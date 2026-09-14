@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gnomore Gnomes</title>
+<style>
+  :root {
+    --bg: #1f2430;
+    --accent: #7a3ef0;
+    --ink: #f4f2f8;
+    --muted: #a9a6b8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    text-align: center;
+    padding: 24px;
+  }
+  .card { max-width: 480px; }
+  h1 {
+    font-size: clamp(2rem, 6vw, 3rem);
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+  }
+  .hex {
+    width: 56px;
+    height: 64px;
+    margin: 0 auto 20px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  p {
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+  .tag {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 6px 14px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="hex"></div>
+    <h1>Gnomore Gnomes</h1>
+    <p>Estrategia por turnos, mundo de fantasía, caza de gnomos.<br>En construcción.</p>
+    <span class="tag">Prototipo · GitHub Pages</span>
+  </div>
+</body>
+</html>
