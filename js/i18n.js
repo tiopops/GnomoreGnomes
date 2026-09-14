@@ -9,6 +9,22 @@ const STRINGS = {
     menu_resume_game: "Reanudar Partida",
     menu_multiplayer: "Multijugador (próximamente)",
     menu_footer: "Prototipo en construcción",
+
+    back: "Volver",
+
+    choose_mode: "Elige el modo de juego",
+    mode_gnomesmash: "GnomeSmash",
+    mode_gnomesmash_desc: "Caza gnomos, cárgalos y machácalos en la base rival.",
+
+    choose_race: "Elige tu raza",
+    race_mushboom_forest: "El Reino Mushboom Forest",
+    race_mushboom_forest_desc: "Orcos y goblins del bosque Mushboom, expertos en setas bomba.",
+
+    choose_opponents: "Elige el número de rivales",
+    opponents_label: "{n} rival",
+    opponents_label_plural: "{n} rivales",
+
+    generating_map: "Generando escenario…",
   },
   en: {
     game_title: "Gnomore Gnomes",
@@ -16,6 +32,22 @@ const STRINGS = {
     menu_resume_game: "Resume Game",
     menu_multiplayer: "Multiplayer (coming soon)",
     menu_footer: "Prototype under construction",
+
+    back: "Back",
+
+    choose_mode: "Choose game mode",
+    mode_gnomesmash: "GnomeSmash",
+    mode_gnomesmash_desc: "Hunt gnomes, charge them up, and smash them in the enemy base.",
+
+    choose_race: "Choose your race",
+    race_mushboom_forest: "The Mushboom Forest Kingdom",
+    race_mushboom_forest_desc: "Orcs and goblins from the Mushboom forest, masters of bomb mushrooms.",
+
+    choose_opponents: "Choose number of opponents",
+    opponents_label: "{n} opponent",
+    opponents_label_plural: "{n} opponents",
+
+    generating_map: "Generating map…",
   },
 };
 
@@ -41,9 +73,15 @@ const I18N = {
     this.apply();
   },
 
-  t(key) {
+  t(key, vars) {
     const dict = STRINGS[this.currentLang] || STRINGS[DEFAULT_LANGUAGE];
-    return dict[key] || STRINGS[DEFAULT_LANGUAGE][key] || key;
+    let str = dict[key] || STRINGS[DEFAULT_LANGUAGE][key] || key;
+    if (vars) {
+      Object.keys(vars).forEach((k) => {
+        str = str.replace(`{${k}}`, vars[k]);
+      });
+    }
+    return str;
   },
 
   apply() {

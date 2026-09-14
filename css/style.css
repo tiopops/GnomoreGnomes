@@ -1,4 +1,4 @@
-/* Gnomore Gnomes — estilos base del menú principal.
+/* Gnomore Gnomes — estilos base.
    Regla de oro: preparado para escalar (más pantallas, más idiomas, más temas). */
 
 :root {
@@ -24,26 +24,33 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   min-height: 100vh;
-  padding: 24px;
 }
 
-.main-menu {
-  width: 100%;
-  max-width: 420px;
-  text-align: center;
+.screen {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 24px;
+}
+
+/* ---------- Menú principal ---------- */
+
+.main-menu {
+  justify-content: center;
+  text-align: center;
+}
+
+.main-menu > * {
+  width: 100%;
+  max-width: 420px;
 }
 
 .hex-logo {
   width: 56px;
   height: 64px;
-  margin-bottom: 20px;
+  margin: 0 auto 20px;
   background: var(--accent);
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }
@@ -54,8 +61,13 @@ h1 {
   letter-spacing: -0.02em;
 }
 
+h2 {
+  font-size: clamp(1.4rem, 5vw, 1.8rem);
+  margin: 8px 0 24px;
+  text-align: center;
+}
+
 .menu-buttons {
-  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -72,7 +84,14 @@ h1 {
   color: var(--ink);
   cursor: pointer;
   transition: background-color 0.15s ease, transform 0.1s ease;
-  /* Regla de oro: retroalimentación en cada interacción */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.menu-btn i {
+  font-size: 1.2rem;
 }
 
 .menu-btn:hover:not(:disabled) {
@@ -89,10 +108,6 @@ h1 {
   color: var(--muted);
   border-color: var(--disabled);
   cursor: not-allowed;
-}
-
-.menu-btn--disabled {
-  font-weight: 500;
 }
 
 .menu-footer {
@@ -121,7 +136,127 @@ h1 {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Modo táctil / pantallas pequeñas: botones más altos y fáciles de pulsar */
+/* ---------- Pantallas de selección (modo / raza / rivales) ---------- */
+
+.back-btn {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 8px 4px;
+  margin-bottom: 12px;
+  transition: color 0.15s ease;
+}
+
+.back-btn:hover {
+  color: var(--ink);
+}
+
+.back-btn--floating {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 5;
+  background: var(--bg-elevated);
+  border-radius: 999px;
+  padding: 10px;
+  margin-bottom: 0;
+}
+
+.option-list {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.option-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--disabled);
+  background: var(--bg-elevated);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, transform 0.1s ease, background-color 0.15s ease;
+  --card-accent: var(--accent);
+}
+
+.option-card:hover {
+  border-color: var(--card-accent);
+  transform: translateY(-2px);
+  background: #2c3242;
+}
+
+.option-card:active {
+  transform: translateY(0);
+}
+
+.option-card__icon {
+  font-size: 1.6rem;
+  color: var(--card-accent);
+  margin-bottom: 4px;
+}
+
+.option-card__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.option-card__desc {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+/* ---------- Tablero (escenario isométrico) ---------- */
+
+.screen-board {
+  padding: 0;
+  position: relative;
+  overflow: auto;
+  align-items: center;
+  justify-content: center;
+  background: #171b24;
+}
+
+.board-viewport {
+  padding: 60px 40px;
+  display: inline-block;
+}
+
+.board-tiles {
+  position: relative;
+}
+
+.tile {
+  position: absolute;
+  width: 72px;
+  height: 42px;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  transition: filter 0.1s ease;
+}
+
+.tile:hover {
+  filter: brightness(1.15) !important;
+}
+
+.tile--grass {
+  background: linear-gradient(135deg, #6cc25a, #4f9e42);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+/* Modo táctil / pantallas pequeñas */
 @media (max-width: 480px) {
   .menu-btn {
     padding: 16px 20px;
