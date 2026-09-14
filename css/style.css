@@ -27,20 +27,28 @@ body {
   min-height: 100vh;
 }
 
+/* Las pantallas ocupan siempre el mismo sitio fijo (position: fixed) y se
+   alternan con una transición de opacidad + desplazamiento, en vez de
+   apilarse una debajo de otra o cambiar de golpe sin transición. */
 .screen {
+  position: fixed;
+  inset: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 24px;
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-/* Importante: sin esto, el atributo "hidden" no vale de nada, porque la regla
-   ".screen { display: flex }" de arriba lo pisa (una regla de autor siempre
-   gana al estilo por defecto del navegador para [hidden], aunque tengan la
-   misma especificidad). Esta regla hace que "hidden" sí oculte la pantalla. */
-.screen[hidden] {
-  display: none;
+.screen.screen--active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 /* ---------- Menú principal ---------- */
