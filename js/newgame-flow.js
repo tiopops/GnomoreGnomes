@@ -6,7 +6,7 @@ const screenHistory = ["main-menu"];
 
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach((s) => {
-    s.hidden = s.id !== id;
+    s.classList.toggle("screen--active", s.id === id);
   });
 }
 

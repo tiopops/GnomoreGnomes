@@ -41,16 +41,25 @@ const SFX = {
 
 const SFX_TARGETS = ".menu-btn:not(:disabled), .option-card, .back-btn";
 
+// IMPORTANTE: se usa "mouseover"/"mouseout" (delegados en document) en vez de
+// "mouseenter"/"mouseleave" para poder delegar en un único listener, pero eso
+// obliga a comprobar `relatedTarget`: sin esa comprobación, mover el ratón
+// entre elementos hijos del mismo botón (el icono y el texto, por ejemplo)
+// se interpreta como "salir y volver a entrar", repitiendo el sonido sin parar.
+
 document.addEventListener("mouseover", (e) => {
   const el = e.target.closest(SFX_TARGETS);
-  if (el && el !== SFX.lastHovered) {
-    SFX.hover();
-    SFX.lastHovered = el;
-  }
+  if (!el) return;
+  if (el.contains(e.relatedTarget)) return; // seguimos dentro del mismo elemento
+  if (el === SFX.lastHovered) return;
+  SFX.hover();
+  SFX.lastHovered = el;
 });
 
 document.addEventListener("mouseout", (e) => {
   const el = e.target.closest(SFX_TARGETS);
+  if (!el) return;
+  if (el.contains(e.relatedTarget)) return; // seguimos dentro del mismo elemento
   if (el === SFX.lastHovered) SFX.lastHovered = null;
 });
 

@@ -10,7 +10,7 @@
 <body>
 
   <!-- Menú principal -->
-  <main class="screen main-menu" id="main-menu">
+  <main class="screen screen--active main-menu" id="main-menu">
     <div class="hex-logo"></div>
     <h1 data-i18n="game_title">Gnomore Gnomes</h1>
 
@@ -33,28 +33,28 @@
   </main>
 
   <!-- Selección de modo de juego -->
-  <main class="screen" id="screen-mode-select" hidden>
+  <main class="screen" id="screen-mode-select">
     <button class="back-btn" data-back><i class="ph ph-arrow-left"></i> <span data-i18n="back">Volver</span></button>
     <h2 data-i18n="choose_mode">Elige el modo de juego</h2>
     <div class="option-list" id="mode-list"></div>
   </main>
 
   <!-- Selección de raza -->
-  <main class="screen" id="screen-race-select" hidden>
+  <main class="screen" id="screen-race-select">
     <button class="back-btn" data-back><i class="ph ph-arrow-left"></i> <span data-i18n="back">Volver</span></button>
     <h2 data-i18n="choose_race">Elige tu raza</h2>
     <div class="option-list" id="race-list"></div>
   </main>
 
   <!-- Selección de número de rivales -->
-  <main class="screen" id="screen-opponent-select" hidden>
+  <main class="screen" id="screen-opponent-select">
     <button class="back-btn" data-back><i class="ph ph-arrow-left"></i> <span data-i18n="back">Volver</span></button>
     <h2 data-i18n="choose_opponents">Elige el número de rivales</h2>
     <div class="option-list" id="opponent-list"></div>
   </main>
 
   <!-- Tablero de juego -->
-  <main class="screen screen-board" id="screen-board" hidden>
+  <main class="screen screen-board" id="screen-board">
     <button class="back-btn back-btn--floating" data-back><i class="ph ph-arrow-left"></i></button>
     <div class="board-viewport">
       <div class="board-tiles" id="board-tiles"></div>
