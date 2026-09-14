@@ -35,6 +35,14 @@ body {
   padding: 24px;
 }
 
+/* Importante: sin esto, el atributo "hidden" no vale de nada, porque la regla
+   ".screen { display: flex }" de arriba lo pisa (una regla de autor siempre
+   gana al estilo por defecto del navegador para [hidden], aunque tengan la
+   misma especificidad). Esta regla hace que "hidden" sí oculte la pantalla. */
+.screen[hidden] {
+  display: none;
+}
+
 /* ---------- Menú principal ---------- */
 
 .main-menu {
