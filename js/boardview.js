@@ -4,23 +4,40 @@
    Regla de oro: un archivo por mecánica — esto solo controla la cámara del
    tablero, no genera ni pinta las losetas (eso vive en mapgen.js).
    Regla de oro: comodidad e intuitividad de controles en cualquier dispositivo
-   (ratón, pantalla táctil) y nivel Triple A en la sensación de manejo. */
+   (ratón, pantalla táctil) y nivel Triple A en la sensación de manejo.
+
+   La cámara funciona con un valor "objetivo" (target) que se actualiza al
+   instante con cada gesto, y un valor "mostrado" que persigue a ese objetivo
+   con una pequeña suavización (lerp) en cada frame — así el movimiento de la
+   cámara se siente suave y ligeramente "lazy" en vez de saltar de golpe. */
 
 const BoardView = {
   viewportEl: null,
   cameraEl: null,
 
-  scale: 1,
   minScale: 0.5,
   maxScale: 2.5,
+
+  // Valores objetivo: a dónde tiene que llegar la cámara.
+  targetScale: 1,
+  targetPanX: 0,
+  targetPanY: 0,
+
+  // Valores mostrados: lo que realmente se pinta, persiguiendo al objetivo.
+  scale: 1,
   panX: 0,
   panY: 0,
+
+  // Cuanto más bajo, más "lazy"/suave; cuanto más alto, más directo/inmediato.
+  EASE: 0.2,
+  SETTLE_EPSILON: 0.02,
 
   contentWidth: 0,
   contentHeight: 0,
 
   _dragState: null,
   _touchState: null,
+  _rafId: null,
 
   init() {
     this.viewportEl = document.getElementById("board-viewport");
@@ -35,17 +52,22 @@ const BoardView = {
   setContent(width, height) {
     this.contentWidth = width;
     this.contentHeight = height;
-    this.scale = 1;
+    this.targetScale = 1;
     this._centerContent();
   },
 
+  // Centra el contenido y, a diferencia de un gesto del jugador, lo hace
+  // al instante (sin suavizado) para que la pantalla no empiece "flotando".
   _centerContent() {
     if (!this.viewportEl) return;
     const vw = this.viewportEl.clientWidth;
     const vh = this.viewportEl.clientHeight;
-    this.panX = (vw - this.contentWidth * this.scale) / 2;
-    this.panY = (vh - this.contentHeight * this.scale) / 2;
-    this._clampPan();
+    this.targetPanX = (vw - this.contentWidth * this.targetScale) / 2;
+    this.targetPanY = (vh - this.contentHeight * this.targetScale) / 2;
+    this._clampTargetPan();
+    this.scale = this.targetScale;
+    this.panX = this.targetPanX;
+    this.panY = this.targetPanY;
     this._apply();
   },
 
@@ -53,20 +75,20 @@ const BoardView = {
     return Math.min(this.maxScale, Math.max(this.minScale, scale));
   },
 
-  _clampPan() {
+  _clampTargetPan() {
     if (!this.viewportEl) return;
     const vw = this.viewportEl.clientWidth;
     const vh = this.viewportEl.clientHeight;
-    const scaledW = this.contentWidth * this.scale;
-    const scaledH = this.contentHeight * this.scale;
+    const scaledW = this.contentWidth * this.targetScale;
+    const scaledH = this.contentHeight * this.targetScale;
 
     const minX = Math.min(0, vw - scaledW);
     const maxX = Math.max(0, vw - scaledW);
     const minY = Math.min(0, vh - scaledH);
     const maxY = Math.max(0, vh - scaledH);
 
-    this.panX = Math.min(maxX, Math.max(minX, this.panX));
-    this.panY = Math.min(maxY, Math.max(minY, this.panY));
+    this.targetPanX = Math.min(maxX, Math.max(minX, this.targetPanX));
+    this.targetPanY = Math.min(maxY, Math.max(minY, this.targetPanY));
   },
 
   _apply() {
@@ -74,16 +96,49 @@ const BoardView = {
   },
 
   _zoomAt(cx, cy, factor) {
-    const newScale = this._clampScale(this.scale * factor);
-    if (newScale === this.scale) return;
+    const newScale = this._clampScale(this.targetScale * factor);
+    if (newScale === this.targetScale) return;
     // Mantiene fijo bajo el cursor/dedos el punto de contenido que había ahí antes del zoom.
-    const contentX = (cx - this.panX) / this.scale;
-    const contentY = (cy - this.panY) / this.scale;
-    this.scale = newScale;
-    this.panX = cx - contentX * this.scale;
-    this.panY = cy - contentY * this.scale;
-    this._clampPan();
-    this._apply();
+    const contentX = (cx - this.targetPanX) / this.targetScale;
+    const contentY = (cy - this.targetPanY) / this.targetScale;
+    this.targetScale = newScale;
+    this.targetPanX = cx - contentX * this.targetScale;
+    this.targetPanY = cy - contentY * this.targetScale;
+    this._clampTargetPan();
+    this._startLoop();
+  },
+
+  _panBy(dx, dy) {
+    this.targetPanX += dx;
+    this.targetPanY += dy;
+    this._clampTargetPan();
+    this._startLoop();
+  },
+
+  // Bucle de suavizado: en cada frame acerca el valor mostrado al objetivo.
+  _startLoop() {
+    if (this._rafId) return;
+    const step = () => {
+      const dx = this.targetPanX - this.panX;
+      const dy = this.targetPanY - this.panY;
+      const ds = this.targetScale - this.scale;
+
+      if (Math.abs(dx) < this.SETTLE_EPSILON && Math.abs(dy) < this.SETTLE_EPSILON && Math.abs(ds) < 0.001) {
+        this.panX = this.targetPanX;
+        this.panY = this.targetPanY;
+        this.scale = this.targetScale;
+        this._apply();
+        this._rafId = null;
+        return;
+      }
+
+      this.panX += dx * this.EASE;
+      this.panY += dy * this.EASE;
+      this.scale += ds * this.EASE;
+      this._apply();
+      this._rafId = requestAnimationFrame(step);
+    };
+    this._rafId = requestAnimationFrame(step);
   },
 
   _bindEvents() {
@@ -117,10 +172,7 @@ const BoardView = {
       const dy = e.clientY - this._dragState.lastY;
       this._dragState.lastX = e.clientX;
       this._dragState.lastY = e.clientY;
-      this.panX += dx;
-      this.panY += dy;
-      this._clampPan();
-      this._apply();
+      this._panBy(dx, dy);
     });
 
     window.addEventListener("mouseup", () => {
@@ -144,7 +196,7 @@ const BoardView = {
           this._touchState = {
             mode: "pinch",
             startDist: touchDist(t1, t2),
-            startScale: this.scale,
+            startScale: this.targetScale,
           };
         }
       },
@@ -164,16 +216,13 @@ const BoardView = {
           const dy = t.clientY - this._touchState.lastY;
           this._touchState.lastX = t.clientX;
           this._touchState.lastY = t.clientY;
-          this.panX += dx;
-          this.panY += dy;
-          this._clampPan();
-          this._apply();
+          this._panBy(dx, dy);
         } else if (this._touchState.mode === "pinch" && e.touches.length === 2) {
           const [t1, t2] = e.touches;
           const dist = touchDist(t1, t2);
           const midX = (t1.clientX + t2.clientX) / 2 - rect.left;
           const midY = (t1.clientY + t2.clientY) / 2 - rect.top;
-          const factor = (dist / this._touchState.startDist) * (this._touchState.startScale / this.scale);
+          const factor = (dist / this._touchState.startDist) * (this._touchState.startScale / this.targetScale);
           this._zoomAt(midX, midY, factor);
         }
       },
@@ -189,8 +238,14 @@ const BoardView = {
       }
     });
 
-    // Si la ventana cambia de tamaño, reajustamos los límites de desplazamiento.
-    window.addEventListener("resize", () => this._clampPan());
+    // Si la ventana cambia de tamaño, reajustamos los límites de desplazamiento
+    // al instante (no es un gesto del jugador, no necesita suavizado).
+    window.addEventListener("resize", () => {
+      this._clampTargetPan();
+      this.panX = this.targetPanX;
+      this.panY = this.targetPanY;
+      this._apply();
+    });
   },
 };
 
