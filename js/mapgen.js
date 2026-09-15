@@ -15,12 +15,17 @@ const TILE_TYPES = {
   },
 };
 
-// Dimensiones reales de la loseta base (hierba_01.png), en píxeles:
-// ancho total = 250, alto de la cara superior (hierba) = 86, profundidad del bloque = 131.
-const TILE_WIDTH = 250;
-const TILE_TOP_HEIGHT = 86;
-const TILE_DEPTH = 131;
-const TILE_TOTAL_HEIGHT = TILE_TOP_HEIGHT + TILE_DEPTH;
+// Dimensiones nativas del archivo de imagen hierba_01.png (no cambian).
+const TILE_NATIVE_WIDTH = 250;
+const TILE_NATIVE_HEIGHT = 217;
+
+// Valores de encaje calibrados a mano por Jesús con debug/calibrar-losetas.html:
+// TILE_WIDTH = ancho al que se renderiza cada loseta (también fija el espaciado
+// horizontal); TILE_TOP_HEIGHT = separación vertical entre filas. La imagen se
+// escala manteniendo su proporción real a partir de TILE_WIDTH.
+const TILE_WIDTH = 208;
+const TILE_TOP_HEIGHT = 126;
+const TILE_RENDER_HEIGHT = Math.round((TILE_WIDTH * TILE_NATIVE_HEIGHT) / TILE_NATIVE_WIDTH);
 
 function pickVariant(typeInfo, row, col) {
   const variants = typeInfo.variants;
@@ -49,7 +54,7 @@ function renderMap(map, container) {
   const centerX = (map.size - 1) * halfW;
 
   const boardWidth = map.size * TILE_WIDTH;
-  const boardHeight = map.size * TILE_TOP_HEIGHT + TILE_DEPTH;
+  const boardHeight = map.size * TILE_TOP_HEIGHT + (TILE_RENDER_HEIGHT - TILE_TOP_HEIGHT);
   container.style.width = `${boardWidth}px`;
   container.style.height = `${boardHeight}px`;
 
@@ -62,7 +67,7 @@ function renderMap(map, container) {
     const img = document.createElement("img");
     img.src = t.src;
     img.width = TILE_WIDTH;
-    img.height = TILE_TOTAL_HEIGHT;
+    img.height = TILE_RENDER_HEIGHT;
     img.draggable = false;
     img.alt = "";
     el.appendChild(img);
