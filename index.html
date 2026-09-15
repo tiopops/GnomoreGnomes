@@ -56,8 +56,10 @@
   <!-- Tablero de juego -->
   <main class="screen screen-board" id="screen-board">
     <button class="back-btn back-btn--floating" data-back><i class="ph ph-arrow-left"></i></button>
-    <div class="board-viewport">
-      <div class="board-tiles" id="board-tiles"></div>
+    <div class="board-viewport" id="board-viewport">
+      <div class="board-camera" id="board-camera">
+        <div class="board-tiles" id="board-tiles"></div>
+      </div>
     </div>
   </main>
 
@@ -68,6 +70,7 @@
   <script src="js/races.js"></script>
   <script src="js/matchsetup.js"></script>
   <script src="js/mapgen.js"></script>
+  <script src="js/boardview.js"></script>
   <script src="js/menu.js"></script>
   <script src="js/newgame-flow.js"></script>
 </body>

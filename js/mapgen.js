@@ -16,10 +16,10 @@ const TILE_TYPES = {
 };
 
 // Dimensiones reales de la loseta base (hierba_01.png), en píxeles:
-// ancho total = 250, alto de la cara superior (hierba) = 72, profundidad del bloque = 144.
+// ancho total = 250, alto de la cara superior (hierba) = 87, profundidad del bloque = 131.
 const TILE_WIDTH = 250;
-const TILE_TOP_HEIGHT = 72;
-const TILE_DEPTH = 144;
+const TILE_TOP_HEIGHT = 87;
+const TILE_DEPTH = 131;
 const TILE_TOTAL_HEIGHT = TILE_TOP_HEIGHT + TILE_DEPTH;
 
 function pickVariant(typeInfo, row, col) {

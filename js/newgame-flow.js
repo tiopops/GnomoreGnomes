@@ -109,6 +109,7 @@ function startMatch({ modeId, raceId, opponents }) {
   showScreen("screen-board");
   screenHistory.length = 0;
   screenHistory.push("main-menu", "screen-board");
+  syncBoardCamera();
 
   const resumeBtn = document.getElementById("btn-resume-game");
   if (resumeBtn) resumeBtn.disabled = false;
@@ -121,6 +122,19 @@ function resumeMatch() {
   showScreen("screen-board");
   screenHistory.length = 0;
   screenHistory.push("main-menu", "screen-board");
+  syncBoardCamera();
+}
+
+// Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del
+// escenario que se acaba de pintar, y lo centra en pantalla.
+function syncBoardCamera() {
+  const boardTiles = document.getElementById("board-tiles");
+  if (!boardTiles || typeof BoardView === "undefined") return;
+  // Espera a que la pantalla sea visible (fin de la transición de fade) para
+  // que el viewport ya tenga su tamaño final antes de centrar el contenido.
+  requestAnimationFrame(() => {
+    BoardView.setContent(boardTiles.offsetWidth, boardTiles.offsetHeight);
+  });
 }
 
 function initNewGameFlow() {

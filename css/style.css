@@ -240,15 +240,30 @@ h2 {
 .screen-board {
   padding: 0;
   position: relative;
-  overflow: auto;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
   background: #171b24;
 }
 
+/* La cámara del tablero (zoom + desplazamiento) vive en js/boardview.js.
+   El viewport recorta el contenido (sin barras de scroll) y la cámara es el
+   elemento al que se le aplica translate()/scale() para desplazar y hacer zoom. */
 .board-viewport {
-  padding: 60px 40px;
-  display: inline-block;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.board-viewport.dragging {
+  cursor: grabbing;
+}
+
+.board-camera {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
 }
 
 .board-tiles {
