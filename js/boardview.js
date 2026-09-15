@@ -29,8 +29,14 @@ const BoardView = {
   panY: 0,
 
   // Cuanto más bajo, más "lazy"/suave; cuanto más alto, más directo/inmediato.
-  EASE: 0.2,
+  // El zoom usa un valor más bajo que el desplazamiento porque, al ser un
+  // cambio de escala mucho más pequeño en números, con el mismo suavizado
+  // que el desplazamiento apenas se notaba el "retraso" — así se percibe
+  // igual de lazy que arrastrar.
+  PAN_EASE: 0.2,
+  SCALE_EASE: 0.1,
   SETTLE_EPSILON: 0.02,
+  SETTLE_EPSILON_SCALE: 0.0005,
 
   contentWidth: 0,
   contentHeight: 0,
@@ -123,7 +129,11 @@ const BoardView = {
       const dy = this.targetPanY - this.panY;
       const ds = this.targetScale - this.scale;
 
-      if (Math.abs(dx) < this.SETTLE_EPSILON && Math.abs(dy) < this.SETTLE_EPSILON && Math.abs(ds) < 0.001) {
+      if (
+        Math.abs(dx) < this.SETTLE_EPSILON &&
+        Math.abs(dy) < this.SETTLE_EPSILON &&
+        Math.abs(ds) < this.SETTLE_EPSILON_SCALE
+      ) {
         this.panX = this.targetPanX;
         this.panY = this.targetPanY;
         this.scale = this.targetScale;
@@ -132,9 +142,9 @@ const BoardView = {
         return;
       }
 
-      this.panX += dx * this.EASE;
-      this.panY += dy * this.EASE;
-      this.scale += ds * this.EASE;
+      this.panX += dx * this.PAN_EASE;
+      this.panY += dy * this.PAN_EASE;
+      this.scale += ds * this.SCALE_EASE;
       this._apply();
       this._rafId = requestAnimationFrame(step);
     };
