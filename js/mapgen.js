@@ -1,76 +1,71 @@
 /* Gnomore Gnomes — generación y render del escenario (perspectiva isométrica, estilo Polytopia).
    Regla de oro: un archivo por mecánica — este solo genera y pinta el tablero de losetas.
-   Regla de oro: escalabilidad — TILE_TYPES está pensado para poder sustituir el color plano
-   por una imagen/sprite real de loseta en el futuro sin tocar el resto del motor.
-   Regla de oro: nivel Triple A — cada loseta se dibuja como un pequeño bloque con cara
-   superior + dos caras laterales (no un rombo plano), y con un orden de dibujado (z-index)
-   estable en función de su posición, para que no "salten" visualmente al hacer hover. */
+   Regla de oro: escalabilidad — TILE_TYPES está pensado para poder añadir nuevos tipos de
+   terreno y variantes visuales dentro de un mismo tipo sin tocar el resto del motor: basta con
+   añadir más rutas de imagen al array "variants" del tipo que corresponda.
+   Regla de oro: nivel Triple A — las losetas usan el arte isométrico real del proyecto
+   (assets/losetas/) en vez de placeholders generados, con un orden de dibujado (z-index)
+   estable en función de su posición para que no "salten" visualmente al hacer hover. */
 
 const TILE_TYPES = {
   grass: {
-    top: ["#8fe06a", "#63c246"],   // cara superior (hierba), degradado claro
-    left: "#3f7a2e",               // cara lateral izquierda (tierra, en sombra media)
-    right: "#2f5f23",              // cara lateral derecha (tierra, en sombra más oscura)
-    // spriteUrl: null  -> cuando haya losetas de imagen reales, se rellena aquí
+    // Varias variantes por tipo = variedad visual sin duplicar lógica (regla de oro de escalabilidad).
+    // De momento solo hay una loseta de hierba; Jesús irá añadiendo más aquí.
+    variants: ["assets/losetas/hierba_01.png"],
   },
 };
 
-const TILE_WIDTH = 72;   // ancho de la cara superior (rombo)
-const TILE_HEIGHT = 42;  // alto de la cara superior (rombo)
-const TILE_DEPTH = 20;   // alto de las caras laterales (el "grosor" del bloque)
+// Dimensiones reales de la loseta base (hierba_01.png), en píxeles:
+// ancho total = 250, alto de la cara superior (hierba) = 72, profundidad del bloque = 144.
+const TILE_WIDTH = 250;
+const TILE_TOP_HEIGHT = 72;
+const TILE_DEPTH = 144;
+const TILE_TOTAL_HEIGHT = TILE_TOP_HEIGHT + TILE_DEPTH;
+
+function pickVariant(typeInfo, row, col) {
+  const variants = typeInfo.variants;
+  if (variants.length === 1) return variants[0];
+  // Selección determinista (misma partida = mismo mapa) en vez de aleatoria pura.
+  const idx = (row * 31 + col * 17) % variants.length;
+  return variants[idx];
+}
 
 function generateMap(size) {
   const tiles = [];
   for (let row = 0; row < size; row++) {
     for (let col = 0; col < size; col++) {
-      tiles.push({ row, col, type: "grass" });
+      const typeInfo = TILE_TYPES.grass;
+      tiles.push({ row, col, type: "grass", src: pickVariant(typeInfo, row, col) });
     }
   }
   return { size, tiles };
-}
-
-function buildTileSVG(typeInfo) {
-  const w = TILE_WIDTH;
-  const h = TILE_HEIGHT;
-  const d = TILE_DEPTH;
-  const totalH = h + d;
-  const [topA, topB] = typeInfo.top;
-
-  return `
-    <svg width="${w}" height="${totalH}" viewBox="0 0 ${w} ${totalH}" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="0,${h / 2} ${w / 2},${h} ${w / 2},${totalH} 0,${h / 2 + d}" fill="${typeInfo.left}" />
-      <polygon points="${w},${h / 2} ${w / 2},${h} ${w / 2},${totalH} ${w},${h / 2 + d}" fill="${typeInfo.right}" />
-      <polygon points="${w / 2},0 ${w},${h / 2} ${w / 2},${h} 0,${h / 2}" fill="url(#g)" />
-      <defs>
-        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="${topA}" />
-          <stop offset="100%" stop-color="${topB}" />
-        </linearGradient>
-      </defs>
-    </svg>
-  `;
 }
 
 function renderMap(map, container) {
   container.innerHTML = "";
 
   const halfW = TILE_WIDTH / 2;
-  const halfH = TILE_HEIGHT / 2;
+  const halfH = TILE_TOP_HEIGHT / 2;
   const centerX = (map.size - 1) * halfW;
 
   const boardWidth = map.size * TILE_WIDTH;
-  const boardHeight = map.size * TILE_HEIGHT + TILE_DEPTH;
+  const boardHeight = map.size * TILE_TOP_HEIGHT + TILE_DEPTH;
   container.style.width = `${boardWidth}px`;
   container.style.height = `${boardHeight}px`;
 
   const fragment = document.createDocumentFragment();
 
   map.tiles.forEach((t) => {
-    const typeInfo = TILE_TYPES[t.type] || TILE_TYPES.grass;
-
     const el = document.createElement("div");
     el.className = "tile";
-    el.innerHTML = buildTileSVG(typeInfo);
+
+    const img = document.createElement("img");
+    img.src = t.src;
+    img.width = TILE_WIDTH;
+    img.height = TILE_TOTAL_HEIGHT;
+    img.draggable = false;
+    img.alt = "";
+    el.appendChild(img);
 
     const x = (t.col - t.row) * halfW + centerX;
     const y = (t.col + t.row) * halfH;

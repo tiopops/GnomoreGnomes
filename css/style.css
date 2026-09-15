@@ -257,15 +257,17 @@ h2 {
 
 .tile {
   position: absolute;
-  line-height: 0; /* evita espacio extra bajo el SVG inline */
+  line-height: 0; /* evita espacio extra bajo la imagen */
 }
 
-.tile svg {
+.tile img {
   display: block;
   transition: filter 0.1s ease;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.tile:hover svg {
+.tile:hover img {
   filter: brightness(1.15);
 }
 
