@@ -15,8 +15,10 @@ const BoardView = {
   viewportEl: null,
   cameraEl: null,
 
-  minScale: 0.5,
-  maxScale: 2.5,
+  // Rango de zoom acotado para que nunca se pueda alejar hasta perder de
+  // vista el tablero ni acercar tanto que las losetas se vean pixeladas.
+  minScale: 0.6,
+  maxScale: 1.8,
 
   // Valores objetivo: a dónde tiene que llegar la cámara.
   targetScale: 1,

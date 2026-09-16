@@ -302,7 +302,20 @@ h2 {
 }
 
 .unit__flip {
-  transition: transform 0.16s ease;
+  /* La sombra vive aquí (no en unit__sprite) a propósito: unit__sprite anima
+     su "transform" constantemente (respiración) y un filter drop-shadow
+     sobre un elemento que cambia de transform cada frame obliga al navegador
+     a repintarlo en software en cada fotograma — eso es lo que se veía como
+     el sprite "perdiendo calidad"/emborronándose al mover el ratón (más
+     repintados de golpe = menos margen para hacerlo a tiempo). unit__flip
+     solo cambia de transform puntualmente (al girar), así que la sombra se
+     queda como una capa estable la mayor parte del tiempo. */
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4));
+  transition: transform 0.16s ease, filter 0.15s ease;
+}
+
+.unit--selected .unit__flip {
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 10px rgba(122, 62, 240, 0.95));
 }
 
 .unit__sprite {
@@ -311,20 +324,19 @@ h2 {
   height: auto;
   user-select: none;
   -webkit-user-drag: none;
-  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4));
-  transition: filter 0.15s ease;
+  /* Ancla la escala a los pies (no al centro) para que la respiración y el
+     salto crezcan/se compriman desde el suelo hacia arriba en vez de que los
+     pies floten al cambiar de escala. */
+  transform-origin: 50% 100%;
+  will-change: transform;
 }
 
-.unit--selected .unit__sprite {
-  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 10px rgba(122, 62, 240, 0.95));
-}
-
-/* Respiración sutil cuando la unidad está parada (no seleccionada en pleno
-   movimiento): una escala/elevación mínima para que el personaje se sienta
-   "vivo" incluso sin interactuar con él. Se desactiva durante el salto
-   (unit__sprite--hop) para no competir por la misma propiedad — ver la regla
-   con mayor especificidad más abajo, que es la que realmente gana durante
-   el movimiento. */
+/* Respiración sutil, SIEMPRE activa mientras la unidad espera (parada, esté
+   o no seleccionada) — solo se apaga durante el salto (unit__sprite--hop,
+   con más especificidad más abajo, así es la que gana durante el
+   movimiento). Solo escala en vertical (los pies, anclados abajo, no se
+   mueven) para que se lea como el pecho subiendo al respirar, no como el
+   personaje levitando. */
 .unit__sprite {
   animation: unit-idle-breathe 2.6s ease-in-out infinite;
 }
@@ -338,8 +350,8 @@ h2 {
 }
 
 @keyframes unit-idle-breathe {
-  0%, 100% { transform: translateY(0) scale(1, 1); }
-  50% { transform: translateY(-1.5px) scale(1.015, 0.985); }
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(0.985, 1.025); }
 }
 
 .unit__sprite--hop {
