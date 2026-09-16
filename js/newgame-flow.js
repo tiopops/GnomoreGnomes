@@ -106,6 +106,7 @@ function startMatch({ modeId, raceId, opponents }) {
   });
 
   renderMap(map, document.getElementById("board-tiles"));
+  spawnTestUnits(size);
   showScreen("screen-board");
   screenHistory.length = 0;
   screenHistory.push("main-menu", "screen-board");
@@ -119,10 +120,22 @@ function resumeMatch() {
   const saved = SaveGame.load();
   if (!saved || !saved.tiles) return;
   renderMap({ size: saved.size, tiles: saved.tiles }, document.getElementById("board-tiles"));
+  spawnTestUnits(saved.size);
   showScreen("screen-board");
   screenHistory.length = 0;
   screenHistory.push("main-menu", "screen-board");
   syncBoardCamera();
+}
+
+// Coloca la unidad de pruebas del Mushboom Forest en el centro del tablero
+// recién pintado. Solo para pruebas (ver js/units.js) — más adelante esto
+// pasará a depender de la raza elegida y de una colocación real de inicio de partida.
+function spawnTestUnits(size) {
+  if (typeof Units === "undefined") return;
+  const boardTiles = document.getElementById("board-tiles");
+  Units.init(boardTiles, size);
+  const mid = Math.floor(size / 2);
+  Units.spawnTestUnit(mid, mid);
 }
 
 // Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del

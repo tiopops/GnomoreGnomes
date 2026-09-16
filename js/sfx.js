@@ -77,6 +77,7 @@ const SFX = {
   },
   click() { this._pluck("click", 880, "triangle", 0.12, 0.28); },
   back() { this._pluck("back", 320, "sine", 0.1, 0.22); },
+  hop() { this._pluck("hop", 520, "sine", 0.07, 0.2); },
 };
 
 const SFX_TARGETS = ".menu-btn:not(:disabled), .option-card, .back-btn";

@@ -33,6 +33,26 @@ const TILE_OVERLAP = 0; // % — 0 = desactivado
 const TILE_FEATHER = 0; // px — 0 = desactivado
 const TILE_RENDER_HEIGHT = Math.round((TILE_WIDTH * TILE_NATIVE_HEIGHT) / TILE_NATIVE_WIDTH);
 
+// Posición en pantalla (esquina superior-izquierda) de una loseta según su
+// fila/columna. Centralizado aquí para que cualquier otro archivo (unidades,
+// gnomos, efectos...) que necesite saber "dónde cae" una loseta en pantalla
+// use exactamente el mismo cálculo que el propio tablero, sin duplicar la
+// fórmula ni arriesgarse a que se desincronicen (regla de oro de escalabilidad).
+function getTileTopLeft(row, col, size) {
+  const halfW = TILE_WIDTH / 2;
+  const halfH = TILE_TOP_HEIGHT / 2;
+  const centerX = (size - 1) * halfW;
+  const x = (col - row) * halfW + centerX;
+  const y = (col + row) * halfH;
+  return { x, y };
+}
+
+// Centro de la cara superior de la loseta (donde "pisa" una unidad de pie sobre ella).
+function getTileCenter(row, col, size) {
+  const { x, y } = getTileTopLeft(row, col, size);
+  return { x: x + TILE_WIDTH / 2, y: y + TILE_TOP_HEIGHT / 2 };
+}
+
 function pickVariant(typeInfo, row, col) {
   const variants = typeInfo.variants;
   if (variants.length === 1) return variants[0];
@@ -54,10 +74,6 @@ function generateMap(size) {
 
 function renderMap(map, container) {
   container.innerHTML = "";
-
-  const halfW = TILE_WIDTH / 2;
-  const halfH = TILE_TOP_HEIGHT / 2;
-  const centerX = (map.size - 1) * halfW;
 
   const boardWidth = map.size * TILE_WIDTH;
   const boardHeight = map.size * TILE_TOP_HEIGHT + (TILE_RENDER_HEIGHT - TILE_TOP_HEIGHT);
@@ -85,8 +101,7 @@ function renderMap(map, container) {
     }
     el.appendChild(img);
 
-    const x = (t.col - t.row) * halfW + centerX;
-    const y = (t.col + t.row) * halfH;
+    const { x, y } = getTileTopLeft(t.row, t.col, map.size);
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
 
