@@ -17,14 +17,20 @@ const TILE_TYPES = {
 
 // Dimensiones nativas del archivo de imagen hierba_01.png (no cambian).
 const TILE_NATIVE_WIDTH = 250;
-const TILE_NATIVE_HEIGHT = 217;
+const TILE_NATIVE_HEIGHT = 218;
 
 // Valores de encaje calibrados a mano por Jesús con debug/calibrar-losetas.html:
 // TILE_WIDTH = ancho al que se renderiza cada loseta (también fija el espaciado
 // horizontal); TILE_TOP_HEIGHT = separación vertical entre filas. La imagen se
 // escala manteniendo su proporción real a partir de TILE_WIDTH.
-const TILE_WIDTH = 208;
-const TILE_TOP_HEIGHT = 126;
+// TILE_OVERLAP/TILE_FEATHER son los mismos ajustes "anti-costura" de la
+// herramienta de calibración (agrandar un poco cada loseta desde su centro y/o
+// difuminar su borde); de momento a 0 porque el encaje quedó perfecto sin ellos,
+// pero se dejan aquí listos por si una futura loseta los necesita.
+const TILE_WIDTH = 188;
+const TILE_TOP_HEIGHT = 117;
+const TILE_OVERLAP = 0; // % — 0 = desactivado
+const TILE_FEATHER = 0; // px — 0 = desactivado
 const TILE_RENDER_HEIGHT = Math.round((TILE_WIDTH * TILE_NATIVE_HEIGHT) / TILE_NATIVE_WIDTH);
 
 function pickVariant(typeInfo, row, col) {
@@ -70,6 +76,13 @@ function renderMap(map, container) {
     img.height = TILE_RENDER_HEIGHT;
     img.draggable = false;
     img.alt = "";
+    if (TILE_OVERLAP > 0) {
+      el.style.transform = `scale(${1 + TILE_OVERLAP / 100})`;
+      el.style.transformOrigin = "center center";
+    }
+    if (TILE_FEATHER > 0) {
+      img.style.filter = `blur(${TILE_FEATHER}px)`;
+    }
     el.appendChild(img);
 
     const x = (t.col - t.row) * halfW + centerX;

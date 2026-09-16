@@ -1,42 +1,82 @@
 /* Gnomore Gnomes — retroalimentación sonora de la interfaz.
    Regla de oro: toda interacción debe dar feedback (sonido y/o animación).
    Sonidos generados por código (Web Audio API) como placeholder, hasta que existan
-   efectos de sonido reales — así no depende de ningún archivo de audio todavía. */
+   efectos de sonido reales — así no depende de ningún archivo de audio todavía.
+
+   Cada sonido (hover/click/back) usa una única voz persistente (un oscilador
+   que arranca una sola vez y se queda sonando en silencio) en vez de crear un
+   oscilador nuevo cada vez. Así, al pasar el ratón muy rápido por varios
+   botones seguidos, no se acumulan decenas de osciladores solapándose (lo que
+   sonaba "roto"/como un error): cada toque solo reinicia la envolvente de
+   volumen de esa misma voz, con una pequeña transición para no hacer clics. */
 
 const SFX = {
   ctx: null,
+  master: null,
+  voices: {},
+
   lastHovered: null,
+  lastHoverTime: 0,
+  HOVER_THROTTLE_MS: 55, // evita el "ametralladora" al barrer el ratón muy rápido por la lista
 
   ensureCtx() {
-    if (!this.ctx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return null;
-      this.ctx = new AudioCtx();
-    }
+    if (this.ctx) return this.ctx;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return null;
+    this.ctx = new AudioCtx();
+    // Compresor a la salida: permite subir el volumen de los tonos sin riesgo
+    // de que se distorsionen si alguna vez llegan a solaparse dos sonidos.
+    this.master = this.ctx.createGain();
+    this.master.gain.value = 1;
+    const compressor = this.ctx.createDynamicsCompressor();
+    this.master.connect(compressor).connect(this.ctx.destination);
     return this.ctx;
   },
 
-  playTone(freq, duration = 0.08, type = "sine", volume = 0.12) {
+  _getVoice(name, freq, type) {
     const ctx = this.ensureCtx();
-    if (!ctx) return;
+    if (!ctx) return null;
+    if (ctx.state === "suspended") ctx.resume();
+    if (this.voices[name]) return this.voices[name];
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.value = 0;
+    osc.connect(gain).connect(this.master);
+    osc.start();
+    const voice = { osc, gain };
+    this.voices[name] = voice;
+    return voice;
+  },
+
+  // "Puntea" la voz: sube el volumen casi de golpe y lo deja caer, como un
+  // pequeño pulso percusivo. Si se llama otra vez antes de que termine de
+  // apagarse, parte del volumen que tuviera en ese momento (sin salto/clic).
+  _pluck(name, freq, type, duration, peak) {
+    const voice = this._getVoice(name, freq, type);
+    if (!voice) return;
     try {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = type;
-      osc.frequency.value = freq;
-      gain.gain.value = volume;
-      osc.connect(gain).connect(ctx.destination);
-      osc.start();
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-      osc.stop(ctx.currentTime + duration);
+      const ctx = this.ctx;
+      const now = ctx.currentTime;
+      const g = voice.gain.gain;
+      g.cancelScheduledValues(now);
+      g.setValueAtTime(g.value, now);
+      g.linearRampToValueAtTime(peak, now + 0.008);
+      g.exponentialRampToValueAtTime(0.0001, now + duration);
     } catch (e) {
       // Audio no disponible (autoplay bloqueado, etc.) — se ignora, no debe romper la UI.
     }
   },
 
-  hover() { this.playTone(620, 0.05, "sine", 0.05); },
-  click() { this.playTone(880, 0.08, "triangle", 0.12); },
-  back() { this.playTone(320, 0.08, "sine", 0.1); },
+  hover() {
+    const now = performance.now();
+    if (now - this.lastHoverTime < this.HOVER_THROTTLE_MS) return;
+    this.lastHoverTime = now;
+    this._pluck("hover", 620, "sine", 0.09, 0.16);
+  },
+  click() { this._pluck("click", 880, "triangle", 0.12, 0.28); },
+  back() { this._pluck("back", 320, "sine", 0.1, 0.22); },
 };
 
 const SFX_TARGETS = ".menu-btn:not(:disabled), .option-card, .back-btn";
