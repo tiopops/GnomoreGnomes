@@ -138,13 +138,23 @@ const Units = {
       marker.style.left = `${x}px`;
       marker.style.top = `${y}px`;
       marker.style.zIndex = String((t.row + t.col) * 10 + 2);
-      marker.style.animationDelay = `${i * 18}ms`;
       marker.addEventListener("click", (e) => {
         e.stopPropagation();
         this._moveUnitTo(unit, t.row, t.col);
       });
       this.container.appendChild(marker);
       this.markerEls.push(marker);
+
+      // La aparición se dispara con una clase (transition), no con una
+      // @keyframes animation: así no compite con el estilo :hover por la
+      // misma propiedad "transform" más adelante (ver nota en style.css).
+      // El rAF asegura que el navegador registre primero el estado inicial
+      // (opacity/scale de partida) antes de pasar al visible, y si no la
+      // transición no se dispararía; el setTimeout reproduce el mismo efecto
+      // escalonado que antes tenía el animation-delay.
+      requestAnimationFrame(() => {
+        setTimeout(() => marker.classList.add("range-marker--visible"), i * 18);
+      });
     });
   },
 

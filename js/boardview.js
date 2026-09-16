@@ -41,6 +41,13 @@ const BoardView = {
   contentWidth: 0,
   contentHeight: 0,
 
+  // Mientras no sea null, el zoom en curso está "anclado" a un punto fijo del
+  // contenido bajo el cursor/dedos (ver _zoomAt): el desplazamiento se deriva
+  // de este ancla en cada frame en vez de perseguir su propio objetivo por
+  // separado, para que el punto bajo el cursor no se mueva ni un pixel
+  // mientras el zoom "alcanza" su valor final (aunque ese alcance sea lazy).
+  _zoomAnchor: null,
+
   _dragState: null,
   _touchState: null,
   _rafId: null,
@@ -59,6 +66,7 @@ const BoardView = {
     this.contentWidth = width;
     this.contentHeight = height;
     this.targetScale = 1;
+    this._zoomAnchor = null;
     this._centerContent();
   },
 
@@ -81,40 +89,76 @@ const BoardView = {
     return Math.min(this.maxScale, Math.max(this.minScale, scale));
   },
 
-  _clampTargetPan() {
-    if (!this.viewportEl) return;
+  // Límites de desplazamiento para una escala dada (no necesariamente la
+  // mostrada ni la objetivo — el ancla de zoom los necesita para cualquier
+  // escala intermedia mientras el zoom "alcanza" su valor final).
+  _clampPanFor(x, y, scale) {
     const vw = this.viewportEl.clientWidth;
     const vh = this.viewportEl.clientHeight;
-    const scaledW = this.contentWidth * this.targetScale;
-    const scaledH = this.contentHeight * this.targetScale;
+    const scaledW = this.contentWidth * scale;
+    const scaledH = this.contentHeight * scale;
 
     const minX = Math.min(0, vw - scaledW);
     const maxX = Math.max(0, vw - scaledW);
     const minY = Math.min(0, vh - scaledH);
     const maxY = Math.max(0, vh - scaledH);
 
-    this.targetPanX = Math.min(maxX, Math.max(minX, this.targetPanX));
-    this.targetPanY = Math.min(maxY, Math.max(minY, this.targetPanY));
+    return { x: Math.min(maxX, Math.max(minX, x)), y: Math.min(maxY, Math.max(minY, y)) };
+  },
+
+  _clampTargetPan() {
+    if (!this.viewportEl) return;
+    const { x, y } = this._clampPanFor(this.targetPanX, this.targetPanY, this.targetScale);
+    this.targetPanX = x;
+    this.targetPanY = y;
   },
 
   _apply() {
     this.cameraEl.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.scale})`;
   },
 
+  // Aplica el ancla de zoom activa (this._zoomAnchor) a una escala concreta:
+  // recalcula el desplazamiento necesario para que el punto de contenido
+  // anclado se quede exactamente bajo el cursor/dedos para ESA escala.
+  // Se llama tanto con la escala mostrada (cada frame, mientras el zoom
+  // "alcanza" su objetivo) como con la escala objetivo (para que el límite
+  // final quede bien calculado desde el principio) — así el punto anclado
+  // nunca se desplaza, solo crece/decrece con el zoom.
+  _applyZoomAnchor(scale, isTarget) {
+    if (!this._zoomAnchor) return;
+    const rawX = this._zoomAnchor.screenX - this._zoomAnchor.contentX * scale;
+    const rawY = this._zoomAnchor.screenY - this._zoomAnchor.contentY * scale;
+    const { x, y } = this._clampPanFor(rawX, rawY, scale);
+    if (isTarget) {
+      this.targetPanX = x;
+      this.targetPanY = y;
+    } else {
+      this.panX = x;
+      this.panY = y;
+    }
+  },
+
   _zoomAt(cx, cy, factor) {
     const newScale = this._clampScale(this.targetScale * factor);
     if (newScale === this.targetScale) return;
-    // Mantiene fijo bajo el cursor/dedos el punto de contenido que había ahí antes del zoom.
-    const contentX = (cx - this.targetPanX) / this.targetScale;
-    const contentY = (cy - this.targetPanY) / this.targetScale;
+    // Ancla usando la escala/posición REALMENTE mostradas (no el objetivo):
+    // así el punto de contenido que había bajo el cursor se queda fijo ahí
+    // durante todo el "alcance" suavizado del zoom, no solo al final.
+    this._zoomAnchor = {
+      screenX: cx,
+      screenY: cy,
+      contentX: (cx - this.panX) / this.scale,
+      contentY: (cy - this.panY) / this.scale,
+    };
     this.targetScale = newScale;
-    this.targetPanX = cx - contentX * this.targetScale;
-    this.targetPanY = cy - contentY * this.targetScale;
-    this._clampTargetPan();
+    this._applyZoomAnchor(this.targetScale, true);
     this._startLoop();
   },
 
   _panBy(dx, dy) {
+    // Un arrastre manual cancela cualquier ancla de zoom en curso: a partir
+    // de ahora el desplazamiento lo controla el jugador, no el zoom.
+    this._zoomAnchor = null;
     this.targetPanX += dx;
     this.targetPanY += dy;
     this._clampTargetPan();
@@ -125,27 +169,37 @@ const BoardView = {
   _startLoop() {
     if (this._rafId) return;
     const step = () => {
-      const dx = this.targetPanX - this.panX;
-      const dy = this.targetPanY - this.panY;
       const ds = this.targetScale - this.scale;
+      const scaleDone = Math.abs(ds) < this.SETTLE_EPSILON_SCALE;
+      this.scale = scaleDone ? this.targetScale : this.scale + ds * this.SCALE_EASE;
 
-      if (
-        Math.abs(dx) < this.SETTLE_EPSILON &&
-        Math.abs(dy) < this.SETTLE_EPSILON &&
-        Math.abs(ds) < this.SETTLE_EPSILON_SCALE
-      ) {
-        this.panX = this.targetPanX;
-        this.panY = this.targetPanY;
-        this.scale = this.targetScale;
-        this._apply();
+      if (this._zoomAnchor) {
+        // Con un ancla de zoom activa, el desplazamiento no persigue su
+        // propio objetivo por separado: se deriva directamente del ancla
+        // para la escala mostrada de este frame, así el punto bajo el
+        // cursor nunca "se reposiciona", solo acompaña al zoom.
+        this._applyZoomAnchor(this.scale, false);
+        this._applyZoomAnchor(this.targetScale, true);
+        if (scaleDone) this._zoomAnchor = null;
+      } else {
+        const dx = this.targetPanX - this.panX;
+        const dy = this.targetPanY - this.panY;
+        this.panX = Math.abs(dx) < this.SETTLE_EPSILON ? this.targetPanX : this.panX + dx * this.PAN_EASE;
+        this.panY = Math.abs(dy) < this.SETTLE_EPSILON ? this.targetPanY : this.panY + dy * this.PAN_EASE;
+      }
+
+      this._apply();
+
+      const settled =
+        scaleDone &&
+        !this._zoomAnchor &&
+        this.panX === this.targetPanX &&
+        this.panY === this.targetPanY;
+
+      if (settled) {
         this._rafId = null;
         return;
       }
-
-      this.panX += dx * this.PAN_EASE;
-      this.panY += dy * this.PAN_EASE;
-      this.scale += ds * this.SCALE_EASE;
-      this._apply();
       this._rafId = requestAnimationFrame(step);
     };
     this._rafId = requestAnimationFrame(step);

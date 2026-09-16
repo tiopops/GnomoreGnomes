@@ -319,6 +319,29 @@ h2 {
   filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 10px rgba(122, 62, 240, 0.95));
 }
 
+/* Respiración sutil cuando la unidad está parada (no seleccionada en pleno
+   movimiento): una escala/elevación mínima para que el personaje se sienta
+   "vivo" incluso sin interactuar con él. Se desactiva durante el salto
+   (unit__sprite--hop) para no competir por la misma propiedad — ver la regla
+   con mayor especificidad más abajo, que es la que realmente gana durante
+   el movimiento. */
+.unit__sprite {
+  animation: unit-idle-breathe 2.6s ease-in-out infinite;
+}
+
+.unit--moving .unit__sprite {
+  animation: none;
+}
+
+.unit--moving .unit__sprite.unit__sprite--hop {
+  animation: unit-hop 0.22s ease-out;
+}
+
+@keyframes unit-idle-breathe {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-1.5px) scale(1.015, 0.985); }
+}
+
 .unit__sprite--hop {
   animation: unit-hop 0.22s ease-out;
 }
@@ -330,12 +353,23 @@ h2 {
   100% { transform: translateY(0) scale(1, 1); }
 }
 
+/* Losetas alcanzables: elipse aplanada (no un círculo) para que se asiente
+   sobre la cara superior de la loseta isométrica con la misma perspectiva,
+   en vez de parecer flotando encima. Más grandes que antes para que se lean
+   bien incluso alejando la cámara.
+   Nota de rendimiento/visual: la aparición y el hover usan SOLO
+   transition (nunca @keyframes) sobre "transform"/"opacity" — mezclar una
+   animation con fill:forwards y una transition sobre la misma propiedad
+   hacía que el navegador las siguiera disputando entre sí en cada hover,
+   lo que se veía como parpadeos en las losetas de alrededor. will-change
+   aísla cada marcador en su propia capa de composición para que ese repintado
+   se quede local y no salpique al tablero. */
 .range-marker {
   position: absolute;
-  width: 34px;
-  height: 34px;
-  margin-left: -17px;
-  margin-top: -17px;
+  width: 100px;
+  height: 54px;
+  margin-left: -50px;
+  margin-top: -27px;
   border-radius: 50%;
   background: rgba(244, 242, 248, 0.22);
   border: 2px solid rgba(244, 242, 248, 0.85);
@@ -343,18 +377,20 @@ h2 {
   cursor: pointer;
   opacity: 0;
   transform: scale(0.4);
-  animation: marker-in 0.22s ease forwards;
-  transition: background-color 0.12s ease, transform 0.12s ease;
+  will-change: transform, opacity;
+  transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s ease, background-color 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
-.range-marker:hover {
-  background: rgba(122, 62, 240, 0.4);
-  transform: scale(1.18);
+.range-marker--visible {
+  opacity: 1;
+  transform: scale(1);
 }
 
-@keyframes marker-in {
-  from { opacity: 0; transform: scale(0.4); }
-  to { opacity: 1; transform: scale(1); }
+.range-marker--visible:hover {
+  background: rgba(122, 62, 240, 0.42);
+  box-shadow: 0 0 16px rgba(122, 62, 240, 0.85);
+  transform: scale(1.22) translateY(-3px);
 }
 
 .tile:hover img {

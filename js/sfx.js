@@ -80,7 +80,7 @@ const SFX = {
   hop() { this._pluck("hop", 520, "sine", 0.07, 0.2); },
 };
 
-const SFX_TARGETS = ".menu-btn:not(:disabled), .option-card, .back-btn";
+const SFX_TARGETS = ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .unit";
 
 // IMPORTANTE: se usa "mouseover"/"mouseout" (delegados en document) en vez de
 // "mouseenter"/"mouseleave" para poder delegar en un único listener, pero eso
