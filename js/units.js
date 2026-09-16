@@ -15,7 +15,8 @@
 const UNIT_TYPES = {
   mushboom_scout: {
     spriteUrl: "assets/equipos/MushboomForest/unidad_01.png",
-    movement: 2, // casillas por movimiento (y, de momento, también de alcance de ataque)
+    movement: 2, // casillas por movimiento
+    attackRange: 1, // pega cuerpo a cuerpo: el rival tiene que estar a 1 casilla de distancia
     maxHp: 3, // de momento todas las unidades tienen la misma vida
     // La imagen viene dibujada mirando hacia la derecha por defecto.
     defaultFacing: "right",
@@ -28,6 +29,7 @@ const Units = {
   list: [], // { id, typeId, team, row, col, facing, hp, maxHp, el, flipEl, spriteEl, hpBarEl, hpFillEl }
   selectedId: null,
   markerEls: [],
+  targetedIds: [], // rivales que muestran su vida por estar al alcance de ataque (sin estar seleccionados)
   _nextId: 1,
 
   init(container, boardSize) {
@@ -36,6 +38,7 @@ const Units = {
     this.list = [];
     this.selectedId = null;
     this.markerEls = [];
+    this.targetedIds = [];
   },
 
   // Crea una unidad de cualquier tipo/bando. spawnTestUnit/spawnRandomEnemy
@@ -179,18 +182,55 @@ const Units = {
     return tiles;
   },
 
-  // Unidades rivales (vivas) al alcance de ataque de `unit`. De momento usa
-  // el mismo número que el de movimiento — el día que haya un stat de
-  // alcance de ataque independiente, solo cambia esta función.
+  // Unidades rivales (vivas) que `unit` puede llegar a atacar ESTE turno: ya
+  // sea porque ya las tiene al alcance de ataque, o porque puede desplazarse
+  // (dentro de su movimiento) hasta alguna casilla libre junto al rival y
+  // atacar desde ahí — ver _findApproachTile.
   _attackableEnemies(unit) {
-    const type = UNIT_TYPES[unit.typeId];
-    const range = type.movement;
     return this.list.filter((other) => {
       if (other.team === unit.team || other.hp <= 0) return false;
-      const dr = other.row - unit.row;
-      const dc = other.col - unit.col;
-      return Math.max(Math.abs(dr), Math.abs(dc)) <= range;
+      return this._findApproachTile(unit, other) !== null;
     });
+  },
+
+  // Encuentra la mejor casilla desde la que `unit` puede atacar a `target`:
+  // si ya está al alcance de ataque desde donde está, no hace falta
+  // moverse; si no, busca entre las casillas libres al alcance de ataque
+  // alrededor del rival cuál es la más cercana a la unidad (línea recta,
+  // distancia Chebyshev) que además esté dentro de su movimiento — esa es
+  // la "distancia más corta" a la que se acerca antes de pegar. Devuelve
+  // null si no hay ninguna forma de llegar a pegarle este turno.
+  _findApproachTile(unit, target) {
+    const type = UNIT_TYPES[unit.typeId];
+    const moveRange = type.movement;
+    const atkRange = type.attackRange;
+
+    const distNow = Math.max(Math.abs(target.row - unit.row), Math.abs(target.col - unit.col));
+    if (distNow <= atkRange) {
+      return { row: unit.row, col: unit.col };
+    }
+
+    let best = null;
+    let bestDist = Infinity;
+    for (let dr = -atkRange; dr <= atkRange; dr++) {
+      for (let dc = -atkRange; dc <= atkRange; dc++) {
+        if (Math.max(Math.abs(dr), Math.abs(dc)) > atkRange) continue;
+        const row = target.row + dr;
+        const col = target.col + dc;
+        if (row === target.row && col === target.col) continue; // no se puede pisar al rival
+        if (row < 0 || col < 0 || row >= this.boardSize || col >= this.boardSize) continue;
+        const occupant = this._unitAt(row, col);
+        if (occupant && occupant.id !== unit.id) continue; // ocupada por otra unidad
+
+        const distFromUnit = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
+        if (distFromUnit > moveRange) continue; // fuera de lo que puede andar este turno
+        if (distFromUnit < bestDist) {
+          bestDist = distFromUnit;
+          best = { row, col };
+        }
+      }
+    }
+    return best;
   },
 
   _unitAt(row, col) {
@@ -203,6 +243,11 @@ const Units = {
 
     const targets = this._attackableEnemies(unit);
     targets.forEach((target, i) => this._addAttackMarker(unit, target, moveTiles.length + i));
+
+    // Los rivales al alcance de ataque enseñan su vida aunque no estén
+    // seleccionados, para poder decidir si merece la pena atacarlos.
+    targets.forEach((target) => target.el.classList.add("unit--targeted"));
+    this.targetedIds = targets.map((t) => t.id);
   },
 
   _addMoveMarker(unit, tile, delayIndex) {
@@ -242,7 +287,7 @@ const Units = {
     marker.style.zIndex = String((target.row + target.col) * 10 + 3);
     marker.addEventListener("click", (e) => {
       e.stopPropagation();
-      this._attackUnit(attacker, target);
+      this._approachAndAttack(attacker, target);
     });
     this.container.appendChild(marker);
     this.markerEls.push(marker);
@@ -264,6 +309,12 @@ const Units = {
   _clearRange() {
     this.markerEls.forEach((m) => m.remove());
     this.markerEls = [];
+
+    this.targetedIds.forEach((id) => {
+      const u = this.list.find((unit) => unit.id === id);
+      if (u) u.el.classList.remove("unit--targeted");
+    });
+    this.targetedIds = [];
   },
 
   async _moveUnitTo(unit, destRow, destCol) {
@@ -332,6 +383,30 @@ const Units = {
       const HOP_MS = 220;
       setTimeout(resolve, HOP_MS);
     });
+  },
+
+  // Al pulsar la mira de ataque: si el rival no está ya al alcance, la
+  // unidad primero se desplaza (por el camino más corto, ver
+  // _findApproachTile) hasta la casilla libre más cercana desde la que sí
+  // pueda pegarle, y solo entonces ataca — un único clic para "acércate y
+  // pega", como en cualquier táctico por turnos.
+  async _approachAndAttack(unit, target) {
+    this._clearRange();
+
+    const approach = this._findApproachTile(unit, target);
+    if (!approach) return; // el rival ya no está al alcance (p.ej. otra unidad ocupó el hueco)
+
+    if (approach.row !== unit.row || approach.col !== unit.col) {
+      unit.el.classList.add("unit--moving");
+      const path = this._stepPath(unit.row, unit.col, approach.row, approach.col);
+      for (const step of path) {
+        await this._hopTo(unit, step.row, step.col);
+      }
+      unit.el.classList.remove("unit--moving");
+      unit.spriteEl.classList.remove("unit__sprite--hop");
+    }
+
+    await this._attackUnit(unit, target);
   },
 
   async _attackUnit(attacker, target) {

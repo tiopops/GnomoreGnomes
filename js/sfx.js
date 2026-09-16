@@ -79,7 +79,17 @@ const SFX = {
   back() { this._pluck("back", 320, "sine", 0.1, 0.22); },
   hop() { this._pluck("hop", 520, "sine", 0.07, 0.2); },
   hit() { this._pluck("hit", 170, "square", 0.16, 0.4); },
-  death() { this._pluck("death", 130, "sawtooth", 0.4, 0.32); },
+
+  // Eliminar a un rival debe sentirse como una pequeña recompensa, no como
+  // un error o un golpe apagado — un solo tono grave plano (lo que había
+  // antes) no genera esa sensación. Encadena un golpe seco grave (el impacto
+  // de la caída) con un destellito agudo de dos notas justo después (la
+  // "recompensa"), como un mini jingle de victoria.
+  death() {
+    this._pluck("death-thud", 115, "square", 0.14, 0.4);
+    setTimeout(() => this._pluck("death-chime-1", 880, "triangle", 0.2, 0.26), 70);
+    setTimeout(() => this._pluck("death-chime-2", 1320, "triangle", 0.26, 0.22), 150);
+  },
 };
 
 const SFX_TARGETS = ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .attack-marker, .unit";

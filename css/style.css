@@ -448,30 +448,26 @@ h2 {
   transform: scale(1.22) translateY(-3px);
 }
 
-/* Losetas con un rival al alcance: mismo tamaño/aplanado/aparición que
-   range-marker (misma sensación, ver nota de rendimiento arriba), pero en
-   rojo y con el icono Phosphor "crosshair" en vez de estar vacío — sustituye
-   al círculo de movimiento en esa loseta, ya que no se puede mover ahí, se
-   puede atacar. */
+/* Losetas con un rival al alcance: mismo hueco/tamaño/aplanado/aparición que
+   range-marker (mismo footprint de 100x54, misma sensación — ver nota de
+   rendimiento arriba), pero SUSTITUYE por completo al círculo: nada de
+   círculo de fondo, solo el propio icono Phosphor "crosshair" en rojo sólido
+   y grande, para que se lea claramente como "aquí se puede atacar" y no como
+   un círculo cualquiera con un icono pequeño dentro. */
 .attack-marker {
   position: absolute;
   width: 100px;
   height: 54px;
   margin-left: -50px;
   margin-top: -27px;
-  border-radius: 50%;
-  background: rgba(224, 54, 54, 0.24);
-  border: 2px solid rgba(255, 130, 130, 0.9);
-  box-shadow: 0 0 10px rgba(214, 40, 40, 0.6);
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   opacity: 0;
   transform: scale(0.4);
   will-change: transform, opacity;
-  transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s ease, background-color 0.12s ease,
-    box-shadow 0.12s ease;
+  transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s ease;
 }
 
 .attack-marker--visible {
@@ -480,18 +476,25 @@ h2 {
 }
 
 .attack-marker--visible:hover {
-  background: rgba(224, 54, 54, 0.45);
-  box-shadow: 0 0 18px rgba(255, 70, 70, 0.95);
   transform: scale(1.22) translateY(-3px);
 }
 
 .attack-marker__icon {
-  font-size: 28px;
-  color: rgba(255, 235, 235, 0.95);
-  text-shadow: 0 0 6px rgba(0, 0, 0, 0.55);
-  /* El icono también se achata, igual que la propia elipse que lo contiene,
-     para que se lea coherente con la perspectiva isométrica de las losetas. */
+  display: block;
+  line-height: 1;
+  /* Ocupa prácticamente todo el ancho de la elipse (igual que hacía el
+     círculo de movimiento), no un icono pequeño perdido dentro de un hueco. */
+  font-size: 80px;
+  color: #ff2323;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 30, 30, 0.85);
+  /* El icono también se achata, igual que los círculos de movimiento, para
+     que se lea coherente con la perspectiva isométrica de las losetas. */
   transform: scaleY(0.56);
+}
+
+.attack-marker--visible:hover .attack-marker__icon {
+  color: #ff4343;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.75), 0 0 22px rgba(255, 50, 50, 1);
 }
 
 /* Barrita de vida: solo visible mientras esa unidad concreta está
@@ -512,7 +515,12 @@ h2 {
   transition: opacity 0.18s ease;
 }
 
-.unit--selected .unit__hpbar {
+/* También se revela sin estar seleccionado cuando es un objetivo de ataque
+   válido para la unidad seleccionada del jugador (clase puesta/quitada desde
+   Units._showRange/_clearRange) — así se ve su vida antes de decidir si
+   atacarlo merece la pena. */
+.unit--selected .unit__hpbar,
+.unit--targeted .unit__hpbar {
   opacity: 1;
 }
 
