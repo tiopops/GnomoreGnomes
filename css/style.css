@@ -301,6 +301,36 @@ h2 {
   100% { transform: translate(-50%, -92%) scale(1); }
 }
 
+/* Reacción al recibir un golpe: un pequeño temblor lateral. Vive en .unit
+   (no en el sprite ni en flip) porque su transform base es una regla CSS
+   fija (translate(-50%,-92%)), no un valor puesto por JS como el de
+   unit__flip — así el keyframe puede reproducir esa base sin pisar nada
+   dinámico. */
+.unit--hit {
+  animation: unit-hit-shake 0.32s ease;
+}
+
+@keyframes unit-hit-shake {
+  0%, 100% { transform: translate(-50%, -92%) translateX(0); }
+  20% { transform: translate(-50%, -92%) translateX(-7px); }
+  40% { transform: translate(-50%, -92%) translateX(6px); }
+  60% { transform: translate(-50%, -92%) translateX(-4px); }
+  80% { transform: translate(-50%, -92%) translateX(2px); }
+}
+
+/* Eliminación: la unidad se desploma y se desvanece antes de quitarla del
+   DOM (ver Units._removeUnit). deselect() se llama siempre antes de esto,
+   así que unit--selected ya no está presente y no compite por el transform. */
+.unit--dying {
+  animation: unit-death 0.42s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes unit-death {
+  0% { transform: translate(-50%, -92%) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -80%) rotate(14deg) scale(0.55); opacity: 0; }
+}
+
 .unit__flip {
   /* La sombra vive aquí (no en unit__sprite) a propósito: unit__sprite anima
      su "transform" constantemente (respiración) y un filter drop-shadow
@@ -316,6 +346,19 @@ h2 {
 
 .unit--selected .unit__flip {
   filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 10px rgba(122, 62, 240, 0.95));
+}
+
+/* Tinte rival: reutiliza el mismo sprite (de momento no hay arte propio para
+   el equipo rival) con un tinte rojizo para distinguirlo a simple vista.
+   También vive en unit__flip, nunca en unit__sprite, por el mismo motivo que
+   la sombra (ver nota arriba). */
+.unit--enemy .unit__flip {
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) hue-rotate(150deg) saturate(1.7) brightness(0.95);
+}
+
+.unit--enemy.unit--selected .unit__flip {
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) hue-rotate(150deg) saturate(1.7) brightness(0.95)
+    drop-shadow(0 0 10px rgba(122, 62, 240, 0.95));
 }
 
 .unit__sprite {
@@ -403,6 +446,106 @@ h2 {
   background: rgba(122, 62, 240, 0.42);
   box-shadow: 0 0 16px rgba(122, 62, 240, 0.85);
   transform: scale(1.22) translateY(-3px);
+}
+
+/* Losetas con un rival al alcance: mismo tamaño/aplanado/aparición que
+   range-marker (misma sensación, ver nota de rendimiento arriba), pero en
+   rojo y con el icono Phosphor "crosshair" en vez de estar vacío — sustituye
+   al círculo de movimiento en esa loseta, ya que no se puede mover ahí, se
+   puede atacar. */
+.attack-marker {
+  position: absolute;
+  width: 100px;
+  height: 54px;
+  margin-left: -50px;
+  margin-top: -27px;
+  border-radius: 50%;
+  background: rgba(224, 54, 54, 0.24);
+  border: 2px solid rgba(255, 130, 130, 0.9);
+  box-shadow: 0 0 10px rgba(214, 40, 40, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.4);
+  will-change: transform, opacity;
+  transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s ease, background-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.attack-marker--visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.attack-marker--visible:hover {
+  background: rgba(224, 54, 54, 0.45);
+  box-shadow: 0 0 18px rgba(255, 70, 70, 0.95);
+  transform: scale(1.22) translateY(-3px);
+}
+
+.attack-marker__icon {
+  font-size: 28px;
+  color: rgba(255, 235, 235, 0.95);
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.55);
+  /* El icono también se achata, igual que la propia elipse que lo contiene,
+     para que se lea coherente con la perspectiva isométrica de las losetas. */
+  transform: scaleY(0.56);
+}
+
+/* Barrita de vida: solo visible mientras esa unidad concreta está
+   seleccionada (amiga o rival), encima de la cabeza. */
+.unit__hpbar {
+  position: absolute;
+  left: 50%;
+  top: -14px;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 8px;
+  border-radius: 5px;
+  background: rgba(18, 20, 26, 0.7);
+  border: 1px solid rgba(244, 242, 248, 0.55);
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.unit--selected .unit__hpbar {
+  opacity: 1;
+}
+
+.unit__hpbar-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #5fe083, #2fb958);
+  transition: width 0.25s ease, background-color 0.25s ease;
+}
+
+.unit__hpbar-fill--low {
+  background: linear-gradient(90deg, #f0605a, #c73a3a);
+}
+
+/* Número de daño flotante: aparece sobre la cabeza del que recibe el golpe y
+   se desvanece subiendo. Es un elemento de un solo uso que se autodestruye
+   (ver Units._spawnDamagePopup) — al no competir nunca con ninguna otra
+   regla por su transform, aquí sí es seguro usar una animation con forwards. */
+.dmg-popup {
+  position: absolute;
+  transform: translate(-50%, 0);
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: #ff5c5c;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+  animation: dmg-popup-rise 0.9s ease-out forwards;
+}
+
+@keyframes dmg-popup-rise {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(0.7); }
+  15% { opacity: 1; transform: translate(-50%, -10px) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -58px) scale(1); }
 }
 
 .tile:hover img {

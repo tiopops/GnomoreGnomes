@@ -16,9 +16,14 @@ const BoardView = {
   cameraEl: null,
 
   // Rango de zoom acotado para que nunca se pueda alejar hasta perder de
-  // vista el tablero ni acercar tanto que las losetas se vean pixeladas.
+  // vista el tablero. El límite superior está calculado a propósito para no
+  // pasarse de la resolución real del arte de las losetas: se renderizan a
+  // TILE_WIDTH=188px pero el archivo fuente mide 250px de ancho, así que
+  // hasta 250/188 ≈ 1.33x todavía hay margen de sobra en la imagen; pasado
+  // eso, el navegador tiene que ampliar la imagen más allá de su resolución
+  // real y se ve borrosa. 1.3 se queda justo por debajo de ese límite.
   minScale: 0.6,
-  maxScale: 1.8,
+  maxScale: 1.3,
 
   // Valores objetivo: a dónde tiene que llegar la cámara.
   targetScale: 1,

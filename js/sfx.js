@@ -78,9 +78,11 @@ const SFX = {
   click() { this._pluck("click", 880, "triangle", 0.12, 0.28); },
   back() { this._pluck("back", 320, "sine", 0.1, 0.22); },
   hop() { this._pluck("hop", 520, "sine", 0.07, 0.2); },
+  hit() { this._pluck("hit", 170, "square", 0.16, 0.4); },
+  death() { this._pluck("death", 130, "sawtooth", 0.4, 0.32); },
 };
 
-const SFX_TARGETS = ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .unit";
+const SFX_TARGETS = ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .attack-marker, .unit";
 
 // IMPORTANTE: se usa "mouseover"/"mouseout" (delegados en document) en vez de
 // "mouseenter"/"mouseleave" para poder delegar en un único listener, pero eso

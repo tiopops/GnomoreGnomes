@@ -128,14 +128,16 @@ function resumeMatch() {
 }
 
 // Coloca la unidad de pruebas del Mushboom Forest en el centro del tablero
-// recién pintado. Solo para pruebas (ver js/units.js) — más adelante esto
-// pasará a depender de la raza elegida y de una colocación real de inicio de partida.
+// recién pintado, más una unidad rival en una casilla al azar. Solo para
+// pruebas (ver js/units.js) — más adelante esto pasará a depender de la raza
+// elegida y de una colocación real de inicio de partida.
 function spawnTestUnits(size) {
   if (typeof Units === "undefined") return;
   const boardTiles = document.getElementById("board-tiles");
   Units.init(boardTiles, size);
   const mid = Math.floor(size / 2);
   Units.spawnTestUnit(mid, mid);
+  Units.spawnRandomEnemy();
 }
 
 // Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del
