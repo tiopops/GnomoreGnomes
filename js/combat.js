@@ -65,21 +65,17 @@ const Combat = {
     return targets;
   },
 
-  // Loseta bajo los pies del rival TAL COMO SE VE EN PANTALLA. Ojo: en esta
-  // proyección isométrica (ver getTileTopLeft en mapgen.js) avanzar solo en
-  // "row" no baja en línea recta por pantalla, sino en diagonal hacia la
-  // izquierda — eso hacía que la mira pareciera aparecer lejos del rival en
-  // vez de justo debajo. Para que quede realmente debajo en pantalla (mismo
-  // X, Y mayor) hay que avanzar row Y col a la vez, porque es la única
-  // combinación que cancela el desplazamiento horizontal de la fórmula:
-  // x = (col-row)*halfW ..., y = (col+row)*halfH ... — con fallback hacia
-  // arriba (row-1,col-1) si el rival está en el borde inferior, y como
-  // último recurso su propia loseta (caso degenerado, no debería darse).
+  // La mira de ataque se pinta sobre la PROPIA loseta del rival (como una
+  // mira encima del objetivo) — quien se mueve es el atacante: al hacer
+  // clic, se coloca en la casilla adyacente al rival más cercana a su
+  // posición actual (ver approachAndAttack/findApproachTile) y golpea desde
+  // ahí, todo en el mismo clic. zOffset se deja explícitamente por ENCIMA
+  // del z-index con el que se pintan las unidades ((row+col)*10 + 5, ver
+  // _placeInstant/hopTo en units.js) para que la mira quede visualmente
+  // encima del sprite del rival Y para que reciba el clic en vez del propio
+  // rival (si no, el div de la unidad —con su z-index mayor— taparía la
+  // mira y el clic seleccionaría al rival en lugar de atacarlo).
   attackMarkerTile(target) {
-    const south = { row: target.row + 1, col: target.col + 1 };
-    if (south.row < Units.boardSize && south.col < Units.boardSize) return south;
-    const north = { row: target.row - 1, col: target.col - 1 };
-    if (north.row >= 0 && north.col >= 0) return north;
     return { row: target.row, col: target.col };
   },
 
@@ -90,7 +86,7 @@ const Combat = {
         className: "attack-marker",
         row: tile.row,
         col: tile.col,
-        zOffset: 3,
+        zOffset: 6,
         delayIndex: i,
         visibleClass: "attack-marker--visible",
         buildContent: (marker) => {
