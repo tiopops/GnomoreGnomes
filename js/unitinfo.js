@@ -9,7 +9,14 @@
 
    A diferencia del radio de movimiento/ataque, el panel de información
    funciona para CUALQUIER unidad seleccionada (también un rival) — solo
-   sirve para consultar datos, no para actuar. */
+   sirve para consultar datos, no para actuar.
+
+   Interacción: es un botón de "mantener pulsado" (como un tooltip), no un
+   toggle — se abre en pointerdown y se cierra en pointerup/pointercancel,
+   sin botón de cerrar ni clic-fuera. El pointerup/cancel se escucha en
+   window (no en el propio botón) para que soltar en cualquier punto de la
+   pantalla cierre igualmente el popup, incluso si el dedo/ratón se ha
+   desplazado fuera del botón antes de soltar. */
 
 const UnitInfo = {
   buttonEl: null,
@@ -21,13 +28,18 @@ const UnitInfo = {
     const btn = document.createElement("button");
     btn.id = "unit-info-btn";
     btn.className = "unit-info-btn";
-    btn.setAttribute("aria-label", "Ver estadísticas del personaje");
+    btn.setAttribute("aria-label", "Mantén pulsado para ver las estadísticas del personaje");
     btn.innerHTML = '<i class="ph ph-info"></i>';
-    btn.addEventListener("click", (e) => {
+    btn.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
+      e.preventDefault();
       this.openPopup();
     });
+    // Evita que un long-press dispare además el menú contextual táctil.
+    btn.addEventListener("contextmenu", (e) => e.preventDefault());
     document.body.appendChild(btn);
+    window.addEventListener("pointerup", () => this.closePopup());
+    window.addEventListener("pointercancel", () => this.closePopup());
     this.buttonEl = btn;
     return btn;
   },
@@ -74,9 +86,11 @@ const UnitInfo = {
 
     const overlay = document.createElement("div");
     overlay.className = "unit-info-overlay";
+    // pointer-events: none en el propio overlay (ver CSS) — es solo un
+    // resumen mientras se mantiene pulsado, no debe poder interceptar ni
+    // absorber ningún clic/toque de la pantalla que hay debajo.
     overlay.innerHTML = `
       <div class="unit-info-card">
-        <button class="unit-info-close" aria-label="Cerrar"><i class="ph ph-x"></i></button>
         <div class="unit-info-portrait${unit.team === "enemy" ? " unit-info-portrait--enemy" : ""}">
           <img src="${type.spriteUrl}" alt="">
         </div>
@@ -89,12 +103,6 @@ const UnitInfo = {
           ${this.statRow("ph-wind", "Agilidad", type.agilidad)}
         </div>
       </div>`;
-
-    // Cerrar al hacer clic fuera de la tarjeta (en el propio fondo).
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) this.closePopup();
-    });
-    overlay.querySelector(".unit-info-close").addEventListener("click", () => this.closePopup());
 
     document.body.appendChild(overlay);
     this.overlayEl = overlay;

@@ -93,7 +93,7 @@ const SFX = {
 };
 
 const SFX_TARGETS =
-  ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .attack-marker, .unit, .unit-info-btn, .unit-info-close";
+  ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .attack-marker, .unit, .unit-info-btn";
 
 // IMPORTANTE: se usa "mouseover"/"mouseout" (delegados en document) en vez de
 // "mouseenter"/"mouseleave" para poder delegar en un único listener, pero eso

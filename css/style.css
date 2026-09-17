@@ -604,10 +604,14 @@ h2 {
   transform: translateY(-3px) scale(1.08);
 }
 
-/* Fondo a pantalla completa de la ventana emergente de estadísticas.
-   Igual que el resto de apariciones del proyecto: solo transition, nunca
-   @keyframes, para que el clic-fuera-para-cerrar y cualquier futuro hover
-   dentro de la tarjeta no compitan por la misma propiedad. */
+/* Fondo a pantalla completa de la ventana emergente de estadísticas. Es un
+   popup de "mantener pulsado" (ver js/unitinfo.js): se abre en pointerdown
+   sobre el botón y se cierra en pointerup/pointercancel en cualquier punto
+   de la pantalla, así que nunca debe poder recibir ni bloquear un clic/toque
+   propio — de ahí pointer-events: none también en el estado "visible", a
+   diferencia del resto de overlays del proyecto. Solo transition, nunca
+   @keyframes, por la misma razón de siempre (evitar la disputa de
+   animation+transition sobre la misma propiedad, ver nota más arriba). */
 .unit-info-overlay {
   position: fixed;
   inset: 0;
@@ -624,7 +628,6 @@ h2 {
 
 .unit-info-overlay--visible {
   opacity: 1;
-  pointer-events: auto;
 }
 
 .unit-info-card {
@@ -642,29 +645,6 @@ h2 {
 
 .unit-info-overlay--visible .unit-info-card {
   transform: scale(1) translateY(0);
-}
-
-.unit-info-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(244, 242, 248, 0.1);
-  color: var(--ink);
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.15s ease;
-}
-
-.unit-info-close:hover {
-  background: rgba(255, 92, 92, 0.85);
-  transform: rotate(90deg);
 }
 
 .unit-info-portrait {
