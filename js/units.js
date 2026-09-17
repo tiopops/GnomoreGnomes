@@ -206,6 +206,7 @@ const Units = {
     // momento no se puede actuar con él.
     if (unit.team === "player") {
       this.rangeProviders.forEach((p) => p.showFor(unit));
+      this._resolveMarkerOverlaps();
     }
   },
 
@@ -226,6 +227,7 @@ const Units = {
     if (this.selectedId !== unit.id) return;
     this.clearRangeOverlays();
     this.rangeProviders.forEach((p) => p.showFor(unit));
+    this._resolveMarkerOverlaps();
   },
 
   clearRangeOverlays() {
@@ -258,6 +260,13 @@ const Units = {
     marker.className = `board-marker ${className}`;
     if (buildContent) buildContent(marker);
 
+    // Guarda su loseta (no solo la posición en pantalla) para que
+    // _resolveMarkerOverlaps pueda detectar cuándo dos marcadores de
+    // mecánicas distintas caen en la misma loseta, sin que ninguna mecánica
+    // tenga que saber de la existencia de la otra.
+    marker.dataset.row = row;
+    marker.dataset.col = col;
+
     const { x, y } = getTileCenter(row, col, this.boardSize);
     marker.style.left = `${x}px`;
     marker.style.top = `${y}px`;
@@ -280,6 +289,31 @@ const Units = {
     }
 
     return marker;
+  },
+
+  // Cuando dos marcadores de mecánicas distintas caen en la misma loseta
+  // (p.ej. la mira de ataque coincide con un círculo de movimiento porque el
+  // rival está dentro del propio radio de movimiento del jugador), el de
+  // ataque es siempre el que manda visualmente: el círculo de debajo no debe
+  // verse, para no leerse como "una loseta cualquiera de movimiento" en vez
+  // de "aquí se puede atacar". Se resuelve aquí, DESPUÉS de que todas las
+  // mecánicas hayan pintado las suyas, precisamente para que ninguna
+  // mecánica (movement.js, combat.js) necesite saber de la existencia de
+  // las demás — es una regla de composición visual del núcleo, no de una
+  // mecánica concreta.
+  _resolveMarkerOverlaps() {
+    const attackTiles = new Set(
+      this.markerEls
+        .filter((m) => m.classList.contains("attack-marker"))
+        .map((m) => `${m.dataset.row},${m.dataset.col}`)
+    );
+    if (attackTiles.size === 0) return;
+    this.markerEls = this.markerEls.filter((m) => {
+      const hidden =
+        m.classList.contains("range-marker") && attackTiles.has(`${m.dataset.row},${m.dataset.col}`);
+      if (hidden) m.remove();
+      return !hidden;
+    });
   },
 
   // ---------- Desplazamiento paso a paso: lo usa cualquier mecánica que

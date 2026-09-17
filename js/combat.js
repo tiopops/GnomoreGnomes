@@ -65,14 +65,21 @@ const Combat = {
     return targets;
   },
 
-  // Loseta "delante" del rival (al sur) donde se pinta la mira de ataque,
-  // usando la misma fórmula de centrado que el resto del tablero — con
-  // fallback a la loseta de encima si el rival está en el borde inferior, y
-  // como último recurso su propia loseta (rival aislado en un tablero 1x1,
-  // caso degenerado que no debería darse en la práctica).
+  // Loseta bajo los pies del rival TAL COMO SE VE EN PANTALLA. Ojo: en esta
+  // proyección isométrica (ver getTileTopLeft en mapgen.js) avanzar solo en
+  // "row" no baja en línea recta por pantalla, sino en diagonal hacia la
+  // izquierda — eso hacía que la mira pareciera aparecer lejos del rival en
+  // vez de justo debajo. Para que quede realmente debajo en pantalla (mismo
+  // X, Y mayor) hay que avanzar row Y col a la vez, porque es la única
+  // combinación que cancela el desplazamiento horizontal de la fórmula:
+  // x = (col-row)*halfW ..., y = (col+row)*halfH ... — con fallback hacia
+  // arriba (row-1,col-1) si el rival está en el borde inferior, y como
+  // último recurso su propia loseta (caso degenerado, no debería darse).
   attackMarkerTile(target) {
-    if (target.row + 1 < Units.boardSize) return { row: target.row + 1, col: target.col };
-    if (target.row - 1 >= 0) return { row: target.row - 1, col: target.col };
+    const south = { row: target.row + 1, col: target.col + 1 };
+    if (south.row < Units.boardSize && south.col < Units.boardSize) return south;
+    const north = { row: target.row - 1, col: target.col - 1 };
+    if (north.row >= 0 && north.col >= 0) return north;
     return { row: target.row, col: target.col };
   },
 
