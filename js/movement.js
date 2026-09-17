@@ -26,6 +26,10 @@ const Movement = {
         const dist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (dist > range) continue;
         if (Units.unitAt(row, col)) continue;
+        // El gnomo (js/gnome.js) no vive en Units.list -> Units.unitAt no lo
+        // detecta; su propia loseta se excluye a mano para no ofrecer "mover
+        // aquí" sobre una casilla que en realidad hay que capturar, no pisar.
+        if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
         tiles.push({ row, col });
       }
     }
@@ -50,6 +54,11 @@ const Movement = {
     Units.clearRangeOverlays();
     const path = Units.stepPath(unit.row, unit.col, destRow, destCol);
     await Units.walkPath(unit, path);
+    // El gnomo (js/gnome.js) reacciona alejándose cada vez que una unidad
+    // del jugador se mueve — vive en su propio archivo y se entera de esto
+    // igual que combat.js/movement.js se enteran uno del otro: sin que
+    // ninguno de los dos necesite saber cómo funciona el otro por dentro.
+    if (typeof Gnome !== "undefined") Gnome.reactToPlayerMove(unit);
     Units.refreshRange(unit);
   },
 };

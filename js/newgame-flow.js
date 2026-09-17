@@ -144,6 +144,11 @@ function spawnTestUnits(size) {
   Units.spawnRandomEnemy("hombre_arbol");
   Units.spawnRandomEnemy("goblin_lanzador");
   Units.spawnRandomEnemy("seta_artificiero");
+
+  // El gnomo (js/gnome.js): de momento uno solo en el tablero, cerca del
+  // centro (spawnNear busca la loseta libre más próxima si esa ya está
+  // ocupada por alguno de los personajes de arriba).
+  if (typeof Gnome !== "undefined") Gnome.spawnNear(mid, mid + 1);
 }
 
 // Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del

@@ -80,6 +80,18 @@ const SFX = {
   hop() { this._pluck("hop", 520, "sine", 0.07, 0.2); },
   hit() { this._pluck("hit", 170, "square", 0.16, 0.4); },
 
+  // El gnomo (js/gnome.js): coger debe sonar a "agarrado" limpio y
+  // satisfactorio; pasar con éxito reutiliza la misma idea de mini-jingle de
+  // dos notas que death() (recompensa) pero sin el golpe grave inicial, para
+  // no confundirse con "algo ha muerto"; fallar el pase es justo lo
+  // contrario de esa recompensa — un tono grave y descendente, sin brillo.
+  catch() { this._pluck("gnome-catch", 740, "triangle", 0.14, 0.32); },
+  passSuccess() {
+    this._pluck("gnome-pass-1", 700, "triangle", 0.16, 0.26);
+    setTimeout(() => this._pluck("gnome-pass-2", 1050, "triangle", 0.22, 0.24), 90);
+  },
+  dropFail() { this._pluck("gnome-drop-fail", 140, "sawtooth", 0.22, 0.35); },
+
   // Eliminar a un rival debe sentirse como una pequeña recompensa, no como
   // un error o un golpe apagado — un solo tono grave plano (lo que había
   // antes) no genera esa sensación. Encadena un golpe seco grave (el impacto
@@ -93,7 +105,8 @@ const SFX = {
 };
 
 const SFX_TARGETS =
-  ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .attack-marker, .unit, .unit-info-btn";
+  ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .attack-marker, .unit, .unit-info-btn, " +
+  ".catch-marker, .pass-marker, .gnome-action-btn";
 
 // IMPORTANTE: se usa "mouseover"/"mouseout" (delegados en document) en vez de
 // "mouseenter"/"mouseleave" para poder delegar en un único listener, pero eso

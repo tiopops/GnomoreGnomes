@@ -42,6 +42,7 @@ const Combat = {
         if (row === unit.row && col === unit.col) continue;
         if (distToTarget(row, col) > attackRange) continue;
         if (Units.unitAt(row, col)) continue; // ocupada (por el propio rival u otra unidad)
+        if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue; // ocupada por el gnomo (js/gnome.js)
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange) continue;
         if (moveDist < bestDist) {
@@ -81,6 +82,10 @@ const Combat = {
   },
 
   showFor(unit) {
+    // Mientras lleva al gnomo cogido (js/gnome.js) la unidad pierde la
+    // capacidad de atacar — puede moverse, golpear al gnomo o pasarlo, pero
+    // no repartir daño a la vez que lo lleva encima.
+    if (typeof Gnome !== "undefined" && Gnome.heldBy === unit.id) return;
     this.attackableEnemies(unit).forEach(({ target, approach }, i) => {
       const tile = this.attackMarkerTile(target);
       Units.addMarker({

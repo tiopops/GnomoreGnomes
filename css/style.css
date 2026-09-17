@@ -742,6 +742,280 @@ h2 {
   filter: brightness(1.15);
 }
 
+/* ---------- El gnomo (js/gnome.js) ----------
+   Personaje neutral que hace de "pelota": reutiliza a propósito las mismas
+   clases .unit/.unit__flip/.unit__sprite que cualquier personaje (ver
+   Gnome.spawn en gnome.js) para heredar gratis su ancla de pies
+   (translate(-50%,-92%)), su sombra, su giro y su animación de salto —
+   .gnome__* solo añade/sobreescribe lo que es distinto: tamaño (el más
+   pequeño de todos), velocidad de respiración (más nerviosa) y que nunca
+   lleva el tinte de rival. */
+.gnome__sprite {
+  width: 70px;
+  animation-duration: 1.1s;
+}
+
+/* Mientras se le lanza por el aire (ver Gnome.animateThrowTo), la posición
+   la controla directamente JS fotograma a fotograma — la transition de
+   left/top de .unit (pensada para saltos paso a paso) competiría con eso y
+   se vería a tirones, así que se desactiva solo durante el vuelo. */
+.gnome--flying {
+  transition: none !important;
+}
+
+/* Mira de "captura": mismo lenguaje visual que .attack-marker (grande, con
+   icono central, por detrás del sprite) pero en dorado/verde para leerse
+   como "coger", nunca como "atacar". */
+.catch-marker {
+  position: absolute;
+  width: 140px;
+  height: 76px;
+  margin-left: -70px;
+  margin-top: -38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.4);
+  will-change: transform, opacity;
+  transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s ease;
+}
+
+.catch-marker--visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.catch-marker--visible:hover {
+  transform: scale(1.12) translateY(-3px);
+}
+
+.catch-marker__icon {
+  display: block;
+  line-height: 1;
+  font-size: 108px;
+  color: #ffcf3f;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 207, 63, 0.85);
+  transform: scaleY(0.56);
+}
+
+.catch-marker--visible:hover .catch-marker__icon {
+  color: #ffe28a;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.75), 0 0 22px rgba(255, 220, 130, 1);
+}
+
+/* Mira de "destino de pase": se pinta sobre un aliado mientras se apunta un
+   pase (ver Gnome.startPassAim) — igual de grande/legible que las otras
+   miras, en el color de acento del juego para distinguirla de "atacar" y de
+   "capturar". */
+.pass-marker {
+  position: absolute;
+  width: 130px;
+  height: 70px;
+  margin-left: -65px;
+  margin-top: -80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.4);
+  will-change: transform, opacity;
+  transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s ease;
+}
+
+.pass-marker--visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.pass-marker--visible:hover {
+  transform: scale(1.12) translateY(-3px);
+}
+
+.pass-marker__icon {
+  display: block;
+  line-height: 1;
+  font-size: 64px;
+  color: var(--accent-hover);
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.7), 0 0 16px rgba(122, 62, 240, 0.85);
+}
+
+/* El gnomo "amarrado" a quien lo lleva cogido: un elemento aparte, hijo del
+   propio unit__flip del portador (ver Gnome.attachTo), para heredar su giro
+   igual que el resto del cuerpo — así, si el portador se da la vuelta, el
+   gnomo se ve consistentemente "en el brazo" y no se queda mirando al lado
+   contrario. */
+.gnome-attach {
+  position: absolute;
+  right: -14px;
+  bottom: 6%;
+  width: 46px;
+  opacity: 0;
+  transform: scale(0.5) translateY(6px);
+  transition: transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s ease;
+  pointer-events: none;
+}
+
+.gnome-attach--visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.gnome-attach__sprite {
+  display: block;
+  width: 100%;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45));
+}
+
+.gnome-attach--visible .gnome-attach__sprite {
+  animation: gnome-nervous-tremble 0.45s ease-in-out infinite;
+}
+
+@keyframes gnome-nervous-tremble {
+  0%, 100% { transform: rotate(0deg) scale(1, 1); }
+  25% { transform: rotate(-6deg) scale(0.97, 1.04); }
+  75% { transform: rotate(6deg) scale(0.97, 1.04); }
+}
+
+/* Reacción a un golpe mientras está cogido (ver Gnome.hit) — un temblor más
+   marcado que el de la respiración nerviosa, sobre la propia .gnome-attach
+   (no sobre su sprite) para no competir con la animation de temblor de
+   arriba, que vive en un elemento distinto (gnome-attach__sprite). */
+.gnome-attach--hit {
+  animation: gnome-attach-hit-shake 0.28s ease;
+}
+
+@keyframes gnome-attach-hit-shake {
+  0%, 100% { transform: scale(1) translateY(0); }
+  30% { transform: scale(1.2) translateY(-4px); }
+  60% { transform: scale(0.92) translateY(2px); }
+}
+
+/* Texto flotante de puntos ganados: mismo componente que dmg-popup (ver
+   Units.spawnFloatingText) pero en dorado — sumar puntos al gnomo es una
+   recompensa, no debe leerse como daño recibido (rojo). */
+.gnome-points-popup {
+  color: #ffcf3f;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.65), 0 0 10px rgba(255, 207, 63, 0.5);
+}
+
+/* Botones de acción mientras se lleva al gnomo cogido (golpear/pasar):
+   mismo estilo que .unit-info-btn (misma fila, a su derecha) — ver
+   gnome.js. Se define aparte en vez de reusar la clase para poder colocar
+   cada uno en su propio left sin pisar el botón de información. */
+.gnome-action-btn {
+  position: fixed;
+  bottom: 20px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 2px solid rgba(244, 242, 248, 0.35);
+  background: var(--bg-elevated);
+  color: var(--ink);
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translateY(14px) scale(0.7);
+  pointer-events: none;
+  z-index: 500;
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.gnome-action-btn--hit { left: 86px; }
+.gnome-action-btn--pass { left: 152px; }
+
+.gnome-action-btn--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.gnome-action-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent-hover);
+  transform: translateY(-3px) scale(1.08);
+}
+
+/* Modo "apuntando pase": el botón de pasar se queda resaltado mientras las
+   miras de destino están en pantalla, para que quede claro que sigue activo
+   (y que un segundo clic lo cancela). */
+.gnome-action-btn--pass.gnome-action-btn--aiming {
+  background: var(--accent);
+  border-color: var(--accent-hover);
+}
+
+/* Marcador fijo (esquina inferior derecha) con los puntos acumulados por el
+   gnomo — siempre visible mientras hay partida, sin depender de ninguna
+   selección (a diferencia del resto de botones de esta sección). */
+.gnome-points-hud {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-elevated);
+  border: 2px solid rgba(244, 242, 248, 0.35);
+  border-radius: 999px;
+  padding: 6px 16px 6px 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  z-index: 500;
+  opacity: 0;
+  transform: translateY(14px) scale(0.7);
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease;
+}
+
+.gnome-points-hud--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.gnome-points-hud__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 35%, rgba(122, 62, 240, 0.35), transparent 70%);
+}
+
+.gnome-points-hud__icon img {
+  width: 100%;
+  height: auto;
+}
+
+.gnome-points-hud__value {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--ink);
+  min-width: 1.6em;
+  text-align: center;
+}
+
+/* Pequeño "pulso" al sumar puntos — es un elemento de un solo disparo por
+   cambio de valor (se reinicia a mano en gnome.js, ver _bumpPointsHud), así
+   que aquí sí es seguro usar una animation con keyframes sin arriesgarse a
+   la disputa con una transition (misma nota que en .unit--selected). */
+.gnome-points-hud__value--bump {
+  animation: gnome-points-bump 0.32s ease;
+}
+
+@keyframes gnome-points-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); color: var(--accent-hover); }
+  100% { transform: scale(1); }
+}
+
 /* Modo táctil / pantallas pequeñas */
 @media (max-width: 480px) {
   .menu-btn {
@@ -751,6 +1025,14 @@ h2 {
 
   .unit-info-btn {
     left: 14px;
+    bottom: 14px;
+  }
+
+  .gnome-action-btn--hit { left: 80px; }
+  .gnome-action-btn--pass { left: 146px; }
+
+  .gnome-points-hud {
+    right: 14px;
     bottom: 14px;
   }
 }
