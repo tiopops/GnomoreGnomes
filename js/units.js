@@ -62,13 +62,18 @@ const UNIT_TYPES = {
     fuerza: 3,
     agilidad: 1,
     attackRange: 1,
+    // Es un personaje más grande que el resto — spriteScale multiplica el
+    // ancho base (120px, ver .unit__sprite en style.css) que usa
+    // Units.spawnUnit. 1 = tamaño base; el resto de tipos lo omiten y se
+    // quedan en 1 por defecto.
+    spriteScale: 1.5,
     defaultFacing: "right", // la imagen viene dibujada mirando hacia la derecha por defecto
   },
   goblin_lanzador: {
     name: "Goblin Lanzador",
     spriteUrl: "assets/equipos/MushboomForest/unidad_02.png",
     aguante: 1,
-    movimiento: 4,
+    movimiento: 3,
     fuerza: 1,
     agilidad: 5,
     attackRange: 1,
@@ -78,7 +83,7 @@ const UNIT_TYPES = {
     name: "Seta Artificiero",
     spriteUrl: "assets/equipos/MushboomForest/unidad_03.png",
     aguante: 2,
-    movimiento: 3,
+    movimiento: 2,
     fuerza: 2,
     agilidad: 2,
     attackRange: 1,
@@ -133,6 +138,14 @@ const Units = {
     spriteEl.src = type.spriteUrl;
     spriteEl.draggable = false;
     spriteEl.alt = "";
+    // El ancho base (120px) vive en CSS (.unit__sprite); los tipos que
+    // necesitan verse más grandes/pequeños (ver spriteScale en UNIT_TYPES)
+    // lo escalan aquí en vez de tener su propia regla CSS — así un tipo
+    // nuevo con escala distinta no necesita tocar el CSS, solo su entrada
+    // en UNIT_TYPES.
+    if (type.spriteScale && type.spriteScale !== 1) {
+      spriteEl.style.width = `${Math.round(120 * type.spriteScale)}px`;
+    }
 
     flipEl.appendChild(spriteEl);
     el.appendChild(flipEl);

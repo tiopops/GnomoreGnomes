@@ -129,9 +129,10 @@ function resumeMatch() {
 
 // Coloca los 3 tipos de unidad de prueba del Mushboom Forest, uno junto a
 // otro cerca del centro del tablero para poder comparar sus estadísticas en
-// acción (ver UNIT_TYPES en units.js), más una unidad rival en una casilla
-// al azar. Solo para pruebas — más adelante esto pasará a depender de la
-// raza elegida y de una colocación real de inicio de partida.
+// acción (ver UNIT_TYPES en units.js), más varios rivales en casillas al
+// azar (uno de cada tipo, con el mismo tinte rojo vía CSS) para tener con
+// quién interactuar. Solo para pruebas — más adelante esto pasará a depender
+// de la raza elegida y de una colocación real de inicio de partida.
 function spawnTestUnits(size) {
   if (typeof Units === "undefined") return;
   const boardTiles = document.getElementById("board-tiles");
@@ -140,7 +141,9 @@ function spawnTestUnits(size) {
   Units.spawnTestUnit(mid, mid, "hombre_arbol");
   Units.spawnTestUnit(mid, mid - 1, "goblin_lanzador");
   Units.spawnTestUnit(mid - 1, mid, "seta_artificiero");
-  Units.spawnRandomEnemy();
+  Units.spawnRandomEnemy("hombre_arbol");
+  Units.spawnRandomEnemy("goblin_lanzador");
+  Units.spawnRandomEnemy("seta_artificiero");
 }
 
 // Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del
