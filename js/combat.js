@@ -66,15 +66,16 @@ const Combat = {
   },
 
   // La mira de ataque se pinta sobre la PROPIA loseta del rival (como una
-  // mira encima del objetivo) — quien se mueve es el atacante: al hacer
-  // clic, se coloca en la casilla adyacente al rival más cercana a su
-  // posición actual (ver approachAndAttack/findApproachTile) y golpea desde
-  // ahí, todo en el mismo clic. zOffset se deja explícitamente por ENCIMA
-  // del z-index con el que se pintan las unidades ((row+col)*10 + 5, ver
-  // _placeInstant/hopTo en units.js) para que la mira quede visualmente
-  // encima del sprite del rival Y para que reciba el clic en vez del propio
-  // rival (si no, el div de la unidad —con su z-index mayor— taparía la
-  // mira y el clic seleccionaría al rival en lugar de atacarlo).
+  // mira bajo sus pies) — quien se mueve es el atacante: al hacer clic, se
+  // coloca en la casilla adyacente al rival más cercana a su posición
+  // actual (ver approachAndAttack/findApproachTile) y golpea desde ahí,
+  // todo en el mismo clic. zOffset se deja explícitamente por DEBAJO del
+  // z-index con el que se pintan las unidades ((row+col)*10 + 5, ver
+  // _placeInstant/hopTo en units.js) para que el sprite del rival quede por
+  // delante de la mira, no al revés — la mira es más grande que el propio
+  // sprite (ver .attack-marker en style.css) precisamente para que sus
+  // bordes asomen por detrás del personaje y sigan siendo clicables ahí,
+  // aunque la silueta central quede tapada por él.
   attackMarkerTile(target) {
     return { row: target.row, col: target.col };
   },
@@ -86,7 +87,7 @@ const Combat = {
         className: "attack-marker",
         row: tile.row,
         col: tile.col,
-        zOffset: 6,
+        zOffset: 2,
         delayIndex: i,
         visibleClass: "attack-marker--visible",
         buildContent: (marker) => {

@@ -448,18 +448,20 @@ h2 {
   transform: scale(1.22) translateY(-3px);
 }
 
-/* Losetas con un rival al alcance: mismo hueco/tamaño/aplanado/aparición que
-   range-marker (mismo footprint de 100x54, misma sensación — ver nota de
-   rendimiento arriba), pero SUSTITUYE por completo al círculo: nada de
-   círculo de fondo, solo el propio icono Phosphor "crosshair" en rojo sólido
-   y grande, para que se lea claramente como "aquí se puede atacar" y no como
-   un círculo cualquiera con un icono pequeño dentro. */
+/* Loseta con un rival al alcance: la mira se pinta en la propia loseta del
+   rival, MÁS GRANDE que un círculo de movimiento y POR DETRÁS de su sprite
+   (z-index menor que el de la unidad, ver zOffset en combat.js) — se lee
+   como una mira/marca de objetivo en el suelo bajo el personaje, no como un
+   icono flotando delante que lo tape. Al ser más grande que el propio
+   sprite, sus bordes asoman por fuera y siguen siendo clicables ahí (el
+   sprite solo cubre — y por tanto solo intercepta el clic en — su propia
+   silueta central). */
 .attack-marker {
   position: absolute;
-  width: 100px;
-  height: 54px;
-  margin-left: -50px;
-  margin-top: -27px;
+  width: 150px;
+  height: 81px;
+  margin-left: -75px;
+  margin-top: -40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -476,7 +478,7 @@ h2 {
 }
 
 .attack-marker--visible:hover {
-  transform: scale(1.22) translateY(-3px);
+  transform: scale(1.12) translateY(-3px);
 }
 
 .attack-marker__icon {
@@ -484,7 +486,7 @@ h2 {
   line-height: 1;
   /* Ocupa prácticamente todo el ancho de la elipse (igual que hacía el
      círculo de movimiento), no un icono pequeño perdido dentro de un hueco. */
-  font-size: 80px;
+  font-size: 120px;
   color: #ff2323;
   text-shadow: 0 0 8px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 30, 30, 0.85);
   /* El icono también se achata, igual que los círculos de movimiento, para
