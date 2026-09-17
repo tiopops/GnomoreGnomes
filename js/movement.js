@@ -18,7 +18,7 @@ const Movement = {
   // Chebyshev (permite diagonales) — el día que haya losetas intransitables
   // o terrenos con coste, este es el único sitio que hay que tocar.
   reachableTiles(unit) {
-    const range = UNIT_TYPES[unit.typeId].movement;
+    const range = UNIT_TYPES[unit.typeId].movimiento;
     const tiles = [];
     for (let row = 0; row < Units.boardSize; row++) {
       for (let col = 0; col < Units.boardSize; col++) {

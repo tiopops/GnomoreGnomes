@@ -25,7 +25,7 @@ const Combat = {
   // quedándose quieta ni movi��ndose puede llegar a pegarle.
   findApproachTile(unit, target) {
     const type = UNIT_TYPES[unit.typeId];
-    const moveRange = type.movement;
+    const moveRange = type.movimiento;
     const attackRange = type.attackRange;
 
     const distToTarget = (row, col) =>
@@ -128,9 +128,13 @@ const Combat = {
   async attack(attacker, target) {
     Units.faceTowardsTile(attacker, target.row, target.col);
 
-    target.hp = Math.max(0, target.hp - 1);
+    // El daño depende de la FUERZA del atacante (una de sus 4 estadísticas,
+    // ver UNIT_TYPES en units.js) en vez de ser siempre 1 — así cada tipo de
+    // unidad pega de verdad distinto, no solo se mueve distinto.
+    const damage = UNIT_TYPES[attacker.typeId].fuerza;
+    target.hp = Math.max(0, target.hp - damage);
     Units.updateHpBar(target);
-    Units.spawnFloatingText(target, "-1", { className: "dmg-popup" });
+    Units.spawnFloatingText(target, `-${damage}`, { className: "dmg-popup" });
     Units.playShake(target);
     SFX.hit();
 

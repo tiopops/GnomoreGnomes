@@ -42,13 +42,46 @@
    satisfactorios: saltos con rebote, giro hacia la dirección real y sonido
    en cada paso — ver también js/movement.js y js/combat.js. */
 
+// Estadísticas de cada tipo de unidad — las 4 que ve el jugador (en el popup
+// de js/unitinfo.js) están todas sobre una escala común de 1 a 5:
+//   aguante    -> vida máxima de la unidad (Units.spawnUnit la usa como hp/maxHp)
+//   movimiento -> casillas por turno (lo usa js/movement.js)
+//   fuerza     -> daño que hace al golpear (lo usa js/combat.js)
+//   agilidad   -> probabilidad de acertar habilidades tipo "pasar al gnomo"
+//                 (todavía no existe esa mecánica — el dato ya está aquí
+//                 preparado para cuando se implemente, sin tener que tocar
+//                 UNIT_TYPES otra vez)
+// attackRange no es una de las 4 estadísticas del jugador (es una regla de
+// combate interna, de momento igual para todas: cuerpo a cuerpo, 1 casilla).
 const UNIT_TYPES = {
-  mushboom_scout: {
+  hombre_arbol: {
+    name: "Hombre Árbol",
     spriteUrl: "assets/equipos/MushboomForest/unidad_01.png",
-    movement: 2, // casillas por movimiento (lo usa js/movement.js)
-    attackRange: 1, // pega cuerpo a cuerpo: el rival tiene que estar a 1 casilla (lo usa js/combat.js)
-    maxHp: 3, // de momento todas las unidades tienen la misma vida
-    // La imagen viene dibujada mirando hacia la derecha por defecto.
+    aguante: 5,
+    movimiento: 1,
+    fuerza: 3,
+    agilidad: 1,
+    attackRange: 1,
+    defaultFacing: "right", // la imagen viene dibujada mirando hacia la derecha por defecto
+  },
+  goblin_lanzador: {
+    name: "Goblin Lanzador",
+    spriteUrl: "assets/equipos/MushboomForest/unidad_02.png",
+    aguante: 1,
+    movimiento: 4,
+    fuerza: 1,
+    agilidad: 5,
+    attackRange: 1,
+    defaultFacing: "right",
+  },
+  seta_artificiero: {
+    name: "Seta Artificiero",
+    spriteUrl: "assets/equipos/MushboomForest/unidad_03.png",
+    aguante: 2,
+    movimiento: 3,
+    fuerza: 2,
+    agilidad: 2,
+    attackRange: 1,
     defaultFacing: "right",
   },
 };
@@ -60,6 +93,7 @@ const Units = {
   selectedId: null,
   markerEls: [],
   rangeProviders: [], // mecánicas registradas (movimiento, combate, futuras) — ver cabecera del archivo
+  selectionListeners: [], // UI no ligada al tablero (ver registerSelectionListener), p.ej. js/unitinfo.js
   _nextId: 1,
 
   init(container, boardSize) {
@@ -119,8 +153,8 @@ const Units = {
       row,
       col,
       facing: type.defaultFacing,
-      hp: type.maxHp,
-      maxHp: type.maxHp,
+      hp: type.aguante,
+      maxHp: type.aguante,
       el,
       flipEl,
       spriteEl,
@@ -140,14 +174,17 @@ const Units = {
     return unit;
   },
 
-  spawnTestUnit(row, col) {
-    return this.spawnUnit({ typeId: "mushboom_scout", row, col, team: "player" });
+  // typeId es parámetro (no fijo) para poder colocar los 3 tipos de prueba
+  // a la vez y comparar sus estadísticas en acción — ver spawnTestUnits en
+  // newgame-flow.js.
+  spawnTestUnit(row, col, typeId = "hombre_arbol") {
+    return this.spawnUnit({ typeId, row, col, team: "player" });
   },
 
   // Coloca un rival en una casilla libre al azar del tablero — de momento
-  // solo para pruebas (mismo tipo de unidad que el jugador, con tinte rojo
-  // vía CSS hasta que haya arte propio para el bando rival).
-  spawnRandomEnemy() {
+  // solo para pruebas (mismo tipo de unidad por defecto, con tinte rojo vía
+  // CSS hasta que haya arte propio para el bando rival).
+  spawnRandomEnemy(typeId = "hombre_arbol") {
     const empty = [];
     for (let row = 0; row < this.boardSize; row++) {
       for (let col = 0; col < this.boardSize; col++) {
@@ -156,7 +193,7 @@ const Units = {
     }
     if (empty.length === 0) return null;
     const spot = empty[Math.floor(Math.random() * empty.length)];
-    return this.spawnUnit({ typeId: "mushboom_scout", row: spot.row, col: spot.col, team: "enemy" });
+    return this.spawnUnit({ typeId, row: spot.row, col: spot.col, team: "enemy" });
   },
 
   unitAt(row, col) {
@@ -208,6 +245,13 @@ const Units = {
       this.rangeProviders.forEach((p) => p.showFor(unit));
       this._resolveMarkerOverlaps();
     }
+    // Los "oyentes de selección" (ver registerSelectionListener) sí se
+    // avisan para CUALQUIER unidad, amiga o rival — a diferencia del radio
+    // de acción, no son una capacidad de actuar sobre el tablero, así que
+    // no tiene sentido limitarlos al equipo del jugador (p.ej. el panel de
+    // estadísticas de js/unitinfo.js también sirve para consultar a un
+    // rival).
+    this.selectionListeners.forEach((l) => l.onSelect && l.onSelect(unit));
   },
 
   deselect() {
@@ -216,6 +260,14 @@ const Units = {
     if (prev) prev.el.classList.remove("unit--selected");
     this.selectedId = null;
     this.clearRangeOverlays();
+    this.selectionListeners.forEach((l) => l.onDeselect && l.onDeselect());
+  },
+
+  // Igual que registerRangeProvider pero para UI que no pinta sobre el
+  // tablero (paneles, botones fijos en pantalla...) y que quiere enterarse
+  // de cada selección/deselección sin que units.js tenga que conocerla.
+  registerSelectionListener(listener) {
+    this.selectionListeners.push(listener);
   },
 
   // Vuelve a calcular y pintar el radio de TODAS las mecánicas registradas
