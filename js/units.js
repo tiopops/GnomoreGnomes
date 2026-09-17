@@ -1,22 +1,52 @@
-/* Gnomore Gnomes — unidades sobre el tablero: pintado, selección, radio de
-   movimiento/ataque, combate y desplazamiento animado.
-   Regla de oro: un archivo por mecánica — este solo se encarga de las
-   unidades (amigas y rivales); las losetas viven en mapgen.js y la cámara en
-   boardview.js.
+/* Gnomore Gnomes — unidades sobre el tablero: modelo de datos, pintado,
+   selección y las utilidades compartidas (desplazamiento paso a paso, giro,
+   marcadores, barra de vida, texto flotante, eliminación) que CUALQUIER
+   mecánica puede reutilizar.
+
+   Regla de oro: un archivo por mecánica. Este archivo es el "núcleo" de las
+   unidades — sabe cómo crearlas, pintarlas, seleccionarlas y moverlas de una
+   loseta a otra, pero NO sabe nada de reglas de movimiento ni de combate:
+   eso vive en js/movement.js y js/combat.js, cada uno en su propio archivo,
+   y se registran aquí sin que este archivo tenga que conocerlos.
+
+   Por qué está organizado así (para cuando haya que tocarlo más adelante):
+   cada mecánica que se pueda usar sobre la unidad del jugador seleccionada
+   (moverse, atacar, y lo que se añada después: construir, curar, una
+   habilidad especial...) se registra con Units.registerRangeProvider(...)
+   como un "proveedor de rango": un objeto con
+     showFor(unit)   -> pinta sus propios marcadores/indicadores para `unit`
+     onClear()       -> (opcional) limpia cualquier estado propio que no sean
+                         marcadores (p.ej. las clases "objetivo" de combate)
+   Este archivo se encarga de la selección, de vaciar los marcadores
+   compartidos y de pedirle a CADA proveedor registrado que se repinte
+   cuando algo cambia (tras moverse, tras atacar...). Así:
+     - Se puede reescribir por completo cómo funciona el movimiento sin
+       tocar el combate, y viceversa: cada uno vive en su archivo y solo
+       habla con Units a través de esta API pública.
+     - Añadir una mecánica nueva es crear un archivo, registrar un proveedor
+       y usar las utilidades de aquí abajo — nunca hace falta editar este
+       archivo ni los de las otras mecánicas.
+   La partida en sí (turnos, cómo se gana/pierde) todavía no existe — eso
+   irá en su propio archivo (p.ej. js/match.js) el día que se defina, y
+   debería poder construirse sobre esta misma API sin reestructurar nada de
+   aquí. Lo mismo vale para tableros más complejos (varios tipos de loseta,
+   obstáculos): mientras sigan siendo una cuadrícula row/col, esta capa no
+   necesita cambios.
+
    Regla de oro: escalabilidad — UNIT_TYPES sigue el mismo patrón que
    TILE_TYPES/RACES: añadir una unidad nueva es añadir una entrada aquí, sin
    tocar el resto del motor; lo mismo para añadir más equipos/bandos: basta
    con pasar otro "team" al spawnear.
    Regla de oro: nivel Triple A / feedback — seleccionar, ver el radio de
-   movimiento/ataque, desplazarse, golpear y morir deben sentirse
-   satisfactorios: saltos con rebote, giro hacia la dirección de movimiento,
-   temblor y número de daño al golpear, y sonido en cada acción. */
+   cualquier mecánica, desplazarse y recibir texto flotante deben sentirse
+   satisfactorios: saltos con rebote, giro hacia la dirección real y sonido
+   en cada paso — ver también js/movement.js y js/combat.js. */
 
 const UNIT_TYPES = {
   mushboom_scout: {
     spriteUrl: "assets/equipos/MushboomForest/unidad_01.png",
-    movement: 2, // casillas por movimiento
-    attackRange: 1, // pega cuerpo a cuerpo: el rival tiene que estar a 1 casilla de distancia
+    movement: 2, // casillas por movimiento (lo usa js/movement.js)
+    attackRange: 1, // pega cuerpo a cuerpo: el rival tiene que estar a 1 casilla (lo usa js/combat.js)
     maxHp: 3, // de momento todas las unidades tienen la misma vida
     // La imagen viene dibujada mirando hacia la derecha por defecto.
     defaultFacing: "right",
@@ -29,7 +59,7 @@ const Units = {
   list: [], // { id, typeId, team, row, col, facing, hp, maxHp, el, flipEl, spriteEl, hpBarEl, hpFillEl }
   selectedId: null,
   markerEls: [],
-  targetedIds: [], // rivales que muestran su vida por estar al alcance de ataque (sin estar seleccionados)
+  rangeProviders: [], // mecánicas registradas (movimiento, combate, futuras) — ver cabecera del archivo
   _nextId: 1,
 
   init(container, boardSize) {
@@ -38,7 +68,15 @@ const Units = {
     this.list = [];
     this.selectedId = null;
     this.markerEls = [];
-    this.targetedIds = [];
+  },
+
+  // Cualquier mecánica que quiera mostrar marcadores/indicadores cuando el
+  // jugador selecciona una de sus unidades llama a esto UNA vez al cargar su
+  // archivo (ver el final de movement.js/combat.js). El orden de registro
+  // decide el orden en que se pintan (y por tanto el orden de su animación
+  // escalonada si comparten índice de aparición).
+  registerRangeProvider(provider) {
+    this.rangeProviders.push(provider);
   },
 
   // Crea una unidad de cualquier tipo/bando. spawnTestUnit/spawnRandomEnemy
@@ -92,7 +130,7 @@ const Units = {
     this.list.push(unit);
 
     this._placeInstant(unit);
-    this._updateHpBar(unit);
+    this.updateHpBar(unit);
 
     el.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -113,12 +151,16 @@ const Units = {
     const empty = [];
     for (let row = 0; row < this.boardSize; row++) {
       for (let col = 0; col < this.boardSize; col++) {
-        if (!this._unitAt(row, col)) empty.push({ row, col });
+        if (!this.unitAt(row, col)) empty.push({ row, col });
       }
     }
     if (empty.length === 0) return null;
     const spot = empty[Math.floor(Math.random() * empty.length)];
     return this.spawnUnit({ typeId: "mushboom_scout", row: spot.row, col: spot.col, team: "enemy" });
+  },
+
+  unitAt(row, col) {
+    return this.list.find((u) => u.row === row && u.col === col);
   },
 
   _placeInstant(unit) {
@@ -134,6 +176,18 @@ const Units = {
     unit.flipEl.style.transform = unit.facing === "left" ? "scaleX(-1)" : "scaleX(1)";
   },
 
+  // Gira `unit` para encararse hacia una loseta destino según su posición
+  // REAL en pantalla (no basta con comparar fila/columna en isométrico) —
+  // lo usan tanto los saltos de movimiento como encararse al atacar, así
+  // que vive aquí en vez de duplicarse en cada mecánica.
+  faceTowardsTile(unit, row, col) {
+    const from = getTileCenter(unit.row, unit.col, this.boardSize);
+    const to = getTileCenter(row, col, this.boardSize);
+    if (to.x > from.x + 0.5) unit.facing = "right";
+    else if (to.x < from.x - 0.5) unit.facing = "left";
+    this._applyFacing(unit);
+  },
+
   _onUnitClick(unit) {
     if (this.selectedId === unit.id) {
       this.deselect();
@@ -147,11 +201,11 @@ const Units = {
     this.selectedId = unit.id;
     unit.el.classList.add("unit--selected");
     SFX.click();
-    // El radio de movimiento/ataque solo se calcula para las unidades del
+    // El radio de cualquier mecánica solo se calcula para las unidades del
     // jugador — seleccionar un rival solo sirve para verle la vida, de
-    // momento no se puede mover ni actuar con él.
+    // momento no se puede actuar con él.
     if (unit.team === "player") {
-      this._showRange(unit);
+      this.rangeProviders.forEach((p) => p.showFor(unit));
     }
   },
 
@@ -160,191 +214,84 @@ const Units = {
     const prev = this.list.find((u) => u.id === this.selectedId);
     if (prev) prev.el.classList.remove("unit--selected");
     this.selectedId = null;
-    this._clearRange();
+    this.clearRangeOverlays();
   },
 
-  _reachableTiles(unit) {
-    const type = UNIT_TYPES[unit.typeId];
-    const range = type.movement;
-    const tiles = [];
-    for (let dr = -range; dr <= range; dr++) {
-      for (let dc = -range; dc <= range; dc++) {
-        if (dr === 0 && dc === 0) continue;
-        // Distancia Chebyshev: se puede llegar en `range` pasos en cualquier dirección (8 direcciones).
-        if (Math.max(Math.abs(dr), Math.abs(dc)) > range) continue;
-        const row = unit.row + dr;
-        const col = unit.col + dc;
-        if (row < 0 || col < 0 || row >= this.boardSize || col >= this.boardSize) continue;
-        if (this._unitAt(row, col)) continue; // ocupada por otra unidad (rival = se ataca, no se pisa)
-        tiles.push({ row, col });
-      }
-    }
-    return tiles;
+  // Vuelve a calcular y pintar el radio de TODAS las mecánicas registradas
+  // para `unit` (si sigue siendo la seleccionada) — se llama tras cualquier
+  // acción que pueda cambiarlo (moverse, atacar...). Centralizarlo aquí es
+  // lo que permite que una mecánica no tenga que saber nada de las demás:
+  // movement.js no sabe que combat.js existe, y viceversa.
+  refreshRange(unit) {
+    if (this.selectedId !== unit.id) return;
+    this.clearRangeOverlays();
+    this.rangeProviders.forEach((p) => p.showFor(unit));
   },
 
-  // Unidades rivales (vivas) que `unit` puede llegar a atacar ESTE turno: ya
-  // sea porque ya las tiene al alcance de ataque, o porque puede desplazarse
-  // (dentro de su movimiento) hasta alguna casilla libre junto al rival y
-  // atacar desde ahí — ver _findApproachTile.
-  _attackableEnemies(unit) {
-    return this.list.filter((other) => {
-      if (other.team === unit.team || other.hp <= 0) return false;
-      return this._findApproachTile(unit, other) !== null;
-    });
-  },
-
-  // Encuentra la mejor casilla desde la que `unit` puede atacar a `target`:
-  // si ya está al alcance de ataque desde donde está, no hace falta
-  // moverse; si no, busca entre las casillas libres al alcance de ataque
-  // alrededor del rival cuál es la más cercana a la unidad (línea recta,
-  // distancia Chebyshev) que además esté dentro de su movimiento — esa es
-  // la "distancia más corta" a la que se acerca antes de pegar. Devuelve
-  // null si no hay ninguna forma de llegar a pegarle este turno.
-  _findApproachTile(unit, target) {
-    const type = UNIT_TYPES[unit.typeId];
-    const moveRange = type.movement;
-    const atkRange = type.attackRange;
-
-    const distNow = Math.max(Math.abs(target.row - unit.row), Math.abs(target.col - unit.col));
-    if (distNow <= atkRange) {
-      return { row: unit.row, col: unit.col };
-    }
-
-    let best = null;
-    let bestDist = Infinity;
-    for (let dr = -atkRange; dr <= atkRange; dr++) {
-      for (let dc = -atkRange; dc <= atkRange; dc++) {
-        if (Math.max(Math.abs(dr), Math.abs(dc)) > atkRange) continue;
-        const row = target.row + dr;
-        const col = target.col + dc;
-        if (row === target.row && col === target.col) continue; // no se puede pisar al rival
-        if (row < 0 || col < 0 || row >= this.boardSize || col >= this.boardSize) continue;
-        const occupant = this._unitAt(row, col);
-        if (occupant && occupant.id !== unit.id) continue; // ocupada por otra unidad
-
-        const distFromUnit = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
-        if (distFromUnit > moveRange) continue; // fuera de lo que puede andar este turno
-        if (distFromUnit < bestDist) {
-          bestDist = distFromUnit;
-          best = { row, col };
-        }
-      }
-    }
-    return best;
-  },
-
-  _unitAt(row, col) {
-    return this.list.find((u) => u.row === row && u.col === col);
-  },
-
-  _showRange(unit) {
-    const moveTiles = this._reachableTiles(unit);
-    moveTiles.forEach((t, i) => this._addMoveMarker(unit, t, i));
-
-    const targets = this._attackableEnemies(unit);
-    targets.forEach((target, i) => this._addAttackMarker(unit, target, moveTiles.length + i));
-
-    // Los rivales al alcance de ataque enseñan su vida aunque no estén
-    // seleccionados, para poder decidir si merece la pena atacarlos.
-    targets.forEach((target) => target.el.classList.add("unit--targeted"));
-    this.targetedIds = targets.map((t) => t.id);
-  },
-
-  _addMoveMarker(unit, tile, delayIndex) {
-    const marker = document.createElement("div");
-    marker.className = "range-marker";
-    const { x, y } = getTileCenter(tile.row, tile.col, this.boardSize);
-    marker.style.left = `${x}px`;
-    marker.style.top = `${y}px`;
-    marker.style.zIndex = String((tile.row + tile.col) * 10 + 2);
-    marker.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this._moveUnitTo(unit, tile.row, tile.col);
-    });
-    this.container.appendChild(marker);
-    this.markerEls.push(marker);
-    this._revealMarker(marker, "range-marker--visible", delayIndex);
-  },
-
-  // Loseta con un rival al alcance: mismo hueco visual que un range-marker
-  // (misma casilla, mismo tamaño), pero con la mira roja de ataque en vez
-  // del círculo — no se puede mover ahí, así que lo sustituye.
-  _addAttackMarker(attacker, target, delayIndex) {
-    const marker = document.createElement("div");
-    marker.className = "attack-marker";
-    const icon = document.createElement("i");
-    icon.className = "ph ph-crosshair attack-marker__icon";
-    marker.appendChild(icon);
-    const { x, y } = getTileCenter(target.row, target.col, this.boardSize);
-    marker.style.left = `${x}px`;
-    // Desplazada hacia abajo respecto al centro exacto de la loseta: el
-    // propio rectángulo (invisible) del sprite del rival ya ocupa esa zona y
-    // se dibuja por encima (para poder seguir seleccionándolo con un clic
-    // normal), así que centrar la mira ahí la dejaría tapada y no se podría
-    // pulsar. Bajarla la saca de debajo del rival y la deja, literalmente,
-    // a sus pies.
-    marker.style.top = `${y + 28}px`;
-    marker.style.zIndex = String((target.row + target.col) * 10 + 3);
-    marker.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this._approachAndAttack(attacker, target);
-    });
-    this.container.appendChild(marker);
-    this.markerEls.push(marker);
-    this._revealMarker(marker, "attack-marker--visible", delayIndex);
-  },
-
-  // La aparición se dispara con una clase (transition), no con una
-  // @keyframes animation: así no compite con el estilo :hover por la misma
-  // propiedad "transform" (ver nota en style.css sobre el parpadeo que
-  // causaba mezclar ambas). El rAF asegura que el navegador registre primero
-  // el estado inicial antes de pasar al visible, y el setTimeout escalona la
-  // aparición igual que antes hacía el animation-delay.
-  _revealMarker(marker, visibleClass, delayIndex) {
-    requestAnimationFrame(() => {
-      setTimeout(() => marker.classList.add(visibleClass), delayIndex * 18);
-    });
-  },
-
-  _clearRange() {
+  clearRangeOverlays() {
     this.markerEls.forEach((m) => m.remove());
     this.markerEls = [];
-
-    this.targetedIds.forEach((id) => {
-      const u = this.list.find((unit) => unit.id === id);
-      if (u) u.el.classList.remove("unit--targeted");
+    this.rangeProviders.forEach((p) => {
+      if (p.onClear) p.onClear();
     });
-    this.targetedIds = [];
   },
 
-  async _moveUnitTo(unit, destRow, destCol) {
-    this._clearRange();
-    unit.el.classList.add("unit--moving");
+  // Crea, posiciona y anima la aparición de un marcador interactivo sobre
+  // una loseta (círculo de movimiento, mira de ataque, o cualquier
+  // indicador que añada una futura mecánica). Centraliza aquí el patrón de
+  // posición/animación/registro para que cada mecánica solo tenga que
+  // decidir SU contenido y SU clase CSS, nunca reimplementar esto — y para
+  // que el "clic fuera para deseleccionar" de más abajo detecte cualquier
+  // marcador presente o futuro sin tener que conocer sus clases concretas
+  // (por eso siempre lleva también la clase genérica "board-marker").
+  //
+  // La aparición se dispara con una clase (transition), no con una
+  // @keyframes animation: mezclar una animation con fill:forwards y una
+  // transition sobre la misma propiedad "transform" (p.ej. la de :hover)
+  // hace que el navegador las siga disputando entre sí en cada hover, lo
+  // que se ve como parpadeos (ver nota de rendimiento en style.css). El rAF
+  // asegura que el navegador registre primero el estado inicial antes de
+  // pasar al visible, y el setTimeout escalona la aparición de varios
+  // marcadores seguidos.
+  addMarker({ className, row, col, zOffset = 0, delayIndex = 0, visibleClass, onClick, buildContent }) {
+    const marker = document.createElement("div");
+    marker.className = `board-marker ${className}`;
+    if (buildContent) buildContent(marker);
 
-    const path = this._stepPath(unit.row, unit.col, destRow, destCol);
-    for (const step of path) {
-      await this._hopTo(unit, step.row, step.col);
+    const { x, y } = getTileCenter(row, col, this.boardSize);
+    marker.style.left = `${x}px`;
+    marker.style.top = `${y}px`;
+    marker.style.zIndex = String((row + col) * 10 + zOffset);
+
+    if (onClick) {
+      marker.addEventListener("click", (e) => {
+        e.stopPropagation();
+        onClick();
+      });
     }
 
-    unit.el.classList.remove("unit--moving");
-    // La clase del salto se queda pegada tras el último paso (no hay más
-    // saltos que la vuelvan a reiniciar) y, al tener la misma especificidad
-    // que la regla de respiración pero declararse después en el CSS, ganaba
-    // para siempre y dejaba al personaje sin animación de espera. Hay que
-    // quitarla explícitamente al terminar de moverse.
-    unit.spriteEl.classList.remove("unit__sprite--hop");
+    this.container.appendChild(marker);
+    this.markerEls.push(marker);
 
-    // Sigue seleccionada tras moverse (estamos en fase de pruebas): recalcula
-    // el radio desde la nueva posición para poder seguir moviéndola o atacar.
-    if (this.selectedId === unit.id) {
-      this._showRange(unit);
+    if (visibleClass) {
+      requestAnimationFrame(() => {
+        setTimeout(() => marker.classList.add(visibleClass), delayIndex * 18);
+      });
     }
+
+    return marker;
   },
+
+  // ---------- Desplazamiento paso a paso: lo usa cualquier mecánica que
+  // necesite mover una unidad de una loseta a otra (movimiento normal,
+  // acercarse antes de atacar, y lo que se añada después). Vive aquí y no
+  // en movement.js para que combat.js pueda reutilizarlo tal cual, sin
+  // duplicar la animación ni arriesgarse a que las dos copias diverjan. ----
 
   // Camino recto en línea, paso a paso por casilla (como mucho tantos pasos
   // como la distancia Chebyshev al destino) — de momento no hay obstáculos
   // en el tablero, así que un camino recto es siempre válido.
-  _stepPath(fromRow, fromCol, toRow, toCol) {
+  stepPath(fromRow, fromCol, toRow, toCol) {
     const steps = Math.max(Math.abs(toRow - fromRow), Math.abs(toCol - fromCol));
     const path = [];
     for (let i = 1; i <= steps; i++) {
@@ -357,20 +304,31 @@ const Units = {
     return path;
   },
 
-  _hopTo(unit, row, col) {
-    return new Promise((resolve) => {
-      const from = getTileCenter(unit.row, unit.col, this.boardSize);
-      const to = getTileCenter(row, col, this.boardSize);
+  // Recorre un camino ya calculado (ver stepPath), salto a salto, con el
+  // giro/animación/sonido de cada paso. Encapsula también la limpieza que
+  // hay que hacer al terminar: si no se quita a mano la clase del último
+  // salto, se queda pegada para siempre y "tapa" la animación de
+  // respiración (misma especificidad que unit__sprite pero declarada
+  // después en el CSS) — al vivir en un único sitio, ninguna mecánica que
+  // reutilice esto puede reintroducir ese bug por accidente.
+  async walkPath(unit, path) {
+    unit.el.classList.add("unit--moving");
+    for (const step of path) {
+      await this.hopTo(unit, step.row, step.col);
+    }
+    unit.el.classList.remove("unit--moving");
+    unit.spriteEl.classList.remove("unit__sprite--hop");
+  },
 
-      // Girar hacia la dirección real del paso en pantalla (izquierda/derecha).
-      if (to.x > from.x + 0.5) unit.facing = "right";
-      else if (to.x < from.x - 0.5) unit.facing = "left";
-      this._applyFacing(unit);
+  hopTo(unit, row, col) {
+    return new Promise((resolve) => {
+      this.faceTowardsTile(unit, row, col);
 
       unit.row = row;
       unit.col = col;
-      unit.el.style.left = `${to.x}px`;
-      unit.el.style.top = `${to.y}px`;
+      const { x, y } = getTileCenter(row, col, this.boardSize);
+      unit.el.style.left = `${x}px`;
+      unit.el.style.top = `${y}px`;
       unit.el.style.zIndex = String((row + col) * 10 + 5);
 
       // Reinicia la animación de salto en cada paso (aunque sea la misma clase).
@@ -385,77 +343,33 @@ const Units = {
     });
   },
 
-  // Al pulsar la mira de ataque: si el rival no está ya al alcance, la
-  // unidad primero se desplaza (por el camino más corto, ver
-  // _findApproachTile) hasta la casilla libre más cercana desde la que sí
-  // pueda pegarle, y solo entonces ataca — un único clic para "acércate y
-  // pega", como en cualquier táctico por turnos.
-  async _approachAndAttack(unit, target) {
-    this._clearRange();
+  // ---------- Vida / feedback genérico: cualquier mecánica puede tocar la
+  // vida de una unidad o darle feedback visual — quién decide CUÁNDO
+  // hacerlo (p.ej. combat.js al golpear) no tiene por qué reimplementar
+  // CÓMO se ve. ----
 
-    const approach = this._findApproachTile(unit, target);
-    if (!approach) return; // el rival ya no está al alcance (p.ej. otra unidad ocupó el hueco)
-
-    if (approach.row !== unit.row || approach.col !== unit.col) {
-      unit.el.classList.add("unit--moving");
-      const path = this._stepPath(unit.row, unit.col, approach.row, approach.col);
-      for (const step of path) {
-        await this._hopTo(unit, step.row, step.col);
-      }
-      unit.el.classList.remove("unit--moving");
-      unit.spriteEl.classList.remove("unit__sprite--hop");
-    }
-
-    await this._attackUnit(unit, target);
-  },
-
-  async _attackUnit(attacker, target) {
-    this._clearRange();
-
-    // El atacante se encara hacia el objetivo, igual que al moverse.
-    const from = getTileCenter(attacker.row, attacker.col, this.boardSize);
-    const to = getTileCenter(target.row, target.col, this.boardSize);
-    if (to.x > from.x + 0.5) attacker.facing = "right";
-    else if (to.x < from.x - 0.5) attacker.facing = "left";
-    this._applyFacing(attacker);
-
-    target.hp = Math.max(0, target.hp - 1);
-    this._updateHpBar(target);
-    this._spawnDamagePopup(target, 1);
-    this._playHitReaction(target);
-    SFX.hit();
-
-    if (target.hp <= 0) {
-      await this._removeUnit(target);
-    }
-
-    // Igual que al moverse: sigue seleccionado, recalcula el radio por si ya
-    // no quedan más rivales al alcance o alguno ha muerto.
-    if (this.selectedId === attacker.id) {
-      this._showRange(attacker);
-    }
-  },
-
-  _playHitReaction(unit) {
-    unit.el.classList.remove("unit--hit");
-    void unit.el.offsetWidth; // fuerza reflow para poder repetir el temblor
-    unit.el.classList.add("unit--hit");
-  },
-
-  _updateHpBar(unit) {
+  updateHpBar(unit) {
     const pct = Math.max(0, unit.hp / unit.maxHp) * 100;
     unit.hpFillEl.style.width = `${pct}%`;
     unit.hpFillEl.classList.toggle("unit__hpbar-fill--low", unit.hp <= 1);
   },
 
-  // Número de daño flotante sobre la cabeza del que recibe el golpe — se
-  // autodestruye solo (ver dmg-popup-rise en style.css) al acabar su propia
-  // animación de subida y desvanecido.
-  _spawnDamagePopup(unit, amount) {
+  // Pequeño temblor de reacción (golpe recibido, y en el futuro cualquier
+  // otro impacto/bloqueo) sobre `unit`.
+  playShake(unit) {
+    unit.el.classList.remove("unit--hit");
+    void unit.el.offsetWidth; // fuerza reflow para poder repetir el temblor
+    unit.el.classList.add("unit--hit");
+  },
+
+  // Texto flotante sobre la cabeza de una unidad (daño, y en el futuro
+  // curación u otros mensajes) — se autodestruye solo al acabar su propia
+  // animación de subida y desvanecido (ver style.css).
+  spawnFloatingText(unit, text, { className = "dmg-popup" } = {}) {
     const { x, y } = getTileCenter(unit.row, unit.col, this.boardSize);
     const popup = document.createElement("div");
-    popup.className = "dmg-popup";
-    popup.textContent = `-${amount}`;
+    popup.className = className;
+    popup.textContent = text;
     popup.style.left = `${x}px`;
     popup.style.top = `${y - 108}px`; // por encima de la cabeza
     popup.style.zIndex = String((unit.row + unit.col) * 10 + 9);
@@ -463,7 +377,9 @@ const Units = {
     popup.addEventListener("animationend", () => popup.remove());
   },
 
-  async _removeUnit(unit) {
+  // Elimina una unidad del juego (0 de vida, o cualquier otra razón futura)
+  // con su propia animación antes de quitarla del DOM y de la lista.
+  async removeUnit(unit) {
     if (this.selectedId === unit.id) this.deselect();
     unit.el.classList.add("unit--dying");
     SFX.death();
@@ -474,12 +390,13 @@ const Units = {
 };
 
 // Al hacer clic en cualquier punto del tablero que no sea una unidad ni un
-// marcador de movimiento/ataque, se deselecciona (comportamiento esperado/cómodo).
+// marcador de cualquier mecánica (clase genérica "board-marker", ver
+// addMarker), se deselecciona (comportamiento esperado/cómodo).
 document.addEventListener("DOMContentLoaded", () => {
   const viewport = document.getElementById("board-viewport");
   if (!viewport) return;
   viewport.addEventListener("click", (e) => {
-    if (e.target.closest(".unit") || e.target.closest(".range-marker") || e.target.closest(".attack-marker")) return;
+    if (e.target.closest(".unit") || e.target.closest(".board-marker")) return;
     Units.deselect();
   });
 });
