@@ -60,7 +60,9 @@ const GNOME_ATTACH_OFFSETS = {
   hombre_arbol: { right: 72, bottom: 17 },
   surcabosques: { right: 38, bottom: 6 },
   seta_artificiero: { right: 33, bottom: 6 },
-  goblin_lanzador: { right: 51, bottom: 69 },
+  goblin_lanzador: { right: 35, bottom: 61 },
+  urgamentes: { right: 55, bottom: 16 },
+  punoroca: { right: 86, bottom: 7 },
 };
 
 const Gnome = {

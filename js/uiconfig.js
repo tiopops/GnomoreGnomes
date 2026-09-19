@@ -47,7 +47,7 @@ const UI_LAYOUT = {
   // pequeño), mientras se sigue viendo como un semicírculo a la derecha.
   actionButtons: {
     size: 51,
-    radius: 86,
+    radius: 92,
     startAngle: -34,
     endAngle: 11,
   },
