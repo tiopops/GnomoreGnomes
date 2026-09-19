@@ -110,6 +110,20 @@ const UNIT_TYPES = {
     attackRange: 1,
     defaultFacing: "right",
   },
+  // Mismas estadísticas EXACTAS que TruenoEspora/seta_artificiero (pedido
+  // explícito: "con las características de esporas de MushBoom") — solo
+  // cambia el personaje, su sprite y su equipo.
+  urgamentes: {
+    name: "UrgaMentes",
+    raceId: "colinas_rockntroll",
+    spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_02.png",
+    aguante: 2,
+    movimiento: 2,
+    fuerza: 2,
+    agilidad: 2,
+    attackRange: 1,
+    defaultFacing: "right",
+  },
 };
 
 const Units = {
