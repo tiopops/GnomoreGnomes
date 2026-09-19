@@ -139,10 +139,10 @@ function spawnTestUnits(size) {
   Units.init(boardTiles, size);
   const mid = Math.floor(size / 2);
   Units.spawnTestUnit(mid, mid, "hombre_arbol");
-  Units.spawnTestUnit(mid, mid - 1, "goblin_lanzador");
+  Units.spawnTestUnit(mid, mid - 1, "surcabosques");
   Units.spawnTestUnit(mid - 1, mid, "seta_artificiero");
   Units.spawnRandomEnemy("hombre_arbol");
-  Units.spawnRandomEnemy("goblin_lanzador");
+  Units.spawnRandomEnemy("surcabosques");
   Units.spawnRandomEnemy("seta_artificiero");
 
   // El gnomo (js/gnome.js): de momento uno solo en el tablero, cerca del

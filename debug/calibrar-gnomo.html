@@ -175,9 +175,14 @@
   <div class="section-title">Cogido por un personaje</div>
   <div class="panel">
     <div class="control">
+      <label for="teamSelect">Selección de Equipo</label>
+      <select id="teamSelect"></select>
+      <span style="font-size:0.75rem;color:var(--muted);">Sale directo de RACES — un equipo nuevo aparece aquí solo.</span>
+    </div>
+    <div class="control">
       <label for="charSelect">Personaje</label>
       <select id="charSelect"></select>
-      <span style="font-size:0.75rem;color:var(--muted);">Sale directo de UNIT_TYPES — un personaje nuevo aparece aquí solo.</span>
+      <span style="font-size:0.75rem;color:var(--muted);">Filtrado por el equipo de arriba (UNIT_TYPES.raceId) — un personaje nuevo aparece aquí solo.</span>
     </div>
     <div class="control">
       <label for="right">Horizontal (right) — <span class="value" id="rightVal">-14</span> px</label>
@@ -248,6 +253,8 @@
     </div>
   </div>
 
+  <script src="../js/i18n.js"></script>
+  <script src="../js/races.js"></script>
   <script src="../js/units.js"></script>
   <script>
     const POS_STORAGE_KEY = "gnomore-gnomo-posicion-v1"; // mismo formato que usa js/gnomecalib.js dentro del juego
@@ -285,6 +292,7 @@
     let facingLeft = false;
     let currentEls = null;
 
+    const teamSelect = document.getElementById("teamSelect");
     const charSelect = document.getElementById("charSelect");
     const rightInput = document.getElementById("right");
     const bottomInput = document.getElementById("bottom");
@@ -305,12 +313,31 @@
     const copyBtn = document.getElementById("copyBtn");
     const copiedMsg = document.getElementById("copiedMsg");
 
-    Object.keys(UNIT_TYPES).forEach((typeId) => {
+    // Equipo -> personaje: el desplegable de personaje SIEMPRE se limita a
+    // los tipos de UNIT_TYPES cuyo raceId es el equipo elegido arriba (ver
+    // esa relación en js/units.js) — así un equipo nuevo con un solo
+    // personaje (como Colinas Rock'n Troll de momento) no mezcla su lista
+    // con la de los demás.
+    RACES.forEach((race) => {
       const opt = document.createElement("option");
-      opt.value = typeId;
-      opt.textContent = UNIT_TYPES[typeId].name;
-      charSelect.appendChild(opt);
+      opt.value = race.id;
+      opt.textContent = I18N && I18N.t ? I18N.t(race.nameKey) : race.id;
+      teamSelect.appendChild(opt);
     });
+
+    function charsForTeam(raceId) {
+      return Object.keys(UNIT_TYPES).filter((typeId) => UNIT_TYPES[typeId].raceId === raceId);
+    }
+
+    function populateCharSelect(raceId) {
+      charSelect.innerHTML = "";
+      charsForTeam(raceId).forEach((typeId) => {
+        const opt = document.createElement("option");
+        opt.value = typeId;
+        opt.textContent = UNIT_TYPES[typeId].name;
+        charSelect.appendChild(opt);
+      });
+    }
 
     function buildHeldStage(typeId) {
       stageHeld.innerHTML = "";
@@ -399,6 +426,12 @@
       applyValuesToStage();
     }
 
+    function loadTeam(raceId) {
+      populateCharSelect(raceId);
+      loadCharacter(charSelect.value);
+    }
+
+    teamSelect.addEventListener("change", () => loadTeam(teamSelect.value));
     charSelect.addEventListener("change", () => loadCharacter(charSelect.value));
     [rightInput, bottomInput].forEach((input) => {
       input.addEventListener("input", () => {
@@ -455,7 +488,7 @@
       setTimeout(() => copiedMsg.classList.remove("copied-msg--visible"), 1400);
     });
 
-    loadCharacter(charSelect.value);
+    loadTeam(teamSelect.value);
     renderHeldWidth();
     renderGround();
     renderFlying();

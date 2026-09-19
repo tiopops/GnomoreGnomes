@@ -19,6 +19,8 @@ const STRINGS = {
     choose_race: "Elige tu raza",
     race_mushboom_forest: "El Reino Mushboom Forest",
     race_mushboom_forest_desc: "Orcos y goblins del bosque Mushboom, expertos en setas bomba.",
+    race_colinas_rockntroll: "Colinas Rock'n Troll",
+    race_colinas_rockntroll_desc: "Trolls de las colinas rocosas, tan duros de roer como su música.",
 
     choose_opponents: "Elige el número de rivales",
     opponents_label: "{n} rival",
@@ -42,6 +44,8 @@ const STRINGS = {
     choose_race: "Choose your race",
     race_mushboom_forest: "The Mushboom Forest Kingdom",
     race_mushboom_forest_desc: "Orcs and goblins from the Mushboom forest, masters of bomb mushrooms.",
+    race_colinas_rockntroll: "Rock'n Troll Hills",
+    race_colinas_rockntroll_desc: "Trolls from the rocky hills, as hard-headed as their music.",
 
     choose_opponents: "Choose number of opponents",
     opponents_label: "{n} opponent",

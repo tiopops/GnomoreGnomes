@@ -53,9 +53,14 @@
 //                 UNIT_TYPES otra vez)
 // attackRange no es una de las 4 estadísticas del jugador (es una regla de
 // combate interna, de momento igual para todas: cuerpo a cuerpo, 1 casilla).
+// raceId liga cada tipo de unidad a una de las razas de js/races.js — así
+// cualquier pantalla que necesite "solo los personajes de este equipo"
+// (p.ej. el selector de debug/calibrar-gnomo.html) puede filtrar por él sin
+// tener que mantener una segunda lista por separado.
 const UNIT_TYPES = {
   hombre_arbol: {
     name: "Hombre Árbol",
+    raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_01.png",
     aguante: 5,
     movimiento: 1,
@@ -69,8 +74,12 @@ const UNIT_TYPES = {
     spriteScale: 1.5,
     defaultFacing: "right", // la imagen viene dibujada mirando hacia la derecha por defecto
   },
-  goblin_lanzador: {
-    name: "Goblin Lanzador",
+  // Sustituye a Goblin Lanzador en el Reino Mushboom Forest (ver más abajo:
+  // el goblin ahora vive en Colinas Rock'n Troll) — mismas estadísticas
+  // exactas, solo cambia el personaje y su sprite.
+  surcabosques: {
+    name: "Surcabosques",
+    raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_02.png",
     aguante: 1,
     movimiento: 3,
@@ -81,11 +90,23 @@ const UNIT_TYPES = {
   },
   seta_artificiero: {
     name: "Seta Artificiero",
+    raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_03.png",
     aguante: 2,
     movimiento: 2,
     fuerza: 2,
     agilidad: 2,
+    attackRange: 1,
+    defaultFacing: "right",
+  },
+  goblin_lanzador: {
+    name: "Goblin Lanzador",
+    raceId: "colinas_rockntroll",
+    spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_01.png",
+    aguante: 1,
+    movimiento: 3,
+    fuerza: 1,
+    agilidad: 5,
     attackRange: 1,
     defaultFacing: "right",
   },

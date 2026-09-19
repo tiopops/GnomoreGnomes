@@ -11,4 +11,12 @@ const RACES = [
     color: "#8fbf4d",
     available: true,
   },
+  {
+    id: "colinas_rockntroll",
+    nameKey: "race_colinas_rockntroll",
+    descKey: "race_colinas_rockntroll_desc",
+    icon: "ph-mountains",
+    color: "#8a8f99",
+    available: true,
+  },
 ];
