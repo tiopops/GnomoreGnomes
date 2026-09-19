@@ -47,7 +47,7 @@ const GNOME_LAND_IMPACT_MS = 480;
 // TIPO DE PERSONAJE — hace falta porque no todos los personajes tienen el
 // mismo tamaño en pantalla (ver spriteScale en UNIT_TYPES, units.js): el
 // mismo offset que queda bien en un personaje normal se ve descolocado en
-// uno más grande como el hombre árbol. "default" es el que se usa para
+// uno más grande como el GolemCorteza. "default" es el que se usa para
 // cualquier tipo nuevo que todavía no se haya calibrado a mano — así un
 // personaje añadido más adelante nunca se queda sin gnomo visible, solo con
 // un ajuste genérico hasta que se afine el suyo propio.
@@ -58,8 +58,9 @@ const GNOME_LAND_IMPACT_MS = 480;
 const GNOME_ATTACH_OFFSETS = {
   default: { right: -14, bottom: 6 },
   hombre_arbol: { right: 72, bottom: 17 },
-  goblin_lanzador: { right: 51, bottom: 69 },
+  surcabosques: { right: 38, bottom: 6 },
   seta_artificiero: { right: 33, bottom: 6 },
+  goblin_lanzador: { right: 51, bottom: 69 },
 };
 
 const Gnome = {

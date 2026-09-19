@@ -59,7 +59,7 @@
 // tener que mantener una segunda lista por separado.
 const UNIT_TYPES = {
   hombre_arbol: {
-    name: "Hombre Árbol",
+    name: "GolemCorteza",
     raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_01.png",
     aguante: 5,
@@ -89,7 +89,7 @@ const UNIT_TYPES = {
     defaultFacing: "right",
   },
   seta_artificiero: {
-    name: "Seta Artificiero",
+    name: "TruenoEspora",
     raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_03.png",
     aguante: 2,
@@ -404,7 +404,7 @@ const Units = {
     marker.style.top = `${y}px`;
     // alwaysOnTop: por encima de CUALQUIER unidad, sea cual sea su fila/
     // columna — lo usa el círculo de movimiento (ver movement.js) para que
-    // un personaje grande (p.ej. el hombre árbol, más alto que su propia
+    // un personaje grande (p.ej. el GolemCorteza, más alto que su propia
     // loseta) nunca lo tape aunque esté en la loseta "de detrás" en el
     // orden isométrico normal. El resto de marcadores (mira de ataque,
     // captura del gnomo...) siguen con el z-index relativo a su loseta,
