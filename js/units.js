@@ -62,7 +62,7 @@ const UNIT_TYPES = {
     name: "GolemCorteza",
     raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_01.png",
-    aguante: 5,
+    aguante: 4,
     movimiento: 1,
     fuerza: 3,
     agilidad: 1,
@@ -70,16 +70,17 @@ const UNIT_TYPES = {
     defaultFacing: "right", // la imagen viene dibujada mirando hacia la derecha por defecto
   },
   // Sustituye a LanzaGnomos en el Reino Mushboom Forest (ver más abajo: el
-  // goblin ahora vive en Colinas Rock'n Troll) — mismas estadísticas
-  // exactas, solo cambia el personaje y su sprite.
+  // goblin ahora vive en Colinas Rock'n Troll) — mismo personaje que ese
+  // reemplazó, pero cada uno con sus propias estadísticas ya calibradas por
+  // separado en debug/calibrar-tamano.html.
   surcabosques: {
     name: "SurcaBosques",
     raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_02.png",
     aguante: 1,
-    movimiento: 3,
+    movimiento: 5,
     fuerza: 1,
-    agilidad: 5,
+    agilidad: 3,
     attackRange: 1,
     defaultFacing: "right",
   },
@@ -90,7 +91,7 @@ const UNIT_TYPES = {
     aguante: 2,
     movimiento: 2,
     fuerza: 2,
-    agilidad: 2,
+    agilidad: 3,
     attackRange: 1,
     defaultFacing: "right",
   },
@@ -105,30 +106,28 @@ const UNIT_TYPES = {
     attackRange: 1,
     defaultFacing: "right",
   },
-  // Mismas estadísticas EXACTAS que TruenoEspora/seta_artificiero (pedido
-  // explícito: "con las características de esporas de MushBoom") — solo
-  // cambia el personaje, su sprite y su equipo.
   urgamentes: {
     name: "UrgaMentes",
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_02.png",
     aguante: 2,
-    movimiento: 2,
+    movimiento: 3,
     fuerza: 2,
     agilidad: 2,
     attackRange: 1,
     defaultFacing: "right",
   },
-  // Mismas estadísticas EXACTAS que GolemCorteza/hombre_arbol (pedido
-  // explícito: "con los stats de golemcorteza") — solo cambia el personaje,
-  // su sprite y su equipo.
+  // Mismo personaje al que sustituyó GolemCorteza/hombre_arbol (pedido
+  // explícito original: "con los stats de golemcorteza"), ya con sus
+  // propias estadísticas calibradas por separado en
+  // debug/calibrar-tamano.html.
   punoroca: {
     name: "PuñoRoca",
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_03.png",
     aguante: 5,
     movimiento: 1,
-    fuerza: 3,
+    fuerza: 5,
     agilidad: 1,
     attackRange: 1,
     defaultFacing: "right",
@@ -150,7 +149,7 @@ const SPRITE_SCALES = {
   surcabosques: 1,
   seta_artificiero: 1,
   goblin_lanzador: 1,
-  urgamentes: 0.9,
+  urgamentes: 0.8,
   punoroca: 1.5,
 };
 
@@ -663,5 +662,9 @@ document.addEventListener("DOMContentLoaded", () => {
   viewport.addEventListener("click", (e) => {
     if (e.target.closest(".unit") || e.target.closest(".board-marker")) return;
     Units.deselect();
+    // Clic en casilla vacía también cierra cualquier placa de puntos de
+    // gnomo abierta (ver js/gnome.js) — igual que deseleccionar, es el
+    // comportamiento esperado al "hacer clic fuera".
+    if (typeof Gnome !== "undefined") Gnome.hideAllBadges();
   });
 });

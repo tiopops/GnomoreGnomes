@@ -968,7 +968,13 @@ h2 {
   opacity: 0;
   transform: scale(0.5) translateY(6px);
   transition: transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s ease;
-  pointer-events: none;
+  /* pointer-events: auto (no "none" como antes) a propósito: clicar el
+     propio gnomo mientras lo llevan cogido muestra/oculta su contador de
+     puntos (ver GnomeInstance.attachTo/toggleBadge en gnome.js) — pedido
+     explícito, "el contador de puntos del gnomo aparecerá sobre el propio
+     gnomo al pulsar sobre él". */
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .gnome-attach--visible {
@@ -1016,11 +1022,11 @@ h2 {
 
 /* ---------- Modo de calibración del gnomo (js/gnomecalib.js) ----------
    Solo existe activo con ?calibrarGnomo en la URL — en una partida normal
-   .gnome-attach se queda con pointer-events: none (arriba) y nada de esto
-   llega a crearse. */
+   nada de esto llega a crearse. */
 
-/* Mientras se calibra, .gnome-attach SÍ debe poder recibir el puntero (a
-   diferencia de la partida normal) para poder arrastrarlo. */
+/* Mientras se calibra, el cursor pasa de "clicar para ver puntos" (arriba)
+   a "arrastrar para mover", y se marca con un contorno para que quede claro
+   que está en modo edición. */
 .gnome-attach--calibrating {
   pointer-events: auto;
   cursor: grab;
@@ -1169,35 +1175,43 @@ h2 {
   border-color: var(--accent-hover);
 }
 
-/* Marcador fijo (esquina inferior derecha) con los puntos acumulados por el
-   gnomo — siempre visible mientras hay partida, sin depender de ninguna
-   selección (a diferencia del resto de botones de esta sección). */
-.gnome-points-hud {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
+/* Contador de puntos DE UN GNOMO CONCRETO, flotante sobre él (o sobre quien
+   lo lleve cogido) — pedido explícito: como puede haber varios gnomos a la
+   vez, ya no tiene sentido un único marcador fijo siempre visible (lo que
+   había antes); ahora cada gnomo tiene el suyo, oculto por defecto, y
+   aparece al hacer clic sobre él (ver GnomeInstance.toggleBadge en
+   gnome.js). Vive dentro del propio tablero (Units.container, igual que
+   spawnFloatingText) en vez de position:fixed en pantalla, para que se
+   mueva y escale junto con la cámara del tablero (BoardView) igual que el
+   resto de elementos sobre las losetas, y left/top los fija JS en píxeles
+   de tablero (ver _positionBadge), no CSS. */
+.gnome-points-badge {
+  position: absolute;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: var(--bg-elevated);
   border: 2px solid rgba(244, 242, 248, 0.35);
   border-radius: 999px;
-  padding: 6px 16px 6px 6px;
+  padding: 4px 12px 4px 4px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-  z-index: 500;
+  white-space: nowrap;
+  transform: translate(-50%, -8px) scale(0.6);
+  transform-origin: bottom center;
   opacity: 0;
-  transform: translateY(14px) scale(0.7);
-  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease;
+  pointer-events: none;
+  transition: transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s ease;
 }
 
-.gnome-points-hud--visible {
+.gnome-points-badge--visible {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translate(-50%, -14px) scale(1);
+  pointer-events: auto;
 }
 
-.gnome-points-hud__icon {
-  width: 42px;
-  height: 42px;
+.gnome-points-badge__icon {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
@@ -1207,24 +1221,25 @@ h2 {
   background: radial-gradient(circle at 50% 35%, rgba(122, 62, 240, 0.35), transparent 70%);
 }
 
-.gnome-points-hud__icon img {
+.gnome-points-badge__icon img {
   width: 100%;
   height: auto;
 }
 
-.gnome-points-hud__value {
+.gnome-points-badge__value {
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: var(--ink);
-  min-width: 1.6em;
+  min-width: 1.4em;
   text-align: center;
 }
 
 /* Pequeño "pulso" al sumar puntos — es un elemento de un solo disparo por
-   cambio de valor (se reinicia a mano en gnome.js, ver _bumpPointsHud), así
-   que aquí sí es seguro usar una animation con keyframes sin arriesgarse a
-   la disputa con una transition (misma nota que en .unit--selected). */
-.gnome-points-hud__value--bump {
+   cambio de valor (se reinicia a mano en gnome.js, ver GnomeInstance._setPoints),
+   así que aquí sí es seguro usar una animation con keyframes sin
+   arriesgarse a la disputa con una transition (misma nota que en
+   .unit--selected). */
+.gnome-points-badge__value--bump {
   animation: gnome-points-bump 0.32s ease;
 }
 
@@ -1248,10 +1263,8 @@ h2 {
 
   /* Los botones de acción del gnomo no necesitan su propia regla aquí:
      Gnome._positionActionButtons ya lee UI_LAYOUT.infoCircleMobile (mismos
-     14px que arriba) para recalcular su semicírculo en pantallas pequeñas. */
-
-  .gnome-points-hud {
-    right: 14px;
-    bottom: 14px;
-  }
+     14px que arriba) para recalcular su semicírculo en pantallas pequeñas.
+     El contador de puntos de cada gnomo (.gnome-points-badge) tampoco
+     necesita nada aquí: vive dentro del tablero, en píxeles de tablero, así
+     que ya escala con la cámara igual en cualquier tamaño de pantalla. */
 }

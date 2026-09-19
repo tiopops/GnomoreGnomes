@@ -164,10 +164,20 @@ function spawnTestUnits(size, raceId) {
     Units.spawnRandomEnemy(typeId);
   });
 
-  // El gnomo (js/gnome.js): de momento uno solo en el tablero, cerca del
-  // centro (spawnNear busca la loseta libre más próxima si esa ya está
-  // ocupada por alguno de los personajes de arriba).
-  if (typeof Gnome !== "undefined") Gnome.spawnNear(mid, mid + 1);
+  // Los gnomos (js/gnome.js): PUEDE HABER VARIOS a la vez (pedido
+  // explícito, "de echo para hacer pruebas pon 3 gnomos en la partida de
+  // pruebas") — Gnome.resetAll() detiene primero los temporizadores de los
+  // de la partida anterior (si los había) y vacía la lista antes de crear
+  // los nuevos. spawnNear busca la loseta libre más próxima a cada punto si
+  // esa ya está ocupada (por los personajes de arriba o por otro gnomo ya
+  // colocado), así que basta con pedir tres puntos de partida distintos
+  // cerca del centro sin calcular a mano qué queda libre.
+  if (typeof Gnome !== "undefined") {
+    Gnome.resetAll();
+    Gnome.spawnNear(mid, mid + 1);
+    Gnome.spawnNear(mid + 1, mid + 2);
+    Gnome.spawnNear(mid - 1, mid + 2);
+  }
 }
 
 // Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del

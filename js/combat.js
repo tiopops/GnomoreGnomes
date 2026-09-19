@@ -85,7 +85,7 @@ const Combat = {
     // Mientras lleva al gnomo cogido (js/gnome.js) la unidad pierde la
     // capacidad de atacar — puede moverse, golpear al gnomo o pasarlo, pero
     // no repartir daño a la vez que lo lleva encima.
-    if (typeof Gnome !== "undefined" && Gnome.heldBy === unit.id) return;
+    if (typeof Gnome !== "undefined" && Gnome.isHeldBy(unit.id)) return;
     this.attackableEnemies(unit).forEach(({ target, approach }, i) => {
       const tile = this.attackMarkerTile(target);
       Units.addMarker({
