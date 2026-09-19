@@ -124,6 +124,22 @@ const UNIT_TYPES = {
     attackRange: 1,
     defaultFacing: "right",
   },
+  // Mismas estadísticas EXACTAS que GolemCorteza/hombre_arbol (pedido
+  // explícito: "con los stats de golemcorteza") — solo cambia el personaje,
+  // su sprite y su equipo. También comparte su spriteScale: es un troll
+  // igual de corpulento en el arte.
+  punoroca: {
+    name: "PuñoRoca",
+    raceId: "colinas_rockntroll",
+    spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_03.png",
+    aguante: 5,
+    movimiento: 1,
+    fuerza: 3,
+    agilidad: 1,
+    attackRange: 1,
+    spriteScale: 1.5,
+    defaultFacing: "right",
+  },
 };
 
 const Units = {
