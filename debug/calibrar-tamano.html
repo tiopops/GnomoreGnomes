@@ -100,11 +100,38 @@
   .card__stage-inner .unit { left: 94px; top: 58.5px; }
   .card__stage-inner .unit__hpbar { display: none; }
 
-  .card__sliders { display: flex; flex-direction: column; gap: 6px; }
+  .card__sliders { display: flex; flex-direction: column; gap: 8px; }
   .card__slider-row { display: flex; align-items: center; gap: 8px; }
   .card__slider-row label { font-size: 0.78rem; color: var(--muted); width: 78px; flex-shrink: 0; }
   .card__slider-row .value { font-weight: 700; color: var(--accent); font-size: 0.85rem; min-width: 38px; text-align: right; }
   input[type="range"] { width: 100%; }
+
+  /* Filas de estadística IGUALES que el popup real (.unit-stat-row/-icon/
+     -label/-pips/-pip, ver css/style.css) pero con los pips clicables y
+     botones +/- a los lados — pedido explícito: "podria verse lo de poner
+     mas o menos habilidades como en el popup de info... con + y - en el
+     lateral". Los pips reutilizan las clases reales sin tocar su CSS, solo
+     se añade cursor:pointer aquí porque en el popup real no son clicables. */
+  .card__stat-row .unit-stat-pip { cursor: pointer; }
+  .card__stat-btn {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid rgba(244, 242, 248, 0.3);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .card__stat-btn:hover { background: var(--accent); border-color: var(--accent-hover); }
+  .card__stat-btn:disabled { opacity: 0.35; cursor: default; }
+  .card__stat-btn:disabled:hover { background: var(--bg); border-color: rgba(244, 242, 248, 0.3); }
   .card__reset {
     align-self: flex-start;
     background: transparent;
@@ -301,10 +328,76 @@
       }
 
       addSlider("scale", "Tamaño", 0.4, 2.5, 0.05, 2, "x");
-      addSlider("aguante", "Aguante", 1, 5, 1, 0, "");
-      addSlider("movimiento", "Movimiento", 1, 5, 1, 0, "");
-      addSlider("fuerza", "Fuerza", 1, 5, 1, 0, "");
-      addSlider("agilidad", "Agilidad", 1, 5, 1, 0, "");
+
+      // Estadísticas: misma fila de 5 "pips" que el popup real de
+      // js/unitinfo.js (statRow), pero editable — clic en un pip la fija a
+      // ese nivel (clic en el último pip ya relleno la quita un punto), y
+      // los botones +/- a los lados suman/restan de uno en uno.
+      function addStatRow(key, label, icon) {
+        const row = document.createElement("div");
+        row.className = "unit-stat-row card__stat-row";
+
+        const minusBtn = document.createElement("button");
+        minusBtn.type = "button";
+        minusBtn.className = "card__stat-btn";
+        minusBtn.textContent = "−";
+
+        const iconEl = document.createElement("i");
+        iconEl.className = `ph ${icon} unit-stat-icon`;
+
+        const labelEl = document.createElement("span");
+        labelEl.className = "unit-stat-label";
+        labelEl.textContent = label;
+
+        const pipsWrap = document.createElement("span");
+        pipsWrap.className = "unit-stat-pips";
+        const pipEls = [];
+        for (let i = 0; i < 5; i++) {
+          const pip = document.createElement("span");
+          pip.className = "unit-stat-pip";
+          pip.addEventListener("click", () => {
+            // Clic en el pip más alto ya relleno -> lo quita (baja un
+            // nivel); cualquier otro clic -> rellena hasta ahí.
+            setStat(v[key] === i + 1 ? i : i + 1);
+          });
+          pipsWrap.appendChild(pip);
+          pipEls.push(pip);
+        }
+
+        const plusBtn = document.createElement("button");
+        plusBtn.type = "button";
+        plusBtn.className = "card__stat-btn";
+        plusBtn.textContent = "+";
+
+        row.appendChild(minusBtn);
+        row.appendChild(iconEl);
+        row.appendChild(labelEl);
+        row.appendChild(pipsWrap);
+        row.appendChild(plusBtn);
+        sliders.appendChild(row);
+
+        function render() {
+          pipEls.forEach((pip, i) => pip.classList.toggle("unit-stat-pip--filled", i < v[key]));
+          minusBtn.disabled = v[key] <= 1;
+          plusBtn.disabled = v[key] >= 5;
+        }
+
+        function setStat(newVal) {
+          v[key] = Math.max(1, Math.min(5, newVal));
+          render();
+          saveTuned(tuned);
+          updateOutput();
+        }
+
+        minusBtn.addEventListener("click", () => setStat(v[key] - 1));
+        plusBtn.addEventListener("click", () => setStat(v[key] + 1));
+        render();
+      }
+
+      addStatRow("aguante", "Aguante", "ph-shield");
+      addStatRow("movimiento", "Movimiento", "ph-footprints");
+      addStatRow("fuerza", "Fuerza", "ph-boxing-glove");
+      addStatRow("agilidad", "Agilidad", "ph-wind");
 
       const resetBtn = document.createElement("button");
       resetBtn.className = "card__reset";

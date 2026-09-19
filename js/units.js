@@ -150,7 +150,7 @@ const SPRITE_SCALES = {
   surcabosques: 1,
   seta_artificiero: 1,
   goblin_lanzador: 1,
-  urgamentes: 1,
+  urgamentes: 0.9,
   punoroca: 1.5,
 };
 
