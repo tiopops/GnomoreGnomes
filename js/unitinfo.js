@@ -23,13 +23,22 @@ const UnitInfo = {
   overlayEl: null,
   currentUnit: null,
 
+  faceEl: null,
+
   ensureButton() {
     if (this.buttonEl) return this.buttonEl;
     const btn = document.createElement("button");
     btn.id = "unit-info-btn";
     btn.className = "unit-info-btn";
     btn.setAttribute("aria-label", "Mantén pulsado para ver las estadísticas del personaje");
-    btn.innerHTML = '<i class="ph ph-info"></i>';
+    // La cara del propio personaje seleccionado, recortada en círculo, en
+    // vez de un icono genérico de "i" — así el botón identifica de un
+    // vistazo A QUIÉN estás consultando (útil sobre todo cuando hay varias
+    // unidades parecidas en pantalla). object-fit + un zoom con transform
+    // (ver CSS) recorta hacia la parte de arriba del sprite, donde suele
+    // estar la cabeza en el arte actual del juego.
+    btn.innerHTML = '<span class="unit-info-btn__face-wrap"><img class="unit-info-btn__face" alt=""></span>';
+    this.faceEl = btn.querySelector(".unit-info-btn__face");
     btn.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
       e.preventDefault();
@@ -47,6 +56,9 @@ const UnitInfo = {
   onSelect(unit) {
     this.currentUnit = unit;
     const btn = this.ensureButton();
+    const type = UNIT_TYPES[unit.typeId];
+    this.faceEl.src = type.spriteUrl;
+    this.faceEl.classList.toggle("unit-info-btn__face--enemy", unit.team === "enemy");
     // Si ya estaba visible (cambio directo de una unidad seleccionada a
     // otra) no hace falta re-disparar la transición de entrada.
     requestAnimationFrame(() => btn.classList.add("unit-info-btn--visible"));
@@ -76,13 +88,15 @@ const UnitInfo = {
 
   openPopup() {
     if (!this.currentUnit) return;
+    // Si ya hay una abierta, no se recrea — en móvil un mismo toque puede
+    // disparar el pointerdown más de una vez (o llegar uno "fantasma" justo
+    // después del real); antes esto llamaba a closePopup() y volvía a
+    // crear el overlay, lo que cortaba en seco la transición de entrada a
+    // mitad de camino y se veía como un parpadeo justo al abrirse.
+    if (this.overlayEl) return;
     const unit = this.currentUnit;
     const type = UNIT_TYPES[unit.typeId];
     SFX.click();
-
-    // Por si quedara una abierta de antes (no debería, pero así nunca se
-    // duplica el overlay).
-    this.closePopup();
 
     const overlay = document.createElement("div");
     overlay.className = "unit-info-overlay";

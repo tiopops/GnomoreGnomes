@@ -37,13 +37,19 @@ const Movement = {
   },
 
   showFor(unit) {
-    this.reachableTiles(unit).forEach((tile, i) => {
+    const tiles = this.reachableTiles(unit);
+    tiles.forEach((tile, i) => {
       Units.addMarker({
         className: "range-marker",
         row: tile.row,
         col: tile.col,
         zOffset: 2,
-        delayIndex: i,
+        // Siempre por encima de cualquier unidad (ver alwaysOnTop en
+        // Units.addMarker): un personaje más alto que su loseta (p.ej. el
+        // hombre árbol) no debe poder tapar el círculo de la loseta de
+        // detrás solo por ser más grande.
+        alwaysOnTop: true,
+        delayMs: Units.staggerDelay(i, tiles.length),
         visibleClass: "range-marker--visible",
         onClick: () => this.moveTo(unit, tile.row, tile.col),
       });

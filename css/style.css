@@ -339,9 +339,35 @@ h2 {
      el sprite "perdiendo calidad"/emborronándose al mover el ratón (más
      repintados de golpe = menos margen para hacerlo a tiempo). unit__flip
      solo cambia de transform puntualmente (al girar), así que la sombra se
-     queda como una capa estable la mayor parte del tiempo. */
+     queda como una capa estable la mayor parte del tiempo.
+     El giro (--facing-scale, la puesta a punto de Units._applyFacing) NO
+     lleva transition sobre transform a propósito: una transition suave
+     entre scaleX(1) y scaleX(-1) pasa por scaleX(0) a mitad de camino —
+     aplastar el sprite hasta una línea y expandirlo por el otro lado, que
+     es justo lo que se leía como "un cartón de papel girando". El giro es
+     instantáneo; el "pop" elástico de abajo (unit__flip--turning) es lo que
+     da la sensación de personaje, no de recorte plano. */
   filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4));
-  transition: transform 0.16s ease, filter 0.15s ease;
+  transform: scaleX(var(--facing-scale, 1));
+  transition: filter 0.15s ease;
+}
+
+/* Rebote al cambiar de sentido: un breve encogido/estirado elástico que se
+   dispara SOLO cuando el personaje realmente cambia de dirección (nunca en
+   su colocación inicial, ver el guard en _applyFacing). Cada fotograma
+   incluye scaleX(var(--facing-scale)) para no pisar el giro de arriba — es
+   la misma propiedad "transform" pero ya no hay transition compitiendo (se
+   quitó arriba), así que un @keyframes aquí es seguro, misma regla que en
+   el resto del proyecto. */
+.unit__flip--turning {
+  animation: unit-turn-pop 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes unit-turn-pop {
+  0% { transform: scaleX(var(--facing-scale)) scale(1, 1); }
+  40% { transform: scaleX(var(--facing-scale)) scale(0.8, 1.14); }
+  70% { transform: scaleX(var(--facing-scale)) scale(1.1, 0.92); }
+  100% { transform: scaleX(var(--facing-scale)) scale(1, 1); }
 }
 
 .unit--selected .unit__flip {
@@ -576,6 +602,7 @@ h2 {
   bottom: 20px;
   width: 54px;
   height: 54px;
+  padding: 0;
   border-radius: 50%;
   border: 2px solid rgba(244, 242, 248, 0.35);
   background: var(--bg-elevated);
@@ -604,6 +631,34 @@ h2 {
   background: var(--accent);
   border-color: var(--accent-hover);
   transform: translateY(-3px) scale(1.08);
+}
+
+/* Cara del personaje seleccionado, recortada en círculo (sustituye al
+   icono genérico de "i") — ver UnitInfo.onSelect en unitinfo.js. */
+.unit-info-btn__face-wrap {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  display: block;
+}
+
+.unit-info-btn__face {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Recorta hacia arriba (donde suele estar la cabeza en el arte actual) y
+     amplía un poco más allá de lo que object-fit por sí solo conseguiría,
+     para que se lea como una cara, no como el personaje entero en miniatura. */
+  object-position: 50% 10%;
+  transform: scale(2.3);
+  transform-origin: 50% 22%;
+  display: block;
+}
+
+.unit-info-btn__face--enemy {
+  /* Mismo tinte que el resto del arte rival (ver .unit--enemy .unit__flip). */
+  filter: hue-rotate(150deg) saturate(1.7) brightness(0.95);
 }
 
 /* Fondo a pantalla completa de la ventana emergente de estadísticas. Es un
@@ -752,7 +807,9 @@ h2 {
    lleva el tinte de rival. */
 .gnome__sprite {
   width: 70px;
-  animation-duration: 1.1s;
+  /* Respira 3 veces más rápido que un personaje normal (2.6s, ver
+     unit-idle-breathe) para leerse como nervioso incluso parado. */
+  animation-duration: 0.87s;
 }
 
 /* Mientras se le lanza por el aire (ver Gnome.animateThrowTo), la posición
@@ -761,6 +818,28 @@ h2 {
    se vería a tirones, así que se desactiva solo durante el vuelo. */
 .gnome--flying {
   transition: none !important;
+}
+
+/* Aterrizaje tras un pase fallido (ver Gnome.landAt): golpe contra el suelo
+   -> aplastón -> rebote tipo "goma" hasta asentarse. Sustituye por completo
+   a la respiración continua mientras dura (misma idea que .unit--moving en
+   units.js: dos animaciones no pueden compartir "transform" en el mismo
+   elemento a la vez, así que .gnome--landing .gnome__sprite gana por
+   especificidad sobre la regla base .unit__sprite y la reemplaza en vez de
+   sumarse a ella). Duración = GNOME_LAND_IMPACT_MS en gnome.js — si se toca
+   un valor hay que tocar el otro. */
+.gnome--landing .gnome__sprite {
+  animation: gnome-land-impact 0.48s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+@keyframes gnome-land-impact {
+  0% { transform: scale(1, 1) translateY(0); }
+  12% { transform: scale(1.32, 0.6) translateY(0); }
+  32% { transform: scale(0.82, 1.22) translateY(-10px); }
+  50% { transform: scale(1.1, 0.9) translateY(0); }
+  68% { transform: scale(0.94, 1.07) translateY(-3px); }
+  84% { transform: scale(1.03, 0.98) translateY(0); }
+  100% { transform: scale(1, 1) translateY(0); }
 }
 
 /* Mira de "captura": mismo lenguaje visual que .attack-marker (grande, con
@@ -846,12 +925,15 @@ h2 {
    propio unit__flip del portador (ver Gnome.attachTo), para heredar su giro
    igual que el resto del cuerpo — así, si el portador se da la vuelta, el
    gnomo se ve consistentemente "en el brazo" y no se queda mirando al lado
-   contrario. */
+   contrario.
+   right/bottom/width NO se fijan aquí: cada tipo de personaje puede
+   necesitar su propio ajuste (un personaje más grande como el hombre árbol
+   no queda bien con el mismo offset que uno normal) — Gnome.attachTo los
+   pone inline a partir de GNOME_ATTACH_OFFSETS (ver gnome.js), calibrados
+   arrastrando dentro del propio juego (ver js/gnomecalib.js,
+   ?calibrarGnomo). */
 .gnome-attach {
   position: absolute;
-  right: -14px;
-  bottom: 6%;
-  width: 46px;
   opacity: 0;
   transform: scale(0.5) translateY(6px);
   transition: transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s ease;
@@ -899,6 +981,112 @@ h2 {
 .gnome-points-popup {
   color: #ffcf3f;
   text-shadow: 0 2px 5px rgba(0, 0, 0, 0.65), 0 0 10px rgba(255, 207, 63, 0.5);
+}
+
+/* ---------- Modo de calibración del gnomo (js/gnomecalib.js) ----------
+   Solo existe activo con ?calibrarGnomo en la URL — en una partida normal
+   .gnome-attach se queda con pointer-events: none (arriba) y nada de esto
+   llega a crearse. */
+
+/* Mientras se calibra, .gnome-attach SÍ debe poder recibir el puntero (a
+   diferencia de la partida normal) para poder arrastrarlo. */
+.gnome-attach--calibrating {
+  pointer-events: auto;
+  cursor: grab;
+  outline: 2px dashed rgba(255, 207, 63, 0.7);
+  outline-offset: 3px;
+}
+
+.gnome-attach--dragging {
+  cursor: grabbing;
+}
+
+/* Asa de redimensionado en la esquina — solo aparece durante la
+   calibración (se crea/destruye desde GnomeCalib, nunca vive en el DOM en
+   una partida normal). */
+.gnome-calib-handle {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--ink);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.gnome-calib-panel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  max-width: 280px;
+  background: var(--bg-elevated);
+  border: 2px solid rgba(255, 207, 63, 0.5);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 700;
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.gnome-calib-panel--visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.gnome-calib-panel__title {
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #ffcf3f;
+}
+
+.gnome-calib-panel__values {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.gnome-calib-panel__hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.gnome-calib-panel__copy {
+  width: 100%;
+  background: var(--accent);
+  color: var(--ink);
+  border: none;
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.gnome-calib-panel__copy:hover {
+  background: var(--accent-hover);
+}
+
+.gnome-calib-panel__copied {
+  display: block;
+  text-align: center;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #5fe083;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.gnome-calib-panel__copied--visible {
+  opacity: 1;
 }
 
 /* Botones de acción mientras se lleva al gnomo cogido (golpear/pasar):

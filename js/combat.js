@@ -142,9 +142,67 @@ const Combat = {
 
     if (target.hp <= 0) {
       await Units.removeUnit(target);
+    } else {
+      await this.pushBack(attacker, target);
     }
 
     Units.refreshRange(attacker);
+  },
+
+  // Empujón: se restan las FUERZAs (atacante - objetivo) y, si sale positivo,
+  // el objetivo retrocede esa cantidad de casillas en línea recta en la
+  // dirección del golpe (desde el atacante hacia el objetivo, prolongada más
+  // allá) — un atacante mucho más fuerte aparta al rival de un golpe, uno
+  // más débil o igual de fuerte no consigue moverlo ni un poco (0 o menos =
+  // sin efecto). Se para en el primer obstáculo (borde del tablero, otra
+  // unidad o el gnomo) en vez de saltárselo.
+  async pushBack(attacker, target) {
+    const push = UNIT_TYPES[attacker.typeId].fuerza - UNIT_TYPES[target.typeId].fuerza;
+    if (push <= 0) return;
+
+    const dRow = Math.sign(target.row - attacker.row);
+    const dCol = Math.sign(target.col - attacker.col);
+    if (dRow === 0 && dCol === 0) return;
+
+    const path = [];
+    let row = target.row;
+    let col = target.col;
+    for (let i = 0; i < push; i++) {
+      const nextRow = row + dRow;
+      const nextCol = col + dCol;
+      if (nextRow < 0 || nextCol < 0 || nextRow >= Units.boardSize || nextCol >= Units.boardSize) break;
+      if (Units.unitAt(nextRow, nextCol)) break;
+      if (typeof Gnome !== "undefined" && Gnome.isAt(nextRow, nextCol)) break;
+      path.push({ row: nextRow, col: nextCol });
+      row = nextRow;
+      col = nextCol;
+    }
+    if (path.length === 0) return;
+
+    // Empuje propio (no Units.walkPath): un empujón no es una decisión del
+    // propio personaje, así que NO se le hace girar para "mirar" hacia donde
+    // retrocede (a diferencia de un movimiento normal) — se queda mirando de
+    // frente a quien le ha golpeado, solo que unas casillas más atrás. Más
+    // rápido que un paso normal (140ms) para que se lea como un golpe seco,
+    // no como una decisión pausada.
+    target.el.classList.add("unit--moving");
+    for (const step of path) {
+      await new Promise((resolve) => {
+        target.row = step.row;
+        target.col = step.col;
+        const { x, y } = getTileCenter(step.row, step.col, Units.boardSize);
+        target.el.style.left = `${x}px`;
+        target.el.style.top = `${y}px`;
+        target.el.style.zIndex = String((step.row + step.col) * 10 + 5);
+        target.spriteEl.classList.remove("unit__sprite--hop");
+        void target.spriteEl.offsetWidth;
+        target.spriteEl.classList.add("unit__sprite--hop");
+        SFX.hop();
+        setTimeout(resolve, 140);
+      });
+    }
+    target.el.classList.remove("unit--moving");
+    target.spriteEl.classList.remove("unit__sprite--hop");
   },
 };
 

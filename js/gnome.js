@@ -26,6 +26,37 @@ const GNOME_ASSETS = {
   grita: "assets/equipos/MushboomForest/gnomo_grita.png",
 };
 
+// Ancho (px) del sprite del gnomo en el suelo (parado/huyendo) y en pleno
+// vuelo (ver Gnome.animateThrowTo) — calibrados con
+// debug/calibrar-gnomo.html. El tamaño mientras lo llevan cogido no vive
+// aquí: es uno de los valores por personaje de GNOME_ATTACH_OFFSETS, porque
+// ese sí depende de al lado de qué personaje se está viendo.
+const GNOME_SIZES = {
+  ground: 69,
+  flying: 73,
+};
+
+// Duración (ms) del aplastón + rebote al caer tras un pase fallido — debe
+// coincidir con la de @keyframes gnome-land-impact en style.css.
+const GNOME_LAND_IMPACT_MS = 480;
+
+// Posición/tamaño del gnomo "amarrado" al brazo de quien lo lleva cogido,
+// UNO POR TIPO DE PERSONAJE — hace falta porque no todos los personajes
+// tienen el mismo tamaño en pantalla (ver spriteScale en UNIT_TYPES,
+// units.js): el mismo offset que queda bien en un personaje normal se ve
+// descolocado en uno más grande como el hombre árbol. "default" es el que
+// se usa para cualquier tipo nuevo que todavía no se haya calibrado a mano
+// — así un personaje añadido más adelante nunca se queda sin gnomo
+// visible, solo con un ajuste genérico hasta que se afine el suyo propio.
+// Calibrados arrastrando dentro del propio juego (?calibrarGnomo, ver
+// js/gnomecalib.js) y con debug/calibrar-gnomo.html.
+const GNOME_ATTACH_OFFSETS = {
+  default: { right: -14, bottom: 6, width: 46 },
+  hombre_arbol: { right: 80, bottom: 23, width: 67 },
+  goblin_lanzador: { right: 59, bottom: 69, width: 63 },
+  seta_artificiero: { right: 33, bottom: 6, width: 63 },
+};
+
 const Gnome = {
   el: null,
   flipEl: null,
@@ -86,6 +117,7 @@ const Gnome = {
     spriteEl.src = GNOME_ASSETS.idle;
     spriteEl.draggable = false;
     spriteEl.alt = "";
+    spriteEl.style.width = `${GNOME_SIZES.ground}px`;
 
     flipEl.appendChild(spriteEl);
     el.appendChild(flipEl);
@@ -240,9 +272,26 @@ const Gnome = {
       this.attachSpriteEl = img;
     }
     this.attachSpriteEl.src = GNOME_ASSETS.grita;
+
+    // En modo de calibración (js/gnomecalib.js, activo solo con
+    // ?calibrarGnomo en la URL) se usa el último ajuste guardado a mano
+    // para este personaje en vez del valor fijo del código, para poder
+    // seguir arrastrando desde donde se dejó la vez anterior — fuera de ese
+    // modo esta llamada no hace nada (GnomeCalib.active es false) y se usa
+    // siempre GNOME_ATTACH_OFFSETS tal cual.
+    let offset = GNOME_ATTACH_OFFSETS[unit.typeId] || GNOME_ATTACH_OFFSETS.default;
+    if (typeof GnomeCalib !== "undefined" && GnomeCalib.active) {
+      offset = GnomeCalib.getOffset(unit.typeId) || offset;
+    }
+    this.attachEl.style.right = `${offset.right}px`;
+    this.attachEl.style.bottom = `${offset.bottom}%`;
+    this.attachEl.style.width = `${offset.width}px`;
+
     unit.flipEl.appendChild(this.attachEl);
     this.attachEl.classList.remove("gnome-attach--visible");
     requestAnimationFrame(() => this.attachEl.classList.add("gnome-attach--visible"));
+
+    if (typeof GnomeCalib !== "undefined") GnomeCalib.onAttach(unit, this);
   },
 
   detachFrom() {
@@ -251,6 +300,7 @@ const Gnome = {
       this.attachEl.classList.remove("gnome-attach--visible");
       this.attachEl.remove();
     }
+    if (typeof GnomeCalib !== "undefined") GnomeCalib.onDetach();
   },
 
   // ---------- Botones de "lo llevo cogido": golpear / pasar ----------
@@ -388,12 +438,17 @@ const Gnome = {
       this._addPoints(distance);
       SFX.passSuccess();
     } else {
-      this.landAt(end);
-      SFX.dropFail();
+      await this.landAt(end);
     }
 
     this.busy = false;
+    // Vuelve a pintar el radio de quien lanzaba (ya no lleva al gnomo, así
+    // que recupera la posibilidad de atacar) Y el de quien esté
+    // seleccionada ahora mismo si es otra unidad — ver el porqué en
+    // _refreshSelectedUnitRange: la mira de "coger" puede haberse quedado
+    // apuntando a la loseta vieja si el gnomo acaba de aparecer en otra.
     Units.refreshRange(holder);
+    this._refreshSelectedUnitRange();
   },
 
   // Loseta a la que cae el gnomo si el pase falla: se aleja de TODOS los
@@ -421,13 +476,30 @@ const Gnome = {
     return best || { row: fromUnit.row, col: fromUnit.col };
   },
 
-  landAt(tile) {
+  // Aterrizaje tras un pase fallido: el golpe contra el suelo es lo primero
+  // que se ve — SIGUE con el sprite de "lanzado" (grita) mientras se
+  // aplasta y rebota, como si el propio impacto fuera lo que lo asusta — y
+  // solo cuando el rebote termina de asentarse (ya con su forma normal)
+  // vuelve al sprite de reposo. gnome--landing sustituye temporalmente a la
+  // respiración continua (misma idea que unit--moving en units.js: dos
+  // animaciones no pueden compartir la propiedad "transform" a la vez, así
+  // que una sustituye a la otra mientras dura en vez de sumarse).
+  async landAt(tile) {
     this.row = tile.row;
     this.col = tile.col;
-    this.spriteEl.src = GNOME_ASSETS.idle;
     this.el.classList.remove("gnome--flying");
     this.el.style.display = "";
     Units._placeInstant(this);
+    SFX.dropFail();
+
+    this.el.classList.remove("gnome--landing");
+    void this.spriteEl.offsetWidth; // fuerza reflow para poder repetir la animación en aterrizajes seguidos
+    this.el.classList.add("gnome--landing");
+    await new Promise((resolve) => setTimeout(resolve, GNOME_LAND_IMPACT_MS));
+    this.el.classList.remove("gnome--landing");
+
+    this.spriteEl.src = GNOME_ASSETS.idle;
+    this.spriteEl.style.width = `${GNOME_SIZES.ground}px`;
   },
 
   // Arco de lanzamiento: la posición la controla JS fotograma a fotograma
@@ -446,6 +518,7 @@ const Gnome = {
       this.el.classList.add("gnome--flying");
       this.el.style.display = "";
       this.el.style.zIndex = "900";
+      this.spriteEl.style.width = `${GNOME_SIZES.flying}px`;
 
       const t0 = performance.now();
       const step = (now) => {
@@ -497,6 +570,11 @@ const Gnome = {
     this.busy = true;
     Units.walkPath(this, path).then(() => {
       this.busy = false;
+      // El gnomo acaba de cambiar de loseta: si hay una unidad seleccionada
+      // ahora mismo (sea o no la que se acaba de mover), su mira de
+      // "coger" puede haberse quedado apuntando a la loseta vieja — ver
+      // _refreshSelectedUnitRange.
+      this._refreshSelectedUnitRange();
     });
   },
 
@@ -525,6 +603,18 @@ const Gnome = {
       return { row: r, col: c };
     }
     return null;
+  },
+
+  // Vuelve a pintar el radio de la unidad del JUGADOR que esté seleccionada
+  // ahora mismo (si hay alguna) — se llama cada vez que el gnomo cambia de
+  // loseta por cualquier motivo (huida, aterrizaje tras un pase fallido...)
+  // para que una mira de "coger" que apuntaba a su loseta vieja se
+  // refresque a la nueva, sin que quien disparó el cambio tenga que ser la
+  // propia unidad seleccionada.
+  _refreshSelectedUnitRange() {
+    if (!Units.selectedId) return;
+    const unit = Units.list.find((u) => u.id === Units.selectedId);
+    if (unit && unit.team === "player") Units.refreshRange(unit);
   },
 
   // ---------- Puntos acumulados ----------

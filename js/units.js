@@ -221,9 +221,26 @@ const Units = {
     this._applyFacing(unit);
   },
 
+  // El giro en sí es SIEMPRE instantáneo (nunca con transition sobre
+  // transform, ver .unit__flip en style.css) — una transition suave entre
+  // scaleX(1) y scaleX(-1) pasa por scaleX(0) a mitad de camino, que es
+  // literalmente aplastar el sprite hasta una línea y expandirlo por el
+  // otro lado: se lee como un cartón de papel girando, no como un
+  // personaje dándose la vuelta. En su lugar, cuando el sentido REALMENTE
+  // cambia (no en la colocación inicial), se dispara un "pop" con
+  // rebote — un breve encogido/estirado elástico (unit-turn-pop, ver CSS)
+  // que convive con el mismo scaleX porque ambos leen la variable CSS
+  // --facing-scale en vez de competir por la propiedad transform.
   _applyFacing(unit) {
-    // El arte mira a la derecha por defecto: invertir solo cuando toca mirar a la izquierda.
-    unit.flipEl.style.transform = unit.facing === "left" ? "scaleX(-1)" : "scaleX(1)";
+    const newScale = unit.facing === "left" ? "-1" : "1";
+    const prevScale = unit.flipEl.dataset.facingScale;
+    unit.flipEl.style.setProperty("--facing-scale", newScale);
+    unit.flipEl.dataset.facingScale = newScale;
+    if (prevScale !== undefined && prevScale !== newScale) {
+      unit.flipEl.classList.remove("unit__flip--turning");
+      void unit.flipEl.offsetWidth; // fuerza reflow para poder repetir el pop si gira varias veces seguidas
+      unit.flipEl.classList.add("unit__flip--turning");
+    }
   },
 
   // Gira `unit` para encararse hacia una loseta destino según su posición
@@ -239,6 +256,24 @@ const Units = {
   },
 
   _onUnitClick(unit) {
+    // Si esta unidad es un rival "marcado como objetivo" ahora mismo (ver
+    // unit--targeted, lo pone Combat.showFor para cada rival al alcance de
+    // la unidad seleccionada), un clic sobre EL PROPIO PERSONAJE ataca
+    // directamente en vez de solo seleccionarlo/deseleccionarlo — antes de
+    // que la mira de ataque pasara a pintarse por detrás de su sprite (a
+    // petición expresa) bastaba con acertar en cualquier punto del rival
+    // para atacar; ahora que la mira solo asoma por los bordes, sin esto
+    // el jugador puede quedarse sin poder atacar aunque haga clic justo
+    // encima del rival. Vive aquí (no en combat.js) porque es el propio
+    // manejador de clic de la unidad el que necesita desviarse, y así
+    // combat.js sigue sin saber nada de cómo se selecciona una unidad.
+    if (unit.el.classList.contains("unit--targeted") && this.selectedId) {
+      const attacker = this.list.find((u) => u.id === this.selectedId);
+      if (attacker && typeof Combat !== "undefined") {
+        Combat.approachAndAttack(attacker, unit);
+        return;
+      }
+    }
     if (this.selectedId === unit.id) {
       this.deselect();
       return;
@@ -320,7 +355,18 @@ const Units = {
   // asegura que el navegador registre primero el estado inicial antes de
   // pasar al visible, y el setTimeout escalona la aparición de varios
   // marcadores seguidos.
-  addMarker({ className, row, col, zOffset = 0, delayIndex = 0, visibleClass, onClick, buildContent }) {
+  addMarker({
+    className,
+    row,
+    col,
+    zOffset = 0,
+    delayIndex = 0,
+    delayMs,
+    alwaysOnTop = false,
+    visibleClass,
+    onClick,
+    buildContent,
+  }) {
     const marker = document.createElement("div");
     marker.className = `board-marker ${className}`;
     if (buildContent) buildContent(marker);
@@ -335,7 +381,15 @@ const Units = {
     const { x, y } = getTileCenter(row, col, this.boardSize);
     marker.style.left = `${x}px`;
     marker.style.top = `${y}px`;
-    marker.style.zIndex = String((row + col) * 10 + zOffset);
+    // alwaysOnTop: por encima de CUALQUIER unidad, sea cual sea su fila/
+    // columna — lo usa el círculo de movimiento (ver movement.js) para que
+    // un personaje grande (p.ej. el hombre árbol, más alto que su propia
+    // loseta) nunca lo tape aunque esté en la loseta "de detrás" en el
+    // orden isométrico normal. El resto de marcadores (mira de ataque,
+    // captura del gnomo...) siguen con el z-index relativo a su loseta,
+    // porque esos sí necesitan una relación concreta (por delante/detrás)
+    // con una unidad concreta.
+    marker.style.zIndex = alwaysOnTop ? String(5000 + zOffset) : String((row + col) * 10 + zOffset);
 
     if (onClick) {
       marker.addEventListener("click", (e) => {
@@ -348,12 +402,31 @@ const Units = {
     this.markerEls.push(marker);
 
     if (visibleClass) {
+      // delayMs (si se da) sustituye al escalonado fijo de 18ms por
+      // marcador: con muchas losetas a la vez (una unidad con mucho
+      // movimiento puede alcanzar más de 100) ese fijo tardaría segundos en
+      // terminar de aparecer — ver Units.staggerDelay, que lo comprime para
+      // que el radio completo tarde siempre más o menos lo mismo en
+      // revelarse, sea cual sea su tamaño.
+      const delay = delayMs !== undefined ? delayMs : delayIndex * 18;
       requestAnimationFrame(() => {
-        setTimeout(() => marker.classList.add(visibleClass), delayIndex * 18);
+        setTimeout(() => marker.classList.add(visibleClass), delay);
       });
     }
 
     return marker;
+  },
+
+  // Retraso (ms) para el elemento `index` de `total` en una aparición
+  // escalonada: como antes (18ms por elemento) mientras el conjunto es
+  // pequeño, pero comprimido para que el conjunto ENTERO nunca tarde más de
+  // `maxTotalMs` en terminar de aparecer — así una unidad con movimiento 5
+  // (que puede iluminar más de 100 losetas) no tarda proporcionalmente más
+  // que una con movimiento 1 (unas 8 losetas).
+  staggerDelay(index, total, maxTotalMs = 200) {
+    if (total <= 1) return 0;
+    const perStep = Math.min(18, maxTotalMs / total);
+    return index * perStep;
   },
 
   // Cuando dos marcadores de mecánicas distintas caen en la misma loseta
