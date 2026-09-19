@@ -18,11 +18,13 @@
    por tipo de personaje. */
 
 const GNOME_CALIB_STORAGE_KEY = "gnomore-gnomo-posicion-v1"; // mismo formato que la herramienta anterior
-const GNOME_CALIB_DEFAULTS = { right: -14, bottom: 6, width: 46 };
+const GNOME_CALIB_WIDTH_STORAGE_KEY = "gnomore-gnomo-tamano-cogido-v1";
+const GNOME_CALIB_DEFAULTS = { right: -14, bottom: 6 };
 
 const GnomeCalib = {
   active: false,
-  tuned: {},
+  tuned: {}, // posición (right/bottom), UNA por tipo de personaje
+  heldWidth: null, // tamaño cogido, UN SOLO valor compartido por todos los personajes
   currentUnit: null,
   currentGnome: null,
   handleEl: null,
@@ -34,6 +36,7 @@ const GnomeCalib = {
     this.active = /(?:^|[?&])calibrarGnomo(?:=|&|$)/.test(location.search);
     if (!this.active) return;
     this.tuned = this._load();
+    this.heldWidth = this._loadWidth();
     document.addEventListener("DOMContentLoaded", () => this._ensurePanel());
   },
 
@@ -53,13 +56,43 @@ const GnomeCalib = {
     }
   },
 
+  _loadWidth() {
+    try {
+      const raw = localStorage.getItem(GNOME_CALIB_WIDTH_STORAGE_KEY);
+      return raw ? Number(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  _saveWidth() {
+    try {
+      localStorage.setItem(GNOME_CALIB_WIDTH_STORAGE_KEY, String(this.heldWidth));
+    } catch (e) {
+      // no crítico — solo se pierde la persistencia entre recargas
+    }
+  },
+
   getOffset(typeId) {
     return this.tuned[typeId] || null;
+  },
+
+  // Tamaño cogido: siempre el mismo, sea cual sea el personaje que lo lleve
+  // — si aún no se ha tocado el asa de redimensionar en esta sesión de
+  // calibración, usa el tamaño fijo del código (GNOME_SIZES.held, gnome.js).
+  getHeldWidth() {
+    return this.heldWidth != null ? this.heldWidth : GNOME_SIZES.held;
   },
 
   _setOffset(typeId, offset) {
     this.tuned[typeId] = offset;
     this._save();
+    this._updatePanelValues();
+  },
+
+  _setHeldWidth(width) {
+    this.heldWidth = width;
+    this._saveWidth();
     this._updatePanelValues();
   },
 
@@ -113,7 +146,7 @@ const GnomeCalib = {
     const flipRect = this.currentUnit.flipEl.getBoundingClientRect();
     const startRight = parseFloat(attachEl.style.right) || 0;
     const startBottomPct = parseFloat(attachEl.style.bottom) || 0;
-    const startWidth = parseFloat(attachEl.style.width) || GNOME_CALIB_DEFAULTS.width;
+    const startWidth = parseFloat(attachEl.style.width) || this.getHeldWidth();
 
     this.drag = {
       mode,
@@ -165,7 +198,10 @@ const GnomeCalib = {
     } else {
       // Redimensionar desde la esquina inferior derecha: arrastrar hacia
       // fuera (derecha/abajo, sin espejar — el asa vive dentro del propio
-      // elemento ya orientado) agranda; hacia dentro, encoge.
+      // elemento ya orientado) agranda; hacia dentro, encoge. Este tamaño es
+      // COMPARTIDO por todos los personajes (ver GNOME_SIZES.held en
+      // gnome.js) — se puede ajustar mirando a cualquiera de ellos, pero se
+      // aplica a todos por igual.
       const localDx = d.invertX ? -dxScreen : dxScreen;
       const newWidth = Math.max(16, Math.round(d.startWidth + localDx));
       attachEl.style.width = `${newWidth}px`;
@@ -179,8 +215,8 @@ const GnomeCalib = {
     this._setOffset(this.currentUnit.typeId, {
       right: Math.round(parseFloat(attachEl.style.right) || 0),
       bottom: Math.round((parseFloat(attachEl.style.bottom) || 0) * 10) / 10,
-      width: Math.round(parseFloat(attachEl.style.width) || GNOME_CALIB_DEFAULTS.width),
     });
+    this._setHeldWidth(Math.round(parseFloat(attachEl.style.width) || this.getHeldWidth()));
   },
 
   // ---------- Panel flotante ----------
@@ -191,9 +227,9 @@ const GnomeCalib = {
     panel.className = "gnome-calib-panel";
     panel.innerHTML = `
       <div class="gnome-calib-panel__title">Calibrando: <span id="gnomeCalibCharName">—</span></div>
-      <div class="gnome-calib-panel__values" id="gnomeCalibValues">right — · bottom — · width —</div>
-      <div class="gnome-calib-panel__hint">Arrastra el gnomo para moverlo. Arrastra el puntito de su esquina para cambiar su tamaño.</div>
-      <button class="gnome-calib-panel__copy" id="gnomeCalibCopyBtn">Copiar ajustes (GNOME_ATTACH_OFFSETS)</button>
+      <div class="gnome-calib-panel__values" id="gnomeCalibValues">right — · bottom — · tamaño (compartido) —</div>
+      <div class="gnome-calib-panel__hint">Arrastra el gnomo para moverlo (por personaje). Arrastra el puntito de su esquina para cambiar su tamaño — este es el MISMO para todos los personajes, se ajusta mirando a cualquiera.</div>
+      <button class="gnome-calib-panel__copy" id="gnomeCalibCopyBtn">Copiar ajustes (GNOME_SIZES + GNOME_ATTACH_OFFSETS)</button>
       <span class="gnome-calib-panel__copied" id="gnomeCalibCopiedMsg">Copiado ✓</span>
     `;
     document.body.appendChild(panel);
@@ -221,7 +257,7 @@ const GnomeCalib = {
     const right = Math.round(parseFloat(attachEl.style.right) || 0);
     const bottom = Math.round((parseFloat(attachEl.style.bottom) || 0) * 10) / 10;
     const width = Math.round(parseFloat(attachEl.style.width) || 0);
-    this.panelValuesEl.textContent = `right ${right} · bottom ${bottom}% · width ${width}px`;
+    this.panelValuesEl.textContent = `right ${right} · bottom ${bottom}% · tamaño (compartido) ${width}px`;
   },
 
   _updatePanelValues() {
@@ -231,13 +267,19 @@ const GnomeCalib = {
   // ---------- Copiar ----------
 
   _buildOutputText() {
-    const lines = ["const GNOME_ATTACH_OFFSETS = {"];
-    lines.push(
-      `  default: { right: ${GNOME_CALIB_DEFAULTS.right}, bottom: ${GNOME_CALIB_DEFAULTS.bottom}, width: ${GNOME_CALIB_DEFAULTS.width} },`
-    );
+    const lines = [
+      "const GNOME_SIZES = {",
+      `  ground: ${GNOME_SIZES.ground},`,
+      `  flying: ${GNOME_SIZES.flying},`,
+      `  held: ${this.getHeldWidth()},`,
+      "};",
+      "",
+      "const GNOME_ATTACH_OFFSETS = {",
+      `  default: { right: ${GNOME_CALIB_DEFAULTS.right}, bottom: ${GNOME_CALIB_DEFAULTS.bottom} },`,
+    ];
     Object.keys(UNIT_TYPES).forEach((typeId) => {
       const v = this.tuned[typeId] || GNOME_CALIB_DEFAULTS;
-      lines.push(`  ${typeId}: { right: ${v.right}, bottom: ${v.bottom}, width: ${v.width} },`);
+      lines.push(`  ${typeId}: { right: ${v.right}, bottom: ${v.bottom} },`);
     });
     lines.push("};");
     return lines.join("\n");

@@ -187,20 +187,21 @@
       <label for="bottom">Vertical (bottom) — <span class="value" id="bottomVal">6</span> %</label>
       <input type="range" id="bottom" min="-20" max="100" step="1" value="6">
     </div>
-    <div class="control">
-      <label for="width">Tamaño cogido — <span class="value" id="widthVal">46</span> px</label>
-      <input type="range" id="width" min="20" max="120" step="1" value="46">
-    </div>
     <div class="control" style="min-width: auto;">
       <button class="toggle-btn" id="flipBtn">Girar personaje</button>
     </div>
     <div class="control" style="min-width: auto;">
-      <button class="reset-btn" id="resetBtn">Reiniciar este personaje</button>
+      <button class="reset-btn" id="resetBtn">Reiniciar posición de este personaje</button>
     </div>
   </div>
 
-  <div class="section-title">En el suelo / lanzado</div>
+  <div class="section-title">Tamaños (compartidos por TODOS los personajes)</div>
   <div class="panel">
+    <div class="control">
+      <label for="heldWidth">Tamaño cogido — <span class="value" id="heldWidthVal">46</span> px</label>
+      <input type="range" id="heldWidth" min="20" max="120" step="1" value="46">
+      <span style="font-size:0.75rem;color:var(--muted);">Un único valor para todos — solo la posición (right/bottom) varía por personaje.</span>
+    </div>
     <div class="control">
       <label for="groundWidth">Tamaño en el suelo — <span class="value" id="groundWidthVal">69</span> px</label>
       <input type="range" id="groundWidth" min="20" max="140" step="1" value="69">
@@ -251,7 +252,9 @@
   <script>
     const POS_STORAGE_KEY = "gnomore-gnomo-posicion-v1"; // mismo formato que usa js/gnomecalib.js dentro del juego
     const SIZE_STORAGE_KEY = "gnomore-gnomo-tamano-v1";
-    const POS_DEFAULTS = { right: -14, bottom: 6, width: 46 };
+    const HELD_WIDTH_STORAGE_KEY = "gnomore-gnomo-tamano-cogido-v1"; // mismo formato que usa js/gnomecalib.js
+    const POS_DEFAULTS = { right: -14, bottom: 6 };
+    const HELD_WIDTH_DEFAULT = 46;
 
     function loadPositions() {
       try { return JSON.parse(localStorage.getItem(POS_STORAGE_KEY)) || {}; } catch (e) { return {}; }
@@ -266,22 +269,32 @@
     function saveSizes(data) {
       try { localStorage.setItem(SIZE_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
     }
+    function loadHeldWidth() {
+      try {
+        const raw = localStorage.getItem(HELD_WIDTH_STORAGE_KEY);
+        return raw ? Number(raw) : HELD_WIDTH_DEFAULT;
+      } catch (e) { return HELD_WIDTH_DEFAULT; }
+    }
+    function saveHeldWidth(value) {
+      try { localStorage.setItem(HELD_WIDTH_STORAGE_KEY, String(value)); } catch (e) {}
+    }
 
     let tuned = loadPositions();
     let sizes = loadSizes();
+    let heldWidth = loadHeldWidth();
     let facingLeft = false;
     let currentEls = null;
 
     const charSelect = document.getElementById("charSelect");
     const rightInput = document.getElementById("right");
     const bottomInput = document.getElementById("bottom");
-    const widthInput = document.getElementById("width");
     const rightVal = document.getElementById("rightVal");
     const bottomVal = document.getElementById("bottomVal");
-    const widthVal = document.getElementById("widthVal");
     const flipBtn = document.getElementById("flipBtn");
     const resetBtn = document.getElementById("resetBtn");
     const stageHeld = document.getElementById("stageHeld");
+    const heldWidthInput = document.getElementById("heldWidth");
+    const heldWidthVal = document.getElementById("heldWidthVal");
     const groundWidth = document.getElementById("groundWidth");
     const flyingWidth = document.getElementById("flyingWidth");
     const groundWidthVal = document.getElementById("groundWidthVal");
@@ -339,7 +352,7 @@
     }
 
     function currentValues() {
-      return { right: Number(rightInput.value), bottom: Number(bottomInput.value), width: Number(widthInput.value) };
+      return { right: Number(rightInput.value), bottom: Number(bottomInput.value) };
     }
 
     function applyValuesToStage() {
@@ -347,10 +360,9 @@
       const v = currentValues();
       currentEls.attachEl.style.right = v.right + "px";
       currentEls.attachEl.style.bottom = v.bottom + "%";
-      currentEls.attachEl.style.width = v.width + "px";
+      currentEls.attachEl.style.width = heldWidth + "px";
       rightVal.textContent = v.right;
       bottomVal.textContent = v.bottom;
-      widthVal.textContent = v.width;
     }
 
     function updateOutput() {
@@ -358,14 +370,15 @@
         "const GNOME_SIZES = {",
         `  ground: ${sizes.ground},`,
         `  flying: ${sizes.flying},`,
+        `  held: ${heldWidth},`,
         "};",
         "",
         "const GNOME_ATTACH_OFFSETS = {",
-        `  default: { right: ${POS_DEFAULTS.right}, bottom: ${POS_DEFAULTS.bottom}, width: ${POS_DEFAULTS.width} },`,
+        `  default: { right: ${POS_DEFAULTS.right}, bottom: ${POS_DEFAULTS.bottom} },`,
       ];
       Object.keys(UNIT_TYPES).forEach((typeId) => {
         const v = tuned[typeId] || POS_DEFAULTS;
-        lines.push(`  ${typeId}: { right: ${v.right}, bottom: ${v.bottom}, width: ${v.width} },`);
+        lines.push(`  ${typeId}: { right: ${v.right}, bottom: ${v.bottom} },`);
       });
       lines.push("};");
       output.value = lines.join("\n");
@@ -382,13 +395,12 @@
       const v = tuned[typeId] || POS_DEFAULTS;
       rightInput.value = v.right;
       bottomInput.value = v.bottom;
-      widthInput.value = v.width;
       buildHeldStage(typeId);
       applyValuesToStage();
     }
 
     charSelect.addEventListener("change", () => loadCharacter(charSelect.value));
-    [rightInput, bottomInput, widthInput].forEach((input) => {
+    [rightInput, bottomInput].forEach((input) => {
       input.addEventListener("input", () => {
         applyValuesToStage();
         persistCurrent();
@@ -403,6 +415,14 @@
       updateOutput();
     });
 
+    function renderHeldWidth() {
+      // Compartido por TODOS los personajes — no depende de charSelect.
+      heldWidth = Number(heldWidthInput.value);
+      heldWidthVal.textContent = heldWidth;
+      saveHeldWidth(heldWidth);
+      applyValuesToStage();
+      updateOutput();
+    }
     function renderGround() {
       sizes.ground = Number(groundWidth.value);
       groundWidthVal.textContent = sizes.ground;
@@ -417,8 +437,10 @@
       saveSizes(sizes);
       updateOutput();
     }
+    heldWidthInput.value = heldWidth;
     groundWidth.value = sizes.ground;
     flyingWidth.value = sizes.flying;
+    heldWidthInput.addEventListener("input", renderHeldWidth);
     groundWidth.addEventListener("input", renderGround);
     flyingWidth.addEventListener("input", renderFlying);
 
@@ -434,6 +456,7 @@
     });
 
     loadCharacter(charSelect.value);
+    renderHeldWidth();
     renderGround();
     renderFlying();
     updateOutput();

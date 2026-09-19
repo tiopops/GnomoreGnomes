@@ -26,35 +26,40 @@ const GNOME_ASSETS = {
   grita: "assets/equipos/MushboomForest/gnomo_grita.png",
 };
 
-// Ancho (px) del sprite del gnomo en el suelo (parado/huyendo) y en pleno
-// vuelo (ver Gnome.animateThrowTo) — calibrados con
-// debug/calibrar-gnomo.html. El tamaño mientras lo llevan cogido no vive
-// aquí: es uno de los valores por personaje de GNOME_ATTACH_OFFSETS, porque
-// ese sí depende de al lado de qué personaje se está viendo.
+// Ancho (px) del sprite del gnomo en el suelo (parado/huyendo), en pleno
+// vuelo (ver Gnome.animateThrowTo) y mientras lo llevan cogido — calibrados
+// con debug/calibrar-gnomo.html. "held" es UN ÚNICO valor compartido por
+// TODOS los personajes (a diferencia de right/bottom en
+// GNOME_ATTACH_OFFSETS, que sí varían según el personaje): el gnomo debe
+// verse siempre del mismo tamaño mientras está cogido, solo cambia dónde se
+// engancha.
 const GNOME_SIZES = {
   ground: 69,
-  flying: 73,
+  flying: 87,
+  held: 85,
 };
 
 // Duración (ms) del aplastón + rebote al caer tras un pase fallido — debe
 // coincidir con la de @keyframes gnome-land-impact en style.css.
 const GNOME_LAND_IMPACT_MS = 480;
 
-// Posición/tamaño del gnomo "amarrado" al brazo de quien lo lleva cogido,
-// UNO POR TIPO DE PERSONAJE — hace falta porque no todos los personajes
-// tienen el mismo tamaño en pantalla (ver spriteScale en UNIT_TYPES,
-// units.js): el mismo offset que queda bien en un personaje normal se ve
-// descolocado en uno más grande como el hombre árbol. "default" es el que
-// se usa para cualquier tipo nuevo que todavía no se haya calibrado a mano
-// — así un personaje añadido más adelante nunca se queda sin gnomo
-// visible, solo con un ajuste genérico hasta que se afine el suyo propio.
+// Posición del gnomo "amarrado" al brazo de quien lo lleva cogido, UNA POR
+// TIPO DE PERSONAJE — hace falta porque no todos los personajes tienen el
+// mismo tamaño en pantalla (ver spriteScale en UNIT_TYPES, units.js): el
+// mismo offset que queda bien en un personaje normal se ve descolocado en
+// uno más grande como el hombre árbol. "default" es el que se usa para
+// cualquier tipo nuevo que todavía no se haya calibrado a mano — así un
+// personaje añadido más adelante nunca se queda sin gnomo visible, solo con
+// un ajuste genérico hasta que se afine el suyo propio.
+// El TAMAÑO mientras está cogido, en cambio, NO vive aquí — es el mismo
+// para todos los personajes (ver GNOME_SIZES.held más arriba).
 // Calibrados arrastrando dentro del propio juego (?calibrarGnomo, ver
 // js/gnomecalib.js) y con debug/calibrar-gnomo.html.
 const GNOME_ATTACH_OFFSETS = {
-  default: { right: -14, bottom: 6, width: 46 },
-  hombre_arbol: { right: 80, bottom: 23, width: 67 },
-  goblin_lanzador: { right: 59, bottom: 69, width: 63 },
-  seta_artificiero: { right: 33, bottom: 6, width: 63 },
+  default: { right: -14, bottom: 6 },
+  hombre_arbol: { right: 72, bottom: 17 },
+  goblin_lanzador: { right: 51, bottom: 69 },
+  seta_artificiero: { right: 33, bottom: 6 },
 };
 
 const Gnome = {
@@ -280,12 +285,14 @@ const Gnome = {
     // modo esta llamada no hace nada (GnomeCalib.active es false) y se usa
     // siempre GNOME_ATTACH_OFFSETS tal cual.
     let offset = GNOME_ATTACH_OFFSETS[unit.typeId] || GNOME_ATTACH_OFFSETS.default;
+    let heldWidth = GNOME_SIZES.held;
     if (typeof GnomeCalib !== "undefined" && GnomeCalib.active) {
       offset = GnomeCalib.getOffset(unit.typeId) || offset;
+      heldWidth = GnomeCalib.getHeldWidth();
     }
     this.attachEl.style.right = `${offset.right}px`;
     this.attachEl.style.bottom = `${offset.bottom}%`;
-    this.attachEl.style.width = `${offset.width}px`;
+    this.attachEl.style.width = `${heldWidth}px`;
 
     unit.flipEl.appendChild(this.attachEl);
     this.attachEl.classList.remove("gnome-attach--visible");
