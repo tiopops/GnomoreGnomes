@@ -42,8 +42,8 @@
 const FACE_OFFSETS = {
   default: { x: 50, y: 15, zoom: 230 },
   hombre_arbol: { x: 72, y: 14, zoom: 210 },
-  surcabosques: { x: 50, y: 15, zoom: 230 },
-  seta_artificiero: { x: 50, y: 15, zoom: 230 },
+  surcabosques: { x: 87, y: 23, zoom: 165 },
+  seta_artificiero: { x: 72, y: 32, zoom: 180 },
   goblin_lanzador: { x: 70, y: 21, zoom: 190 },
 };
 

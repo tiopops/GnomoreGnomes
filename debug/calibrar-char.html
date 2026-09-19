@@ -165,7 +165,7 @@
   .output-wrap h2 { font-size: 0.82rem; margin: 0 0 6px; color: var(--muted); font-weight: 600; }
   textarea {
     width: 100%;
-    height: 100px;
+    height: 180px;
     background: var(--bg);
     color: #b7f5c2;
     border: 1px solid rgba(244, 242, 248, 0.2);
@@ -501,13 +501,24 @@
       });
     });
 
+    // El textarea de salida lleva SIEMPRE el bloque FACE_OFFSETS completo,
+    // con una entrada por cada personaje de UNIT_TYPES (el que se esté
+    // editando ahora mismo con los sliders de arriba, y todos los demás
+    // con su último valor guardado en localStorage, o el valor por
+    // defecto si aún no se ha tocado) — así Jesús copia una sola vez y
+    // pega el objeto entero en vez de ir personaje a personaje.
     function updateOutput() {
-      const typeId = charSelect.value;
-      const v = faceOffsets[typeId] || FACE_DEFAULT;
       const lines = [
-        "// --- js/unitinfo.js — entrada de FACE_OFFSETS para " + typeId + " ---",
-        `  ${typeId}: { x: ${v.x}, y: ${v.y}, zoom: ${v.zoom} },`,
-        "",
+        "// --- js/unitinfo.js — FACE_OFFSETS completo ---",
+        "const FACE_OFFSETS = {",
+        `  default: { x: ${FACE_DEFAULT.x}, y: ${FACE_DEFAULT.y}, zoom: ${FACE_DEFAULT.zoom} },`,
+      ];
+      Object.keys(UNIT_TYPES).forEach((typeId) => {
+        const v = faceOffsets[typeId] || FACE_DEFAULT;
+        lines.push(`  ${typeId}: { x: ${v.x}, y: ${v.y}, zoom: ${v.zoom} },`);
+      });
+      lines.push("};", "");
+      lines.push(
         "// --- js/uiconfig.js — UI_LAYOUT completo ---",
         "const UI_LAYOUT = {",
         "  infoCircle: {",
@@ -526,8 +537,8 @@
         `    startAngle: ${btnLayout.startAngle},`,
         `    endAngle: ${btnLayout.endAngle},`,
         "  },",
-        "};",
-      ];
+        "};"
+      );
       output.value = lines.join("\n");
     }
 
