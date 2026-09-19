@@ -64,7 +64,13 @@ const Movement = {
     // del jugador se mueve — vive en su propio archivo y se entera de esto
     // igual que combat.js/movement.js se enteran uno del otro: sin que
     // ninguno de los dos necesite saber cómo funciona el otro por dentro.
-    if (typeof Gnome !== "undefined") Gnome.reactToPlayerMove(unit);
+    // Orden pedido explícitamente: primero se mueve el personaje (ya
+    // esperado arriba), LUEGO se mueve el gnomo del todo (por eso se
+    // espera aquí, reactToPlayerMove es async precisamente para esto) y
+    // solo DESPUÉS se refrescan las casillas de movimiento — nunca en
+    // paralelo, para que no se vea el radio actualizándose mientras el
+    // gnomo todavía está huyendo.
+    if (typeof Gnome !== "undefined") await Gnome.reactToPlayerMove(unit);
     Units.refreshRange(unit);
   },
 };

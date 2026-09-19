@@ -636,7 +636,14 @@ const Gnome = {
   // del jugador (ver esa línea en movement.js) — el gnomo se aleja 2
   // casillas de quien se acaba de mover, salvo que esté cogido o ya esté
   // ocupado en otra animación propia.
-  reactToPlayerMove(mover) {
+  //
+  // Async A PROPÓSITO (antes no lo era, y Movement.moveTo la llamaba sin
+  // esperarla): el orden pedido es personaje se mueve → LUEGO se mueve el
+  // gnomo → LUEGO se actualizan las casillas de movimiento, así que
+  // Movement.moveTo tiene que poder esperar a que esta función termine del
+  // todo (incluida la huida del gnomo) antes de refrescar el radio —
+  // devolver una promesa aquí es lo que se lo permite.
+  async reactToPlayerMove(mover) {
     if (!this.el || this.heldBy || this.busy) return;
 
     let dRow = Math.sign(this.row - mover.row);
@@ -659,14 +666,13 @@ const Gnome = {
     if (path.length === 0) return;
 
     this.busy = true;
-    Units.walkPath(this, path).then(() => {
-      this.busy = false;
-      // El gnomo acaba de cambiar de loseta: si hay una unidad seleccionada
-      // ahora mismo (sea o no la que se acaba de mover), su mira de
-      // "coger" puede haberse quedado apuntando a la loseta vieja — ver
-      // _refreshSelectedUnitRange.
-      this._refreshSelectedUnitRange();
-    });
+    await Units.walkPath(this, path);
+    this.busy = false;
+    // El gnomo acaba de cambiar de loseta: si hay una unidad seleccionada
+    // ahora mismo (sea o no la que se acaba de mover), su mira de
+    // "coger" puede haberse quedado apuntando a la loseta vieja — ver
+    // _refreshSelectedUnitRange.
+    this._refreshSelectedUnitRange();
   },
 
   // Elige la mejor loseta vecina para huir. No basta con "la primera
