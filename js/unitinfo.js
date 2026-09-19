@@ -18,6 +18,35 @@
    pantalla cierre igualmente el popup, incluso si el dedo/ratón se ha
    desplazado fuera del botón antes de soltar. */
 
+// Recorte de la cara dentro del círculo de información, UNO POR TIPO DE
+// PERSONAJE (mismo patrón que GNOME_ATTACH_OFFSETS en gnome.js): cada
+// sprite tiene la cabeza en un sitio distinto, así que un único recorte
+// para todos no encaja bien con ninguno en particular.
+//
+// Implementado con background-image (no <img>+object-fit/transform como
+// antes): con object-fit:cover, un sprite casi tan ancho como alto dentro
+// de un círculo también casi cuadrado deja muy poco margen de sobra para
+// mover — object-position apenas tenía nada que recorrer y el resultado
+// era que arrastrar los sliders de posición no se notaba. Con
+// background-position + background-size si que hay margen real que
+// recorrer siempre (el "zoom" agranda la imagen de fondo más allá del
+// propio círculo a propósito), así que "x"/"y" desplazan la cara de
+// verdad. No hace falta un transform-origin aparte: background-position
+// ya expresa directamente "qué punto de la imagen se ve en el centro".
+//   x/y: background-position (%), 0=borde izq./sup., 100=borde der./inf.
+//   zoom: background-size, en % del ancho del círculo (100% = la imagen
+//         cubre el círculo justo; más alto = más cerca/recortado).
+// "default" se usa para cualquier tipo sin entrada propia. Calibrado con
+// debug/calibrar-char.html — pega ahí el bloque que genere esa
+// herramienta cuando haga falta reajustar algún personaje.
+const FACE_OFFSETS = {
+  default: { x: 50, y: 15, zoom: 230 },
+  hombre_arbol: { x: 50, y: 15, zoom: 230 },
+  surcabosques: { x: 50, y: 15, zoom: 230 },
+  seta_artificiero: { x: 50, y: 15, zoom: 230 },
+  goblin_lanzador: { x: 70, y: 21, zoom: 190 },
+};
+
 const UnitInfo = {
   buttonEl: null,
   overlayEl: null,
@@ -34,10 +63,10 @@ const UnitInfo = {
     // La cara del propio personaje seleccionado, recortada en círculo, en
     // vez de un icono genérico de "i" — así el botón identifica de un
     // vistazo A QUIÉN estás consultando (útil sobre todo cuando hay varias
-    // unidades parecidas en pantalla). object-fit + un zoom con transform
-    // (ver CSS) recorta hacia la parte de arriba del sprite, donde suele
-    // estar la cabeza en el arte actual del juego.
-    btn.innerHTML = '<span class="unit-info-btn__face-wrap"><img class="unit-info-btn__face" alt=""></span>';
+    // unidades parecidas en pantalla). Es un <div> con background-image
+    // (no un <img>, ver FACE_OFFSETS arriba) para poder recortar/mover la
+    // cara con background-position + background-size.
+    btn.innerHTML = '<span class="unit-info-btn__face-wrap"><div class="unit-info-btn__face" role="img"></div></span>';
     this.faceEl = btn.querySelector(".unit-info-btn__face");
     btn.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
@@ -57,8 +86,15 @@ const UnitInfo = {
     this.currentUnit = unit;
     const btn = this.ensureButton();
     const type = UNIT_TYPES[unit.typeId];
-    this.faceEl.src = type.spriteUrl;
+    this.faceEl.setAttribute("aria-label", type.name);
     this.faceEl.classList.toggle("unit-info-btn__face--enemy", unit.team === "enemy");
+    // Recorte propio de este personaje (ver FACE_OFFSETS arriba) — se
+    // aplica inline porque depende del typeId, a diferencia del resto de
+    // reglas de .unit-info-btn__face que sí son fijas en el CSS.
+    const face = FACE_OFFSETS[unit.typeId] || FACE_OFFSETS.default;
+    this.faceEl.style.backgroundImage = `url(${type.spriteUrl})`;
+    this.faceEl.style.backgroundPosition = `${face.x}% ${face.y}%`;
+    this.faceEl.style.backgroundSize = `${face.zoom}% auto`;
     // Si ya estaba visible (cambio directo de una unidad seleccionada a
     // otra) no hace falta re-disparar la transición de entrada.
     requestAnimationFrame(() => btn.classList.add("unit-info-btn--visible"));

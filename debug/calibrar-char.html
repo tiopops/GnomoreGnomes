@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calibrar cara e iconos — Gnomore Gnomes</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<style>
+  /* El fondo de las dos vistas previas usa var(--bg) a propósito: es
+     EXACTAMENTE el mismo color que hay detrás del tablero cuando no hay
+     escenario (.board-viewport/body no ponen fondo propio y heredan
+     var(--bg)) — así la cara y los botones se calibran aquí contra el
+     mismo fondo que tendrán en la partida real.
+
+     Todo el layout está pensado para caber en una ventana normal SIN
+     scroll: controles compactos a la izquierda, previews a la derecha,
+     una sola fila de arriba abajo. */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    display: flex;
+    flex-direction: column;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  h1 {
+    margin: 0;
+    padding: 10px 18px;
+    font-size: 0.98rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid #3a4054;
+    flex: none;
+  }
+  h1 small { display: block; font-size: 0.72rem; color: var(--muted); font-weight: 400; margin-top: 2px; }
+
+  .main {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .controls {
+    width: 360px;
+    flex: none;
+    overflow-y: auto;
+    padding: 12px 16px 16px;
+    background: var(--bg-elevated);
+    border-right: 1px solid #3a4054;
+  }
+
+  .section-title {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 14px 0 6px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .control { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+  .control label { font-size: 0.8rem; color: var(--muted); }
+  .control .value { font-weight: 700; color: var(--accent); }
+  input[type="range"] { width: 100%; }
+  select {
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid rgba(244, 242, 248, 0.3);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+  .reset-btn {
+    background: transparent;
+    color: #ff8a8a;
+    border: 1px solid rgba(255, 138, 138, 0.4);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.82rem;
+  }
+  .reset-btn:hover { background: rgba(255, 138, 138, 0.12); }
+  .hint { font-size: 0.72rem; color: var(--muted); margin-top: -4px; }
+
+  .previews {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .preview-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-bottom: 1px solid #3a4054;
+  }
+  .preview-box:last-child { border-bottom: none; }
+  .preview-label {
+    padding: 6px 14px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: rgba(0, 0, 0, 0.15);
+    flex: none;
+  }
+  .preview-stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ---- Círculo de la cara (calca .unit-info-btn / .unit-info-btn__face
+     del CSS real, con tamaño ajustable en vivo) ---- */
+  #faceCircle {
+    position: relative;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(244, 242, 248, 0.35);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    background: var(--bg-elevated) no-repeat;
+  }
+
+  /* ---- Vista previa del semicírculo de botones de acción ---- */
+  #actionPreview { position: relative; width: 100%; height: 100%; }
+  .ap-info-circle {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(244, 242, 248, 0.35);
+    background: var(--bg-elevated) no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+  }
+  .ap-btn {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(244, 242, 248, 0.35);
+    background: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: left 0.08s linear, bottom 0.08s linear, width 0.08s linear, height 0.08s linear;
+  }
+  .ap-guide {
+    position: absolute;
+    border: 1px dashed rgba(244, 242, 248, 0.18);
+    border-radius: 50%;
+    transition: left 0.08s linear, bottom 0.08s linear, width 0.08s linear, height 0.08s linear;
+  }
+
+  .output-wrap {
+    flex: none;
+    padding: 10px 16px 12px;
+    background: var(--bg-elevated);
+    border-top: 1px solid #3a4054;
+  }
+  .output-wrap h2 { font-size: 0.82rem; margin: 0 0 6px; color: var(--muted); font-weight: 600; }
+  textarea {
+    width: 100%;
+    height: 100px;
+    background: var(--bg);
+    color: #b7f5c2;
+    border: 1px solid rgba(244, 242, 248, 0.2);
+    border-radius: 10px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    padding: 10px;
+    resize: none;
+  }
+  .output-actions { display: flex; gap: 10px; margin-top: 6px; align-items: center; }
+  .copy-btn {
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid rgba(244, 242, 248, 0.3);
+    border-radius: 8px;
+    padding: 7px 14px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .copy-btn:hover { background: var(--accent); border-color: var(--accent-hover); }
+  .copied-msg { color: #5fe083; font-size: 0.8rem; opacity: 0; transition: opacity 0.2s ease; }
+  .copied-msg--visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+  <h1>Calibrar cara e iconos del círculo de información
+    <small>Recorte de la cara por personaje + tamaño del círculo, y semicírculo de golpear/pasar. Fondo = el mismo color que detrás del tablero sin escenario.</small>
+  </h1>
+
+  <div class="main">
+    <div class="controls">
+      <div class="section-title">Equipo y personaje</div>
+      <div class="control">
+        <label for="teamSelect">Equipo</label>
+        <select id="teamSelect"></select>
+      </div>
+      <div class="control">
+        <label for="charSelect">Personaje</label>
+        <select id="charSelect"></select>
+      </div>
+
+      <div class="section-title">Recorte de la cara (por personaje)</div>
+      <div class="control">
+        <label for="faceX">Horizontal — <span class="value" id="faceXVal">50</span>%</label>
+        <input type="range" id="faceX" min="0" max="100" step="1" value="50">
+      </div>
+      <div class="control">
+        <label for="faceY">Vertical — <span class="value" id="faceYVal">15</span>%</label>
+        <input type="range" id="faceY" min="0" max="100" step="1" value="15">
+      </div>
+      <div class="control">
+        <label for="faceZoom">Zoom — <span class="value" id="faceZoomVal">230</span>%</label>
+        <input type="range" id="faceZoom" min="100" max="500" step="5" value="230">
+        <span class="hint">100% = la imagen cubre el círculo justo, sin margen para mover.</span>
+      </div>
+      <button class="reset-btn" id="faceResetBtn">Reiniciar este personaje</button>
+
+      <div class="section-title">Tamaño del círculo (compartido)</div>
+      <div class="control">
+        <label for="circleSize">Diámetro — <span class="value" id="circleSizeVal">110</span> px</label>
+        <input type="range" id="circleSize" min="24" max="160" step="1" value="110">
+        <span class="hint">Es también el círculo del que parte el semicírculo de botones.</span>
+      </div>
+
+      <div class="section-title">Semicírculo de botones de acción</div>
+      <div class="control">
+        <label for="btnRadius">Distancia al centro — <span class="value" id="btnRadiusVal">86</span> px</label>
+        <input type="range" id="btnRadius" min="40" max="180" step="1" value="86">
+      </div>
+      <div class="control">
+        <label for="btnStart">Ángulo inicial (arriba) — <span class="value" id="btnStartVal">-34</span>°</label>
+        <input type="range" id="btnStart" min="-90" max="0" step="1" value="-34">
+      </div>
+      <div class="control">
+        <label for="btnEnd">Ángulo final (abajo) — <span class="value" id="btnEndVal">11</span>°</label>
+        <input type="range" id="btnEnd" min="0" max="90" step="1" value="11">
+      </div>
+      <div class="control">
+        <label for="btnSize">Tamaño de cada botón — <span class="value" id="btnSizeVal">51</span> px</label>
+        <input type="range" id="btnSize" min="30" max="90" step="1" value="51">
+      </div>
+      <span class="hint">0° = justo a la derecha del círculo principal. Negativo = arriba, positivo = abajo.</span>
+    </div>
+
+    <div class="previews">
+      <div class="preview-box">
+        <div class="preview-label">Círculo de información con el personaje elegido</div>
+        <div class="preview-stage">
+          <div id="faceCircle"></div>
+        </div>
+      </div>
+      <div class="preview-box">
+        <div class="preview-label">Círculo principal + botones repartidos alrededor</div>
+        <div class="preview-stage">
+          <div id="actionPreview"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="output-wrap">
+    <h2>Cópialo y pásamelo tal cual — un bloque para js/unitinfo.js (FACE_OFFSETS) y otro para js/uiconfig.js (UI_LAYOUT)</h2>
+    <textarea id="output" readonly></textarea>
+    <div class="output-actions">
+      <button class="copy-btn" id="copyBtn">Copiar</button>
+      <span class="copied-msg" id="copiedMsg">Copiado ✓</span>
+    </div>
+  </div>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/races.js"></script>
+  <script src="../js/units.js"></script>
+  <script>
+    const FACE_STORAGE_KEY = "gnomore-cara-offsets-v2";
+    const CIRCLE_SIZE_STORAGE_KEY = "gnomore-circulo-tamano-v1";
+    const BTN_LAYOUT_STORAGE_KEY = "gnomore-botones-layout-v1";
+
+    const FACE_DEFAULT = { x: 50, y: 15, zoom: 230 };
+    const CIRCLE_SIZE_DEFAULT = 110;
+    const BTN_LAYOUT_DEFAULT = { radius: 86, startAngle: -34, endAngle: 11, size: 51 };
+
+    function loadFaceOffsets() {
+      try { return JSON.parse(localStorage.getItem(FACE_STORAGE_KEY)) || {}; } catch (e) { return {}; }
+    }
+    function saveFaceOffsets(data) {
+      try { localStorage.setItem(FACE_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+    function loadCircleSize() {
+      try {
+        const raw = localStorage.getItem(CIRCLE_SIZE_STORAGE_KEY);
+        return raw ? Number(raw) : CIRCLE_SIZE_DEFAULT;
+      } catch (e) { return CIRCLE_SIZE_DEFAULT; }
+    }
+    function saveCircleSize(v) {
+      try { localStorage.setItem(CIRCLE_SIZE_STORAGE_KEY, String(v)); } catch (e) {}
+    }
+    function loadBtnLayout() {
+      try { return Object.assign({}, BTN_LAYOUT_DEFAULT, JSON.parse(localStorage.getItem(BTN_LAYOUT_STORAGE_KEY)) || {}); }
+      catch (e) { return Object.assign({}, BTN_LAYOUT_DEFAULT); }
+    }
+    function saveBtnLayout(data) {
+      try { localStorage.setItem(BTN_LAYOUT_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+
+    let faceOffsets = loadFaceOffsets();
+    let circleSize = loadCircleSize();
+    let btnLayout = loadBtnLayout();
+
+    const teamSelect = document.getElementById("teamSelect");
+    const charSelect = document.getElementById("charSelect");
+    const faceX = document.getElementById("faceX");
+    const faceY = document.getElementById("faceY");
+    const faceZoom = document.getElementById("faceZoom");
+    const faceXVal = document.getElementById("faceXVal");
+    const faceYVal = document.getElementById("faceYVal");
+    const faceZoomVal = document.getElementById("faceZoomVal");
+    const faceResetBtn = document.getElementById("faceResetBtn");
+    const faceCircle = document.getElementById("faceCircle");
+    const circleSizeInput = document.getElementById("circleSize");
+    const circleSizeVal = document.getElementById("circleSizeVal");
+    const btnRadius = document.getElementById("btnRadius");
+    const btnStart = document.getElementById("btnStart");
+    const btnEnd = document.getElementById("btnEnd");
+    const btnSize = document.getElementById("btnSize");
+    const btnRadiusVal = document.getElementById("btnRadiusVal");
+    const btnStartVal = document.getElementById("btnStartVal");
+    const btnEndVal = document.getElementById("btnEndVal");
+    const btnSizeVal = document.getElementById("btnSizeVal");
+    const actionPreview = document.getElementById("actionPreview");
+    const output = document.getElementById("output");
+    const copyBtn = document.getElementById("copyBtn");
+    const copiedMsg = document.getElementById("copiedMsg");
+
+    // Mismo patrón Equipo -> Personaje que debug/calibrar-gnomo.html.
+    RACES.forEach((race) => {
+      const opt = document.createElement("option");
+      opt.value = race.id;
+      opt.textContent = I18N && I18N.t ? I18N.t(race.nameKey) : race.id;
+      teamSelect.appendChild(opt);
+    });
+    function charsForTeam(raceId) {
+      return Object.keys(UNIT_TYPES).filter((typeId) => UNIT_TYPES[typeId].raceId === raceId);
+    }
+    function populateCharSelect(raceId) {
+      charSelect.innerHTML = "";
+      charsForTeam(raceId).forEach((typeId) => {
+        const opt = document.createElement("option");
+        opt.value = typeId;
+        opt.textContent = UNIT_TYPES[typeId].name;
+        charSelect.appendChild(opt);
+      });
+    }
+
+    function currentFaceValues() {
+      return {
+        x: Number(faceX.value),
+        y: Number(faceY.value),
+        zoom: Number(faceZoom.value),
+      };
+    }
+
+    function applyFaceToCircle() {
+      const v = currentFaceValues();
+      faceCircle.style.backgroundPosition = `${v.x}% ${v.y}%`;
+      faceCircle.style.backgroundSize = `${v.zoom}% auto`;
+      faceXVal.textContent = v.x;
+      faceYVal.textContent = v.y;
+      faceZoomVal.textContent = v.zoom;
+    }
+
+    function applyCircleSize() {
+      faceCircle.style.width = circleSize + "px";
+      faceCircle.style.height = circleSize + "px";
+      circleSizeVal.textContent = circleSize;
+    }
+
+    function loadCharacter(typeId) {
+      const type = UNIT_TYPES[typeId];
+      faceCircle.style.backgroundImage = `url(../${type.spriteUrl})`;
+      const v = faceOffsets[typeId] || FACE_DEFAULT;
+      faceX.value = v.x;
+      faceY.value = v.y;
+      faceZoom.value = v.zoom;
+      applyFaceToCircle();
+    }
+
+    function loadTeam(raceId) {
+      populateCharSelect(raceId);
+      loadCharacter(charSelect.value);
+    }
+
+    function persistCurrentFace() {
+      const typeId = charSelect.value;
+      faceOffsets[typeId] = currentFaceValues();
+      saveFaceOffsets(faceOffsets);
+      updateOutput();
+    }
+
+    teamSelect.addEventListener("change", () => loadTeam(teamSelect.value));
+    charSelect.addEventListener("change", () => loadCharacter(charSelect.value));
+    [faceX, faceY, faceZoom].forEach((input) => {
+      input.addEventListener("input", () => {
+        applyFaceToCircle();
+        persistCurrentFace();
+      });
+    });
+    faceResetBtn.addEventListener("click", () => {
+      const typeId = charSelect.value;
+      delete faceOffsets[typeId];
+      saveFaceOffsets(faceOffsets);
+      loadCharacter(typeId);
+      updateOutput();
+    });
+
+    circleSizeInput.addEventListener("input", () => {
+      circleSize = Number(circleSizeInput.value);
+      applyCircleSize();
+      saveCircleSize(circleSize);
+      renderActionPreview();
+      updateOutput();
+    });
+
+    // ---- Semicírculo de botones: MISMA fórmula que
+    // Gnome._positionActionButtons (js/gnome.js), reproducida aquí en la
+    // vista previa para que el resultado sea idéntico al del juego real. ----
+    function renderActionPreview() {
+      actionPreview.innerHTML = "";
+      const marginLeft = 20;
+      const marginBottom = 20;
+      const centerX = marginLeft + circleSize / 2;
+      const centerY = marginBottom + circleSize / 2;
+
+      const info = document.createElement("div");
+      info.className = "ap-info-circle";
+      info.style.left = marginLeft + "px";
+      info.style.bottom = marginBottom + "px";
+      info.style.width = circleSize + "px";
+      info.style.height = circleSize + "px";
+      info.innerHTML = '<i class="ph ph-user-circle"></i>';
+      actionPreview.appendChild(info);
+
+      const r = Number(btnRadius.value);
+      const guide = document.createElement("div");
+      guide.className = "ap-guide";
+      guide.style.width = r * 2 + "px";
+      guide.style.height = r * 2 + "px";
+      guide.style.left = centerX - r + "px";
+      guide.style.bottom = centerY - r + "px";
+      actionPreview.appendChild(guide);
+
+      const layout = {
+        radius: r,
+        startAngle: Number(btnStart.value),
+        endAngle: Number(btnEnd.value),
+        size: Number(btnSize.value),
+      };
+      const icons = ["ph-boxing-glove", "ph-paper-plane-tilt"];
+      const n = icons.length;
+      icons.forEach((iconClass, i) => {
+        const angleDeg = n === 1 ? (layout.startAngle + layout.endAngle) / 2
+          : layout.startAngle + (i * (layout.endAngle - layout.startAngle)) / (n - 1);
+        const angleRad = (angleDeg * Math.PI) / 180;
+        const bx = centerX + layout.radius * Math.cos(angleRad);
+        const by = centerY - layout.radius * Math.sin(angleRad);
+        const btn = document.createElement("div");
+        btn.className = "ap-btn";
+        btn.style.left = bx - layout.size / 2 + "px";
+        btn.style.bottom = by - layout.size / 2 + "px";
+        btn.style.width = layout.size + "px";
+        btn.style.height = layout.size + "px";
+        btn.innerHTML = `<i class="ph ${iconClass}"></i>`;
+        actionPreview.appendChild(btn);
+      });
+
+      btnRadiusVal.textContent = layout.radius;
+      btnStartVal.textContent = layout.startAngle;
+      btnEndVal.textContent = layout.endAngle;
+      btnSizeVal.textContent = layout.size;
+    }
+
+    [btnRadius, btnStart, btnEnd, btnSize].forEach((input) => {
+      input.addEventListener("input", () => {
+        btnLayout = {
+          radius: Number(btnRadius.value),
+          startAngle: Number(btnStart.value),
+          endAngle: Number(btnEnd.value),
+          size: Number(btnSize.value),
+        };
+        saveBtnLayout(btnLayout);
+        renderActionPreview();
+        updateOutput();
+      });
+    });
+
+    function updateOutput() {
+      const typeId = charSelect.value;
+      const v = faceOffsets[typeId] || FACE_DEFAULT;
+      const lines = [
+        "// --- js/unitinfo.js — entrada de FACE_OFFSETS para " + typeId + " ---",
+        `  ${typeId}: { x: ${v.x}, y: ${v.y}, zoom: ${v.zoom} },`,
+        "",
+        "// --- js/uiconfig.js — UI_LAYOUT completo ---",
+        "const UI_LAYOUT = {",
+        "  infoCircle: {",
+        "    left: 20,",
+        "    bottom: 20,",
+        `    size: ${circleSize},`,
+        "  },",
+        "  infoCircleMobile: {",
+        "    left: 14,",
+        "    bottom: 14,",
+        `    size: ${circleSize},`,
+        "  },",
+        "  actionButtons: {",
+        `    size: ${btnLayout.size},`,
+        `    radius: ${btnLayout.radius},`,
+        `    startAngle: ${btnLayout.startAngle},`,
+        `    endAngle: ${btnLayout.endAngle},`,
+        "  },",
+        "};",
+      ];
+      output.value = lines.join("\n");
+    }
+
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(output.value);
+      } catch (e) {
+        output.select();
+        document.execCommand("copy");
+      }
+      copiedMsg.classList.add("copied-msg--visible");
+      setTimeout(() => copiedMsg.classList.remove("copied-msg--visible"), 1400);
+    });
+
+    btnRadius.value = btnLayout.radius;
+    btnStart.value = btnLayout.startAngle;
+    btnEnd.value = btnLayout.endAngle;
+    btnSize.value = btnLayout.size;
+    circleSizeInput.value = circleSize;
+
+    loadTeam(teamSelect.value);
+    applyCircleSize();
+    renderActionPreview();
+    updateOutput();
+  </script>
+</body>
+</html>

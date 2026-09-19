@@ -237,6 +237,7 @@ const Gnome = {
       // detrás", así que se prioriza que sea siempre clicable sin más vueltas.
       zOffset: 6,
       visibleClass: "catch-marker--visible",
+      owner: "gnome",
       buildContent: (marker) => {
         const icon = document.createElement("i");
         icon.className = "ph ph-hand-grabbing catch-marker__icon";
@@ -341,6 +342,37 @@ const Gnome = {
     });
     document.body.appendChild(passBtn);
     this._passBtn = passBtn;
+
+    this._positionActionButtons();
+  },
+
+  // Coloca golpear/pasar en semicírculo a la derecha del círculo de
+  // información (ver UI_LAYOUT en js/uiconfig.js) — se calcula una sola
+  // vez al crear los botones porque ni el círculo de información ni el
+  // propio layout se mueven después. Repartidos a ángulos iguales entre
+  // startAngle y endAngle: con los dos botones actuales queda golpear
+  // arriba-derecha y pasar abajo-derecha; si se añadiera un tercer botón
+  // el mismo cálculo lo intercalaría entre ambos sin tocar nada más.
+  _positionActionButtons() {
+    const info = window.innerWidth <= 480 ? UI_LAYOUT.infoCircleMobile : UI_LAYOUT.infoCircle;
+    const layout = UI_LAYOUT.actionButtons;
+    const centerX = info.left + info.size / 2;
+    const centerY = info.bottom + info.size / 2; // medido "desde abajo", como el bottom de CSS
+
+    const buttons = [this._hitBtn, this._passBtn].filter(Boolean);
+    const n = buttons.length;
+    buttons.forEach((btn, i) => {
+      const angleDeg =
+        n === 1 ? (layout.startAngle + layout.endAngle) / 2 : layout.startAngle + (i * (layout.endAngle - layout.startAngle)) / (n - 1);
+      const angleRad = (angleDeg * Math.PI) / 180;
+      const bx = centerX + layout.radius * Math.cos(angleRad);
+      // ángulo negativo = "hacia arriba" → más bottom, de ahí el signo menos.
+      const by = centerY - layout.radius * Math.sin(angleRad);
+      btn.style.left = `${bx - layout.size / 2}px`;
+      btn.style.bottom = `${by - layout.size / 2}px`;
+      btn.style.width = `${layout.size}px`;
+      btn.style.height = `${layout.size}px`;
+    });
   },
 
   _showHoldingActions(unit) {
@@ -390,6 +422,7 @@ const Gnome = {
           zOffset: 12,
           delayIndex: i,
           visibleClass: "pass-marker--visible",
+          owner: "gnome",
           buildContent: (marker) => {
             const icon = document.createElement("i");
             icon.className = "ph ph-paper-plane-tilt pass-marker__icon";
@@ -410,14 +443,25 @@ const Gnome = {
     });
   },
 
-  // Probabilidad de éxito del pase: sube con la AGILIDAD de quien pasa y
-  // baja con la distancia (en casillas) hasta quien lo recibe. Con
-  // agilidad 5 (máxima) un pase a 1 casilla sale casi siempre; con
-  // agilidad 1 (mínima) o a mucha distancia, falla más de lo que acierta.
+  // Probabilidad de éxito del pase. Diseño (pedido explícito): DENTRO del
+  // propio alcance de movimiento de quien pasa, el pase tiene que ser
+  // fiable para cualquiera — incluso un personaje de agilidad baja domina
+  // un pase corto, a esa distancia ya se mueve con comodidad. La agilidad
+  // entra en juego sobre todo MÁS ALLÁ de ese alcance: ahí sí decide si el
+  // pase sigue siendo utilizable (agilidad alta) o se vuelve un tiro
+  // arriesgado (agilidad baja). Por eso la fórmula usa "overreach"
+  // (casillas de distancia por encima del propio movimiento) en vez de la
+  // distancia absoluta como antes.
+  //   - overreach = 0 (dentro de rango): base alta para todos (86%-94%
+  //     según agilidad) — "fiable" en el sentido pedido, sin que la
+  //     agilidad baja lo tire por debajo de fiable.
+  //   - overreach > 0: penalización fuerte por casilla de más, que la
+  //     agilidad alta amortigua y la agilidad baja agrava.
   // Acotado entre 10% y 97% para que nunca sea ni un fallo ni un éxito
   // garantizados.
-  computePassSuccess(agilidad, distance) {
-    const pct = 95 - (distance - 1) * 12 - (5 - agilidad) * 10;
+  computePassSuccess(agilidad, distance, movimiento) {
+    const overreach = Math.max(0, distance - movimiento);
+    const pct = overreach === 0 ? 90 + (agilidad - 3) * 2 : 90 - overreach * 16 + (agilidad - 3) * 9;
     return Math.min(97, Math.max(10, pct)) / 100;
   },
 
@@ -428,8 +472,8 @@ const Gnome = {
     this.busy = true;
 
     const distance = Math.max(Math.abs(target.row - holder.row), Math.abs(target.col - holder.col));
-    const agilidad = UNIT_TYPES[holder.typeId].agilidad;
-    const success = Math.random() < this.computePassSuccess(agilidad, distance);
+    const holderType = UNIT_TYPES[holder.typeId];
+    const success = Math.random() < this.computePassSuccess(holderType.agilidad, distance, holderType.movimiento);
 
     this.row = holder.row;
     this.col = holder.col;
@@ -586,43 +630,76 @@ const Gnome = {
     });
   },
 
-  // Prueba la dirección deseada y, si esa loseta no es válida (fuera del
-  // tablero u ocupada), prueba las direcciones vecinas más parecidas antes
-  // de rendirse — para que un gnomo acorralado en una esquina no se quede
-  // simplemente parado en vez de escabullirse hacia el lado que sí puede.
+  // Elige la mejor loseta vecina para huir. No basta con "la primera
+  // dirección libre parecida a la deseada" (lo que hacía antes): eso podía
+  // llevar al gnomo, paso a paso, hacia una esquina o un rincón cerrado de
+  // unidades sin darse cuenta, porque cada paso individual parecía válido
+  // aunque lo dejara cada vez con menos salidas. Ahora se puntúan TODAS las
+  // 8 loselas vecinas válidas con dos criterios:
+  //   - alineación: cuánto se acerca esa dirección a la deseada (alejarse
+  //     de quien se movió) — sigue siendo lo que más pesa.
+  //   - amplitud (_tileOpenness): cuántas de las 8 casillas alrededor de
+  //     ESA loseta quedarían libres — una loseta con poca amplitud es un
+  //     callejón o una esquina, aunque ahora mismo esté libre. Sirve de
+  //     desempate y evita dead-ends: entre dos direcciones parecidas de
+  //     alejamiento, se prefiere la que deja más salidas para el próximo
+  //     movimiento en vez de la que acorrala más rápido.
   _bestFleeStep(row, col, dRow, dCol) {
-    const candidates = [
-      { dr: dRow, dc: dCol },
-      { dr: dRow, dc: 0 },
-      { dr: 0, dc: dCol },
-      { dr: dRow, dc: -dCol },
-      { dr: -dRow, dc: dCol },
-      { dr: -1, dc: 0 },
-      { dr: 1, dc: 0 },
-      { dr: 0, dc: -1 },
-      { dr: 0, dc: 1 },
-    ];
-    for (const { dr, dc } of candidates) {
-      if (dr === 0 && dc === 0) continue;
-      const r = row + dr;
-      const c = col + dc;
-      if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
-      if (Units.unitAt(r, c)) continue;
-      return { row: r, col: c };
+    let best = null;
+    let bestScore = -Infinity;
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const r = row + dr;
+        const c = col + dc;
+        if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
+        if (Units.unitAt(r, c)) continue;
+        const alignment = dr * dRow + dc * dCol;
+        const openness = this._tileOpenness(r, c);
+        const score = alignment * 3 + openness;
+        if (score > bestScore) {
+          bestScore = score;
+          best = { row: r, col: c };
+        }
+      }
     }
-    return null;
+    return best;
   },
 
-  // Vuelve a pintar el radio de la unidad del JUGADOR que esté seleccionada
-  // ahora mismo (si hay alguna) — se llama cada vez que el gnomo cambia de
-  // loseta por cualquier motivo (huida, aterrizaje tras un pase fallido...)
-  // para que una mira de "coger" que apuntaba a su loseta vieja se
-  // refresque a la nueva, sin que quien disparó el cambio tenga que ser la
-  // propia unidad seleccionada.
+  // Cuántas de las 8 casillas alrededor de (row, col) están libres y
+  // dentro del tablero — una medida simple de "cuántas salidas tendría el
+  // gnomo si estuviera aquí", usada por _bestFleeStep para no elegir una
+  // loseta que hoy está libre pero mañana lo deja sin escapatoria.
+  _tileOpenness(row, col) {
+    let free = 0;
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const r = row + dr;
+        const c = col + dc;
+        if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
+        if (Units.unitAt(r, c)) continue;
+        free++;
+      }
+    }
+    return free;
+  },
+
+  // Vuelve a pintar SOLO lo del gnomo (mira de "coger", o las de "pasar" si
+  // se está apuntando un pase) para la unidad del JUGADOR que esté
+  // seleccionada ahora mismo (si hay alguna) — se llama cada vez que el
+  // gnomo cambia de loseta por cualquier motivo (huida, aterrizaje tras un
+  // pase fallido...) para que esa mira, que podía haberse quedado apuntando
+  // a la loseta vieja, se refresque a la nueva. Usa
+  // Units.refreshProviderFor en vez de refreshRange a propósito: repintar
+  // TODO el radio (movimiento, ataque) solo porque el gnomo se ha movido
+  // por su cuenta reiniciaría también esas casillas sin necesidad,
+  // haciéndolas parpadear/reaparecer aunque seguían siendo válidas — aquí
+  // solo hace falta actualizar la casilla del gnomo.
   _refreshSelectedUnitRange() {
     if (!Units.selectedId) return;
     const unit = Units.list.find((u) => u.id === Units.selectedId);
-    if (unit && unit.team === "player") Units.refreshRange(unit);
+    if (unit && unit.team === "player") Units.refreshProviderFor(unit, this, "gnome");
   },
 
   // ---------- Puntos acumulados ----------

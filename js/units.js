@@ -351,6 +351,27 @@ const Units = {
     this._resolveMarkerOverlaps();
   },
 
+  // Igual que refreshRange, pero SOLO borra y vuelve a pintar los
+  // marcadores de UNA mecánica (identificada por `ownerKey`, ver el
+  // parámetro `owner` de addMarker) en vez de las de todas. Pensado para
+  // cuando algo externo a la propia selección deja desactualizado un
+  // marcador puntual (p.ej. la mira de "coger" del gnomo cuando este se
+  // mueve solo por su cuenta, sin que la unidad del jugador haya hecho
+  // nada) — así esa actualización no reinicia también el radio de
+  // movimiento/ataque de las demás mecánicas, que seguía siendo válido y no
+  // necesitaba volver a animarse desde cero.
+  refreshProviderFor(unit, provider, ownerKey) {
+    if (this.selectedId !== unit.id) return;
+    this.markerEls = this.markerEls.filter((m) => {
+      if (m._owner !== ownerKey) return true;
+      m.remove();
+      return false;
+    });
+    if (provider.onClear) provider.onClear();
+    provider.showFor(unit);
+    this._resolveMarkerOverlaps();
+  },
+
   clearRangeOverlays() {
     this.markerEls.forEach((m) => m.remove());
     this.markerEls = [];
@@ -387,10 +408,18 @@ const Units = {
     visibleClass,
     onClick,
     buildContent,
+    owner,
   }) {
     const marker = document.createElement("div");
     marker.className = `board-marker ${className}`;
     if (buildContent) buildContent(marker);
+
+    // Etiqueta opcional (una simple cadena, p.ej. "gnome") para que
+    // refreshProviderFor pueda borrar y repintar SOLO los marcadores de esta
+    // mecánica sin tocar los de las demás — ver esa función más abajo. Una
+    // propiedad JS normal, no dataset, porque no necesita reflejarse en el
+    // DOM ni ser una cadena forzosamente serializable.
+    if (owner) marker._owner = owner;
 
     // Guarda su loseta (no solo la posición en pantalla) para que
     // _resolveMarkerOverlaps pueda detectar cuándo dos marcadores de
