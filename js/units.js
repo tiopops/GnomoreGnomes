@@ -126,7 +126,7 @@ const UNIT_TYPES = {
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_03.png",
     aguante: 5,
-    movimiento: 1,
+    movimiento: 3,
     fuerza: 5,
     agilidad: 1,
     attackRange: 1,
