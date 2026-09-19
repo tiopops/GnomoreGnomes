@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calibrar tamaño de personajes — Gnomore Gnomes</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  /* El .unit/.unit__flip/.unit__sprite de cada tarjeta viene tal cual del CSS
+     real del juego (ver el <link> de arriba) para que las vistas previas
+     sean pixel a pixel iguales que en la partida — misma idea que
+     calibrar-gnomo.html/calibrar-char.html. */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    display: flex;
+    flex-direction: column;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  h1 {
+    margin: 0;
+    padding: 14px 20px;
+    font-size: 1.05rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid #3a4054;
+  }
+  h1 small { display: block; font-size: 0.75rem; color: var(--muted); font-weight: 400; margin-top: 2px; }
+
+  /* TODOS los personajes a la vez, en tarjetas — pedido explícito: "que
+     vayamos teniendo sobre una loseta... para copiar y pegar de una", igual
+     que el output de calibrar-char.html incluye SIEMPRE el bloque completo
+     en vez de uno por uno. */
+  .grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1px;
+    background: #3a4054;
+    overflow-y: auto;
+  }
+  .card {
+    background: var(--bg-elevated);
+    display: flex;
+    flex-direction: column;
+    padding: 12px 14px 14px;
+    gap: 8px;
+  }
+  .card__name { font-size: 0.9rem; font-weight: 600; }
+  .card__race { font-size: 0.72rem; color: var(--muted); margin-top: -6px; }
+  .card__stage {
+    position: relative;
+    width: 100%;
+    height: 168px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      linear-gradient(rgba(244,242,248,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(244,242,248,0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .card__stage-inner { position: relative; width: 188px; height: 164px; }
+  .card__stage-inner img.tile-ref { position: absolute; left: 0; top: 0; width: 188px; display: block; }
+  /* Misma ancla que .unit real (translate(-50%,-92%)) para que el tamaño se
+     vea EXACTAMENTE igual que sobre el tablero, pies clavados a la loseta. */
+  .card__stage-inner .unit { left: 50%; top: 58%; }
+  .card__stage-inner .unit__hpbar { display: none; }
+  .card__slider-row { display: flex; align-items: center; gap: 8px; }
+  .card__slider-row label { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  .card__slider-row .value { font-weight: 700; color: var(--accent); font-size: 0.85rem; min-width: 34px; text-align: right; }
+  input[type="range"] { width: 100%; }
+  .card__reset {
+    align-self: flex-start;
+    background: transparent;
+    color: #ff8a8a;
+    border: 1px solid rgba(255, 138, 138, 0.4);
+    border-radius: 8px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 0.75rem;
+  }
+  .card__reset:hover { background: rgba(255, 138, 138, 0.12); }
+
+  .output-wrap {
+    padding: 12px 20px 16px;
+    background: var(--bg-elevated);
+    border-top: 1px solid #3a4054;
+  }
+  .output-wrap h2 { font-size: 0.95rem; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+  textarea {
+    width: 100%;
+    min-height: 130px;
+    background: var(--bg);
+    color: #b7f5c2;
+    border: 1px solid rgba(244, 242, 248, 0.2);
+    border-radius: 10px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    padding: 12px;
+    resize: vertical;
+  }
+  .output-actions { display: flex; gap: 10px; margin-top: 8px; align-items: center; }
+  .toggle-btn {
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid rgba(244, 242, 248, 0.3);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .toggle-btn:hover { background: var(--accent); border-color: var(--accent-hover); }
+  .copied-msg { color: #5fe083; font-size: 0.85rem; opacity: 0; transition: opacity 0.2s ease; }
+  .copied-msg--visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+  <h1>Calibrar tamaño de personajes
+    <small>Todos los personajes a la vez, cada uno sobre una loseta real a escala — ajusta y copia el bloque completo de una sola vez.</small>
+  </h1>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="output-wrap">
+    <h2>Cópialo y pásamelo tal cual para que lo aplique en js/units.js</h2>
+    <textarea id="output" readonly></textarea>
+    <div class="output-actions">
+      <button class="toggle-btn" id="copyBtn">Copiar</button>
+      <span class="copied-msg" id="copiedMsg">Copiado ✓</span>
+    </div>
+  </div>
+
+  <script src="../js/i18n.js"></script>
+  <script src="../js/races.js"></script>
+  <script src="../js/units.js"></script>
+  <script>
+    const STORAGE_KEY = "gnomore-tamano-personajes-v1";
+
+    function loadScales() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+      catch (e) { return {}; }
+    }
+    function saveScales(data) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+
+    // Arranca desde lo que ya haya calibrado en SPRITE_SCALES (units.js) y lo
+    // que se haya guardado localmente encima — así reabrir la herramienta no
+    // pierde ajustes a medio hacer ni tampoco lo ya aplicado al juego real.
+    let scales = Object.assign({}, SPRITE_SCALES, loadScales());
+
+    const grid = document.getElementById("grid");
+    const output = document.getElementById("output");
+    const copyBtn = document.getElementById("copyBtn");
+    const copiedMsg = document.getElementById("copiedMsg");
+
+    const typeIds = Object.keys(UNIT_TYPES);
+    const cards = {}; // typeId -> { spriteEl, valueEl, resetBtn }
+
+    function raceName(raceId) {
+      const race = RACES.find((r) => r.id === raceId);
+      return race && I18N && I18N.t ? I18N.t(race.nameKey) : raceId;
+    }
+
+    function buildCard(typeId) {
+      const type = UNIT_TYPES[typeId];
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const name = document.createElement("div");
+      name.className = "card__name";
+      name.textContent = type.name;
+      card.appendChild(name);
+
+      const race = document.createElement("div");
+      race.className = "card__race";
+      race.textContent = raceName(type.raceId);
+      card.appendChild(race);
+
+      const stage = document.createElement("div");
+      stage.className = "card__stage";
+      const stageInner = document.createElement("div");
+      stageInner.className = "card__stage-inner";
+
+      const tileImg = document.createElement("img");
+      tileImg.className = "tile-ref";
+      tileImg.src = "../assets/losetas/hierba_01.png";
+      tileImg.alt = "";
+      stageInner.appendChild(tileImg);
+
+      const unitEl = document.createElement("div");
+      unitEl.className = "unit unit--player";
+      const flipEl = document.createElement("div");
+      flipEl.className = "unit__flip";
+      const spriteEl = document.createElement("img");
+      spriteEl.className = "unit__sprite";
+      spriteEl.src = "../" + type.spriteUrl;
+      spriteEl.draggable = false;
+      spriteEl.alt = "";
+      flipEl.appendChild(spriteEl);
+      unitEl.appendChild(flipEl);
+      stageInner.appendChild(unitEl);
+
+      stage.appendChild(stageInner);
+      card.appendChild(stage);
+
+      const sliderRow = document.createElement("div");
+      sliderRow.className = "card__slider-row";
+      const label = document.createElement("label");
+      label.setAttribute("for", `slider-${typeId}`);
+      label.textContent = "Tamaño";
+      const slider = document.createElement("input");
+      slider.type = "range";
+      slider.id = `slider-${typeId}`;
+      slider.min = "0.4";
+      slider.max = "2.5";
+      slider.step = "0.05";
+      const valueEl = document.createElement("span");
+      valueEl.className = "value";
+      sliderRow.appendChild(label);
+      sliderRow.appendChild(slider);
+      sliderRow.appendChild(valueEl);
+      card.appendChild(sliderRow);
+
+      const resetBtn = document.createElement("button");
+      resetBtn.className = "card__reset";
+      resetBtn.textContent = "Reiniciar";
+      resetBtn.addEventListener("click", () => {
+        delete scales[typeId];
+        saveScales(scales);
+        const fallback = SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default;
+        setScale(typeId, fallback);
+      });
+      card.appendChild(resetBtn);
+
+      grid.appendChild(card);
+      cards[typeId] = { spriteEl, valueEl, slider };
+
+      slider.addEventListener("input", () => {
+        setScale(typeId, Number(slider.value));
+      });
+    }
+
+    function setScale(typeId, scale) {
+      scales[typeId] = scale;
+      const c = cards[typeId];
+      c.slider.value = scale;
+      c.valueEl.textContent = scale.toFixed(2) + "x";
+      c.spriteEl.style.width = Math.round(120 * scale) + "px";
+      saveScales(scales);
+      updateOutput();
+    }
+
+    function updateOutput() {
+      const lines = ["const SPRITE_SCALES = {", `  default: ${SPRITE_SCALES.default},`];
+      typeIds.forEach((typeId) => {
+        const v = scales[typeId] ?? (SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default);
+        lines.push(`  ${typeId}: ${v},`);
+      });
+      lines.push("};");
+      output.value = lines.join("\n");
+    }
+
+    typeIds.forEach(buildCard);
+    typeIds.forEach((typeId) => {
+      const v = scales[typeId] ?? (SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default);
+      setScale(typeId, v);
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(output.value);
+      } catch (e) {
+        output.select();
+        document.execCommand("copy");
+      }
+      copiedMsg.classList.add("copied-msg--visible");
+      setTimeout(() => copiedMsg.classList.remove("copied-msg--visible"), 1400);
+    });
+  </script>
+</body>
+</html>

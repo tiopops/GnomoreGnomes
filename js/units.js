@@ -67,11 +67,6 @@ const UNIT_TYPES = {
     fuerza: 3,
     agilidad: 1,
     attackRange: 1,
-    // Es un personaje más grande que el resto — spriteScale multiplica el
-    // ancho base (120px, ver .unit__sprite en style.css) que usa
-    // Units.spawnUnit. 1 = tamaño base; el resto de tipos lo omiten y se
-    // quedan en 1 por defecto.
-    spriteScale: 1.5,
     defaultFacing: "right", // la imagen viene dibujada mirando hacia la derecha por defecto
   },
   // Sustituye a Goblin Lanzador en el Reino Mushboom Forest (ver más abajo:
@@ -126,8 +121,7 @@ const UNIT_TYPES = {
   },
   // Mismas estadísticas EXACTAS que GolemCorteza/hombre_arbol (pedido
   // explícito: "con los stats de golemcorteza") — solo cambia el personaje,
-  // su sprite y su equipo. También comparte su spriteScale: es un troll
-  // igual de corpulento en el arte.
+  // su sprite y su equipo.
   punoroca: {
     name: "PuñoRoca",
     raceId: "colinas_rockntroll",
@@ -137,9 +131,27 @@ const UNIT_TYPES = {
     fuerza: 3,
     agilidad: 1,
     attackRange: 1,
-    spriteScale: 1.5,
     defaultFacing: "right",
   },
+};
+
+// Tamaño visual de cada personaje EN EL TABLERO (multiplica el ancho base de
+// 120px, ver .unit__sprite en style.css) — vive separado de UNIT_TYPES, no
+// dentro de cada entrada, porque es puramente estético/de calibración (a
+// diferencia de las estadísticas de juego) y así debug/calibrar-tamano.html
+// puede generar de una este objeto completo listo para pegar, igual que
+// FACE_OFFSETS (unitinfo.js) o GNOME_SIZES/GNOME_ATTACH_OFFSETS (gnome.js).
+// "default" es el que usa cualquier tipo nuevo sin calibrar todavía — así
+// un personaje recién añadido nunca aparece invisible ni gigante, solo con
+// el tamaño base hasta que se afine el suyo.
+const SPRITE_SCALES = {
+  default: 1,
+  hombre_arbol: 1.5,
+  surcabosques: 1,
+  seta_artificiero: 1,
+  goblin_lanzador: 1,
+  urgamentes: 1,
+  punoroca: 1.5,
 };
 
 const Units = {
@@ -190,12 +202,13 @@ const Units = {
     spriteEl.draggable = false;
     spriteEl.alt = "";
     // El ancho base (120px) vive en CSS (.unit__sprite); los tipos que
-    // necesitan verse más grandes/pequeños (ver spriteScale en UNIT_TYPES)
+    // necesitan verse más grandes/pequeños (ver SPRITE_SCALES más arriba)
     // lo escalan aquí en vez de tener su propia regla CSS — así un tipo
     // nuevo con escala distinta no necesita tocar el CSS, solo su entrada
-    // en UNIT_TYPES.
-    if (type.spriteScale && type.spriteScale !== 1) {
-      spriteEl.style.width = `${Math.round(120 * type.spriteScale)}px`;
+    // en SPRITE_SCALES.
+    const scale = SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default;
+    if (scale !== 1) {
+      spriteEl.style.width = `${Math.round(120 * scale)}px`;
     }
 
     flipEl.appendChild(spriteEl);

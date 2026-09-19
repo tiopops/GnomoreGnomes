@@ -352,8 +352,9 @@
       spriteEl.src = "../" + type.spriteUrl;
       spriteEl.draggable = false;
       spriteEl.alt = "";
-      if (type.spriteScale && type.spriteScale !== 1) {
-        spriteEl.style.width = Math.round(120 * type.spriteScale) + "px";
+      const scale = SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default;
+      if (scale !== 1) {
+        spriteEl.style.width = Math.round(120 * scale) + "px";
       }
       flipEl.appendChild(spriteEl);
       el.appendChild(flipEl);

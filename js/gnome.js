@@ -45,7 +45,7 @@ const GNOME_LAND_IMPACT_MS = 480;
 
 // Posición del gnomo "amarrado" al brazo de quien lo lleva cogido, UNA POR
 // TIPO DE PERSONAJE — hace falta porque no todos los personajes tienen el
-// mismo tamaño en pantalla (ver spriteScale en UNIT_TYPES, units.js): el
+// mismo tamaño en pantalla (ver SPRITE_SCALES en units.js): el
 // mismo offset que queda bien en un personaje normal se ve descolocado en
 // uno más grande como el GolemCorteza. "default" es el que se usa para
 // cualquier tipo nuevo que todavía no se haya calibrado a mano — así un
