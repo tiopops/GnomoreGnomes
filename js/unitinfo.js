@@ -49,6 +49,25 @@ const FACE_OFFSETS = {
   punoroca: { x: 89, y: 13, zoom: 210 },
 };
 
+// Descripción corta de cada personaje, mostrada en el popup justo debajo de
+// su sprite (pedido explícito: "vamos a añadirle a los popup una pequeña
+// descripcion, debajo de su sprite") — igual que FACE_OFFSETS arriba, una
+// entrada por typeId en vez de vivir dentro de UNIT_TYPES (js/units.js) para
+// no mezclar datos de calibración/flavor con las estadísticas de juego.
+// Editable desde debug/configurar-personajes.html (antes calibrar-tamano.html
+// — pedido explícito: "esta descripcion se podra editar tambien desde
+// calibrar-tamano que ahora pasa a llamarse configurar-personajes"), que
+// genera el bloque completo listo para pegar aquí. Un typeId sin entrada
+// simplemente no muestra ningún párrafo de descripción en el popup.
+const UNIT_DESCRIPTIONS = {
+  hombre_arbol: "Un golem de corteza y musgo que nunca ha tenido prisa por llegar a ningún sitio, pero tampoco por caer.",
+  surcabosques: "Se desliza entre los árboles más rápido de lo que nadie puede seguirle la pista.",
+  seta_artificiero: "Experimenta con esporas explosivas y, milagrosamente, casi nunca se hace daño a sí mismo.",
+  goblin_lanzador: "El mejor brazo de las Colinas Rock'n Troll — nadie lanza un gnomo más lejos ni más certero.",
+  urgamentes: "Piensa cada jugada tres veces antes de moverse, lo cual explica por qué siempre llega tarde.",
+  punoroca: "Sus puños son más duros que la piedra de la que sacó el nombre.",
+};
+
 const UnitInfo = {
   buttonEl: null,
   overlayEl: null,
@@ -138,6 +157,10 @@ const UnitInfo = {
 
     const overlay = document.createElement("div");
     overlay.className = "unit-info-overlay";
+    // Descripción de flavor (ver UNIT_DESCRIPTIONS arriba) — solo se pinta
+    // el párrafo si el personaje tiene una definida, para no dejar un hueco
+    // vacío mientras se van rellenando desde configurar-personajes.html.
+    const desc = UNIT_DESCRIPTIONS[unit.typeId];
     // pointer-events: none en el propio overlay (ver CSS) — es solo un
     // resumen mientras se mantiene pulsado, no debe poder interceptar ni
     // absorber ningún clic/toque de la pantalla que hay debajo.
@@ -146,6 +169,7 @@ const UnitInfo = {
         <div class="unit-info-portrait${unit.team === "enemy" ? " unit-info-portrait--enemy" : ""}">
           <img src="${type.spriteUrl}" alt="">
         </div>
+        ${desc ? `<p class="unit-info-desc">${desc}</p>` : ""}
         <h2 class="unit-info-name">${type.name}</h2>
         <div class="unit-info-hp"><i class="ph ph-heart"></i> ${unit.hp} / ${unit.maxHp}</div>
         <div class="unit-info-stats">

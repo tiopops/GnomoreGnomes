@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calibrar tamaño y estadísticas — Gnomore Gnomes</title>
+<title>Configurar personajes — Gnomore Gnomes</title>
 <link rel="stylesheet" href="../css/style.css">
 <style>
   /* El .unit/.unit__flip/.unit__sprite de cada tarjeta viene tal cual del CSS
@@ -100,6 +100,24 @@
   .card__stage-inner .unit { left: 94px; top: 58.5px; }
   .card__stage-inner .unit__hpbar { display: none; }
 
+  /* Descripción de flavor (UNIT_DESCRIPTIONS en js/unitinfo.js) — misma
+     idea que el resto de la tarjeta: editable aquí, con vista previa igual
+     de cursiva/apagada que en el popup real (.unit-info-desc). */
+  .card__desc-label { font-size: 0.78rem; color: var(--muted); }
+  .card__desc {
+    width: 100%;
+    min-height: 54px;
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid rgba(244, 242, 248, 0.3);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-style: italic;
+    resize: vertical;
+  }
+
   .card__sliders { display: flex; flex-direction: column; gap: 8px; }
   .card__slider-row { display: flex; align-items: center; gap: 8px; }
   .card__slider-row label { font-size: 0.78rem; color: var(--muted); width: 78px; flex-shrink: 0; }
@@ -180,7 +198,7 @@
 </head>
 <body>
 
-  <h1>Calibrar tamaño y estadísticas
+  <h1>Configurar personajes
     <small>Elige un equipo — solo sus personajes aparecen abajo, cada uno en mitad de su loseta tal cual en la partida. El bloque de abajo siempre incluye TODOS los personajes de TODOS los equipos, aunque ahora mismo solo veas uno.</small>
   </h1>
 
@@ -195,8 +213,8 @@
   <div class="grid" id="grid"></div>
 
   <div class="output-wrap">
-    <h2>Cópialo y pásamelo tal cual para que lo aplique en js/units.js</h2>
-    <div class="hint">Incluye el tamaño de TODOS los personajes y sus 4 estadísticas (aguante/movimiento/fuerza/agilidad), de los dos equipos — cámbialos de equipo arriba sin miedo, no se pierde nada.</div>
+    <h2>Cópialo y pásamelo tal cual para que lo aplique en js/units.js y js/unitinfo.js</h2>
+    <div class="hint">Incluye el tamaño de TODOS los personajes, sus 4 estadísticas (aguante/movimiento/fuerza/agilidad) y su descripción, de los dos equipos — cámbialos de equipo arriba sin miedo, no se pierde nada.</div>
     <textarea id="output" readonly></textarea>
     <div class="output-actions">
       <button class="toggle-btn" id="copyBtn">Copiar</button>
@@ -207,6 +225,10 @@
   <script src="../js/i18n.js"></script>
   <script src="../js/races.js"></script>
   <script src="../js/units.js"></script>
+  <!-- Solo para leer UNIT_DESCRIPTIONS como punto de partida (ver más abajo)
+       — el resto de unitinfo.js (botón/popup real) no se usa aquí, no hace
+       falta ninguna unidad seleccionada para que cargue sin errores. -->
+  <script src="../js/unitinfo.js"></script>
   <script>
     const STORAGE_KEY = "gnomore-tamano-stats-personajes-v1";
     const STAT_KEYS = ["aguante", "movimiento", "fuerza", "agilidad"];
@@ -219,10 +241,11 @@
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
     }
 
-    // tuned[typeId] = { scale, aguante, movimiento, fuerza, agilidad }.
-    // Arranca desde lo que ya haya en el juego real (SPRITE_SCALES/UNIT_TYPES)
-    // y lo que se haya guardado localmente encima — reabrir la herramienta o
-    // cambiar de equipo nunca pierde ajustes a medio hacer.
+    // tuned[typeId] = { scale, aguante, movimiento, fuerza, agilidad, description }.
+    // Arranca desde lo que ya haya en el juego real (SPRITE_SCALES/UNIT_TYPES/
+    // UNIT_DESCRIPTIONS) y lo que se haya guardado localmente encima —
+    // reabrir la herramienta o cambiar de equipo nunca pierde ajustes a
+    // medio hacer.
     const tuned = loadTuned();
     Object.keys(UNIT_TYPES).forEach((typeId) => {
       const saved = tuned[typeId] || {};
@@ -233,6 +256,7 @@
         movimiento: saved.movimiento ?? type.movimiento,
         fuerza: saved.fuerza ?? type.fuerza,
         agilidad: saved.agilidad ?? type.agilidad,
+        description: saved.description ?? (UNIT_DESCRIPTIONS[typeId] ?? ""),
       };
     });
 
@@ -292,6 +316,23 @@
 
       stage.appendChild(stageInner);
       card.appendChild(stage);
+
+      // Descripción de flavor — debajo del sprite (pedido explícito), igual
+      // que en el popup real (ver .unit-info-desc en css/style.css).
+      const descLabel = document.createElement("div");
+      descLabel.className = "card__desc-label";
+      descLabel.textContent = "Descripción (aparece debajo del sprite en el popup)";
+      card.appendChild(descLabel);
+
+      const descInput = document.createElement("textarea");
+      descInput.className = "card__desc";
+      descInput.value = v.description;
+      descInput.addEventListener("input", () => {
+        v.description = descInput.value;
+        saveTuned(tuned);
+        updateOutput();
+      });
+      card.appendChild(descInput);
 
       const sliders = document.createElement("div");
       sliders.className = "card__sliders";
@@ -409,6 +450,7 @@
           movimiento: type.movimiento,
           fuerza: type.fuerza,
           agilidad: type.agilidad,
+          description: UNIT_DESCRIPTIONS[typeId] ?? "",
         };
         saveTuned(tuned);
         renderTeam(teamSelect.value);
@@ -441,6 +483,15 @@
           `  ${typeId}: { aguante: ${v.aguante}, movimiento: ${v.movimiento}, fuerza: ${v.fuerza}, agilidad: ${v.agilidad}, },`
         );
       });
+      lines.push("");
+      lines.push("// --- js/unitinfo.js — UNIT_DESCRIPTIONS completo ---");
+      lines.push("const UNIT_DESCRIPTIONS = {");
+      typeIds.forEach((typeId) => {
+        // JSON.stringify escapa comillas/saltos de línea solos — así una
+        // descripción con comillas dentro no rompe el bloque generado.
+        lines.push(`  ${typeId}: ${JSON.stringify(tuned[typeId].description || "")},`);
+      });
+      lines.push("};");
       output.value = lines.join("\n");
     }
 

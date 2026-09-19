@@ -760,6 +760,17 @@ h2 {
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)) hue-rotate(150deg) saturate(1.7) brightness(0.95);
 }
 
+/* Descripción de flavor, justo debajo del sprite (ver UNIT_DESCRIPTIONS en
+   js/unitinfo.js) — en cursiva y más apagada que el nombre para que se lea
+   como texto ambiental, no como otro dato de la ficha. */
+.unit-info-desc {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .unit-info-name {
   margin: 4px 0 2px;
   font-size: 1.3rem;

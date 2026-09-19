@@ -66,6 +66,17 @@ const GNOME_SIZES = {
 // coincidir con la de @keyframes gnome-land-impact en style.css.
 const GNOME_LAND_IMPACT_MS = 480;
 
+// Duración BASE (segundos) de las dos animaciones de "idle" del gnomo — la
+// respiración mientras anda suelto (.gnome__sprite, animation-duration en
+// style.css) y el temblor mientras lo llevan cogido (.gnome-attach__sprite,
+// @keyframes gnome-nervous-tremble) — deben coincidir con esos valores en
+// style.css. GnomeInstance._applyNervousness() las acorta según los puntos
+// que lleve acumulados (pedido explícito: "en función de la cantidad de
+// puntos que llevan acumulados, sus animaciones de idle son más rápidas...
+// más nerviosos tienen que parecer"), así que estos dos números son el
+// punto de partida a 0 puntos, no un valor fijo.
+const GNOME_IDLE_BASE_S = { loose: 0.87, held: 0.45 };
+
 // Posición del gnomo "amarrado" al brazo de quien lo lleva cogido, UNA POR
 // TIPO DE PERSONAJE — hace falta porque no todos los personajes tienen el
 // mismo tamaño en pantalla (ver SPRITE_SCALES en units.js): el
@@ -163,17 +174,23 @@ function createGnomeInstance() {
       el.appendChild(flipEl);
       Units.container.appendChild(el);
 
-      // Clic directo sobre el propio gnomo (cuando anda suelto, sin mira de
-      // "coger" tapándolo) -> muestra/oculta su contador de puntos justo
-      // encima — pedido explícito: "el contador de puntos del gnomo
-      // aparecerá sobre el propio gnomo al pulsar sobre él, porque pueden
-      // haber varios en juego". stopPropagation para no disparar también el
-      // deseleccionar-al-hacer-clic-fuera de units.js (mismo patrón que
-      // Units.spawnUnit con las unidades normales).
-      el.addEventListener("click", (e) => {
+      // Mantener pulsado sobre el propio gnomo (cuando anda suelto, sin mira
+      // de "coger" tapándolo) -> muestra su contador de puntos justo encima
+      // MIENTRAS se mantiene pulsado, igual que el botón de info de
+      // js/unitinfo.js (pointerdown abre / pointerup-en-cualquier-sitio
+      // cierra, no es un toggle) — pedido explícito: "los puntos de cada
+      // gnomo se muestran solo al mantenerlos pulsados sobre ellos".
+      // stopPropagation para no disparar también el deseleccionar-al-hacer-
+      // clic-fuera de units.js (mismo patrón que Units.spawnUnit con las
+      // unidades normales).
+      el.addEventListener("pointerdown", (e) => {
         e.stopPropagation();
-        this.toggleBadge();
+        e.preventDefault();
+        this.showBadge();
       });
+      // Evita que un long-press dispare además el menú contextual táctil
+      // (mismo motivo que unit-info-btn en unitinfo.js).
+      el.addEventListener("contextmenu", (e) => e.preventDefault());
 
       this.el = el;
       this.flipEl = flipEl;
@@ -304,16 +321,18 @@ function createGnomeInstance() {
         img.draggable = false;
         img.alt = "";
         attachEl.appendChild(img);
-        // Igual que el clic sobre el gnomo suelto (ver spawn()): mientras lo
-        // llevan cogido, clicar el propio gnomo amarrado también
-        // muestra/oculta su contador de puntos — normalmente es cuando MÁS
-        // interesa consultarlo, con los puntos ya subiendo a base de
-        // golpearlo. stopPropagation para no reseleccionar por debajo a
-        // quien lo lleva.
-        attachEl.addEventListener("click", (e) => {
+        // Igual que mantener pulsado el gnomo suelto (ver spawn()): mientras
+        // lo llevan cogido, mantener pulsado el propio gnomo amarrado
+        // también muestra su contador de puntos MIENTRAS se mantiene
+        // pulsado — normalmente es cuando MÁS interesa consultarlo, con los
+        // puntos ya subiendo a base de golpearlo. stopPropagation para no
+        // reseleccionar por debajo a quien lo lleva.
+        attachEl.addEventListener("pointerdown", (e) => {
           e.stopPropagation();
-          this.toggleBadge();
+          e.preventDefault();
+          this.showBadge();
         });
+        attachEl.addEventListener("contextmenu", (e) => e.preventDefault());
         this.attachEl = attachEl;
         this.attachSpriteEl = img;
       }
@@ -334,6 +353,11 @@ function createGnomeInstance() {
       this.attachEl.style.right = `${offset.right}px`;
       this.attachEl.style.bottom = `${offset.bottom}%`;
       this.attachEl.style.width = `${heldWidth}px`;
+      // Por si ya llevaba puntos acumulados antes de cogerlo (p.ej. tras un
+      // pase exitoso, ver executePass): el temblor del sprite recién
+      // enganchado debe arrancar ya a la velocidad "nerviosa" que le toca,
+      // no a la base (ver GNOME_IDLE_BASE_S/_applyNervousness arriba).
+      this._applyNervousness();
 
       unit.flipEl.appendChild(this.attachEl);
       this.attachEl.classList.remove("gnome-attach--visible");
@@ -744,11 +768,32 @@ function createGnomeInstance() {
 
     _setPoints(value) {
       this.points = value;
+      this._applyNervousness();
       if (!this._badgeValueEl) return;
       this._badgeValueEl.textContent = String(this.points);
       this._badgeValueEl.classList.remove("gnome-points-badge__value--bump");
       void this._badgeValueEl.offsetWidth;
       this._badgeValueEl.classList.add("gnome-points-badge__value--bump");
+    },
+
+    // Acorta la animación de "idle" que esté activa ahora mismo (respiración
+    // suelto / temblor cogido, ver GNOME_IDLE_BASE_S arriba) en proporción a
+    // los puntos acumulados — cuantos más puntos, más nervioso se ve. Se
+    // aplica sobre AMBOS sprites (this.spriteEl y this.attachSpriteEl, si ya
+    // existe) en vez de solo el visible ahora mismo, para que el que
+    // corresponda ya esté a la velocidad correcta en cuanto se muestre (p.ej.
+    // al recogerlo justo después de que sus puntos hayan cambiado). Reduce la
+    // duración de forma proporcional (no resta fija) para que siga habiendo
+    // cambio perceptible incluso con pocos puntos, con un suelo (35% de la
+    // base) para que muchos puntos nunca lo vuelvan un parpadeo ilegible.
+    _applyNervousness() {
+      const factor = Math.max(0.35, 1 / (1 + this.points * 0.15));
+      if (this.spriteEl) {
+        this.spriteEl.style.animationDuration = `${(GNOME_IDLE_BASE_S.loose * factor).toFixed(3)}s`;
+      }
+      if (this.attachSpriteEl) {
+        this.attachSpriteEl.style.animationDuration = `${(GNOME_IDLE_BASE_S.held * factor).toFixed(3)}s`;
+      }
     },
 
     // ---------- Contador de puntos flotante (al hacer clic) ----------
@@ -806,16 +851,24 @@ function createGnomeInstance() {
       this._badgeEl.style.zIndex = String((row + col) * 10 + 20);
     },
 
-    toggleBadge() {
+    // Mantener-pulsado, no toggle (ver pointerdown en spawn()/attachTo()):
+    // se abre aquí y se cierra en el pointerup/pointercancel global
+    // registrado por el GESTOR más abajo (window.addEventListener), igual
+    // que UnitInfo.openPopup/closePopup en js/unitinfo.js — soltar en
+    // CUALQUIER punto de la pantalla cierra el contador, incluso si el
+    // dedo/ratón se ha desplazado fuera del gnomo antes de soltar.
+    showBadge() {
       this._ensureBadge();
       this._positionBadge();
-      this._badgeVisible = !this._badgeVisible;
-      this._badgeEl.classList.toggle("gnome-points-badge--visible", this._badgeVisible);
+      this._badgeVisible = true;
+      this._badgeEl.classList.add("gnome-points-badge--visible");
+      Gnome._pressedGnome = this;
     },
 
     hideBadge() {
       this._badgeVisible = false;
       if (this._badgeEl) this._badgeEl.classList.remove("gnome-points-badge--visible");
+      if (Gnome._pressedGnome === this) Gnome._pressedGnome = null;
     },
   };
 }
@@ -833,6 +886,15 @@ const Gnome = {
   _passBtn: null,
   _currentHeldGnome: null,
   _currentHolderUnit: null,
+
+  // Qué gnomo tiene su contador de puntos abierto por "mantener pulsado"
+  // ahora mismo (ver GnomeInstance.showBadge/hideBadge) — lo escribe el
+  // propio gnomo al abrirse y lo lee el listener global de
+  // pointerup/pointercancel de más abajo para saber a cuál cerrarle el
+  // contador al soltar, sin que cada gnomo tenga que registrar su propio
+  // listener en window (uno solo para todos, igual que UnitInfo en
+  // unitinfo.js hace con un único botón).
+  _pressedGnome: null,
 
   // Se llama UNA vez al empezar cada partida nueva (spawnTestUnits,
   // newgame-flow.js), ANTES de crear los gnomos de esa partida — detiene
@@ -998,3 +1060,15 @@ const Gnome = {
 };
 
 Units.registerRangeProvider(Gnome);
+
+// Cierra el contador de puntos de "mantener pulsado" (ver
+// GnomeInstance.showBadge) al soltar en CUALQUIER punto de la pantalla, no
+// solo sobre el propio gnomo — mismo patrón que UnitInfo.closePopup en
+// unitinfo.js. Un único listener para todos los gnomos (Gnome._pressedGnome
+// dice a cuál cerrarle el suyo) en vez de uno por instancia.
+window.addEventListener("pointerup", () => {
+  if (Gnome._pressedGnome) Gnome._pressedGnome.hideBadge();
+});
+window.addEventListener("pointercancel", () => {
+  if (Gnome._pressedGnome) Gnome._pressedGnome.hideBadge();
+});

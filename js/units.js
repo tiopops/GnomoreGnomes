@@ -72,7 +72,7 @@ const UNIT_TYPES = {
   // Sustituye a LanzaGnomos en el Reino Mushboom Forest (ver más abajo: el
   // goblin ahora vive en Colinas Rock'n Troll) — mismo personaje que ese
   // reemplazó, pero cada uno con sus propias estadísticas ya calibradas por
-  // separado en debug/calibrar-tamano.html.
+  // separado en debug/configurar-personajes.html.
   surcabosques: {
     name: "SurcaBosques",
     raceId: "mushboom_forest",
@@ -120,7 +120,7 @@ const UNIT_TYPES = {
   // Mismo personaje al que sustituyó GolemCorteza/hombre_arbol (pedido
   // explícito original: "con los stats de golemcorteza"), ya con sus
   // propias estadísticas calibradas por separado en
-  // debug/calibrar-tamano.html.
+  // debug/configurar-personajes.html.
   punoroca: {
     name: "PuñoRoca",
     raceId: "colinas_rockntroll",
@@ -137,7 +137,7 @@ const UNIT_TYPES = {
 // Tamaño visual de cada personaje EN EL TABLERO (multiplica el ancho base de
 // 120px, ver .unit__sprite en style.css) — vive separado de UNIT_TYPES, no
 // dentro de cada entrada, porque es puramente estético/de calibración (a
-// diferencia de las estadísticas de juego) y así debug/calibrar-tamano.html
+// diferencia de las estadísticas de juego) y así debug/configurar-personajes.html
 // puede generar de una este objeto completo listo para pegar, igual que
 // FACE_OFFSETS (unitinfo.js) o GNOME_SIZES/GNOME_ATTACH_OFFSETS (gnome.js).
 // "default" es el que usa cualquier tipo nuevo sin calibrar todavía — así
