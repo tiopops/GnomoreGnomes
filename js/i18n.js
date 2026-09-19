@@ -17,7 +17,7 @@ const STRINGS = {
     mode_gnomesmash_desc: "Caza gnomos, cárgalos y machácalos en la base rival.",
 
     choose_race: "Elige tu raza",
-    race_mushboom_forest: "Bosque MushBooom",
+    race_mushboom_forest: "Bosque MushBoom",
     race_mushboom_forest_desc: "GolemCorteza, Surcabosques y TruenoEspora, habitantes del bosque, expertos en setas bomba.",
     race_colinas_rockntroll: "Colinas Rock'n Troll",
     race_colinas_rockntroll_desc: "Trolls de las colinas rocosas, tan duros de roer como su música.",
@@ -42,7 +42,7 @@ const STRINGS = {
     mode_gnomesmash_desc: "Hunt gnomes, charge them up, and smash them in the enemy base.",
 
     choose_race: "Choose your race",
-    race_mushboom_forest: "MushBooom Forest",
+    race_mushboom_forest: "MushBoom Forest",
     race_mushboom_forest_desc: "GolemCorteza, Surcabosques and TruenoEspora, forest dwellers and masters of bomb mushrooms.",
     race_colinas_rockntroll: "Rock'n Troll Hills",
     race_colinas_rockntroll_desc: "Trolls from the rocky hills, as hard-headed as their music.",

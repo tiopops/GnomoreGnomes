@@ -41,7 +41,7 @@
 // herramienta cuando haga falta reajustar algún personaje.
 const FACE_OFFSETS = {
   default: { x: 50, y: 15, zoom: 230 },
-  hombre_arbol: { x: 50, y: 15, zoom: 230 },
+  hombre_arbol: { x: 72, y: 14, zoom: 210 },
   surcabosques: { x: 50, y: 15, zoom: 230 },
   seta_artificiero: { x: 50, y: 15, zoom: 230 },
   goblin_lanzador: { x: 70, y: 21, zoom: 190 },

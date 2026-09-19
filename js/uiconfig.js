@@ -16,7 +16,7 @@
    poder calcular ángulos con trigonometría. Misma idea que
    GNOME_LAND_IMPACT_MS teniendo que coincidir con su @keyframes.
 
-   Calibrado con debug/calibrar-cara.html — esa herramienta genera el
+   Calibrado con debug/calibrar-char.html — esa herramienta genera el
    bloque de código listo para pegar aquí si hace falta reajustar tamaño,
    radio o ángulos. */
 

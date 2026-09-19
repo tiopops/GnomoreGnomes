@@ -443,26 +443,26 @@ const Gnome = {
     });
   },
 
-  // Probabilidad de éxito del pase. Diseño (pedido explícito): DENTRO del
-  // propio alcance de movimiento de quien pasa, el pase tiene que ser
-  // fiable para cualquiera — incluso un personaje de agilidad baja domina
-  // un pase corto, a esa distancia ya se mueve con comodidad. La agilidad
-  // entra en juego sobre todo MÁS ALLÁ de ese alcance: ahí sí decide si el
-  // pase sigue siendo utilizable (agilidad alta) o se vuelve un tiro
-  // arriesgado (agilidad baja). Por eso la fórmula usa "overreach"
-  // (casillas de distancia por encima del propio movimiento) en vez de la
-  // distancia absoluta como antes.
-  //   - overreach = 0 (dentro de rango): base alta para todos (86%-94%
-  //     según agilidad) — "fiable" en el sentido pedido, sin que la
-  //     agilidad baja lo tire por debajo de fiable.
-  //   - overreach > 0: penalización fuerte por casilla de más, que la
-  //     agilidad alta amortigua y la agilidad baja agrava.
-  // Acotado entre 10% y 97% para que nunca sea ni un fallo ni un éxito
-  // garantizados.
+  // Probabilidad de éxito del pase.
+  //   - A 1 casilla (adyacente) es prácticamente un "dar la mano" más que
+  //     un lanzamiento real — pedido explícito: NUNCA debe fallar, así que
+  //     es el único caso con 100% fijo, sea cual sea la agilidad.
+  //   - Más allá de 1 casilla, DENTRO del propio alcance de movimiento de
+  //     quien pasa, el pase sigue siendo fiable para cualquiera — incluso
+  //     un personaje de agilidad baja domina un pase corto. La agilidad
+  //     entra en juego sobre todo MÁS ALLÁ de ese alcance ("overreach" =
+  //     casillas de distancia por encima del propio movimiento): ahí sí
+  //     decide si el pase se mantiene utilizable (agilidad alta, apenas
+  //     penalizado) o se vuelve un tiro arriesgado (agilidad baja, cae
+  //     rápido). Subido respecto a la versión anterior porque incluso los
+  //     personajes de agilidad alta fallaban demasiado.
+  // Acotado entre 15% y 98% fuera del caso adyacente, para que ahí nunca
+  // sea ni un fallo ni un éxito garantizados.
   computePassSuccess(agilidad, distance, movimiento) {
+    if (distance <= 1) return 1;
     const overreach = Math.max(0, distance - movimiento);
-    const pct = overreach === 0 ? 90 + (agilidad - 3) * 2 : 90 - overreach * 16 + (agilidad - 3) * 9;
-    return Math.min(97, Math.max(10, pct)) / 100;
+    const pct = overreach === 0 ? 90 + agilidad * 3 : 92 - overreach * 12 + agilidad * 7;
+    return Math.min(98, Math.max(15, pct)) / 100;
   },
 
   async executePass(holder, target) {

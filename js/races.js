@@ -7,7 +7,11 @@ const RACES = [
     id: "mushboom_forest",
     nameKey: "race_mushboom_forest",
     descKey: "race_mushboom_forest_desc",
-    icon: "ph-mushroom",
+    // "ph-mushroom" no existe en el set de Phosphor que usamos (por eso no
+    // salía ningún icono, solo el hueco vacío) — comprobado también que
+    // "ph-tree" tampoco existe; ph-leaf sí está en el set y pega igual de
+    // bien con un equipo de bosque.
+    icon: "ph-leaf",
     color: "#8fbf4d",
     available: true,
   },
