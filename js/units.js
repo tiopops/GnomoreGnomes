@@ -69,11 +69,11 @@ const UNIT_TYPES = {
     attackRange: 1,
     defaultFacing: "right", // la imagen viene dibujada mirando hacia la derecha por defecto
   },
-  // Sustituye a Goblin Lanzador en el Reino Mushboom Forest (ver más abajo:
-  // el goblin ahora vive en Colinas Rock'n Troll) — mismas estadísticas
+  // Sustituye a LanzaGnomos en el Reino Mushboom Forest (ver más abajo: el
+  // goblin ahora vive en Colinas Rock'n Troll) — mismas estadísticas
   // exactas, solo cambia el personaje y su sprite.
   surcabosques: {
-    name: "Surcabosques",
+    name: "SurcaBosques",
     raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_02.png",
     aguante: 1,
@@ -95,7 +95,7 @@ const UNIT_TYPES = {
     defaultFacing: "right",
   },
   goblin_lanzador: {
-    name: "Goblin Lanzador",
+    name: "LanzaGnomos",
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_01.png",
     aguante: 1,

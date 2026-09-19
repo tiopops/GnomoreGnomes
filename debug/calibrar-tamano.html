@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calibrar tamaño de personajes — Gnomore Gnomes</title>
+<title>Calibrar tamaño y estadísticas — Gnomore Gnomes</title>
 <link rel="stylesheet" href="../css/style.css">
 <style>
   /* El .unit/.unit__flip/.unit__sprite de cada tarjeta viene tal cual del CSS
@@ -27,17 +27,35 @@
   }
   h1 small { display: block; font-size: 0.75rem; color: var(--muted); font-weight: 400; margin-top: 2px; }
 
-  /* TODOS los personajes a la vez, en tarjetas — pedido explícito: "que
-     vayamos teniendo sobre una loseta... para copiar y pegar de una", igual
-     que el output de calibrar-char.html incluye SIEMPRE el bloque completo
-     en vez de uno por uno. */
+  .panel {
+    padding: 12px 20px;
+    background: var(--bg-elevated);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-end;
+    border-bottom: 1px solid #3a4054;
+  }
+  .control { display: flex; flex-direction: column; gap: 4px; min-width: 220px; }
+  .control label { font-size: 0.85rem; color: var(--muted); }
+  select {
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid rgba(244, 242, 248, 0.3);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.95rem;
+  }
+
+  /* Solo los personajes del equipo elegido arriba — pedido explícito: "no
+     quiero que se muestren todos, quiero que se muestren los del equipo
+     que yo seleccione". */
   .grid {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
     gap: 1px;
     background: #3a4054;
-    overflow-y: auto;
   }
   .card {
     background: var(--bg-elevated);
@@ -47,30 +65,45 @@
     gap: 8px;
   }
   .card__name { font-size: 0.9rem; font-weight: 600; }
-  .card__race { font-size: 0.72rem; color: var(--muted); margin-top: -6px; }
   .card__stage {
     position: relative;
     width: 100%;
-    height: 168px;
+    /* Suficiente margen POR ENCIMA de la loseta para que hasta el personaje
+       más grande al tope del slider (2.5x, sobre el sprite más alto de los
+       6 -> UrgaMentes, 354px de alto nativo) no se corte por arriba.
+       Cálculo: a 2.5x la altura mostrada de ese sprite es
+       120*2.5*(354/300)=354px, y el ancla real (transform:
+       translate(-50%,-92%), ver más abajo) sube un 92% de esa altura desde
+       el centro de la loseta -> hacen falta ~326px libres por encima del
+       ancla, más la loseta debajo -> 440px con margen de sobra. */
+    height: 440px;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
     background:
       linear-gradient(rgba(244,242,248,0.05) 1px, transparent 1px),
       linear-gradient(90deg, rgba(244,242,248,0.05) 1px, transparent 1px);
     background-size: 20px 20px;
     border-radius: 8px;
-    overflow: hidden;
+    overflow: visible;
   }
-  .card__stage-inner { position: relative; width: 188px; height: 164px; }
+  .card__stage-inner { position: relative; width: 188px; height: 164px; overflow: visible; }
   .card__stage-inner img.tile-ref { position: absolute; left: 0; top: 0; width: 188px; display: block; }
-  /* Misma ancla que .unit real (translate(-50%,-92%)) para que el tamaño se
-     vea EXACTAMENTE igual que sobre el tablero, pies clavados a la loseta. */
-  .card__stage-inner .unit { left: 50%; top: 58%; }
+  /* Misma ancla que usa la partida real: getTileCenter (js/mapgen.js) coloca
+     el centro de la unidad en (TILE_WIDTH/2, TILE_TOP_HEIGHT/2) = (94px,
+     58.5px) medido en píxeles desde la esquina de la loseta, y el CSS real
+     de .unit (transform: translate(-50%,-92%)) sube desde ahí un 92% de la
+     altura YA ESCALADA del propio sprite — exactamente donde aparece en el
+     tablero real, ni más arriba ni más centrado de más (pedido explícito:
+     "deben aparecer mostrados en mitad de la loseta, de la misma manera
+     que se muestran en el juego"). */
+  .card__stage-inner .unit { left: 94px; top: 58.5px; }
   .card__stage-inner .unit__hpbar { display: none; }
+
+  .card__sliders { display: flex; flex-direction: column; gap: 6px; }
   .card__slider-row { display: flex; align-items: center; gap: 8px; }
-  .card__slider-row label { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
-  .card__slider-row .value { font-weight: 700; color: var(--accent); font-size: 0.85rem; min-width: 34px; text-align: right; }
+  .card__slider-row label { font-size: 0.78rem; color: var(--muted); width: 78px; flex-shrink: 0; }
+  .card__slider-row .value { font-weight: 700; color: var(--accent); font-size: 0.85rem; min-width: 38px; text-align: right; }
   input[type="range"] { width: 100%; }
   .card__reset {
     align-self: flex-start;
@@ -90,9 +123,10 @@
     border-top: 1px solid #3a4054;
   }
   .output-wrap h2 { font-size: 0.95rem; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+  .output-wrap .hint { font-size: 0.75rem; color: var(--muted); margin: -4px 0 8px; }
   textarea {
     width: 100%;
-    min-height: 130px;
+    min-height: 150px;
     background: var(--bg);
     color: #b7f5c2;
     border: 1px solid rgba(244, 242, 248, 0.2);
@@ -119,14 +153,23 @@
 </head>
 <body>
 
-  <h1>Calibrar tamaño de personajes
-    <small>Todos los personajes a la vez, cada uno sobre una loseta real a escala — ajusta y copia el bloque completo de una sola vez.</small>
+  <h1>Calibrar tamaño y estadísticas
+    <small>Elige un equipo — solo sus personajes aparecen abajo, cada uno en mitad de su loseta tal cual en la partida. El bloque de abajo siempre incluye TODOS los personajes de TODOS los equipos, aunque ahora mismo solo veas uno.</small>
   </h1>
+
+  <div class="panel">
+    <div class="control">
+      <label for="teamSelect">Selección de Equipo</label>
+      <select id="teamSelect"></select>
+      <span style="font-size:0.75rem;color:var(--muted);">Sale directo de RACES — un equipo nuevo aparece aquí solo.</span>
+    </div>
+  </div>
 
   <div class="grid" id="grid"></div>
 
   <div class="output-wrap">
     <h2>Cópialo y pásamelo tal cual para que lo aplique en js/units.js</h2>
+    <div class="hint">Incluye el tamaño de TODOS los personajes y sus 4 estadísticas (aguante/movimiento/fuerza/agilidad), de los dos equipos — cámbialos de equipo arriba sin miedo, no se pierde nada.</div>
     <textarea id="output" readonly></textarea>
     <div class="output-actions">
       <button class="toggle-btn" id="copyBtn">Copiar</button>
@@ -138,36 +181,54 @@
   <script src="../js/races.js"></script>
   <script src="../js/units.js"></script>
   <script>
-    const STORAGE_KEY = "gnomore-tamano-personajes-v1";
+    const STORAGE_KEY = "gnomore-tamano-stats-personajes-v1";
+    const STAT_KEYS = ["aguante", "movimiento", "fuerza", "agilidad"];
 
-    function loadScales() {
+    function loadTuned() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
       catch (e) { return {}; }
     }
-    function saveScales(data) {
+    function saveTuned(data) {
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
     }
 
-    // Arranca desde lo que ya haya calibrado en SPRITE_SCALES (units.js) y lo
-    // que se haya guardado localmente encima — así reabrir la herramienta no
-    // pierde ajustes a medio hacer ni tampoco lo ya aplicado al juego real.
-    let scales = Object.assign({}, SPRITE_SCALES, loadScales());
+    // tuned[typeId] = { scale, aguante, movimiento, fuerza, agilidad }.
+    // Arranca desde lo que ya haya en el juego real (SPRITE_SCALES/UNIT_TYPES)
+    // y lo que se haya guardado localmente encima — reabrir la herramienta o
+    // cambiar de equipo nunca pierde ajustes a medio hacer.
+    const tuned = loadTuned();
+    Object.keys(UNIT_TYPES).forEach((typeId) => {
+      const saved = tuned[typeId] || {};
+      const type = UNIT_TYPES[typeId];
+      tuned[typeId] = {
+        scale: saved.scale ?? (SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default),
+        aguante: saved.aguante ?? type.aguante,
+        movimiento: saved.movimiento ?? type.movimiento,
+        fuerza: saved.fuerza ?? type.fuerza,
+        agilidad: saved.agilidad ?? type.agilidad,
+      };
+    });
 
+    const teamSelect = document.getElementById("teamSelect");
     const grid = document.getElementById("grid");
     const output = document.getElementById("output");
     const copyBtn = document.getElementById("copyBtn");
     const copiedMsg = document.getElementById("copiedMsg");
 
-    const typeIds = Object.keys(UNIT_TYPES);
-    const cards = {}; // typeId -> { spriteEl, valueEl, resetBtn }
+    RACES.forEach((race) => {
+      const opt = document.createElement("option");
+      opt.value = race.id;
+      opt.textContent = I18N && I18N.t ? I18N.t(race.nameKey) : race.id;
+      teamSelect.appendChild(opt);
+    });
 
-    function raceName(raceId) {
-      const race = RACES.find((r) => r.id === raceId);
-      return race && I18N && I18N.t ? I18N.t(race.nameKey) : raceId;
+    function charsForTeam(raceId) {
+      return Object.keys(UNIT_TYPES).filter((typeId) => UNIT_TYPES[typeId].raceId === raceId);
     }
 
     function buildCard(typeId) {
       const type = UNIT_TYPES[typeId];
+      const v = tuned[typeId];
 
       const card = document.createElement("div");
       card.className = "card";
@@ -176,11 +237,6 @@
       name.className = "card__name";
       name.textContent = type.name;
       card.appendChild(name);
-
-      const race = document.createElement("div");
-      race.className = "card__race";
-      race.textContent = raceName(type.raceId);
-      card.appendChild(race);
 
       const stage = document.createElement("div");
       stage.className = "card__stage";
@@ -202,6 +258,7 @@
       spriteEl.src = "../" + type.spriteUrl;
       spriteEl.draggable = false;
       spriteEl.alt = "";
+      spriteEl.style.width = Math.round(120 * v.scale) + "px";
       flipEl.appendChild(spriteEl);
       unitEl.appendChild(flipEl);
       stageInner.appendChild(unitEl);
@@ -209,68 +266,92 @@
       stage.appendChild(stageInner);
       card.appendChild(stage);
 
-      const sliderRow = document.createElement("div");
-      sliderRow.className = "card__slider-row";
-      const label = document.createElement("label");
-      label.setAttribute("for", `slider-${typeId}`);
-      label.textContent = "Tamaño";
-      const slider = document.createElement("input");
-      slider.type = "range";
-      slider.id = `slider-${typeId}`;
-      slider.min = "0.4";
-      slider.max = "2.5";
-      slider.step = "0.05";
-      const valueEl = document.createElement("span");
-      valueEl.className = "value";
-      sliderRow.appendChild(label);
-      sliderRow.appendChild(slider);
-      sliderRow.appendChild(valueEl);
-      card.appendChild(sliderRow);
+      const sliders = document.createElement("div");
+      sliders.className = "card__sliders";
+      card.appendChild(sliders);
+
+      function addSlider(key, label, min, max, step, decimals, suffix) {
+        const row = document.createElement("div");
+        row.className = "card__slider-row";
+        const lbl = document.createElement("label");
+        lbl.textContent = label;
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = String(min);
+        slider.max = String(max);
+        slider.step = String(step);
+        slider.value = String(v[key]);
+        const valueEl = document.createElement("span");
+        valueEl.className = "value";
+        const renderValue = () => (decimals ? Number(slider.value).toFixed(decimals) : slider.value) + (suffix || "");
+        valueEl.textContent = renderValue();
+        row.appendChild(lbl);
+        row.appendChild(slider);
+        row.appendChild(valueEl);
+        sliders.appendChild(row);
+
+        slider.addEventListener("input", () => {
+          const num = Number(slider.value);
+          v[key] = num;
+          valueEl.textContent = renderValue();
+          if (key === "scale") spriteEl.style.width = Math.round(120 * num) + "px";
+          saveTuned(tuned);
+          updateOutput();
+        });
+      }
+
+      addSlider("scale", "Tamaño", 0.4, 2.5, 0.05, 2, "x");
+      addSlider("aguante", "Aguante", 1, 5, 1, 0, "");
+      addSlider("movimiento", "Movimiento", 1, 5, 1, 0, "");
+      addSlider("fuerza", "Fuerza", 1, 5, 1, 0, "");
+      addSlider("agilidad", "Agilidad", 1, 5, 1, 0, "");
 
       const resetBtn = document.createElement("button");
       resetBtn.className = "card__reset";
       resetBtn.textContent = "Reiniciar";
       resetBtn.addEventListener("click", () => {
-        delete scales[typeId];
-        saveScales(scales);
-        const fallback = SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default;
-        setScale(typeId, fallback);
+        tuned[typeId] = {
+          scale: SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default,
+          aguante: type.aguante,
+          movimiento: type.movimiento,
+          fuerza: type.fuerza,
+          agilidad: type.agilidad,
+        };
+        saveTuned(tuned);
+        renderTeam(teamSelect.value);
       });
       card.appendChild(resetBtn);
 
       grid.appendChild(card);
-      cards[typeId] = { spriteEl, valueEl, slider };
-
-      slider.addEventListener("input", () => {
-        setScale(typeId, Number(slider.value));
-      });
     }
 
-    function setScale(typeId, scale) {
-      scales[typeId] = scale;
-      const c = cards[typeId];
-      c.slider.value = scale;
-      c.valueEl.textContent = scale.toFixed(2) + "x";
-      c.spriteEl.style.width = Math.round(120 * scale) + "px";
-      saveScales(scales);
+    function renderTeam(raceId) {
+      grid.innerHTML = "";
+      charsForTeam(raceId).forEach(buildCard);
       updateOutput();
     }
 
     function updateOutput() {
-      const lines = ["const SPRITE_SCALES = {", `  default: ${SPRITE_SCALES.default},`];
-      typeIds.forEach((typeId) => {
-        const v = scales[typeId] ?? (SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default);
-        lines.push(`  ${typeId}: ${v},`);
-      });
+      const typeIds = Object.keys(UNIT_TYPES);
+      const lines = [
+        "// --- js/units.js — SPRITE_SCALES completo ---",
+        "const SPRITE_SCALES = {",
+        `  default: ${SPRITE_SCALES.default},`,
+      ];
+      typeIds.forEach((typeId) => lines.push(`  ${typeId}: ${tuned[typeId].scale},`));
       lines.push("};");
+      lines.push("");
+      lines.push("// --- js/units.js — estadísticas (aguante/movimiento/fuerza/agilidad) por personaje ---");
+      typeIds.forEach((typeId) => {
+        const v = tuned[typeId];
+        lines.push(
+          `  ${typeId}: { aguante: ${v.aguante}, movimiento: ${v.movimiento}, fuerza: ${v.fuerza}, agilidad: ${v.agilidad}, },`
+        );
+      });
       output.value = lines.join("\n");
     }
 
-    typeIds.forEach(buildCard);
-    typeIds.forEach((typeId) => {
-      const v = scales[typeId] ?? (SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default);
-      setScale(typeId, v);
-    });
+    teamSelect.addEventListener("change", () => renderTeam(teamSelect.value));
 
     copyBtn.addEventListener("click", async () => {
       try {
@@ -282,6 +363,8 @@
       copiedMsg.classList.add("copied-msg--visible");
       setTimeout(() => copiedMsg.classList.remove("copied-msg--visible"), 1400);
     });
+
+    renderTeam(teamSelect.value);
   </script>
 </body>
 </html>
