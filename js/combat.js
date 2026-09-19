@@ -140,6 +140,19 @@ const Combat = {
     Units.playShake(target);
     SFX.hit();
 
+    // Retroalimentación en QUIEN GOLPEA, no solo en quien lo recibe (regla
+    // de oro del proyecto: todo necesita sonido y/o animación coherente con
+    // la acción) — reutiliza el mismo puñetazo corto que Gnome.hit
+    // (unit--punching, ver style.css: sustituye a la respiración continua
+    // mientras dura, nunca se mezcla con ella), sincronizado con el mismo
+    // golpe de sonido y el temblor de quien lo recibe.
+    if (attacker.el) {
+      attacker.el.classList.remove("unit--punching");
+      void attacker.spriteEl.offsetWidth;
+      attacker.el.classList.add("unit--punching");
+      setTimeout(() => attacker.el.classList.remove("unit--punching"), 320);
+    }
+
     if (target.hp <= 0) {
       await Units.removeUnit(target);
     } else {
