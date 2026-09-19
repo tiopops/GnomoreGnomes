@@ -106,7 +106,7 @@ function startMatch({ modeId, raceId, opponents }) {
   });
 
   renderMap(map, document.getElementById("board-tiles"));
-  spawnTestUnits(size);
+  spawnTestUnits(size, raceId);
   showScreen("screen-board");
   screenHistory.length = 0;
   screenHistory.push("main-menu", "screen-board");
@@ -120,30 +120,49 @@ function resumeMatch() {
   const saved = SaveGame.load();
   if (!saved || !saved.tiles) return;
   renderMap({ size: saved.size, tiles: saved.tiles }, document.getElementById("board-tiles"));
-  spawnTestUnits(saved.size);
+  spawnTestUnits(saved.size, saved.raceId);
   showScreen("screen-board");
   screenHistory.length = 0;
   screenHistory.push("main-menu", "screen-board");
   syncBoardCamera();
 }
 
-// Coloca los 3 tipos de unidad de prueba del Mushboom Forest, uno junto a
-// otro cerca del centro del tablero para poder comparar sus estadísticas en
-// acción (ver UNIT_TYPES en units.js), más varios rivales en casillas al
-// azar (uno de cada tipo, con el mismo tinte rojo vía CSS) para tener con
-// quién interactuar. Solo para pruebas — más adelante esto pasará a depender
-// de la raza elegida y de una colocación real de inicio de partida.
-function spawnTestUnits(size) {
+// Coloca los 3 tipos de unidad del equipo de la raza elegida, uno junto a
+// otro cerca del centro del tablero (ver UNIT_TYPES en units.js — el orden
+// en el que aparecen ahí es el mismo con el que se colocan aquí), más un
+// rival de cada uno de esos mismos tipos en casillas al azar (mismo tinte
+// rojo vía CSS) para tener con quién interactuar. El roster se calcula
+// filtrando UNIT_TYPES por raceId en vez de tener una lista fija: así un
+// personaje nuevo que se añada a una raza aparece aquí solo, sin tocar este
+// archivo (pedido explícito: "si elijo colinas rockn troll debe empezar la
+// partida con los personajes del equipo elegido" — antes esto era siempre
+// el roster de Mushboom Forest sin importar la raza escogida).
+function spawnTestUnits(size, raceId) {
   if (typeof Units === "undefined") return;
   const boardTiles = document.getElementById("board-tiles");
   Units.init(boardTiles, size);
   const mid = Math.floor(size / 2);
-  Units.spawnTestUnit(mid, mid, "hombre_arbol");
-  Units.spawnTestUnit(mid, mid - 1, "surcabosques");
-  Units.spawnTestUnit(mid - 1, mid, "seta_artificiero");
-  Units.spawnRandomEnemy("hombre_arbol");
-  Units.spawnRandomEnemy("surcabosques");
-  Units.spawnRandomEnemy("seta_artificiero");
+
+  const roster = Object.keys(UNIT_TYPES).filter((typeId) => UNIT_TYPES[typeId].raceId === raceId);
+  // Si por lo que sea no hay raza válida (partida guardada antigua sin
+  // raceId, etc.) se cae de vuelta al roster de Mushboom Forest de siempre
+  // en vez de dejar el tablero sin personajes del jugador.
+  const finalRoster = roster.length > 0
+    ? roster
+    : Object.keys(UNIT_TYPES).filter((typeId) => UNIT_TYPES[typeId].raceId === "mushboom_forest");
+
+  // Mismas 3 casillas relativas al centro que se usaban antes — de momento
+  // solo hay razas con 3 personajes, así que alcanza con 3 posiciones fijas.
+  const spawnSpots = [
+    { row: mid, col: mid },
+    { row: mid, col: mid - 1 },
+    { row: mid - 1, col: mid },
+  ];
+  finalRoster.forEach((typeId, i) => {
+    const spot = spawnSpots[i] || spawnSpots[spawnSpots.length - 1];
+    Units.spawnTestUnit(spot.row, spot.col, typeId);
+    Units.spawnRandomEnemy(typeId);
+  });
 
   // El gnomo (js/gnome.js): de momento uno solo en el tablero, cerca del
   // centro (spawnNear busca la loseta libre más próxima si esa ya está
