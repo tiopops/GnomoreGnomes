@@ -434,6 +434,38 @@ h2 {
   100% { transform: translateY(0) scale(1, 1); }
 }
 
+/* Golpear al gnomo mientras se lleva cogido (ver Gnome.hit) — retroalimentación
+   en QUIEN GOLPEA, no solo en el gnomo (que ya temblaba con gnome-attach--hit):
+   un puñetazo corto que sustituye a la respiración mientras dura, mismo patrón
+   de intercambio de animación que unit--moving arriba (nunca se mezcla con la
+   respiración continua). translateX se ve mirado hacia el lado correcto solo
+   porque unit__flip (el padre) ya aplica el scaleX de girar — el propio sprite
+   no necesita saber hacia qué lado mira su personaje. */
+.unit--punching .unit__sprite {
+  animation: unit-punch 0.32s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+@keyframes unit-punch {
+  0% { transform: scale(1, 1) translateX(0); }
+  35% { transform: scale(1.08, 0.93) translateX(7px); }
+  65% { transform: scale(0.96, 1.05) translateX(-2px); }
+  100% { transform: scale(1, 1) translateX(0); }
+}
+
+/* Pasar el gnomo (ver Gnome.executePass) — armado + suelta sobre QUIEN LANZA,
+   en paralelo al vuelo del propio gnomo (gnome--flying, ver más abajo), para
+   que la acción se lea completa en los dos lados y no solo en quien vuela. */
+.unit--throwing .unit__sprite {
+  animation: unit-throw 0.38s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+@keyframes unit-throw {
+  0% { transform: scale(1, 1) translateX(0) rotate(0deg); }
+  30% { transform: scale(0.94, 1.05) translateX(-5px) rotate(-5deg); }
+  65% { transform: scale(1.1, 0.9) translateX(9px) rotate(7deg); }
+  100% { transform: scale(1, 1) translateX(0) rotate(0deg); }
+}
+
 /* Losetas alcanzables: elipse aplanada (no un círculo) para que se asiente
    sobre la cara superior de la loseta isométrica con la misma perspectiva,
    en vez de parecer flotando encima. Más grandes que antes para que se lean

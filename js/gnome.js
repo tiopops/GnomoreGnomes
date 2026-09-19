@@ -397,6 +397,19 @@ const Gnome = {
     const dmg = UNIT_TYPES[unit.typeId].fuerza;
     this._addPoints(dmg);
     SFX.hit();
+    // Retroalimentación de animación en AMBOS lados del golpe, no solo en
+    // el gnomo (regla de oro del proyecto: todo necesita sonido y/o
+    // animación coherente con la acción) — quien golpea da un puñetazo
+    // corto (unit--punching, mismo patrón de swap de clase que
+    // unit--moving/unit__sprite--hop: sustituye a la respiración continua
+    // mientras dura, nunca se mezcla con ella) sincronizado con el temblor
+    // ya existente del gnomo (gnome-attach--hit).
+    if (unit.el) {
+      unit.el.classList.remove("unit--punching");
+      void unit.spriteEl.offsetWidth;
+      unit.el.classList.add("unit--punching");
+      setTimeout(() => unit.el.classList.remove("unit--punching"), 320);
+    }
     if (this.attachEl) {
       this.attachEl.classList.remove("gnome-attach--hit");
       void this.attachEl.offsetWidth;
@@ -447,22 +460,26 @@ const Gnome = {
   //   - A 1 casilla (adyacente) es prácticamente un "dar la mano" más que
   //     un lanzamiento real — pedido explícito: NUNCA debe fallar, así que
   //     es el único caso con 100% fijo, sea cual sea la agilidad.
-  //   - Más allá de 1 casilla, DENTRO del propio alcance de movimiento de
-  //     quien pasa, el pase sigue siendo fiable para cualquiera — incluso
-  //     un personaje de agilidad baja domina un pase corto. La agilidad
-  //     entra en juego sobre todo MÁS ALLÁ de ese alcance ("overreach" =
-  //     casillas de distancia por encima del propio movimiento): ahí sí
-  //     decide si el pase se mantiene utilizable (agilidad alta, apenas
-  //     penalizado) o se vuelve un tiro arriesgado (agilidad baja, cae
-  //     rápido). Subido respecto a la versión anterior porque incluso los
-  //     personajes de agilidad alta fallaban demasiado.
-  // Acotado entre 15% y 98% fuera del caso adyacente, para que ahí nunca
+  //   - Más allá de 1 casilla, pero DENTRO del propio alcance de
+  //     movimiento de quien pasa, el pase sigue siendo fiable para
+  //     cualquiera — incluso un personaje de agilidad baja domina un pase
+  //     corto.
+  //   - MÁS ALLÁ de ese alcance ("overreach" = casillas de distancia por
+  //     encima del propio movimiento) es donde la agilidad de verdad tiene
+  //     que notarse: un personaje de agilidad baja (p. ej. GolemCorteza,
+  //     agilidad 1) NO puede pasar el gnomo con normalidad a 3+ casillas
+  //     de más — pedido explícito, "eso no puede ser" — así que ahí la
+  //     fórmula ya no parte de una base alta común, sino de una base baja
+  //     que la propia agilidad tiene que levantar: con poca agilidad casi
+  //     nunca sale, con mucha sigue siendo un tiro arriesgado pero jugable.
+  // Acotado entre 5% y 98% fuera del caso adyacente, para que ahí nunca
   // sea ni un fallo ni un éxito garantizados.
   computePassSuccess(agilidad, distance, movimiento) {
     if (distance <= 1) return 1;
     const overreach = Math.max(0, distance - movimiento);
-    const pct = overreach === 0 ? 90 + agilidad * 3 : 92 - overreach * 12 + agilidad * 7;
-    return Math.min(98, Math.max(15, pct)) / 100;
+    if (overreach === 0) return Math.min(98, 90 + agilidad * 3) / 100;
+    const pct = 15 + agilidad * 15 - overreach * 11;
+    return Math.min(98, Math.max(5, pct)) / 100;
   },
 
   async executePass(holder, target) {
@@ -475,8 +492,30 @@ const Gnome = {
     const holderType = UNIT_TYPES[holder.typeId];
     const success = Math.random() < this.computePassSuccess(holderType.agilidad, distance, holderType.movimiento);
 
+    // Encararse hacia quien recibe el pase ANTES de soltarlo — tanto quien
+    // lanza como el propio gnomo — para que el lanzamiento se lea como
+    // dirigido a propósito, no como si saliera disparado a ciegas.
+    // Units.faceTowardsTile funciona también con el gnomo porque tiene la
+    // misma forma que una unidad normal (ver cabecera del archivo), así
+    // que se reutiliza en vez de duplicar la lógica de girar.
+    Units.faceTowardsTile(holder, target.row, target.col);
     this.row = holder.row;
     this.col = holder.col;
+    Units.faceTowardsTile(this, target.row, target.col);
+
+    // Animación de lanzamiento sobre quien pasa (armado + soltar), en
+    // paralelo al vuelo del propio gnomo — retroalimentación en los dos
+    // lados de la acción, no solo en quien vuela (misma idea que el
+    // puñetazo de Gnome.hit). Mismo patrón de swap de clase que
+    // unit--moving/unit__sprite--hop: sustituye a la respiración continua
+    // mientras dura, nunca se mezcla con ella.
+    if (holder.el) {
+      holder.el.classList.remove("unit--throwing");
+      void holder.spriteEl.offsetWidth;
+      holder.el.classList.add("unit--throwing");
+      setTimeout(() => holder.el.classList.remove("unit--throwing"), 380);
+    }
+
     this.detachFrom();
     this.spriteEl.src = GNOME_ASSETS.grita;
 
