@@ -232,7 +232,7 @@ const Units = {
     // tiembla vía CSS (.unit--doomed .unit__doom-icon, ver style.css), igual
     // que el resto del estado "doomed" ya hace con el sprite/glow.
     const doomIconEl = document.createElement("i");
-    doomIconEl.className = "ph ph-skull unit__doom-icon";
+    doomIconEl.className = "ph-fill ph-skull unit__doom-icon";
     el.appendChild(doomIconEl);
 
     // Barra de vida SECCIONADA — pedido explícito: "las barras de vida

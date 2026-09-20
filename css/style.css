@@ -15,6 +15,15 @@
      suelen gustar"), nunca mezclado con un segundo color. */
   --p5-tone-light: #4a3d52;
   --p5-tone-dark: #241f28;
+  /* Pedido explícito (sexta pasada): "colores planos para las interfaces"
+     — ya no se usa NINGÚN degradado en la familia visual del banderín
+     irregular (--p5-tone-light/--p5-tone-dark quedan solo como referencia
+     histórica en los comentarios de arriba); --p5-tone es el único tono
+     plano, sólido, que se pinta en menús, tarjetas, botones, el marcador
+     de Puntos de Gloria y el icono de ajustes. La irregularidad sigue
+     viniendo SOLO de la forma (clip-path) y la sombra dura, nunca del
+     color. */
+  --p5-tone: #372e3d;
 }
 
 * {
@@ -91,7 +100,7 @@ body {
   width: 60px;
   height: 68px;
   margin: 0 auto 22px;
-  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  background: var(--p5-tone);
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   border: 2px solid #000;
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
@@ -110,7 +119,7 @@ body {
   margin: 0 0 32px;
   padding: 14px 32px;
   color: #fff;
-  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  background: var(--p5-tone);
   clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
   border: 2px solid #000;
   box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
@@ -150,7 +159,7 @@ h2 {
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: #fff;
-  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  background: var(--p5-tone);
   clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
   border: 2px solid #000;
   box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
@@ -161,14 +170,25 @@ h2 {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  transform: rotate(0deg);
+  /* Rotación propia por botón vía variable (--tilt, fijada por nth-child
+     más abajo) en vez de directamente en la propiedad transform: así
+     :hover/:active (que si tocan transform de verdad) SIEMPRE ganan sin
+     pelearse por especificidad con el selector nth-child, que si se
+     comparase directamente (3 clases/pseudo-clases) le ganaría a
+     ".menu-btn:hover" (2) y el botón se quedaría sin reaccionar al pasar
+     el ratón por encima — bug real que hubo aquí, pedido explícito: "todos
+     los elementos de la interfaz deben reaccionar al raton al pasarlo por
+     encima...algunos botones pulsables no reaccionan". */
+  --tilt: 0deg;
+  transform: rotate(var(--tilt));
 }
 
 /* Rotación propia por botón — pequeña a propósito (1-1.6deg), lo justo
    para leerse como "colocado a mano" sin dificultar la lectura del texto;
-   se endereza entera al hover (ver más abajo). */
-.menu-buttons .menu-btn:nth-child(odd) { transform: rotate(-1deg); }
-.menu-buttons .menu-btn:nth-child(even) { transform: rotate(1deg); }
+   se endereza entera al hover (ver más abajo). Solo fija la VARIABLE, no
+   transform directamente (ver nota de arriba). */
+.menu-buttons .menu-btn:nth-child(odd) { --tilt: -1deg; }
+.menu-buttons .menu-btn:nth-child(even) { --tilt: 1deg; }
 
 .menu-btn i {
   font-size: 1.15rem;
@@ -199,7 +219,7 @@ h2 {
 }
 
 .menu-btn:disabled {
-  background: linear-gradient(165deg, #3a3640, #201d24 70%);
+  background: #2b2731;
   color: rgba(255, 255, 255, 0.4);
   text-shadow: none;
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
@@ -219,7 +239,7 @@ h2 {
   color: #fff;
   font-size: 0.88rem;
   font-weight: 700;
-  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  background: var(--p5-tone);
   clip-path: polygon(4% 0, 100% 0, 96% 100%, 0% 100%);
   border: 2px solid #000;
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
@@ -252,7 +272,7 @@ h2 {
   cursor: pointer;
   padding: 9px 22px 9px 14px;
   margin-bottom: 16px;
-  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  background: var(--p5-tone);
   clip-path: polygon(0 0, 100% 0, 88% 100%, 0% 100%);
   border: 2px solid #000;
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
@@ -289,17 +309,22 @@ h2 {
   gap: 5px;
   padding: 18px 26px 18px 22px;
   color: #fff;
-  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  background: var(--p5-tone);
   clip-path: polygon(3% 0, 100% 0, 97% 100%, 0% 100%);
   border: 2px solid #000;
   box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
   cursor: pointer;
   text-align: left;
   transition: transform 0.15s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.15s ease;
+  /* Misma técnica que .menu-btn (ver su comentario más arriba): rotación
+     vía variable para que :hover/:active nunca pierdan el pulso por
+     especificidad frente al nth-child. */
+  --tilt: 0deg;
+  transform: rotate(var(--tilt));
 }
 
-.option-list .option-card:nth-child(odd) { transform: rotate(-0.8deg); }
-.option-list .option-card:nth-child(even) { transform: rotate(0.8deg); }
+.option-list .option-card:nth-child(odd) { --tilt: -0.8deg; }
+.option-list .option-card:nth-child(even) { --tilt: 0.8deg; }
 
 .option-card:hover {
   transform: rotate(0deg) translate(-3px, -3px);
@@ -527,7 +552,20 @@ h2 {
   transform: translate(-50%, -92%);
   cursor: pointer;
   transition: left 0.22s cubic-bezier(0.34, 1.2, 0.64, 1), top 0.22s cubic-bezier(0.34, 1.2, 0.64, 1),
-    opacity 0.4s ease, visibility 0s linear 0s;
+    opacity 0.4s ease, visibility 0s linear 0s, transform 0.15s ease, filter 0.15s ease;
+}
+
+/* Pedido explícito: "todos los elementos de la interfaz deben reaccionar al
+   raton al pasarlo por encima" — a los propios personajes/rivales del
+   tablero (clicables para seleccionar, ver Units._onUnitClick) les faltaba
+   cualquier feedback de hover. Un levantamiento sutil + brillo (nunca sobre
+   unit__flip: ese elemento ya usa su propio transform vía --facing-scale
+   para el volteo, tocarlo aquí lo pisaría) basta para que se lean como
+   interactivos sin competir con el temblor/selección/miedo que ya animan
+   por debajo. */
+.unit:hover {
+  transform: translate(-50%, -92%) scale(1.05);
+  filter: brightness(1.12);
 }
 
 .unit--selected {
@@ -796,11 +834,16 @@ h2 {
   display: none;
   position: absolute;
   left: 50%;
-  top: -34px;
+  top: -54px;
   transform: translateX(-50%);
-  font-size: 1.5rem;
-  color: #ff3b3b;
-  text-shadow: 0 0 8px rgba(255, 40, 40, 0.9), 0 2px 3px rgba(0, 0, 0, 0.6);
+  /* Pedido explícito: "la calavera de miedo puede ser rellena en vez de
+     lineal y en color blanco con una sombra negra? ademas el doble de
+     grande" — ph-fill (ver su className en units.js) en vez de la variante
+     de línea, blanca pura con una sombra negra dura (ya no un halo rojo
+     difuminado) y el doble de tamaño (3rem, antes 1.5rem). */
+  font-size: 3rem;
+  color: #fff;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.85), -1px -1px 0 rgba(0, 0, 0, 0.6);
   z-index: 30;
   pointer-events: none;
 }
@@ -1122,7 +1165,7 @@ h2 {
   padding: 10px 26px 10px 10px;
   clip-path: polygon(7% 0, 100% 0, 93% 100%, 0% 100%);
   border: 2px solid #000;
-  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  background: var(--p5-tone);
   color: #fff;
   font-size: 0.98rem;
   font-weight: 900;
@@ -1162,45 +1205,83 @@ h2 {
 /* El icono vive dentro de su propio rombo a la izquierda (en vez de una
    moneda circular, para no romper el lenguaje angular del resto del
    botón) — separa visualmente el símbolo del texto y da algo con lo que
-   animar el estado de "pensando"/"listo" sin mover el resto del botón. */
+   animar el estado de "pensando"/"listo" sin mover el resto del botón.
+   Pedido explícito: "me gustaria que fuera amarillo el recuadro en el que
+   esta y negro el reloj. hazlo mas grande que sobresalga del recuadro
+   donde esta el texto pasar turno" (color plano, sin degradado — pedido
+   explícito posterior: "colores planos para las interfaces") — recuadro
+   amarillo con el icono en negro, e "overflow: visible" a propósito para
+   que un icono más grande que la propia caja (2rem sobre 34px) se salga de
+   ella sin recortarse — es justo ese desbordamiento lo que pedía.
+   IMPORTANTE: Turns.js (_ensureButton/_updateButtonState) pone la clase
+   "end-turn-btn__icon" DIRECTAMENTE sobre el <i> del icono — no hay un div
+   contenedor separado. Así que aquí el propio icono ES el rombo (transform:
+   rotate(45deg)) y el glifo se endereza con su ::before (mismo patrón que
+   .menu-btn i::before), no con un hijo .end-turn-btn__icon i que no existe
+   en el DOM real (ese selector nunca coincidía con nada — bug detectado al
+   verificar este mismo cambio). */
 .end-turn-btn__icon {
-  width: 30px;
-  height: 30px;
-  background: rgba(0, 0, 0, 0.32);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  position: relative;
+  width: 34px;
+  height: 34px;
+  background: #ffcf3d;
+  border: 2px solid #000;
+  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.05rem;
+  overflow: visible;
+  font-size: 2rem;
   font-style: normal;
   flex-shrink: 0;
   transform: rotate(45deg);
 }
 
-.end-turn-btn__icon i {
+.end-turn-btn__icon::before {
+  display: inline-block;
   transform: rotate(-45deg);
+}
+
+/* Pedido explícito: "el icono de pasar turno que es un reloj de arena,
+   puede girar 2 veces y frenar suavemente al poner el raton encima del
+   boton pasar turno?" — dos vueltas completas a partir del reposo (45deg +
+   720deg = 765deg, visualmente idéntico a 45deg) con una curva de easing
+   muy cargada al final (frena de golpe al principio del recorrido, apenas
+   se mueve en el último tramo) para que se LEA como que pierde inercia, no
+   como una vuelta a velocidad constante que para en seco. Solo en hover
+   (nunca infinito) y solo sobre el propio reloj de arena — los otros
+   iconos del botón (comprobado/girando de "pensando") tienen sus propias
+   animaciones y no deben heredar esta. Gira el rombo entero (icono y caja
+   son el mismo elemento, ver nota de arriba) — como es un cuadrado, no
+   cambia de silueta en los múltiplos de 90°, así que se lee igual de bien
+   que si solo girase el glifo. */
+.end-turn-btn:hover .end-turn-btn__icon.ph-hourglass-simple {
+  animation: end-turn-hourglass-spin 1.1s cubic-bezier(0.1, 0.82, 0.25, 1) 1;
+}
+
+@keyframes end-turn-hourglass-spin {
+  from { transform: rotate(45deg); }
+  to { transform: rotate(765deg); }
 }
 
 /* Mientras la IA rival resuelve su turno (Turns._aiRunning) — deshabilitado
    (el jugador no puede pasarle el turno a sí mismo dos veces seguidas), en
-   tono apagado en vez del degradado rojo/negro, con el icono girando sin
-   parar para que se lea como "pensando", no como un botón roto que no
-   responde. */
+   tono apagado y plano en vez del amarillo, con el icono girando sin parar
+   para que se lea como "pensando", no como un botón roto que no responde. */
 .end-turn-btn--thinking {
-  background: linear-gradient(165deg, #35303a, #1c181f 70%);
+  background: #26212a;
   color: rgba(255, 255, 255, 0.55);
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
   cursor: default;
 }
 
-.end-turn-btn--thinking .end-turn-btn__icon i {
-  display: inline-flex;
+.end-turn-btn--thinking .end-turn-btn__icon {
   animation: end-turn-spin 0.9s linear infinite;
 }
 
 @keyframes end-turn-spin {
-  from { transform: rotate(-45deg); }
-  to { transform: rotate(315deg); }
+  from { transform: rotate(45deg); }
+  to { transform: rotate(405deg); }
 }
 
 /* Pedido explícito: "cuando todos los personajes se hayan movido estaría
@@ -1753,17 +1834,24 @@ h2 {
    mueva y escale junto con la cámara del tablero (BoardView) igual que el
    resto de elementos sobre las losetas, y left/top los fija JS en píxeles
    de tablero (ver _positionBadge), no CSS. */
+/* Pedido explícito: "haz un recuadro irregular a la interfaz que muestra
+   los puntos que tiene cada gnomo al pulsar sobre ellos, colores planos" —
+   fuera el círculo con degradado radial de antes: ahora es un recuadro
+   irregular (clip-path a medida, ni rectángulo ni círculo perfecto) en UN
+   color plano (var(--accent) sólido, sin degradado) a juego con el resto
+   de la paleta de selección del tablero (el mismo morado del glow de
+   unit--selected). */
 .gnome-points-badge {
   position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
+  width: 50px;
   height: 46px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 32%, rgba(122, 62, 240, 0.55), var(--bg-elevated) 72%);
-  border: 2px solid rgba(244, 242, 248, 0.4);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  clip-path: polygon(18% 0%, 82% 0%, 100% 32%, 88% 100%, 12% 100%, 0% 30%);
+  background: var(--accent);
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
   white-space: nowrap;
   transform: translate(-50%, -8px) scale(0.6);
   transform-origin: bottom center;
@@ -1823,12 +1911,16 @@ h2 {
   .glory-hud {
     top: 14px;
     left: 14px;
-    padding: 5px 18px 5px 5px;
   }
 
   .glory-hud__icon {
-    width: 46px;
-    height: 46px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .glory-hud__main {
+    margin-left: -26px;
+    padding: 6px 20px 6px 32px;
   }
 
   .glory-hud__value {
@@ -1856,45 +1948,36 @@ h2 {
 /* ---------- Marcador de Puntos de Gloria (js/glory.js) ----------
    Pedido explícito: "un marcador situado arriba la izquierda con un icono
    distinto para cada raza... de momento vamos a implementar el icono qye
-   muestre los puntos en una interfaz con un diseño espectacular" — medallón
-   dorado con anillo doble + brillo pulsante, misma familia visual que
-   end-turn-btn (degradado + halo) pero con paleta propia (dorado/ámbar en
-   vez del morado de acento) para que se lea como un recurso distinto, no
-   como "otro botón más". Fijo en pantalla (position:fixed), igual que
-   end-turn-btn/unit-info-btn — vive fuera del tablero, no escala con la
-   cámara.
+   muestre los puntos en una interfaz con un diseño espectacular".
    Pedido explícito (segunda pasada): "el icono de los puntos de gloria me
    parece muy pequeño... debe destacar mas es algo importante, tambien debe
    haber algun indicador que diga cuando puntos de gloria se generan por
    turno (algo mas discreto), al igual que se muestran los puntos de gloria
-   actuales (este hay que destacarlo mas)" — de ahí el icono más grande (56px,
-   antes 44px) y el número a 1.6rem con su propio halo de texto, con el
-   indicador de previsión (glory-hud__preview) mucho más pequeño y apagado
-   justo debajo, para que la jerarquía visual sea inequívoca: lo grande y
-   brillante es "lo que tienes", lo pequeño y gris es "lo que viene".
+   actuales (este hay que destacarlo mas)" — de ahí el número grande (1.6rem
+   con su propio halo de texto) con el indicador de previsión
+   (glory-hud__preview) mucho más pequeño y apagado justo debajo.
    Pedido explícito (cuarta pasada): "lo mismo con todas las interfaces...
    la que muestra los puntos de victoria... esos tipo de interface
-   irregulares me gustan... CURRATELO" — la píldora redondeada de antes
-   pasa a ser un banderín cortado en diagonal (mismo clip-path/sombra dura
-   que .p5-banner) ligeramente girado, igual que el resto de la interfaz;
-   el medallón dorado en sí se queda REDONDO a propósito (es una moneda,
-   no un banderín de texto — mismo contraste angular/redondo que ya usa
-   settings-gear-btn frente a settings-panel) y conserva su propia paleta
-   ámbar/dorada (un solo matiz, degradado consigo mismo) para seguir
-   leyéndose como "el recurso", no como "otro botón más" de fondo
-   berenjena-gris. */
+   irregulares me gustan... CURRATELO" — el banderín (glory-hud__main) usa
+   el mismo clip-path/sombra dura que el resto de la interfaz, ligeramente
+   girado, con su propia paleta ámbar/dorada (un solo matiz, degradado
+   consigo mismo) para seguir leyéndose como "el recurso".
+   Pedido explícito (quinta pasada): "puedes poner el icono de puntos de
+   gloria directamente sin estar dentro de un circulo y la barra de la
+   derecha saliendo desde la mitad del icono por detras hacia la derecha
+   para integrarla" — fuera el medallón circular con fondo/anillo propio:
+   ahora glory-hud__icon es directamente el PNG de la raza, sin fondo ni
+   borde, con solo un drop-shadow para que se despegue del fondo del
+   tablero; glory-hud__main (el banderín con el número) se solapa por
+   DEBAJO suyo (z-index) con un margen negativo igual a la mitad del ancho
+   del icono, así que visualmente "nace" desde el centro del icono hacia la
+   derecha en vez de quedar como dos piezas pegadas una junto a la otra. */
 .glory-hud {
   position: fixed;
   top: 20px;
   left: 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 7px 30px 7px 7px;
-  clip-path: polygon(0 0, 100% 0, 91% 100%, 0% 100%);
-  background: linear-gradient(165deg, #3a3120, #201a10 60%);
-  border: 2px solid #000;
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
   z-index: 500;
   opacity: 0;
   transform: rotate(-1.3deg) translateY(-10px) scale(0.85);
@@ -1910,31 +1993,40 @@ h2 {
 
 .glory-hud__icon {
   position: relative;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at 50% 32%, #ffd66e, #b9791a 68%, #7a4d0e 100%);
-  box-shadow: 0 0 0 3px rgba(255, 214, 110, 0.6), 0 0 18px rgba(255, 190, 60, 0.55),
-    inset 0 2px 3px rgba(255, 255, 255, 0.35), inset 0 -3px 5px rgba(0, 0, 0, 0.35);
-}
-
-.glory-hud__icon img {
-  width: 82%;
-  height: 82%;
+  z-index: 2;
+  width: 68px;
+  height: 68px;
   object-fit: contain;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+  flex-shrink: 0;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 190, 60, 0.4));
+  pointer-events: none;
 }
 
 .glory-hud__main {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 1px;
   line-height: 1;
+  /* La mitad del ancho del icono (68px), para que el banderín nazca justo
+     en su centro — ver nota de cabecera. */
+  margin-left: -34px;
+  padding: 8px 28px 8px 42px;
+  clip-path: polygon(0 0, 100% 0, 89% 100%, 0% 100%);
+  background: #241b10;
+  border: 2px solid #000;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Sin icono de raza (partida vieja sin raceId válido, ver Glory._ensureHud)
+   — el banderín no tiene de qué "nacer", así que se queda como una pieza
+   suelta normal en vez de comerse su propio borde izquierdo con el margen
+   negativo pensado para solaparse con el icono. */
+.glory-hud--no-icon .glory-hud__main {
+  margin-left: 0;
+  padding-left: 22px;
+  clip-path: polygon(0 0, 100% 0, 91% 100%, 0% 100%);
 }
 
 .glory-hud__value {
@@ -1956,30 +2048,21 @@ h2 {
   color: rgba(255, 227, 163, 0.55);
 }
 
-/* Mismo "pulso" que gnome-points-badge__value--bump al sumar puntos (aquí en
-   el medallón entero, no solo el número, para que se note más al llegar +2
-   automáticos al empezar cada turno). */
+/* Mismo "pulso" que gnome-points-badge__value--bump al sumar puntos — ahora
+   sobre el propio icono suelto (un pop de escala, ya no tiene anillo/brillo
+   de fondo que animar) y sobre el número, a la vez. */
 .glory-hud--bump .glory-hud__icon {
-  animation: glory-hud-bump 0.4s ease;
+  animation: glory-hud-icon-bump 0.4s ease;
 }
 
 .glory-hud--bump .glory-hud__value {
   animation: glory-hud-value-bump 0.4s ease;
 }
 
-@keyframes glory-hud-bump {
-  0% {
-    box-shadow: 0 0 0 2px rgba(255, 214, 110, 0.55), 0 0 14px rgba(255, 190, 60, 0.5),
-      inset 0 2px 3px rgba(255, 255, 255, 0.35), inset 0 -3px 5px rgba(0, 0, 0, 0.35);
-  }
-  40% {
-    box-shadow: 0 0 0 4px rgba(255, 214, 110, 0.85), 0 0 26px rgba(255, 200, 80, 0.9),
-      inset 0 2px 3px rgba(255, 255, 255, 0.5), inset 0 -3px 5px rgba(0, 0, 0, 0.35);
-  }
-  100% {
-    box-shadow: 0 0 0 2px rgba(255, 214, 110, 0.55), 0 0 14px rgba(255, 190, 60, 0.5),
-      inset 0 2px 3px rgba(255, 255, 255, 0.35), inset 0 -3px 5px rgba(0, 0, 0, 0.35);
-  }
+@keyframes glory-hud-icon-bump {
+  0% { transform: scale(1); filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 190, 60, 0.4)); }
+  40% { transform: scale(1.22); filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 20px rgba(255, 200, 80, 0.85)); }
+  100% { transform: scale(1); filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 190, 60, 0.4)); }
 }
 
 @keyframes glory-hud-value-bump {
@@ -2014,7 +2097,7 @@ h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  background: var(--p5-tone);
   clip-path: polygon(4% 0, 100% 0, 96% 100%, 0% 100%);
   border: 2px solid #000;
   padding: 10px 24px;
@@ -2049,21 +2132,24 @@ h2 {
 /* Icono de engranaje — esquina superior derecha, mismo patrón fixed +
    --visible controlado a mano (Turns._btn/end-turn-btn) que el resto de
    iconos que viven fuera de #screen-board (ver SettingsMenu.showButton/
-   hideButton). Circular en vez de banderín a propósito: es el único
-   "control" suelto de la interfaz, no un cartel con texto, así que se
-   distingue mejor como una insignia redonda con anillo rojo — el mismo
-   contraste angular/redondo que usa la propia referencia entre sus iconos
-   sueltos (arriba) y sus banderines de texto (abajo). */
+   hideButton).
+   Pedido explícito (sexta pasada): "quiero un recuadro irregular tambien
+   para el icono de configuracion...todas las interfaces asi" — fuera la
+   insignia circular de antes (era la ÚNICA pieza redonda que quedaba en
+   todo el juego): ahora es un recuadro recortado en ángulo (clip-path),
+   igual de irregular que el resto de la familia .p5-banner, con el mismo
+   tono plano (--p5-tone), borde negro y sombra dura sin difuminar — ya no
+   queda ninguna pieza circular ni con degradado en ninguna interfaz. */
 .settings-gear-btn {
   position: fixed;
   top: 20px;
   right: 20px;
   width: 52px;
   height: 52px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, var(--p5-tone-light), var(--p5-tone-dark) 72%);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.5);
+  clip-path: polygon(14% 0%, 100% 6%, 90% 100%, 0% 92%);
+  background: var(--p5-tone);
+  border: 2px solid #000;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
   color: #fff;
   display: flex;
   align-items: center;
@@ -2083,8 +2169,8 @@ h2 {
 }
 
 .settings-gear-btn:hover {
-  transform: scale(1.08) rotate(35deg);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.45);
+  transform: scale(1.08) rotate(35deg) translate(-2px, -2px);
+  box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.6);
 }
 
 .settings-gear-btn:active {
@@ -2144,9 +2230,10 @@ h2 {
   padding: 14px 30px;
   clip-path: polygon(6% 0, 100% 0, 94% 100%, 0% 100%);
   /* El propio .p5-banner ya pone el tono berenjena-gris de base; aquí un
-     pelín más claro (mismo par de variables, invertidas) para que se
-     distinga del fondo del panel sin necesitar un segundo color. */
-  background: linear-gradient(165deg, var(--p5-tone-dark), var(--p5-tone-light) 130%);
+     pelín más claro (--p5-tone-light, plano, sin degradado — pedido
+     explícito: "colores planos para las interfaces") para que se distinga
+     del fondo del panel sin necesitar un segundo color. */
+  background: var(--p5-tone-light);
 }
 
 .settings-panel__option-icon {

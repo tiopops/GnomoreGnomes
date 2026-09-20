@@ -105,20 +105,29 @@ const Glory = {
     return list.find((r) => r.id === raceId) || null;
   },
 
+  // Pedido explícito (quinta pasada): "puedes poner el icono de puntos de
+  // gloria directamente sin estar dentro de un circulo y la barra de la
+  // derecha saliendo desde la mitad del icono por detras hacia la derecha
+  // para integrarla" — fuera el medallón circular de antes: ahora el PNG
+  // de la raza (RACES[].gloryIcon) se pinta suelto, sin fondo/borde propio,
+  // y el banderín de número queda DETRÁS suyo en el z-index (ver
+  // glory-hud__icon/__main en style.css), con un margen negativo para que
+  // nazca justo a la mitad del icono y se lea como una sola pieza, no dos
+  // pegadas.
   _ensureHud(team, raceId) {
     if (this._els[team]) return;
     const race = this._raceFor(raceId);
 
     const el = document.createElement("div");
     el.className = `glory-hud glory-hud--${team}`;
+    if (!race || !race.gloryIcon) el.classList.add("glory-hud--no-icon");
 
-    const iconWrap = document.createElement("div");
-    iconWrap.className = "glory-hud__icon";
     if (race && race.gloryIcon) {
-      const img = document.createElement("img");
-      img.src = race.gloryIcon;
-      img.alt = "";
-      iconWrap.appendChild(img);
+      const icon = document.createElement("img");
+      icon.className = "glory-hud__icon";
+      icon.src = race.gloryIcon;
+      icon.alt = "";
+      el.appendChild(icon);
     }
 
     const main = document.createElement("div");
@@ -139,7 +148,6 @@ const Glory = {
     main.appendChild(value);
     main.appendChild(preview);
 
-    el.appendChild(iconWrap);
     el.appendChild(main);
     document.body.appendChild(el);
 
