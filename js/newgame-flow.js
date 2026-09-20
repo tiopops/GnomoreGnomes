@@ -231,6 +231,14 @@ function spawnTestUnits(size, raceId) {
   // Turnos (js/turns.js) — se resetea AL FINAL, con todos los personajes y
   // gnomos ya colocados: siempre empieza el turno del jugador con las 2
   // acciones de cada uno intactas, y (re)aparece el botón de PASAR TURNO.
+  // Puntos de Gloria (js/glory.js) — se inicializa ANTES de Turns.reset()
+  // (justo debajo) para que el marcador ya exista cuando Turns.reset()
+  // conceda el +2 inicial del primer turno del jugador (ver
+  // Turns.reset -> Glory.grantTurnStart). La raza rival puede no existir
+  // (ver nota de enemyRace más arriba) — Glory.init ya tolera un id sin
+  // raza asociada (simplemente no pinta icono).
+  if (typeof Glory !== "undefined") Glory.init(finalRaceId, enemyRace ? enemyRace.id : finalRaceId);
+
   if (typeof Turns !== "undefined") Turns.reset();
 
   // Niebla de guerra (js/fog.js) — estado de visibilidad inicial: con todos

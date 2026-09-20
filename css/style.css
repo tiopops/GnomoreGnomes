@@ -1590,11 +1590,12 @@ h2 {
   position: absolute;
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: var(--bg-elevated);
-  border: 2px solid rgba(244, 242, 248, 0.35);
-  border-radius: 999px;
-  padding: 4px 12px 4px 4px;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 32%, rgba(122, 62, 240, 0.55), var(--bg-elevated) 72%);
+  border: 2px solid rgba(244, 242, 248, 0.4);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   white-space: nowrap;
   transform: translate(-50%, -8px) scale(0.6);
@@ -1610,28 +1611,11 @@ h2 {
   pointer-events: auto;
 }
 
-.gnome-points-badge__icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at 50% 35%, rgba(122, 62, 240, 0.35), transparent 70%);
-}
-
-.gnome-points-badge__icon img {
-  width: 100%;
-  height: auto;
-}
-
 .gnome-points-badge__value {
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 1.5rem;
+  line-height: 1;
   color: var(--ink);
-  min-width: 1.4em;
   text-align: center;
 }
 
@@ -1668,4 +1652,118 @@ h2 {
      El contador de puntos de cada gnomo (.gnome-points-badge) tampoco
      necesita nada aquí: vive dentro del tablero, en píxeles de tablero, así
      que ya escala con la cámara igual en cualquier tamaño de pantalla. */
+
+  .glory-hud {
+    top: 14px;
+    left: 14px;
+    padding: 5px 16px 5px 5px;
+  }
+
+  .glory-hud__icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .glory-hud__value {
+    font-size: 1.1rem;
+  }
+}
+
+/* ---------- Marcador de Puntos de Gloria (js/glory.js) ----------
+   Pedido explícito: "un marcador situado arriba la izquierda con un icono
+   distinto para cada raza... de momento vamos a implementar el icono qye
+   muestre los puntos en una interfaz con un diseño espectacular" — medallón
+   dorado con anillo doble + brillo pulsante, misma familia visual que
+   end-turn-btn (degradado + halo) pero con paleta propia (dorado/ámbar en
+   vez del morado de acento) para que se lea como un recurso distinto, no
+   como "otro botón más". Fijo en pantalla (position:fixed), igual que
+   end-turn-btn/unit-info-btn — vive fuera del tablero, no escala con la
+   cámara. */
+.glory-hud {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 22px 6px 6px;
+  border-radius: 999px;
+  background: linear-gradient(165deg, #3a3120, #201a10 60%);
+  border: 1px solid rgba(255, 208, 110, 0.35);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 190, 60, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  z-index: 500;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.85);
+  animation: glory-hud-enter 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) 0.15s forwards;
+}
+
+@keyframes glory-hud-enter {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.glory-hud__icon {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 32%, #ffd66e, #b9791a 68%, #7a4d0e 100%);
+  box-shadow: 0 0 0 2px rgba(255, 214, 110, 0.55), 0 0 14px rgba(255, 190, 60, 0.5),
+    inset 0 2px 3px rgba(255, 255, 255, 0.35), inset 0 -3px 5px rgba(0, 0, 0, 0.35);
+}
+
+.glory-hud__icon img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+}
+
+.glory-hud__value {
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: 0.01em;
+  color: #ffe3a3;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  min-width: 1.2em;
+}
+
+/* Mismo "pulso" que gnome-points-badge__value--bump al sumar puntos (aquí en
+   el medallón entero, no solo el número, para que se note más al llegar +2
+   automáticos al empezar cada turno). */
+.glory-hud--bump .glory-hud__icon {
+  animation: glory-hud-bump 0.4s ease;
+}
+
+.glory-hud--bump .glory-hud__value {
+  animation: glory-hud-value-bump 0.4s ease;
+}
+
+@keyframes glory-hud-bump {
+  0% {
+    box-shadow: 0 0 0 2px rgba(255, 214, 110, 0.55), 0 0 14px rgba(255, 190, 60, 0.5),
+      inset 0 2px 3px rgba(255, 255, 255, 0.35), inset 0 -3px 5px rgba(0, 0, 0, 0.35);
+  }
+  40% {
+    box-shadow: 0 0 0 4px rgba(255, 214, 110, 0.85), 0 0 26px rgba(255, 200, 80, 0.9),
+      inset 0 2px 3px rgba(255, 255, 255, 0.5), inset 0 -3px 5px rgba(0, 0, 0, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 2px rgba(255, 214, 110, 0.55), 0 0 14px rgba(255, 190, 60, 0.5),
+      inset 0 2px 3px rgba(255, 255, 255, 0.35), inset 0 -3px 5px rgba(0, 0, 0, 0.35);
+  }
+}
+
+@keyframes glory-hud-value-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); color: #fff2d0; }
+  100% { transform: scale(1); }
 }

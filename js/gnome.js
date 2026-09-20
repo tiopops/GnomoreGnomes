@@ -726,6 +726,19 @@ function createGnomeInstance() {
         await this.landAt(end);
       }
 
+      // Pedido explícito: al caer sobre una CASILLA (no sobre un aliado),
+      // el gnomo se aleja 3 casillas de los jugadores — mismo patrón que
+      // dropFromDyingUnit: el jugador vivo más cercano como referencia.
+      const nearestPlayer = Units.list
+        .filter((u) => u.team === "player")
+        .reduce((best, u) => {
+          const d = Math.max(Math.abs(u.row - this.row), Math.abs(u.col - this.col));
+          return !best || d < best.d ? { u, d } : best;
+        }, null);
+      if (nearestPlayer) {
+        await this._fleeAwayFrom(nearestPlayer.u.row, nearestPlayer.u.col, 3);
+      }
+
       this.busy = false;
       Units.refreshRange(holder);
       this._refreshSelectedUnitRange();
@@ -1108,18 +1121,13 @@ function createGnomeInstance() {
       // hasta el listener de deseleccionar del tablero.
       badge.addEventListener("click", (e) => e.stopPropagation());
 
-      const icon = document.createElement("div");
-      icon.className = "gnome-points-badge__icon";
-      const img = document.createElement("img");
-      img.src = GNOME_ASSETS.idle;
-      img.alt = "";
-      icon.appendChild(img);
-
+      // Rediseño pedido explícito: "interfaz circular simple sin iconos
+      // donde se muestre el numero con un tamaño correcto" — fuera el
+      // icono del gnomo, círculo simple, solo el número (más grande).
       const value = document.createElement("span");
       value.className = "gnome-points-badge__value";
       value.textContent = String(this.points);
 
-      badge.appendChild(icon);
       badge.appendChild(value);
       Units.container.appendChild(badge);
 

@@ -14,6 +14,9 @@ const RACES = [
     icon: "ph-leaf",
     color: "#8fbf4d",
     available: true,
+    // Icono de los Puntos de Gloria (ver js/glory.js) para ESTA raza en
+    // concreto — pedido explícito: "un icono distinto para cada raza".
+    gloryIcon: "assets/iconos/gloria_mushboom_forest.png",
   },
   {
     id: "colinas_rockntroll",
@@ -22,5 +25,6 @@ const RACES = [
     icon: "ph-mountains",
     color: "#8a8f99",
     available: true,
+    gloryIcon: "assets/iconos/gloria_colinas_rockntroll.png",
   },
 ];

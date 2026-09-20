@@ -51,6 +51,10 @@ const Turns = {
     Units.list.forEach((u) => this._applyExhaustedClass(u));
     this._ensureButton();
     this._updateButtonState();
+    // Puntos de Gloria (js/glory.js) — pedido explícito: "al comienzo de
+    // cada turno se generan automaticamente 2 puntos de gloria", y el
+    // primer turno de la partida (el del jugador) no es una excepción.
+    if (typeof Glory !== "undefined") Glory.grantTurnStart("player");
   },
 
   // true si `unit` puede gastar todavía alguna de sus 2 acciones ESTE turno
@@ -191,6 +195,11 @@ const Turns = {
     this._resetTeamActions("enemy");
     this._aiRunning = true;
     this._updateButtonState();
+    // Puntos de Gloria (js/glory.js) — +2 al empezar el turno del rival
+    // también: el marcador en pantalla es solo el del jugador (ver nota de
+    // cabecera de glory.js), pero el rival igualmente acumula los suyos por
+    // dentro para cuando su IA los pueda gastar más adelante.
+    if (typeof Glory !== "undefined") Glory.grantTurnStart("enemy");
 
     await this._runEnemyTurn();
 
@@ -199,6 +208,7 @@ const Turns = {
     this.activeTeam = "player";
     this._resetTeamActions("player");
     this._updateButtonState();
+    if (typeof Glory !== "undefined") Glory.grantTurnStart("player");
   },
 
   // ---------- IA del bando rival ----------
