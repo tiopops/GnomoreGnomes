@@ -74,6 +74,19 @@ const Fog = {
     this.revealedGrid[row][col] = true;
     const fogEl = this._fogEls.get(`${row},${col}`);
     if (!fogEl) return;
+    // BUG encontrado y corregido: mapgen.js pone a cada niebla un
+    // animation-delay NEGATIVO aleatorio inline (0 a -9s) para desincronizar
+    // la respiración de reposo (fog-idle-drift, 8s de ciclo) entre losetas.
+    // Ese estilo inline pesa más que la propiedad "animation" del CSS de
+    // .tile__fog--revealed, así que si no se limpia aquí se queda puesto al
+    // cambiar de animación — y como fog-dissipate dura solo 1.1s, un delay
+    // heredado de p.ej. -7s hace que arranque ya "7s dentro" de un ciclo de
+    // 1.1s, es decir prácticamente en su último fotograma: la niebla
+    // desaparece de golpe (el "POP!" que reportaste) en vez de disiparse. Con
+    // delays pequeños casi no se notaba, de ahí que unas veces se viera bien
+    // y otras no — no era una carrera ni una regla CSS duplicada, era este
+    // resto de estilo inline. Se limpia justo antes de cambiar de animación.
+    fogEl.style.animationDelay = "0s";
     // Se disipa con su propia animación (@keyframes fog-dissipate, ver
     // style.css: crece, se difumina y se desvanece, no un simple fundido de
     // opacidad) en vez de desaparecer de golpe — nivel Triple A / feedback
