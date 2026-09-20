@@ -30,6 +30,15 @@ const Movement = {
         // detecta; su propia loseta se excluye a mano para no ofrecer "mover
         // aquí" sobre una casilla que en realidad hay que capturar, no pisar.
         if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
+        // Niebla de guerra (js/fog.js) — pedido explícito: "un personaje no
+        // puede moverse a una zona que esté cubierta por niebla, pero sí a
+        // una adyacente a la misma". No hace falta comprobar el CAMINO hacia
+        // ahí (de momento el motor no calcula rutas con obstáculos, solo
+        // distancia Chebyshev en línea recta, ver comentario de arriba) —
+        // basta con excluir del rango cualquier casilla DESTINO que siga sin
+        // revelar; una ya revelada justo al lado de niebla sigue siendo un
+        // destino válido sin más comprobación.
+        if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;
         tiles.push({ row, col });
       }
     }
@@ -60,6 +69,11 @@ const Movement = {
     Units.clearRangeOverlays();
     const path = Units.stepPath(unit.row, unit.col, destRow, destCol);
     await Units.walkPath(unit, path);
+    // Niebla de guerra (js/fog.js) — pedido explícito: "se revelarán según
+    // su percepción al terminar el desplazamiento". Va ANTES de que
+    // reaccione el gnomo a propósito: revelar es lo primero que pasa al
+    // "terminar de moverse", el gnomo huyendo es una reacción aparte.
+    if (typeof Fog !== "undefined") Fog.revealForUnit(unit);
     // El gnomo (js/gnome.js) reacciona alejándose cada vez que una unidad
     // del jugador se mueve — vive en su propio archivo y se entera de esto
     // igual que combat.js/movement.js se enteran uno del otro: sin que

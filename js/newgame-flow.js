@@ -158,10 +158,22 @@ function spawnTestUnits(size, raceId) {
     { row: mid, col: mid - 1 },
     { row: mid - 1, col: mid },
   ];
+  // Niebla de guerra (js/fog.js): TODO el mapa arranca oculto — hay que
+  // inicializarla ANTES de revelar nada, y DESPUÉS de renderMap (llamado
+  // por quien invoque a esta función, ver startMatch/resumeMatch más
+  // arriba), que es quien crea las losetas .tile/.tile__fog que Fog.init
+  // necesita cachear.
+  if (typeof Fog !== "undefined") Fog.init(size, boardTiles);
+
   finalRoster.forEach((typeId, i) => {
     const spot = spawnSpots[i] || spawnSpots[spawnSpots.length - 1];
     Units.spawnTestUnit(spot.row, spot.col, typeId);
     Units.spawnRandomEnemy(typeId);
+    // Revelado inicial FIJO alrededor de cada personaje del jugador (pedido
+    // explícito: "cuando inicia el juego 2 losetas alrededor de cada
+    // personaje de radio están reveladas") — NO se revela nada alrededor
+    // del rival: la niebla es la del jugador, no la suya.
+    if (typeof Fog !== "undefined") Fog.revealInitial(spot.row, spot.col);
   });
 
   // Los gnomos (js/gnome.js): PUEDE HABER VARIOS a la vez (pedido
@@ -169,14 +181,21 @@ function spawnTestUnits(size, raceId) {
   // pruebas") — Gnome.resetAll() detiene primero los temporizadores de los
   // de la partida anterior (si los había) y vacía la lista antes de crear
   // los nuevos. spawnNear busca la loseta libre más próxima a cada punto si
-  // esa ya está ocupada (por los personajes de arriba o por otro gnomo ya
-  // colocado), así que basta con pedir tres puntos de partida distintos
-  // cerca del centro sin calcular a mano qué queda libre.
+  // esa ya está ocupada (por los personajes de arriba, por un rival o por
+  // otro gnomo ya colocado — nunca pueden coincidir dos gnomos en la misma
+  // casilla), así que basta con pedir puntos de partida sin calcular a mano
+  // qué queda libre. Posiciones AL AZAR en todo el tablero (pedido
+  // explícito: "al iniciar la fase de pruebas los gnomos aparecen en
+  // posiciones aleatorias del mapa") — pueden caer bajo niebla sin
+  // problema, es parte de la gracia de explorar: se descubren al revelarse
+  // esa zona, igual que un rival.
   if (typeof Gnome !== "undefined") {
     Gnome.resetAll();
-    Gnome.spawnNear(mid, mid + 1);
-    Gnome.spawnNear(mid + 1, mid + 2);
-    Gnome.spawnNear(mid - 1, mid + 2);
+    for (let i = 0; i < 3; i++) {
+      const row = Math.floor(Math.random() * size);
+      const col = Math.floor(Math.random() * size);
+      Gnome.spawnNear(row, col);
+    }
   }
 }
 

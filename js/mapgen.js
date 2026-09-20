@@ -15,6 +15,20 @@ const TILE_TYPES = {
   },
 };
 
+// Niebla de guerra (js/fog.js): NO es un TILE_TYPES más (no sustituye a la
+// loseta real, que sigue existiendo debajo tal cual la genera generateMap) —
+// es una nube que se pinta ENCIMA de cada loseta, más ancha que ella
+// (FOG_OVERHANG) para que el borde entre lo revelado y lo que no se ha
+// explorado todavía se lea como una nube continua en vez de un corte recto
+// tile a tile. renderMap crea SIEMPRE esta capa para las 3 losetas — visible
+// por defecto — y js/fog.js decide después, tras generar el mapa, para
+// cuáles ocultarla (revelado inicial) y cuándo ir ocultando el resto (al
+// moverse, ver Fog.revealForUnit). Así este archivo sigue sin saber nada de
+// "qué está revelado", solo pinta la pieza visual que la otra mecánica
+// necesita — mismo patrón que unit__hpbar en Units.spawnUnit (units.js).
+const FOG_SRC = "assets/losetas/niebla_01.png";
+const FOG_OVERHANG = 1.55; // veces TILE_WIDTH — cuánto sobresale la nube de su loseta.
+
 // Dimensiones nativas del archivo de imagen hierba_01.png (no cambian).
 const TILE_NATIVE_WIDTH = 250;
 const TILE_NATIVE_HEIGHT = 218;
@@ -104,11 +118,32 @@ function renderMap(map, container) {
     const { x, y } = getTileTopLeft(t.row, t.col, map.size);
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
+    el.dataset.row = String(t.row);
+    el.dataset.col = String(t.col);
 
     // Orden de dibujado estable: las losetas "más cercanas" a la cámara
     // (mayor fila+columna) siempre se pintan encima de las que tienen detrás,
     // sin depender del orden en el que se insertaron en el DOM.
     el.style.zIndex = String(t.row + t.col);
+
+    // Capa de niebla (ver comentario de FOG_SRC arriba) — visible por
+    // defecto en TODAS las losetas; js/fog.js la oculta loseta a loseta
+    // según se va revelando el mapa. z-index enorme y fijo (no depende de
+    // row/col como el resto) a propósito: tiene que quedar SIEMPRE por
+    // encima de cualquier unidad/gnomo que pueda estar de pie sobre esa
+    // misma loseta sin haberse revelado todavía — si dependiera de
+    // (row+col) como las propias losetas, una unidad con z-index más alto
+    // (más cerca de la cámara) se vería POR ENCIMA de la niebla que debería
+    // ocultarla.
+    const fogImg = document.createElement("img");
+    fogImg.className = "tile__fog";
+    fogImg.src = FOG_SRC;
+    fogImg.draggable = false;
+    fogImg.alt = "";
+    const fogWidth = Math.round(TILE_WIDTH * FOG_OVERHANG);
+    fogImg.width = fogWidth;
+    fogImg.height = fogWidth; // niebla_01.png es cuadrada — ver FOG_OVERHANG
+    el.appendChild(fogImg);
 
     fragment.appendChild(el);
   });

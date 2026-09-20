@@ -177,6 +177,7 @@ const UnitInfo = {
           ${this.statRow("ph-footprints", "Movimiento", type.movimiento)}
           ${this.statRow("ph-boxing-glove", "Fuerza", type.fuerza)}
           ${this.statRow("ph-wind", "Agilidad", type.agilidad)}
+          ${this.statRow("ph-eye", "Percepción", type.percepcion)}
         </div>
       </div>`;
 

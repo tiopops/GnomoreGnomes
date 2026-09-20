@@ -282,6 +282,32 @@ h2 {
   -webkit-user-drag: none;
 }
 
+/* Niebla de guerra (js/mapgen.js genera esta capa siempre, js/fog.js decide
+   cuándo ocultarla) — más ancha que su propia loseta (ver FOG_OVERHANG en
+   mapgen.js) y anclada por su borde inferior, igual de idea que el ancla de
+   pies de .unit (translate/left/bottom), para que la nube "crezca" desde el
+   suelo de la loseta hacia arriba y los lados en vez de desde su propio
+   centro. pointer-events: none — nunca debe robar clics: las losetas de
+   niebla ya quedan excluidas como destino de movimiento en js/movement.js,
+   así que no hace falta que intercepte nada aquí. */
+.tile__fog {
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+  z-index: 100000;
+}
+
+/* Al revelarse (Fog.revealForUnit) se desvanece en vez de desaparecer de
+   golpe — nivel Triple A / feedback (regla de oro del proyecto): explorar
+   debe sentirse como un descubrimiento, no como un simple "on/off". */
+.tile__fog--revealed {
+  opacity: 0;
+}
+
 /* ---------- Unidades ---------- */
 
 .unit {

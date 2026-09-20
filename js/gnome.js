@@ -77,6 +77,23 @@ const GNOME_LAND_IMPACT_MS = 480;
 // punto de partida a 0 puntos, no un valor fijo.
 const GNOME_IDLE_BASE_S = { loose: 0.87, held: 0.45 };
 
+// Umbral de puntos (a partir de aquí) y puntos necesarios para llegar al
+// tope de intensidad de los DOS efectos "exagerados" de muchos puntos
+// acumulados (pedido explícito: "los movimientos y animaciones de los
+// gnomos con muchos puntos acumulados deben ser más exagerados... pueden ir
+// tiñéndose de rojo o dar pequeños saltitos por la superficie de su propia
+// loseta"):
+//   - GNOME_RED_TINT_MAX_POINTS: puntos en los que el tinte rojo (filtro
+//     CSS, ver _applyNervousness) llega a su máximo — empieza a notarse
+//     desde el primer punto, no hay umbral mínimo para este efecto.
+//   - GNOME_HOP_MIN_POINTS / GNOME_HOP_MAX_CHANCE: por debajo del mínimo
+//     nunca da saltitos él solo; a partir de ahí la probabilidad de saltar
+//     en cada ciclo de idle sube con los puntos hasta un tope (nunca un
+//     salto continuo, sigue siendo "de vez en cuando").
+const GNOME_RED_TINT_MAX_POINTS = 20;
+const GNOME_HOP_MIN_POINTS = 6;
+const GNOME_HOP_MAX_CHANCE = 0.6;
+
 // Posición del gnomo "amarrado" al brazo de quien lo lleva cogido, UNA POR
 // TIPO DE PERSONAJE — hace falta porque no todos los personajes tienen el
 // mismo tamaño en pantalla (ver SPRITE_SCALES en units.js): el
@@ -226,11 +243,31 @@ function createGnomeInstance() {
           if (this.el && !this.heldBy && !this.busy) {
             this.facing = this.facing === "left" ? "right" : "left";
             Units._applyFacing(this);
+            this._maybeIdleHop();
           }
           tick();
         }, delay);
       };
       tick();
+    },
+
+    // Salta un instante EN SU PROPIA LOSETA (sin cambiar de fila/columna)
+    // cuando lleva muchos puntos encima — pedido explícito: "...pueden...
+    // dar pequeños saltitos por la superficie de su propia loseta". Solo
+    // mientras anda SUELTO (no cogido — mientras lo llevan ya tiembla con
+    // gnome-nervous-tremble, ver style.css, y "la superficie de su propia
+    // loseta" no aplica). Reutiliza el mismo salto que un paso de
+    // movimiento normal (unit__sprite--hop, ver units.js/style.css) en vez
+    // de una animación nueva — ya se lee como "salto corto", basta con
+    // dispararlo sin mover row/col.
+    _maybeIdleHop() {
+      if (this.points < GNOME_HOP_MIN_POINTS) return;
+      const chance = Math.min(GNOME_HOP_MAX_CHANCE, (this.points - GNOME_HOP_MIN_POINTS) * 0.05);
+      if (Math.random() > chance) return;
+      this.spriteEl.classList.remove("unit__sprite--hop");
+      void this.spriteEl.offsetWidth;
+      this.spriteEl.classList.add("unit__sprite--hop");
+      SFX.hop();
     },
 
     // ---------- Coger al gnomo ----------
@@ -778,21 +815,39 @@ function createGnomeInstance() {
 
     // Acorta la animación de "idle" que esté activa ahora mismo (respiración
     // suelto / temblor cogido, ver GNOME_IDLE_BASE_S arriba) en proporción a
-    // los puntos acumulados — cuantos más puntos, más nervioso se ve. Se
-    // aplica sobre AMBOS sprites (this.spriteEl y this.attachSpriteEl, si ya
+    // los puntos acumulados, Y le va aplicando un tinte rojo creciente
+    // (pedido explícito: "más exagerados... pueden ir tiñéndose de rojo") —
+    // cuantos más puntos, más nervioso y más "al rojo vivo" se ve. Se aplica
+    // sobre AMBOS sprites (this.spriteEl y this.attachSpriteEl, si ya
     // existe) en vez de solo el visible ahora mismo, para que el que
-    // corresponda ya esté a la velocidad correcta en cuanto se muestre (p.ej.
-    // al recogerlo justo después de que sus puntos hayan cambiado). Reduce la
-    // duración de forma proporcional (no resta fija) para que siga habiendo
-    // cambio perceptible incluso con pocos puntos, con un suelo (35% de la
-    // base) para que muchos puntos nunca lo vuelvan un parpadeo ilegible.
+    // corresponda ya esté al nivel correcto en cuanto se muestre (p.ej. al
+    // recogerlo justo después de que sus puntos hayan cambiado). La
+    // duración se reduce de forma proporcional (no resta fija) para que
+    // siga habiendo cambio perceptible incluso con pocos puntos, con un
+    // suelo (35% de la base) para que muchos puntos nunca lo vuelvan un
+    // parpadeo ilegible.
+    //
+    // El tinte usa sepia()+hue-rotate() en vez de hue-rotate() solo (como el
+    // tinte de "rival", ver .unit--enemy en style.css): el gnomo es
+    // mayormente blanco/gris, y hue-rotate() no afecta a colores sin
+    // saturación (blanco/gris no tienen "tono" que rotar) — sepia() sí
+    // introduce color incluso ahí, y el hue-rotate() posterior empuja ese
+    // tono cálido hacia el rojo.
     _applyNervousness() {
       const factor = Math.max(0.35, 1 / (1 + this.points * 0.15));
+      const t = Math.min(1, this.points / GNOME_RED_TINT_MAX_POINTS); // 0 (sin tinte) .. 1 (máximo)
+      const tint = t > 0 ? `sepia(${t.toFixed(2)}) saturate(${(1 + t * 3).toFixed(2)}) hue-rotate(-40deg)` : "";
       if (this.spriteEl) {
         this.spriteEl.style.animationDuration = `${(GNOME_IDLE_BASE_S.loose * factor).toFixed(3)}s`;
+        this.spriteEl.style.filter = tint;
       }
       if (this.attachSpriteEl) {
         this.attachSpriteEl.style.animationDuration = `${(GNOME_IDLE_BASE_S.held * factor).toFixed(3)}s`;
+        // .gnome-attach__sprite trae su propia sombra por CSS (drop-shadow) —
+        // fijar el filtro inline la pisaría por completo, así que cuando hay
+        // tinte se repite aquí esa misma sombra a mano; sin tinte se limpia
+        // el inline entero para que la regla del CSS vuelva a mandar sola.
+        this.attachSpriteEl.style.filter = tint ? `${tint} drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45))` : "";
       }
     },
 

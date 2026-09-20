@@ -214,7 +214,7 @@
 
   <div class="output-wrap">
     <h2>Cópialo y pásamelo tal cual para que lo aplique en js/units.js y js/unitinfo.js</h2>
-    <div class="hint">Incluye el tamaño de TODOS los personajes, sus 4 estadísticas (aguante/movimiento/fuerza/agilidad) y su descripción, de los dos equipos — cámbialos de equipo arriba sin miedo, no se pierde nada.</div>
+    <div class="hint">Incluye el tamaño de TODOS los personajes, sus 5 estadísticas (aguante/movimiento/fuerza/agilidad/percepción) y su descripción, de los dos equipos — cámbialos de equipo arriba sin miedo, no se pierde nada.</div>
     <textarea id="output" readonly></textarea>
     <div class="output-actions">
       <button class="toggle-btn" id="copyBtn">Copiar</button>
@@ -231,7 +231,7 @@
   <script src="../js/unitinfo.js"></script>
   <script>
     const STORAGE_KEY = "gnomore-tamano-stats-personajes-v1";
-    const STAT_KEYS = ["aguante", "movimiento", "fuerza", "agilidad"];
+    const STAT_KEYS = ["aguante", "movimiento", "fuerza", "agilidad", "percepcion"];
 
     function loadTuned() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -241,7 +241,7 @@
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
     }
 
-    // tuned[typeId] = { scale, aguante, movimiento, fuerza, agilidad, description }.
+    // tuned[typeId] = { scale, aguante, movimiento, fuerza, agilidad, percepcion, description }.
     // Arranca desde lo que ya haya en el juego real (SPRITE_SCALES/UNIT_TYPES/
     // UNIT_DESCRIPTIONS) y lo que se haya guardado localmente encima —
     // reabrir la herramienta o cambiar de equipo nunca pierde ajustes a
@@ -256,6 +256,7 @@
         movimiento: saved.movimiento ?? type.movimiento,
         fuerza: saved.fuerza ?? type.fuerza,
         agilidad: saved.agilidad ?? type.agilidad,
+        percepcion: saved.percepcion ?? type.percepcion,
         description: saved.description ?? (UNIT_DESCRIPTIONS[typeId] ?? ""),
       };
     });
@@ -439,6 +440,7 @@
       addStatRow("movimiento", "Movimiento", "ph-footprints");
       addStatRow("fuerza", "Fuerza", "ph-boxing-glove");
       addStatRow("agilidad", "Agilidad", "ph-wind");
+      addStatRow("percepcion", "Percepción", "ph-eye");
 
       const resetBtn = document.createElement("button");
       resetBtn.className = "card__reset";
@@ -450,6 +452,7 @@
           movimiento: type.movimiento,
           fuerza: type.fuerza,
           agilidad: type.agilidad,
+          percepcion: type.percepcion,
           description: UNIT_DESCRIPTIONS[typeId] ?? "",
         };
         saveTuned(tuned);
@@ -476,11 +479,11 @@
       typeIds.forEach((typeId) => lines.push(`  ${typeId}: ${tuned[typeId].scale},`));
       lines.push("};");
       lines.push("");
-      lines.push("// --- js/units.js — estadísticas (aguante/movimiento/fuerza/agilidad) por personaje ---");
+      lines.push("// --- js/units.js — estadísticas (aguante/movimiento/fuerza/agilidad/percepcion) por personaje ---");
       typeIds.forEach((typeId) => {
         const v = tuned[typeId];
         lines.push(
-          `  ${typeId}: { aguante: ${v.aguante}, movimiento: ${v.movimiento}, fuerza: ${v.fuerza}, agilidad: ${v.agilidad}, },`
+          `  ${typeId}: { aguante: ${v.aguante}, movimiento: ${v.movimiento}, fuerza: ${v.fuerza}, agilidad: ${v.agilidad}, percepcion: ${v.percepcion}, },`
         );
       });
       lines.push("");

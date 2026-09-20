@@ -42,16 +42,21 @@
    satisfactorios: saltos con rebote, giro hacia la dirección real y sonido
    en cada paso — ver también js/movement.js y js/combat.js. */
 
-// Estadísticas de cada tipo de unidad — las 4 que ve el jugador (en el popup
+// Estadísticas de cada tipo de unidad — las 5 que ve el jugador (en el popup
 // de js/unitinfo.js) están todas sobre una escala común de 1 a 5:
 //   aguante    -> vida máxima de la unidad (Units.spawnUnit la usa como hp/maxHp)
 //   movimiento -> casillas por turno (lo usa js/movement.js)
 //   fuerza     -> daño que hace al golpear (lo usa js/combat.js)
 //   agilidad   -> probabilidad de acertar habilidades tipo "pasar al gnomo"
-//                 (todavía no existe esa mecánica — el dato ya está aquí
-//                 preparado para cuando se implemente, sin tener que tocar
-//                 UNIT_TYPES otra vez)
-// attackRange no es una de las 4 estadísticas del jugador (es una regla de
+//                 (también aplica al éxito del pase, ver Gnome.computePassSuccess)
+//   percepcion -> radio (en casillas, distancia Chebyshev) de niebla que se
+//                 revela alrededor de la unidad AL TERMINAR de moverse a una
+//                 casilla nueva — la usa js/fog.js (Fog.revealForUnit). El
+//                 revelado inicial al empezar la partida es un radio FIJO de
+//                 2 para todos, independiente de esta estadística (pedido
+//                 explícito) — percepcion solo entra en juego a partir del
+//                 primer movimiento.
+// attackRange no es una de las 5 estadísticas del jugador (es una regla de
 // combate interna, de momento igual para todas: cuerpo a cuerpo, 1 casilla).
 // raceId liga cada tipo de unidad a una de las razas de js/races.js — así
 // cualquier pantalla que necesite "solo los personajes de este equipo"
@@ -66,6 +71,7 @@ const UNIT_TYPES = {
     movimiento: 1,
     fuerza: 3,
     agilidad: 1,
+    percepcion: 1,
     attackRange: 1,
     defaultFacing: "right", // la imagen viene dibujada mirando hacia la derecha por defecto
   },
@@ -81,6 +87,7 @@ const UNIT_TYPES = {
     movimiento: 5,
     fuerza: 1,
     agilidad: 3,
+    percepcion: 4,
     attackRange: 1,
     defaultFacing: "right",
   },
@@ -92,6 +99,7 @@ const UNIT_TYPES = {
     movimiento: 2,
     fuerza: 2,
     agilidad: 3,
+    percepcion: 3,
     attackRange: 1,
     defaultFacing: "right",
   },
@@ -103,6 +111,7 @@ const UNIT_TYPES = {
     movimiento: 3,
     fuerza: 1,
     agilidad: 5,
+    percepcion: 3,
     attackRange: 1,
     defaultFacing: "right",
   },
@@ -114,6 +123,7 @@ const UNIT_TYPES = {
     movimiento: 3,
     fuerza: 2,
     agilidad: 2,
+    percepcion: 3,
     attackRange: 1,
     defaultFacing: "right",
   },
@@ -129,6 +139,7 @@ const UNIT_TYPES = {
     movimiento: 3,
     fuerza: 5,
     agilidad: 1,
+    percepcion: 1,
     attackRange: 1,
     defaultFacing: "right",
   },
