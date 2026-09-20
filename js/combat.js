@@ -222,6 +222,13 @@ const Combat = {
       // siga recibiendo `target` como parámetro en vez de tener que buscarlo.
       // Gnome.dropHeldBy no hace nada si `target` no llevaba ningún gnomo
       // encima, así que siempre es seguro llamarlo aquí sin comprobar antes.
+      // Puntos de Gloria (js/glory.js) — pedido explícito: "matar a 1
+      // enemigo genera +1 punto de gloria al comienzo del turno". Se
+      // registra aquí, en el instante exacto en que la baja se confirma
+      // (equipo de QUIEN ATACA, no de la víctima) — Glory ya se encarga de
+      // no sumarlo a los puntos "de verdad" hasta el próximo inicio de
+      // turno de ese equipo.
+      if (typeof Glory !== "undefined") Glory.queueKillBonus(attacker.team);
       await Units.removeUnit(target);
       if (typeof Gnome !== "undefined") await Gnome.dropHeldBy(target);
     } else {

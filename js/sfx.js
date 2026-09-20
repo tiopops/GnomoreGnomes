@@ -211,11 +211,23 @@ const SFX = {
     setTimeout(() => this._pluck("death-chime-1", 880, "triangle", 0.2, 0.26), 70);
     setTimeout(() => this._pluck("death-chime-2", 1320, "triangle", 0.26, 0.22), 150);
   },
+
+  // Puntos de Gloria (js/glory.js) — pedido explícito: "cuando alguna cosa
+  // genera +X puntos de gloria, el icono de los puntos de gloria debe hacer
+  // una animacion de pulsacion y escucharse un sonido de recompensa". Mini
+  // arpegio ascendente de 3 notas (a diferencia de death(), que es solo 2 y
+  // empieza con un golpe grave) para que suene a "tesoro"/moneda, no a
+  // "victoria de combate" — nada de golpe seco inicial, solo brillo.
+  glory() {
+    this._pluck("glory-1", 660, "triangle", 0.18, 0.24);
+    setTimeout(() => this._pluck("glory-2", 880, "triangle", 0.18, 0.24), 70);
+    setTimeout(() => this._pluck("glory-3", 1180, "triangle", 0.3, 0.26), 140);
+  },
 };
 
 const SFX_TARGETS =
   ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .attack-marker, .unit, .unit-info-btn, " +
-  ".catch-marker, .pass-marker, .gnome-action-btn";
+  ".catch-marker, .pass-marker, .gnome-action-btn, .settings-gear-btn, .settings-panel__option";
 
 // IMPORTANTE: se usa "mouseover"/"mouseout" (delegados en document) en vez de
 // "mouseenter"/"mouseleave" para poder delegar en un único listener, pero eso

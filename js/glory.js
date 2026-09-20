@@ -4,7 +4,9 @@
      - Pintar el marcador de la esquina superior izquierda para cada equipo,
        con el icono de SU raza (RACES[].gloryIcon, ver js/races.js).
      - Sumar puntos al empezar cada turno (Glory.grantTurnStart, llamado
-       desde js/turns.js — ver Turns.reset/Turns.endTurn).
+       desde js/turns.js — ver Turns.reset/Turns.endTurn), incluyendo el
+       bonus por bajas conseguidas durante el turno anterior
+       (Glory.queueKillBonus, llamado desde js/combat.js al matar).
 
    Pedido explícito: "Vamos a introducir la mecanica de PUNTOS DE GLORIA, un
    marcador situado arriba la izquierda con un icono distinto para cada raza
@@ -22,6 +24,13 @@
    constante aparte a propósito, para que sumar más fuentes en el futuro sea
    tocar esto, no reescribir la lógica de turno.
 
+   Pedido explícito (segunda pasada): "matar a 1 enemigo genera +1 punto de
+   gloria al comienzo del turno" — el bonus se ACUMULA en cuanto se
+   confirma la baja (queueKillBonus, llamado desde Combat.attack) pero no
+   se suma a los puntos "de verdad" hasta que empieza el turno de ese
+   equipo (grantTurnStart), exactamente igual que el resto de fuentes de
+   este archivo: todo pasa por el mismo grifo del inicio de turno.
+
    Los puntos se llevan la cuenta para LOS DOS equipos (el rival también los
    necesitará el día que su IA construya/mejore algo), pero el marcador en
    pantalla ("un marcador situado arriba la izquierda", en singular) es solo
@@ -29,31 +38,66 @@
    jugador el recurso del rival. */
 
 const GLORY_PER_TURN_START = 2;
+const GLORY_PER_KILL = 1;
 
 const Glory = {
   points: { player: 0, enemy: 0 },
+  // Bonus ya "ganado" (bajas conseguidas) pero todavía sin sumar a points —
+  // se vuelca entero en el próximo grantTurnStart de ESE equipo y se vacía.
+  pendingBonus: { player: 0, enemy: 0 },
   _els: { player: null, enemy: null },
   _valueEls: { player: null, enemy: null },
+  _previewEls: { player: null, enemy: null },
 
   // Se llama al empezar cada partida nueva (spawnTestUnits, ver
   // newgame-flow.js), justo después de Turns.reset() — recibe la raza de
   // cada equipo para poder pintar el icono correcto de cada uno.
   init(playerRaceId, enemyRaceId) {
     this.points = { player: 0, enemy: 0 };
+    this.pendingBonus = { player: 0, enemy: 0 };
     this._raceIds = { player: playerRaceId, enemy: enemyRaceId };
     // Solo el marcador del JUGADOR se pinta en pantalla (ver nota de
     // cabecera) — el del rival se lleva por dentro sin HUD propio.
     this._ensureHud("player", playerRaceId);
+    this._els.player.style.display = "flex";
     this._render("player");
+    this._renderPreview("player");
   },
 
-  // Pedido explícito: "+2 al comienzo de cada turno" — lo llama Turns.js en
+  // Se llama desde js/settingsmenu.js al salir de la partida — mismo motivo
+  // que Turns.hideButton() (ver ese archivo): el marcador vive fuera del
+  // tablero y persiste entre partidas (se reutiliza el mismo elemento, ver
+  // _ensureHud), así que hay que ocultarlo a mano al volver al menú en vez
+  // de esperar a que se destruya solo con el resto del tablero.
+  hideHud() {
+    if (this._els.player) this._els.player.style.display = "none";
+  },
+
+  // Pedido explícito: "matar a 1 enemigo genera +1 punto de gloria al
+  // comienzo del turno" — se llama desde Combat.attack en el momento exacto
+  // en que se confirma la baja (target.hp <= 0), con el equipo de QUIEN
+  // MATA (no de la víctima). No toca `points` todavía, solo la reserva que
+  // grantTurnStart recogerá para ese equipo en su próximo turno — y refresca
+  // el indicador discreto de "próximo turno" al momento, para que el
+  // jugador vea reflejada la baja enseguida aunque los puntos de verdad
+  // tarden hasta el inicio del turno en aparecer.
+  queueKillBonus(team) {
+    if (!(team in this.pendingBonus)) return;
+    this.pendingBonus[team] += GLORY_PER_KILL;
+    this._renderPreview(team);
+  },
+
+  // Pedido explícito: "+2 al comienzo de cada turno" (ahora +2 y lo que se
+  // haya acumulado en pendingBonus, ver cabecera) — lo llama Turns.js en
   // cada cambio de equipo activo (incluida la primera vez que empieza el
   // jugador). `team` es "player" | "enemy".
   grantTurnStart(team) {
     if (!(team in this.points)) return;
-    this.points[team] += GLORY_PER_TURN_START;
-    this._render(team, { bump: true });
+    const gained = GLORY_PER_TURN_START + this.pendingBonus[team];
+    this.points[team] += gained;
+    this.pendingBonus[team] = 0;
+    this._render(team, { bump: true, gained });
+    this._renderPreview(team);
   },
 
   _raceFor(raceId) {
@@ -77,19 +121,34 @@ const Glory = {
       iconWrap.appendChild(img);
     }
 
+    const main = document.createElement("div");
+    main.className = "glory-hud__main";
+
     const value = document.createElement("span");
     value.className = "glory-hud__value";
     value.textContent = "0";
 
+    // Indicador discreto — pedido explícito: "debe haber algun indicador que
+    // diga cuando puntos de gloria se generan por turno (algo mas
+    // discreto)" — a diferencia de __value (el total actual, el que "hay
+    // que destacar más"), este va pequeño y apagado, justo debajo.
+    const preview = document.createElement("span");
+    preview.className = "glory-hud__preview";
+    preview.textContent = `+${GLORY_PER_TURN_START} / turno`;
+
+    main.appendChild(value);
+    main.appendChild(preview);
+
     el.appendChild(iconWrap);
-    el.appendChild(value);
+    el.appendChild(main);
     document.body.appendChild(el);
 
     this._els[team] = el;
     this._valueEls[team] = value;
+    this._previewEls[team] = preview;
   },
 
-  _render(team, { bump = false } = {}) {
+  _render(team, { bump = false, gained = 0 } = {}) {
     const valueEl = this._valueEls[team];
     if (!valueEl) return;
     valueEl.textContent = String(this.points[team]);
@@ -98,6 +157,19 @@ const Glory = {
       el.classList.remove("glory-hud--bump");
       void el.offsetWidth;
       el.classList.add("glory-hud--bump");
+      // Sonido de recompensa — pedido explícito: "cuando alguna cosa genera
+      // +X puntos de gloria... debe escucharse un sonido de recompensa".
+      // Solo aquí (no en queueKillBonus): la baja en sí ya suena a golpe/
+      // victoria con SFX.death(), este chime específico de gloria es para
+      // el momento en que los puntos de verdad "entran en la cuenta".
+      if (gained > 0 && typeof SFX !== "undefined") SFX.glory();
     }
+  },
+
+  _renderPreview(team) {
+    const previewEl = this._previewEls[team];
+    if (!previewEl) return;
+    const next = GLORY_PER_TURN_START + this.pendingBonus[team];
+    previewEl.textContent = `+${next} / turno`;
   },
 };

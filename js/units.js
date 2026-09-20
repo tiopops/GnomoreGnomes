@@ -224,6 +224,17 @@ const Units = {
     flipEl.appendChild(spriteEl);
     el.appendChild(flipEl);
 
+    // Icono de "a punto de morir" — pedido explícito: "puedes mostrar un
+    // icono phosphor sobre el sprite del jugador que tiembla porque el
+    // proximo ataque le va a matar?". Vive fuera de unit__flip (que ya se
+    // gira/escala con la unidad) para que el icono se quede siempre mirando
+    // de frente, sin girarse con el personaje — solo se muestra/oculta y
+    // tiembla vía CSS (.unit--doomed .unit__doom-icon, ver style.css), igual
+    // que el resto del estado "doomed" ya hace con el sprite/glow.
+    const doomIconEl = document.createElement("i");
+    doomIconEl.className = "ph ph-skull unit__doom-icon";
+    el.appendChild(doomIconEl);
+
     // Barra de vida SECCIONADA — pedido explícito: "las barras de vida
     // pueden estar seccionadas? creo que así sería más visible a la hora de
     // ver cuántos puntos de vida quedan... implementa un diseño digno de un
@@ -259,6 +270,7 @@ const Units = {
       el,
       flipEl,
       spriteEl,
+      doomIconEl,
       hpBarEl,
       hpSegmentEls,
       _fearTimer: null, // ver startFearLoop/stopFearLoop más abajo

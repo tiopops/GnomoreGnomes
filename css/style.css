@@ -9,6 +9,12 @@
   --ink: #f4f2f8;
   --muted: #a9a6b8;
   --disabled: #4b4f5c;
+  /* Familia visual "banderín irregular" (js/settingsmenu.js .p5-banner,
+     .end-turn-btn) — UN solo tono (berenjena-gris oscuro, pedido
+     explícito: "un gris oscuro o un berenjena tirando a gris oscuro me
+     suelen gustar"), nunca mezclado con un segundo color. */
+  --p5-tone-light: #4a3d52;
+  --p5-tone-dark: #241f28;
 }
 
 * {
@@ -52,6 +58,24 @@ body {
 }
 
 /* ---------- Menú principal ---------- */
+/* Pedido explícito (cuarta pasada): "pero lo mismo con todas las
+   interfaces...la de configuracion de arriba a la derecha, la que muestra
+   los puntos de victoria... esos tipo de interface irregulares me
+   gustan. las del menu principal y siguientes tambien. CURRATELO!!" — el
+   lenguaje visual "banderín irregular" (clip-path en diagonal, sombra dura
+   sin difuminar, tipografía blanca en bloque itálica, UN solo tono
+   berenjena-gris — ver --p5-tone-light/--p5-tone-dark y la nota de
+   settings-gear-btn/end-turn-btn más abajo) se extiende aquí a TODO:
+   logo, título, botones del menú, pantallas de selección (modo/raza/
+   rivales) y el propio marcador de Puntos de Gloria (ver su sección más
+   abajo) — ya no queda ninguna píldora/tarjeta redondeada "de manual" en
+   el juego, todo pasa por .p5-banner o el mismo lenguaje aplicado a mano
+   a los elementos que ya existían (para no tener que tocar menu.js/
+   newgame-flow.js: mismas clases de siempre, todas las reutiliza el JS tal
+   cual). Cada botón/tarjeta lleva además una pequeñísima rotación propia
+   (nth-child) que se endereza al pasar el ratón — ese es el matiz que hace
+   que se lea como un colage irregular de verdad y no como una fila de
+   rectángulos con las esquinas cortadas todos exactamente igual. */
 
 .main-menu {
   justify-content: center;
@@ -64,81 +88,141 @@ body {
 }
 
 .hex-logo {
-  width: 56px;
-  height: 64px;
-  margin: 0 auto 20px;
-  background: var(--accent);
+  width: 60px;
+  height: 68px;
+  margin: 0 auto 22px;
+  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  border: 2px solid #000;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
+  transform: rotate(-4deg);
 }
 
-h1 {
-  font-size: clamp(2rem, 6vw, 2.6rem);
+.main-menu h1 {
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   margin: 0 0 32px;
-  letter-spacing: -0.02em;
+  padding: 14px 32px;
+  color: #fff;
+  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
+  border: 2px solid #000;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
+  transform: rotate(-1.2deg);
 }
 
 h2 {
-  font-size: clamp(1.4rem, 5vw, 1.8rem);
-  margin: 8px 0 24px;
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+  font-size: clamp(1.1rem, 4vw, 1.4rem);
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 4px 0 26px;
+  padding-bottom: 10px;
   text-align: center;
+  color: #fff;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.4);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
 }
 
 .menu-buttons {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .menu-btn {
   width: 100%;
-  padding: 14px 20px;
-  font-size: 1.05rem;
-  font-weight: 600;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  background: var(--accent);
-  color: var(--ink);
+  padding: 15px 26px 15px 18px;
+  font-size: 1rem;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
+  border: 2px solid #000;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.7);
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition: transform 0.15s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.15s ease, background 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
+  transform: rotate(0deg);
 }
 
+/* Rotación propia por botón — pequeña a propósito (1-1.6deg), lo justo
+   para leerse como "colocado a mano" sin dificultar la lectura del texto;
+   se endereza entera al hover (ver más abajo). */
+.menu-buttons .menu-btn:nth-child(odd) { transform: rotate(-1deg); }
+.menu-buttons .menu-btn:nth-child(even) { transform: rotate(1deg); }
+
 .menu-btn i {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(45deg);
+}
+
+.menu-btn i::before {
+  display: inline-block;
+  transform: rotate(-45deg);
 }
 
 .menu-btn:hover:not(:disabled) {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
+  transform: rotate(0deg) translate(-3px, -3px);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.55);
 }
 
 .menu-btn:active:not(:disabled) {
-  transform: translateY(0);
+  transform: rotate(0deg) translate(1px, 1px);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
 }
 
 .menu-btn:disabled {
-  background: var(--bg-elevated);
-  color: var(--muted);
-  border-color: var(--disabled);
+  background: linear-gradient(165deg, #3a3640, #201d24 70%);
+  color: rgba(255, 255, 255, 0.4);
+  text-shadow: none;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
   cursor: not-allowed;
 }
 
 .menu-footer {
-  margin-top: 28px;
+  margin-top: 30px;
   color: var(--muted);
   font-size: 0.85rem;
+  font-style: italic;
 }
 
 .menu-feedback {
-  margin-top: 16px;
-  padding: 10px 16px;
-  border-radius: 10px;
-  background: var(--bg-elevated);
-  color: var(--ink);
-  font-size: 0.9rem;
+  margin-top: 18px;
+  padding: 10px 20px;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0% 100%);
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
   opacity: 0;
   transform: translateY(-4px);
 }
@@ -158,19 +242,27 @@ h2 {
   align-self: flex-start;
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-size: 0.95rem;
+  gap: 8px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  padding: 8px 4px;
-  margin-bottom: 12px;
-  transition: color 0.15s ease;
+  padding: 9px 22px 9px 14px;
+  margin-bottom: 16px;
+  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  clip-path: polygon(0 0, 100% 0, 88% 100%, 0% 100%);
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.7);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .back-btn:hover {
-  color: var(--ink);
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
 }
 
 .back-btn--floating {
@@ -178,9 +270,6 @@ h2 {
   top: 16px;
   left: 16px;
   z-index: 5;
-  background: var(--bg-elevated);
-  border-radius: 999px;
-  padding: 10px;
   margin-bottom: 0;
 }
 
@@ -189,7 +278,7 @@ h2 {
   max-width: 480px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .option-card {
@@ -197,42 +286,63 @@ h2 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
-  padding: 18px 20px;
-  border-radius: 14px;
-  border: 1px solid var(--disabled);
-  background: var(--bg-elevated);
-  color: var(--ink);
+  gap: 5px;
+  padding: 18px 26px 18px 22px;
+  color: #fff;
+  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  clip-path: polygon(3% 0, 100% 0, 97% 100%, 0% 100%);
+  border: 2px solid #000;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.15s ease, transform 0.1s ease, background-color 0.15s ease;
-  --card-accent: var(--accent);
+  transition: transform 0.15s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.15s ease;
 }
 
+.option-list .option-card:nth-child(odd) { transform: rotate(-0.8deg); }
+.option-list .option-card:nth-child(even) { transform: rotate(0.8deg); }
+
 .option-card:hover {
-  border-color: var(--card-accent);
-  transform: translateY(-2px);
-  background: #2c3242;
+  transform: rotate(0deg) translate(-3px, -3px);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.55);
 }
 
 .option-card:active {
-  transform: translateY(0);
+  transform: rotate(0deg) translate(1px, 1px);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
 }
 
 .option-card__icon {
-  font-size: 1.6rem;
-  color: var(--card-accent);
-  margin-bottom: 4px;
+  font-size: 1.4rem;
+  width: 34px;
+  height: 34px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(45deg);
+  margin-bottom: 6px;
+}
+
+.option-card__icon::before {
+  display: inline-block;
+  transform: rotate(-45deg);
 }
 
 .option-card__title {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.7);
 }
 
 .option-card__desc {
-  font-size: 0.88rem;
-  color: var(--muted);
+  font-size: 0.86rem;
+  color: rgba(255, 255, 255, 0.65);
+  font-style: italic;
 }
 
 /* ---------- Tablero (escenario isométrico) ---------- */
@@ -672,6 +782,39 @@ h2 {
   75% { transform: scale(0.97, 1.04) rotate(3deg) translateX(2px); }
 }
 
+/* Calavera de aviso sobre la cabeza de quien está "doomed" (ver arriba) —
+   pedido explícito: "puedes mostrar un icono phosphor sobre el sprite del
+   jugador que tiembla porque el proximo ataque le va a matar?". Oculta por
+   defecto (display:none, no solo opacity: así no ocupa espacio de layout ni
+   es clicable mientras no aplica) y solo aparece con .unit--doomed. Vive
+   fuera de unit__flip a propósito (ver comentario en units.js) para no
+   heredar su giro — este icono siempre mira de frente, solo tiembla con su
+   propio keyframe (más simple que el del sprite: aquí no hace falta rotar,
+   con un temblor vertical corto + el propio pulso de escala ya se lee como
+   "alarma"). */
+.unit__doom-icon {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: -34px;
+  transform: translateX(-50%);
+  font-size: 1.5rem;
+  color: #ff3b3b;
+  text-shadow: 0 0 8px rgba(255, 40, 40, 0.9), 0 2px 3px rgba(0, 0, 0, 0.6);
+  z-index: 30;
+  pointer-events: none;
+}
+
+.unit--doomed .unit__doom-icon {
+  display: block;
+  animation: unit-doom-icon-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes unit-doom-icon-pulse {
+  0%, 100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 0.85; }
+  50% { transform: translateX(-50%) translateY(-3px) scale(1.18); opacity: 1; }
+}
+
 /* Losetas alcanzables: elipse aplanada (no un círculo) para que se asiente
    sobre la cara superior de la loseta isométrica con la misma perspectiva,
    en vez de parecer flotando encima. Más grandes que antes para que se lean
@@ -951,34 +1094,53 @@ h2 {
    gnome-action-btn, que solo aparecen con una unidad seleccionada) — la
    visibilidad la controla Turns._ensureButton/el back-btn del tablero, no
    ninguna selección. */
+/* Pedido explícito (segunda pasada): "el boton de pasar turno no acaba de
+   convencerme en general busco interfaces irregulares como las de la
+   captura, probamos a ver como quedan?" — captura de referencia: HUD de
+   Persona 5 (banderines inclinados, tipografía blanca en bloque, todo
+   irregular en vez de píldoras redondeadas). Migrado de la píldora morada
+   de antes a un banderín recortado en diagonal (clip-path, ver el mismo
+   lenguaje visual que .p5-banner en js/settingsmenu.js más abajo) con
+   sombra dura sin difuminar (en vez de box-shadow con blur) — es justo ese
+   trazo duro y sin redondear el que lee como "cómic/irregular" en la
+   referencia.
+   Pedido explícito (tercera pasada): "el estilo me gusta, pero no combines
+   2 colores en la interfaz, con 1 color es suficiente, un tono neutro que
+   ayude la legibilidad de los botones y textos" + "un gris oscuro o un
+   berenjena tirando a gris oscuro me suelen gustar" — la mezcla negro/rojo
+   en diagonal de la primera pasada queda sustituida por UN solo tono
+   (berenjena-gris oscuro, --p5-tone) en degradado consigo mismo (más claro
+   arriba/más oscuro abajo, nunca un segundo color distinto) — sigue siendo
+   irregular por la forma (clip-path) y la sombra dura, no por mezclar
+   colores. Conserva el mismo marcado/clases de siempre
+   (.end-turn-btn__icon, --visible/--thinking/--ready) — solo cambia el
+   aspecto, no lo que hace Turns.js con él. */
 .end-turn-btn {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
-  padding: 8px 22px 8px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(244, 242, 248, 0.14);
-  /* Degradado sutil + un highlight superior (en vez del morado plano de
-     antes, pedido explícito: "el botón de pasar turno es muy cutre...
-     puedes hacerlo mejor") para que se lea como una pieza de interfaz
-     trabajada, no como un <button> por defecto pintado del color de acento. */
-  background: linear-gradient(165deg, var(--accent-hover), var(--accent) 55%, #5f2fc4);
-  color: var(--ink);
+  right: 24px;
+  bottom: 24px;
+  padding: 10px 26px 10px 10px;
+  clip-path: polygon(7% 0, 100% 0, 93% 100%, 0% 100%);
+  border: 2px solid #000;
+  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  color: #fff;
   font-size: 0.98rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(122, 62, 240, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
   opacity: 0;
   transform: translateY(14px) scale(0.85);
   pointer-events: none;
   z-index: 500;
   transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, background 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.15s ease;
 }
 
 .end-turn-btn--visible {
@@ -988,50 +1150,57 @@ h2 {
 }
 
 .end-turn-btn:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(148, 99, 255, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translate(-3px, -3px) scale(1);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.6);
 }
 
 .end-turn-btn:active:not(:disabled) {
-  transform: translateY(-1px) scale(0.99);
+  transform: translate(1px, 1px) scale(1);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
 }
 
-/* El icono vive dentro de su propia "moneda" circular a la izquierda (en vez
-   de suelto junto al texto, como antes) — separa visualmente el símbolo del
-   texto y da algo con lo que animar el estado de "pensando"/"listo" sin
-   mover el resto del botón. */
+/* El icono vive dentro de su propio rombo a la izquierda (en vez de una
+   moneda circular, para no romper el lenguaje angular del resto del
+   botón) — separa visualmente el símbolo del texto y da algo con lo que
+   animar el estado de "pensando"/"listo" sin mover el resto del botón. */
 .end-turn-btn__icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.18);
+  width: 30px;
+  height: 30px;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
+  font-style: normal;
   flex-shrink: 0;
+  transform: rotate(45deg);
+}
+
+.end-turn-btn__icon i {
+  transform: rotate(-45deg);
 }
 
 /* Mientras la IA rival resuelve su turno (Turns._aiRunning) — deshabilitado
    (el jugador no puede pasarle el turno a sí mismo dos veces seguidas), en
-   tono apagado en vez del degradado de acento, con el icono girando sin
+   tono apagado en vez del degradado rojo/negro, con el icono girando sin
    parar para que se lea como "pensando", no como un botón roto que no
    responde. */
 .end-turn-btn--thinking {
-  background: var(--bg-elevated);
-  color: var(--muted);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(244, 242, 248, 0.1);
+  background: linear-gradient(165deg, #35303a, #1c181f 70%);
+  color: rgba(255, 255, 255, 0.55);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
   cursor: default;
 }
 
-.end-turn-btn--thinking .end-turn-btn__icon {
+.end-turn-btn--thinking .end-turn-btn__icon i {
+  display: inline-flex;
   animation: end-turn-spin 0.9s linear infinite;
 }
 
 @keyframes end-turn-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from { transform: rotate(-45deg); }
+  to { transform: rotate(315deg); }
 }
 
 /* Pedido explícito: "cuando todos los personajes se hayan movido estaría
@@ -1047,13 +1216,11 @@ h2 {
 @keyframes end-turn-pulse {
   0%, 100% {
     transform: translateY(0) scale(1);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(122, 62, 240, 0.25),
-      0 0 0 0 rgba(148, 99, 255, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55), 0 0 0 0 rgba(255, 255, 255, 0.4);
   }
   50% {
-    transform: translateY(-2px) scale(1.045);
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(148, 99, 255, 0.4),
-      0 0 0 10px rgba(148, 99, 255, 0), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.55), 0 0 0 8px rgba(255, 255, 255, 0);
   }
 }
 
@@ -1656,16 +1823,33 @@ h2 {
   .glory-hud {
     top: 14px;
     left: 14px;
-    padding: 5px 16px 5px 5px;
+    padding: 5px 18px 5px 5px;
   }
 
   .glory-hud__icon {
-    width: 38px;
-    height: 38px;
+    width: 46px;
+    height: 46px;
   }
 
   .glory-hud__value {
-    font-size: 1.1rem;
+    font-size: 1.35rem;
+  }
+
+  .glory-hud__preview {
+    font-size: 0.62rem;
+  }
+
+  .settings-gear-btn {
+    top: 14px;
+    right: 14px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .settings-panel {
+    padding: 26px 24px;
+    min-width: 0;
+    width: calc(100vw - 48px);
   }
 }
 
@@ -1678,37 +1862,56 @@ h2 {
    vez del morado de acento) para que se lea como un recurso distinto, no
    como "otro botón más". Fijo en pantalla (position:fixed), igual que
    end-turn-btn/unit-info-btn — vive fuera del tablero, no escala con la
-   cámara. */
+   cámara.
+   Pedido explícito (segunda pasada): "el icono de los puntos de gloria me
+   parece muy pequeño... debe destacar mas es algo importante, tambien debe
+   haber algun indicador que diga cuando puntos de gloria se generan por
+   turno (algo mas discreto), al igual que se muestran los puntos de gloria
+   actuales (este hay que destacarlo mas)" — de ahí el icono más grande (56px,
+   antes 44px) y el número a 1.6rem con su propio halo de texto, con el
+   indicador de previsión (glory-hud__preview) mucho más pequeño y apagado
+   justo debajo, para que la jerarquía visual sea inequívoca: lo grande y
+   brillante es "lo que tienes", lo pequeño y gris es "lo que viene".
+   Pedido explícito (cuarta pasada): "lo mismo con todas las interfaces...
+   la que muestra los puntos de victoria... esos tipo de interface
+   irregulares me gustan... CURRATELO" — la píldora redondeada de antes
+   pasa a ser un banderín cortado en diagonal (mismo clip-path/sombra dura
+   que .p5-banner) ligeramente girado, igual que el resto de la interfaz;
+   el medallón dorado en sí se queda REDONDO a propósito (es una moneda,
+   no un banderín de texto — mismo contraste angular/redondo que ya usa
+   settings-gear-btn frente a settings-panel) y conserva su propia paleta
+   ámbar/dorada (un solo matiz, degradado consigo mismo) para seguir
+   leyéndose como "el recurso", no como "otro botón más" de fondo
+   berenjena-gris. */
 .glory-hud {
   position: fixed;
   top: 20px;
   left: 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 22px 6px 6px;
-  border-radius: 999px;
+  gap: 12px;
+  padding: 7px 30px 7px 7px;
+  clip-path: polygon(0 0, 100% 0, 91% 100%, 0% 100%);
   background: linear-gradient(165deg, #3a3120, #201a10 60%);
-  border: 1px solid rgba(255, 208, 110, 0.35);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 190, 60, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 2px solid #000;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
   z-index: 500;
   opacity: 0;
-  transform: translateY(-10px) scale(0.85);
+  transform: rotate(-1.3deg) translateY(-10px) scale(0.85);
   animation: glory-hud-enter 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) 0.15s forwards;
 }
 
 @keyframes glory-hud-enter {
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: rotate(-1.3deg) translateY(0) scale(1);
   }
 }
 
 .glory-hud__icon {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
@@ -1716,7 +1919,7 @@ h2 {
   align-items: center;
   justify-content: center;
   background: radial-gradient(circle at 50% 32%, #ffd66e, #b9791a 68%, #7a4d0e 100%);
-  box-shadow: 0 0 0 2px rgba(255, 214, 110, 0.55), 0 0 14px rgba(255, 190, 60, 0.5),
+  box-shadow: 0 0 0 3px rgba(255, 214, 110, 0.6), 0 0 18px rgba(255, 190, 60, 0.55),
     inset 0 2px 3px rgba(255, 255, 255, 0.35), inset 0 -3px 5px rgba(0, 0, 0, 0.35);
 }
 
@@ -1727,13 +1930,30 @@ h2 {
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
 }
 
+.glory-hud__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1;
+}
+
 .glory-hud__value {
   font-weight: 800;
-  font-size: 1.25rem;
+  font-size: 1.6rem;
   letter-spacing: 0.01em;
   color: #ffe3a3;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 200, 90, 0.4);
   min-width: 1.2em;
+}
+
+/* El indicador discreto: pequeño, apagado, todo lo contrario del número de
+   arriba a propósito (ver nota de cabecera) — solo informa, no compite por
+   la atención. */
+.glory-hud__preview {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 227, 163, 0.55);
 }
 
 /* Mismo "pulso" que gnome-points-badge__value--bump al sumar puntos (aquí en
@@ -1766,4 +1986,171 @@ h2 {
   0% { transform: scale(1); }
   40% { transform: scale(1.3); color: #fff2d0; }
   100% { transform: scale(1); }
+}
+
+/* ---------- Menú de ajustes (js/settingsmenu.js) ----------
+   Pedido explícito: "el icono de puntos de gloria esta tapando el icono de
+   atras, el icono de atras lo eliminamos, creamos un nuevo icono con un
+   engranaje que sera el de configuracion arriba a la derecha, al darle, un
+   popup dara varias opciones... todas las interfaces conel estilo que te
+   mostre antes" — la captura de referencia es el HUD de Persona 5:
+   banderines inclinados, tipografía blanca en bloque/itálica, TODO
+   recortado en ángulo en vez de píldoras o rectángulos rectos, con una
+   sombra dura (sin blur, desplazada) en vez de un box-shadow difuminado
+   normal — de ahí .p5-banner como pieza base reutilizable, no solo para
+   este popup: .end-turn-btn (ver más arriba) ya se ha migrado al mismo
+   lenguaje en esta misma pasada.
+   Pedido explícito (tercera pasada): "el estilo me gusta, pero no combines
+   2 colores en la interfaz, con 1 color es suficiente, un tono neutro que
+   ayude la legibilidad de los botones y textos" + "un gris oscuro o un
+   berenjena tirando a gris oscuro me suelen gustar" — --p5-tone es ESE
+   único tono (berenjena-gris oscuro), y todo lo de esta familia visual
+   (banderines, botón de pasar turno, icono de ajustes) se degrada consigo
+   mismo (más claro arriba, más oscuro abajo) en vez de mezclarse con un
+   segundo color — la irregularidad viene de la forma (clip-path) y la
+   sombra dura, nunca del color. */
+.p5-banner {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(165deg, var(--p5-tone-light), var(--p5-tone-dark) 70%);
+  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0% 100%);
+  border: 2px solid #000;
+  padding: 10px 24px;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
+}
+
+.p5-banner__label {
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+}
+
+.p5-banner--action {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.p5-banner--action:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.6);
+}
+
+.p5-banner--action:active {
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* Icono de engranaje — esquina superior derecha, mismo patrón fixed +
+   --visible controlado a mano (Turns._btn/end-turn-btn) que el resto de
+   iconos que viven fuera de #screen-board (ver SettingsMenu.showButton/
+   hideButton). Circular en vez de banderín a propósito: es el único
+   "control" suelto de la interfaz, no un cartel con texto, así que se
+   distingue mejor como una insignia redonda con anillo rojo — el mismo
+   contraste angular/redondo que usa la propia referencia entre sus iconos
+   sueltos (arriba) y sus banderines de texto (abajo). */
+.settings-gear-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--p5-tone-light), var(--p5-tone-dark) 72%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 500;
+  opacity: 0;
+  transform: scale(0.7) rotate(-35deg);
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.settings-gear-btn--visible {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  pointer-events: auto;
+}
+
+.settings-gear-btn:hover {
+  transform: scale(1.08) rotate(35deg);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.settings-gear-btn:active {
+  transform: scale(0.94) rotate(20deg);
+}
+
+.settings-gear-btn__icon {
+  font-size: 1.5rem;
+}
+
+/* Popup de opciones — overlay estándar (fondo oscuro, clic fuera cierra,
+   ver SettingsMenu.close) con el panel en sí como un .p5-banner grande
+   girado un par de grados, para que incluso quieto se lea "irregular" en
+   vez de perfectamente cuadrado. */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 5, 8, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.settings-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 20px;
+  padding: 36px 48px;
+  min-width: 300px;
+  transform: rotate(-1.4deg) scale(0.88);
+  transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.settings-overlay--visible .settings-panel {
+  transform: rotate(-1.4deg) scale(1);
+}
+
+.settings-panel__title {
+  align-self: center;
+  font-size: 1.4rem;
+  padding-bottom: 12px;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.settings-panel__option {
+  gap: 14px;
+  padding: 14px 30px;
+  clip-path: polygon(6% 0, 100% 0, 94% 100%, 0% 100%);
+  /* El propio .p5-banner ya pone el tono berenjena-gris de base; aquí un
+     pelín más claro (mismo par de variables, invertidas) para que se
+     distinga del fondo del panel sin necesitar un segundo color. */
+  background: linear-gradient(165deg, var(--p5-tone-dark), var(--p5-tone-light) 130%);
+}
+
+.settings-panel__option-icon {
+  font-size: 1.3rem;
+  color: #fff;
+  flex-shrink: 0;
 }

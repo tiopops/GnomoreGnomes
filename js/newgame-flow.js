@@ -240,6 +240,10 @@ function spawnTestUnits(size, raceId) {
   if (typeof Glory !== "undefined") Glory.init(finalRaceId, enemyRace ? enemyRace.id : finalRaceId);
 
   if (typeof Turns !== "undefined") Turns.reset();
+  // Icono de ajustes (js/settingsmenu.js) — sustituye al back-btn flotante
+  // que tapaba el marcador de Puntos de Gloria (ver ese archivo) — visible
+  // mientras dura la partida, oculto al salir por su propia opción.
+  if (typeof SettingsMenu !== "undefined") SettingsMenu.showButton();
 
   // Niebla de guerra (js/fog.js) — estado de visibilidad inicial: con todos
   // los rivales y gnomos ya colocados y el revelado inicial de cada

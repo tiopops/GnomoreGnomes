@@ -132,16 +132,17 @@ const Turns = {
     this._btn = btn;
     this._btnLabelEl = label;
     this._btnIconEl = icon;
+  },
 
-    // El botón vive fuera de #screen-board (igual que unit-info-btn/
-    // gnome-action-btn), así que no desaparece solo al volver al menú desde
-    // el propio tablero — se oculta a mano al pulsar ESE back-btn concreto.
-    const boardBack = document.querySelector("#screen-board .back-btn");
-    if (boardBack) {
-      boardBack.addEventListener("click", () => {
-        this._btn.classList.remove("end-turn-btn--visible");
-      });
-    }
+  // Se llama desde js/settingsmenu.js al salir de la partida (opción "Salir
+  // de la partida" del popup de ajustes, ver ese archivo) — antes esto lo
+  // hacía un listener propio sobre el back-btn del tablero, pero ese botón
+  // ya no existe (lo tapaba el marcador de Puntos de Gloria, pedido
+  // explícito: lo sustituye el icono de ajustes de la esquina superior
+  // derecha). Mismo efecto de siempre: el botón deja de estar visible hasta
+  // que la próxima partida lo vuelva a mostrar (Turns.reset -> _updateButtonState).
+  hideButton() {
+    if (this._btn) this._btn.classList.remove("end-turn-btn--visible");
   },
 
   // true si NINGUNA unidad del jugador puede ya actuar este turno (las 2
