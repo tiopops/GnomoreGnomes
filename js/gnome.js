@@ -154,7 +154,8 @@ function createGnomeInstance() {
     // calcular a mano qué losetas están ya ocupadas, ni por personajes de
     // prueba ni por otro gnomo ya colocado antes que este.
     spawnNear(row, col) {
-      if (!Units.unitAt(row, col) && !Gnome._otherGnomeAt(this, row, col)) {
+      const walkable = (r, c) => typeof TerrainMap === "undefined" || TerrainMap.isWalkable(r, c);
+      if (!Units.unitAt(row, col) && !Gnome._otherGnomeAt(this, row, col) && walkable(row, col)) {
         this.spawn(row, col);
         return;
       }
@@ -166,6 +167,10 @@ function createGnomeInstance() {
             if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
             if (Units.unitAt(r, c)) continue;
             if (Gnome._otherGnomeAt(this, r, c)) continue;
+            // Terreno (js/mapgen.js, TerrainMap) — un gnomo tampoco aparece
+            // sobre agua; la propia espiral ya sigue buscando hacia afuera
+            // hasta encontrar la loseta transitable libre más cercana.
+            if (!walkable(r, c)) continue;
             this.spawn(r, c);
             return;
           }
@@ -327,6 +332,7 @@ function createGnomeInstance() {
           if (distToGnome(row, col) > 1) continue;
           if (Units.unitAt(row, col)) continue;
           if (Gnome._otherGnomeAt(this, row, col)) continue;
+          if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
           if (moveDist > moveRange) continue;
           if (moveDist < bestDist) {
@@ -737,6 +743,7 @@ function createGnomeInstance() {
         for (let col = 0; col < Units.boardSize; col++) {
           if (Units.unitAt(row, col)) continue;
           if (Gnome._otherGnomeAt(this, row, col)) continue;
+          if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const minDist = Units.list.reduce(
             (min, u) => Math.min(min, Math.max(Math.abs(u.row - row), Math.abs(u.col - col))),
             Infinity
@@ -885,10 +892,13 @@ function createGnomeInstance() {
 
     // Pedido explícito: "si un personaje con el gnomo cogido muere, este cae
     // a la loseta actual y huye en una dirección alejándose de los jugadores
-    // 3 casillas". Lo llama el GESTOR (Gnome.dropHeldBy) justo antes de que
-    // Units.removeUnit se lleve del todo a `deadUnit` — por eso deadUnit
-    // sigue haciendo falta como parámetro (su row/col) en vez de leerlo de
-    // Units.list, que puede que ya no lo contenga para cuando esto corra.
+    // 3 casillas" — Y, sobre el ORDEN: "primero, el enemigo muere, luego el
+    // gnomo aparece... y luego el gnomo huye". Lo llama el GESTOR
+    // (Gnome.dropHeldBy) DESPUÉS de que Units.removeUnit ya haya terminado
+    // su animación de muerte y haya quitado a `deadUnit` del DOM/de
+    // Units.list (ver combat.js) — por eso deadUnit sigue haciendo falta
+    // como parámetro (su row/col), en vez de leerlo de Units.list, que para
+    // cuando esto corre ya no lo contiene.
     async dropFromDyingUnit(deadUnit) {
       this.detachFrom();
       this.row = deadUnit.row;
@@ -939,6 +949,7 @@ function createGnomeInstance() {
           if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
           if (Units.unitAt(r, c)) continue;
           if (Gnome._otherGnomeAt(this, r, c)) continue;
+          if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           const alignment = dr * dRow + dc * dCol;
           const openness = this._tileOpenness(r, c);
           const score = alignment * 3 + openness;
@@ -966,6 +977,7 @@ function createGnomeInstance() {
           if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
           if (Units.unitAt(r, c)) continue;
           if (Gnome._otherGnomeAt(this, r, c)) continue;
+          if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           free++;
         }
       }

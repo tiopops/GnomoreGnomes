@@ -106,6 +106,12 @@ function startMatch({ modeId, raceId, opponents }) {
   });
 
   renderMap(map, document.getElementById("board-tiles"));
+  // Terreno real (js/mapgen.js) — DESPUÉS de renderMap (necesita que los
+  // overlays .tile__terrain-reveal ya existan en el DOM para cachearlos,
+  // igual que Fog.init) y ANTES de spawnTestUnits (que ya necesita poder
+  // consultar TerrainMap.isWalkable para no colocar rivales/gnomos sobre
+  // agua).
+  if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
   spawnTestUnits(size, raceId);
   showScreen("screen-board");
   screenHistory.length = 0;
@@ -119,7 +125,9 @@ function startMatch({ modeId, raceId, opponents }) {
 function resumeMatch() {
   const saved = SaveGame.load();
   if (!saved || !saved.tiles) return;
-  renderMap({ size: saved.size, tiles: saved.tiles }, document.getElementById("board-tiles"));
+  const map = { size: saved.size, tiles: saved.tiles };
+  renderMap(map, document.getElementById("board-tiles"));
+  if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
   spawnTestUnits(saved.size, saved.raceId);
   showScreen("screen-board");
   screenHistory.length = 0;

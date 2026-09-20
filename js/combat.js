@@ -43,6 +43,7 @@ const Combat = {
         if (distToTarget(row, col) > attackRange) continue;
         if (Units.unitAt(row, col)) continue; // ocupada (por el propio rival u otra unidad)
         if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue; // ocupada por el gnomo (js/gnome.js)
+        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue; // agua (js/mapgen.js)
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange) continue;
         if (moveDist < bestDist) {
@@ -180,14 +181,19 @@ const Combat = {
     }
 
     if (target.hp <= 0) {
-      // Pedido explícito: "si un personaje con el gnomo cogido muere, este
-      // cae a la loseta actual y huye... alejándose de los jugadores 3
-      // casillas" — ANTES de Units.removeUnit (que borra su fila/columna del
-      // todo tras la animación de muerte): Gnome.dropHeldBy no hace nada si
-      // `target` no llevaba ningún gnomo encima, así que siempre es seguro
-      // llamarlo aquí sin comprobar antes.
-      if (typeof Gnome !== "undefined") await Gnome.dropHeldBy(target);
+      // Pedido explícito sobre el ORDEN: "primero, el enemigo muere, luego
+      // el gnomo aparece en la casilla en la que murió y luego el gnomo
+      // huye. en ese orden" — así que Units.removeUnit (animación de muerte
+      // completa) va PRIMERO, y solo cuando termina se llama a
+      // Gnome.dropHeldBy (que hace aparecer el gnomo y lo pone a huir).
+      // Units.removeUnit NO borra target.row/target.col (solo quita el
+      // elemento del DOM y de Units.list), así que dropFromDyingUnit sigue
+      // pudiendo leer dónde murió aunque ya no esté en la lista — de ahí que
+      // siga recibiendo `target` como parámetro en vez de tener que buscarlo.
+      // Gnome.dropHeldBy no hace nada si `target` no llevaba ningún gnomo
+      // encima, así que siempre es seguro llamarlo aquí sin comprobar antes.
       await Units.removeUnit(target);
+      if (typeof Gnome !== "undefined") await Gnome.dropHeldBy(target);
     } else {
       await this.pushBack(attacker, target);
     }

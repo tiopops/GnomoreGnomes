@@ -39,6 +39,11 @@ const Movement = {
         // revelar; una ya revelada justo al lado de niebla sigue siendo un
         // destino válido sin más comprobación.
         if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;
+        // Terreno (js/mapgen.js, TerrainMap) — pedido explícito: el agua "los
+        // jugadores no pueden pasar de momento por ahi, salvo que alguna
+        // raza si pueda nadar o se use un barco" (aún no implementado, así
+        // que de momento es intransitable para todos por igual).
+        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
         tiles.push({ row, col });
       }
     }

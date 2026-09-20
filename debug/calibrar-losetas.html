@@ -48,6 +48,15 @@
 
   <div class="panel">
     <div class="control">
+      <label for="tileType">Loseta</label>
+      <select id="tileType">
+        <option value="grass">Hierba</option>
+        <option value="water">Agua</option>
+        <option value="mixed">Mixto (mitad hierba, mitad agua)</option>
+      </select>
+      <span class="hint">"Mixto" pinta la mitad del tablero con cada una, para ver cómo queda la costura entre las dos.</span>
+    </div>
+    <div class="control">
       <label for="topHeight">Alineación vertical (alto de la cara superior) — <span class="value" id="topHeightVal">117</span> px</label>
       <input type="range" id="topHeight" min="0" max="260" step="1" value="117">
       <span class="hint">Mueve el slider hasta que las losetas encajen en vertical sin huecos ni solapes en el borde de tierra. Luego dime el número que te sale.</span>
@@ -74,11 +83,17 @@
   </div>
 
   <script>
-    const TILE_IMG = "../assets/losetas/hierba_01.png";
-    const TILE_IMG_WIDTH = 250;   // ancho real del archivo (fijo, no cambia)
-    const TILE_IMG_HEIGHT = 218;  // alto real del archivo (fijo, no cambia)
+    // Mismos dos tipos que TILE_TYPES en js/mapgen.js — se duplican aquí
+    // (en vez de cargar ese archivo) porque esta herramienta es standalone y
+    // solo necesita el ancho/alto nativo de cada imagen para calcular su
+    // proporción, no el resto del motor.
+    const TILE_ART = {
+      grass: { src: "../assets/losetas/hierba_01.png", nativeWidth: 250, nativeHeight: 218 },
+      water: { src: "../assets/losetas/agua_01.png", nativeWidth: 627, nativeHeight: 514 },
+    };
     const GRID_SIZE = 6;
 
+    const tileTypeInput = document.getElementById("tileType");
     const topHeightInput = document.getElementById("topHeight");
     const tileWidthInput = document.getElementById("tileWidth");
     const overlapInput = document.getElementById("overlap");
@@ -88,6 +103,15 @@
     const overlapVal = document.getElementById("overlapVal");
     const featherVal = document.getElementById("featherVal");
     const container = document.getElementById("board-tiles");
+
+    // "Mixto" reparte hierba/agua por mitades del tablero (en vez de al
+    // azar) para poder mirar SIEMPRE la misma costura entre las dos al
+    // tocar los sliders, en vez de que cambie de sitio en cada render.
+    function tileArtFor(row, col) {
+      const mode = tileTypeInput.value;
+      if (mode === "mixed") return col < GRID_SIZE / 2 ? TILE_ART.grass : TILE_ART.water;
+      return TILE_ART[mode];
+    }
 
     function render() {
       const topHeight = Number(topHeightInput.value);
@@ -104,20 +128,31 @@
       const halfH = topHeight / 2;
       const centerX = (GRID_SIZE - 1) * halfW;
 
+      // Alto máximo de las dos imágenes (a igualdad de tileWidth) — el agua
+      // es más alta que la hierba (bloque con más pared visible), así que
+      // el contenedor tiene que dejar hueco de sobra para la más alta, sea
+      // cual sea el tipo que se esté mirando ahora mismo.
+      const maxNativeRatio = Math.max(
+        TILE_ART.grass.nativeHeight / TILE_ART.grass.nativeWidth,
+        TILE_ART.water.nativeHeight / TILE_ART.water.nativeWidth
+      );
+      const tallestRenderHeight = tileWidth * maxNativeRatio;
+
       const boardWidth = GRID_SIZE * tileWidth;
-      const boardHeight = GRID_SIZE * topHeight + (TILE_IMG_HEIGHT - topHeight);
+      const boardHeight = GRID_SIZE * topHeight + (tallestRenderHeight - topHeight);
       container.style.width = boardWidth + "px";
       container.style.height = boardHeight + "px";
 
       const fragment = document.createDocumentFragment();
       for (let row = 0; row < GRID_SIZE; row++) {
         for (let col = 0; col < GRID_SIZE; col++) {
+          const art = tileArtFor(row, col);
           const el = document.createElement("div");
           el.className = "tile";
           const img = document.createElement("img");
-          img.src = TILE_IMG;
+          img.src = art.src;
           img.width = tileWidth;
-          img.height = tileWidth * (TILE_IMG_HEIGHT / TILE_IMG_WIDTH);
+          img.height = tileWidth * (art.nativeHeight / art.nativeWidth);
           img.draggable = false;
           img.alt = "";
           if (overlap > 0) {
@@ -140,6 +175,7 @@
       container.appendChild(fragment);
     }
 
+    tileTypeInput.addEventListener("change", render);
     topHeightInput.addEventListener("input", render);
     tileWidthInput.addEventListener("input", render);
     overlapInput.addEventListener("input", render);

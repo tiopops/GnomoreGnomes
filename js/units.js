@@ -275,7 +275,11 @@ const Units = {
     const empty = [];
     for (let row = 0; row < this.boardSize; row++) {
       for (let col = 0; col < this.boardSize; col++) {
-        if (!this.unitAt(row, col)) empty.push({ row, col });
+        if (this.unitAt(row, col)) continue;
+        // Terreno (js/mapgen.js, TerrainMap) — un rival tampoco puede
+        // aparecer sobre agua, mismo motivo que Movement.reachableTiles.
+        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        empty.push({ row, col });
       }
     }
     if (empty.length === 0) return null;

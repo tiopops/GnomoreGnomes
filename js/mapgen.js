@@ -13,6 +13,81 @@ const TILE_TYPES = {
     // De momento solo hay una loseta de hierba; Jesús irá añadiendo más aquí.
     variants: ["assets/losetas/hierba_01.png"],
   },
+  // Pedido explícito: "añadimos loseta de agua deben formar lagos y rodear
+  // la parte exterior del escenario... los jugadores no pueden pasar de
+  // momento por ahi, salvo que alguna raza si pueda nadar o se use un
+  // barco, eso lo decidire mas tarde". walkable:false es lo único que hace
+  // falta declarar aquí para que TODO el motor (Movement.reachableTiles,
+  // Units.spawnRandomEnemy, Gnome...) la trate como intransitable sin tener
+  // que tocar cada mecánica por separado — ver TerrainMap.isWalkable más
+  // abajo, que es lo único que consultan.
+  //
+  // nativeWidth/nativeHeight: agua_01.png NO comparte la proporción de
+  // hierba_01.png (su bloque es más alto, con más pared lateral visible) —
+  // TILE_NATIVE_WIDTH/HEIGHT de más abajo están pensados solo para hierba,
+  // así que cualquier tipo cuya imagen tenga otra proporción declara aquí
+  // las suyas propias; renderMap las usa para escalar manteniendo SU
+  // relación de aspecto real en vez de estirarla/aplastarla con la de
+  // hierba (más alto por su cuenta, igual que el overhang de la niebla, no
+  // rompe el encaje en cuadrícula porque solo depende de TILE_WIDTH/
+  // TILE_TOP_HEIGHT, no de la altura de la imagen).
+  water: {
+    variants: ["assets/losetas/agua_01.png"],
+    walkable: false,
+    nativeWidth: 627,
+    nativeHeight: 514,
+  },
+};
+
+// Consulta del terreno real por casilla — lo usa cualquier mecánica que
+// necesite saber "¿se puede pisar/pasar por aquí?" (Movement, Combat,
+// Gnome, spawns...) sin tener que conocer TILE_TYPES ni cómo se generó el
+// mapa. Vive aquí (no en Fog ni en Units) porque el terreno es dato de
+// ESTE archivo — misma idea que Fog solo sabe de niebla y Units solo de
+// personajes (regla de oro: un archivo por mecánica).
+const TerrainMap = {
+  size: 0,
+  grid: null, // grid[row][col] = "grass" | "water" (tipo REAL, no el visual bajo niebla)
+  _revealEls: null, // Map "row,col" -> <img class="tile__terrain-reveal"> de esa loseta (si no es hierba)
+
+  // Se llama tras generar/pintar cada mapa nuevo (startMatch/resumeMatch en
+  // newgame-flow.js), DESPUÉS de renderMap — igual que Fog.init, necesita
+  // que las losetas ya existan en el DOM para cachear sus overlays.
+  init(map) {
+    this.size = map.size;
+    this.grid = Array.from({ length: map.size }, () => new Array(map.size).fill("grass"));
+    map.tiles.forEach((t) => {
+      this.grid[t.row][t.col] = t.type;
+    });
+    this._revealEls = new Map();
+    document.querySelectorAll(".tile__terrain-reveal").forEach((el) => {
+      this._revealEls.set(`${el.dataset.row},${el.dataset.col}`, el);
+    });
+  },
+
+  typeAt(row, col) {
+    if (!this.grid || row < 0 || col < 0 || row >= this.size || col >= this.size) return "grass";
+    return this.grid[row][col];
+  },
+
+  isWalkable(row, col) {
+    const info = TILE_TYPES[this.typeAt(row, col)];
+    return !info || info.walkable !== false;
+  },
+
+  // Pedido explícito: "la loseta de agua sustituye a las de hierba, pero
+  // inicialmente bajo la niebla todas son de hierba hasta que se revelan" —
+  // renderMap pinta SIEMPRE hierba de base (ver más abajo) y deja ya
+  // preparado, oculto (opacity 0), un segundo <img> con la textura REAL de
+  // cada loseta que no sea hierba; esto lo hace aparecer con un fundido —
+  // js/fog.js llama a esto en el mismo momento en que empieza a disipar la
+  // niebla de esa loseta (Fog._reveal), para que el cambio de textura quede
+  // disimulado detrás de la propia nube en vez de dar un salto brusco.
+  revealTile(row, col) {
+    if (!this._revealEls) return;
+    const el = this._revealEls.get(`${row},${col}`);
+    if (el) el.classList.add("tile__terrain-reveal--visible");
+  },
 };
 
 // Niebla de guerra (js/fog.js): NO es un TILE_TYPES más (no sustituye a la
@@ -89,12 +164,94 @@ function pickVariant(typeInfo, row, col) {
   return variants[idx];
 }
 
+// Hace crecer un lago orgánico desde (startRow, startCol): en cada paso
+// elige un vecino libre al azar de entre los ya colocados (no siempre el
+// mismo, de ahí el "frontier" e ir retirando celdas de vez en cuando) hasta
+// alcanzar targetCount casillas o quedarse sin vecinos válidos — así el
+// contorno sale irregular, como una orilla de verdad, en vez de un círculo
+// o un cuadrado perfectos. `forbidden(row, col)` excluye del crecimiento las
+// casillas demasiado cerca del borde (que ya es agua por su cuenta, ver
+// generateMap) o de la zona segura donde spawnea el jugador.
+function growLake(grid, size, startRow, startCol, targetCount, forbidden) {
+  grid[startRow][startCol] = "water";
+  const frontier = [{ row: startRow, col: startCol }];
+  let placed = 1;
+  const dirs = [
+    [-1, 0], [1, 0], [0, -1], [0, 1],
+    [-1, -1], [-1, 1], [1, -1], [1, 1],
+  ];
+  while (placed < targetCount && frontier.length > 0) {
+    const idx = Math.floor(Math.random() * frontier.length);
+    const cell = frontier[idx];
+    const candidates = dirs
+      .map(([dr, dc]) => ({ row: cell.row + dr, col: cell.col + dc }))
+      .filter(({ row, col }) => row >= 0 && col >= 0 && row < size && col < size)
+      .filter(({ row, col }) => grid[row][col] !== "water")
+      .filter(({ row, col }) => !forbidden(row, col));
+    if (candidates.length === 0) {
+      frontier.splice(idx, 1);
+      continue;
+    }
+    const next = candidates[Math.floor(Math.random() * candidates.length)];
+    grid[next.row][next.col] = "water";
+    frontier.push(next);
+    placed++;
+    // Retira la celda de partida de vez en cuando aunque aún tenga huecos
+    // libres, para que el lago no crezca siempre pegado al mismo punto y
+    // salga una mancha más repartida en vez de un solo brazo.
+    if (Math.random() < 0.35) frontier.splice(idx, 1);
+  }
+}
+
 function generateMap(size) {
+  const grid = Array.from({ length: size }, () => new Array(size).fill("grass"));
+  const mid = Math.floor(size / 2);
+  // Radio (Chebyshev) alrededor del centro donde NUNCA se genera agua —
+  // ahí es donde spawnTestUnits (newgame-flow.js) coloca siempre a los
+  // personajes del jugador (spawnSpots relativos a mid/mid), así que tiene
+  // que quedar garantizado transitable pase lo que pase con el resto del
+  // mapa.
+  const SAFE_RADIUS = 4;
+  const inSafeZone = (row, col) => Math.max(Math.abs(row - mid), Math.abs(col - mid)) <= SAFE_RADIUS;
+  const edgeDist = (row, col) => Math.min(row, col, size - 1 - row, size - 1 - col);
+
+  // --- Borde exterior (pedido explícito: "rodear la parte exterior del
+  // escenario") --- La orilla más externa es SIEMPRE agua; la segunda capa
+  // hacia dentro lo es solo la mitad de las veces, para que el borde no se
+  // lea como un marco geométrico perfecto sino como una costa irregular.
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      const d = edgeDist(row, col);
+      if (d === 0) grid[row][col] = "water";
+      else if (d === 1 && Math.random() < 0.5) grid[row][col] = "water";
+    }
+  }
+
+  // --- Lagos interiores ("a veces se acumulan formando lagos") --- Cantidad
+  // proporcional al tamaño del mapa para que un tablero más grande (más
+  // rivales) tenga más variedad de terreno, no siempre el mismo puñado fijo.
+  const lakeCount = Math.max(1, Math.round(size / 9));
+  for (let i = 0; i < lakeCount; i++) {
+    let seed = null;
+    for (let attempt = 0; attempt < 50 && !seed; attempt++) {
+      const row = 2 + Math.floor(Math.random() * (size - 4));
+      const col = 2 + Math.floor(Math.random() * (size - 4));
+      if (edgeDist(row, col) < 3) continue; // lejos del borde, que ya es agua por su cuenta
+      if (inSafeZone(row, col)) continue;
+      if (grid[row][col] === "water") continue;
+      seed = { row, col };
+    }
+    if (!seed) continue;
+    const targetCount = 4 + Math.floor(Math.random() * 6);
+    growLake(grid, size, seed.row, seed.col, targetCount, (row, col) => edgeDist(row, col) < 2 || inSafeZone(row, col));
+  }
+
   const tiles = [];
   for (let row = 0; row < size; row++) {
     for (let col = 0; col < size; col++) {
-      const typeInfo = TILE_TYPES.grass;
-      tiles.push({ row, col, type: "grass", src: pickVariant(typeInfo, row, col) });
+      const type = grid[row][col];
+      const typeInfo = TILE_TYPES[type];
+      tiles.push({ row, col, type, src: pickVariant(typeInfo, row, col) });
     }
   }
   return { size, tiles };
@@ -114,8 +271,16 @@ function renderMap(map, container) {
     const el = document.createElement("div");
     el.className = "tile";
 
+    // Base SIEMPRE hierba (pedido explícito: "la loseta de agua sustituye a
+    // las de hierba, pero inicialmente bajo la niebla todas son de hierba
+    // hasta que se revelan") — sea cual sea el tipo REAL de esta loseta
+    // (t.type, ya decidido por generateMap y usado para la lógica de juego
+    // vía TerrainMap), lo que se pinta de entrada es siempre la textura de
+    // hierba; el tipo real solo aparece con el overlay de abajo, al
+    // revelarse.
+    const baseSrc = t.type === "grass" ? t.src : pickVariant(TILE_TYPES.grass, t.row, t.col);
     const img = document.createElement("img");
-    img.src = t.src;
+    img.src = baseSrc;
     img.width = TILE_WIDTH;
     img.height = TILE_RENDER_HEIGHT;
     img.draggable = false;
@@ -128,6 +293,30 @@ function renderMap(map, container) {
       img.style.filter = `blur(${TILE_FEATHER}px)`;
     }
     el.appendChild(img);
+
+    // Overlay con la textura REAL, oculto (opacity 0, ver
+    // .tile__terrain-reveal en style.css) hasta que TerrainMap.revealTile
+    // lo active — lo llama js/fog.js en el mismo instante en que esa loseta
+    // empieza a disiparse, para que el cambio de hierba a agua quede
+    // disimulado detrás de la propia niebla en vez de dar un salto brusco.
+    // Solo se crea para losetas que NO sean hierba (para no duplicar de
+    // más el DOM en un tablero grande sin necesidad — una de hierba ya
+    // enseña su textura real desde el principio, no le hace falta overlay).
+    if (t.type !== "grass") {
+      const typeInfo = TILE_TYPES[t.type];
+      const nativeW = typeInfo.nativeWidth || TILE_NATIVE_WIDTH;
+      const nativeH = typeInfo.nativeHeight || TILE_NATIVE_HEIGHT;
+      const revealImg = document.createElement("img");
+      revealImg.className = "tile__terrain-reveal";
+      revealImg.src = t.src;
+      revealImg.width = TILE_WIDTH;
+      revealImg.height = Math.round((TILE_WIDTH * nativeH) / nativeW);
+      revealImg.draggable = false;
+      revealImg.alt = "";
+      revealImg.dataset.row = String(t.row);
+      revealImg.dataset.col = String(t.col);
+      el.appendChild(revealImg);
+    }
 
     const { x, y } = getTileTopLeft(t.row, t.col, map.size);
     el.style.left = `${x}px`;

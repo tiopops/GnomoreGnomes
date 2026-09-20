@@ -91,6 +91,13 @@ const Fog = {
     // y otras no — no era una carrera ni una regla CSS duplicada, era este
     // resto de estilo inline. Se limpia justo antes de cambiar de animación.
     fogEl.style.animationDelay = "0s";
+    // Terreno real (js/mapgen.js, TerrainMap) — pedido explícito: "la loseta
+    // de agua sustituye a las de hierba, pero inicialmente bajo la niebla
+    // todas son de hierba hasta que se revelan". Se dispara en el MISMO
+    // instante en que empieza a disiparse la niebla de esta loseta (no al
+    // terminar) para que el cambio de textura quede disimulado detrás de la
+    // propia nube durante su 1.2s de disipado en vez de dar un salto brusco.
+    if (typeof TerrainMap !== "undefined") TerrainMap.revealTile(row, col);
     // Se disipa con su propia animación (@keyframes fog-dissipate, ver
     // style.css: crece, se difumina y se desvanece, no un simple fundido de
     // opacidad) en vez de desaparecer de golpe — nivel Triple A / feedback
