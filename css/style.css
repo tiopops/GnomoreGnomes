@@ -829,21 +829,24 @@ h2 {
    heredar su giro — este icono siempre mira de frente, solo tiembla con su
    propio keyframe (más simple que el del sprite: aquí no hace falta rotar,
    con un temblor vertical corto + el propio pulso de escala ya se lee como
-   "alarma"). */
+   "alarma").
+   Pedido explícito (séptima pasada): "tambien te adjunto el icono de una
+   calavera para que lo sustituyas por el phosphor de temblar de miedo" —
+   ahora es un <img> (assets/iconos/calavera_miedo.png, ver units.js) en vez
+   de un glifo de Phosphor, así que width/height sustituyen a font-size y
+   filter:drop-shadow sustituye a text-shadow (no aplica a imágenes) — se
+   mantiene el mismo tamaño grande y la sombra negra dura de la pasada
+   anterior. */
 .unit__doom-icon {
   display: none;
   position: absolute;
   left: 50%;
   top: -54px;
   transform: translateX(-50%);
-  /* Pedido explícito: "la calavera de miedo puede ser rellena en vez de
-     lineal y en color blanco con una sombra negra? ademas el doble de
-     grande" — ph-fill (ver su className en units.js) en vez de la variante
-     de línea, blanca pura con una sombra negra dura (ya no un halo rojo
-     difuminado) y el doble de tamaño (3rem, antes 1.5rem). */
-  font-size: 3rem;
-  color: #fff;
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.85), -1px -1px 0 rgba(0, 0, 0, 0.6);
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.85)) drop-shadow(-1px -1px 0 rgba(0, 0, 0, 0.6));
   z-index: 30;
   pointer-events: none;
 }
@@ -1220,10 +1223,20 @@ h2 {
    .menu-btn i::before), no con un hijo .end-turn-btn__icon i que no existe
    en el DOM real (ese selector nunca coincidía con nada — bug detectado al
    verificar este mismo cambio). */
+/* Pedido explícito (séptima pasada): "el rombo de pasar turno mas grande,
+   que se salga del recuadro...el reloj con un poco de margen que esta
+   demasiado apurado al recuadro amarillo" — caja más grande (34px -> 46px,
+   así sobresale más del botón) y glifo proporcionalmente más pequeño que su
+   caja (antes 2rem sobre 34px = 94% de la caja, casi sin margen; ahora
+   1.9rem sobre 46px = 66%) para que quede aire entre el reloj de arena y el
+   borde del rombo — eso es justo lo que se leía como icono "duplicado" (ver
+   nota en Turns._setIcon, turns.js): un reloj de arena (ya de por sí una
+   silueta de doble triángulo) pegado al borde de OTRO rombo se confundía
+   con dos figuras superpuestas. */
 .end-turn-btn__icon {
   position: relative;
-  width: 34px;
-  height: 34px;
+  width: 46px;
+  height: 46px;
   background: #ffcf3d;
   border: 2px solid #000;
   color: #000;
@@ -1231,7 +1244,7 @@ h2 {
   align-items: center;
   justify-content: center;
   overflow: visible;
-  font-size: 2rem;
+  font-size: 1.9rem;
   font-style: normal;
   flex-shrink: 0;
   transform: rotate(45deg);
@@ -1244,24 +1257,25 @@ h2 {
 
 /* Pedido explícito: "el icono de pasar turno que es un reloj de arena,
    puede girar 2 veces y frenar suavemente al poner el raton encima del
-   boton pasar turno?" — dos vueltas completas a partir del reposo (45deg +
-   720deg = 765deg, visualmente idéntico a 45deg) con una curva de easing
-   muy cargada al final (frena de golpe al principio del recorrido, apenas
-   se mueve en el último tramo) para que se LEA como que pierde inercia, no
-   como una vuelta a velocidad constante que para en seco. Solo en hover
-   (nunca infinito) y solo sobre el propio reloj de arena — los otros
-   iconos del botón (comprobado/girando de "pensando") tienen sus propias
-   animaciones y no deben heredar esta. Gira el rombo entero (icono y caja
-   son el mismo elemento, ver nota de arriba) — como es un cuadrado, no
-   cambia de silueta en los múltiplos de 90°, así que se lee igual de bien
-   que si solo girase el glifo. */
+   boton pasar turno?" — corregido después (séptima pasada): "que no gire
+   el reloj tantas veces" — UNA vuelta completa a partir del reposo (45deg +
+   360deg = 405deg, visualmente idéntico a 45deg) en vez de dos, con una
+   curva de easing muy cargada al final (frena de golpe al principio del
+   recorrido, apenas se mueve en el último tramo) para que se LEA como que
+   pierde inercia, no como una vuelta a velocidad constante que para en
+   seco. Solo en hover (nunca infinito) y solo sobre el propio reloj de
+   arena — los otros iconos del botón (comprobado/girando de "pensando")
+   tienen sus propias animaciones y no deben heredar esta. Gira el rombo
+   entero (icono y caja son el mismo elemento, ver nota de arriba) — como es
+   un cuadrado, no cambia de silueta en los múltiplos de 90°, así que se lee
+   igual de bien que si solo girase el glifo. */
 .end-turn-btn:hover .end-turn-btn__icon.ph-hourglass-simple {
-  animation: end-turn-hourglass-spin 1.1s cubic-bezier(0.1, 0.82, 0.25, 1) 1;
+  animation: end-turn-hourglass-spin 0.85s cubic-bezier(0.1, 0.82, 0.25, 1) 1;
 }
 
 @keyframes end-turn-hourglass-spin {
   from { transform: rotate(45deg); }
-  to { transform: rotate(765deg); }
+  to { transform: rotate(405deg); }
 }
 
 /* Mientras la IA rival resuelve su turno (Turns._aiRunning) — deshabilitado
@@ -1991,17 +2005,24 @@ h2 {
   }
 }
 
+/* Pedido explícito (séptima pasada): "el icono de puntos de gloria mas
+   grande" — 68px -> 84px. */
 .glory-hud__icon {
   position: relative;
   z-index: 2;
-  width: 68px;
-  height: 68px;
+  width: 84px;
+  height: 84px;
   object-fit: contain;
   flex-shrink: 0;
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 190, 60, 0.4));
   pointer-events: none;
 }
 
+/* Pedido explícito (séptima pasada): "la zona donde se muestran los puntos
+   de gloria en el mismo color que el recuadro de PASAR TURNO" — mismo
+   amarillo plano que .end-turn-btn__icon/.settings-gear-btn (#ffcf3d), así
+   que el texto pasa de tonos ámbar claro (pensados para un fondo oscuro) a
+   negro, igual que el resto de piezas amarillas de la interfaz. */
 .glory-hud__main {
   position: relative;
   z-index: 1;
@@ -2009,12 +2030,12 @@ h2 {
   flex-direction: column;
   gap: 1px;
   line-height: 1;
-  /* La mitad del ancho del icono (68px), para que el banderín nazca justo
+  /* La mitad del ancho del icono (84px), para que el banderín nazca justo
      en su centro — ver nota de cabecera. */
-  margin-left: -34px;
-  padding: 8px 28px 8px 42px;
+  margin-left: -42px;
+  padding: 8px 28px 8px 50px;
   clip-path: polygon(0 0, 100% 0, 89% 100%, 0% 100%);
-  background: #241b10;
+  background: #ffcf3d;
   border: 2px solid #000;
   box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
 }
@@ -2033,8 +2054,7 @@ h2 {
   font-weight: 800;
   font-size: 1.6rem;
   letter-spacing: 0.01em;
-  color: #ffe3a3;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 200, 90, 0.4);
+  color: #000;
   min-width: 1.2em;
 }
 
@@ -2045,7 +2065,7 @@ h2 {
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: rgba(255, 227, 163, 0.55);
+  color: rgba(0, 0, 0, 0.55);
 }
 
 /* Mismo "pulso" que gnome-points-badge__value--bump al sumar puntos — ahora
@@ -2067,7 +2087,7 @@ h2 {
 
 @keyframes glory-hud-value-bump {
   0% { transform: scale(1); }
-  40% { transform: scale(1.3); color: #fff2d0; }
+  40% { transform: scale(1.3); color: #5c3d00; }
   100% { transform: scale(1); }
 }
 
@@ -2135,50 +2155,56 @@ h2 {
    hideButton).
    Pedido explícito (sexta pasada): "quiero un recuadro irregular tambien
    para el icono de configuracion...todas las interfaces asi" — fuera la
-   insignia circular de antes (era la ÚNICA pieza redonda que quedaba en
-   todo el juego): ahora es un recuadro recortado en ángulo (clip-path),
-   igual de irregular que el resto de la familia .p5-banner, con el mismo
-   tono plano (--p5-tone), borde negro y sombra dura sin difuminar — ya no
-   queda ninguna pieza circular ni con degradado en ninguna interfaz. */
+   insignia circular de antes.
+   Pedido explícito (séptima pasada): "el rombo donde esta configuracion mas
+   grande y en amarillo tambien, con el engranaje en negro, debe girar como
+   el de pasar turno al tocarlo" — ahora es literalmente el mismo lenguaje
+   que .end-turn-btn__icon: un rombo (cuadrado rotado 45deg) amarillo plano
+   con borde negro, más grande que antes (52px -> 64px), con el engranaje en
+   negro dentro (contrarrotado -45deg para quedar derecho — aquí SÍ hay un
+   <i> hijo de verdad, a diferencia de end-turn-btn__icon, así que se
+   contrarrota directamente en vez de con ::before) y la misma animación de
+   giro al pasar el ratón (ver end-turn-hourglass-spin más arriba, reusada
+   aquí tal cual). */
 .settings-gear-btn {
   position: fixed;
   top: 20px;
   right: 20px;
-  width: 52px;
-  height: 52px;
-  clip-path: polygon(14% 0%, 100% 6%, 90% 100%, 0% 92%);
-  background: var(--p5-tone);
+  width: 64px;
+  height: 64px;
+  background: #ffcf3d;
   border: 2px solid #000;
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
-  color: #fff;
+  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 500;
   opacity: 0;
-  transform: scale(0.7) rotate(-35deg);
+  transform: scale(0.7) rotate(10deg);
   pointer-events: none;
   transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, box-shadow 0.2s ease;
 }
 
 .settings-gear-btn--visible {
   opacity: 1;
-  transform: scale(1) rotate(0deg);
+  transform: scale(1) rotate(45deg);
   pointer-events: auto;
 }
 
 .settings-gear-btn:hover {
-  transform: scale(1.08) rotate(35deg) translate(-2px, -2px);
+  animation: end-turn-hourglass-spin 0.85s cubic-bezier(0.1, 0.82, 0.25, 1) 1;
   box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.6);
 }
 
 .settings-gear-btn:active {
-  transform: scale(0.94) rotate(20deg);
+  transform: scale(0.94) rotate(45deg);
 }
 
 .settings-gear-btn__icon {
-  font-size: 1.5rem;
+  font-size: 1.9rem;
+  transform: rotate(-45deg);
 }
 
 /* Popup de opciones — overlay estándar (fondo oscuro, clic fuera cierra,
@@ -2240,4 +2266,110 @@ h2 {
   font-size: 1.3rem;
   color: #fff;
   flex-shrink: 0;
+}
+
+/* ---------- Poblados neutrales (js/villages.js) ----------
+   Pedido explícito: "añadimos poblados neutrales, los poblados neutrales
+   aparecen desperdigados por el mapa...tienen 10 puntos de vida...si un
+   equipo consigue destruir un poblado neutral por completo, el sprite del
+   poblado cambiara al del de su equipo". Reutiliza la clase ".unit" solo
+   por su posicionamiento base (translate(-50%,-92%), igual que cualquier
+   personaje) y el temblor .unit--hit al recibir un golpe (ver villages.js
+   para el porqué) — nunca entra en Units.list, así que nada del motor de
+   combate/movimiento lo confunde con una unidad real. */
+.village {
+  cursor: default;
+}
+
+.village__sprite {
+  display: block;
+  width: 168px;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 8px 6px rgba(0, 0, 0, 0.45));
+  transform-origin: 50% 100%;
+  /* A diferencia de .unit__sprite, sin animación de respiración — es un
+     edificio, no un personaje: se queda quieto salvo al recibir un golpe
+     (.unit--hit, heredado de la clase "unit" del propio .village) o al
+     conquistarse (village--captured más abajo). */
+}
+
+/* Pedido implícito (visibilidad): la barra de vida de una unidad normal
+   solo se revela seleccionada/apuntada (ver .unit--selected .unit__hpbar
+   más arriba) — un poblado nunca se selecciona, así que la suya está
+   SIEMPRE visible, más ancha para que se lea bien con 10 segmentos. */
+.village .unit__hpbar {
+  opacity: 1;
+  top: -22px;
+  width: 96px;
+  height: 9px;
+}
+
+/* Pop elástico al conquistarse — mismo espíritu que el resto de feedback
+   "Triple A" del proyecto (gnome-points-badge, glory-hud-icon-bump...):
+   ningún cambio de estado importante pasa desapercibido sin animación. */
+.village--captured {
+  animation: village-captured-pop 0.5s cubic-bezier(0.34, 1.6, 0.64, 1);
+}
+
+@keyframes village-captured-pop {
+  0% { transform: translate(-50%, -92%) scale(1); filter: brightness(1); }
+  40% { transform: translate(-50%, -92%) scale(1.18); filter: brightness(1.5); }
+  100% { transform: translate(-50%, -92%) scale(1); filter: brightness(1); }
+}
+
+/* ---------- Golpe mortal en un solo golpe contra un poblado ---------- */
+/* Ver Villages._playEpicSmash (js/villages.js). Pedido explícito: "saltara
+   haciendo una parabola epica a camara lenta y machara el gnomo contra el
+   suelo, la camara debe temblar al impactar contra el suelo... Tiene que
+   quedar muy epico".
+
+   Vive en .unit__sprite (no en .unit, el elemento raíz posicionado por
+   fila/columna) — mismo patrón de intercambio de animación que
+   unit--punching/unit--moving arriba, nunca se mezcla con la respiración
+   normal mientras dura. Sube MUY por encima de su loseta en cámara lenta
+   (impulso largo, mitad de la animación entera) y se queda un instante
+   suspendido en el aire antes de caer en picado y aplastarse contra el
+   suelo — el impacto real (Villages._playEpicSmash) está sincronizado a
+   mano con el punto 85% de esta curva. .unit--epic-smash en el elemento
+   raíz solo se encarga de subir el z-index por encima de cualquier otra
+   unidad/poblado mientras dura el salto, para que nunca quede tapado. */
+.unit--epic-smash {
+  z-index: 9999 !important;
+}
+
+.unit--epic-smash .unit__sprite {
+  animation: unit-epic-smash 1.1s cubic-bezier(0.22, 0, 0.3, 1);
+}
+
+@keyframes unit-epic-smash {
+  0%   { transform: translateY(0) scale(1, 1) rotate(0deg); }
+  50%  { transform: translateY(-124px) scale(1.1, 0.94) rotate(-7deg); }
+  70%  { transform: translateY(-124px) scale(1.14, 0.9) rotate(-9deg); }
+  85%  { transform: translateY(10px) scale(1.28, 0.68) rotate(2deg); }
+  93%  { transform: translateY(-10px) scale(0.9, 1.16) rotate(-1deg); }
+  100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+}
+
+/* Temblor de cámara al impactar (ver Villages._playEpicSmash) — vive sobre
+   #board-viewport y NO sobre #board-camera: ese elemento ya lleva su propio
+   transform (paneo/zoom) puesto directamente por JS en cada arrastre/rueda
+   del ratón (js/boardview.js), y una animación CSS ahí ganaría la partida
+   mientras dura, "reseteando" visualmente el paneo del jugador durante el
+   temblor. board-viewport, en cambio, nunca lleva transform propio, así que
+   sumarle uno aquí sacude TODO lo visible del tablero sin pisar nada. */
+.board-viewport--shake {
+  animation: board-viewport-shake 0.42s ease-in-out;
+}
+
+@keyframes board-viewport-shake {
+  0% { transform: translate(0, 0); }
+  12% { transform: translate(-13px, 8px); }
+  27% { transform: translate(11px, -9px); }
+  42% { transform: translate(-9px, 7px); }
+  58% { transform: translate(8px, -6px); }
+  73% { transform: translate(-5px, 4px); }
+  88% { transform: translate(3px, -2px); }
+  100% { transform: translate(0, 0); }
 }

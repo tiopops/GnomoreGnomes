@@ -87,17 +87,40 @@ const Glory = {
     this._renderPreview(team);
   },
 
-  // Pedido explícito: "+2 al comienzo de cada turno" (ahora +2 y lo que se
-  // haya acumulado en pendingBonus, ver cabecera) — lo llama Turns.js en
+  // Lo llama Villages._capture (js/villages.js) justo al cambiar el dueño
+  // de un poblado — el bonus persistente por poblado (ver _villagesBonus)
+  // depende de Villages.ownedCount, que cambia en ese momento, así que el
+  // indicador discreto de "próximo turno" debe refrescarse ahí mismo para
+  // reflejarlo al instante, igual que queueKillBonus hace con las bajas.
+  refreshPreview(team) {
+    this._renderPreview(team);
+  },
+
+  // Pedido explícito: "+2 al comienzo de cada turno" (ahora +2, lo que se
+  // haya acumulado en pendingBonus, y +1 por cada poblado neutral que
+  // posea ese equipo — ver villagesBonus más abajo) — lo llama Turns.js en
   // cada cambio de equipo activo (incluida la primera vez que empieza el
   // jugador). `team` es "player" | "enemy".
   grantTurnStart(team) {
     if (!(team in this.points)) return;
-    const gained = GLORY_PER_TURN_START + this.pendingBonus[team];
+    const gained = GLORY_PER_TURN_START + this.pendingBonus[team] + this._villagesBonus(team);
     this.points[team] += gained;
     this.pendingBonus[team] = 0;
     this._render(team, { bump: true, gained });
     this._renderPreview(team);
+  },
+
+  // Pedido explícito (js/villages.js, mecánica de poblados neutrales):
+  // "tener un poblado otorga +1 punto de gloria persistentes a todos los
+  // turnos" — y, si se conquistó de un golpe mortal en un solo golpe, +2 en
+  // vez de +1 (ver Villages._playEpicSmash). Villages.gloryBonusFor ya suma
+  // el bonus fijado en cada poblado que posea ese equipo (1 o 2 según cómo
+  // se conquistó), así que basta con preguntárselo aquí en cada inicio de
+  // turno en vez de llevar la cuenta por duplicado en este archivo (regla de
+  // oro: un archivo por mecánica — Glory no sabe nada de cómo se conquista
+  // un poblado, solo cuánto suma).
+  _villagesBonus(team) {
+    return typeof Villages !== "undefined" ? Villages.gloryBonusFor(team) : 0;
   },
 
   _raceFor(raceId) {
@@ -177,7 +200,7 @@ const Glory = {
   _renderPreview(team) {
     const previewEl = this._previewEls[team];
     if (!previewEl) return;
-    const next = GLORY_PER_TURN_START + this.pendingBonus[team];
+    const next = GLORY_PER_TURN_START + this.pendingBonus[team] + this._villagesBonus(team);
     previewEl.textContent = `+${next} / turno`;
   },
 };

@@ -67,6 +67,14 @@ const UNIT_TYPES = {
     name: "GolemCorteza",
     raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_01.png",
+    // Sprite opcional para la animación épica de un golpe mortal a un
+    // poblado (ver Villages._playEpicSmash, js/villages.js) — pedido
+    // explícito: "esta animacion tiene un sprite con el nombre
+    // machacagnomos en su nombre". Es opcional a propósito (la mayoría de
+    // personajes todavía no lo tienen): Units.machacaSpriteFor es la única
+    // función que sabe hacer el relleno "usa el normal de iddle" cuando
+    // falta, así que este campo puede quedar sin definir sin más.
+    machacaUrl: "assets/equipos/MushboomForest/machacagnomos_hombre_arbol.png",
     aguante: 4,
     movimiento: 1,
     fuerza: 3,
@@ -226,13 +234,20 @@ const Units = {
 
     // Icono de "a punto de morir" — pedido explícito: "puedes mostrar un
     // icono phosphor sobre el sprite del jugador que tiembla porque el
-    // proximo ataque le va a matar?". Vive fuera de unit__flip (que ya se
-    // gira/escala con la unidad) para que el icono se quede siempre mirando
-    // de frente, sin girarse con el personaje — solo se muestra/oculta y
-    // tiembla vía CSS (.unit--doomed .unit__doom-icon, ver style.css), igual
-    // que el resto del estado "doomed" ya hace con el sprite/glow.
-    const doomIconEl = document.createElement("i");
-    doomIconEl.className = "ph-fill ph-skull unit__doom-icon";
+    // proximo ataque le va a matar?" — sustituido después (séptima pasada)
+    // por un PNG propio ("tambien te adjunto el icono de una calavera para
+    // que lo sustituyas por el phosphor de temblar de miedo", ver
+    // assets/iconos/calavera_miedo.png) en vez del glifo de Phosphor: ya no
+    // depende de que la webfont de iconos cargue bien. Vive fuera de
+    // unit__flip (que ya se gira/escala con la unidad) para que el icono se
+    // quede siempre mirando de frente, sin girarse con el personaje — solo
+    // se muestra/oculta y tiembla vía CSS (.unit--doomed .unit__doom-icon,
+    // ver style.css), igual que el resto del estado "doomed" ya hace con el
+    // sprite/glow.
+    const doomIconEl = document.createElement("img");
+    doomIconEl.className = "unit__doom-icon";
+    doomIconEl.src = "assets/iconos/calavera_miedo.png";
+    doomIconEl.alt = "";
     el.appendChild(doomIconEl);
 
     // Barra de vida SECCIONADA — pedido explícito: "las barras de vida
@@ -316,6 +331,18 @@ const Units = {
 
   unitAt(row, col) {
     return this.list.find((u) => u.row === row && u.col === col);
+  },
+
+  // Sprite de "machacagnomos" para la animación épica de un golpe mortal
+  // contra un poblado (ver Villages._playEpicSmash, js/villages.js) — con
+  // relleno automático cuando el tipo de personaje no tiene uno propio
+  // todavía: "para los que no tengan el sprite de machaganomos usa el
+  // normal de iddle" (pedido explícito). Único sitio que conoce este
+  // relleno, igual que spriteFor(owner) en villages.js con su propia tabla.
+  machacaSpriteFor(typeId) {
+    const def = UNIT_TYPES[typeId];
+    if (!def) return "";
+    return def.machacaUrl || def.spriteUrl || "";
   },
 
   _placeInstant(unit) {
@@ -601,7 +628,8 @@ const Units = {
 
   // Camino recto en línea, paso a paso por casilla (como mucho tantos pasos
   // como la distancia Chebyshev al destino) — de momento no hay obstáculos
-  // en el tablero, así que un camino recto es siempre válido.
+  // de colisión en el tablero (aparte del agua, ver pathIsWalkable justo
+  // debajo), así que un camino recto es siempre válido.
   stepPath(fromRow, fromCol, toRow, toCol) {
     const steps = Math.max(Math.abs(toRow - fromRow), Math.abs(toCol - fromCol));
     const path = [];
@@ -613,6 +641,29 @@ const Units = {
       });
     }
     return path;
+  },
+
+  // Pedido explícito: "bajo ningun concepto un personaje puede moverse a
+  // traves de una casilla de agua a no ser que algo definido por mi rompa
+  // esa regla" — hasta ahora cada mecánica (Movement.reachableTiles,
+  // Combat._approachTile, GnomeInstance varias) solo comprobaba que la
+  // casilla DE DESTINO fuera transitable (TerrainMap.isWalkable), pero el
+  // camino en sí (stepPath, línea recta con hasta `movimiento` pasos) nunca
+  // se validaba paso a paso — así que una unidad con alcance >=2 SÍ podía
+  // "saltar" en línea recta sobre una casilla de agua intermedia y aterrizar
+  // en tierra firme al otro lado, cruzándola de hecho aunque el destino
+  // fuera válido. Este helper comprueba TODO el camino (incluido el
+  // destino, ya cubierto pero sin coste comprobarlo dos veces) para que
+  // ninguna mecánica pueda ofrecer una casilla como alcanzable si el camino
+  // recto hasta ella pisa agua en cualquier punto intermedio. El día que
+  // "algo definido por él rompa esa regla" (nadar, un barco...) este es el
+  // único sitio que hay que tocar: añadir esa excepción aquí, no en cada
+  // mecánica por separado.
+  pathIsWalkable(fromRow, fromCol, toRow, toCol) {
+    if (typeof TerrainMap === "undefined") return true;
+    return this.stepPath(fromRow, fromCol, toRow, toCol).every((step) =>
+      TerrainMap.isWalkable(step.row, step.col)
+    );
   },
 
   // Recorre un camino ya calculado (ver stepPath), salto a salto, con el

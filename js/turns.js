@@ -134,6 +134,35 @@ const Turns = {
     this._btnIconEl = icon;
   },
 
+  // Pedido explícito: "creo que el icono phosphor de pasar turno esta
+  // duplicado...compruebalo y arreglalo" — investigado a fondo: el paquete
+  // @phosphor-icons/web (el que carga index.html por CDN) es solo CSS puro,
+  // un webfont con el glifo pintado vía ::before{content:...} — no inyecta
+  // ni duplica ningún SVG por JS, así que no hay ningún proceso que pueda
+  // "apilar" iconos por cambiar el className varias veces (se comprobó
+  // bajando el paquete e inspeccionando su código fuente). La causa real es
+  // visual, no un bug de DOM: el reloj de arena (que de por sí tiene una
+  // silueta de "lazo"/doble triángulo) vive MUY pegado a los bordes de su
+  // propia caja, que también es un rombo — dos formas de diamante casi
+  // superpuestas a esa escala se leen como si hubiera un icono repetido.
+  // Arreglo de verdad: más margen entre el glifo y el borde de la caja +
+  // caja más grande (ver .end-turn-btn__icon en style.css) para que se
+  // distingan como una sola pieza clara, no dos. Este método sigue siendo
+  // la forma correcta y más robusta de cambiar el icono desde JS (crea un
+  // <i> limpio en vez de mutar uno ya existente), así que se queda aunque
+  // no fuera la causa del "duplicado".
+  _setIcon(className) {
+    if (this._btnIconEl && this._btnIconEl.className === className) return;
+    const icon = document.createElement("i");
+    icon.className = className;
+    if (this._btnIconEl && this._btnIconEl.parentNode) {
+      this._btnIconEl.replaceWith(icon);
+    } else if (this._btn) {
+      this._btn.insertBefore(icon, this._btn.firstChild);
+    }
+    this._btnIconEl = icon;
+  },
+
   // Se llama desde js/settingsmenu.js al salir de la partida (opción "Salir
   // de la partida" del popup de ajustes, ver ese archivo) — antes esto lo
   // hacía un listener propio sobre el back-btn del tablero, pero ese botón
@@ -171,13 +200,13 @@ const Turns = {
 
     if (!isPlayerTurn) {
       this._btnLabelEl.textContent = "Turno rival…";
-      this._btnIconEl.className = "ph ph-circle-notch end-turn-btn__icon";
+      this._setIcon("ph ph-circle-notch end-turn-btn__icon");
     } else if (ready) {
       this._btnLabelEl.textContent = "¡Todos listos!";
-      this._btnIconEl.className = "ph ph-check-circle end-turn-btn__icon";
+      this._setIcon("ph ph-check-circle end-turn-btn__icon");
     } else {
       this._btnLabelEl.textContent = "Pasar turno";
-      this._btnIconEl.className = "ph ph-hourglass-simple end-turn-btn__icon";
+      this._setIcon("ph ph-hourglass-simple end-turn-btn__icon");
     }
   },
 

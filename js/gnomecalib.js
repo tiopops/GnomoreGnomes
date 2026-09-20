@@ -18,13 +18,20 @@
    por tipo de personaje. */
 
 const GNOME_CALIB_STORAGE_KEY = "gnomore-gnomo-posicion-v1"; // mismo formato que la herramienta anterior
+// Misma idea que GNOME_CALIB_STORAGE_KEY pero para la pose "machaca" (ver
+// GNOME_ATTACH_OFFSETS_MACHACA, gnome.js) — clave DISTINTA a propósito: así
+// los ajustes de la pose "iddle" ya guardados por partidas anteriores no se
+// pisan ni se mezclan con los nuevos de "machaca".
+const GNOME_CALIB_STORAGE_KEY_MACHACA = "gnomore-gnomo-posicion-machaca-v1";
 const GNOME_CALIB_WIDTH_STORAGE_KEY = "gnomore-gnomo-tamano-cogido-v1";
 const GNOME_CALIB_DEFAULTS = { right: -14, bottom: 6 };
 
 const GnomeCalib = {
   active: false,
-  tuned: {}, // posición (right/bottom), UNA por tipo de personaje
-  heldWidth: null, // tamaño cogido, UN SOLO valor compartido por todos los personajes
+  pose: "idle", // "idle" | "machaca" — qué tabla se está editando ahora mismo (ver _togglePose)
+  tuned: {}, // posición (right/bottom) pose "idle", UNA por tipo de personaje
+  tunedMachaca: {}, // lo mismo para la pose "machaca"
+  heldWidth: null, // tamaño cogido, UN SOLO valor compartido por todos los personajes y las dos poses
   currentUnit: null,
   currentGnome: null,
   handleEl: null,
@@ -35,14 +42,15 @@ const GnomeCalib = {
   init() {
     this.active = /(?:^|[?&])calibrarGnomo(?:=|&|$)/.test(location.search);
     if (!this.active) return;
-    this.tuned = this._load();
+    this.tuned = this._load(GNOME_CALIB_STORAGE_KEY);
+    this.tunedMachaca = this._load(GNOME_CALIB_STORAGE_KEY_MACHACA);
     this.heldWidth = this._loadWidth();
     document.addEventListener("DOMContentLoaded", () => this._ensurePanel());
   },
 
-  _load() {
+  _load(key) {
     try {
-      return JSON.parse(localStorage.getItem(GNOME_CALIB_STORAGE_KEY)) || {};
+      return JSON.parse(localStorage.getItem(key)) || {};
     } catch (e) {
       return {};
     }
@@ -51,6 +59,7 @@ const GnomeCalib = {
   _save() {
     try {
       localStorage.setItem(GNOME_CALIB_STORAGE_KEY, JSON.stringify(this.tuned));
+      localStorage.setItem(GNOME_CALIB_STORAGE_KEY_MACHACA, JSON.stringify(this.tunedMachaca));
     } catch (e) {
       // no crítico — solo se pierde la persistencia entre recargas
     }
@@ -73,8 +82,11 @@ const GnomeCalib = {
     }
   },
 
-  getOffset(typeId) {
-    return this.tuned[typeId] || null;
+  // pose: "idle" (por defecto, comportamiento de siempre) o "machaca" — ver
+  // cabecera del archivo y GNOME_ATTACH_OFFSETS_MACHACA en gnome.js.
+  getOffset(typeId, pose) {
+    const table = pose === "machaca" ? this.tunedMachaca : this.tuned;
+    return table[typeId] || null;
   },
 
   // Tamaño cogido: siempre el mismo, sea cual sea el personaje que lo lleve
@@ -84,8 +96,9 @@ const GnomeCalib = {
     return this.heldWidth != null ? this.heldWidth : GNOME_SIZES.held;
   },
 
-  _setOffset(typeId, offset) {
-    this.tuned[typeId] = offset;
+  _setOffset(typeId, offset, pose) {
+    const table = pose === "machaca" ? this.tunedMachaca : this.tuned;
+    table[typeId] = offset;
     this._save();
     this._updatePanelValues();
   },
@@ -102,6 +115,7 @@ const GnomeCalib = {
     if (!this.active) return;
     this.currentUnit = unit;
     this.currentGnome = gnomeObj;
+    this.pose = "idle"; // cada enganche real empieza siempre en la pose de reposo
     this._ensurePanel();
     this._ensureHandle(gnomeObj.attachEl);
     gnomeObj.attachEl.classList.add("gnome-attach--calibrating");
@@ -110,6 +124,10 @@ const GnomeCalib = {
 
   onDetach() {
     if (!this.active) return;
+    // Si se soltó mientras se previsualizaba la pose "machaca", devuelve al
+    // personaje su sprite normal antes de perder la referencia — si no, se
+    // quedaría con la pinta de "machacagnomos" para siempre tras soltar.
+    if (this.pose === "machaca") this._togglePose();
     this.currentUnit = null;
     this.currentGnome = null;
     if (this.handleEl) {
@@ -117,6 +135,31 @@ const GnomeCalib = {
       this.handleEl = null;
     }
     this._hidePanel();
+  },
+
+  // ---------- Alternar pose "iddle" / "machaca" ----------
+  // Pedido explícito: la posición del gnomo cogido "tambien debe poder
+  // ajustarse desde calibrar gnomo en esta posicion concreta [machaca]
+  // ademas de en la de iddle para cada personaje". Cambia el sprite del
+  // PERSONAJE (no el del gnomo) a su versión "machacagnomos" (con el mismo
+  // relleno automático que en el juego real, ver Units.machacaSpriteFor) y
+  // reposiciona el gnomo enganchado con la tabla de offsets de esa pose, así
+  // se puede arrastrar/redimensionar exactamente igual que en modo "iddle".
+  _togglePose() {
+    if (!this.currentUnit || !this.currentGnome) return;
+    this.pose = this.pose === "machaca" ? "idle" : "machaca";
+    const typeId = this.currentUnit.typeId;
+    const def = typeof UNIT_TYPES !== "undefined" ? UNIT_TYPES[typeId] : null;
+    if (this.currentUnit.spriteEl && def) {
+      this.currentUnit.spriteEl.src =
+        this.pose === "machaca"
+          ? typeof Units !== "undefined"
+            ? Units.machacaSpriteFor(typeId)
+            : def.spriteUrl
+          : def.spriteUrl;
+    }
+    this.currentGnome.setAttachPose(this.currentUnit, this.pose);
+    this._showPanel();
   },
 
   // ---------- Arrastrar para mover ----------
@@ -212,10 +255,14 @@ const GnomeCalib = {
   _persistCurrent() {
     if (!this.currentUnit || !this.currentGnome) return;
     const attachEl = this.currentGnome.attachEl;
-    this._setOffset(this.currentUnit.typeId, {
-      right: Math.round(parseFloat(attachEl.style.right) || 0),
-      bottom: Math.round((parseFloat(attachEl.style.bottom) || 0) * 10) / 10,
-    });
+    this._setOffset(
+      this.currentUnit.typeId,
+      {
+        right: Math.round(parseFloat(attachEl.style.right) || 0),
+        bottom: Math.round((parseFloat(attachEl.style.bottom) || 0) * 10) / 10,
+      },
+      this.pose
+    );
     this._setHeldWidth(Math.round(parseFloat(attachEl.style.width) || this.getHeldWidth()));
   },
 
@@ -226,9 +273,10 @@ const GnomeCalib = {
     const panel = document.createElement("div");
     panel.className = "gnome-calib-panel";
     panel.innerHTML = `
-      <div class="gnome-calib-panel__title">Calibrando: <span id="gnomeCalibCharName">—</span></div>
+      <div class="gnome-calib-panel__title">Calibrando: <span id="gnomeCalibCharName">—</span> <span id="gnomeCalibPoseName"></span></div>
       <div class="gnome-calib-panel__values" id="gnomeCalibValues">right — · bottom — · tamaño (compartido) —</div>
-      <div class="gnome-calib-panel__hint">Arrastra el gnomo para moverlo (por personaje). Arrastra el puntito de su esquina para cambiar su tamaño — este es el MISMO para todos los personajes, se ajusta mirando a cualquiera.</div>
+      <div class="gnome-calib-panel__hint">Arrastra el gnomo para moverlo (por personaje y por pose). Arrastra el puntito de su esquina para cambiar su tamaño — este es el MISMO para todos los personajes y las dos poses, se ajusta mirando a cualquiera.</div>
+      <button class="gnome-calib-panel__copy" id="gnomeCalibPoseBtn">Ver pose: machacagnomos</button>
       <button class="gnome-calib-panel__copy" id="gnomeCalibCopyBtn">Copiar ajustes (GNOME_SIZES + GNOME_ATTACH_OFFSETS)</button>
       <span class="gnome-calib-panel__copied" id="gnomeCalibCopiedMsg">Copiado ✓</span>
     `;
@@ -237,6 +285,7 @@ const GnomeCalib = {
     this.panelValuesEl = panel.querySelector("#gnomeCalibValues");
 
     panel.querySelector("#gnomeCalibCopyBtn").addEventListener("click", () => this._copy());
+    panel.querySelector("#gnomeCalibPoseBtn").addEventListener("click", () => this._togglePose());
   },
 
   _showPanel() {
@@ -244,6 +293,10 @@ const GnomeCalib = {
     this.panelEl.classList.add("gnome-calib-panel--visible");
     this.panelEl.querySelector("#gnomeCalibCharName").textContent =
       (UNIT_TYPES[this.currentUnit.typeId] && UNIT_TYPES[this.currentUnit.typeId].name) || this.currentUnit.typeId;
+    this.panelEl.querySelector("#gnomeCalibPoseName").textContent =
+      this.pose === "machaca" ? "(pose: machacagnomos)" : "(pose: iddle)";
+    const poseBtn = this.panelEl.querySelector("#gnomeCalibPoseBtn");
+    if (poseBtn) poseBtn.textContent = this.pose === "machaca" ? "Ver pose: iddle" : "Ver pose: machacagnomos";
     this._updateLiveValues();
   },
 
@@ -280,6 +333,14 @@ const GnomeCalib = {
     Object.keys(UNIT_TYPES).forEach((typeId) => {
       const v = this.tuned[typeId] || GNOME_CALIB_DEFAULTS;
       lines.push(`  ${typeId}: { right: ${v.right}, bottom: ${v.bottom} },`);
+    });
+    lines.push("};");
+    lines.push("");
+    lines.push("const GNOME_ATTACH_OFFSETS_MACHACA = {");
+    lines.push(`  default: { right: ${GNOME_CALIB_DEFAULTS.right}, bottom: ${GNOME_CALIB_DEFAULTS.bottom} },`);
+    Object.keys(UNIT_TYPES).forEach((typeId) => {
+      const v = this.tunedMachaca[typeId];
+      if (v) lines.push(`  ${typeId}: { right: ${v.right}, bottom: ${v.bottom} },`);
     });
     lines.push("};");
     return lines.join("\n");

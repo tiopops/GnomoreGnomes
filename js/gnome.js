@@ -116,6 +116,20 @@ const GNOME_ATTACH_OFFSETS = {
   punoroca: { right: 86, bottom: 7 },
 };
 
+// Misma idea que GNOME_ATTACH_OFFSETS de arriba, pero para la pose
+// "machacagnomos" (ver Villages._playEpicSmash, js/villages.js): el brazo
+// que golpea queda levantado/adelantado de forma distinta al de sujetar en
+// reposo, así que el gnomo cogido necesita su PROPIO ajuste por personaje
+// durante esos instantes, no el mismo que en "iddle" — pedido explícito:
+// "tambien debe poder ajustarse desde calibrar gnomo en esta posicion
+// concreta ademas de en la de iddle para cada personaje" (ver
+// js/gnomecalib.js, GnomeCalib.pose). Sin calibrar todavía a mano para
+// ningún personaje: usa "default" para todos hasta que se ajuste desde
+// ?calibrarGnomo.
+const GNOME_ATTACH_OFFSETS_MACHACA = {
+  default: { right: -14, bottom: 40 },
+};
+
 // ---------- Cada gnomo individual ----------
 //
 // Fábrica en vez de clase por consistencia con el resto del proyecto (todo
@@ -155,7 +169,8 @@ function createGnomeInstance() {
     // prueba ni por otro gnomo ya colocado antes que este.
     spawnNear(row, col) {
       const walkable = (r, c) => typeof TerrainMap === "undefined" || TerrainMap.isWalkable(r, c);
-      if (!Units.unitAt(row, col) && !Gnome._otherGnomeAt(this, row, col) && walkable(row, col)) {
+      const noVillage = (r, c) => typeof Villages === "undefined" || !Villages.at(r, c);
+      if (!Units.unitAt(row, col) && !Gnome._otherGnomeAt(this, row, col) && walkable(row, col) && noVillage(row, col)) {
         this.spawn(row, col);
         return;
       }
@@ -171,6 +186,8 @@ function createGnomeInstance() {
             // sobre agua; la propia espiral ya sigue buscando hacia afuera
             // hasta encontrar la loseta transitable libre más cercana.
             if (!walkable(r, c)) continue;
+            // Poblados (js/villages.js) — tampoco aparece encima de uno.
+            if (!noVillage(r, c)) continue;
             this.spawn(r, c);
             return;
           }
@@ -235,6 +252,35 @@ function createGnomeInstance() {
     reset() {
       if (this._flipTimer) clearTimeout(this._flipTimer);
       this._flipTimer = null;
+    },
+
+    // Pedido explícito (js/villages.js, mecánica de poblados neutrales):
+    // "cuando se pega con un gnomo a un poblado el gnomo muere y desaparece
+    // del juego" — a diferencia de dropFromDyingUnit (que SUELTA el gnomo
+    // pero lo deja huyendo, sigue existiendo) esto lo borra del todo: para
+    // el gestor (Gnome.destroyInstance más abajo), que además lo saca de
+    // Gnome.list. Reutiliza reset() para los temporizadores propios (mismo
+    // motivo que ahí: no dejar un temporizador zombi reprogramándose para
+    // siempre) y quita TODO su rastro del DOM, tanto si iba suelto (this.el)
+    // como si lo llevaba cogido alguien (this.attachEl) o tenía el contador
+    // de puntos abierto (this._badgeEl).
+    destroy() {
+      this.reset();
+      if (this.attachEl) {
+        this.attachEl.remove();
+        this.attachEl = null;
+        this.attachSpriteEl = null;
+      }
+      if (this._badgeEl) {
+        this._badgeEl.remove();
+        this._badgeEl = null;
+        this._badgeValueEl = null;
+      }
+      if (this.el) {
+        this.el.remove();
+        this.el = null;
+      }
+      this.heldBy = null;
     },
 
     isAt(row, col) {
@@ -332,9 +378,13 @@ function createGnomeInstance() {
           if (distToGnome(row, col) > 1) continue;
           if (Units.unitAt(row, col)) continue;
           if (Gnome._otherGnomeAt(this, row, col)) continue;
+          if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
           if (moveDist > moveRange) continue;
+          // Pedido explícito: "bajo ningun concepto un personaje puede
+          // moverse a traves de una casilla de agua" — ver Units.pathIsWalkable.
+          if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
           if (moveDist < bestDist) {
             bestDist = moveDist;
             best = { row, col };
@@ -427,21 +477,10 @@ function createGnomeInstance() {
       }
       this.attachSpriteEl.src = GNOME_ASSETS.grita;
 
-      // En modo de calibración (js/gnomecalib.js, activo solo con
-      // ?calibrarGnomo en la URL) se usa el último ajuste guardado a mano
-      // para este personaje en vez del valor fijo del código, para poder
-      // seguir arrastrando desde donde se dejó la vez anterior — fuera de ese
-      // modo esta llamada no hace nada (GnomeCalib.active es false) y se usa
-      // siempre GNOME_ATTACH_OFFSETS tal cual.
-      let offset = GNOME_ATTACH_OFFSETS[unit.typeId] || GNOME_ATTACH_OFFSETS.default;
-      let heldWidth = GNOME_SIZES.held;
-      if (typeof GnomeCalib !== "undefined" && GnomeCalib.active) {
-        offset = GnomeCalib.getOffset(unit.typeId) || offset;
-        heldWidth = GnomeCalib.getHeldWidth();
-      }
-      this.attachEl.style.right = `${offset.right}px`;
-      this.attachEl.style.bottom = `${offset.bottom}%`;
-      this.attachEl.style.width = `${heldWidth}px`;
+      // Posición inicial: siempre la pose "iddle" (ver setAttachPose más
+      // abajo) — la pose "machaca" solo se aplica momentáneamente durante la
+      // animación épica de un golpe mortal (Villages._playEpicSmash).
+      this.setAttachPose(unit, "idle");
       // Por si ya llevaba puntos acumulados antes de cogerlo (p.ej. tras un
       // pase exitoso, ver executePass): el temblor del sprite recién
       // enganchado debe arrancar ya a la velocidad "nerviosa" que le toca,
@@ -450,9 +489,38 @@ function createGnomeInstance() {
 
       unit.flipEl.appendChild(this.attachEl);
       this.attachEl.classList.remove("gnome-attach--visible");
-      requestAnimationFrame(() => this.attachEl.classList.add("gnome-attach--visible"));
+      // Comprobación defensiva: si este gnomo se destruye del todo
+      // (Gnome.destroyInstance, ver villages.js) en el intervalo entre este
+      // requestAnimationFrame y el siguiente frame real, this.attachEl ya
+      // sería null (GnomeInstance.destroy lo limpia) y el callback rompería
+      // con un TypeError al intentar leer su classList.
+      const attachEl = this.attachEl;
+      requestAnimationFrame(() => {
+        if (attachEl.isConnected) attachEl.classList.add("gnome-attach--visible");
+      });
 
       if (typeof GnomeCalib !== "undefined") GnomeCalib.onAttach(unit, this);
+    },
+
+    // Reposiciona el gnomo YA enganchado (this.attachEl) según la pose de
+    // quien lo lleva — "idle" (reposo normal, la de siempre) o "machaca"
+    // (brazo en alto/golpeando, ver Villages._playEpicSmash) — sin tener
+    // que desenganchar/re-enganchar nada. En modo de calibración
+    // (?calibrarGnomo, js/gnomecalib.js) se usa el ajuste guardado a mano
+    // para ESTA pose y este personaje en vez del valor fijo del código,
+    // igual que ya hacía attachTo antes de este refactor.
+    setAttachPose(unit, pose) {
+      if (!this.attachEl) return;
+      const table = pose === "machaca" ? GNOME_ATTACH_OFFSETS_MACHACA : GNOME_ATTACH_OFFSETS;
+      let offset = table[unit.typeId] || table.default;
+      let heldWidth = GNOME_SIZES.held;
+      if (typeof GnomeCalib !== "undefined" && GnomeCalib.active) {
+        offset = GnomeCalib.getOffset(unit.typeId, pose) || offset;
+        heldWidth = GnomeCalib.getHeldWidth();
+      }
+      this.attachEl.style.right = `${offset.right}px`;
+      this.attachEl.style.bottom = `${offset.bottom}%`;
+      this.attachEl.style.width = `${heldWidth}px`;
     },
 
     detachFrom() {
@@ -756,6 +824,7 @@ function createGnomeInstance() {
         for (let col = 0; col < Units.boardSize; col++) {
           if (Units.unitAt(row, col)) continue;
           if (Gnome._otherGnomeAt(this, row, col)) continue;
+          if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const minDist = Units.list.reduce(
             (min, u) => Math.min(min, Math.max(Math.abs(u.row - row), Math.abs(u.col - col))),
@@ -962,6 +1031,7 @@ function createGnomeInstance() {
           if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
           if (Units.unitAt(r, c)) continue;
           if (Gnome._otherGnomeAt(this, r, c)) continue;
+          if (typeof Villages !== "undefined" && Villages.at(r, c)) continue; // poblado (js/villages.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           const alignment = dr * dRow + dc * dCol;
           const openness = this._tileOpenness(r, c);
@@ -990,6 +1060,7 @@ function createGnomeInstance() {
           if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
           if (Units.unitAt(r, c)) continue;
           if (Gnome._otherGnomeAt(this, r, c)) continue;
+          if (typeof Villages !== "undefined" && Villages.at(r, c)) continue; // poblado (js/villages.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           free++;
         }
@@ -1236,6 +1307,19 @@ const Gnome = {
   // combat.js para quitarle la posibilidad de atacar mientras carga con uno.
   isHeldBy(unitId) {
     return this.list.some((g) => g.heldBy === unitId);
+  },
+
+  // Pedido explícito (js/villages.js): "cuando se pega con un gnomo a un
+  // poblado el gnomo muere y desaparece del juego" — lo llama Villages.attack
+  // sobre el gnomo que se acaba de estrellar contra el poblado. Cierra
+  // primero sus botones de golpear/pasar si era el que los tenía abiertos
+  // (mismo motivo que _hideHoldingActions en cualquier otro sitio: no dejar
+  // esos botones apuntando a un gnomo que ya no existe) y lo saca de la
+  // lista después de que GnomeInstance.destroy limpie su propio DOM.
+  destroyInstance(gnomeInstance) {
+    if (this._currentHeldGnome === gnomeInstance) this._hideHoldingActions();
+    gnomeInstance.destroy();
+    this.list = this.list.filter((g) => g !== gnomeInstance);
   },
 
   // Lo llama Combat.attack justo antes de eliminar del todo a una unidad con

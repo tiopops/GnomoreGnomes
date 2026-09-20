@@ -228,6 +228,18 @@ function spawnTestUnits(size, raceId) {
     }
   }
 
+  // Poblados neutrales (js/villages.js) — pedido explícito: "los poblados
+  // neutrales aparecen desperdigados por el mapa, de momento puedes poner
+  // 2". DESPUÉS de colocar personajes y gnomos (para que Villages.spawn
+  // pueda evitar sus casillas al elegir dónde aparecen) y ANTES de
+  // Glory.init (para que el marcador de gloria, si algún día arranca con un
+  // poblado ya conquistado, lo tenga en cuenta desde el primer turno).
+  if (typeof Villages !== "undefined") {
+    Villages.resetAll();
+    Villages.init(finalRaceId, enemyRace ? enemyRace.id : finalRaceId);
+    Villages.spawn(size);
+  }
+
   // Turnos (js/turns.js) — se resetea AL FINAL, con todos los personajes y
   // gnomos ya colocados: siempre empieza el turno del jugador con las 2
   // acciones de cada uno intactas, y (re)aparece el botón de PASAR TURNO.

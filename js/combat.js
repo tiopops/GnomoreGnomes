@@ -49,9 +49,16 @@ const Combat = {
         if (distToTarget(row, col) > attackRange) continue;
         if (Units.unitAt(row, col)) continue; // ocupada (por el propio rival u otra unidad)
         if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue; // ocupada por el gnomo (js/gnome.js)
+        if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue; // agua (js/mapgen.js)
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange) continue;
+        // Pedido explícito: "bajo ningun concepto un personaje puede
+        // moverse a traves de una casilla de agua" — ver Units.pathIsWalkable
+        // (units.js): el destino ya se comprueba arriba, pero el camino recto
+        // hasta él también tiene que estar libre de agua en cualquier punto
+        // intermedio, no solo al llegar.
+        if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
         if (moveDist < bestDist) {
           bestDist = moveDist;
           best = { row, col };
@@ -262,6 +269,7 @@ const Combat = {
       if (nextRow < 0 || nextCol < 0 || nextRow >= Units.boardSize || nextCol >= Units.boardSize) break;
       if (Units.unitAt(nextRow, nextCol)) break;
       if (typeof Gnome !== "undefined" && Gnome.isAt(nextRow, nextCol)) break;
+      if (typeof Villages !== "undefined" && Villages.at(nextRow, nextCol)) break; // poblado (js/villages.js)
       path.push({ row: nextRow, col: nextCol });
       row = nextRow;
       col = nextCol;

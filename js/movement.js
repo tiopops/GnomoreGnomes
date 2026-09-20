@@ -30,6 +30,7 @@ const Movement = {
         // detecta; su propia loseta se excluye a mano para no ofrecer "mover
         // aquí" sobre una casilla que en realidad hay que capturar, no pisar.
         if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
+        if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
         // Niebla de guerra (js/fog.js) — pedido explícito: "un personaje no
         // puede moverse a una zona que esté cubierta por niebla, pero sí a
         // una adyacente a la misma". No hace falta comprobar el CAMINO hacia
@@ -44,6 +45,12 @@ const Movement = {
         // raza si pueda nadar o se use un barco" (aún no implementado, así
         // que de momento es intransitable para todos por igual).
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        // Pedido explícito: "bajo ningun concepto un personaje puede
+        // moverse a traves de una casilla de agua" — no basta con que el
+        // DESTINO sea transitable, el camino recto hasta él (ver
+        // Units.pathIsWalkable) tampoco puede pisar agua en ningún punto
+        // intermedio (ver ese helper para el detalle del bug que corrige).
+        if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
         tiles.push({ row, col });
       }
     }
