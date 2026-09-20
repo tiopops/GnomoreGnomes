@@ -47,6 +47,7 @@ const Villages = {
   list: [],
   _raceIds: { player: null, enemy: null },
   _nextId: 1,
+  _flashEl: null,
 
   // Se llama junto a Glory.init (newgame-flow.js) para que Villages sepa
   // qué sprite de raza usar cuando cada equipo conquiste uno — mismo patrón
@@ -312,6 +313,13 @@ const Villages = {
     await new Promise((resolve) => setTimeout(resolve, IMPACT_DELAY_MS));
 
     // ---- Momento del impacto ----
+    // Pose de impacto propia (distinta a la de "machaca"/salto de arriba)
+    // justo en el instante en que tiembla la cámara — pedido explícito: "el
+    // gnomo se desintegra asi que cuando se muestre este sprite el gnomo no
+    // tiene que aparecer", por eso este cambio de sprite va JUSTO ANTES de
+    // Gnome.destroyInstance(gnome) más abajo, no después.
+    const impactSrc = typeof Units !== "undefined" ? Units.impactSpriteFor(typeId) : machacaSrc;
+    if (unit.spriteEl && impactSrc) unit.spriteEl.src = impactSrc;
     Units.updateHpBar(village);
     Units.spawnFloatingText(village, `-${damage}`, { className: "dmg-popup" });
     Units.spawnFloatingText(village, "¡GOLPE MORTAL!", { className: "dmg-popup gnome-points-popup" });
@@ -333,12 +341,35 @@ const Villages = {
     // del juego" — en el golpe mortal, desaparece justo en el instante del
     // machacón contra el suelo, no al principio del salto.
     if (gnome) Gnome.destroyInstance(gnome);
+    // "un pequeño destello blanco puede iluminar la pantalla un instante"
+    // (pedido explícito) — mismo instante que el temblor de cámara de
+    // arriba, ver _flashScreen().
+    this._flashScreen();
 
     await new Promise((resolve) => setTimeout(resolve, TOTAL_MS - IMPACT_DELAY_MS));
 
     // ---- Fin de la animación: vuelve todo a la normalidad ----
     unit.el.classList.remove("unit--epic-smash");
     if (unit.spriteEl && idleSrc) unit.spriteEl.src = idleSrc;
+  },
+
+  // Destello blanco de pantalla completa en el instante del impacto — mismo
+  // patrón que el resto del proyecto para elementos globales creados una
+  // sola vez y reutilizados (ver settingsmenu.js/turns.js: se crea la
+  // primera vez que hace falta y se guarda la referencia). Reinicia la
+  // clase en cada llamada (remove/reflow/add) por si dos machacones épicos
+  // se solaparan, igual que el resto de animaciones de "un solo tiro" de
+  // este archivo (unit--epic-smash, board-viewport--shake).
+  _flashScreen() {
+    if (!this._flashEl) {
+      const el = document.createElement("div");
+      el.id = "epic-smash-flash";
+      document.body.appendChild(el);
+      this._flashEl = el;
+    }
+    this._flashEl.classList.remove("epic-smash-flash--active");
+    void this._flashEl.offsetWidth;
+    this._flashEl.classList.add("epic-smash-flash--active");
   },
 
   // "si un equipo consigue destruir un poblado neutral por completo, el

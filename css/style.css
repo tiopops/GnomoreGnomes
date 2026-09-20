@@ -2433,11 +2433,36 @@ h2 {
 
 @keyframes unit-epic-smash {
   0%   { transform: translateY(0) scale(1, 1) rotate(0deg); }
-  50%  { transform: translateY(-124px) scale(1.1, 0.94) rotate(-7deg); }
-  70%  { transform: translateY(-124px) scale(1.14, 0.9) rotate(-9deg); }
+  50%  { transform: translateY(-190px) scale(1.1, 0.94) rotate(-7deg); }
+  70%  { transform: translateY(-190px) scale(1.14, 0.9) rotate(-9deg); }
   85%  { transform: translateY(10px) scale(1.28, 0.68) rotate(2deg); }
   93%  { transform: translateY(-10px) scale(0.9, 1.16) rotate(-1deg); }
   100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+}
+
+/* Destello blanco en el instante del impacto (ver Villages._flashScreen) —
+   pedido explícito: "un pequeño destello blanco puede iluminar la pantalla
+   un instante". Fixed + pointer-events:none para no robar clics, opacity 0
+   en reposo, z-index por encima de absolutamente todo (incluso del propio
+   personaje en unit--epic-smash) para que se note bien pero solo un
+   instante: sube muy rápido y se apaga enseguida, no es un fundido lento. */
+#epic-smash-flash {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99999;
+}
+
+.epic-smash-flash--active {
+  animation: epic-smash-flash 0.32s ease-out;
+}
+
+@keyframes epic-smash-flash {
+  0%   { opacity: 0; }
+  10%  { opacity: 0.9; }
+  100% { opacity: 0; }
 }
 
 /* Temblor de cámara al impactar (ver Villages._playEpicSmash) — vive sobre

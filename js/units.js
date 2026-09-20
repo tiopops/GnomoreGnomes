@@ -75,6 +75,14 @@ const UNIT_TYPES = {
     // función que sabe hacer el relleno "usa el normal de iddle" cuando
     // falta, así que este campo puede quedar sin definir sin más.
     machacaUrl: "assets/equipos/MushboomForest/machacagnomos_hombre_arbol.png",
+    // Sprite opcional para el INSTANTE del impacto contra el suelo, dentro
+    // de esa misma animación (ver Villages._playEpicSmash) — pedido
+    // explícito: pose distinta a la de "machaca" (el salto/windup) justo en
+    // el momento en que tiembla la cámara y el gnomo se desintegra. Igual
+    // de opcional que machacaUrl: Units.impactSpriteFor rellena con el de
+    // machaca (y ese a su vez con el de iddle) cuando un personaje no lo
+    // tiene todavía.
+    machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_hombre_arbol_impacto.png",
     aguante: 4,
     movimiento: 1,
     fuerza: 3,
@@ -343,6 +351,17 @@ const Units = {
     const def = UNIT_TYPES[typeId];
     if (!def) return "";
     return def.machacaUrl || def.spriteUrl || "";
+  },
+
+  // Sprite del INSTANTE del impacto contra el suelo, dentro de esa misma
+  // animación épica (ver Villages._playEpicSmash) — relleno en cascada
+  // igual de explícito que machacaSpriteFor: si el personaje no tiene un
+  // sprite propio de impacto, se queda con el de "machaca" (windup/salto),
+  // y si tampoco tiene ese, con el de iddle de siempre.
+  impactSpriteFor(typeId) {
+    const def = UNIT_TYPES[typeId];
+    if (!def) return "";
+    return def.machacaImpactUrl || def.machacaUrl || def.spriteUrl || "";
   },
 
   _placeInstant(unit) {

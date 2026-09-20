@@ -185,18 +185,18 @@
       <span style="font-size:0.75rem;color:var(--muted);">Filtrado por el equipo de arriba (UNIT_TYPES.raceId) — un personaje nuevo aparece aquí solo.</span>
     </div>
     <div class="control">
-      <label for="right">Horizontal (right) — <span class="value" id="rightVal">-14</span> px</label>
-      <input type="range" id="right" min="-100" max="120" step="1" value="-14">
-    </div>
-    <div class="control">
-      <label for="bottom">Vertical (bottom) — <span class="value" id="bottomVal">6</span> %</label>
-      <input type="range" id="bottom" min="-20" max="100" step="1" value="6">
+      <label>Posición — right: <span class="value" id="rightVal">-14</span> px · bottom: <span class="value" id="bottomVal">6</span> %</label>
+      <span style="font-size:0.75rem;color:var(--muted);">Arrastra al gnomo directamente en el escenario "Cogido" (a la derecha) para moverlo — ya no hay sliders para esto.</span>
     </div>
     <div class="control" style="min-width: auto;">
       <button class="toggle-btn" id="flipBtn">Girar personaje</button>
     </div>
     <div class="control" style="min-width: auto;">
-      <button class="reset-btn" id="resetBtn">Reiniciar posición de este personaje</button>
+      <button class="toggle-btn" id="poseBtn">Ver pose: machacagnomos</button>
+      <span style="font-size:0.75rem;color:var(--muted);" id="poseName">Pose actual: iddle</span>
+    </div>
+    <div class="control" style="min-width: auto;">
+      <button class="reset-btn" id="resetBtn">Reiniciar posición de este personaje (pose actual)</button>
     </div>
   </div>
 
@@ -258,17 +258,21 @@
   <script src="../js/units.js"></script>
   <script>
     const POS_STORAGE_KEY = "gnomore-gnomo-posicion-v1"; // mismo formato que usa js/gnomecalib.js dentro del juego
+    const POS_STORAGE_KEY_MACHACA = "gnomore-gnomo-posicion-machaca-v1"; // mismo formato/clave que GNOME_CALIB_STORAGE_KEY_MACHACA en js/gnomecalib.js — así ambas herramientas comparten la misma calibración
     const SIZE_STORAGE_KEY = "gnomore-gnomo-tamano-v1";
     const HELD_WIDTH_STORAGE_KEY = "gnomore-gnomo-tamano-cogido-v1"; // mismo formato que usa js/gnomecalib.js
     const POS_DEFAULTS = { right: -14, bottom: 6 };
+    const POS_DEFAULTS_MACHACA = { right: -14, bottom: 40 }; // igual que GNOME_ATTACH_OFFSETS_MACHACA.default en js/gnome.js
     const HELD_WIDTH_DEFAULT = 46;
 
-    function loadPositions() {
-      try { return JSON.parse(localStorage.getItem(POS_STORAGE_KEY)) || {}; } catch (e) { return {}; }
+    function loadPositionsFrom(key) {
+      try { return JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { return {}; }
     }
-    function savePositions(data) {
-      try { localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+    function savePositionsTo(key, data) {
+      try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
     }
+    function loadPositions() { return loadPositionsFrom(POS_STORAGE_KEY); }
+    function savePositions(data) { savePositionsTo(POS_STORAGE_KEY, data); }
     function loadSizes() {
       try { return Object.assign({ ground: 69, flying: 73 }, JSON.parse(localStorage.getItem(SIZE_STORAGE_KEY)) || {}); }
       catch (e) { return { ground: 69, flying: 73 }; }
@@ -287,18 +291,28 @@
     }
 
     let tuned = loadPositions();
+    let tunedMachaca = loadPositionsFrom(POS_STORAGE_KEY_MACHACA);
     let sizes = loadSizes();
     let heldWidth = loadHeldWidth();
     let facingLeft = false;
+    let pose = "idle"; // "idle" | "machaca"
     let currentEls = null;
+    let currentTypeId = null;
+    let curRight = POS_DEFAULTS.right; // ya no hay sliders — este es el estado vivo que mueve el arrastre
+    let curBottom = POS_DEFAULTS.bottom;
+    let drag = null;
+
+    function tableForPose() { return pose === "machaca" ? tunedMachaca : tuned; }
+    function defaultsForPose() { return pose === "machaca" ? POS_DEFAULTS_MACHACA : POS_DEFAULTS; }
+    function storageKeyForPose() { return pose === "machaca" ? POS_STORAGE_KEY_MACHACA : POS_STORAGE_KEY; }
 
     const teamSelect = document.getElementById("teamSelect");
     const charSelect = document.getElementById("charSelect");
-    const rightInput = document.getElementById("right");
-    const bottomInput = document.getElementById("bottom");
     const rightVal = document.getElementById("rightVal");
     const bottomVal = document.getElementById("bottomVal");
     const flipBtn = document.getElementById("flipBtn");
+    const poseBtn = document.getElementById("poseBtn");
+    const poseName = document.getElementById("poseName");
     const resetBtn = document.getElementById("resetBtn");
     const stageHeld = document.getElementById("stageHeld");
     const heldWidthInput = document.getElementById("heldWidth");
@@ -341,6 +355,7 @@
 
     function buildHeldStage(typeId) {
       stageHeld.innerHTML = "";
+      currentTypeId = typeId;
       const type = UNIT_TYPES[typeId];
 
       const el = document.createElement("div");
@@ -349,7 +364,6 @@
       flipEl.className = "unit__flip";
       const spriteEl = document.createElement("img");
       spriteEl.className = "unit__sprite";
-      spriteEl.src = "../" + type.spriteUrl;
       spriteEl.draggable = false;
       spriteEl.alt = "";
       const scale = SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default;
@@ -361,7 +375,13 @@
       stageHeld.appendChild(el);
 
       const attachEl = document.createElement("div");
-      attachEl.className = "gnome-attach gnome-attach--visible";
+      // "--calibrating" es la misma clase que usa el modo de calibración
+      // DENTRO del juego (js/gnomecalib.js, ?calibrarGnomo) — viene del CSS
+      // compartido (../css/style.css, ya enlazado arriba) así que el cursor
+      // de "arrastrar" y el contorno de aviso salen gratis, sin duplicar
+      // nada aquí.
+      attachEl.className = "gnome-attach gnome-attach--visible gnome-attach--calibrating";
+      attachEl.style.touchAction = "none";
       const attachSprite = document.createElement("img");
       attachSprite.className = "gnome-attach__sprite";
       attachSprite.src = "../assets/equipos/MushboomForest/gnomo_grita.png";
@@ -370,8 +390,63 @@
       attachEl.appendChild(attachSprite);
       flipEl.appendChild(attachEl);
 
-      currentEls = { el, flipEl, attachEl };
+      attachEl.addEventListener("pointerdown", startDrag);
+
+      currentEls = { el, flipEl, attachEl, spriteEl };
       applyFacing();
+      updateHeldSprite();
+    }
+
+    // ---------- Arrastrar para mover (mismo patrón que js/gnomecalib.js,
+    // el calibrador DENTRO del propio juego — pedido explícito: "la
+    // posicion del gnomo se hiciera manual arrastrando con el raton y no
+    // con sliders") ----------
+    function startDrag(e) {
+      if (!currentEls) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const attachEl = currentEls.attachEl;
+      const flipRect = currentEls.flipEl.getBoundingClientRect();
+      drag = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        startRight: curRight,
+        startBottom: curBottom,
+        flipHeight: flipRect.height || 1,
+        // Igual que en gnomecalib.js: con el personaje girado (scaleX(-1))
+        // arrastrar hacia la derecha EN PANTALLA debe seguir moviendo el
+        // gnomo hacia la derecha tal como se ve, así que hay que invertir
+        // el eje X antes de aplicarlo a `right` (que vive sin espejar).
+        invertX: facingLeft,
+      };
+      attachEl.classList.add("gnome-attach--dragging");
+      attachEl.setPointerCapture(e.pointerId);
+      attachEl.addEventListener("pointermove", onDragMove);
+      attachEl.addEventListener("pointerup", endDrag);
+      attachEl.addEventListener("pointercancel", endDrag);
+    }
+
+    function onDragMove(e) {
+      if (!drag || !currentEls) return;
+      const dxScreen = e.clientX - drag.startX;
+      const dyScreen = e.clientY - drag.startY;
+      const localDx = drag.invertX ? -dxScreen : dxScreen;
+      curRight = Math.round(drag.startRight - localDx);
+      curBottom = Math.round((drag.startBottom - (dyScreen / drag.flipHeight) * 100) * 10) / 10;
+      applyValuesToStage();
+    }
+
+    function endDrag(e) {
+      if (!currentEls) return;
+      const attachEl = currentEls.attachEl;
+      attachEl.releasePointerCapture(e.pointerId);
+      attachEl.classList.remove("gnome-attach--dragging");
+      attachEl.removeEventListener("pointermove", onDragMove);
+      attachEl.removeEventListener("pointerup", endDrag);
+      attachEl.removeEventListener("pointercancel", endDrag);
+      drag = null;
+      persistCurrent();
     }
 
     function applyFacing() {
@@ -379,8 +454,22 @@
       currentEls.flipEl.style.transform = facingLeft ? "scaleX(-1)" : "scaleX(1)";
     }
 
+    // Cambia el sprite del personaje según la pose actual — "iddle" usa el
+    // sprite normal (type.spriteUrl), "machaca" usa Units.machacaSpriteFor
+    // (disponible aquí porque js/units.js ya está cargado; para los
+    // personajes sin sprite propio de machacagnomos, esa función ya
+    // devuelve el de iddle como fallback, igual que en el juego real).
+    function updateHeldSprite() {
+      if (!currentEls || !currentTypeId) return;
+      const type = UNIT_TYPES[currentTypeId];
+      const url = pose === "machaca" && typeof Units !== "undefined"
+        ? Units.machacaSpriteFor(currentTypeId)
+        : type.spriteUrl;
+      currentEls.spriteEl.src = "../" + (url || type.spriteUrl);
+    }
+
     function currentValues() {
-      return { right: Number(rightInput.value), bottom: Number(bottomInput.value) };
+      return { right: curRight, bottom: curBottom };
     }
 
     function applyValuesToStage() {
@@ -409,20 +498,29 @@
         lines.push(`  ${typeId}: { right: ${v.right}, bottom: ${v.bottom} },`);
       });
       lines.push("};");
+      lines.push("");
+      lines.push("const GNOME_ATTACH_OFFSETS_MACHACA = {");
+      lines.push(`  default: { right: ${POS_DEFAULTS_MACHACA.right}, bottom: ${POS_DEFAULTS_MACHACA.bottom} },`);
+      Object.keys(UNIT_TYPES).forEach((typeId) => {
+        const v = tunedMachaca[typeId] || POS_DEFAULTS_MACHACA;
+        lines.push(`  ${typeId}: { right: ${v.right}, bottom: ${v.bottom} },`);
+      });
+      lines.push("};");
       output.value = lines.join("\n");
     }
 
     function persistCurrent() {
       const typeId = charSelect.value;
-      tuned[typeId] = currentValues();
-      savePositions(tuned);
+      const table = tableForPose();
+      table[typeId] = currentValues();
+      savePositionsTo(storageKeyForPose(), table);
       updateOutput();
     }
 
     function loadCharacter(typeId) {
-      const v = tuned[typeId] || POS_DEFAULTS;
-      rightInput.value = v.right;
-      bottomInput.value = v.bottom;
+      const v = tableForPose()[typeId] || defaultsForPose();
+      curRight = v.right;
+      curBottom = v.bottom;
       buildHeldStage(typeId);
       applyValuesToStage();
     }
@@ -434,17 +532,19 @@
 
     teamSelect.addEventListener("change", () => loadTeam(teamSelect.value));
     charSelect.addEventListener("change", () => loadCharacter(charSelect.value));
-    [rightInput, bottomInput].forEach((input) => {
-      input.addEventListener("input", () => {
-        applyValuesToStage();
-        persistCurrent();
-      });
-    });
     flipBtn.addEventListener("click", () => { facingLeft = !facingLeft; applyFacing(); });
+    poseBtn.addEventListener("click", () => {
+      pose = pose === "machaca" ? "idle" : "machaca";
+      poseBtn.textContent = pose === "machaca" ? "Ver pose: iddle" : "Ver pose: machacagnomos";
+      poseName.textContent = "Pose actual: " + (pose === "machaca" ? "machacagnomos" : "iddle");
+      loadCharacter(charSelect.value);
+      updateHeldSprite();
+    });
     resetBtn.addEventListener("click", () => {
       const typeId = charSelect.value;
-      delete tuned[typeId];
-      savePositions(tuned);
+      const table = tableForPose();
+      delete table[typeId];
+      savePositionsTo(storageKeyForPose(), table);
       loadCharacter(typeId);
       updateOutput();
     });

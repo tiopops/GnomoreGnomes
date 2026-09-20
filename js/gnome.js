@@ -58,7 +58,7 @@ const GNOME_ASSETS = {
 // solo cambia dónde se engancha.
 const GNOME_SIZES = {
   ground: 69,
-  flying: 87,
+  flying: 86,
   held: 85,
 };
 
@@ -128,6 +128,12 @@ const GNOME_ATTACH_OFFSETS = {
 // ?calibrarGnomo.
 const GNOME_ATTACH_OFFSETS_MACHACA = {
   default: { right: -14, bottom: 40 },
+  hombre_arbol: { right: -21, bottom: 71 },
+  surcabosques: { right: -14, bottom: 40 },
+  seta_artificiero: { right: -14, bottom: 40 },
+  goblin_lanzador: { right: -14, bottom: 40 },
+  urgamentes: { right: -14, bottom: 40 },
+  punoroca: { right: -14, bottom: 40 },
 };
 
 // ---------- Cada gnomo individual ----------
