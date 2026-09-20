@@ -696,8 +696,13 @@ const Units = {
   // comportamiento a imitar en el propio pedido — reescrito aquí en vez de
   // reutilizado porque Gnome._startIdleFlipLoop vive dentro de una instancia
   // de gnomo concreta (this.facing/this.el propios), no de una `unit`
-  // normal; misma idea, cadencia random propia (más rápida: un enemigo
-  // aterrorizado no respira tranquilo esperando su turno de girarse).
+  // normal; misma idea, cadencia random propia. Pedido explícito tras
+  // probarlo en el juego: "los que tienen miedo se giran demasiadas veces...
+  // queda muy exagerado, temblar bien pero no girarse tan de seguido" — el
+  // temblor (puro CSS, ver arriba) se queda igual de intenso, solo se alarga
+  // el intervalo entre giros (antes 260-520ms, ahora 1400-2200ms: parecido
+  // al ritmo de girarse del gnomo en reposo, GNOME_IDLE_BASE_S en gnome.js,
+  // en vez de mucho más rápido que él).
   startFearLoop(unit) {
     if (unit._fearTimer) return; // ya en marcha (p.ej. varias unidades pueden matarlo este turno)
     const tick = () => {
@@ -706,7 +711,7 @@ const Units = {
         unit.facing = unit.facing === "left" ? "right" : "left";
         this._applyFacing(unit);
         tick();
-      }, 260 + Math.random() * 260);
+      }, 1400 + Math.random() * 800);
     };
     tick();
   },
