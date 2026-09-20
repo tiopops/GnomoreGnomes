@@ -36,25 +36,25 @@ const TILE_TYPES = {
   // que tocar cada mecánica por separado — ver TerrainMap.isWalkable más
   // abajo, que es lo único que consultan.
   //
-  // nativeWidth/nativeHeight: agua_01.png NO comparte la proporción de
-  // hierba_01.png (su bloque es más alto, con más pared lateral visible) —
-  // TILE_NATIVE_WIDTH/HEIGHT de más abajo están pensados solo para hierba,
-  // así que cualquier tipo cuya imagen tenga otra proporción declara aquí
-  // las suyas propias; renderMap las usa para escalar manteniendo SU
+  // nativeWidth/nativeHeight: por si algún día agua_01.png deja de
+  // compartir la proporción exacta de hierba_01.png — de momento SÍ la
+  // comparte (mismo recorte 1024x854, arte de sustitución provisional
+  // pedido explícito: "vamos a sustituir las losetas hasta que las
+  // mejore por estas"), pero se declaran igualmente para que este tipo
+  // siga funcionando sin tocar nada el día que su arte definitivo tenga
+  // otra proporción — renderMap las usa para escalar manteniendo SU
   // relación de aspecto real en vez de estirarla/aplastarla con la de
-  // hierba (más alto por su cuenta, igual que el overhang de la niebla, no
-  // rompe el encaje en cuadrícula porque solo depende de TILE_WIDTH/
-  // TILE_TOP_HEIGHT, no de la altura de la imagen).
+  // hierba.
   water: {
     variants: ["assets/losetas/agua_01.png"],
     walkable: false,
-    nativeWidth: 627,
-    nativeHeight: 514,
-    // Calibrado a mano por Jesús con debug/calibrar-losetas.html: encaja
-    // igual que la hierba (escala 100%, sin desplazamiento en X), solo
-    // necesita bajarse 8px para que su cara superior quede a la misma
-    // altura que la de la loseta vecina.
-    offsetY: 8,
+    nativeWidth: 1024,
+    nativeHeight: 854,
+    // Sin offsetX/offsetY/scale propios: al compartir exactamente el mismo
+    // recorte que hierba_01.png ya encaja igual que ella por defecto — la
+    // calibración anterior (offsetY:8) era para el arte de agua VIEJO y ya
+    // no aplica a este. Si el arte definitivo lo necesita, se recalibra de
+    // nuevo con debug/calibrar-losetas.html y se añade aquí.
   },
 };
 
@@ -138,8 +138,8 @@ const FOG_NATIVE_HEIGHT = 1110;
 const FOG_OVERHANG = 1.7; // veces TILE_WIDTH — cuánto sobresale la nube de su loseta.
 
 // Dimensiones nativas del archivo de imagen hierba_01.png (no cambian).
-const TILE_NATIVE_WIDTH = 250;
-const TILE_NATIVE_HEIGHT = 218;
+const TILE_NATIVE_WIDTH = 1024;
+const TILE_NATIVE_HEIGHT = 854;
 
 // Valores de encaje calibrados a mano por Jesús con debug/calibrar-losetas.html:
 // TILE_WIDTH = ancho al que se renderiza cada loseta (también fija el espaciado
