@@ -118,12 +118,20 @@ const Turns = {
     const btn = document.createElement("button");
     btn.className = "end-turn-btn";
     btn.setAttribute("aria-label", "Pasar turno");
+    // Capa de fondo aparte (ver style.css) — el recorte en banderín del
+    // botón vive AQUÍ, no en el <button> en sí, para que el rombo del
+    // icono (hermano suyo, no hijo) pueda salirse fuera de la caja de
+    // texto sin que ese mismo clip-path le coma la punta. "Pasar turno" es
+    // el texto de este span, no del botón entero.
+    const bg = document.createElement("span");
+    bg.className = "end-turn-btn__bg";
     const icon = document.createElement("i");
     icon.className = "ph ph-flag-checkered end-turn-btn__icon";
     const label = document.createElement("span");
     label.className = "end-turn-btn__label";
+    bg.appendChild(label);
+    btn.appendChild(bg);
     btn.appendChild(icon);
-    btn.appendChild(label);
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       this.endTurn();

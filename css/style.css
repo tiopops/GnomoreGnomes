@@ -24,6 +24,15 @@
      viniendo SOLO de la forma (clip-path) y la sombra dura, nunca del
      color. */
   --p5-tone: #372e3d;
+  /* Pedido explícito (octava pasada, tras varias rondas de mockups en HTML
+     aprobados a mano): el rombo de pasar turno y el de configuración ya no
+     son un rombo perfecto (cuadrado girado 45deg) — es una silueta
+     irregular, "algo entre un cuadrado y un rombo", girada solo unos pocos
+     grados. Una sola variable compartida por los dos (ver
+     .end-turn-btn__icon y .settings-gear-btn) para que compartan
+     exactamente la misma forma sin repetirla dos veces. */
+  --gg-badge-clip: polygon(10% 3%, 95% 0%, 100% 87%, 5% 100%);
+  --gg-badge-tilt: 9deg;
 }
 
 * {
@@ -973,16 +982,23 @@ h2 {
 
 /* Barrita de vida: solo visible mientras esa unidad concreta está
    seleccionada (amiga o rival), encima de la cabeza.
-   Pedido explícito: "las barras de vida pueden estar seccionadas? creo que
-   así sería más visible a la hora de ver cuántos puntos de vida quedan a
-   los jugadores, implementa un diseño digno de un juego triple A" — un
-   segmento real por punto de aguante (uno por .unit__hpbar-segment, ver
-   Units.spawnUnit) separados con gap de verdad, no un único div con
-   gradiente al que se le cambia el ancho en % (así quedaba "una barra que
-   se acorta", no "puntos de vida" contables de un vistazo). overflow
-   visible a propósito (antes hidden): el pop elástico de un segmento al
-   romperse (--pop, más abajo) se sale un poco de su caja, es parte del
-   efecto. */
+   Pedido explícito (primera pasada): "las barras de vida pueden estar
+   seccionadas? creo que así sería más visible a la hora de ver cuántos
+   puntos de vida quedan a los jugadores, implementa un diseño digno de un
+   juego triple A" — un segmento real por punto de aguante (uno por
+   .unit__hpbar-segment, ver Units.spawnUnit) separados con gap de verdad,
+   no un único div con gradiente al que se le cambia el ancho en %.
+   Pedido explícito (segunda pasada, tras varias rondas de mockups en HTML
+   aprobando el diseño final a mano): "esa barra es la que quiero en todo lo
+   que tenga vida de mi juego" — el propio .unit__hpbar hace ahora de MARCO
+   astillado (mismo lenguaje visual que el resto de recuadros planos del
+   juego, clip-path + var(--p5-tone), sin necesidad de un div contenedor
+   aparte) y cada segmento lleva su propio corte diagonal en punta — salvo
+   el primero, que queda totalmente plano y pegado al borde interior del
+   marco (fue justo lo que se corrigió en el último mockup aprobado: un
+   diente sobrando ahí se veía mal). overflow visible a propósito (nunca
+   hidden): el pop elástico de un segmento al romperse (--pop, más abajo) se
+   sale un poco de su caja, es parte del efecto. */
 .unit__hpbar {
   position: absolute;
   left: 50%;
@@ -991,12 +1007,11 @@ h2 {
   width: 56px;
   height: 8px;
   display: flex;
-  gap: 2px;
-  padding: 1px;
+  gap: 1.1px;
+  padding: 1.5px 3px;
   box-sizing: border-box;
-  border-radius: 5px;
-  background: rgba(18, 20, 26, 0.7);
-  border: 1px solid rgba(244, 242, 248, 0.55);
+  background: var(--p5-tone);
+  clip-path: polygon(0% 0%, 100% 11%, 98.5% 100%, 0% 89%);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.18s ease;
@@ -1019,23 +1034,29 @@ h2 {
   flex: 1 1 0;
   min-width: 0;
   height: 100%;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.14);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  background: rgba(0, 0, 0, 0.35);
+  clip-path: polygon(2.5px 0%, 100% 0%, calc(100% - 2.5px) 100%, 0% 100%);
+  transition: background 0.2s ease;
+}
+
+/* La primera casilla NUNCA lleva el corte diagonal en su lado izquierdo —
+   ese lado es el borde exterior del marco, no una unión con otro segmento,
+   así que se queda plana y pegada a él (ver nota de cabecera más arriba). */
+.unit__hpbar-segment:first-child {
+  clip-path: polygon(0% 0%, 100% 0%, calc(100% - 2.5px) 100%, 0% 100%);
 }
 
 .unit__hpbar-segment--filled {
-  background: linear-gradient(180deg, #7cf29a, #2fb958);
-  box-shadow: 0 0 3px rgba(95, 224, 131, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.55);
+  background: var(--hp-fill, #4fcf74);
 }
 
 /* Último punto de vida en pie: rojo y pulsando SOLO ese segmento (no toda
    la barra) — "cuidado, un golpe más y muere" se lee mejor en un único
-   punto parpadeando que en un color de fondo entero. */
+   punto parpadeando que en un color de fondo entero. Colores planos (sin
+   gradiente/glow) a juego con el resto de interfaces del juego — el pulso
+   de aviso vive solo en el brillo (filter), no en una sombra de color. */
 .unit__hpbar-segment--low {
-  background: linear-gradient(180deg, #ff8f7a, #c73a3a);
-  box-shadow: 0 0 4px rgba(224, 60, 45, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  background: #e14a3a;
   animation: hpbar-segment-low-pulse 0.9s ease-in-out infinite;
 }
 
@@ -1161,32 +1182,32 @@ h2 {
    colores. Conserva el mismo marcado/clases de siempre
    (.end-turn-btn__icon, --visible/--thinking/--ready) — solo cambia el
    aspecto, no lo que hace Turns.js con él. */
+/* Pedido explícito (octava pasada, tras varias rondas de mockups HTML
+   aprobados a mano): "el rombo con el icono del reloj debe mostrarse por
+   ENCIMA DE TODO EL BOTON, no estar contenido dentro de la parte donde pone
+   pasar turno" + "el rombo fuera del cuadrado de donde está el texto...ese
+   cuadrado tiene que ser más estrecho" — el recorte en banderín (clip-path)
+   se separa a su PROPIA capa (.end-turn-btn__bg), ya no vive en el mismo
+   elemento que el icono: así el rombo puede salirse fuera sin que el propio
+   contorno recortado del botón le coma la punta (un clip-path recorta TODO
+   lo que se pinte dentro de su elemento, incluidos los hijos con overflow
+   visible — esa es la causa real del recorte de antes). .end-turn-btn en sí
+   ya no pinta nada visible: solo posiciona (fixed) y mueve el CONJUNTO
+   entero (bg + rombo) a la vez en las animaciones de aparición/hover/pulso,
+   para que ambas piezas se muevan siempre juntas. */
 .end-turn-btn {
   position: fixed;
   right: 24px;
   bottom: 24px;
-  padding: 10px 26px 10px 10px;
-  clip-path: polygon(7% 0, 100% 0, 93% 100%, 0% 100%);
-  border: 2px solid #000;
-  background: var(--p5-tone);
-  color: #fff;
-  font-size: 0.98rem;
-  font-weight: 900;
-  font-style: italic;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  padding: 0;
+  border: none;
+  background: none;
   cursor: pointer;
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
   opacity: 0;
   transform: translateY(14px) scale(0.85);
   pointer-events: none;
   z-index: 500;
-  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, background 0.2s ease,
-    box-shadow 0.15s ease;
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease;
 }
 
 .end-turn-btn--visible {
@@ -1197,85 +1218,125 @@ h2 {
 
 .end-turn-btn:hover:not(:disabled) {
   transform: translate(-3px, -3px) scale(1);
-  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.6);
 }
 
 .end-turn-btn:active:not(:disabled) {
   transform: translate(1px, 1px) scale(1);
+}
+
+/* La caja de texto — todo lo que antes vivía en .end-turn-btn (el recorte
+   en banderín, el fondo, la sombra dura) se queda aquí. Más aire a la
+   izquierda (10px -> 44px) que antes: ya no hace falta reservar sitio para
+   el icono dentro de la fila, así que la caja queda más estrecha de
+   verdad — el hueco que le sobra es justo el que necesita el propio texto,
+   no el que necesitaba compartir con el rombo. */
+.end-turn-btn__bg {
+  display: block;
+  padding: 10px 26px 10px 44px;
+  clip-path: polygon(7% 0, 100% 0, 93% 100%, 0% 100%);
+  border: 2px solid #000;
+  background: var(--p5-tone);
+  color: #fff;
+  font-size: 0.98rem;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
+  white-space: nowrap;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
+  transition: background 0.2s ease, box-shadow 0.15s ease;
+}
+
+.end-turn-btn:hover:not(:disabled) .end-turn-btn__bg {
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.6);
+}
+
+.end-turn-btn:active:not(:disabled) .end-turn-btn__bg {
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
 }
 
-/* El icono vive dentro de su propio rombo a la izquierda (en vez de una
-   moneda circular, para no romper el lenguaje angular del resto del
-   botón) — separa visualmente el símbolo del texto y da algo con lo que
-   animar el estado de "pensando"/"listo" sin mover el resto del botón.
-   Pedido explícito: "me gustaria que fuera amarillo el recuadro en el que
-   esta y negro el reloj. hazlo mas grande que sobresalga del recuadro
-   donde esta el texto pasar turno" (color plano, sin degradado — pedido
-   explícito posterior: "colores planos para las interfaces") — recuadro
-   amarillo con el icono en negro, e "overflow: visible" a propósito para
-   que un icono más grande que la propia caja (2rem sobre 34px) se salga de
-   ella sin recortarse — es justo ese desbordamiento lo que pedía.
+/* El rombo — ya NO vive dentro de la fila del texto (position:absolute,
+   fuera del flujo) y ya NO es un rombo perfecto: silueta irregular
+   compartida con .settings-gear-btn (--gg-badge-clip/--gg-badge-tilt, ver
+   :root), más grande que antes (46px -> 60px) y sin "border" (un border
+   normal no sigue bien un contorno irregular/girado, se ve desigual en las
+   diagonales — el contorno negro ahora es ::after, una segunda silueta
+   idéntica y un poco más grande, DEBAJO, así los cuatro lados quedan
+   perfectamente rectos). top:50% + translateY(-50%) centra el rombo con la
+   misma línea horizontal que el propio botón (antes quedaba descolgado
+   hacia arriba, como dos piezas en dos alturas distintas) — sigue
+   saliéndose por la izquierda, ya no hacia arriba.
    IMPORTANTE: Turns.js (_ensureButton/_updateButtonState) pone la clase
    "end-turn-btn__icon" DIRECTAMENTE sobre el <i> del icono — no hay un div
-   contenedor separado. Así que aquí el propio icono ES el rombo (transform:
-   rotate(45deg)) y el glifo se endereza con su ::before (mismo patrón que
-   .menu-btn i::before), no con un hijo .end-turn-btn__icon i que no existe
-   en el DOM real (ese selector nunca coincidía con nada — bug detectado al
-   verificar este mismo cambio). */
-/* Pedido explícito (séptima pasada): "el rombo de pasar turno mas grande,
-   que se salga del recuadro...el reloj con un poco de margen que esta
-   demasiado apurado al recuadro amarillo" — caja más grande (34px -> 46px,
-   así sobresale más del botón) y glifo proporcionalmente más pequeño que su
-   caja (antes 2rem sobre 34px = 94% de la caja, casi sin margen; ahora
-   1.9rem sobre 46px = 66%) para que quede aire entre el reloj de arena y el
-   borde del rombo — eso es justo lo que se leía como icono "duplicado" (ver
-   nota en Turns._setIcon, turns.js): un reloj de arena (ya de por sí una
-   silueta de doble triángulo) pegado al borde de OTRO rombo se confundía
-   con dos figuras superpuestas. */
+   contenedor separado, así que aquí el propio icono ES el rombo y el glifo
+   se endereza con su ::before (mismo patrón de siempre). */
 .end-turn-btn__icon {
-  position: relative;
-  width: 46px;
-  height: 46px;
+  position: absolute;
+  /* Centrado en vertical con margin-top (mitad de los 60px de alto) en vez
+     de translateY(-50%): así el "transform" de este icono contiene SOLO el
+     giro (rotate), igual que .settings-gear-btn — necesario para que los
+     dos puedan compartir la misma animación de giro (end-turn-hourglass-
+     spin) sin que uno lleve un translateY de más que el otro no necesita. */
+  top: 50%;
+  margin-top: -30px;
+  left: -26px;
+  width: 60px;
+  height: 60px;
   background: #ffcf3d;
-  border: 2px solid #000;
   color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: visible;
-  font-size: 1.9rem;
+  font-size: 1.95rem;
   font-style: normal;
   flex-shrink: 0;
-  transform: rotate(45deg);
+  clip-path: var(--gg-badge-clip);
+  transform: rotate(var(--gg-badge-tilt));
+  /* El contorno negro y la sombra dura son un "filter", no un border ni un
+     segundo elemento — un border normal no sigue bien un clip-path
+     irregular/girado (queda desigual en las diagonales, motivo por el que
+     se cambió), y un box-shadow o un ::after normal se recortarían por el
+     propio clip-path de este mismo elemento (clip-path recorta TAMBIÉN a
+     sus hijos/pseudo-elementos, no solo su propio relleno). drop-shadow, en
+     cambio, se calcula sobre la silueta YA recortada pero se PINTA sin que
+     ese mismo clip-path se la coma — es la única forma de conseguir un
+     contorno recto de verdad sobre una forma irregular. Ocho copias en
+     círculo (arriba/abajo/izq/dcha/diagonales) a 2px simulan un trazo
+     uniforme; la última, más grande y semitransparente, es la sombra dura
+     de profundidad de siempre (mismo lenguaje que el resto de recuadros). */
+  filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000)
+    drop-shadow(0 -2px 0 #000) drop-shadow(1.5px 1.5px 0 #000) drop-shadow(-1.5px 1.5px 0 #000)
+    drop-shadow(1.5px -1.5px 0 #000) drop-shadow(-1.5px -1.5px 0 #000) drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
+  z-index: 2;
 }
 
 .end-turn-btn__icon::before {
   display: inline-block;
-  transform: rotate(-45deg);
+  transform: rotate(calc(-1 * var(--gg-badge-tilt)));
 }
 
 /* Pedido explícito: "el icono de pasar turno que es un reloj de arena,
    puede girar 2 veces y frenar suavemente al poner el raton encima del
-   boton pasar turno?" — corregido después (séptima pasada): "que no gire
-   el reloj tantas veces" — UNA vuelta completa a partir del reposo (45deg +
-   360deg = 405deg, visualmente idéntico a 45deg) en vez de dos, con una
-   curva de easing muy cargada al final (frena de golpe al principio del
-   recorrido, apenas se mueve en el último tramo) para que se LEA como que
-   pierde inercia, no como una vuelta a velocidad constante que para en
-   seco. Solo en hover (nunca infinito) y solo sobre el propio reloj de
-   arena — los otros iconos del botón (comprobado/girando de "pensando")
-   tienen sus propias animaciones y no deben heredar esta. Gira el rombo
-   entero (icono y caja son el mismo elemento, ver nota de arriba) — como es
-   un cuadrado, no cambia de silueta en los múltiplos de 90°, así que se lee
-   igual de bien que si solo girase el glifo. */
+   boton pasar turno?" — corregido después: "que no gire el reloj tantas
+   veces" — UNA vuelta completa a partir del reposo (mismo ángulo de reposo
+   + 360deg, visualmente idéntico al reposo) en vez de dos, con una curva de
+   easing muy cargada al final (frena de golpe al principio del recorrido,
+   apenas se mueve en el último tramo) para que se LEA como que pierde
+   inercia, no como una vuelta a velocidad constante que para en seco. Solo
+   en hover (nunca infinito) y solo sobre el propio reloj de arena — los
+   otros iconos del botón (comprobado/girando de "pensando") tienen sus
+   propias animaciones y no deben heredar esta. Reutilizada tal cual por
+   .settings-gear-btn:hover más abajo, así los dos rombos giran con la
+   misma física exacta. */
 .end-turn-btn:hover .end-turn-btn__icon.ph-hourglass-simple {
   animation: end-turn-hourglass-spin 0.85s cubic-bezier(0.1, 0.82, 0.25, 1) 1;
 }
 
 @keyframes end-turn-hourglass-spin {
-  from { transform: rotate(45deg); }
-  to { transform: rotate(405deg); }
+  from { transform: rotate(var(--gg-badge-tilt)); }
+  to { transform: rotate(calc(var(--gg-badge-tilt) + 360deg)); }
 }
 
 /* Mientras la IA rival resuelve su turno (Turns._aiRunning) — deshabilitado
@@ -1283,10 +1344,13 @@ h2 {
    tono apagado y plano en vez del amarillo, con el icono girando sin parar
    para que se lea como "pensando", no como un botón roto que no responde. */
 .end-turn-btn--thinking {
+  cursor: default;
+}
+
+.end-turn-btn--thinking .end-turn-btn__bg {
   background: #26212a;
   color: rgba(255, 255, 255, 0.55);
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
-  cursor: default;
 }
 
 .end-turn-btn--thinking .end-turn-btn__icon {
@@ -1294,8 +1358,8 @@ h2 {
 }
 
 @keyframes end-turn-spin {
-  from { transform: rotate(45deg); }
-  to { transform: rotate(405deg); }
+  from { transform: rotate(var(--gg-badge-tilt)); }
+  to { transform: rotate(calc(var(--gg-badge-tilt) + 360deg)); }
 }
 
 /* Pedido explícito: "cuando todos los personajes se hayan movido estaría
@@ -1308,13 +1372,25 @@ h2 {
   animation: end-turn-pulse 1.3s ease-in-out infinite;
 }
 
+/* El pulso mueve el CONJUNTO (arriba, transform) para que el rombo también
+   rebote con el resto — pero la sombra "expansiva" solo tiene sentido
+   pintada sobre la caja de texto (.end-turn-btn__bg), que es la que de
+   verdad tiene box-shadow ahora. Misma duración/curva que el de arriba para
+   que ambas animaciones se vean perfectamente sincronizadas. */
+.end-turn-btn--ready .end-turn-btn__bg {
+  animation: end-turn-pulse-shadow 1.3s ease-in-out infinite;
+}
+
 @keyframes end-turn-pulse {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.03); }
+}
+
+@keyframes end-turn-pulse-shadow {
   0%, 100% {
-    transform: translateY(0) scale(1);
     box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55), 0 0 0 0 rgba(255, 255, 255, 0.4);
   }
   50% {
-    transform: translateY(-2px) scale(1.03);
     box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.55), 0 0 0 8px rgba(255, 255, 255, 0);
   }
 }
@@ -2158,14 +2234,21 @@ h2 {
    insignia circular de antes.
    Pedido explícito (séptima pasada): "el rombo donde esta configuracion mas
    grande y en amarillo tambien, con el engranaje en negro, debe girar como
-   el de pasar turno al tocarlo" — ahora es literalmente el mismo lenguaje
-   que .end-turn-btn__icon: un rombo (cuadrado rotado 45deg) amarillo plano
-   con borde negro, más grande que antes (52px -> 64px), con el engranaje en
-   negro dentro (contrarrotado -45deg para quedar derecho — aquí SÍ hay un
-   <i> hijo de verdad, a diferencia de end-turn-btn__icon, así que se
-   contrarrota directamente en vez de con ::before) y la misma animación de
-   giro al pasar el ratón (ver end-turn-hourglass-spin más arriba, reusada
-   aquí tal cual). */
+   el de pasar turno al tocarlo" — mismo lenguaje que .end-turn-btn__icon.
+   Pedido explícito (octava pasada): "el rombo de configuración lo quiero
+   igual" — ya no es un rombo perfecto (cuadrado a 45deg) sino la misma
+   silueta irregular compartida (--gg-badge-clip/--gg-badge-tilt, ver
+   :root). El contorno negro y la sombra dura dejan de ser un "border"/
+   box-shadow normal (ninguno de los dos sigue bien un clip-path irregular
+   — un border queda desigual en las diagonales, y un box-shadow se recorta
+   por el propio clip-path del elemento, igual que le pasaría a un
+   pseudo-elemento hijo) y pasan a ser un filter: drop-shadow (ver el mismo
+   truco en .end-turn-btn__icon) — la única técnica que dibuja un contorno
+   recto sobre una silueta ya recortada sin que ese mismo recorte se lo
+   coma. El engranaje en negro dentro sigue contrarrotado para quedar
+   derecho, y comparte con .end-turn-btn__icon la misma animación de giro al
+   pasar el ratón (end-turn-hourglass-spin) con la física exacta, ya que los
+   dos ahora solo rotan (sin translateY de por medio). */
 .settings-gear-btn {
   position: fixed;
   top: 20px;
@@ -2173,8 +2256,8 @@ h2 {
   width: 64px;
   height: 64px;
   background: #ffcf3d;
-  border: 2px solid #000;
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
+  border: none;
+  clip-path: var(--gg-badge-clip);
   color: #000;
   display: flex;
   align-items: center;
@@ -2182,29 +2265,34 @@ h2 {
   cursor: pointer;
   z-index: 500;
   opacity: 0;
-  transform: scale(0.7) rotate(10deg);
+  transform: scale(0.7) rotate(var(--gg-badge-tilt));
   pointer-events: none;
-  transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, box-shadow 0.2s ease;
-}
-
-.settings-gear-btn--visible {
-  opacity: 1;
-  transform: scale(1) rotate(45deg);
-  pointer-events: auto;
+  filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000)
+    drop-shadow(0 -2px 0 #000) drop-shadow(1.5px 1.5px 0 #000) drop-shadow(-1.5px 1.5px 0 #000)
+    drop-shadow(1.5px -1.5px 0 #000) drop-shadow(-1.5px -1.5px 0 #000) drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
+  transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, filter 0.2s ease;
 }
 
 .settings-gear-btn:hover {
   animation: end-turn-hourglass-spin 0.85s cubic-bezier(0.1, 0.82, 0.25, 1) 1;
-  box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.6);
+  filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000)
+    drop-shadow(0 -2px 0 #000) drop-shadow(1.5px 1.5px 0 #000) drop-shadow(-1.5px 1.5px 0 #000)
+    drop-shadow(1.5px -1.5px 0 #000) drop-shadow(-1.5px -1.5px 0 #000) drop-shadow(6px 6px 0 rgba(0, 0, 0, 0.6));
+}
+
+.settings-gear-btn--visible {
+  opacity: 1;
+  transform: scale(1) rotate(var(--gg-badge-tilt));
+  pointer-events: auto;
 }
 
 .settings-gear-btn:active {
-  transform: scale(0.94) rotate(45deg);
+  transform: scale(0.94) rotate(var(--gg-badge-tilt));
 }
 
 .settings-gear-btn__icon {
   font-size: 1.9rem;
-  transform: rotate(-45deg);
+  transform: rotate(calc(-1 * var(--gg-badge-tilt)));
 }
 
 /* Popup de opciones — overlay estándar (fondo oscuro, clic fuera cierra,
