@@ -233,6 +233,17 @@ const BoardView = {
     // ---- Arrastrar con el ratón (clic y arrastrar) ----
     vp.addEventListener("mousedown", (e) => {
       if (e.button !== 0) return;
+      // BUG encontrado y corregido: "este error grafico aparece a veces,
+      // es como si estuvieran seleccionados como texto" — sin esto, un
+      // clic-y-arrastre normal para mover la cámara TAMBIÉN disparaba el
+      // gesto nativo del navegador de seleccionar texto arrastrando (no
+      // hay ningún texto de verdad bajo el cursor, pero el navegador igual
+      // arranca una selección y la pinta como un rectángulo azul
+      // translúcido encima de lo que haya debajo — una loseta, un gnomo...
+      // ver también el user-select:none en .board-viewport, CSS, como
+      // segunda barrera). preventDefault() en el propio mousedown ataja el
+      // problema de raíz: nunca llega a iniciarse esa selección.
+      e.preventDefault();
       this._dragState = { lastX: e.clientX, lastY: e.clientY };
       vp.classList.add("dragging");
     });

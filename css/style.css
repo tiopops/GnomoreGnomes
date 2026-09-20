@@ -252,6 +252,21 @@ h2 {
   inset: 0;
   overflow: hidden;
   cursor: grab;
+  /* BUG encontrado y corregido: "este error grafico aparece a veces, es
+     como si estuvieran seleccionados como texto" — el arrastre para mover
+     la cámara (js/boardview.js, mousedown+mousemove) no evitaba el gesto
+     nativo del navegador de "seleccionar texto arrastrando", así que un
+     clic-y-arrastre normal para desplazar el mapa también iniciaba una
+     selección de verdad por debajo, que el navegador pinta como un
+     rectángulo azul translúcido encima de lo que caiga en medio (una
+     loseta, un gnomo...) aunque esos elementos concretos ya tuvieran
+     user-select:none. Este user-select:none en el CONTENEDOR es la
+     segunda barrera (ver también e.preventDefault() en el propio
+     mousedown de boardview.js, que ataja el problema de raíz) — cubre
+     cualquier otro nodo de texto/espacio en blanco que quedara sin
+     proteger dentro del tablero. */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .board-viewport.dragging {
@@ -277,6 +292,17 @@ h2 {
 
 .tile img {
   display: block;
+  /* position:absolute (con left/top puestos por JS en mapgen.js, por
+     defecto 0/0 = sin cambio) permite que cada TIPO de loseta lleve su
+     propio desplazamiento fino dentro de su propia casilla — ver
+     TILE_TYPES.<tipo>.offsetX/offsetY en mapgen.js y
+     debug/calibrar-losetas.html, pedido explícito: "quiero que me deje
+     ajustar todas las losetas al mismo tiempo... poder ajustarlas entre
+     ellas". La CASILLA en sí (.tile, este es su único hijo posicionado)
+     sigue encajando siempre en la misma cuadrícula sea cual sea ese ajuste. */
+  position: absolute;
+  left: 0;
+  top: 0;
   transition: filter 0.1s ease;
   user-select: none;
   -webkit-user-drag: none;
@@ -328,14 +354,26 @@ h2 {
   transform: translate(-50%, -50%);
   pointer-events: none;
   opacity: 0.96;
-  /* Fijo y enorme a propósito (no depende de row/col como .tile) — tiene
-     que quedar SIEMPRE por encima de CUALQUIER loseta o unidad, incluidas
-     las que están "más cerca de cámara" (z-index más alto, ver mapgen.js);
-     sin esto, cualquier loseta con z-index > 0 pintaría por encima de la
-     niebla en vez de al revés (regresión ya vista una vez: sin z-index
-     propio, un elemento posicionado cuenta como 0 y las losetas con
-     row+col > 0 lo tapaban casi todo). */
-  z-index: 100000;
+  /* BUG encontrado y corregido: "el z-index de la niebla no funciona
+     correctamente, debería estar detrás de mi personaje" — antes este
+     z-index era fijo y ENORME (100000) para TODAS las nubes, a propósito
+     para que la niebla de una loseta siempre quedara por encima de
+     cualquier unidad de pie en ESA MISMA loseta sin revelar. Pero
+     FOG_OVERHANG (mapgen.js) hace cada nube más ancha que su propia
+     loseta para que el borde se lea continuo — y como ese valor fijo
+     ignoraba por completo el orden normal de dibujado (mayor fila+columna
+     = más cerca de cámara = por encima), una nube de una loseta que
+     todavía no se ha revelado y que está DETRÁS del jugador en la
+     cuadrícula (fila+columna menor) se seguía pintando por delante de su
+     propio personaje en cuanto el solapamiento la hacía asomar sobre esa
+     casilla — justo el bug reportado. Ahora el z-index de cada nube lo
+     pone JS por loseta (ver mapgen.js, mismo patrón (fila+columna)*10 que
+     usan unidades/marcadores, +6 para quedar por encima de cualquier
+     unidad de SU PROPIA loseta (unidades van a +5) sin adelantarse a las
+     losetas siguientes) — así una nube "detrás" del jugador vuelve a
+     quedar detrás, y una "delante" (loseta más cercana a cámara que
+     todavía tapa lo que hay detrás) sigue ocultándolo correctamente, que
+     es la oclusión normal esperada en isométrico. */
   will-change: transform, opacity, filter;
   animation: fog-idle-drift 8s ease-in-out infinite;
 }

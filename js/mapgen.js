@@ -7,6 +7,20 @@
    (assets/losetas/) en vez de placeholders generados, con un orden de dibujado (z-index)
    estable en función de su posición para que no "salten" visualmente al hacer hover. */
 
+// scale/offsetX/offsetY (por tipo, ver también debug/calibrar-losetas.html):
+// pedido explícito — "quiero que me deje ajustar todas las losetas al mismo
+// tiempo para que pueda hacerlas coincidir... lo que quiero es poder
+// ajustarlas entre ellas". El encaje de la CUADRÍCULA en sí sigue siendo
+// SIEMPRE el mismo para todos los tipos (TILE_WIDTH/TILE_TOP_HEIGHT, más
+// abajo — eso es lo que mantiene alineadas las filas/columnas); estos 3
+// valores solo retocan la imagen DENTRO de su propia casilla — escala
+// (1 = tamaño normal) y desplazamiento en píxeles desde la esquina de la
+// casilla — para poder corregir a mano pequeños desajustes del propio arte
+// (recortes con distinto margen, etc.) sin tocar el resto del motor. Los
+// tres a 0/0/1 por defecto (sin efecto) hasta que se calibren con la
+// herramienta de debug.
+const TILE_DEFAULT_ADJUST = { scale: 1, offsetX: 0, offsetY: 0 };
+
 const TILE_TYPES = {
   grass: {
     // Varias variantes por tipo = variedad visual sin duplicar lógica (regla de oro de escalabilidad).
@@ -36,6 +50,11 @@ const TILE_TYPES = {
     walkable: false,
     nativeWidth: 627,
     nativeHeight: 514,
+    // Calibrado a mano por Jesús con debug/calibrar-losetas.html: encaja
+    // igual que la hierba (escala 100%, sin desplazamiento en X), solo
+    // necesita bajarse 8px para que su cara superior quede a la misma
+    // altura que la de la loseta vecina.
+    offsetY: 8,
   },
 };
 
@@ -279,10 +298,22 @@ function renderMap(map, container) {
     // hierba; el tipo real solo aparece con el overlay de abajo, al
     // revelarse.
     const baseSrc = t.type === "grass" ? t.src : pickVariant(TILE_TYPES.grass, t.row, t.col);
+    // Ajuste fino propio de la hierba (ver TILE_DEFAULT_ADJUST más arriba) —
+    // se aplica aquí SIEMPRE, tanto si esta loseta es realmente hierba como
+    // si de momento solo está ENSEÑANDO hierba a la espera de revelarse
+    // (agua bajo niebla): lo que se ve es hierba, así que lleva el ajuste
+    // de hierba.
+    const grassAdjust = {
+      scale: TILE_TYPES.grass.scale != null ? TILE_TYPES.grass.scale : TILE_DEFAULT_ADJUST.scale,
+      offsetX: TILE_TYPES.grass.offsetX != null ? TILE_TYPES.grass.offsetX : TILE_DEFAULT_ADJUST.offsetX,
+      offsetY: TILE_TYPES.grass.offsetY != null ? TILE_TYPES.grass.offsetY : TILE_DEFAULT_ADJUST.offsetY,
+    };
     const img = document.createElement("img");
     img.src = baseSrc;
-    img.width = TILE_WIDTH;
-    img.height = TILE_RENDER_HEIGHT;
+    img.width = TILE_WIDTH * grassAdjust.scale;
+    img.height = TILE_RENDER_HEIGHT * grassAdjust.scale;
+    img.style.left = `${grassAdjust.offsetX}px`;
+    img.style.top = `${grassAdjust.offsetY}px`;
     img.draggable = false;
     img.alt = "";
     if (TILE_OVERLAP > 0) {
@@ -306,11 +337,19 @@ function renderMap(map, container) {
       const typeInfo = TILE_TYPES[t.type];
       const nativeW = typeInfo.nativeWidth || TILE_NATIVE_WIDTH;
       const nativeH = typeInfo.nativeHeight || TILE_NATIVE_HEIGHT;
+      const adjust = {
+        scale: typeInfo.scale != null ? typeInfo.scale : TILE_DEFAULT_ADJUST.scale,
+        offsetX: typeInfo.offsetX != null ? typeInfo.offsetX : TILE_DEFAULT_ADJUST.offsetX,
+        offsetY: typeInfo.offsetY != null ? typeInfo.offsetY : TILE_DEFAULT_ADJUST.offsetY,
+      };
+      const renderWidth = TILE_WIDTH * adjust.scale;
       const revealImg = document.createElement("img");
       revealImg.className = "tile__terrain-reveal";
       revealImg.src = t.src;
-      revealImg.width = TILE_WIDTH;
-      revealImg.height = Math.round((TILE_WIDTH * nativeH) / nativeW);
+      revealImg.width = renderWidth;
+      revealImg.height = Math.round((renderWidth * nativeH) / nativeW);
+      revealImg.style.left = `${adjust.offsetX}px`;
+      revealImg.style.top = `${adjust.offsetY}px`;
       revealImg.draggable = false;
       revealImg.alt = "";
       revealImg.dataset.row = String(t.row);
@@ -337,15 +376,29 @@ function renderMap(map, container) {
     // ver el comentario de FOG_SRC de por qué se centra con sus propias
     // coordenadas en vez de heredar la caja de la loseta), con
     // data-row/data-col propios para que Fog.init la encuentre igual que
-    // encontraría la de .tile. z-index enorme y fijo (no depende de row/col
-    // como el resto) a propósito: tiene que quedar SIEMPRE por encima de
-    // cualquier unidad/gnomo que pueda estar de pie sobre esa misma loseta
-    // sin haberse revelado todavía — si dependiera de (row+col) como las
-    // propias losetas, una unidad con z-index más alto (más cerca de la
-    // cámara) se vería POR ENCIMA de la niebla que debería ocultarla.
+    // encontraría la de .tile.
+    //
+    // BUG encontrado y corregido: "el z-index de la niebla no funciona
+    // correctamente, debería estar detrás de mi personaje" — antes CADA
+    // nube usaba un z-index fijo y enorme (100000, en style.css) para
+    // garantizar que quedara por encima de cualquier unidad de pie en SU
+    // PROPIA loseta sin revelar. Pero FOG_OVERHANG hace que cada nube
+    // sobresalga sobre losetas VECINAS ya reveladas — y ese valor fijo
+    // ignoraba el orden normal (mayor fila+columna = más cerca de cámara),
+    // así que una nube de una loseta que está DETRÁS del jugador en la
+    // cuadrícula se seguía dibujando por delante de su propio personaje en
+    // cuanto el solapamiento la hacía asomar sobre esa casilla. Ahora usa
+    // el mismo patrón (fila+columna)*10 que unidades/marcadores (ver
+    // Units.addMarker/_placeInstant) — +6 porque una unidad de pie en ESTA
+    // MISMA loseta usa +5 (así la nube sigue tapándola mientras no se haya
+    // revelado), pero sin sobrepasar el rango de la SIGUIENTE loseta
+    // (arranca en +10), que es lo que ahora deja que el orden normal de
+    // dibujado decida correctamente si una nube vecina queda delante o
+    // detrás del jugador, según toque.
     const fogImg = document.createElement("img");
     fogImg.className = "tile__fog";
     fogImg.src = FOG_SRC;
+    fogImg.style.zIndex = String((t.row + t.col) * 10 + 6);
     fogImg.draggable = false;
     fogImg.alt = "";
     fogImg.dataset.row = String(t.row);

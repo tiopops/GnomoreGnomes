@@ -8,28 +8,66 @@
   :root {
     --bg: #1f2430;
     --bg-elevated: #262c3a;
+    --bg-card: #2c3346;
     --accent: #7a3ef0;
+    --accent-grass: #6fcf6f;
+    --accent-water: #4fc3e0;
     --ink: #f4f2f8;
     --muted: #a9a6b8;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; }
-  body { display: flex; flex-direction: column; min-height: 100vh; }
+  body { display: flex; min-height: 100vh; }
 
-  .panel {
-    padding: 16px 20px;
+  .sidebar {
+    width: 340px;
+    flex: none;
     background: var(--bg-elevated);
+    border-right: 1px solid #3a4054;
+    overflow-y: auto;
+    padding: 18px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 24px;
-    align-items: center;
-    border-bottom: 1px solid #3a4054;
+    flex-direction: column;
+    gap: 18px;
   }
-  .control { display: flex; flex-direction: column; gap: 4px; min-width: 260px; }
-  .control label { font-size: 0.85rem; color: var(--muted); }
-  .control .value { font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+  h2 { font-size: 0.95rem; margin: 0 0 8px; color: var(--ink); }
+  h3 { font-size: 0.85rem; margin: 0; text-transform: uppercase; letter-spacing: 0.04em; }
+  .control { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .control label { font-size: 0.8rem; color: var(--muted); }
+  .control .value { font-weight: 700; color: var(--accent); }
   input[type="range"] { width: 100%; }
-  .hint { font-size: 0.8rem; color: var(--muted); max-width: 480px; }
+  select { width: 100%; padding: 6px; border-radius: 6px; background: #1c212c; color: var(--ink); border: 1px solid #3a4054; }
+  .hint { font-size: 0.75rem; color: var(--muted); line-height: 1.4; }
+
+  .card { background: var(--bg-card); border-radius: 10px; padding: 12px 14px; border: 2px solid transparent; }
+  .card--grass { border-color: color-mix(in srgb, var(--accent-grass) 45%, transparent); }
+  .card--water { border-color: color-mix(in srgb, var(--accent-water) 45%, transparent); }
+  .card h3 { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .swatch--grass { background: var(--accent-grass); }
+  .swatch--water { background: var(--accent-water); }
+  .reset-btn {
+    margin-top: 4px;
+    background: #1c212c;
+    color: var(--muted);
+    border: 1px solid #3a4054;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+  .reset-btn:hover { color: var(--ink); border-color: var(--accent); }
+
+  .summary {
+    background: #14171f;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.72rem;
+    color: #b9e8c4;
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
 
   .board-wrap {
     flex: 1;
@@ -41,40 +79,80 @@
   }
   .board-tiles { position: relative; }
   .tile { position: absolute; line-height: 0; }
-  .tile img { display: block; user-select: none; -webkit-user-drag: none; }
+  .tile img { display: block; user-select: none; -webkit-user-drag: none; position: absolute; left: 0; top: 0; }
 </style>
 </head>
 <body>
 
-  <div class="panel">
-    <div class="control">
-      <label for="tileType">Loseta</label>
-      <select id="tileType">
-        <option value="grass">Hierba</option>
-        <option value="water">Agua</option>
-        <option value="mixed">Mixto (mitad hierba, mitad agua)</option>
-      </select>
-      <span class="hint">"Mixto" pinta la mitad del tablero con cada una, para ver cómo queda la costura entre las dos.</span>
+  <div class="sidebar">
+    <div>
+      <h2>Vista</h2>
+      <div class="control">
+        <label for="viewMode">Modo de tablero</label>
+        <select id="viewMode">
+          <option value="checker">Damero (agua/hierba alternadas — mejor para ver TODAS las costuras)</option>
+          <option value="split">Mitad y mitad (una sola costura recta)</option>
+          <option value="grass">Solo hierba</option>
+          <option value="water">Solo agua</option>
+        </select>
+      </div>
     </div>
-    <div class="control">
-      <label for="topHeight">Alineación vertical (alto de la cara superior) — <span class="value" id="topHeightVal">117</span> px</label>
-      <input type="range" id="topHeight" min="0" max="260" step="1" value="117">
-      <span class="hint">Mueve el slider hasta que las losetas encajen en vertical sin huecos ni solapes en el borde de tierra. Luego dime el número que te sale.</span>
+
+    <div>
+      <h2>Rejilla compartida</h2>
+      <span class="hint">Define el espaciado de la cuadrícula isométrica en sí — igual para las dos losetas. Los controles de más abajo (uno por loseta) son los que las mueven/escalan CADA UNA por su cuenta para hacerlas coincidir entre sí.</span>
+      <div class="control" style="margin-top:10px;">
+        <label for="topHeight">Alto de la cara superior — <span class="value" id="topHeightVal">117</span> px</label>
+        <input type="range" id="topHeight" min="0" max="260" step="1" value="117">
+      </div>
+      <div class="control">
+        <label for="tileWidth">Ancho de casilla — <span class="value" id="tileWidthVal">188</span> px</label>
+        <input type="range" id="tileWidth" min="50" max="420" step="1" value="188">
+      </div>
+      <div class="control">
+        <label for="feather">Difuminado de borde — <span class="value" id="featherVal">0</span> px</label>
+        <input type="range" id="feather" min="0" max="4" step="0.1" value="0">
+      </div>
     </div>
-    <div class="control">
-      <label for="tileWidth">Alineación horizontal (ancho de loseta) — <span class="value" id="tileWidthVal">188</span> px</label>
-      <input type="range" id="tileWidth" min="50" max="420" step="1" value="188">
-      <span class="hint">Solo tócalo si también ves huecos o solapes en horizontal.</span>
+
+    <div class="card card--grass">
+      <h3><span class="swatch swatch--grass"></span>Hierba</h3>
+      <div class="control">
+        <label for="grass-scale">Escala — <span class="value" id="grass-scaleVal">100</span> %</label>
+        <input type="range" id="grass-scale" min="50" max="150" step="1" value="100">
+      </div>
+      <div class="control">
+        <label for="grass-offsetX">Desplazamiento X — <span class="value" id="grass-offsetXVal">0</span> px</label>
+        <input type="range" id="grass-offsetX" min="-60" max="60" step="1" value="0">
+      </div>
+      <div class="control">
+        <label for="grass-offsetY">Desplazamiento Y — <span class="value" id="grass-offsetYVal">0</span> px</label>
+        <input type="range" id="grass-offsetY" min="-60" max="60" step="1" value="0">
+      </div>
+      <button class="reset-btn" data-reset="grass">Restablecer hierba</button>
     </div>
-    <div class="control">
-      <label for="overlap">Solape / sangrado — <span class="value" id="overlapVal">0</span> %</label>
-      <input type="range" id="overlap" min="0" max="20" step="0.5" value="0">
-      <span class="hint">Agranda cada loseta un poco desde su centro para que se "coman" ligeramente entre sí. Es el truco clásico para que no se note la costura aunque el ajuste no sea perfecto al pixel.</span>
+
+    <div class="card card--water">
+      <h3><span class="swatch swatch--water"></span>Agua</h3>
+      <div class="control">
+        <label for="water-scale">Escala — <span class="value" id="water-scaleVal">100</span> %</label>
+        <input type="range" id="water-scale" min="50" max="150" step="1" value="100">
+      </div>
+      <div class="control">
+        <label for="water-offsetX">Desplazamiento X — <span class="value" id="water-offsetXVal">0</span> px</label>
+        <input type="range" id="water-offsetX" min="-60" max="60" step="1" value="0">
+      </div>
+      <div class="control">
+        <label for="water-offsetY">Desplazamiento Y — <span class="value" id="water-offsetYVal">0</span> px</label>
+        <input type="range" id="water-offsetY" min="-60" max="60" step="1" value="0">
+      </div>
+      <button class="reset-btn" data-reset="water">Restablecer agua</button>
     </div>
-    <div class="control">
-      <label for="feather">Difuminado de borde — <span class="value" id="featherVal">0</span> px</label>
-      <input type="range" id="feather" min="0" max="4" step="0.1" value="0">
-      <span class="hint">Suaviza el borde de cada loseta para que la línea de costura se funda con la de abajo en vez de verse como un corte duro. Con poco (0.5–1.5px) suele bastar.</span>
+
+    <div>
+      <h2>Valores actuales</h2>
+      <span class="hint">Cuando quede bien encajado, copia/pega esto tal cual — con eso basta para meterlo en el juego.</span>
+      <div class="summary" id="summary"></div>
     </div>
   </div>
 
@@ -91,80 +169,125 @@
       grass: { src: "../assets/losetas/hierba_01.png", nativeWidth: 250, nativeHeight: 218 },
       water: { src: "../assets/losetas/agua_01.png", nativeWidth: 627, nativeHeight: 514 },
     };
-    const GRID_SIZE = 6;
+    const GRID_SIZE = 8;
+    const DEFAULTS = { scale: 100, offsetX: 0, offsetY: 0 };
 
-    const tileTypeInput = document.getElementById("tileType");
+    const viewModeInput = document.getElementById("viewMode");
     const topHeightInput = document.getElementById("topHeight");
     const tileWidthInput = document.getElementById("tileWidth");
-    const overlapInput = document.getElementById("overlap");
     const featherInput = document.getElementById("feather");
     const topHeightVal = document.getElementById("topHeightVal");
     const tileWidthVal = document.getElementById("tileWidthVal");
-    const overlapVal = document.getElementById("overlapVal");
     const featherVal = document.getElementById("featherVal");
     const container = document.getElementById("board-tiles");
+    const summaryEl = document.getElementById("summary");
 
-    // "Mixto" reparte hierba/agua por mitades del tablero (en vez de al
-    // azar) para poder mirar SIEMPRE la misma costura entre las dos al
-    // tocar los sliders, en vez de que cambie de sitio en cada render.
-    function tileArtFor(row, col) {
-      const mode = tileTypeInput.value;
-      if (mode === "mixed") return col < GRID_SIZE / 2 ? TILE_ART.grass : TILE_ART.water;
-      return TILE_ART[mode];
+    // Un set de sliders POR TIPO (pedido explícito: "quiero que me deje
+    // ajustar todas las losetas al mismo tiempo para que pueda hacerlas
+    // coincidir, no por separado...lo que quiero es poder ajustarlas entre
+    // ellas") — antes solo había un juego de controles compartido por
+    // cualquier tipo que se estuviera mirando, así que ajustar una
+    // desalineaba la otra sin poder verlas juntas a la vez. Ahora cada tipo
+    // tiene su propia escala/desplazamiento, y con "Damero" las ves TODAS
+    // juntas mientras las mueves.
+    const typeInputs = {
+      grass: {
+        scale: document.getElementById("grass-scale"),
+        offsetX: document.getElementById("grass-offsetX"),
+        offsetY: document.getElementById("grass-offsetY"),
+      },
+      water: {
+        scale: document.getElementById("water-scale"),
+        offsetX: document.getElementById("water-offsetX"),
+        offsetY: document.getElementById("water-offsetY"),
+      },
+    };
+    const typeVals = {
+      grass: {
+        scale: document.getElementById("grass-scaleVal"),
+        offsetX: document.getElementById("grass-offsetXVal"),
+        offsetY: document.getElementById("grass-offsetYVal"),
+      },
+      water: {
+        scale: document.getElementById("water-scaleVal"),
+        offsetX: document.getElementById("water-offsetXVal"),
+        offsetY: document.getElementById("water-offsetYVal"),
+      },
+    };
+
+    function tileTypeFor(row, col) {
+      const mode = viewModeInput.value;
+      if (mode === "checker") return (row + col) % 2 === 0 ? "grass" : "water";
+      if (mode === "split") return col < GRID_SIZE / 2 ? "grass" : "water";
+      return mode; // "grass" | "water"
     }
 
     function render() {
       const topHeight = Number(topHeightInput.value);
       const tileWidth = Number(tileWidthInput.value);
-      const overlap = Number(overlapInput.value);
       const feather = Number(featherInput.value);
       topHeightVal.textContent = topHeight;
       tileWidthVal.textContent = tileWidth;
-      overlapVal.textContent = overlap;
       featherVal.textContent = feather;
+
+      const cfg = {};
+      ["grass", "water"].forEach((type) => {
+        const scale = Number(typeInputs[type].scale.value);
+        const offsetX = Number(typeInputs[type].offsetX.value);
+        const offsetY = Number(typeInputs[type].offsetY.value);
+        typeVals[type].scale.textContent = scale;
+        typeVals[type].offsetX.textContent = offsetX;
+        typeVals[type].offsetY.textContent = offsetY;
+        cfg[type] = { scale: scale / 100, offsetX, offsetY };
+      });
 
       container.innerHTML = "";
       const halfW = tileWidth / 2;
       const halfH = topHeight / 2;
       const centerX = (GRID_SIZE - 1) * halfW;
 
-      // Alto máximo de las dos imágenes (a igualdad de tileWidth) — el agua
-      // es más alta que la hierba (bloque con más pared visible), así que
-      // el contenedor tiene que dejar hueco de sobra para la más alta, sea
-      // cual sea el tipo que se esté mirando ahora mismo.
-      const maxNativeRatio = Math.max(
-        TILE_ART.grass.nativeHeight / TILE_ART.grass.nativeWidth,
-        TILE_ART.water.nativeHeight / TILE_ART.water.nativeWidth
-      );
-      const tallestRenderHeight = tileWidth * maxNativeRatio;
+      // Alto máximo posible (con la escala más grande que pueda tener
+      // cualquiera de las dos) para que el contenedor siempre deje hueco de
+      // sobra y nada se recorte al mover los sliders.
+      const tallestRenderHeight = Math.max(
+        tileWidth * (cfg.grass.scale) * (TILE_ART.grass.nativeHeight / TILE_ART.grass.nativeWidth),
+        tileWidth * (cfg.water.scale) * (TILE_ART.water.nativeHeight / TILE_ART.water.nativeWidth)
+      ) + 80;
 
-      const boardWidth = GRID_SIZE * tileWidth;
-      const boardHeight = GRID_SIZE * topHeight + (tallestRenderHeight - topHeight);
+      const boardWidth = GRID_SIZE * tileWidth + 160;
+      const boardHeight = GRID_SIZE * topHeight + tallestRenderHeight;
       container.style.width = boardWidth + "px";
       container.style.height = boardHeight + "px";
 
       const fragment = document.createDocumentFragment();
       for (let row = 0; row < GRID_SIZE; row++) {
         for (let col = 0; col < GRID_SIZE; col++) {
-          const art = tileArtFor(row, col);
+          const type = tileTypeFor(row, col);
+          const art = TILE_ART[type];
+          const t = cfg[type];
           const el = document.createElement("div");
           el.className = "tile";
+
+          const renderWidth = tileWidth * t.scale;
+          const renderHeight = renderWidth * (art.nativeHeight / art.nativeWidth);
+
           const img = document.createElement("img");
           img.src = art.src;
-          img.width = tileWidth;
-          img.height = tileWidth * (art.nativeHeight / art.nativeWidth);
+          img.width = renderWidth;
+          img.height = renderHeight;
           img.draggable = false;
           img.alt = "";
-          if (overlap > 0) {
-            el.style.transform = `scale(${1 + overlap / 100})`;
-            el.style.transformOrigin = "center center";
-          }
-          if (feather > 0) {
-            img.style.filter = `blur(${feather}px)`;
-          }
+          img.style.left = t.offsetX + "px";
+          img.style.top = t.offsetY + "px";
+          if (feather > 0) img.style.filter = `blur(${feather}px)`;
           el.appendChild(img);
 
-          const x = (col - row) * halfW + centerX;
+          // Posición de la CASILLA en la rejilla — siempre según tileWidth/
+          // topHeight compartidos (grid fijo), NUNCA según la escala propia
+          // del tipo: eso es justo lo que permite mover/escalar cada
+          // textura por su cuenta sin romper el encaje de la cuadrícula en
+          // sí, que tiene que seguir siendo la misma para las dos.
+          const x = (col - row) * halfW + centerX + 80;
           const y = (col + row) * halfH;
           el.style.left = x + "px";
           el.style.top = y + "px";
@@ -173,13 +296,30 @@
         }
       }
       container.appendChild(fragment);
+
+      summaryEl.textContent =
+        `grid:  tileWidth=${tileWidth}  topHeight=${topHeight}  feather=${feather}\n` +
+        `grass: scale=${cfg.grass.scale.toFixed(2)}  offsetX=${cfg.grass.offsetX}  offsetY=${cfg.grass.offsetY}\n` +
+        `water: scale=${cfg.water.scale.toFixed(2)}  offsetX=${cfg.water.offsetX}  offsetY=${cfg.water.offsetY}`;
     }
 
-    tileTypeInput.addEventListener("change", render);
-    topHeightInput.addEventListener("input", render);
-    tileWidthInput.addEventListener("input", render);
-    overlapInput.addEventListener("input", render);
-    featherInput.addEventListener("input", render);
+    [viewModeInput, topHeightInput, tileWidthInput, featherInput].forEach((el) => {
+      el.addEventListener("input", render);
+      el.addEventListener("change", render);
+    });
+    Object.values(typeInputs).forEach((group) => {
+      Object.values(group).forEach((el) => el.addEventListener("input", render));
+    });
+    document.querySelectorAll(".reset-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const type = btn.dataset.reset;
+        typeInputs[type].scale.value = DEFAULTS.scale;
+        typeInputs[type].offsetX.value = DEFAULTS.offsetX;
+        typeInputs[type].offsetY.value = DEFAULTS.offsetY;
+        render();
+      });
+    });
+
     render();
   </script>
 </body>
