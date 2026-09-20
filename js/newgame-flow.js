@@ -129,14 +129,14 @@ function resumeMatch() {
 
 // Coloca los 3 tipos de unidad del equipo de la raza elegida, uno junto a
 // otro cerca del centro del tablero (ver UNIT_TYPES en units.js — el orden
-// en el que aparecen ahí es el mismo con el que se colocan aquí), más un
-// rival de cada uno de esos mismos tipos en casillas al azar (mismo tinte
-// rojo vía CSS) para tener con quién interactuar. El roster se calcula
-// filtrando UNIT_TYPES por raceId en vez de tener una lista fija: así un
-// personaje nuevo que se añada a una raza aparece aquí solo, sin tocar este
-// archivo (pedido explícito: "si elijo colinas rockn troll debe empezar la
-// partida con los personajes del equipo elegido" — antes esto era siempre
-// el roster de Mushboom Forest sin importar la raza escogida).
+// en el que aparecen ahí es el mismo con el que se colocan aquí), más el
+// equipo RIVAL: la otra raza que el jugador NO escogió, con su propio arte
+// (ya no hace falta el tinte rojo de antes, "de momento solo hay arte de un
+// mismo tipo" — pedido explícito: "no pongas a mi mismo equipo con los
+// colores cambiados... coloca al otro equipo que queda libre y no escogí").
+// El roster se calcula filtrando UNIT_TYPES por raceId en vez de tener una
+// lista fija: así un personaje nuevo que se añada a una raza aparece aquí
+// solo, sin tocar este archivo.
 function spawnTestUnits(size, raceId) {
   if (typeof Units === "undefined") return;
   const boardTiles = document.getElementById("board-tiles");
@@ -147,9 +147,25 @@ function spawnTestUnits(size, raceId) {
   // Si por lo que sea no hay raza válida (partida guardada antigua sin
   // raceId, etc.) se cae de vuelta al roster de Mushboom Forest de siempre
   // en vez de dejar el tablero sin personajes del jugador.
+  const finalRaceId = roster.length > 0 ? raceId : "mushboom_forest";
   const finalRoster = roster.length > 0
     ? roster
     : Object.keys(UNIT_TYPES).filter((typeId) => UNIT_TYPES[typeId].raceId === "mushboom_forest");
+
+  // La raza rival es la que "queda libre": cualquier otra disponible en
+  // RACES que NO sea la que el jugador acaba de elegir — con solo 2 razas
+  // ahora mismo siempre es "la otra", pero esto sigue funcionando igual el
+  // día que haya una tercera (coge la primera libre en vez de asumir que
+  // solo hay dos). Si por lo que sea no hay ninguna otra raza disponible
+  // (partida con una sola raza cargada) se cae de vuelta a la MISMA raza del
+  // jugador en vez de dejar el tablero sin rivales — único caso en el que
+  // vuelve a tocar spawnear "la misma raza", y solo como último recurso.
+  const enemyRace = (typeof RACES !== "undefined" ? RACES : []).find(
+    (r) => r.available && r.id !== finalRaceId
+  );
+  const enemyRoster = enemyRace
+    ? Object.keys(UNIT_TYPES).filter((typeId) => UNIT_TYPES[typeId].raceId === enemyRace.id)
+    : finalRoster;
 
   // Mismas 3 casillas relativas al centro que se usaban antes — de momento
   // solo hay razas con 3 personajes, así que alcanza con 3 posiciones fijas.
@@ -168,12 +184,18 @@ function spawnTestUnits(size, raceId) {
   finalRoster.forEach((typeId, i) => {
     const spot = spawnSpots[i] || spawnSpots[spawnSpots.length - 1];
     Units.spawnTestUnit(spot.row, spot.col, typeId);
-    Units.spawnRandomEnemy(typeId);
     // Revelado inicial FIJO alrededor de cada personaje del jugador (pedido
     // explícito: "cuando inicia el juego 2 losetas alrededor de cada
     // personaje de radio están reveladas") — NO se revela nada alrededor
     // del rival: la niebla es la del jugador, no la suya.
     if (typeof Fog !== "undefined") Fog.revealInitial(spot.row, spot.col);
+  });
+
+  // El equipo rival se coloca en su propio bucle (roster independiente del
+  // jugador: puede tener otro número de personajes el día que las razas no
+  // tengan siempre 3) en casillas al azar del tablero, como ya hacía antes.
+  enemyRoster.forEach((typeId) => {
+    Units.spawnRandomEnemy(typeId);
   });
 
   // Los gnomos (js/gnome.js): PUEDE HABER VARIOS a la vez (pedido
@@ -197,6 +219,11 @@ function spawnTestUnits(size, raceId) {
       Gnome.spawnNear(row, col);
     }
   }
+
+  // Turnos (js/turns.js) — se resetea AL FINAL, con todos los personajes y
+  // gnomos ya colocados: siempre empieza el turno del jugador con las 2
+  // acciones de cada uno intactas, y (re)aparece el botón de PASAR TURNO.
+  if (typeof Turns !== "undefined") Turns.reset();
 }
 
 // Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del

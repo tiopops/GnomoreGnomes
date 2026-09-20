@@ -362,8 +362,13 @@ const Units = {
     SFX.click();
     // El radio de cualquier mecánica solo se calcula para las unidades del
     // jugador — seleccionar un rival solo sirve para verle la vida, de
-    // momento no se puede actuar con él.
-    if (unit.team === "player") {
+    // momento no se puede actuar con él. Turnos (js/turns.js) — pedido
+    // explícito: fuera del turno del jugador (mientras la IA rival resuelve
+    // el suyo) tampoco se puede actuar con las propias unidades, aunque
+    // sigan siendo del equipo "player" — cada mecánica (Movement/Combat/
+    // Gnome) ya se blinda por su cuenta con Turns.canAct, pero así ni
+    // siquiera se intenta pintar nada.
+    if (unit.team === "player" && (typeof Turns === "undefined" || Turns.activeTeam === "player")) {
       this.rangeProviders.forEach((p) => p.showFor(unit));
       this._resolveMarkerOverlaps();
     }

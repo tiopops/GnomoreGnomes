@@ -238,7 +238,16 @@ function createGnomeInstance() {
 
     _startIdleFlipLoop() {
       const tick = () => {
-        const delay = 1500 + Math.random() * 2500;
+        // Mismo factor que _applyNervousness (respiración/temblor) aplicado
+        // ahora también al RITMO de girarse en la loseta — pedido explícito:
+        // "lo que tienen que hacer es que sus animaciones de respirar y de
+        // girarse en la loseta sean más rápidas" (cuantos más puntos lleve
+        // encima, antes vuelve a cambiar de sentido, no solo respira más
+        // deprisa). Se recalcula en cada vuelta del bucle, no una vez al
+        // crear el gnomo, para que ya vaya más rápido el turno siguiente
+        // aunque los puntos hayan subido a media espera.
+        const factor = this._nervousnessFactor();
+        const delay = (1500 + Math.random() * 2500) * factor;
         this._flipTimer = setTimeout(() => {
           if (this.el && !this.heldBy && !this.busy) {
             this.facing = this.facing === "left" ? "right" : "left";
@@ -260,6 +269,25 @@ function createGnomeInstance() {
     // movimiento normal (unit__sprite--hop, ver units.js/style.css) en vez
     // de una animación nueva — ya se lee como "salto corto", basta con
     // dispararlo sin mover row/col.
+    //
+    // BUG encontrado y corregido: esta función AÑADÍA la clase
+    // "unit__sprite--hop" pero nunca la quitaba — a diferencia de un paso de
+    // movimiento normal (Units.hopTo la limpia en el siguiente paso, y
+    // Units.walkPath al terminar del todo), aquí no había ningún sitio que
+    // lo hiciera. Esa clase, en CSS (.unit__sprite--hop, ver style.css), fija
+    // "animation" por completo — sustituyendo a la respiración continua, no
+    // sumándose a ella — así que un gnomo con muchos puntos (más probabilidad
+    // de saltar en cada ciclo de idle, ver GNOME_HOP_MAX_CHANCE) acababa
+    // saltando tan seguido que casi nunca le daba tiempo a "soltar" esa clase
+    // antes del siguiente salto: se quedaba con la respiración apagada para
+    // siempre, pareciendo "sin animar" — justo el bug que reportó Jesús. Se
+    // arregla quitándola a mano en cuanto termina su propia animación
+    // (220ms, igual que @keyframes unit-hop en style.css) para que la
+    // respiración vuelva a mandar entre salto y salto.
+    //
+    // Pedido explícito: "mientras están en iddle los gnomos no deben hacer
+    // sonidos" — antes sonaba SFX.hop() aquí igual que en un paso de
+    // movimiento de verdad; se quita del todo, este salto es solo visual.
     _maybeIdleHop() {
       if (this.points < GNOME_HOP_MIN_POINTS) return;
       const chance = Math.min(GNOME_HOP_MAX_CHANCE, (this.points - GNOME_HOP_MIN_POINTS) * 0.05);
@@ -267,7 +295,12 @@ function createGnomeInstance() {
       this.spriteEl.classList.remove("unit__sprite--hop");
       void this.spriteEl.offsetWidth;
       this.spriteEl.classList.add("unit__sprite--hop");
-      SFX.hop();
+      setTimeout(() => {
+        // Por si en esos 220ms ha empezado a llevarlo cogido alguien (el
+        // sprite suelto ya ni se ve) o el gnomo ha sido destruido/reiniciado
+        // (nueva partida) — no tocar nada que ya no exista.
+        if (this.spriteEl) this.spriteEl.classList.remove("unit__sprite--hop");
+      }, 220);
     },
 
     // ---------- Coger al gnomo ----------
@@ -338,6 +371,11 @@ function createGnomeInstance() {
 
     async catchBy(unit) {
       if (this.heldBy || this.busy) return;
+      // Turnos (js/turns.js) — coger un gnomo suelto cuenta como UNA acción
+      // del turno (se agrupa con "moverse": no hay una acción "coger"
+      // separada en la lista pedida explícitamente, y acercarse + agarrar es
+      // un único gesto, igual que acercarse + golpear en Combat.attack).
+      if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
       Units.clearRangeOverlays();
       const approach = this.findApproachTile(unit);
       if (!approach) return; // se alejó / lo cogieron justo antes del clic
@@ -349,6 +387,7 @@ function createGnomeInstance() {
       Units.faceTowardsTile(unit, this.row, this.col);
       this.attachTo(unit);
       SFX.catch();
+      if (typeof Turns !== "undefined") Turns.useAction(unit);
       Units.refreshRange(unit);
     },
 
@@ -423,6 +462,10 @@ function createGnomeInstance() {
 
     hit(unit) {
       if (this.heldBy !== unit.id || this.busy) return;
+      // Turnos (js/turns.js) — pedido explícito: "pegar al gnomo una vez"
+      // es una de las 2 acciones del turno.
+      if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+      if (typeof Turns !== "undefined") Turns.useAction(unit);
       const dmg = UNIT_TYPES[unit.typeId].fuerza;
       this._addPoints(dmg);
       SFX.hit();
@@ -531,6 +574,12 @@ function createGnomeInstance() {
 
     async executePass(holder, target) {
       if (this.heldBy !== holder.id || this.busy) return;
+      // Turnos (js/turns.js) — pedido explícito: "pasar el gnomo una vez"
+      // es una de las 2 acciones del turno (de QUIEN LANZA — recibirlo no
+      // gasta ninguna acción de quien lo recibe, por eso Turns.useAction se
+      // llama con `holder`, nunca con `target`).
+      if (typeof Turns !== "undefined" && !Turns.canAct(holder)) return;
+      if (typeof Turns !== "undefined") Turns.useAction(holder);
       Units.clearRangeOverlays();
       this.passing = false;
       this.busy = true;
@@ -667,6 +716,14 @@ function createGnomeInstance() {
         this.el.style.zIndex = "900";
         this.spriteEl.style.width = `${GNOME_SIZES.flying}px`;
 
+        // Grito mientras vuela por el aire (pedido explícito: "un sonido...
+        // como iiiiiiiiu o que den un gritito") — dura lo mismo que el propio
+        // vuelo (duration, ya calculado arriba) para que se apague justo al
+        // aterrizar, tanto si el pase sale bien como si no (esto se dispara
+        // ANTES de saber el resultado: el propio Gnome.executePass ya decide
+        // el sonido de éxito/fallo aparte, al aterrizar).
+        SFX.gnomeFly(duration / 1000);
+
         const t0 = performance.now();
         const step = (now) => {
           const t = Math.min(1, (now - t0) / duration);
@@ -700,9 +757,18 @@ function createGnomeInstance() {
     // refrescar el radio.
     async reactToPlayerMove(mover) {
       if (!this.el || this.heldBy || this.busy) return;
+      await this._fleeAwayFrom(mover.row, mover.col, 2);
+    },
 
-      let dRow = Math.sign(this.row - mover.row);
-      let dCol = Math.sign(this.col - mover.col);
+    // Núcleo compartido de "huir N casillas alejándose de un punto" — lo
+    // usaba solo reactToPlayerMove (2 casillas, alejándose de quien se
+    // acaba de mover); se extrae aquí tal cual para que dropFromDyingUnit
+    // pueda reutilizar EXACTAMENTE la misma lógica de evitar rincones
+    // (_bestFleeStep/_tileOpenness) con otro punto de referencia y otro
+    // número de casillas, en vez de duplicarla.
+    async _fleeAwayFrom(fromRow, fromCol, steps) {
+      let dRow = Math.sign(this.row - fromRow);
+      let dCol = Math.sign(this.col - fromCol);
       if (dRow === 0 && dCol === 0) {
         dRow = Math.random() < 0.5 ? 1 : -1;
         dCol = Math.random() < 0.5 ? 1 : -1;
@@ -711,7 +777,7 @@ function createGnomeInstance() {
       const path = [];
       let r = this.row;
       let c = this.col;
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < steps; i++) {
         const step = this._bestFleeStep(r, c, dRow, dCol);
         if (!step) break;
         path.push(step);
@@ -728,6 +794,38 @@ function createGnomeInstance() {
       // mira de "coger" puede haberse quedado apuntando a la loseta vieja
       // — ver _refreshSelectedUnitRange.
       this._refreshSelectedUnitRange();
+    },
+
+    // Pedido explícito: "si un personaje con el gnomo cogido muere, este cae
+    // a la loseta actual y huye en una dirección alejándose de los jugadores
+    // 3 casillas". Lo llama el GESTOR (Gnome.dropHeldBy) justo antes de que
+    // Units.removeUnit se lleve del todo a `deadUnit` — por eso deadUnit
+    // sigue haciendo falta como parámetro (su row/col) en vez de leerlo de
+    // Units.list, que puede que ya no lo contenga para cuando esto corra.
+    async dropFromDyingUnit(deadUnit) {
+      this.detachFrom();
+      this.row = deadUnit.row;
+      this.col = deadUnit.col;
+      this.el.style.display = "";
+      Units._placeInstant(this);
+      this.spriteEl.src = GNOME_ASSETS.idle;
+      this.spriteEl.style.width = `${GNOME_SIZES.ground}px`;
+      SFX.dropFail();
+
+      // "alejándose de los jugadores" (plural, no solo de quien lo llevaba,
+      // que ya no está) — se usa como referencia el personaje del JUGADOR
+      // vivo más cercano a donde ha caído; si no queda ninguno (partida ya
+      // ganada, o quien murió no era del jugador) se huye desde la propia
+      // loseta donde ha caído en una dirección al azar (_fleeAwayFrom ya lo
+      // resuelve así cuando from == la posición actual del gnomo).
+      const nearestPlayer = Units.list
+        .filter((u) => u.team === "player")
+        .reduce((best, u) => {
+          const d = Math.max(Math.abs(u.row - this.row), Math.abs(u.col - this.col));
+          return !best || d < best.d ? { u, d } : best;
+        }, null);
+      const ref = nearestPlayer ? nearestPlayer.u : { row: this.row, col: this.col };
+      await this._fleeAwayFrom(ref.row, ref.col, 3);
     },
 
     // Elige la mejor loseta vecina para huir. No basta con "la primera
@@ -810,6 +908,32 @@ function createGnomeInstance() {
       this._setPoints(this.points + n);
     },
 
+    // Pedido explícito: "los gnomos que están sueltos sin ser cogidos
+    // pierden 5 puntos cada vez que alguien pulsa el botón PASAR TURNO...
+    // un -5 deberá salir de sus sprites como cuando se les pega... si
+    // pierden puntos, se van relajando... pierden la tonalidad roja y no se
+    // mueven tan rápido" — lo llama el GESTOR (Gnome.applyTurnPassDecay,
+    // desde js/turns.js) en cada cambio de turno, nunca mientras lo llevan
+    // cogido (eso lo decide el gestor filtrando por heldBy antes de
+    // llamar) ni mientras está en medio de una animación propia (huida,
+    // vuelo, aterrizaje...) para no interrumpirla ni tocar puntos/posición a
+    // mitad de otra cosa. "Se van relajando" (tonalidad roja + velocidad de
+    // idle) no necesita código aparte: _setPoints ya llama a
+    // _applyNervousness, que recalcula ambas cosas a partir de this.points
+    // cada vez — al bajar los puntos, bajan solas.
+    _loseCooldownPoints(amount) {
+      if (this.heldBy || this.busy) return;
+      if (this.points <= 0) return; // nada que perder — no repetir el popup "-0" sin sentido
+      const lost = Math.min(amount, this.points);
+      this._setPoints(this.points - lost);
+      // Mismo popup que un golpe de verdad (pedido explícito: "como cuando
+      // se les pega"), con el signo ya incluido en el propio texto en vez de
+      // depender de una clase CSS distinta para el signo.
+      Units.spawnFloatingText(this, `-${lost}`, { className: "dmg-popup gnome-points-popup" });
+      Units.playShake(this);
+      SFX.gnomeCooldown();
+    },
+
     _setPoints(value) {
       this.points = value;
       this._applyNervousness();
@@ -840,8 +964,18 @@ function createGnomeInstance() {
     // saturación (blanco/gris no tienen "tono" que rotar) — sepia() sí
     // introduce color incluso ahí, y el hue-rotate() posterior empuja ese
     // tono cálido hacia el rojo.
+    // Factor de velocidad (< 1 = más rápido) compartido por LAS TRES cosas
+    // que se aceleran con los puntos acumulados: la respiración/temblor
+    // (_applyNervousness) y ahora también el ritmo de girarse en la loseta
+    // (_startIdleFlipLoop) — antes cada uno calculaba su propia fórmula por
+    // separado (girarse ni siquiera lo tenía en cuenta); vive aquí para que
+    // los tres lean siempre el mismo número, sin poder desincronizarse.
+    _nervousnessFactor() {
+      return Math.max(0.35, 1 / (1 + this.points * 0.15));
+    },
+
     _applyNervousness() {
-      const factor = Math.max(0.35, 1 / (1 + this.points * 0.15));
+      const factor = this._nervousnessFactor();
       const t = Math.min(1, this.points / GNOME_RED_TINT_MAX_POINTS); // 0 (sin tinte) .. 1 (máximo)
       const tint = t > 0 ? `sepia(${t.toFixed(2)}) saturate(${(1 + t * 3).toFixed(2)}) hue-rotate(-40deg)` : "";
       if (this.spriteEl) {
@@ -997,9 +1131,29 @@ const Gnome = {
     return this.list.some((g) => g.heldBy === unitId);
   },
 
+  // Lo llama Combat.attack justo antes de eliminar del todo a una unidad con
+  // 0 de vida (ver esa línea en combat.js) — si esa unidad llevaba un gnomo
+  // cogido, lo suelta ahí mismo y lo hace huir (ver
+  // GnomeInstance.dropFromDyingUnit). Si no llevaba ninguno no hace nada, así
+  // que combat.js puede llamar a esto siempre sin comprobar antes si hacía
+  // falta.
+  dropHeldBy(deadUnit) {
+    const g = this.list.find((g) => g.heldBy === deadUnit.id);
+    if (g) return g.dropFromDyingUnit(deadUnit);
+    return Promise.resolve();
+  },
+
   // ---------- Proveedor de rango (ver cabecera del archivo) ----------
 
   showFor(unit) {
+    // Turnos (js/turns.js) — pedido explícito: "pegar al gnomo"/"pasar el
+    // gnomo"/coger un gnomo suelto cuentan como acciones del turno; si ya no
+    // puede actuar no se ofrece ni la mira de "coger" ni los botones de
+    // golpear/pasar.
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) {
+      this._hideHoldingActions();
+      return;
+    }
     const held = this.list.find((g) => g.heldBy === unit.id);
     if (held) {
       this._showHoldingActions(unit, held);
@@ -1034,6 +1188,19 @@ const Gnome = {
 
   hideAllBadges() {
     this.list.forEach((g) => g.hideBadge());
+  },
+
+  // Lo llama js/turns.js cada vez que se pulsa PASAR TURNO (tanto el propio
+  // jugador como la pulsación automática del ordenador al terminar su turno
+  // — pedido explícito: "cada vez que alguien pulsa el botón", sin
+  // distinguir quién) — pierden puntos TODOS los gnomos sueltos a la vez,
+  // cada uno con su propio popup/temblor/sonido (ver
+  // GnomeInstance._loseCooldownPoints), nunca los que estén cogidos ahora
+  // mismo (esos ya están "en juego", ganando puntos, no relajándose solos).
+  applyTurnPassDecay(amount = 5) {
+    this.list.forEach((g) => {
+      if (!g.heldBy) g._loseCooldownPoints(amount);
+    });
   },
 
   // ---------- Botones de "lo llevo cogido": golpear / pasar ----------

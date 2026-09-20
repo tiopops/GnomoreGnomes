@@ -443,16 +443,32 @@ h2 {
   filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 10px rgba(122, 62, 240, 0.95));
 }
 
-/* Tinte rival: reutiliza el mismo sprite (de momento no hay arte propio para
-   el equipo rival) con un tinte rojizo para distinguirlo a simple vista.
-   También vive en unit__flip, nunca en unit__sprite, por el mismo motivo que
-   la sombra (ver nota arriba). */
-.unit--enemy .unit__flip {
-  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) hue-rotate(150deg) saturate(1.7) brightness(0.95);
+/* El equipo rival YA NO reutiliza el mismo arte con un tinte rojizo (pedido
+   explícito: "no pongas a mi mismo equipo con los colores cambiados...
+   coloca al otro equipo que queda libre") — ahora newgame-flow.js coloca de
+   verdad la otra raza disponible como rival, con su propio arte real, así
+   que el tinte artificial de antes ya no hace falta ni tiene sentido (se
+   sumaba a un color que ahora ya es distinto por sí solo). .unit--enemy se
+   deja como clase (la siguen usando unitinfo.js/gnome.js para reglas que no
+   son de color, y por si algún día hace falta distinguir el bando de otra
+   forma) pero sin ninguna regla de filtro propia: hereda tal cual la de
+   .unit__flip normal, ver más arriba. */
+
+/* Turnos (js/turns.js) — un personaje que ya gastó sus 2 acciones este
+   turno pierde saturación para leerse como "inactivo" de un vistazo (pedido
+   explícito). Puramente visual: SIGUE pudiendo recibir un pase de gnomo
+   (eso no es una acción SUYA), así que no se toca pointer-events ni ningún
+   listener aquí, solo el filtro — mismas combinaciones que arriba
+   (normal/rival, con o sin selección) para que la desaturación se sume
+   siempre al tinte/sombra que ya le tocara, en vez de sustituirlo. transition
+   en la propiedad "filter" (igual que el resto de estados de unit__flip) para
+   que apagarse sea un fundido suave, no un cambio de golpe. */
+.unit--exhausted .unit__flip {
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) saturate(0.35) brightness(0.8);
 }
 
-.unit--enemy.unit--selected .unit__flip {
-  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) hue-rotate(150deg) saturate(1.7) brightness(0.95)
+.unit--exhausted.unit--selected .unit__flip {
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) saturate(0.35) brightness(0.8)
     drop-shadow(0 0 10px rgba(122, 62, 240, 0.95));
 }
 
@@ -734,6 +750,77 @@ h2 {
   transform: translateY(-3px) scale(1.08);
 }
 
+/* ---------- Botón "Pasar turno" (js/turns.js) ---------- */
+
+/* Esquina inferior DERECHA (pedido explícito), simétrico al círculo de
+   información de la esquina inferior izquierda pero como píldora horizontal
+   en vez de círculo — no compite por espacio con los botones de golpear/
+   pasar del gnomo (semicírculo A LA DERECHA del círculo de información, ver
+   UI_LAYOUT en uiconfig.js), que quedan más centrados en la pantalla.
+   SIEMPRE visible durante la partida (a diferencia de unit-info-btn/
+   gnome-action-btn, que solo aparecen con una unidad seleccionada) — la
+   visibilidad la controla Turns._ensureButton/el back-btn del tablero, no
+   ninguna selección. */
+.end-turn-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  border: 2px solid rgba(244, 242, 248, 0.35);
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translateY(14px) scale(0.85);
+  pointer-events: none;
+  z-index: 500;
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.end-turn-btn--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.end-turn-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-3px) scale(1.03);
+}
+
+.end-turn-btn__icon {
+  font-size: 1.2rem;
+}
+
+/* Mientras la IA rival resuelve su turno (Turns._aiRunning) — deshabilitado
+   (el jugador no puede pasarle el turno a sí mismo dos veces seguidas) y con
+   el icono girando sin parar para que se lea como "pensando", no como un
+   botón roto que no responde. */
+.end-turn-btn--thinking {
+  background: var(--bg-elevated);
+  color: var(--muted);
+  border-color: var(--disabled);
+  cursor: default;
+  box-shadow: none;
+}
+
+.end-turn-btn--thinking .end-turn-btn__icon {
+  animation: end-turn-spin 0.9s linear infinite;
+}
+
+@keyframes end-turn-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Cara del personaje seleccionado, recortada en círculo (sustituye al
    icono genérico de "i") — ver UnitInfo.onSelect en unitinfo.js. */
 .unit-info-btn__face-wrap {
@@ -755,10 +842,11 @@ h2 {
      fijos aquí. */
 }
 
-.unit-info-btn__face--enemy {
-  /* Mismo tinte que el resto del arte rival (ver .unit--enemy .unit__flip). */
-  filter: hue-rotate(150deg) saturate(1.7) brightness(0.95);
-}
+/* .unit-info-btn__face--enemy ya no lleva ningún tinte propio (ver la nota
+   junto a .unit--enemy en el bloque de arriba: ahora el rival es de verdad
+   la otra raza, con su propio arte, no un recolor del mismo). Se deja la
+   clase declarada aquí como comentario para quien busque por qué "no pasa
+   nada" en vez de dejarla sin explicación. */
 
 /* Fondo a pantalla completa de la ventana emergente de estadísticas. Es un
    popup de "mantener pulsado" (ver js/unitinfo.js): se abre en pointerdown
@@ -822,12 +910,9 @@ h2 {
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
 }
 
-/* Mismo tinte que el sprite en el tablero (ver .unit--enemy .unit__flip),
-   para que el retrato de un rival en el popup se reconozca al instante como
-   tal en vez de parecer otra unidad del jugador. */
-.unit-info-portrait--enemy img {
-  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)) hue-rotate(150deg) saturate(1.7) brightness(0.95);
-}
+/* .unit-info-portrait--enemy ya no lleva ningún tinte propio, mismo motivo
+   que .unit-info-btn__face--enemy arriba — el retrato de un rival ya se
+   reconoce solo porque es una raza distinta con su propio arte. */
 
 /* Descripción de flavor, justo debajo del sprite (ver UNIT_DESCRIPTIONS en
    js/unitinfo.js) — en cursiva y más apagada que el nombre para que se lea

@@ -90,6 +90,13 @@ const Combat = {
   },
 
   showFor(unit) {
+    // Turnos (js/turns.js) — pedido explícito: cada personaje tiene 2
+    // acciones por turno ("pegar una vez a un enemigo" es una de ellas); si
+    // ya no puede actuar (las gastó, o no es su turno) no se ofrece ninguna
+    // mira de ataque. typeof por si turns.js todavía no ha cargado (o una
+    // herramienta de debug no lo incluye) — igual que el resto de comprobaciones
+    // "typeof X !== undefined" de este proyecto.
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
     // Mientras lleva al gnomo cogido (js/gnome.js) la unidad pierde la
     // capacidad de atacar — puede moverse, golpear al gnomo o pasarlo, pero
     // no repartir daño a la vez que lo lleva encima.
@@ -136,7 +143,18 @@ const Combat = {
   },
 
   async attack(attacker, target) {
+    // Turnos (js/turns.js) — comprobación defensiva además del gate en
+    // showFor: approachAndAttack puede llegar aquí desde un marcador que ya
+    // estaba pintado en pantalla justo cuando se agotó la acción (p.ej. la
+    // IA rival encadenando ataques), así que se repite aquí por seguridad.
+    if (typeof Turns !== "undefined" && !Turns.canAct(attacker)) return;
     Units.faceTowardsTile(attacker, target.row, target.col);
+
+    // Golpear cuenta como UNA de las 2 acciones del turno (pedido explícito:
+    // "pegar una vez a un enemigo") — se gasta aquí, en el golpe en sí, no en
+    // approachAndAttack: acercarse antes de golpear no es una acción aparte,
+    // es parte de la misma.
+    if (typeof Turns !== "undefined") Turns.useAction(attacker);
 
     // El daño depende de la FUERZA del atacante (una de sus 4 estadísticas,
     // ver UNIT_TYPES en units.js) en vez de ser siempre 1 — así cada tipo de
@@ -162,6 +180,13 @@ const Combat = {
     }
 
     if (target.hp <= 0) {
+      // Pedido explícito: "si un personaje con el gnomo cogido muere, este
+      // cae a la loseta actual y huye... alejándose de los jugadores 3
+      // casillas" — ANTES de Units.removeUnit (que borra su fila/columna del
+      // todo tras la animación de muerte): Gnome.dropHeldBy no hace nada si
+      // `target` no llevaba ningún gnomo encima, así que siempre es seguro
+      // llamarlo aquí sin comprobar antes.
+      if (typeof Gnome !== "undefined") await Gnome.dropHeldBy(target);
       await Units.removeUnit(target);
     } else {
       await this.pushBack(attacker, target);

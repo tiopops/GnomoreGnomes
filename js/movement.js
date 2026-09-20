@@ -46,6 +46,10 @@ const Movement = {
   },
 
   showFor(unit) {
+    // Turnos (js/turns.js) — pedido explícito: "moverse" es una de las 2
+    // acciones del turno; si ya no puede actuar no se ofrece ningún círculo
+    // de movimiento.
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
     const tiles = this.reachableTiles(unit);
     tiles.forEach((tile, i) => {
       Units.addMarker({
@@ -66,9 +70,15 @@ const Movement = {
   },
 
   async moveTo(unit, destRow, destCol) {
+    // Comprobación defensiva (ver el mismo comentario en Combat.attack) —
+    // además de gatear en showFor, la IA rival llama a esto directamente sin
+    // pasar por ningún marcador clicado.
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
     Units.clearRangeOverlays();
     const path = Units.stepPath(unit.row, unit.col, destRow, destCol);
     await Units.walkPath(unit, path);
+    // Moverse cuenta como UNA de las 2 acciones del turno (pedido explícito).
+    if (typeof Turns !== "undefined") Turns.useAction(unit);
     // Niebla de guerra (js/fog.js) — pedido explícito: "se revelarán según
     // su percepción al terminar el desplazamiento". Va ANTES de que
     // reaccione el gnomo a propósito: revelar es lo primero que pasa al

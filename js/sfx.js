@@ -92,6 +92,74 @@ const SFX = {
   },
   dropFail() { this._pluck("gnome-drop-fail", 140, "sawtooth", 0.22, 0.35); },
 
+  // Un gnomo suelto perdiendo puntos al pasar turno (js/turns.js,
+  // GnomeInstance._loseCooldownPoints) — a propósito NO reutiliza hit() (un
+  // golpe de verdad, seco y agudo): esto es lo contrario, se está calmando,
+  // así que suena grave y blando (sine en vez de square, más largo y suave)
+  // en vez de un impacto.
+  gnomeCooldown() { this._pluck("gnome-cooldown", 210, "sine", 0.28, 0.22); },
+
+  // Grito del gnomo mientras vuela por el aire (Gnome.animateThrowTo) —
+  // pedido explícito: "un sonido... como iiiiiiiiu o que den un gritito...
+  // asegúrate de que sea un sonido de calidad". No reutiliza _pluck/_getVoice
+  // (pensados para un tono fijo con solo un envolvente de volumen): aquí hace
+  // falta un oscilador PROPIO por cada vuelo porque su frecuencia se desliza
+  // de principio a fin (glissando descendente, el clásico "caída" de dibujos
+  // animados) y con la voz compartida un segundo vuelo que empezara antes de
+  // que la anterior terminara de apagarse heredaría a medias su rampa de
+  // frecuencia. Tres capas para que no suene a tono puro de sintetizador:
+  //   - osc (sawtooth): el propio "grito", más brillante que una sinusoide,
+  //     de startFreq a endFreq con exponentialRamp (una caída de tono se
+  //     percibe más natural en escala exponencial que lineal).
+  //   - vibrato: una segunda oscilación (LFO) modulando la frecuencia de
+  //     osc unos ±26Hz a ~11Hz — el temblor que distingue un "grito" de un
+  //     pitido liso.
+  //   - filter (lowpass): su frecuencia de corte baja EN PARALELO al tono
+  //     para que el final del grito también se sienta "apagándose", no solo
+  //     más grave.
+  // duration en SEGUNDOS (a diferencia del resto de SFX, en ms) porque quien
+  // llama a esto ya tiene la duración del vuelo en segundos a mano.
+  gnomeFly(duration) {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      const dur = Math.max(0.15, duration);
+
+      const osc = ctx.createOscillator();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(1100, now);
+      osc.frequency.exponentialRampToValueAtTime(300, now + dur);
+
+      const vibrato = ctx.createOscillator();
+      vibrato.type = "sine";
+      vibrato.frequency.value = 11;
+      const vibratoGain = ctx.createGain();
+      vibratoGain.gain.value = 26;
+      vibrato.connect(vibratoGain).connect(osc.frequency);
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(4200, now);
+      filter.frequency.exponentialRampToValueAtTime(900, now + dur);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.24, now + Math.min(0.12, dur * 0.3));
+      gain.gain.setValueAtTime(0.24, now + Math.max(0, dur - 0.12));
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+      osc.connect(filter).connect(gain).connect(this.master);
+      osc.start(now);
+      vibrato.start(now);
+      osc.stop(now + dur + 0.05);
+      vibrato.stop(now + dur + 0.05);
+    } catch (e) {
+      // Audio no disponible — se ignora, no debe romper la animación de vuelo.
+    }
+  },
+
   // Eliminar a un rival debe sentirse como una pequeña recompensa, no como
   // un error o un golpe apagado — un solo tono grave plano (lo que había
   // antes) no genera esa sensación. Encadena un golpe seco grave (el impacto
