@@ -283,29 +283,62 @@ h2 {
 }
 
 /* Niebla de guerra (js/mapgen.js genera esta capa siempre, js/fog.js decide
-   cuándo ocultarla) — más ancha que su propia loseta (ver FOG_OVERHANG en
-   mapgen.js) y anclada por su borde inferior, igual de idea que el ancla de
-   pies de .unit (translate/left/bottom), para que la nube "crezca" desde el
-   suelo de la loseta hacia arriba y los lados en vez de desde su propio
-   centro. pointer-events: none — nunca debe robar clics: las losetas de
-   niebla ya quedan excluidas como destino de movimiento en js/movement.js,
-   así que no hace falta que intercepte nada aquí. */
+   cuándo ocultarla) — centrada EXACTAMENTE en el centro de su loseta
+   (getTileCenter, ver comentario de FOG_SRC en mapgen.js: niebla_01.png es
+   solo la nube, sin ninguna loseta dibujada dentro, así que no hay que
+   adivinar ningún ancla) y más ancha que ella (FOG_OVERHANG en mapgen.js)
+   para que el borde entre lo revelado y lo que no se ha explorado todavía
+   se lea como una nube continua en vez de un corte recto tile a tile.
+   pointer-events: none — nunca debe robar clics: las losetas de niebla ya
+   quedan excluidas como destino de movimiento en js/movement.js, así que no
+   hace falta que intercepte nada aquí.
+
+   Nivel Triple A / feedback (regla de oro del proyecto) — NO es una nube
+   estática: respira/deriva muy despacio incluso parada (fog-idle-drift,
+   desfasada al azar por loseta desde mapgen.js para que un campo entero de
+   niebla no "lata" a la vez como si fuera un efecto de pantalla en vez de
+   niebla de verdad), y al revelarse no es un simple fundido de opacidad
+   sino que se DISIPA de verdad (fog-dissipate más abajo): crece, se
+   difumina y se desvanece, como si el viento se la llevara. */
 .tile__fog {
   position: absolute;
-  left: 50%;
-  bottom: -14px;
-  transform: translateX(-50%);
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
   pointer-events: none;
-  opacity: 1;
-  transition: opacity 0.5s ease;
+  opacity: 0.96;
+  /* Fijo y enorme a propósito (no depende de row/col como .tile) — tiene
+     que quedar SIEMPRE por encima de CUALQUIER loseta o unidad, incluidas
+     las que están "más cerca de cámara" (z-index más alto, ver mapgen.js);
+     sin esto, cualquier loseta con z-index > 0 pintaría por encima de la
+     niebla en vez de al revés (regresión ya vista una vez: sin z-index
+     propio, un elemento posicionado cuenta como 0 y las losetas con
+     row+col > 0 lo tapaban casi todo). */
   z-index: 100000;
+  will-change: transform, opacity, filter;
+  animation: fog-idle-drift 8s ease-in-out infinite;
 }
 
-/* Al revelarse (Fog.revealForUnit) se desvanece en vez de desaparecer de
-   golpe — nivel Triple A / feedback (regla de oro del proyecto): explorar
-   debe sentirse como un descubrimiento, no como un simple "on/off". */
+@keyframes fog-idle-drift {
+  0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  50% { transform: translate(-50%, -47%) scale(1.035) rotate(0.6deg); }
+}
+
+/* Al revelarse (Fog.revealForUnit) sustituye por completo la animación de
+   reposo (misma propiedad "animation", gana por ir después en la hoja de
+   estilos) — nunca las dos compitiendo por transform a la vez, mismo patrón
+   que unit--moving/unit__sprite--hop en units.js/style.css. "forwards"
+   deja el fotograma final (opacity:0, ya disipada) en vez de volver de
+   golpe al primero al terminar; js/fog.js la esconde del todo
+   (display:none) cuando acaba, vía animationend. */
 .tile__fog--revealed {
-  opacity: 0;
+  animation: fog-dissipate 1.1s cubic-bezier(0.34, 0.7, 0.4, 1) forwards;
+}
+
+@keyframes fog-dissipate {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.96; filter: blur(0px); }
+  35% { transform: translate(-50%, -58%) scale(1.16); opacity: 0.7; filter: blur(2px); }
+  100% { transform: translate(-50%, -72%) scale(1.55); opacity: 0; filter: blur(7px); }
 }
 
 /* ---------- Unidades ---------- */

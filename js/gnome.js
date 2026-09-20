@@ -306,6 +306,13 @@ function createGnomeInstance() {
     },
 
     _showCatchMarkerFor(unit) {
+      // Niebla de guerra (js/fog.js) — pedido explícito: "puede que haya un
+      // enemigo o gnomos, pero hasta que no se despeje no se sabrá". Un
+      // gnomo suelto sobre una loseta todavía sin revelar no se puede coger
+      // aunque esté a distancia — ya queda oculto visualmente por la propia
+      // niebla; esto evita además "cogerlo a ciegas" haciendo clic donde en
+      // teoría no se ve nada.
+      if (typeof Fog !== "undefined" && Fog.isFogged(this.row, this.col)) return;
       const approach = this.findApproachTile(unit);
       if (!approach) return;
       Units.addMarker({

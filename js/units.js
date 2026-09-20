@@ -107,7 +107,7 @@ const UNIT_TYPES = {
     name: "LanzaGnomos",
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_01.png",
-    aguante: 1,
+    aguante: 2,
     movimiento: 3,
     fuerza: 1,
     agilidad: 5,

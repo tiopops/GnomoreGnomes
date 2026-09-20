@@ -38,9 +38,11 @@ const Fog = {
     this.size = size;
     this.revealedGrid = Array.from({ length: size }, () => new Array(size).fill(false));
     this._fogEls = new Map();
-    container.querySelectorAll(".tile").forEach((tileEl) => {
-      const fogEl = tileEl.querySelector(".tile__fog");
-      if (fogEl) this._fogEls.set(`${tileEl.dataset.row},${tileEl.dataset.col}`, fogEl);
+    // .tile__fog ya no vive DENTRO de su .tile (ver comentario de FOG_SRC en
+    // mapgen.js) — es un elemento hermano con su propio data-row/data-col,
+    // así que se busca directamente en vez de a través de la loseta.
+    container.querySelectorAll(".tile__fog").forEach((fogEl) => {
+      this._fogEls.set(`${fogEl.dataset.row},${fogEl.dataset.col}`, fogEl);
     });
   },
 
@@ -71,10 +73,24 @@ const Fog = {
     if (this.revealedGrid[row][col]) return;
     this.revealedGrid[row][col] = true;
     const fogEl = this._fogEls.get(`${row},${col}`);
-    // Se desvanece (transition en .tile__fog--revealed, ver style.css) en
-    // vez de desaparecer de golpe — nivel Triple A / feedback (regla de oro
-    // del proyecto): explorar debe sentirse como un descubrimiento.
-    if (fogEl) fogEl.classList.add("tile__fog--revealed");
+    if (!fogEl) return;
+    // Se disipa con su propia animación (@keyframes fog-dissipate, ver
+    // style.css: crece, se difumina y se desvanece, no un simple fundido de
+    // opacidad) en vez de desaparecer de golpe — nivel Triple A / feedback
+    // (regla de oro del proyecto): explorar debe sentirse como un
+    // descubrimiento, no como un interruptor on/off.
+    fogEl.classList.add("tile__fog--revealed");
+    // Al terminar la animación de disipado se saca del flujo de pintado por
+    // completo (display:none) — ya es invisible (opacity:0 al final del
+    // keyframe) pero sin esto seguiría "animando en reposo" para siempre sin
+    // coste visible; con esto no vuelve a costar nada.
+    fogEl.addEventListener(
+      "animationend",
+      () => {
+        fogEl.style.display = "none";
+      },
+      { once: true }
+    );
   },
 
   // Revelado FIJO al empezar la partida — ver FOG_INITIAL_RADIUS arriba.

@@ -26,8 +26,22 @@ const TILE_TYPES = {
 // moverse, ver Fog.revealForUnit). Así este archivo sigue sin saber nada de
 // "qué está revelado", solo pinta la pieza visual que la otra mecánica
 // necesita — mismo patrón que unit__hpbar en Units.spawnUnit (units.js).
+//
+// niebla_01.png es SOLO la nube (sin ninguna loseta dibujada dentro, a
+// diferencia de una versión anterior) — precisamente para poder centrarla
+// con las MISMAS coordenadas exactas que usa cualquier otra cosa sobre el
+// tablero (getTileCenter, igual que unidades/marcadores) en vez de intentar
+// adivinar dónde "encajaba" un dibujo de loseta ya incluido en la imagen
+// (eso fue lo que causaba el desalineado que Jesús reportó). Por eso NO
+// vive dentro de .tile (que se posiciona por su ESQUINA, getTileTopLeft) —
+// se pinta como elemento propio, hermano de .tile, anclado por su CENTRO
+// justo en getTileCenter(row,col) con transform: translate(-50%,-50%) —
+// mismo patrón que un marcador (Units.addMarker) o el ancla de pies de una
+// unidad, solo que centrada en vez de "de pie".
 const FOG_SRC = "assets/losetas/niebla_01.png";
-const FOG_OVERHANG = 1.55; // veces TILE_WIDTH — cuánto sobresale la nube de su loseta.
+const FOG_NATIVE_WIDTH = 1295;
+const FOG_NATIVE_HEIGHT = 1110;
+const FOG_OVERHANG = 1.7; // veces TILE_WIDTH — cuánto sobresale la nube de su loseta.
 
 // Dimensiones nativas del archivo de imagen hierba_01.png (no cambian).
 const TILE_NATIVE_WIDTH = 250;
@@ -126,26 +140,41 @@ function renderMap(map, container) {
     // sin depender del orden en el que se insertaron en el DOM.
     el.style.zIndex = String(t.row + t.col);
 
+    fragment.appendChild(el);
+
     // Capa de niebla (ver comentario de FOG_SRC arriba) — visible por
     // defecto en TODAS las losetas; js/fog.js la oculta loseta a loseta
-    // según se va revelando el mapa. z-index enorme y fijo (no depende de
-    // row/col como el resto) a propósito: tiene que quedar SIEMPRE por
-    // encima de cualquier unidad/gnomo que pueda estar de pie sobre esa
-    // misma loseta sin haberse revelado todavía — si dependiera de
-    // (row+col) como las propias losetas, una unidad con z-index más alto
-    // (más cerca de la cámara) se vería POR ENCIMA de la niebla que debería
-    // ocultarla.
+    // según se va revelando el mapa. Elemento HERMANO de .tile (no hijo:
+    // ver el comentario de FOG_SRC de por qué se centra con sus propias
+    // coordenadas en vez de heredar la caja de la loseta), con
+    // data-row/data-col propios para que Fog.init la encuentre igual que
+    // encontraría la de .tile. z-index enorme y fijo (no depende de row/col
+    // como el resto) a propósito: tiene que quedar SIEMPRE por encima de
+    // cualquier unidad/gnomo que pueda estar de pie sobre esa misma loseta
+    // sin haberse revelado todavía — si dependiera de (row+col) como las
+    // propias losetas, una unidad con z-index más alto (más cerca de la
+    // cámara) se vería POR ENCIMA de la niebla que debería ocultarla.
     const fogImg = document.createElement("img");
     fogImg.className = "tile__fog";
     fogImg.src = FOG_SRC;
     fogImg.draggable = false;
     fogImg.alt = "";
+    fogImg.dataset.row = String(t.row);
+    fogImg.dataset.col = String(t.col);
     const fogWidth = Math.round(TILE_WIDTH * FOG_OVERHANG);
     fogImg.width = fogWidth;
-    fogImg.height = fogWidth; // niebla_01.png es cuadrada — ver FOG_OVERHANG
-    el.appendChild(fogImg);
-
-    fragment.appendChild(el);
+    fogImg.height = Math.round((fogWidth * FOG_NATIVE_HEIGHT) / FOG_NATIVE_WIDTH);
+    const center = getTileCenter(t.row, t.col, map.size);
+    fogImg.style.left = `${center.x}px`;
+    fogImg.style.top = `${center.y}px`;
+    // Fase de la animación de reposo (ver @keyframes fog-idle-drift en
+    // style.css) desfasada al azar por loseta — nivel Triple A / feedback
+    // (regla de oro del proyecto): un campo entero de nubes respirando
+    // exactamente a la vez se lee como un efecto de pantalla, no como niebla
+    // de verdad. Negativo para que arranque ya a mitad de ciclo en vez de
+    // hacer esperar a la primera loseta hasta que empiece su turno.
+    fogImg.style.animationDelay = `-${(Math.random() * 9).toFixed(2)}s`;
+    fragment.appendChild(fogImg);
   });
 
   container.appendChild(fragment);

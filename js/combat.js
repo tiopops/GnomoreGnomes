@@ -60,6 +60,14 @@ const Combat = {
     const targets = [];
     Units.list.forEach((other) => {
       if (other.team === unit.team) return;
+      // Niebla de guerra (js/fog.js) — pedido explícito: "el jugador no
+      // puede ver lo que hay tras ella... puede que haya un enemigo... pero
+      // hasta que no se despeje no se sabrá". Un rival de pie sobre una
+      // loseta todavía sin revelar no se puede atacar aunque caiga dentro
+      // del alcance — ya está oculto visualmente por la propia niebla
+      // (z-index por encima de todo, ver mapgen.js), esto evita además que
+      // se pueda "atacar a ciegas" algo que no se ve.
+      if (typeof Fog !== "undefined" && Fog.isFogged(other.row, other.col)) return;
       const approach = this.findApproachTile(unit, other);
       if (approach) targets.push({ target: other, approach });
     });
