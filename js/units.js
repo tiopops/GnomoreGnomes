@@ -87,7 +87,7 @@ const UNIT_TYPES = {
     movimiento: 4,
     fuerza: 1,
     agilidad: 3,
-    percepcion: 4,
+    percepcion: 3,
     attackRange: 1,
     defaultFacing: "right",
   },

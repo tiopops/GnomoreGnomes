@@ -332,13 +332,23 @@ h2 {
    golpe al primero al terminar; js/fog.js la esconde del todo
    (display:none) cuando acaba, vía animationend. */
 .tile__fog--revealed {
-  animation: fog-dissipate 1.1s cubic-bezier(0.34, 0.7, 0.4, 1) forwards;
+  /* SOLO 0% y 100% a propósito — la primera versión (con un keyframe
+     intermedio al 35%, y luego la siguiente con varios al 25/50/75%) tenía
+     el mismo problema de fondo: cuando una animación CSS lleva varios
+     keyframes y una única timing-function en el shorthand, esa curva de
+     aceleración/deceleración se vuelve a aplicar DESDE CERO dentro de cada
+     tramo entre dos keyframes, no una sola vez a lo largo de toda la
+     animación. Eso hace que la velocidad caiga casi a cero justo antes de
+     cada punto intermedio y "arranque" de golpe en el siguiente tramo — el
+     tirón que reportó Jesús, y con varios keyframes intermedios pasaba
+     varias veces seguidas ("como en 2 partes"). Con un solo tramo (0→100%)
+     la curva se aplica de una sola vez, sin reinicios a mitad de camino. */
+  animation: fog-dissipate 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 @keyframes fog-dissipate {
   0% { transform: translate(-50%, -50%) scale(1); opacity: 0.96; filter: blur(0px); }
-  35% { transform: translate(-50%, -58%) scale(1.16); opacity: 0.7; filter: blur(2px); }
-  100% { transform: translate(-50%, -72%) scale(1.55); opacity: 0; filter: blur(7px); }
+  100% { transform: translate(-50%, -74%) scale(1.6); opacity: 0; filter: blur(7px); }
 }
 
 /* ---------- Unidades ---------- */
