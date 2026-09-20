@@ -387,6 +387,20 @@ h2 {
   80% { transform: translate(-50%, -92%) translateX(2px); }
 }
 
+/* Niebla de guerra (js/fog.js, Fog.applyVisibility) — pedido explícito: "los
+   elementos de debajo de la niebla no deben renderizarse para el jugador...
+   no puedo ver asomar por una esquina de la niebla la cabeza de un
+   personaje enemigo". visibility:hidden en vez de opacity/display:none:
+   conserva su sitio y tamaño en el DOM (nada que recalcular al
+   mostrarse/ocultarse) y de paso dejan de poder recibir clics/hover sin
+   tener que tocar pointer-events aparte en ningún otro sitio. Se aplica al
+   elemento RAÍZ (.unit, no .unit__flip/.unit__sprite) para que se lleve
+   detrás cualquier hijo — barra de vida, gnomo cogido (gnome-attach vive
+   dentro de unit.flipEl) — sin necesitar su propia comprobación. */
+.unit--fog-hidden {
+  visibility: hidden;
+}
+
 /* Eliminación: la unidad se desploma y se desvanece antes de quitarla del
    DOM (ver Units._removeUnit). deselect() se llama siempre antes de esto,
    así que unit--selected ya no está presente y no compite por el transform. */
@@ -591,6 +605,25 @@ h2 {
   transform: scale(1.22) translateY(-3px);
 }
 
+/* Círculos de movimiento reutilizados como destino de "lanzar el gnomo a una
+   loseta vacía" (js/gnome.js, _startPassAim) — pedido explícito: "no seas
+   tan cafre de ponerme el icono de pasar en todos los recuadros de mi
+   movimiento, tiñelos los circulos del color del icono que este en ese
+   momento". color-mix() con --accent-hover en vez de un rgba() fijo para
+   que, si el icono de pasar (.pass-marker__icon, mismo --accent-hover) cambia
+   de color el día de mañana, este teñido lo siga automáticamente sin tocar
+   dos sitios. */
+.range-marker--pass-target {
+  background: color-mix(in srgb, var(--accent-hover) 30%, transparent);
+  border-color: color-mix(in srgb, var(--accent-hover) 80%, white 20%);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent-hover) 55%, transparent);
+}
+
+.range-marker--pass-target:hover {
+  background: color-mix(in srgb, var(--accent-hover) 55%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent-hover) 85%, transparent);
+}
+
 /* Loseta con un rival al alcance: la mira se pinta en la propia loseta del
    rival, MÁS GRANDE que un círculo de movimiento y POR DETRÁS de su sprite
    (z-index menor que el de la unidad, ver zOffset en combat.js) — se lee
@@ -765,24 +798,30 @@ h2 {
   position: fixed;
   right: 20px;
   bottom: 20px;
-  padding: 14px 22px;
+  padding: 8px 22px 8px 8px;
   border-radius: 999px;
-  border: 2px solid rgba(244, 242, 248, 0.35);
-  background: var(--accent);
+  border: 1px solid rgba(244, 242, 248, 0.14);
+  /* Degradado sutil + un highlight superior (en vez del morado plano de
+     antes, pedido explícito: "el botón de pasar turno es muy cutre...
+     puedes hacerlo mejor") para que se lea como una pieza de interfaz
+     trabajada, no como un <button> por defecto pintado del color de acento. */
+  background: linear-gradient(165deg, var(--accent-hover), var(--accent) 55%, #5f2fc4);
   color: var(--ink);
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(122, 62, 240, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
   opacity: 0;
   transform: translateY(14px) scale(0.85);
   pointer-events: none;
   z-index: 500;
-  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, background-color 0.15s ease,
-    border-color 0.15s ease;
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .end-turn-btn--visible {
@@ -792,24 +831,41 @@ h2 {
 }
 
 .end-turn-btn:hover:not(:disabled) {
-  background: var(--accent-hover);
   transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(148, 99, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
+.end-turn-btn:active:not(:disabled) {
+  transform: translateY(-1px) scale(0.99);
+}
+
+/* El icono vive dentro de su propia "moneda" circular a la izquierda (en vez
+   de suelto junto al texto, como antes) — separa visualmente el símbolo del
+   texto y da algo con lo que animar el estado de "pensando"/"listo" sin
+   mover el resto del botón. */
 .end-turn-btn__icon {
-  font-size: 1.2rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
 }
 
 /* Mientras la IA rival resuelve su turno (Turns._aiRunning) — deshabilitado
-   (el jugador no puede pasarle el turno a sí mismo dos veces seguidas) y con
-   el icono girando sin parar para que se lea como "pensando", no como un
-   botón roto que no responde. */
+   (el jugador no puede pasarle el turno a sí mismo dos veces seguidas), en
+   tono apagado en vez del degradado de acento, con el icono girando sin
+   parar para que se lea como "pensando", no como un botón roto que no
+   responde. */
 .end-turn-btn--thinking {
   background: var(--bg-elevated);
   color: var(--muted);
-  border-color: var(--disabled);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(244, 242, 248, 0.1);
   cursor: default;
-  box-shadow: none;
 }
 
 .end-turn-btn--thinking .end-turn-btn__icon {
@@ -819,6 +875,29 @@ h2 {
 @keyframes end-turn-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* Pedido explícito: "cuando todos los personajes se hayan movido estaría
+   bien que palpitase para avisar visualmente al jugador" — pulso continuo
+   de sombra/escala (nunca de opacity: el botón debe seguir leyéndose
+   sólido, no como si parpadeara/fallara) mientras ya no queda ninguna
+   acción por gastar. Se combina con --visible (ambas clases activas a la
+   vez) en vez de sustituirla, así que hereda su posición/aparición normal. */
+.end-turn-btn--ready {
+  animation: end-turn-pulse 1.3s ease-in-out infinite;
+}
+
+@keyframes end-turn-pulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(122, 62, 240, 0.25),
+      0 0 0 0 rgba(148, 99, 255, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.045);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(148, 99, 255, 0.4),
+      0 0 0 10px rgba(148, 99, 255, 0), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
 }
 
 /* Cara del personaje seleccionado, recortada en círculo (sustituye al

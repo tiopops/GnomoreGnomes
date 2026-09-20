@@ -7,8 +7,12 @@
 const OPPONENT_OPTIONS = [1];
 
 const BOARD_SIZE_BY_OPPONENTS = {
-  1: 13, // MVP: partida 1 contra 1 (jugador + 1 IA). Ligeramente más grande que el
-         // mínimo de Polytopia (11x11) porque los gnomos necesitan sitio para huir.
+  // Pedido explícito, al introducir la loseta de agua: "hicieses más grande
+  // el escenario, con más losetas" — de 13x13 a 17x17 para dejar sitio de
+  // verdad a un borde de agua rodeando el escenario y algún lago suelto por
+  // dentro (ver TODO de agua en mapgen.js) sin comerse el espacio jugable
+  // que ya había.
+  1: 17,
 };
 
 function getBoardSize(numOpponents) {

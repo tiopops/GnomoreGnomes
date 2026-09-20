@@ -598,6 +598,13 @@ const Units = {
     }
     unit.el.classList.remove("unit--moving");
     unit.spriteEl.classList.remove("unit__sprite--hop");
+    // Niebla de guerra (js/fog.js) — quien acaba de moverse (rival o gnomo
+    // huyendo) puede haber entrado en una loseta sin revelar (o salido de
+    // una): reevalúa aquí, en el ÚNICO sitio por el que pasa cualquier
+    // desplazamiento paso a paso del proyecto (movimiento normal, acercarse
+    // antes de atacar o de coger al gnomo, huida del gnomo...), en vez de
+    // repetirlo en cada mecánica que llame a esto.
+    if (typeof Fog !== "undefined") Fog.applyVisibility();
   },
 
   hopTo(unit, row, col) {

@@ -26,6 +26,13 @@
 
 const TURNS_MAX_ACTIONS = 2;
 
+// Pedido explícito: "de momento para hacer pruebas, que los enemigos no
+// ataquen estamos en modo sandbox" — la IA rival (_aiActOnce más abajo)
+// sigue moviéndose y cogiendo/golpeando/pasando gnomos con total normalidad,
+// solo se le desactiva la prioridad de ATACAR a los personajes del jugador.
+// Poner a false el día que se quiera que el rival ataque de verdad.
+const TURNS_SANDBOX_NO_ENEMY_ATTACK = true;
+
 const Turns = {
   activeTeam: "player", // "player" | "enemy"
   actionsUsed: {}, // unitId -> nº de acciones gastadas en SU turno actual
@@ -66,6 +73,12 @@ const Turns = {
     if (Units.selectedId === unit.id && !this.canAct(unit)) {
       Units.deselect();
     }
+    // Pedido explícito: "cuando todos los personajes se hayan movido estaría
+    // bien que palpitase para avisar visualmente al jugador" — se comprueba
+    // después de CADA acción (no solo al cambiar de turno) para que el botón
+    // se ponga a palpitar en el instante exacto en que la ÚLTIMA unidad del
+    // jugador se queda sin acciones, no un paso más tarde.
+    this._updateButtonState();
   },
 
   // Saturación reducida (pedido explícito) en cuanto una unidad agota sus 2
@@ -127,19 +140,40 @@ const Turns = {
     }
   },
 
+  // true si NINGUNA unidad del jugador puede ya actuar este turno (las 2
+  // acciones de todas gastadas) — lo usa _updateButtonState para decidir
+  // cuándo palpitar (pedido explícito, ver más abajo). false si el equipo
+  // del jugador está vacío (no hay nada que avisar).
+  _allPlayerUnitsExhausted() {
+    const playerUnits = Units.list.filter((u) => u.team === "player");
+    if (playerUnits.length === 0) return false;
+    return playerUnits.every((u) => !this.canAct(u));
+  },
+
   _updateButtonState() {
     if (!this._btn) return;
     this._btn.classList.add("end-turn-btn--visible");
     const isPlayerTurn = this.activeTeam === "player" && !this._aiRunning;
     this._btn.disabled = !isPlayerTurn;
     this._btn.classList.toggle("end-turn-btn--thinking", !isPlayerTurn);
-    this._btnLabelEl.textContent = isPlayerTurn ? "Pasar turno" : "Turno rival…";
-    // Icono distinto mientras "piensa" (ph-circle-notch, pensado para girar
-    // sin quedar raro, a diferencia de la bandera de meta) en vez de
-    // limitarse a girar el propio icono de bandera.
-    this._btnIconEl.className = isPlayerTurn
-      ? "ph ph-flag-checkered end-turn-btn__icon"
-      : "ph ph-circle-notch end-turn-btn__icon";
+
+    // Pedido explícito: "cuando todos los personajes se hayan movido estaría
+    // bien que palpitase para avisar visualmente al jugador" — solo mientras
+    // es su turno de verdad (nunca durante el turno rival, aunque
+    // técnicamente ya estén todos "agotados" de la ronda anterior).
+    const ready = isPlayerTurn && this._allPlayerUnitsExhausted();
+    this._btn.classList.toggle("end-turn-btn--ready", ready);
+
+    if (!isPlayerTurn) {
+      this._btnLabelEl.textContent = "Turno rival…";
+      this._btnIconEl.className = "ph ph-circle-notch end-turn-btn__icon";
+    } else if (ready) {
+      this._btnLabelEl.textContent = "¡Todos listos!";
+      this._btnIconEl.className = "ph ph-check-circle end-turn-btn__icon";
+    } else {
+      this._btnLabelEl.textContent = "Pasar turno";
+      this._btnIconEl.className = "ph ph-hourglass-simple end-turn-btn__icon";
+    }
   },
 
   // ---------- Cambio de turno ----------
@@ -221,7 +255,7 @@ const Turns = {
       }
     }
 
-    if (typeof Combat !== "undefined") {
+    if (!TURNS_SANDBOX_NO_ENEMY_ATTACK && typeof Combat !== "undefined") {
       const targets = Combat.attackableEnemies(unit);
       if (targets.length > 0) {
         await Combat.approachAndAttack(unit, targets[0].target);

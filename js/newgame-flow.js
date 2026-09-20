@@ -224,6 +224,14 @@ function spawnTestUnits(size, raceId) {
   // gnomos ya colocados: siempre empieza el turno del jugador con las 2
   // acciones de cada uno intactas, y (re)aparece el botón de PASAR TURNO.
   if (typeof Turns !== "undefined") Turns.reset();
+
+  // Niebla de guerra (js/fog.js) — estado de visibilidad inicial: con todos
+  // los rivales y gnomos ya colocados y el revelado inicial de cada
+  // personaje del jugador ya hecho (arriba), toca ocultar a quien haya
+  // caído fuera de esas zonas reveladas. Va AL FINAL de todo a propósito
+  // (después de spawnear rivales/gnomos, no antes) — pedido explícito: "los
+  // elementos de debajo de la niebla no deben renderizarse para el jugador".
+  if (typeof Fog !== "undefined") Fog.applyVisibility();
 }
 
 // Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del

@@ -67,6 +67,10 @@ const Fog = {
         this._reveal(r, c);
       }
     }
+    // Puede que este revelado acabe de dejar a la vista a algún rival o
+    // gnomo que ya estaba ahí de pie (ver applyVisibility más abajo) — una
+    // sola pasada al final del radio entero, no una por loseta individual.
+    this.applyVisibility();
   },
 
   _reveal(row, col) {
@@ -119,5 +123,43 @@ const Fog = {
   revealForUnit(unit) {
     const type = UNIT_TYPES[unit.typeId];
     this.revealAround(unit.row, unit.col, type.percepcion);
+  },
+
+  // Pedido explícito: "los elementos de debajo de la niebla no deben
+  // renderizarse para el jugador que está jugando... no puedo ver asomar
+  // por una esquina de la niebla la cabeza de un personaje enemigo... solo
+  // se renderiza para mí, cuando esa niebla no está" — hasta ahora la niebla
+  // solo TAPABA visualmente (z-index por encima) sin impedir que el rival o
+  // el gnomo se siguieran pintando debajo de verdad; como la nube de niebla
+  // no es un rectángulo perfecto pegado a cada loseta (tiene bordes suaves y
+  // sobresale por encima con FOG_OVERHANG, ver mapgen.js) ni cubre toda la
+  // altura de un personaje de pie (más alto que su propia loseta), quedaban
+  // huecos por los que se veía asomar quien estuviera debajo. La solución de
+  // verdad no es "tapar mejor" (seguiría dependiendo del arte concreto de la
+  // nube) sino no pintar en absoluto lo que el jugador no debería poder ver
+  // todavía — oculta con la clase "unit--fog-hidden" (ver style.css,
+  // visibility:hidden: conserva su sitio en el DOM sin más lógica especial,
+  // y de paso dejan de poder recibir clics) a cualquier rival o gnomo suelto
+  // que esté de pie sobre una loseta sin revelar. Las unidades del propio
+  // jugador NUNCA se ocultan (nunca deberían poder estar sobre niebla suya,
+  // ver la exclusión en Movement.reachableTiles, pero se excluyen aquí
+  // también por seguridad) y un gnomo COGIDO no se toca directamente — su
+  // sprite ya vive dentro del personaje que lo lleva (gnome-attach, ver
+  // GnomeInstance.attachTo) así que hereda la visibilidad de ese personaje
+  // sin necesitar su propia comprobación.
+  applyVisibility() {
+    if (!this.revealedGrid) return;
+    if (typeof Units !== "undefined") {
+      Units.list.forEach((u) => {
+        if (u.team === "player" || !u.el) return;
+        u.el.classList.toggle("unit--fog-hidden", this.isFogged(u.row, u.col));
+      });
+    }
+    if (typeof Gnome !== "undefined") {
+      Gnome.list.forEach((g) => {
+        if (g.heldBy || !g.el) return;
+        g.el.classList.toggle("unit--fog-hidden", this.isFogged(g.row, g.col));
+      });
+    }
   },
 };

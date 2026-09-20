@@ -516,13 +516,36 @@ function createGnomeInstance() {
             onClick: () => this.executePass(unit, ally),
           });
         });
+
+      // Además de a un aliado, también se puede lanzar a una loseta VACÍA
+      // dentro del propio alcance de movimiento de quien lo lleva (pedido
+      // explícito) — se reutiliza el mismo círculo de rango normal
+      // (.range-marker) en vez de un icono nuevo por casilla ("no seas tan
+      // cafre de ponerme el icono de pasar en todos los recuadros de mi
+      // movimiento"), solo teñido con el color del icono de pasar
+      // (--pass-target en style.css usa color-mix con var(--accent-hover),
+      // la misma variable que .pass-marker__icon, así que si ese color
+      // cambia algún día los círculos lo siguen automáticamente).
+      if (typeof Movement !== "undefined") {
+        Movement.reachableTiles(unit).forEach((tile, i) => {
+          Units.addMarker({
+            className: "range-marker range-marker--pass-target",
+            row: tile.row,
+            col: tile.col,
+            delayIndex: i,
+            visibleClass: "range-marker--visible",
+            owner: "gnome",
+            onClick: () => this.executeThrowToTile(unit, tile.row, tile.col),
+          });
+        });
+      }
     },
 
     _cancelPassAim() {
       this.passing = false;
       if (Gnome._passBtn) Gnome._passBtn.classList.remove("gnome-action-btn--aiming");
       Units.markerEls = Units.markerEls.filter((m) => {
-        const isPass = m.classList.contains("pass-marker");
+        const isPass = m.classList.contains("pass-marker") || m.classList.contains("range-marker--pass-target");
         if (isPass) m.remove();
         return !isPass;
       });
@@ -645,6 +668,63 @@ function createGnomeInstance() {
       this._refreshSelectedUnitRange();
     },
 
+    // Lanzar el gnomo a una loseta VACÍA dentro del propio alcance de
+    // movimiento de quien lo lleva (pedido explícito: "que la habilidad
+    // lanzar al gnomo tambien te permita lanzarlo a una zona dentro de tu
+    // rango de movimiento") — mismo formulario de éxito/puntos que un pase a
+    // un aliado (computePassSuccess/computePassPoints), pero contra la
+    // LOSETA en vez de contra una unidad. Como el destino siempre sale de
+    // Movement.reachableTiles(holder) (ver _startPassAim), la distancia
+    // nunca supera el propio movimiento de quien lanza — overreach siempre
+    // 0 — así que este lanzamiento es casi siempre un éxito, coherente con
+    // "está dentro de tu alcance, deberías poder hacerlo bien".
+    async executeThrowToTile(holder, destRow, destCol) {
+      if (this.heldBy !== holder.id || this.busy) return;
+      // Turnos (js/turns.js) — igual que executePass, esto gasta una acción
+      // de QUIEN LANZA.
+      if (typeof Turns !== "undefined" && !Turns.canAct(holder)) return;
+      if (typeof Turns !== "undefined") Turns.useAction(holder);
+      Units.clearRangeOverlays();
+      this.passing = false;
+      this.busy = true;
+      this.hideBadge();
+
+      const distance = Math.max(Math.abs(destRow - holder.row), Math.abs(destCol - holder.col));
+      const holderType = UNIT_TYPES[holder.typeId];
+      const success = Math.random() < this.computePassSuccess(holderType.agilidad, distance, holderType.movimiento);
+
+      Units.faceTowardsTile(holder, destRow, destCol);
+      this.row = holder.row;
+      this.col = holder.col;
+      Units.faceTowardsTile(this, destRow, destCol);
+
+      if (holder.el) {
+        holder.el.classList.remove("unit--throwing");
+        void holder.spriteEl.offsetWidth;
+        holder.el.classList.add("unit--throwing");
+        setTimeout(() => holder.el.classList.remove("unit--throwing"), 380);
+      }
+
+      this.detachFrom();
+      this.spriteEl.src = GNOME_ASSETS.grita;
+
+      const end = success ? { row: destRow, col: destCol } : this.findDropTile(holder);
+      await this.animateThrowTo(holder.row, holder.col, end.row, end.col);
+
+      if (success) {
+        const gained = this.computePassPoints(distance, holderType.movimiento);
+        this._addPoints(gained);
+        await this.landAt(end, { sound: () => SFX.gnomeLandSoft() });
+        Units.spawnFloatingText(this, `+${gained}`, { className: "dmg-popup gnome-points-popup" });
+      } else {
+        await this.landAt(end);
+      }
+
+      this.busy = false;
+      Units.refreshRange(holder);
+      this._refreshSelectedUnitRange();
+    },
+
     // Loseta a la que cae este gnomo si el pase falla: se aleja de TODOS los
     // personajes (no solo de quien lanzaba) Y de cualquier otro gnomo suelto
     // (para no caer encima de otro y solaparse), buscando quedar lo más
@@ -680,13 +760,14 @@ function createGnomeInstance() {
     // respiración continua (misma idea que unit--moving en units.js: dos
     // animaciones no pueden compartir la propiedad "transform" a la vez, así
     // que una sustituye a la otra mientras dura en vez de sumarse).
-    async landAt(tile) {
+    async landAt(tile, { sound } = {}) {
       this.row = tile.row;
       this.col = tile.col;
       this.el.classList.remove("gnome--flying");
       this.el.style.display = "";
       Units._placeInstant(this);
-      SFX.dropFail();
+      if (sound) sound();
+      else SFX.dropFail();
 
       this.el.classList.remove("gnome--landing");
       void this.spriteEl.offsetWidth; // fuerza reflow para poder repetir la animación en aterrizajes seguidos
@@ -736,6 +817,12 @@ function createGnomeInstance() {
             requestAnimationFrame(step);
           } else {
             this.el.classList.remove("gnome--flying");
+            // Niebla de guerra (js/fog.js) — un pase fallido (landAt) puede
+            // dejar caer al gnomo sobre una loseta sin revelar; el vuelo en
+            // sí (animateThrowTo) no pasa por Units.walkPath (tiene su
+            // propio bucle de fotogramas, ver comentario de arriba), así que
+            // no se reevalúa solo — se hace aquí, al aterrizar.
+            if (typeof Fog !== "undefined") Fog.applyVisibility();
             resolve();
           }
         };

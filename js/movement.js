@@ -83,7 +83,12 @@ const Movement = {
     // su percepción al terminar el desplazamiento". Va ANTES de que
     // reaccione el gnomo a propósito: revelar es lo primero que pasa al
     // "terminar de moverse", el gnomo huyendo es una reacción aparte.
-    if (typeof Fog !== "undefined") Fog.revealForUnit(unit);
+    // SOLO para el jugador — "cada jugador tiene su propia niebla": si el
+    // rival (la IA, ver js/turns.js) revelara también al moverse, el
+    // jugador vería aparecer zonas del mapa cada vez que un enemigo se
+    // acerca a algo sin haberlo explorado él mismo, que es justo la fuga de
+    // información que se acaba de arreglar en Fog.applyVisibility.
+    if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
     // El gnomo (js/gnome.js) reacciona alejándose cada vez que una unidad
     // del jugador se mueve — vive en su propio archivo y se entera de esto
     // igual que combat.js/movement.js se enteran uno del otro: sin que

@@ -92,6 +92,15 @@ const SFX = {
   },
   dropFail() { this._pluck("gnome-drop-fail", 140, "sawtooth", 0.22, 0.35); },
 
+  // Aterrizaje de un lanzamiento EXITOSO a una zona vacía (pedido explícito:
+  // "lanzarlo a una zona dentro de tu rango de movimiento" — ver
+  // GnomeInstance.executeThrowToTile en gnome.js). Usa la misma animación de
+  // impacto que un pase fallido (GnomeInstance.landAt) pero con este sonido
+  // en vez de dropFail(): triangular y más agudo, sin nada de "sawtooth
+  // grave" — tiene que sonar a logro, no a error, aunque físicamente el
+  // gnomo golpee el suelo igual en los dos casos.
+  gnomeLandSoft() { this._pluck("gnome-land-soft", 480, "triangle", 0.16, 0.26); },
+
   // Un gnomo suelto perdiendo puntos al pasar turno (js/turns.js,
   // GnomeInstance._loseCooldownPoints) — a propósito NO reutiliza hit() (un
   // golpe de verdad, seco y agudo): esto es lo contrario, se está calmando,
@@ -101,22 +110,32 @@ const SFX = {
 
   // Grito del gnomo mientras vuela por el aire (Gnome.animateThrowTo) —
   // pedido explícito: "un sonido... como iiiiiiiiu o que den un gritito...
-  // asegúrate de que sea un sonido de calidad". No reutiliza _pluck/_getVoice
-  // (pensados para un tono fijo con solo un envolvente de volumen): aquí hace
-  // falta un oscilador PROPIO por cada vuelo porque su frecuencia se desliza
-  // de principio a fin (glissando descendente, el clásico "caída" de dibujos
-  // animados) y con la voz compartida un segundo vuelo que empezara antes de
-  // que la anterior terminara de apagarse heredaría a medias su rampa de
-  // frecuencia. Tres capas para que no suene a tono puro de sintetizador:
-  //   - osc (sawtooth): el propio "grito", más brillante que una sinusoide,
-  //     de startFreq a endFreq con exponentialRamp (una caída de tono se
-  //     percibe más natural en escala exponencial que lineal).
-  //   - vibrato: una segunda oscilación (LFO) modulando la frecuencia de
-  //     osc unos ±26Hz a ~11Hz — el temblor que distingue un "grito" de un
-  //     pitido liso.
-  //   - filter (lowpass): su frecuencia de corte baja EN PARALELO al tono
-  //     para que el final del grito también se sienta "apagándose", no solo
-  //     más grave.
+  // asegúrate de que sea un sonido de calidad".
+  //
+  // REHECHO — la primera versión (un único sawtooth crudo deslizándose hacia
+  // abajo) sonaba a sirena/alarma en vez de a algo divertido ("muy
+  // desagradable... no me gusta NADA", feedback directo de Jesús). El sonido
+  // de un "lanzamiento" alegre de dibujos animados casi nunca es un sawtooth
+  // solo: ese timbre tiene demasiados armónicos agudos crudos, se percibe
+  // metálico/duro pite el oído lo asocie enseguida a un aviso de error, no a
+  // diversión. Rehecho con tres cambios de fondo:
+  //   1. DOS triangulares casi al unísono (osc1/osc2, desafinadas ±6 cents)
+  //      en vez de un sawtooth — un triangle ya es mucho más suave de por sí
+  //      (solo armónicos impares, más débiles), y dos voces casi idénticas
+  //      sonando juntas dan ese "grosor" cálido de coro en vez de un pitido
+  //      plano de sintetizador de un solo oscilador.
+  //   2. Un pequeño "flick" de despegue: sube de tono en el primer 12% del
+  //      vuelo antes de empezar a bajar — un salto que arranca "p'arriba" y
+  //      LUEGO cae se lee como un lanzamiento juguetón (el clásico "wheee!"),
+  //      mientras que deslizarse hacia abajo desde el primer instante (como
+  //      hacía antes) se lee de entrada como una caída/alarma, no como una
+  //      salida con ganas.
+  //   3. Vibrato más lento y su mitad de profundo (6.5Hz/±12Hz en vez de
+  //      11Hz/±26Hz) — suficiente para que no suene a tono robótico plano,
+  //      sin llegar a temblar como un grito de socorro.
+  // El filtro paso-bajo se mantiene (el corte baja en paralelo al tono, para
+  // que el propio timbre se sienta "apagándose" al final, no solo más
+  // grave), solo con un rango menos agresivo a juego con el resto.
   // duration en SEGUNDOS (a diferencia del resto de SFX, en ms) porque quien
   // llama a esto ya tiene la duración del vuelo en segundos a mano.
   gnomeFly(duration) {
@@ -126,34 +145,56 @@ const SFX = {
       if (ctx.state === "suspended") ctx.resume();
       const now = ctx.currentTime;
       const dur = Math.max(0.15, duration);
+      const flickEnd = now + dur * 0.12;
 
-      const osc = ctx.createOscillator();
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(1100, now);
-      osc.frequency.exponentialRampToValueAtTime(300, now + dur);
+      const osc1 = ctx.createOscillator();
+      osc1.type = "triangle";
+      osc1.detune.value = -6;
+      const osc2 = ctx.createOscillator();
+      osc2.type = "triangle";
+      osc2.detune.value = 6;
+
+      [osc1, osc2].forEach((osc) => {
+        osc.frequency.setValueAtTime(560, now);
+        osc.frequency.exponentialRampToValueAtTime(780, flickEnd); // "flick" de despegue hacia arriba
+        osc.frequency.exponentialRampToValueAtTime(300, now + dur); // y luego cae hasta aterrizar
+      });
 
       const vibrato = ctx.createOscillator();
       vibrato.type = "sine";
-      vibrato.frequency.value = 11;
+      vibrato.frequency.value = 6.5;
       const vibratoGain = ctx.createGain();
-      vibratoGain.gain.value = 26;
-      vibrato.connect(vibratoGain).connect(osc.frequency);
+      vibratoGain.gain.value = 12;
+      vibrato.connect(vibratoGain);
+      vibratoGain.connect(osc1.frequency);
+      vibratoGain.connect(osc2.frequency);
 
       const filter = ctx.createBiquadFilter();
       filter.type = "lowpass";
-      filter.frequency.setValueAtTime(4200, now);
-      filter.frequency.exponentialRampToValueAtTime(900, now + dur);
+      filter.Q.value = 0.7;
+      filter.frequency.setValueAtTime(2600, now);
+      filter.frequency.exponentialRampToValueAtTime(1400, now + dur);
 
       const gain = ctx.createGain();
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.24, now + Math.min(0.12, dur * 0.3));
-      gain.gain.setValueAtTime(0.24, now + Math.max(0, dur - 0.12));
+      gain.gain.exponentialRampToValueAtTime(0.22, now + Math.min(0.09, dur * 0.25));
+      gain.gain.setValueAtTime(0.22, now + Math.max(0, dur - 0.14));
       gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
 
-      osc.connect(filter).connect(gain).connect(this.master);
-      osc.start(now);
+      // Suma las dos voces ANTES del filtro/envolvente compartidos (en vez
+      // de duplicar filter+gain por voz) y compensa el volumen combinado
+      // para que sumar una segunda voz no salga más fuerte que antes.
+      const merge = ctx.createGain();
+      merge.gain.value = 0.6;
+      osc1.connect(merge);
+      osc2.connect(merge);
+      merge.connect(filter).connect(gain).connect(this.master);
+
+      osc1.start(now);
+      osc2.start(now);
       vibrato.start(now);
-      osc.stop(now + dur + 0.05);
+      osc1.stop(now + dur + 0.05);
+      osc2.stop(now + dur + 0.05);
       vibrato.stop(now + dur + 0.05);
     } catch (e) {
       // Audio no disponible — se ignora, no debe romper la animación de vuelo.
