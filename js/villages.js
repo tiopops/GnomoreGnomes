@@ -48,6 +48,7 @@ const Villages = {
   _raceIds: { player: null, enemy: null },
   _nextId: 1,
   _flashEl: null,
+  _targetedIds: [],
 
   // Se llama junto a Glory.init (newgame-flow.js) para que Villages sepa
   // qué sprite de raza usar cuando cada equipo conquiste uno — mismo patrón
@@ -63,6 +64,7 @@ const Villages = {
   resetAll() {
     this.list.forEach((v) => v.el.remove());
     this.list = [];
+    this._targetedIds = [];
   },
 
   // Coloca VILLAGE_COUNT poblados en losetas transitables, libres (sin
@@ -152,6 +154,22 @@ const Villages = {
     }
     el.appendChild(hpBarEl);
 
+    // "cuando el totem este dentro del alcance de ataque de un personaje se
+    // debe poder atacar simplemente con pulsar sobre el, no solo sobre el
+    // circulo" (pedido explícito) — mismo patrón que Units._onUnitClick con
+    // "unit--targeted" para un rival atacable: si este tótem está marcado
+    // como objetivo ahora mismo (ver showFor, "village--targeted" más abajo)
+    // y hay una unidad seleccionada, un clic sobre el propio tótem ataca
+    // directamente en vez de no hacer nada (los poblados nunca se
+    // seleccionan, así que no hay que desviar ningún otro comportamiento).
+    el.addEventListener("click", (e) => {
+      if (!el.classList.contains("village--targeted")) return;
+      if (typeof Units === "undefined" || !Units.selectedId) return;
+      e.stopPropagation();
+      const attacker = Units.list.find((u) => u.id === Units.selectedId);
+      if (attacker) this.attack(attacker, village);
+    });
+
     if (typeof Units !== "undefined") Units.container.appendChild(el);
 
     const village = {
@@ -211,10 +229,23 @@ const Villages = {
         },
         onClick: () => this.attack(unit, village),
       });
+
+      // "village--targeted" — mismo patrón que "unit--targeted" en
+      // combat.js: marca el tótem como atacable ahora mismo, para que el
+      // clic directo sobre su sprite (ver el listener en _create) y el
+      // cursor de diana (ver style.css) sepan cuándo activarse.
+      village.el.classList.add("village--targeted");
+      this._targetedIds.push(village.id);
     });
   },
 
-  onClear() {},
+  onClear() {
+    this._targetedIds.forEach((id) => {
+      const village = this.list.find((v) => v.id === id);
+      if (village) village.el.classList.remove("village--targeted");
+    });
+    this._targetedIds = [];
+  },
 
   async attack(unit, village) {
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
@@ -224,10 +255,6 @@ const Villages = {
 
     Units.clearRangeOverlays();
     Units.faceTowardsTile(unit, village.row, village.col);
-
-    // Golpear a un poblado cuenta como UNA de las 2 acciones del turno,
-    // igual que cualquier otra acción (moverse, golpear a un rival...).
-    if (typeof Turns !== "undefined") Turns.useAction(unit);
 
     // "los puntos acumulados del gnomo se restan a los puntos de vida del
     // poblado" — el daño es exactamente los puntos que llevaba encima, sin
@@ -240,10 +267,26 @@ const Villages = {
     // de este golpe concreto (nunca dañado antes, ni en este turno ni en
     // otro anterior) Y este golpe por sí solo lo deja a 0 o menos. Un
     // poblado ya dañado en un golpe previo que se remata después NO cuenta,
-    // aunque ese golpe final sí sea el que lo destruye.
+    // aunque ese golpe final sí sea el que lo destruye. Calculado ANTES de
+    // gastar la acción del turno (más abajo) porque el propio aviso visual
+    // de "sin acciones" depende de saber ya si esto va a ser un golpe
+    // mortal en un solo golpe o no.
     const wasFullHp = village.hp >= village.maxHp;
     village.hp = Math.max(0, village.hp - damage);
     const oneHitKill = wasFullHp && village.hp <= 0;
+
+    // Golpear a un poblado cuenta como UNA de las 2 acciones del turno,
+    // igual que cualquier otra acción (moverse, golpear a un rival...).
+    if (typeof Turns !== "undefined") Turns.useAction(unit);
+    // "cuando se machaca a un gnomo el personaje no debe tener los colores
+    // de inactivo hasta que se haya capturado el propio totem" (pedido
+    // explícito) — Turns.useAction ya cuenta la acción de verdad (para que
+    // canAct/el resto de reglas sigan siendo correctas durante todo el
+    // salto), pero el aviso VISUAL de "sin acciones" (unit--exhausted, ver
+    // turns.js) se quita otra vez aquí y no vuelve hasta el final de
+    // _playEpicSmash — así el personaje se ve a toda saturación durante su
+    // propio momento de gloria, no desteñido a media animación.
+    if (oneHitKill && unit.el) unit.el.classList.remove("unit--exhausted");
 
     if (oneHitKill) {
       // La animación épica se encarga ella sola de la retroalimentación de
@@ -275,6 +318,12 @@ const Villages = {
     if (village.hp <= 0) {
       this._capture(village, unit.team, oneHitKill ? 2 : 1);
     }
+
+    // Ahora que el tótem YA está capturado (si tocaba), toca reaplicar el
+    // aviso visual de "sin acciones" que se suprimió arriba durante el
+    // machacón épico — Turns.useAction ya había contado la acción de verdad
+    // desde el principio, esto solo pone al día el propio classList.
+    if (oneHitKill && typeof Turns !== "undefined") Turns.refreshExhaustedClass(unit);
 
     Units.refreshRange(unit);
   },
@@ -400,7 +449,11 @@ const Villages = {
     village.el.classList.remove("village--captured");
     void village.el.offsetWidth;
     village.el.classList.add("village--captured");
-    if (typeof SFX !== "undefined") SFX.glory();
+    // "Al conseguir un totem debe escucharse un sonido de satisfaccion"
+    // (pedido explícito) — sonido propio y más "grande" que el genérico de
+    // gloria (SFX.glory, ese sigue sonando aparte en el impacto del golpe
+    // mortal, ver _playEpicSmash), justo en el instante de la conquista.
+    if (typeof SFX !== "undefined") SFX.captureVillage();
     Units.spawnFloatingText(village, "¡Conquistado!", { className: "dmg-popup gnome-points-popup" });
     // El indicador discreto "+X / turno" del HUD de gloria (solo se pinta
     // el del jugador, ver glory.js) debe reflejar el nuevo poblado ya

@@ -94,6 +94,16 @@ const Turns = {
     unit.el.classList.toggle("unit--exhausted", exhausted);
   },
 
+  // Versión pública de lo de arriba — para archivos que a propósito
+  // suprimieron el aviso visual un rato (ver Villages._playEpicSmash: "el
+  // personaje no debe tener los colores de inactivo hasta que se haya
+  // capturado el propio totem") y necesitan volver a ponerlo al día sin
+  // tocar el conteo real de acciones (ese ya se actualizó al llamar a
+  // useAction en su momento, esto solo repinta el classList).
+  refreshExhaustedClass(unit) {
+    this._applyExhaustedClass(unit);
+  },
+
   // Vacía a 0 las acciones gastadas de TODAS las unidades de `team` y les
   // quita la saturación — se llama al EMPEZAR el turno de ese equipo (nunca
   // al terminarlo), así el otro equipo se queda viendo cómo de "gastadas"

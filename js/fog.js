@@ -168,5 +168,18 @@ const Fog = {
         g.el.classList.toggle("unit--fog-hidden", this.isFogged(g.row, g.col));
       });
     }
+    // "los totems no deben verse a traves de la niebla, realmente NADA debe
+    // verse si tiene niebla encima" (pedido explícito) — a diferencia de
+    // las unidades de arriba, un poblado/tótem se oculta SIEMPRE que su
+    // loseta esté sin revelar, sea de quien sea (no hay excepción para
+    // "player" como con las unidades: un tótem no se mueve ni until ahora
+    // se sabía nada de esta regla, así que ni siquiera el propio tótem del
+    // jugador debía quedar visible antes de haber explorado su loseta).
+    if (typeof Villages !== "undefined") {
+      Villages.list.forEach((v) => {
+        if (!v.el) return;
+        v.el.classList.toggle("unit--fog-hidden", this.isFogged(v.row, v.col));
+      });
+    }
   },
 };

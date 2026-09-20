@@ -980,6 +980,27 @@ h2 {
   text-shadow: 0 0 10px rgba(0, 0, 0, 0.75), 0 0 22px rgba(255, 50, 50, 1);
 }
 
+/* Cursor de diana al pasar por encima de un objetivo atacable directamente
+   (unit--targeted: rival al alcance de Combat; village--targeted: tótem al
+   alcance de Villages con un gnomo en la mano) — pedido explícito: "cuando
+   se va a atacar el puntero del raton puede ser el icono pshopor target
+   como el que esta debajo de los personajes que se pueden atacar". Un
+   cursor CSS solo admite una imagen, no la propia fuente de iconos (que
+   además puede no estar cargada, ver notas sobre Phosphor/unpkg en otros
+   archivos), así que es un SVG propio a mano con el mismo lenguaje visual
+   que .attack-marker__icon de arriba (mismo rojo, contorno negro para que
+   se lea sobre cualquier fondo) en vez del glifo real. */
+.unit--targeted,
+.village.village--targeted {
+  /* .village.village--targeted (dos clases, no una) a propósito: más abajo
+     en este mismo archivo ".village { cursor: default; }" tiene la MISMA
+     especificidad que un simple ".village--targeted" y gana por venir
+     después en cascada — encadenar las dos clases sube la especificidad
+     para que el cursor de diana gane siempre, venga en el orden que venga
+     el resto de reglas. */
+  cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICA8ZyBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj4KICAgIDxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjkiLz4KICAgIDxsaW5lIHgxPSIxNiIgeTE9IjEiIHgyPSIxNiIgeTI9IjYiLz4KICAgIDxsaW5lIHgxPSIxNiIgeTE9IjI2IiB4Mj0iMTYiIHkyPSIzMSIvPgogICAgPGxpbmUgeDE9IjEiIHkxPSIxNiIgeDI9IjYiIHkyPSIxNiIvPgogICAgPGxpbmUgeDE9IjI2IiB5MT0iMTYiIHgyPSIzMSIgeTI9IjE2Ii8+CiAgPC9nPgogIDxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmMjMyMyIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+CiAgICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSI5Ii8+CiAgICA8bGluZSB4MT0iMTYiIHkxPSIxIiB4Mj0iMTYiIHkyPSI2Ii8+CiAgICA8bGluZSB4MT0iMTYiIHkxPSIyNiIgeDI9IjE2IiB5Mj0iMzEiLz4KICAgIDxsaW5lIHgxPSIxIiB5MT0iMTYiIHgyPSI2IiB5Mj0iMTYiLz4KICAgIDxsaW5lIHgxPSIyNiIgeTE9IjE2IiB4Mj0iMzEiIHkyPSIxNiIvPgogIDwvZz4KPC9zdmc+") 16 16, crosshair;
+}
+
 /* Barrita de vida: solo visible mientras esa unidad concreta está
    seleccionada (amiga o rival), encima de la cabeza.
    Pedido explícito (primera pasada): "las barras de vida pueden estar
@@ -2128,7 +2149,9 @@ h2 {
 
 .glory-hud__value {
   font-weight: 800;
-  font-size: 1.6rem;
+  /* Pedido explícito: "el numero de puntos de gloria debe ser mas grande" —
+     de 1.6rem a 2.1rem. */
+  font-size: 2.1rem;
   letter-spacing: 0.01em;
   color: #000;
   min-width: 1.2em;
@@ -2138,7 +2161,10 @@ h2 {
    arriba a propósito (ver nota de cabecera) — solo informa, no compite por
    la atención. */
 .glory-hud__preview {
-  font-size: 0.68rem;
+  /* Pedido explícito: "el de los puntos de gloria persistentes cambien un
+     poco mas" — sube algo menos que glory-hud__value de arriba, sigue
+     siendo claramente secundario. */
+  font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: rgba(0, 0, 0, 0.55);
@@ -2383,6 +2409,15 @@ h2 {
      conquistarse (village--captured más abajo). */
 }
 
+/* "el totem neutral debe ser un 15% mas pequeño" (pedido explícito) — solo
+   mientras sigue neutral (village--neutral, ver villages.js: esa clase se
+   quita en cuanto se conquista y pasa a village--player/village--enemy),
+   así que al capturarse recupera el 168px normal de cualquier otro tótem
+   sin que este archivo necesite saber nada del cambio de dueño. */
+.village--neutral .village__sprite {
+  width: 142.8px; /* 168px * 0.85 */
+}
+
 /* Pedido implícito (visibilidad): la barra de vida de una unidad normal
    solo se revela seleccionada/apuntada (ver .unit--selected .unit__hpbar
    más arriba) — un poblado nunca se selecciona, así que la suya está
@@ -2431,12 +2466,33 @@ h2 {
   animation: unit-epic-smash 1.1s cubic-bezier(0.22, 0, 0.3, 1);
 }
 
+/* "cuando el personaje salta, el gnomo debe seguir la trayectoria del salto
+   identica a la que se le aplica al peersonaje...hasta que lo estampe
+   contra el suelo" (pedido explícito) — .gnome-attach es un HERMANO de
+   .unit__sprite (los dos cuelgan de .unit__flip, ver gnome.js), así que el
+   salto de arriba no lo arrastraba consigo (transform no afecta a
+   elementos hermanos): sin esto el personaje subía solo y el gnomo se
+   quedaba clavado abajo, en su sitio de siempre. Misma animación, MISMA
+   duración/curva — exactamente el mismo arco, para que de verdad parezca
+   que sigue en su mano todo el trayecto (se destruye de verdad al llegar
+   el instante del impacto, ver Villages._playEpicSmash, así que no hace
+   falta preocuparse de "después" del golpe). */
+.unit--epic-smash .gnome-attach {
+  animation: unit-epic-smash 1.1s cubic-bezier(0.22, 0, 0.3, 1);
+}
+
 @keyframes unit-epic-smash {
+  /* "anima disorsionando (estirando y contrayendo)...para darle dinamismo"
+     (pedido explícito) — mismas fases y mismo timing de siempre (85% sigue
+     siendo el instante exacto del impacto, sincronizado a mano con
+     IMPACT_DELAY_MS en villages.js), solo con MÁS squash/stretch en cada
+     fase: más deformación, más giro, para que se note más el peso del
+     golpe. */
   0%   { transform: translateY(0) scale(1, 1) rotate(0deg); }
-  50%  { transform: translateY(-190px) scale(1.1, 0.94) rotate(-7deg); }
-  70%  { transform: translateY(-190px) scale(1.14, 0.9) rotate(-9deg); }
-  85%  { transform: translateY(10px) scale(1.28, 0.68) rotate(2deg); }
-  93%  { transform: translateY(-10px) scale(0.9, 1.16) rotate(-1deg); }
+  50%  { transform: translateY(-190px) scale(1.18, 0.88) rotate(-10deg); }
+  70%  { transform: translateY(-190px) scale(1.26, 0.8) rotate(-13deg); }
+  85%  { transform: translateY(10px) scale(1.42, 0.52) rotate(4deg); }
+  93%  { transform: translateY(-16px) scale(0.82, 1.28) rotate(-3deg); }
   100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
 }
 

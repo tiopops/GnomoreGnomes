@@ -223,6 +223,21 @@ const SFX = {
     setTimeout(() => this._pluck("glory-2", 880, "triangle", 0.18, 0.24), 70);
     setTimeout(() => this._pluck("glory-3", 1180, "triangle", 0.3, 0.26), 140);
   },
+
+  // Conquistar un tótem (Villages._capture) — pedido explícito: "un sonido
+  // de satisfaccion, recuerda, dopamina en vena con todo". Más largo y más
+  // "grande" que glory() de arriba a propósito (ese es el jingle genérico
+  // de "+X gloria", este es el remate de haber ganado todo un tótem):
+  // golpe grave de aterrizaje + arpegio de CUATRO notas (no tres) que sube
+  // más alto y remata con una nota brillante sostenida, como una campana de
+  // "jackpot" en vez de solo una moneda.
+  captureVillage() {
+    this._pluck("capture-thud", 130, "square", 0.16, 0.42);
+    setTimeout(() => this._pluck("capture-1", 520, "triangle", 0.16, 0.28), 60);
+    setTimeout(() => this._pluck("capture-2", 780, "triangle", 0.16, 0.28), 130);
+    setTimeout(() => this._pluck("capture-3", 1040, "triangle", 0.18, 0.3), 200);
+    setTimeout(() => this._pluck("capture-4", 1560, "triangle", 0.4, 0.34), 280);
+  },
 };
 
 const SFX_TARGETS =
