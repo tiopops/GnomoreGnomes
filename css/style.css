@@ -638,6 +638,40 @@ h2 {
   100% { transform: scale(1, 1) translateX(0) rotate(0deg); }
 }
 
+/* Miedo a morir — pedido explícito: "si un enemigo está al alcance y ese
+   enemigo moriría por el ataque del personaje seleccionado, dicho enemigo
+   empiece a temblar de miedo y que se gire de un lado a otro como hace el
+   gnomo" (clase puesta/quitada desde Combat.showFor/onClear, giro real vía
+   Units.startFearLoop — ver units.js, reutiliza _applyFacing/unit__flip--
+   turning para que el giro se vea idéntico al de cualquier otro personaje).
+   El temblor sustituye a la respiración normal mientras dura (mismo patrón
+   de intercambio de animación que unit--punching/unit--moving, nunca se
+   mezclan) — más agitado y rápido que la respiración (0.22s vs 2.6s) y con
+   una rotación ligera además del escalado, que es justo lo que lo hace
+   leerse como pánico y no como "respirando fuerte". El tinte rojo de alarma
+   (drop-shadow, no filter de color entero: no se quiere perder el arte
+   original) vive en unit__flip (mismo elemento que ya usa la sombra de
+   selección) para poder sumarse sin pisar el que ya tuviera por selección/
+   agotado, igual que el resto de estados de esta capa. */
+.unit--doomed .unit__sprite {
+  animation: unit-fear-tremble 0.22s ease-in-out infinite;
+}
+
+.unit--doomed .unit__flip {
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 9px rgba(224, 40, 40, 0.85));
+}
+
+.unit--doomed.unit--selected .unit__flip {
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 10px rgba(122, 62, 240, 0.95))
+    drop-shadow(0 0 9px rgba(224, 40, 40, 0.85));
+}
+
+@keyframes unit-fear-tremble {
+  0%, 100% { transform: scale(1, 1) rotate(0deg) translateX(0); }
+  25% { transform: scale(0.97, 1.04) rotate(-3deg) translateX(-2px); }
+  75% { transform: scale(0.97, 1.04) rotate(3deg) translateX(2px); }
+}
+
 /* Losetas alcanzables: elipse aplanada (no un círculo) para que se asiente
    sobre la cara superior de la loseta isométrica con la misma perspectiva,
    en vez de parecer flotando encima. Más grandes que antes para que se lean
@@ -749,7 +783,17 @@ h2 {
 }
 
 /* Barrita de vida: solo visible mientras esa unidad concreta está
-   seleccionada (amiga o rival), encima de la cabeza. */
+   seleccionada (amiga o rival), encima de la cabeza.
+   Pedido explícito: "las barras de vida pueden estar seccionadas? creo que
+   así sería más visible a la hora de ver cuántos puntos de vida quedan a
+   los jugadores, implementa un diseño digno de un juego triple A" — un
+   segmento real por punto de aguante (uno por .unit__hpbar-segment, ver
+   Units.spawnUnit) separados con gap de verdad, no un único div con
+   gradiente al que se le cambia el ancho en % (así quedaba "una barra que
+   se acorta", no "puntos de vida" contables de un vistazo). overflow
+   visible a propósito (antes hidden): el pop elástico de un segmento al
+   romperse (--pop, más abajo) se sale un poco de su caja, es parte del
+   efecto. */
 .unit__hpbar {
   position: absolute;
   left: 50%;
@@ -757,14 +801,21 @@ h2 {
   transform: translateX(-50%);
   width: 56px;
   height: 8px;
+  display: flex;
+  gap: 2px;
+  padding: 1px;
+  box-sizing: border-box;
   border-radius: 5px;
   background: rgba(18, 20, 26, 0.7);
   border: 1px solid rgba(244, 242, 248, 0.55);
-  overflow: hidden;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.18s ease;
 }
+
+/* Barras con muchos puntos de aguante (hasta 5, ver UNIT_TYPES) no se
+   ensanchan sin límite — siguen cabiendo en el mismo ancho fijo que antes,
+   cada segmento simplemente se hace más estrecho (flex, no ancho fijo). */
 
 /* También se revela sin estar seleccionado cuando es un objetivo de ataque
    válido para la unidad seleccionada del jugador (clase puesta/quitada desde
@@ -775,15 +826,48 @@ h2 {
   opacity: 1;
 }
 
-.unit__hpbar-fill {
+.unit__hpbar-segment {
+  flex: 1 1 0;
+  min-width: 0;
   height: 100%;
-  width: 100%;
-  background: linear-gradient(90deg, #5fe083, #2fb958);
-  transition: width 0.25s ease, background-color 0.25s ease;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
-.unit__hpbar-fill--low {
-  background: linear-gradient(90deg, #f0605a, #c73a3a);
+.unit__hpbar-segment--filled {
+  background: linear-gradient(180deg, #7cf29a, #2fb958);
+  box-shadow: 0 0 3px rgba(95, 224, 131, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.55);
+}
+
+/* Último punto de vida en pie: rojo y pulsando SOLO ese segmento (no toda
+   la barra) — "cuidado, un golpe más y muere" se lee mejor en un único
+   punto parpadeando que en un color de fondo entero. */
+.unit__hpbar-segment--low {
+  background: linear-gradient(180deg, #ff8f7a, #c73a3a);
+  box-shadow: 0 0 4px rgba(224, 60, 45, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  animation: hpbar-segment-low-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes hpbar-segment-low-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.4); }
+}
+
+/* Segmento recién perdido (ver Units.updateHpBar: solo se dispara cuando
+   pasa de lleno a vacío, nunca al crear la barra) — un pop de "rotura"
+   elástico en vez de apagarse sin más, mismo nivel de feedback que el resto
+   de golpes del juego (unit-hit-shake, unit-punch...). */
+.unit__hpbar-segment--pop {
+  animation: hpbar-segment-break 0.32s ease;
+}
+
+@keyframes hpbar-segment-break {
+  0% { transform: scale(1, 1); }
+  35% { transform: scale(1.4, 0.55); }
+  70% { transform: scale(0.8, 1.2); }
+  100% { transform: scale(1, 1); }
 }
 
 /* Número de daño flotante: aparece sobre la cabeza del que recibe el golpe y

@@ -17,6 +17,12 @@ const Combat = {
   // pueda deshacer este efecto secundario sin saber que existe.
   targetedIds: [],
 
+  // IDs de rivales temblando de miedo ahora mismo por estar a punto de
+  // morir del golpe de la unidad seleccionada (ver showFor/onClear más
+  // abajo) — mismo patrón que targetedIds, una lista aparte porque no todo
+  // objetivo válido está además condenado a morir de este golpe concreto.
+  doomedIds: [],
+
   // Esta unidad pega cuerpo a cuerpo: para golpear tiene que terminar a 1
   // casilla del rival (attackRange), sea cual sea su alcance de movimiento.
   // Busca la loseta libre más cercana a `unit` desde la que `target` ya
@@ -102,6 +108,10 @@ const Combat = {
     // capacidad de atacar — puede moverse, golpear al gnomo o pasarlo, pero
     // no repartir daño a la vez que lo lleva encima.
     if (typeof Gnome !== "undefined" && Gnome.isHeldBy(unit.id)) return;
+    // Daño que haría ESTE golpe (misma fórmula que attack() más abajo) —
+    // hace falta ya aquí, antes de golpear de verdad, para saber qué
+    // rivales morirían con él (ver unit--doomed más abajo).
+    const damage = UNIT_TYPES[unit.typeId].fuerza;
     this.attackableEnemies(unit).forEach(({ target, approach }, i) => {
       const tile = this.attackMarkerTile(target);
       Units.addMarker({
@@ -121,6 +131,17 @@ const Combat = {
 
       target.el.classList.add("unit--targeted");
       this.targetedIds.push(target.id);
+
+      // Pedido explícito: "si un enemigo está al alcance y ese enemigo
+      // moriría por el ataque del personaje seleccionado, dicho enemigo
+      // empiece a temblar de miedo y que se gire de un lado a otro como hace
+      // el gnomo". target.hp <= damage -> este golpe (sin acumular ningún
+      // otro) ya lo mataría del todo.
+      if (target.hp <= damage) {
+        target.el.classList.add("unit--doomed");
+        Units.startFearLoop(target);
+        this.doomedIds.push(target.id);
+      }
     });
   },
 
@@ -130,6 +151,15 @@ const Combat = {
       if (unit) unit.el.classList.remove("unit--targeted");
     });
     this.targetedIds = [];
+
+    this.doomedIds.forEach((id) => {
+      const unit = Units.list.find((u) => u.id === id);
+      if (unit) {
+        unit.el.classList.remove("unit--doomed");
+        Units.stopFearLoop(unit);
+      }
+    });
+    this.doomedIds = [];
   },
 
   async approachAndAttack(unit, target) {

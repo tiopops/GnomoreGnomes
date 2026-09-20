@@ -167,7 +167,7 @@ const SPRITE_SCALES = {
 const Units = {
   boardSize: 0,
   container: null,
-  list: [], // { id, typeId, team, row, col, facing, hp, maxHp, el, flipEl, spriteEl, hpBarEl, hpFillEl }
+  list: [], // { id, typeId, team, row, col, facing, hp, maxHp, el, flipEl, spriteEl, hpBarEl, hpSegmentEls }
   selectedId: null,
   markerEls: [],
   rangeProviders: [], // mecánicas registradas (movimiento, combate, futuras) — ver cabecera del archivo
@@ -224,11 +224,25 @@ const Units = {
     flipEl.appendChild(spriteEl);
     el.appendChild(flipEl);
 
+    // Barra de vida SECCIONADA — pedido explícito: "las barras de vida
+    // pueden estar seccionadas? creo que así sería más visible a la hora de
+    // ver cuántos puntos de vida quedan... implementa un diseño digno de un
+    // juego triple A". Un segmento por punto de aguante (maxHp) en vez de un
+    // único relleno continuo — así "cuántos puntos le quedan" se lee de un
+    // vistazo, número exacto de casillas iluminadas, no hay que estimar un
+    // porcentaje de barra a ojo. Nivel Triple A: cada segmento es su propio
+    // elemento (permite iluminarse/apagarse con su propio pop elástico, ver
+    // .unit__hpbar-segment en style.css) separados por un hueco real (gap),
+    // no una simple división pintada con gradiente.
     const hpBarEl = document.createElement("div");
     hpBarEl.className = "unit__hpbar";
-    const hpFillEl = document.createElement("div");
-    hpFillEl.className = "unit__hpbar-fill";
-    hpBarEl.appendChild(hpFillEl);
+    const hpSegmentEls = [];
+    for (let i = 0; i < type.aguante; i++) {
+      const seg = document.createElement("div");
+      seg.className = "unit__hpbar-segment";
+      hpBarEl.appendChild(seg);
+      hpSegmentEls.push(seg);
+    }
     el.appendChild(hpBarEl);
 
     this.container.appendChild(el);
@@ -246,7 +260,8 @@ const Units = {
       flipEl,
       spriteEl,
       hpBarEl,
-      hpFillEl,
+      hpSegmentEls,
+      _fearTimer: null, // ver startFearLoop/stopFearLoop más abajo
     };
     this.list.push(unit);
 
@@ -640,9 +655,26 @@ const Units = {
   // CÓMO se ve. ----
 
   updateHpBar(unit) {
-    const pct = Math.max(0, unit.hp / unit.maxHp) * 100;
-    unit.hpFillEl.style.width = `${pct}%`;
-    unit.hpFillEl.classList.toggle("unit__hpbar-fill--low", unit.hp <= 1);
+    const hp = Math.max(0, unit.hp);
+    unit.hpSegmentEls.forEach((seg, i) => {
+      const wasFilled = seg.classList.contains("unit__hpbar-segment--filled");
+      const filled = i < hp;
+      // Último punto de vida en rojo (mismo umbral que antes, unit.hp<=1) —
+      // se lee como "cuidado, un golpe más y muere" solo en el segmento que
+      // sigue en pie, no en toda la barra.
+      seg.classList.toggle("unit__hpbar-segment--filled", filled);
+      seg.classList.toggle("unit__hpbar-segment--low", filled && hp <= 1);
+      // Segmento recién APAGADO (perdió ese punto justo ahora, no al
+      // crear la barra) -> un pop de "rotura" en vez de apagarse sin más,
+      // nivel Triple A pedido explícito. void...offsetWidth fuerza reflow
+      // para poder repetirlo aunque el segmento ya tuviera la clase de una
+      // vez anterior (mismo patrón que playShake/_applyFacing de aquí abajo).
+      if (wasFilled && !filled) {
+        seg.classList.remove("unit__hpbar-segment--pop");
+        void seg.offsetWidth;
+        seg.classList.add("unit__hpbar-segment--pop");
+      }
+    });
   },
 
   // Pequeño temblor de reacción (golpe recibido, y en el futuro cualquier
@@ -651,6 +683,37 @@ const Units = {
     unit.el.classList.remove("unit--hit");
     void unit.el.offsetWidth; // fuerza reflow para poder repetir el temblor
     unit.el.classList.add("unit--hit");
+  },
+
+  // ---------- Miedo a morir (ver js/combat.js, Combat.showFor) ----------
+  // Pedido explícito: "si un enemigo está al alcance y ese enemigo moriría
+  // por el ataque del personaje seleccionado, dicho enemigo empiece a
+  // temblar de miedo y que se gire de un lado a otro como hace el gnomo".
+  // El temblor en sí es puro CSS (.unit--doomed, ver style.css, sustituye a
+  // la respiración normal igual que unit--punching/unit--moving); lo único
+  // que hace falta en JS es el mismo bucle que ya usa Gnome._startIdleFlipLoop
+  // para "girarse de un lado a otro" solo — se referencia como el
+  // comportamiento a imitar en el propio pedido — reescrito aquí en vez de
+  // reutilizado porque Gnome._startIdleFlipLoop vive dentro de una instancia
+  // de gnomo concreta (this.facing/this.el propios), no de una `unit`
+  // normal; misma idea, cadencia random propia (más rápida: un enemigo
+  // aterrorizado no respira tranquilo esperando su turno de girarse).
+  startFearLoop(unit) {
+    if (unit._fearTimer) return; // ya en marcha (p.ej. varias unidades pueden matarlo este turno)
+    const tick = () => {
+      unit._fearTimer = setTimeout(() => {
+        if (!unit.el || !unit.el.classList.contains("unit--doomed")) return;
+        unit.facing = unit.facing === "left" ? "right" : "left";
+        this._applyFacing(unit);
+        tick();
+      }, 260 + Math.random() * 260);
+    };
+    tick();
+  },
+
+  stopFearLoop(unit) {
+    if (unit._fearTimer) clearTimeout(unit._fearTimer);
+    unit._fearTimer = null;
   },
 
   // Texto flotante sobre la cabeza de una unidad (daño, y en el futuro
@@ -672,6 +735,7 @@ const Units = {
   // con su propia animación antes de quitarla del DOM y de la lista.
   async removeUnit(unit) {
     if (this.selectedId === unit.id) this.deselect();
+    this.stopFearLoop(unit); // no dejar temblando/girando de miedo a una unidad que ya no existe
     unit.el.classList.add("unit--dying");
     SFX.death();
     await new Promise((resolve) => setTimeout(resolve, 420));
