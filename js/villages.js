@@ -319,6 +319,53 @@ const Villages = {
     });
   },
 
+  // Igual que Combat.findApproachTile/GnomeInstance.findApproachTile: la
+  // loseta libre más cercana a `unit` desde la que `village` ya esté dentro
+  // de VILLAGE_ATTACK_RANGE, sea cual sea su alcance de movimiento; si
+  // `unit` ya está a esa distancia, devuelve su propia casilla (no hace
+  // falta moverse). null si ni quedándose quieta ni moviéndose se puede
+  // llegar a pegarle.
+  //
+  // Pedido explícito (bug reportado): "me quedaba un turno con un
+  // personaje que tenia el gnomo, el totem estaba dentro de mi rango de
+  // movimiento pero no pude pegarle" — showFor (más abajo) solo comprobaba
+  // la distancia YA existente entre unidad y tótem, sin contemplar
+  // acercarse primero (a diferencia de Combat/GnomeInstance, que sí lo
+  // hacen); un tótem fuera de VILLAGE_ATTACK_RANGE pero dentro del
+  // movimiento de la unidad nunca ofrecía la mira de ataque.
+  findApproachTile(unit, village) {
+    const type = UNIT_TYPES[unit.typeId];
+    const moveRange = type.movimiento;
+
+    const distToVillage = (row, col) =>
+      Math.max(Math.abs(row - village.row), Math.abs(col - village.col));
+
+    if (distToVillage(unit.row, unit.col) <= VILLAGE_ATTACK_RANGE) {
+      return { row: unit.row, col: unit.col };
+    }
+
+    let best = null;
+    let bestDist = Infinity;
+    for (let row = 0; row < Units.boardSize; row++) {
+      for (let col = 0; col < Units.boardSize; col++) {
+        if (row === unit.row && col === unit.col) continue;
+        if (distToVillage(row, col) > VILLAGE_ATTACK_RANGE) continue;
+        if (Units.unitAt(row, col)) continue;
+        if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
+        if (this.at(row, col)) continue; // poblado (el mismo u otro)
+        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
+        if (moveDist > moveRange) continue;
+        if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
+        if (moveDist < bestDist) {
+          bestDist = moveDist;
+          best = { row, col };
+        }
+      }
+    }
+    return best;
+  },
+
   // ---------- Proveedor de rango (ver cabecera de units.js) ----------
   // Pedido explícito: "puedes atacarlos solo si tienes un gnomo en la
   // mano" — a diferencia de Combat (que se apaga MIENTRAS se lleva un
@@ -329,11 +376,13 @@ const Villages = {
     if (typeof Gnome === "undefined" || !Gnome.isHeldBy(unit.id)) return;
     this.list.forEach((village, i) => {
       if (village.owner === unit.team) return; // no se ataca el propio poblado
-      const dist = Math.max(Math.abs(village.row - unit.row), Math.abs(village.col - unit.col));
-      if (dist > VILLAGE_ATTACK_RANGE) return;
       // Niebla de guerra — mismo criterio que Combat/Gnome: no se ofrece
       // atacar algo que todavía no se ha revelado.
       if (typeof Fog !== "undefined" && Fog.isFogged(village.row, village.col)) return;
+      // Ahora contempla acercarse (ver findApproachTile arriba), no solo la
+      // distancia ya existente — así un tótem dentro del movimiento de la
+      // unidad, aunque no esté ya a 1 casilla, sí ofrece la mira de ataque.
+      if (!this.findApproachTile(unit, village)) return;
       Units.addMarker({
         className: "attack-marker village-attack-marker",
         row: village.row,
@@ -342,21 +391,46 @@ const Villages = {
         delayIndex: i,
         visibleClass: "attack-marker--visible",
         owner: "villages",
+        onClick: () => this.approachAndAttack(unit, village),
         buildContent: (marker) => {
           const icon = document.createElement("i");
           icon.className = "ph ph-crosshair-simple attack-marker__icon";
           marker.appendChild(icon);
         },
-        onClick: () => this.attack(unit, village),
       });
 
       // "village--targeted" — mismo patrón que "unit--targeted" en
       // combat.js: marca el tótem como atacable ahora mismo, para que el
       // clic directo sobre su sprite (ver el listener en _create) y el
-      // cursor de diana (ver style.css) sepan cuándo activarse.
-      village.el.classList.add("village--targeted");
-      this._targetedIds.push(village.id);
+      // cursor de diana (ver style.css) sepan cuándo activarse. Solo
+      // cuando ya está a distancia SIN moverse — el clic directo sobre el
+      // sprite (a diferencia del marcador de arriba) nunca ha movido a la
+      // unidad, así que solo tiene sentido si ya puede golpear desde donde
+      // está (mismo criterio que .unit--targeted en combat.js, que tampoco
+      // se activa si hay que acercarse primero).
+      const dist = Math.max(Math.abs(village.row - unit.row), Math.abs(village.col - unit.col));
+      if (dist <= VILLAGE_ATTACK_RANGE) {
+        village.el.classList.add("village--targeted");
+        this._targetedIds.push(village.id);
+      }
     });
+  },
+
+  // Igual que Combat.approachAndAttack/GnomeInstance.catchBy: se acerca (si
+  // hace falta) a la loseta desde la que ya puede golpear y resuelve el
+  // golpe desde ahí, todo en un único clic sobre la mira.
+  async approachAndAttack(unit, village) {
+    Units.clearRangeOverlays();
+    const approach = this.findApproachTile(unit, village);
+    if (!approach) return; // se movieron/perdió el gnomo justo antes del clic
+    if (approach.row !== unit.row || approach.col !== unit.col) {
+      const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
+      await Units.walkPath(unit, path);
+      // Mismo bug ya corregido en GnomeInstance.catchBy/Combat.approachAndAttack:
+      // acercarse a pie tiene que revelar niebla nueva al detenerse.
+      if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
+    }
+    await this.attack(unit, village);
   },
 
   onClear() {

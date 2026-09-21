@@ -258,7 +258,13 @@ const SFX = {
 const SFX_TARGETS =
   ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .attack-marker, .unit, .unit-info-btn, " +
   ".catch-marker, .pass-marker, .gnome-action-btn, .settings-gear-btn, .settings-panel__option, " +
-  ".backpack-btn, .backpack-slot:not(:disabled), .backpack-close-btn";
+  ".backpack-btn, .backpack-slot:not(:disabled), .backpack-close-btn, " +
+  // Pedido explícito: "el boton pasar turno no hace sonido cuando el
+  // raton pasa sobre el" — faltaba en la lista de objetivos con sonido de
+  // hover (ver js/turns.js, btn.className = "end-turn-btn"). :not(:disabled)
+  // igual que .menu-btn/.backpack-slot de arriba: no suena durante el
+  // turno rival, cuando turns.js pone btn.disabled = true.
+  ".end-turn-btn:not(:disabled)";
 
 // IMPORTANTE: se usa "mouseover"/"mouseout" (delegados en document) en vez de
 // "mouseenter"/"mouseleave" para poder delegar en un único listener, pero eso
