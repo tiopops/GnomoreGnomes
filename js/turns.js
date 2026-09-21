@@ -39,6 +39,16 @@ const Turns = {
   _btn: null,
   _btnLabelEl: null,
   _aiRunning: false,
+  _turnEndListeners: [],
+
+  // Igual que Units.registerSelectionListener pero para cualquier mecánica
+  // que necesite contar RONDAS COMPLETAS (jugador + rival, un único pulso
+  // del botón de pasar turno) sin tener que reimplementar ese conteo por su
+  // cuenta — ver js/backpack.js (cuenta atrás de la Setarcoiris). Se avisa
+  // al final de endTurn(), cuando ya ha vuelto a ser el turno del jugador.
+  registerTurnEndListener(listener) {
+    this._turnEndListeners.push(listener);
+  },
 
   // Se llama al empezar cada partida nueva (spawnTestUnits, ver
   // newgame-flow.js), DESPUÉS de crear todos los personajes y gnomos —
@@ -257,6 +267,9 @@ const Turns = {
     this._resetTeamActions("player");
     this._updateButtonState();
     if (typeof Glory !== "undefined") Glory.grantTurnStart("player");
+    // "una vez por ronda completa" (ver registerTurnEndListener arriba) —
+    // aquí, justo al terminar, no en ningún punto intermedio de la IA.
+    this._turnEndListeners.forEach((l) => l.onRoundEnd && l.onRoundEnd());
   },
 
   // ---------- IA del bando rival ----------

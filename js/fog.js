@@ -181,5 +181,15 @@ const Fog = {
         v.el.classList.toggle("unit--fog-hidden", this.isFogged(v.row, v.col));
       });
     }
+    // Objetos colocados en el tablero (js/backpack.js, p.ej. la
+    // Setarcoiris) — mismo criterio sin excepción que un tótem: "NADA debe
+    // verse si tiene niebla encima", nunca colocan uno sobre niebla propia
+    // pero sí puede quedar oculto si la niebla vuelve a cerrarse encima.
+    if (typeof Backpack !== "undefined") {
+      Backpack.placedItems.forEach((item) => {
+        if (!item.el) return;
+        item.el.classList.toggle("unit--fog-hidden", this.isFogged(item.row, item.col));
+      });
+    }
   },
 };

@@ -238,11 +238,27 @@ const SFX = {
     setTimeout(() => this._pluck("capture-3", 1040, "triangle", 0.18, 0.3), 200);
     setTimeout(() => this._pluck("capture-4", 1560, "triangle", 0.4, 0.34), 280);
   },
+
+  // Mochila (js/backpack.js) — colocar un objeto sobre el tablero: un
+  // "plop" corto y limpio, distinto del click de menú/UI para que se lea
+  // como una acción sobre el propio tablero, no como navegación.
+  itemPlace() {
+    this._pluck("item-place", 460, "triangle", 0.14, 0.3);
+    setTimeout(() => this._pluck("item-place-2", 700, "triangle", 0.12, 0.24), 70);
+  },
+  // El gnomo se come la Setarcoiris — mismo espíritu "dopamina en vena" que
+  // captureVillage(), pero más juguetón/corto (comerse un aperitivo, no
+  // conquistar un tótem): un mordisco grave seguido de un brillo rápido.
+  itemEaten() {
+    this._pluck("item-eaten-bite", 210, "square", 0.1, 0.36);
+    setTimeout(() => this._pluck("item-eaten-sparkle", 980, "triangle", 0.22, 0.3), 90);
+  },
 };
 
 const SFX_TARGETS =
   ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .attack-marker, .unit, .unit-info-btn, " +
-  ".catch-marker, .pass-marker, .gnome-action-btn, .settings-gear-btn, .settings-panel__option";
+  ".catch-marker, .pass-marker, .gnome-action-btn, .settings-gear-btn, .settings-panel__option, " +
+  ".backpack-btn, .backpack-slot:not(:disabled), .backpack-close-btn";
 
 // IMPORTANTE: se usa "mouseover"/"mouseout" (delegados en document) en vez de
 // "mouseenter"/"mouseleave" para poder delegar en un único listener, pero eso

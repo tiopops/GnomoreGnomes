@@ -251,6 +251,13 @@ function spawnTestUnits(size, raceId) {
   // raza asociada (simplemente no pinta icono).
   if (typeof Glory !== "undefined") Glory.init(finalRaceId, enemyRace ? enemyRace.id : finalRaceId);
 
+  // Mochila (js/backpack.js) — deja el inventario limpio con la Setarcoiris
+  // inicial. ANTES de Turns.reset() (igual que Glory arriba) porque se
+  // registra como oyente de Turns.registerTurnEndListener la primera vez
+  // que se llama, y así queda listo antes de que el jugador pueda pasar
+  // turno.
+  if (typeof Backpack !== "undefined") Backpack.resetAll();
+
   if (typeof Turns !== "undefined") Turns.reset();
   // Icono de ajustes (js/settingsmenu.js) — sustituye al back-btn flotante
   // que tapaba el marcador de Puntos de Gloria (ver ese archivo) — visible

@@ -56,6 +56,7 @@ const Villages = {
   // del otro directamente (regla de oro: un archivo por mecánica).
   init(playerRaceId, enemyRaceId) {
     this._raceIds = { player: playerRaceId, enemy: enemyRaceId };
+    this._initMouseTracking();
   },
 
   // Se llama ANTES de spawn() al empezar cada partida nueva (igual que
@@ -239,41 +240,82 @@ const Villages = {
     );
   },
 
-  // ---------- Ocultar personajes escondidos detrás de un totem ----------
-  // Pedido explícito: "Si alguien se esconde detras de un totem y no deja
-  // seleccionarlo. arreglaremos esto haciendo semitransparente el totem y
-  // clicable el personaje en la zona en la que se encuentra solapado con
-  // el personaje". Se compara el rectángulo real en pantalla del sprite
-  // del tótem con el de cada personaje (getBoundingClientRect, ya
-  // aplicados zoom/scroll/transform del tablero) en vez de calcular a
-  // mano la geometría isométrica: es más robusto y no hay que duplicar
-  // TILE_WIDTH/TILE_TOP_HEIGHT (js/mapgen.js) aquí.
+  // ---------- Ocultar personajes propios escondidos detrás de un totem ----------
+  // Pedido explícito (v1): "Si alguien se esconde detras de un totem y no
+  // deja seleccionarlo. arreglaremos esto haciendo semitransparente el
+  // totem y clicable el personaje en la zona en la que se encuentra
+  // solapado con el personaje". Pedido explícito (v2, afina el anterior):
+  // "la transparencia del totem solo debe ocurrir cuando un jugador de tu
+  // equipo esta detras y el raton esta tocando la zona comprendida de la
+  // casilla donde se encuentra dicho jugador" — dos condiciones a la vez,
+  // no basta con el solapamiento:
+  //   1) el personaje escondido tiene que ser del equipo "player" (nunca
+  //      un rival: no ayudamos a "encontrar" tropas enemigas escondidas).
+  //   2) el puntero del ratón tiene que estar realmente encima de SU
+  //      rectángulo (no de cualquier punto del tótem) — así el tótem solo
+  //      se atenúa cuando el jugador está intentando señalar justo ahí.
   //
-  // Se llama desde el único punto de paso de cualquier desplazamiento
-  // (Units.walkPath, en js/units.js) y una vez al empezar la partida
-  // (js/newgame-flow.js) — igual que Fog.applyVisibility.
-  refreshOcclusion() {
+  // Se recalcula en cada movimiento del ratón (ver _initMouseTracking) y
+  // también tras cualquier desplazamiento/al empezar la partida (por si un
+  // personaje termina justo bajo el puntero sin que este se haya movido).
+  // Pedido explícito (afina la v2 anterior, que valía para CUALQUIER
+  // personaje propio que solapara en pantalla): "lo de la transparencia
+  // del totem solo funciona cuando un jugador esta en la casilla de
+  // detras del mismo, es decir la adyacente hacia arriba a la que esta
+  // plantado el totem". Solo UNA loseta cuenta como "detrás" — no
+  // cualquier solape visual. En la proyección isométrica de este proyecto
+  // (ver getTileTopLeft en mapgen.js: x=(col-row)*halfW, y=(col+row)*halfH)
+  // la loseta que queda justo ARRIBA en pantalla, sin desplazamiento
+  // horizontal, es (row-1, col-1) — la fila Y la columna bajan a la vez
+  // (restar solo a una de las dos da una diagonal hacia un lado, no hacia
+  // arriba). Se calcula así en vez de comparar rectángulos en pantalla
+  // porque es justo esa relación de LOSETAS la que importa aquí, no cuánto
+  // se solapen los sprites (que ya se sabía por la versión anterior).
+  refreshOcclusion(mouseX, mouseY) {
     if (typeof Units === "undefined") return;
+    const mx = typeof mouseX === "number" ? mouseX : this._lastMouseX;
+    const my = typeof mouseY === "number" ? mouseY : this._lastMouseY;
     this.list.forEach((village) => {
       if (!village.spriteEl) return;
       // Un tótem ya oculto por niebla no necesita además hacerse
       // semitransparente por ocultar a alguien.
-      if (village.el.classList.contains("unit--fog-hidden")) {
+      if (village.el.classList.contains("unit--fog-hidden") || mx === null || my === null) {
         village.el.classList.remove("village--occluding");
         return;
       }
-      const vRect = village.spriteEl.getBoundingClientRect();
-      const overlapping = Units.list.some((unit) => {
-        if (!unit.el || unit.el.classList.contains("unit--fog-hidden")) return false;
-        const uRect = unit.el.getBoundingClientRect();
-        return !(
-          uRect.right < vRect.left ||
-          uRect.left > vRect.right ||
-          uRect.bottom < vRect.top ||
-          uRect.top > vRect.bottom
-        );
-      });
-      village.el.classList.toggle("village--occluding", overlapping);
+      const behindUnit = Units.list.find(
+        (unit) =>
+          unit.team === "player" &&
+          unit.row === village.row - 1 &&
+          unit.col === village.col - 1 &&
+          unit.el &&
+          !unit.el.classList.contains("unit--fog-hidden")
+      );
+      let occluding = false;
+      if (behindUnit) {
+        const vRect = village.spriteEl.getBoundingClientRect();
+        const uRect = behindUnit.el.getBoundingClientRect();
+        const mouseOverVillage = mx >= vRect.left && mx <= vRect.right && my >= vRect.top && my <= vRect.bottom;
+        const mouseOverUnit = mx >= uRect.left && mx <= uRect.right && my >= uRect.top && my <= uRect.bottom;
+        occluding = mouseOverVillage || mouseOverUnit;
+      }
+      village.el.classList.toggle("village--occluding", occluding);
+    });
+  },
+
+  // Última posición conocida del ratón en coordenadas de pantalla (clientX/
+  // clientY) — null hasta el primer movimiento. Un único listener para
+  // toda la partida en vez de uno por tótem.
+  _lastMouseX: null,
+  _lastMouseY: null,
+  _mouseTrackingReady: false,
+  _initMouseTracking() {
+    if (this._mouseTrackingReady) return;
+    this._mouseTrackingReady = true;
+    window.addEventListener("mousemove", (e) => {
+      this._lastMouseX = e.clientX;
+      this._lastMouseY = e.clientY;
+      this.refreshOcclusion(e.clientX, e.clientY);
     });
   },
 
@@ -432,10 +474,16 @@ const Villages = {
     unit.el.classList.add("unit--epic-smash");
     if (typeof SFX !== "undefined") SFX.hit();
 
-    // Sincronizado a mano con @keyframes unit-epic-smash (style.css): el
-    // impacto contra el suelo cae sobre el 85% de esa animación de 1.1s.
-    const IMPACT_DELAY_MS = 935;
-    const TOTAL_MS = 1250;
+    // Sincronizado a mano con @keyframes unit-epic-smash (style.css).
+    // Pedido explícito: "la animacion de estamparlo al final debe aparecer
+    // justo cuando empieza a caer de golpe, no cuando contacta con el
+    // suelo" — antes disparaba en el 85% (contacto real), ahora en el 68%
+    // (el instante justo en que arranca la caída en picado desde el punto
+    // más alto): 0.68 * 1300ms = 884ms. TOTAL_MS mantiene el mismo margen
+    // de gracia de 150ms tras el final de la animación CSS (ahora 1300ms)
+    // que ya tenía antes con la de 1100ms.
+    const IMPACT_DELAY_MS = 884;
+    const TOTAL_MS = 1450;
 
     await new Promise((resolve) => setTimeout(resolve, IMPACT_DELAY_MS));
 

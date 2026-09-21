@@ -33,6 +33,25 @@
      exactamente la misma forma sin repetirla dos veces. */
   --gg-badge-clip: polygon(10% 3%, 95% 0%, 100% 87%, 5% 100%);
   --gg-badge-tilt: 9deg;
+
+  /* Punteros de ratón — SOLO escritorio, pedido explícito: "para el
+     puntero de raton usa cursor de phosphor en color amarillo relleno
+     como los menus, para cosas clicables usa han-ponting de phhospor
+     relleno blanco... nota: los punteros son para el modo escritorio, ya
+     que en el modo movil todo se hace con el dedo" — no hace falta ninguna
+     media query para cumplir eso: "cursor" no tiene ningún efecto en
+     pantallas táctiles (no hay puntero que dibujar), así que basta con
+     definir estas dos variables aquí y usarlas en TODOS los "cursor:
+     pointer" del proyecto (reemplazados más abajo) para que el cambio de
+     icono sea uno solo, no 16 copias del mismo SVG.
+     - Puntero por defecto ("Cursor" de Phosphor): la flecha clásica,
+       rellena en amarillo (#ffcf3f, el mismo amarillo ya usado en el
+       resto de la interfaz — "como los menus") con un contorno negro para
+       que se lea también sobre fondos claros.
+     - Puntero sobre algo clicable ("HandPointing" de Phosphor): mano
+       señalando, rellena en blanco con el mismo contorno negro. */
+  --cursor-default: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 256 256"><polygon points="34,20 34,214 79,172 112,242 148,225 116,155 200,155" fill="%23ffcf3f" stroke="%23000000" stroke-width="14" stroke-linejoin="round"/></svg>') 4 2, auto;
+  --cursor-pointer: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256"><path d="M108 232c-8 0-16-3-22-9l-58-58c-9-9-9-23 0-32 8-8 20-9 29-3l19 13V88c0-13 10-24 23-24s23 11 23 24v20c3-1 7-2 11-2 11 0 20 7 23 17 4-2 8-3 13-3 13 0 24 11 24 24v2c3-1 6-1 9-1 13 0 24 11 24 24v40c0 30-24 55-55 55z" fill="%23ffffff" stroke="%23000000" stroke-width="12" stroke-linejoin="round"/></svg>') 6 4, pointer;
 }
 
 * {
@@ -49,6 +68,7 @@ body {
   color: var(--ink);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   min-height: 100vh;
+  cursor: var(--cursor-default);
 }
 
 /* Las pantallas ocupan siempre el mismo sitio fijo (position: fixed) y se
@@ -173,7 +193,7 @@ h2 {
   border: 2px solid #000;
   box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.7);
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   transition: transform 0.15s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.15s ease, background 0.2s ease;
   display: flex;
   align-items: center;
@@ -278,7 +298,7 @@ h2 {
   font-style: italic;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   padding: 9px 22px 9px 14px;
   margin-bottom: 16px;
   background: var(--p5-tone);
@@ -322,7 +342,7 @@ h2 {
   clip-path: polygon(3% 0, 100% 0, 97% 100%, 0% 100%);
   border: 2px solid #000;
   box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   text-align: left;
   transition: transform 0.15s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.15s ease;
   /* Misma técnica que .menu-btn (ver su comentario más arriba): rotación
@@ -559,7 +579,7 @@ h2 {
 .unit {
   position: absolute;
   transform: translate(-50%, -92%);
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   transition: left 0.22s cubic-bezier(0.34, 1.2, 0.64, 1), top 0.22s cubic-bezier(0.34, 1.2, 0.64, 1),
     opacity 0.4s ease, visibility 0s linear 0s, transform 0.15s ease, filter 0.15s ease;
 }
@@ -891,7 +911,7 @@ h2 {
   background: rgba(244, 242, 248, 0.22);
   border: 2px solid rgba(244, 242, 248, 0.85);
   box-shadow: 0 0 10px rgba(122, 62, 240, 0.55);
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   opacity: 0;
   transform: scale(0.4);
   will-change: transform, opacity;
@@ -946,7 +966,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   opacity: 0;
   transform: scale(0.4);
   will-change: transform, opacity;
@@ -982,9 +1002,17 @@ h2 {
 
 /* Cursor de diana al pasar por encima de un objetivo atacable directamente
    (unit--targeted: rival al alcance de Combat; village--targeted: tótem al
-   alcance de Villages con un gnomo en la mano) — pedido explícito: "el
-   icono del puntero al atacar debe ser crosshair", el cursor nativo del
-   navegador (más simple y consistente entre pantallas que un SVG propio). */
+   alcance de Villages con un gnomo en la mano). Pedido explícito (primera
+   pasada): "el icono del puntero al atacar debe ser crosshair" — el cursor
+   nativo del navegador. Pedido explícito (segunda pasada, sustituye a la
+   anterior): "el icono del raton de atacar es el phosphor crosshair-simple
+   de color rojo el doble de grande del que me pusiste en la anterior
+   version" — vuelve a ser un cursor SVG propio (mismo trazo que el icono
+   "ph-crosshair-simple" que ya usa el marcador de ataque, para que
+   marcador y cursor se lean como el mismo símbolo), en rojo y al doble de
+   tamaño (96px, el doble de los 48px de la versión anterior a esta). Un
+   trazo negro por detrás (igual que el resto del arte del juego, siempre
+   con contorno oscuro) para que se lea también sobre fondos claros. */
 .unit--targeted,
 .village.village--targeted {
   /* .village.village--targeted (dos clases, no una) a propósito: más abajo
@@ -993,7 +1021,7 @@ h2 {
      después en cascada — encadenar las dos clases sube la especificidad
      para que el cursor de diana gane siempre, venga en el orden que venga
      el resto de reglas. */
-  cursor: crosshair;
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 256 256"><g stroke="%23000000" stroke-width="30" stroke-linecap="round"><line x1="128" y1="20" x2="128" y2="96"/><line x1="128" y1="160" x2="128" y2="236"/><line x1="20" y1="128" x2="96" y2="128"/><line x1="160" y1="128" x2="236" y2="128"/></g><g stroke="%23ff2d2d" stroke-width="16" stroke-linecap="round"><line x1="128" y1="20" x2="128" y2="96"/><line x1="128" y1="160" x2="128" y2="236"/><line x1="20" y1="128" x2="96" y2="128"/><line x1="160" y1="128" x2="236" y2="128"/></g></svg>') 48 48, crosshair;
 }
 
 /* Barrita de vida: solo visible mientras esa unidad concreta está
@@ -1144,7 +1172,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   opacity: 0;
   transform: translateY(14px) scale(0.7);
@@ -1218,7 +1246,7 @@ h2 {
   padding: 0;
   border: none;
   background: none;
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   opacity: 0;
   transform: translateY(14px) scale(0.85);
   pointer-events: none;
@@ -1640,7 +1668,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   opacity: 0;
   transform: scale(0.4);
   will-change: transform, opacity;
@@ -1683,7 +1711,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   opacity: 0;
   transform: scale(0.4);
   will-change: transform, opacity;
@@ -1729,7 +1757,7 @@ h2 {
      explícito, "el contador de puntos del gnomo aparecerá sobre el propio
      gnomo al pulsar sobre él". */
   pointer-events: auto;
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
 }
 
 .gnome-attach--visible {
@@ -1860,7 +1888,7 @@ h2 {
   border-radius: 8px;
   padding: 9px 10px;
   font-size: 0.85rem;
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
 }
 
 .gnome-calib-panel__copy:hover {
@@ -1900,7 +1928,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   opacity: 0;
   transform: translateY(14px) scale(0.7);
@@ -2232,7 +2260,7 @@ h2 {
 }
 
 .p5-banner--action {
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -2283,7 +2311,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: var(--cursor-pointer);
   z-index: 500;
   opacity: 0;
   transform: scale(0.7) rotate(var(--gg-badge-tilt));
@@ -2398,10 +2426,13 @@ h2 {
   -webkit-user-drag: none;
   filter: drop-shadow(0 8px 6px rgba(0, 0, 0, 0.45));
   transform-origin: 50% 100%;
-  /* A diferencia de .unit__sprite, sin animación de respiración — es un
-     edificio, no un personaje: se queda quieto salvo al recibir un golpe
-     (.unit--hit, heredado de la clase "unit" del propio .village) o al
-     conquistarse (village--captured más abajo). */
+  /* Pedido explícito: "los totems, todos, tienen que tener tambien la
+     animacion de iddle" — sustituye a la nota anterior ("sin animación de
+     respiración, es un edificio") que ya no aplica. Reutiliza el MISMO
+     keyframe que un personaje (unit-idle-breathe, ver más arriba) para que
+     todo lo que "vive" en el tablero respire igual, en vez de inventar una
+     segunda animación de idle solo para tótems. */
+  animation: unit-idle-breathe 2.6s ease-in-out infinite;
 }
 
 /* "el totem neutral debe ser un 15% mas pequeño" (pedido explícito) — solo
@@ -2458,18 +2489,31 @@ h2 {
    fila/columna) — mismo patrón de intercambio de animación que
    unit--punching/unit--moving arriba, nunca se mezcla con la respiración
    normal mientras dura. Sube MUY por encima de su loseta en cámara lenta
-   (impulso largo, mitad de la animación entera) y se queda un instante
-   suspendido en el aire antes de caer en picado y aplastarse contra el
-   suelo — el impacto real (Villages._playEpicSmash) está sincronizado a
-   mano con el punto 85% de esta curva. .unit--epic-smash en el elemento
-   raíz solo se encarga de subir el z-index por encima de cualquier otra
-   unidad/poblado mientras dura el salto, para que nunca quede tapado. */
+   (impulso largo, la mayor parte de la animación entera) y se queda un
+   instante suspendido en el aire antes de caer en picado y aplastarse
+   contra el suelo — el impacto real (Villages._playEpicSmash) está
+   sincronizado a mano con el punto 68% de esta curva (ver más abajo).
+   .unit--epic-smash en el elemento raíz solo se encarga de subir el
+   z-index por encima de cualquier otra unidad/poblado mientras dura el
+   salto, para que nunca quede tapado.
+   Pedido explícito (segunda pasada, afina el timing): "el salto debe ser
+   mas lento cuando va hacia arriba y cuando va hacia abajo mas rapido
+   machacando el gnomo, ademas la animacion de estamparlo al final debe
+   aparecer justo cuando empieza a caer de golpe, no cuando contacta con
+   el suelo" — la duración total sube de 1.1s a 1.3s y ese tiempo extra va
+   ENTERO a la subida (ver @keyframes más abajo: el pico ahora llega al
+   60%, antes al 50%), mientras que la caída se acorta en vez de alargarse
+   con el resto. El disparo del "golpe" (Villages._playEpicSmash) se
+   adelanta del antiguo 85% (contacto real con el suelo) al 68% (el
+   instante justo en que empieza a caer en picado desde el punto más
+   alto), así el cambio de sprite/temblor de cámara/destello coincide con
+   el ARRANQUE de la caída, no con el aterrizaje. */
 .unit--epic-smash {
   z-index: 9999 !important;
 }
 
 .unit--epic-smash .unit__sprite {
-  animation: unit-epic-smash 1.1s cubic-bezier(0.22, 0, 0.3, 1);
+  animation: unit-epic-smash 1.3s cubic-bezier(0.22, 0, 0.3, 1);
 }
 
 /* "cuando el personaje salta, el gnomo debe seguir la trayectoria del salto
@@ -2484,21 +2528,27 @@ h2 {
    el instante del impacto, ver Villages._playEpicSmash, así que no hace
    falta preocuparse de "después" del golpe). */
 .unit--epic-smash .gnome-attach {
-  animation: unit-epic-smash 1.1s cubic-bezier(0.22, 0, 0.3, 1);
+  animation: unit-epic-smash 1.3s cubic-bezier(0.22, 0, 0.3, 1);
 }
 
 @keyframes unit-epic-smash {
   /* "anima disorsionando (estirando y contrayendo)...para darle dinamismo"
-     (pedido explícito) — mismas fases y mismo timing de siempre (85% sigue
-     siendo el instante exacto del impacto, sincronizado a mano con
-     IMPACT_DELAY_MS en villages.js), solo con MÁS squash/stretch en cada
-     fase: más deformación, más giro, para que se note más el peso del
-     golpe. */
+     (pedido explícito) sigue aplicando (mismo squash/stretch marcado de
+     siempre). Timing reestructurado (pedido explícito, segunda pasada):
+     subida LENTA — el 0-60% (el 60% de 1.3s = 780ms, antes el pico llegaba
+     al 50% de solo 1.1s = 550ms) —, un instante de anticipación arriba
+     (60-68%, el personaje ya estirándose hacia el golpe) y CAÍDA RÁPIDA —
+     68-78%, un tramo mucho más corto que el 70-85% de antes — hasta
+     aplastarse del todo contra el suelo justo en el 78%. El disparo real
+     del golpe en JS (Villages._playEpicSmash, IMPACT_DELAY_MS) está
+     sincronizado al 68% (arranque de la caída en picado), no al 78%
+     (contacto), tal como se pidió: "la animacion de estamparlo al final
+     debe aparecer justo cuando empieza a caer de golpe". */
   0%   { transform: translateY(0) scale(1, 1) rotate(0deg); }
-  50%  { transform: translateY(-190px) scale(1.18, 0.88) rotate(-10deg); }
-  70%  { transform: translateY(-190px) scale(1.26, 0.8) rotate(-13deg); }
-  85%  { transform: translateY(10px) scale(1.42, 0.52) rotate(4deg); }
-  93%  { transform: translateY(-16px) scale(0.82, 1.28) rotate(-3deg); }
+  60%  { transform: translateY(-190px) scale(1.18, 0.88) rotate(-10deg); }
+  68%  { transform: translateY(-190px) scale(1.3, 0.76) rotate(-14deg); }
+  78%  { transform: translateY(10px) scale(1.46, 0.5) rotate(5deg); }
+  88%  { transform: translateY(-16px) scale(0.82, 1.28) rotate(-3deg); }
   100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
 }
 
@@ -2547,4 +2597,286 @@ h2 {
   73% { transform: translate(-5px, 4px); }
   88% { transform: translate(3px, -2px); }
   100% { transform: translate(0, 0); }
+}
+
+/* ---------- Mochila (js/backpack.js) ----------
+   Pedido explícito: "la mochila se representa como un icono circular
+   situado arriba de donde aparecen las caras de los personajes al
+   seleccionarlos...Solo se mostrará al tener un personaje
+   seleccionado...en caso de no tener ningun objeto en la mochila este
+   icono no se mostrara...el tamaño del icono de la mochila es un tercio
+   mas pequeño que el de la cara del personaje...el color de fondo del
+   icono de la mochila es el mismo que el del fondo del icono que muestra
+   la cara de los personajes". Mismo patrón fixed + "--visible" que
+   .unit-info-btn (ver más arriba), un tercio más pequeño (110px * 2/3 ≈
+   73px) y justo encima de él (mismo left, bottom = 20 + 110 + 14 de
+   hueco). */
+.backpack-btn {
+  position: fixed;
+  left: 20px;
+  bottom: 144px;
+  width: 73px;
+  height: 73px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(244, 242, 248, 0.35);
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: var(--cursor-pointer);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translateY(14px) scale(0.7);
+  pointer-events: none;
+  z-index: 500;
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.backpack-btn--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.backpack-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent-hover);
+  transform: translateY(-3px) scale(1.08);
+}
+
+.backpack-btn__icon {
+  width: 68%;
+  height: 68%;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+
+/* Popup — mismo lenguaje que .settings-overlay/.settings-panel (ver más
+   arriba): overlay estándar + un .p5-banner grande como panel. */
+.backpack-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 5, 8, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.backpack-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.backpack-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 18px;
+  padding: 40px 40px 30px;
+  min-width: min(420px, 88vw);
+  transform: rotate(-1.2deg) scale(0.88);
+  transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.backpack-overlay--visible .backpack-panel {
+  transform: rotate(-1.2deg) scale(1);
+}
+
+.backpack-panel__title {
+  align-self: center;
+  font-size: 1.4rem;
+  padding-bottom: 12px;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Botón de cerrar — "sera roja con la X en blanco, sera un rombo
+   irregular igual que el del boton configuracion" — misma silueta
+   compartida (--gg-badge-clip/--gg-badge-tilt) que .settings-gear-btn,
+   solo que en rojo y bastante más pequeño, asomando por la esquina
+   superior derecha del panel (posición absoluta, la mitad fuera) en vez
+   de vivir dentro del flujo normal del popup. */
+.backpack-close-btn {
+  /* top/right en positivo (nunca fuera del propio panel): .backpack-panel
+     hereda el clip-path irregular de .p5-banner, que recorta CUALQUIER
+     hijo que se salga de su silueta (aunque tenga overflow visible) — el
+     mismo motivo por el que .end-turn-btn separa el rombo del reloj a su
+     propia capa (ver esa nota en style.css). Más simple aquí: en vez de
+     montar una segunda capa sin recortar, basta con mantener el botón
+     DENTRO del área que el propio clip-path no recorta (needs margen, no
+     un asomo real por la esquina). */
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 44px;
+  height: 44px;
+  background: #e0313f;
+  border: none;
+  clip-path: var(--gg-badge-clip);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: var(--cursor-pointer);
+  transform: rotate(var(--gg-badge-tilt));
+  filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000)
+    drop-shadow(0 -2px 0 #000) drop-shadow(1.5px 1.5px 0 #000) drop-shadow(-1.5px 1.5px 0 #000)
+    drop-shadow(1.5px -1.5px 0 #000) drop-shadow(-1.5px -1.5px 0 #000) drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
+  transition: transform 0.15s ease, filter 0.15s ease;
+  z-index: 5;
+}
+
+.backpack-close-btn:hover {
+  transform: rotate(var(--gg-badge-tilt)) scale(1.1);
+}
+
+.backpack-close-btn:active {
+  transform: rotate(var(--gg-badge-tilt)) scale(0.94);
+}
+
+.backpack-close-btn__icon {
+  font-size: 1.2rem;
+  font-weight: 900;
+  transform: rotate(calc(-1 * var(--gg-badge-tilt)));
+}
+
+/* Huecos del inventario — "mostrara huecos como un inventario de juego
+   triple A que se iran comprando en la tienda goblin...los iconos se
+   reordenan desde la primera casilla hasta la ultima". Una simple
+   rejilla: los primeros BACKPACK_SLOT_COUNT huecos ocupados por el
+   inventario en orden, el resto vacíos (backpack-slot--empty) a la
+   espera de la tienda. */
+.backpack-slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.backpack-slot {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 2px solid rgba(244, 242, 248, 0.3);
+  border-radius: 10px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: var(--cursor-pointer);
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+
+.backpack-slot:hover {
+  border-color: rgba(244, 242, 248, 0.6);
+  transform: translateY(-2px);
+}
+
+.backpack-slot--empty {
+  border-style: dashed;
+  border-color: rgba(244, 242, 248, 0.18);
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Resaltado — "si pulsas sobre un icono en la mochila, este se resalta" */
+.backpack-slot--selected {
+  border-color: #ffcf3f;
+  background: color-mix(in srgb, #ffcf3f 18%, var(--bg));
+  box-shadow: 0 0 14px rgba(255, 207, 63, 0.55);
+  transform: translateY(-2px) scale(1.04);
+}
+
+.backpack-slot__icon {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+
+/* Descripción del objeto resaltado — "debe mostrar una descripcion en la
+   parte de abajo...en un textbox con la interfaz estilo a las que
+   hacemos ahora": mismo tono/recorte que .settings-panel__option, un
+   simple cuadro con el berenjena-gris claro plano de siempre. */
+.backpack-desc {
+  min-height: 52px;
+  padding: 12px 16px;
+  clip-path: polygon(2% 0, 100% 0, 98% 100%, 0% 100%);
+  background: var(--p5-tone-light);
+  display: flex;
+  align-items: center;
+}
+
+.backpack-desc__text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+/* Círculos de colocación de objetos — mismo círculo base que
+   .range-marker (ver más arriba), teñido en amarillo — "el circulo de las
+   casillas aparecen marcadas en amarillo cuando se trata de un objeto". */
+.range-marker--item-target {
+  background: rgba(255, 207, 63, 0.28);
+  border-color: rgba(255, 207, 63, 0.9);
+  box-shadow: 0 0 10px rgba(255, 207, 63, 0.55);
+}
+
+.range-marker--item-target:hover {
+  background: rgba(255, 207, 63, 0.5);
+  box-shadow: 0 0 16px rgba(255, 207, 63, 0.85);
+}
+
+/* Objetos colocados sobre el tablero (de momento solo la Setarcoiris).
+   Reutiliza ".unit" SOLO por su posicionamiento base (translate(-50%,
+   -92%), igual que un personaje o un tótem) — nunca entra en Units.list,
+   así que nada del motor de combate/movimiento lo confunde con una unidad
+   real (mismo motivo que .village, ver más arriba). */
+.board-item {
+  cursor: default;
+  pointer-events: none;
+}
+
+.board-item__sprite {
+  display: block;
+  width: 84px;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.45));
+  transform-origin: 50% 85%;
+  /* "Setarcoiris tiene animacion se eencoge y contrae y se voltea al
+     estirarse de manera energia" — bucle infinito de encoger/estirar con
+     un volteo (rotateY) en el punto de máximo estiramiento, para que se
+     lea "enérgico" en vez de solo una respiración suave. */
+  animation: board-item-setarcoiris-idle 2.4s ease-in-out infinite;
+}
+
+@keyframes board-item-setarcoiris-idle {
+  0%, 100% { transform: scale(1, 1) rotateY(0deg); }
+  22% { transform: scale(0.82, 1.22) rotateY(0deg); }
+  45% { transform: scale(1.28, 0.74) rotateY(90deg); }
+  68% { transform: scale(0.9, 1.14) rotateY(180deg); }
+  100% { transform: scale(1, 1) rotateY(360deg); }
+}
+
+/* "entonces el gnomo se la come y la seta desaparece" — un pequeño
+   "pop" de haber sido comida (encoge de golpe y se desvanece) en vez de
+   simplemente cortarla del DOM sin aviso. */
+.board-item--eaten .board-item__sprite {
+  animation: board-item-eaten-pop 0.4s ease-in forwards;
+}
+
+@keyframes board-item-eaten-pop {
+  0% { transform: scale(1, 1); opacity: 1; }
+  40% { transform: scale(1.3, 0.6); opacity: 1; }
+  100% { transform: scale(0.1, 0.1); opacity: 0; }
 }

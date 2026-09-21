@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Objetos de la mochila — Gnomore Gnomes</title>
+<link rel="stylesheet" href="../css/style.css">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+  /* El estilo real del hueco/descripción de la mochila viene tal cual del
+     CSS del juego (ver el <link> de arriba) para que la vista previa sea
+     igual que en partida — misma idea que calibrar-gnomo.html/
+     configurar-personajes.html: esta página tiene su PROPIA copia de
+     ITEM_DESCRIPTIONS (no carga js/backpack.js, que se autoregistra con
+     Units y no tiene sentido fuera de una partida real), y genera el
+     bloque final listo para pegar en js/backpack.js a mano. */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    display: flex;
+    flex-direction: column;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 {
+    margin: 0;
+    padding: 14px 20px;
+    font-size: 1.05rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid #3a4054;
+  }
+  h1 small { display: block; font-size: 0.75rem; color: var(--muted); font-weight: 400; margin-top: 2px; }
+  .layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1px;
+    background: #3a4054;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1px;
+    background: #3a4054;
+    align-content: start;
+  }
+  .card {
+    background: var(--bg);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .card h2 { margin: 0; font-size: 1rem; }
+  .card textarea {
+    background: var(--bg-elevated);
+    color: var(--ink);
+    border: 1px solid rgba(244, 242, 248, 0.3);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    line-height: 1.4;
+    resize: vertical;
+    min-height: 80px;
+  }
+  .preview-col {
+    background: var(--bg-elevated);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .preview-col h2 { margin: 0; font-size: 0.95rem; color: var(--muted); }
+  .preview-slot-row { display: flex; gap: 12px; align-items: center; }
+  .preview-slot-row .backpack-slot { position: static; width: 84px; }
+  pre#output {
+    background: #101318;
+    color: #b6f5c1;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    flex: 1;
+  }
+  button#gen {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>Objetos de la mochila<small>Edita la descripción de cada objeto y pulsa "Generar bloque" — copia el resultado dentro de ITEM_DESCRIPTIONS en js/backpack.js.</small></h1>
+
+<div class="layout">
+  <div class="grid" id="grid"></div>
+  <div class="preview-col">
+    <h2>Vista previa (estilo real del juego)</h2>
+    <div class="preview-slot-row">
+      <button class="backpack-slot backpack-slot--selected" style="pointer-events:none">
+        <img class="backpack-slot__icon" id="preview-icon" alt="">
+      </button>
+      <div class="backpack-desc" style="flex:1">
+        <p class="backpack-desc__text" id="preview-desc"></p>
+      </div>
+    </div>
+    <button id="gen">Generar bloque</button>
+    <pre id="output">// Elige un objeto de la izquierda y pulsa "Generar bloque".</pre>
+  </div>
+</div>
+
+<script>
+  // Copia local — mismo dato que ITEM_TYPES en js/backpack.js. Si se añade
+  // un objeto nuevo ahí, añádelo también aquí para poder editar su
+  // descripción con esta misma herramienta.
+  const ITEM_TYPES = {
+    setarcoiris: { name: "Setarcoiris", iconUrl: "../assets/iconos/setarcoiris.png" },
+  };
+
+  // Copia local de ITEM_DESCRIPTIONS — la fuente de verdad sigue siendo
+  // js/backpack.js; esto es solo el punto de partida para editar aquí.
+  const ITEM_DESCRIPTIONS = {
+    setarcoiris: "La comida favorita de los gnomos. Colócala junto a uno de tus personajes: en dos turnos atraerá a un gnomo hambriento.",
+  };
+
+  const grid = document.getElementById("grid");
+  const previewIcon = document.getElementById("preview-icon");
+  const previewDesc = document.getElementById("preview-desc");
+
+  function updatePreview(itemId, text) {
+    const def = ITEM_TYPES[itemId];
+    previewIcon.src = def.iconUrl;
+    previewIcon.alt = def.name;
+    previewDesc.textContent = text;
+  }
+
+  Object.keys(ITEM_TYPES).forEach((itemId, i) => {
+    const def = ITEM_TYPES[itemId];
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <h2>${def.name} <span style="color:var(--muted);font-weight:400">(${itemId})</span></h2>
+      <textarea data-item="${itemId}">${ITEM_DESCRIPTIONS[itemId] || ""}</textarea>
+    `;
+    grid.appendChild(card);
+    const textarea = card.querySelector("textarea");
+    textarea.addEventListener("input", () => {
+      ITEM_DESCRIPTIONS[itemId] = textarea.value;
+      updatePreview(itemId, textarea.value);
+    });
+    textarea.addEventListener("focus", () => updatePreview(itemId, textarea.value));
+    if (i === 0) updatePreview(itemId, textarea.value);
+  });
+
+  document.getElementById("gen").addEventListener("click", () => {
+    const lines = Object.keys(ITEM_TYPES).map(
+      (itemId) => `  ${itemId}: ${JSON.stringify(ITEM_DESCRIPTIONS[itemId] || "")},`
+    );
+    const block = `const ITEM_DESCRIPTIONS = {\n${lines.join("\n")}\n};`;
+    document.getElementById("output").textContent = block;
+  });
+</script>
+
+</body>
+</html>
