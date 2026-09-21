@@ -264,6 +264,9 @@ function spawnTestUnits(size, raceId) {
   // (después de spawnear rivales/gnomos, no antes) — pedido explícito: "los
   // elementos de debajo de la niebla no deben renderizarse para el jugador".
   if (typeof Fog !== "undefined") Fog.applyVisibility();
+  // Totems (js/villages.js) — comprueba de entrada si algún personaje ha
+  // quedado colocado justo detrás de un totem (solapamiento en pantalla).
+  if (typeof Villages !== "undefined") Villages.refreshOcclusion();
 }
 
 // Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del

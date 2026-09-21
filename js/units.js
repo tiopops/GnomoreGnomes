@@ -706,6 +706,10 @@ const Units = {
     // antes de atacar o de coger al gnomo, huida del gnomo...), en vez de
     // repetirlo en cada mecánica que llame a esto.
     if (typeof Fog !== "undefined") Fog.applyVisibility();
+    // Un personaje puede haber quedado escondido detrás de un totem (o
+    // haber dejado de estarlo): ver Villages.refreshOcclusion en
+    // js/villages.js, que reusa este mismo punto único de paso.
+    if (typeof Villages !== "undefined") Villages.refreshOcclusion();
   },
 
   hopTo(unit, row, col) {

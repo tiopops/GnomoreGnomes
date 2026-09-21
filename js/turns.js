@@ -297,6 +297,28 @@ const Turns = {
     if (typeof Gnome !== "undefined") {
       const held = Gnome.list.find((g) => g.heldBy === unit.id);
       if (held) {
+        // "ahora el equipo enemigo tambien intenta capturar los totems"
+        // (pedido explícito) — con el gnomo ya en la mano, un tótem que no
+        // sea suyo pesa MÁS que pasar/golpear al gnomo de siempre (dan
+        // gloria persistente CADA turno, no solo puntos sueltos), así que
+        // esta comprobación va primero: atacar si ya está al alcance, o si
+        // no acercarse un poco (la IA sigue intentándolo turno a turno en
+        // vez de rendirse a la primera).
+        if (typeof Villages !== "undefined") {
+          const inRange = Villages.attackableBy(unit);
+          if (inRange) {
+            await Villages.attack(unit, inRange);
+            return true;
+          }
+          const nearest = Villages.nearestUnowned(unit);
+          if (nearest) {
+            const dest = this._aiPickMoveTileToward(unit, nearest);
+            if (dest) {
+              await Movement.moveTo(unit, dest.row, dest.col);
+              return true;
+            }
+          }
+        }
         const ally = Units.list.find(
           (u) =>
             u.team === "enemy" &&
@@ -344,10 +366,6 @@ const Turns = {
   // Movement.reachableTiles (mismo cálculo que ya usa el jugador) en vez de
   // duplicar la comprobación de casillas ocupadas/con niebla.
   _aiPickMoveTile(unit) {
-    if (typeof Movement === "undefined") return null;
-    const tiles = Movement.reachableTiles(unit);
-    if (tiles.length === 0) return null;
-
     let target = null;
     if (typeof Gnome !== "undefined" && Gnome.list.some((g) => !g.heldBy)) {
       target = Gnome.list
@@ -365,7 +383,18 @@ const Turns = {
           return !best || d < best.d ? { row: u.row, col: u.col, d } : best;
         }, null);
     }
-    if (!target) return null;
+    return this._aiPickMoveTileToward(unit, target);
+  },
+
+  // Misma elección de "la loseta alcanzable que más acerca a `unit` a
+  // `target` (fila/columna)" de arriba, pero ya separada del cálculo de
+  // CUÁL es el objetivo — así _aiPickMoveTile (gnomos sueltos / rival más
+  // cercano) y la aproximación a un tótem (ver _aiActOnce) comparten el
+  // mismo criterio de acercamiento sin duplicar el bucle.
+  _aiPickMoveTileToward(unit, target) {
+    if (typeof Movement === "undefined" || !target) return null;
+    const tiles = Movement.reachableTiles(unit);
+    if (tiles.length === 0) return null;
 
     let best = null;
     let bestDist = Infinity;

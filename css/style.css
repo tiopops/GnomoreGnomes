@@ -982,14 +982,9 @@ h2 {
 
 /* Cursor de diana al pasar por encima de un objetivo atacable directamente
    (unit--targeted: rival al alcance de Combat; village--targeted: tótem al
-   alcance de Villages con un gnomo en la mano) — pedido explícito: "cuando
-   se va a atacar el puntero del raton puede ser el icono pshopor target
-   como el que esta debajo de los personajes que se pueden atacar". Un
-   cursor CSS solo admite una imagen, no la propia fuente de iconos (que
-   además puede no estar cargada, ver notas sobre Phosphor/unpkg en otros
-   archivos), así que es un SVG propio a mano con el mismo lenguaje visual
-   que .attack-marker__icon de arriba (mismo rojo, contorno negro para que
-   se lea sobre cualquier fondo) en vez del glifo real. */
+   alcance de Villages con un gnomo en la mano) — pedido explícito: "el
+   icono del puntero al atacar debe ser crosshair", el cursor nativo del
+   navegador (más simple y consistente entre pantallas que un SVG propio). */
 .unit--targeted,
 .village.village--targeted {
   /* .village.village--targeted (dos clases, no una) a propósito: más abajo
@@ -998,7 +993,7 @@ h2 {
      después en cascada — encadenar las dos clases sube la especificidad
      para que el cursor de diana gane siempre, venga en el orden que venga
      el resto de reglas. */
-  cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICA8ZyBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj4KICAgIDxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjkiLz4KICAgIDxsaW5lIHgxPSIxNiIgeTE9IjEiIHgyPSIxNiIgeTI9IjYiLz4KICAgIDxsaW5lIHgxPSIxNiIgeTE9IjI2IiB4Mj0iMTYiIHkyPSIzMSIvPgogICAgPGxpbmUgeDE9IjEiIHkxPSIxNiIgeDI9IjYiIHkyPSIxNiIvPgogICAgPGxpbmUgeDE9IjI2IiB5MT0iMTYiIHgyPSIzMSIgeTI9IjE2Ii8+CiAgPC9nPgogIDxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmMjMyMyIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+CiAgICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSI5Ii8+CiAgICA8bGluZSB4MT0iMTYiIHkxPSIxIiB4Mj0iMTYiIHkyPSI2Ii8+CiAgICA8bGluZSB4MT0iMTYiIHkxPSIyNiIgeDI9IjE2IiB5Mj0iMzEiLz4KICAgIDxsaW5lIHgxPSIxIiB5MT0iMTYiIHgyPSI2IiB5Mj0iMTYiLz4KICAgIDxsaW5lIHgxPSIyNiIgeTE9IjE2IiB4Mj0iMzEiIHkyPSIxNiIvPgogIDwvZz4KPC9zdmc+") 16 16, crosshair;
+  cursor: crosshair;
 }
 
 /* Barrita de vida: solo visible mientras esa unidad concreta está
@@ -2416,6 +2411,17 @@ h2 {
    sin que este archivo necesite saber nada del cambio de dueño. */
 .village--neutral .village__sprite {
   width: 142.8px; /* 168px * 0.85 */
+}
+
+/* "Si alguien se esconde detras de un totem y no deja seleccionarlo"
+   (pedido explícito) — ver Villages.refreshOcclusion en js/villages.js.
+   pointer-events: none en TODO el .village (no solo el sprite) para que,
+   al heredarse, los clics atraviesen el tótem entero y lleguen a quien
+   esté debajo; la semitransparencia deja intuir que hay alguien oculto. */
+.village--occluding {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
 }
 
 /* Pedido implícito (visibilidad): la barra de vida de una unidad normal

@@ -199,6 +199,84 @@ const Villages = {
     village.el.style.zIndex = String((village.row + village.col) * 10 + 5);
   },
 
+  // ---------- Consultas para la IA del rival (js/turns.js) ----------
+  // "ahora el equipo enemigo tambien intenta capturar los totems" (pedido
+  // explícito) — turns.js no sabe nada de rango/niebla/dueño de un tótem
+  // (regla de oro: un archivo por mecánica), así que le basta con
+  // preguntarle a este archivo en vez de duplicar esa lógica.
+
+  // Mismo criterio que showFor() de más abajo (alcance, dueño distinto, sin
+  // niebla) pero sin pintar ningún marcador, solo responde "¿hay algún
+  // tótem que esta unidad podría atacar ya mismo?". El primero que
+  // encuentra, o null.
+  attackableBy(unit) {
+    return (
+      this.list.find((village) => {
+        if (village.owner === unit.team) return false;
+        const dist = Math.max(Math.abs(village.row - unit.row), Math.abs(village.col - unit.col));
+        if (dist > VILLAGE_ATTACK_RANGE) return false;
+        if (typeof Fog !== "undefined" && Fog.isFogged(village.row, village.col)) return false;
+        return true;
+      }) || null
+    );
+  },
+
+  // El tótem que no sea ya suyo más cercano a `unit` — para que la IA
+  // pueda ir ACERCÁNDOSE turno a turno cuando ninguno está todavía al
+  // alcance (ver attackableBy de arriba). No filtra por niebla a propósito
+  // (la IA "sabe" dónde está el mapa, simplifica bastante y de todas formas
+  // nunca llega a atacar uno todavía con niebla real gracias al filtro de
+  // attackableBy). Devuelve { row, col, village } o null si no queda
+  // ninguno por conquistar.
+  nearestUnowned(unit) {
+    return (
+      this.list
+        .filter((v) => v.owner !== unit.team)
+        .reduce((best, v) => {
+          const d = Math.max(Math.abs(v.row - unit.row), Math.abs(v.col - unit.col));
+          return !best || d < best.d ? { row: v.row, col: v.col, d, village: v } : best;
+        }, null) || null
+    );
+  },
+
+  // ---------- Ocultar personajes escondidos detrás de un totem ----------
+  // Pedido explícito: "Si alguien se esconde detras de un totem y no deja
+  // seleccionarlo. arreglaremos esto haciendo semitransparente el totem y
+  // clicable el personaje en la zona en la que se encuentra solapado con
+  // el personaje". Se compara el rectángulo real en pantalla del sprite
+  // del tótem con el de cada personaje (getBoundingClientRect, ya
+  // aplicados zoom/scroll/transform del tablero) en vez de calcular a
+  // mano la geometría isométrica: es más robusto y no hay que duplicar
+  // TILE_WIDTH/TILE_TOP_HEIGHT (js/mapgen.js) aquí.
+  //
+  // Se llama desde el único punto de paso de cualquier desplazamiento
+  // (Units.walkPath, en js/units.js) y una vez al empezar la partida
+  // (js/newgame-flow.js) — igual que Fog.applyVisibility.
+  refreshOcclusion() {
+    if (typeof Units === "undefined") return;
+    this.list.forEach((village) => {
+      if (!village.spriteEl) return;
+      // Un tótem ya oculto por niebla no necesita además hacerse
+      // semitransparente por ocultar a alguien.
+      if (village.el.classList.contains("unit--fog-hidden")) {
+        village.el.classList.remove("village--occluding");
+        return;
+      }
+      const vRect = village.spriteEl.getBoundingClientRect();
+      const overlapping = Units.list.some((unit) => {
+        if (!unit.el || unit.el.classList.contains("unit--fog-hidden")) return false;
+        const uRect = unit.el.getBoundingClientRect();
+        return !(
+          uRect.right < vRect.left ||
+          uRect.left > vRect.right ||
+          uRect.bottom < vRect.top ||
+          uRect.top > vRect.bottom
+        );
+      });
+      village.el.classList.toggle("village--occluding", overlapping);
+    });
+  },
+
   // ---------- Proveedor de rango (ver cabecera de units.js) ----------
   // Pedido explícito: "puedes atacarlos solo si tienes un gnomo en la
   // mano" — a diferencia de Combat (que se apaga MIENTRAS se lleva un
@@ -433,6 +511,15 @@ const Villages = {
   // para siempre — un poblado no "pierde" el bonus con el que se conquistó
   // hasta que alguien vuelva a conquistarlo.
   _capture(village, team, gloryBonus) {
+    // "cuando pierdes el control de un totem los puntos de gloria
+    // persistentes que te otorgaban tambien se pierden" (pedido explícito)
+    // — Villages.gloryBonusFor ya recalcula esto solo en cuanto cambia
+    // `owner` (filtra por dueño ACTUAL, así que el antiguo dueño deja de
+    // contar este tótem en su próximo cálculo sin que este archivo tenga
+    // que hacer nada más); lo que faltaba era avisar al HUD del antiguo
+    // dueño para que su "+X / turno" no se quede enseñando el bonus viejo
+    // hasta su próximo turno — se guarda ANTES de pisar `village.owner`.
+    const previousOwner = village.owner;
     village.owner = team;
     village.gloryBonus = gloryBonus || 1;
     village.hp = VILLAGE_MAX_HP; // un poblado recién conquistado vuelve a estar sano
@@ -457,8 +544,13 @@ const Villages = {
     Units.spawnFloatingText(village, "¡Conquistado!", { className: "dmg-popup gnome-points-popup" });
     // El indicador discreto "+X / turno" del HUD de gloria (solo se pinta
     // el del jugador, ver glory.js) debe reflejar el nuevo poblado ya
-    // mismo, no esperar al próximo inicio de turno.
-    if (typeof Glory !== "undefined") Glory.refreshPreview(team);
+    // mismo, no esperar al próximo inicio de turno — y lo mismo para quien
+    // lo tenía antes (si tenía dueño de verdad, no "neutral": ese nunca
+    // tuvo bonus que perder), que ahora mismo pierde ese +1/+2 de golpe.
+    if (typeof Glory !== "undefined") {
+      Glory.refreshPreview(team);
+      if (previousOwner !== "neutral" && previousOwner !== team) Glory.refreshPreview(previousOwner);
+    }
   },
 };
 
