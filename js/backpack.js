@@ -302,6 +302,14 @@ const Backpack = {
   _startPlacingSetarcoiris(uid) {
     this._placingUid = uid;
     this._updateButtonVisibility();
+    // Pedido explícito: "cuando se va a colocar objetos, solo se muestran
+    // los circulos amarillos donde se puede colocar, los de movimiento no
+    // deben aparecer" — hasta ahora esto solo AÑADÍA las casillas amarillas
+    // de colocación sin quitar las de movimiento/ataque que ya estuvieran
+    // pintadas de la unidad seleccionada (Units.refreshRange las repinta
+    // tras cualquier acción). Se limpian aquí para que durante la
+    // colocación solo se vea lo que de verdad es clicable ahora mismo.
+    Units.clearRangeOverlays();
     const tiles = this._adjacentToPlayerTiles();
     tiles.forEach((tile, i) => {
       Units.addMarker({
@@ -316,6 +324,15 @@ const Backpack = {
     });
   },
 
+  // Al salir del modo colocación (cancelado o completado) la unidad sigue
+  // seleccionada — hay que devolverle sus círculos normales de
+  // movimiento/ataque/coger, que Units.clearRangeOverlays() quitó al
+  // entrar en _startPlacingSetarcoiris (ver nota ahí).
+  _restoreNormalRange() {
+    const unit = typeof Units !== "undefined" ? Units.list.find((u) => u.id === Units.selectedId) : null;
+    if (unit) Units.refreshRange(unit);
+  },
+
   _cancelPlacing() {
     if (this._placingUid === null) return;
     SFX.back();
@@ -326,6 +343,7 @@ const Backpack = {
       return false;
     });
     this._updateButtonVisibility();
+    this._restoreNormalRange();
   },
 
   _placeSetarcoirisAt(uid, row, col) {
@@ -339,6 +357,7 @@ const Backpack = {
     });
     this.inventory = this.inventory.filter((it) => it.uid !== uid);
     this._updateButtonVisibility();
+    this._restoreNormalRange();
 
     const el = document.createElement("div");
     el.className = "unit board-item board-item--setarcoiris";

@@ -176,6 +176,12 @@ const Combat = {
     if (approach.row !== unit.row || approach.col !== unit.col) {
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
       await Units.walkPath(unit, path);
+      // Mismo bug que en GnomeInstance.catchBy (js/gnome.js): acercarse
+      // para atacar tampoco revelaba niebla nueva al detenerse, por la
+      // misma razón (Units.walkPath no revela, solo reevalúa lo ya
+      // revelado). Se corrige igual aquí para que "acercarse + golpear" no
+      // se quede corto de visión al llegar.
+      if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
     }
     await this.attack(unit, target);
   },

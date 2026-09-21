@@ -445,6 +445,14 @@ function createGnomeInstance() {
       if (approach.row !== unit.row || approach.col !== unit.col) {
         const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
         await Units.walkPath(unit, path);
+        // Pedido explícito: "si cojo a un gnomo, el personaje avanza lo
+        // coge y para, pero al parar no se revelan las casillas de niebla
+        // que deberian" — Units.walkPath solo reevalúa visibilidad sobre lo
+        // YA revelado (Fog.applyVisibility), no revela loseta nueva. El
+        // desplazamiento normal (js/movement.js) sí llama a esto tras
+        // moverse; acercarse a coger un gnomo usa walkPath directamente y
+        // se había quedado sin este paso.
+        if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
       }
       Units.faceTowardsTile(unit, this.row, this.col);
       this.attachTo(unit);
