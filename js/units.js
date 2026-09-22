@@ -148,7 +148,7 @@ const UNIT_TYPES = {
   // propias estadísticas calibradas por separado en
   // debug/configurar-personajes.html.
   punoroca: {
-    name: "PuñoRoca",
+    name: "Puñorroca",
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_03.png",
     aguante: 5,
@@ -759,8 +759,8 @@ const Units = {
 
   // "el jugador indica a donde quiere moverse, pero el segundo y tercer
   // paso lo hace hacia una direccion aleatoria. la unica manera de que de
-  // los 3 pasos en la direccion indicada es teniendo a un urgamentes a su
-  // lado" (pedido explícito, habilidades de PuñoRoca/UrgaMentes) — el
+  // los 3 pasos en la direccion indicada es teniendo a un aliado
+  // cualquiera a su lado" (pedido explícito, habilidad de Puñorroca) — el
   // aliado se comprueba ANTES de arrancar (su posición de origen, no la de
   // cada paso intermedio): si está al lado, el camino se respeta tal cual;
   // si no, el primer paso es siempre el indicado, y desde el segundo cada
@@ -772,14 +772,18 @@ const Units = {
   // gnomo/tótem/tienda, todo por igual, sin tocar cada mecánica.
   _applyPunorocaWobble(unit, path) {
     if (path.length < 2) return path;
-    const hasUrgaAlly = this.list.some(
+    // Pedido explícito: "para que puñorroca ande bien obedeciendo tiene que
+    // estar adyacente a un aliado en el momento en el que empieza a andar
+    // ... a cualquier aliado, creo que ahora solo era el urgamente, pero
+    // debe ser cualquier aliado" — ya NO se exige que sea un UrgaMentes en
+    // concreto, basta con cualquier compañero de equipo a su lado.
+    const hasAlly = this.list.some(
       (u) =>
-        u.typeId === "urgamentes" &&
         u.team === unit.team &&
         u.id !== unit.id &&
         Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <= 1
     );
-    if (hasUrgaAlly) return path;
+    if (hasAlly) return path;
 
     const wobbled = [path[0]];
     let curRow = path[0].row;

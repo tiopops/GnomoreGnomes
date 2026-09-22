@@ -48,7 +48,7 @@ const ABILITIES = {
     name: "Nudillos Rocosos",
     icon: "ph-hand-fist",
     description:
-      "Golpea y empuja 4 casillas en línea recta a un enemigo adyacente (se detiene en el primer obstáculo). PuñoRoca queda agotado el siguiente turno. Gasta 1 acción. Un solo uso por partida.",
+      "Golpea y empuja 4 casillas en línea recta a un enemigo adyacente (se detiene en el primer obstáculo); el golpeado queda agotado el siguiente turno. Gasta 1 acción. Un solo uso por partida. Puñorroca es tan bruto que, si no tiene un aliado (cualquiera) justo al lado nada más empezar a andar, da tumbos al azar en vez de ir donde se le indica.",
   },
   goblin_lanzador: {
     name: "Resorte Goblin",
@@ -581,10 +581,11 @@ const Abilities = {
     Units.clearRangeOverlays();
     Units.faceTowardsTile(unit, target.row, target.col);
     this._consume(unit);
-    // "el proximo turno el personaje no puede utilzarse y aparece inactivo
-    // como si hubiera gastado sus 2 acciones" — mismo mecanismo que la
-    // trampa de TruenoEspora (ver turns.js, _resetTeamActions).
-    unit.forcedRestNextTurn = true;
+    // "el que queda agotado el siguiente turno no es puñorroca, si no al
+    // que le pega" (pedido explícito, corrección) — el agotamiento recae
+    // sobre el OBJETIVO golpeado, no sobre quien usa la habilidad. Mismo
+    // mecanismo que la trampa de TruenoEspora (ver turns.js, _resetTeamActions).
+    target.forcedRestNextTurn = true;
 
     if (unit.el) {
       unit.el.classList.remove("unit--punching");
