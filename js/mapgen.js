@@ -175,6 +175,30 @@ function getTileCenter(row, col, size) {
   return { x: x + TILE_WIDTH / 2, y: y + TILE_TOP_HEIGHT / 2 };
 }
 
+// Inversa de getTileCenter: dado un punto en el mismo espacio de coordenadas
+// del tablero (el de "contenido" ANTES del pan/zoom de la cámara, ver
+// BoardView.clientToContent en boardview.js), devuelve la loseta (row/col)
+// más cercana a ese punto — lo usa cualquier mecánica que necesite saber "a
+// qué loseta corresponde este clic" sin duplicar la fórmula (regla de oro de
+// escalabilidad), p.ej. la habilidad Visión Lejana (js/abilities.js), que
+// necesita saber dónde ha hecho clic el jugador en CUALQUIER punto del mapa,
+// esté o no cubierto por otra unidad/tótem/tienda encima de la loseta.
+function getTileFromPoint(x, y, size) {
+  const halfW = TILE_WIDTH / 2;
+  const halfH = TILE_TOP_HEIGHT / 2;
+  // Mismo centerX que getTileTopLeft, más el propio medio-ancho/alto que
+  // getTileCenter le suma encima — invertido aquí de una vez.
+  const centerX = (size - 1) * halfW + halfW;
+  const u = x - centerX;
+  const v = y - halfH;
+  const col = Math.round((u / halfW + v / halfH) / 2);
+  const row = Math.round((v / halfH - u / halfW) / 2);
+  return {
+    row: Math.min(size - 1, Math.max(0, row)),
+    col: Math.min(size - 1, Math.max(0, col)),
+  };
+}
+
 function pickVariant(typeInfo, row, col) {
   const variants = typeInfo.variants;
   if (variants.length === 1) return variants[0];

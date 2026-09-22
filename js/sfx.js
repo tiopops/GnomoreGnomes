@@ -19,6 +19,33 @@ const SFX = {
   lastHoverTime: 0,
   HOVER_THROTTLE_MS: 55, // evita el "ametralladora" al barrer el ratón muy rápido por la lista
 
+  // ---------- Activar/desactivar (checkbox de ajustes) ----------
+  // Pedido explícito: "añade a configuracion otro checkbox que desconecte
+  // los efectos de sonido (ojo! en un futuro habra musica, pero eso ira
+  // por un lado distinto a los efectos de sonido)" — mismo patrón que
+  // Shadows (js/shadows.js): su propia clave en localStorage, su propio
+  // "enabled", nada compartido con lo que sea que use la música el día de
+  // mañana. Silenciar TODO el módulo con un único nodo de ganancia maestro
+  // (this.master) en vez de tener que acordarse de comprobar "enabled" en
+  // cada método (_pluck, hit, glory, captureVillage...) es a prueba de
+  // descuidos: cualquier sonido nuevo que se añada más adelante queda
+  // mudo automáticamente si el checkbox está desmarcado, sin tocar nada
+  // más que este bloque.
+  _STORAGE_KEY: "gnomoregnomes_sfx",
+  enabled: true,
+
+  init() {
+    const saved = localStorage.getItem(this._STORAGE_KEY);
+    this.enabled = saved === null ? true : saved === "1";
+    if (this.master) this.master.gain.value = this.enabled ? 1 : 0;
+  },
+
+  setEnabled(enabled) {
+    this.enabled = !!enabled;
+    localStorage.setItem(this._STORAGE_KEY, this.enabled ? "1" : "0");
+    if (this.master) this.master.gain.value = this.enabled ? 1 : 0;
+  },
+
   ensureCtx() {
     if (this.ctx) return this.ctx;
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -27,7 +54,11 @@ const SFX = {
     // Compresor a la salida: permite subir el volumen de los tonos sin riesgo
     // de que se distorsionen si alguna vez llegan a solaparse dos sonidos.
     this.master = this.ctx.createGain();
-    this.master.gain.value = 1;
+    // Arranca ya silenciado si el checkbox estaba desmarcado (ver
+    // setEnabled arriba) — el contexto de audio se crea de forma perezosa
+    // en el primer sonido, así que "enabled" puede llevar rato fijado
+    // antes de que master exista de verdad.
+    this.master.gain.value = this.enabled ? 1 : 0;
     const compressor = this.ctx.createDynamicsCompressor();
     this.master.connect(compressor).connect(this.ctx.destination);
     return this.ctx;
@@ -265,6 +296,8 @@ const SFX = {
     setTimeout(() => this._pluck("buy-2", 1040, "triangle", 0.2, 0.3), 80);
   },
 };
+
+document.addEventListener("DOMContentLoaded", () => SFX.init());
 
 const SFX_TARGETS =
   ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .attack-marker, .unit, .unit-info-btn, " +

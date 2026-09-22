@@ -87,8 +87,27 @@ const UnitInfo = {
     // unidades parecidas en pantalla). Es un <div> con background-image
     // (no un <img>, ver FACE_OFFSETS arriba) para poder recortar/mover la
     // cara con background-position + background-size.
-    btn.innerHTML = '<span class="unit-info-btn__face-wrap"><div class="unit-info-btn__face" role="img"></div></span>';
+    // Indicador de acciones restantes (pedido explícito: "2 bolitas que se
+    // apaguen...que indique las acciones que les faltan a los personajes...
+    // sobre el icono de sus caras" — mockup aprobado: misma silueta
+    // irregular --gg-badge-clip/--gg-badge-tilt que el resto de badges del
+    // juego, no un rectángulo redondeado, ver settings-gear-btn/backpack-
+    // close-btn/option-card__icon en style.css) — arriba-izquierda del
+    // círculo de la cara, el único hueco libre: el abanico de botones de
+    // acción del gnomo solo aparece a la DERECHA (UI_LAYOUT.actionButtons,
+    // -34°/11°) y la mochila vive justo ENCIMA de este círculo, no a su
+    // izquierda.
+    btn.innerHTML =
+      '<span class="unit-info-btn__face-wrap">' +
+      '<div class="unit-info-btn__face" role="img"></div>' +
+      '<div class="unit-info-action-dots">' +
+      '<span class="unit-info-action-dot"></span>' +
+      '<span class="unit-info-action-dot"></span>' +
+      "</div>" +
+      "</span>";
     this.faceEl = btn.querySelector(".unit-info-btn__face");
+    this.actionDotsEl = btn.querySelector(".unit-info-action-dots");
+    this.actionDotEls = Array.from(btn.querySelectorAll(".unit-info-action-dot"));
     btn.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
       e.preventDefault();
@@ -119,12 +138,35 @@ const UnitInfo = {
     // Si ya estaba visible (cambio directo de una unidad seleccionada a
     // otra) no hace falta re-disparar la transición de entrada.
     requestAnimationFrame(() => btn.classList.add("unit-info-btn--visible"));
+    this._renderActionDots(unit);
   },
 
   onDeselect() {
     this.currentUnit = null;
     if (this.buttonEl) this.buttonEl.classList.remove("unit-info-btn--visible");
     this.closePopup();
+  },
+
+  // Pinta las 2 bolitas del indicador de acciones restantes según
+  // Turns.actionsUsed — encendida (amarilla) mientras esa acción todavía
+  // esté disponible, apagada (gris) en cuanto se gasta. Se llama al
+  // seleccionar (onSelect) y cada vez que Turns cambia el conteo de
+  // acciones de la unidad seleccionada ahora mismo (ver refreshActionDots).
+  _renderActionDots(unit) {
+    if (!this.actionDotEls || this.actionDotEls.length === 0) return;
+    const used = typeof Turns !== "undefined" ? Turns.actionsUsed[unit.id] || 0 : 0;
+    const max = typeof TURNS_MAX_ACTIONS !== "undefined" ? TURNS_MAX_ACTIONS : 2;
+    const remaining = Math.max(0, max - used);
+    this.actionDotEls.forEach((dot, i) => {
+      dot.classList.toggle("unit-info-action-dot--spent", i >= remaining);
+    });
+  },
+
+  // Versión pública para que js/turns.js avise cuando cambie el conteo de
+  // acciones de la unidad que esté seleccionada AHORA MISMO — no hace falta
+  // que turns.js sepa nada de cómo se pinta el indicador, solo que existe.
+  refreshActionDots() {
+    if (this.currentUnit) this._renderActionDots(this.currentUnit);
   },
 
   // Una fila de estadística como 5 "pips" (puntos) rellenos hasta `value` —
@@ -161,6 +203,14 @@ const UnitInfo = {
     // el párrafo si el personaje tiene una definida, para no dejar un hueco
     // vacío mientras se van rellenando desde configurar-personajes.html.
     const desc = UNIT_DESCRIPTIONS[unit.typeId];
+    // Habilidad especial de un solo uso (js/abilities.js) — mismo patrón
+    // que la descripción de flavor: solo se pinta el bloque si este tipo
+    // tiene una definida (LanzaGnomos todavía no la tiene, "falta por
+    // definir"). El icono es el mismo que el del botón de activarla, así
+    // se reconoce de un vistazo cuál es. Cuando ya se gastó (unit.abilityUsed)
+    // se marca como tal en vez de desaparecer del todo, para que se pueda
+    // seguir consultando QUÉ hacía aunque ya no quede disponible.
+    const ability = ABILITIES[unit.typeId];
     // pointer-events: none en el propio overlay (ver CSS) — es solo un
     // resumen mientras se mantiene pulsado, no debe poder interceptar ni
     // absorber ningún clic/toque de la pantalla que hay debajo.
@@ -179,6 +229,18 @@ const UnitInfo = {
           ${this.statRow("ph-wind", "Agilidad", type.agilidad)}
           ${this.statRow("ph-eye", "Percepción", type.percepcion)}
         </div>
+        ${
+          ability
+            ? `<div class="unit-info-ability${unit.abilityUsed ? " unit-info-ability--used" : ""}">
+                <div class="unit-info-ability__header">
+                  <i class="ph ${ability.icon}"></i>
+                  <span class="unit-info-ability__name">${ability.name}</span>
+                  ${unit.abilityUsed ? '<span class="unit-info-ability__tag">Ya usada</span>' : ""}
+                </div>
+                <p class="unit-info-ability__desc">${ability.description}</p>
+              </div>`
+            : ""
+        }
       </div>`;
 
     document.body.appendChild(overlay);

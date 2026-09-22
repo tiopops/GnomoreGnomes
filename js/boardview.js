@@ -11,6 +11,25 @@
    con una pequeña suavización (lerp) en cada frame — así el movimiento de la
    cámara se siente suave y ligeramente "lazy" en vez de saltar de golpe. */
 
+// Desplazamiento con teclado (pedido explícito: "me gustaria que la camara
+// pudiera moverse con las flechas del teclado y WASD") — cada tecla apunta
+// a la dirección en la que se mueve la CÁMARA (lo que ve el jugador), no el
+// contenido: por eso "derecha"/"flecha derecha" resta a panX (el contenido
+// se desplaza a la izquierda para revelar lo que hay a la derecha), mismo
+// criterio que cualquier editor/juego 2D con desplazamiento de cámara.
+// Minúsculas siempre (e.key.toLowerCase()) para que sea indiferente a Bloq
+// Mayús. Flechas y WASD comparten exactamente la misma dirección cada una.
+const BOARD_PAN_KEYS = {
+  arrowup: [0, 1],
+  arrowdown: [0, -1],
+  arrowleft: [1, 0],
+  arrowright: [-1, 0],
+  w: [0, 1],
+  s: [0, -1],
+  a: [1, 0],
+  d: [-1, 0],
+};
+
 const BoardView = {
   viewportEl: null,
   cameraEl: null,
@@ -59,11 +78,22 @@ const BoardView = {
   _touchState: null,
   _rafId: null,
 
+  // ---------- Desplazamiento con teclado (flechas/WASD) ----------
+  // Velocidad en píxeles de PANTALLA por segundo (no de contenido): igual
+  // de rápida se mueva la cámara esté como esté el zoom, igual que ya pasa
+  // al arrastrar con el ratón (_panBy recibe deltas de pantalla tal cual).
+  KEY_PAN_SPEED: 700,
+  _keysPressed: null,
+  _keyLoopId: null,
+  _lastKeyFrameTime: 0,
+
   init() {
     this.viewportEl = document.getElementById("board-viewport");
     this.cameraEl = document.getElementById("board-camera");
     if (!this.viewportEl || !this.cameraEl) return;
+    this._keysPressed = new Set();
     this._bindEvents();
+    this._bindKeyboard();
   },
 
   /* Se llama cada vez que se genera/carga un escenario nuevo, con el tamaño
@@ -143,6 +173,23 @@ const BoardView = {
       this.panX = x;
       this.panY = y;
     }
+  },
+
+  // Convierte un punto en coordenadas del VIEWPORT (relativas a su propia
+  // esquina superior-izquierda, ver getBoundingClientRect) al espacio de
+  // "contenido" — el mismo sistema de coordenadas que usa getTileCenter/
+  // getTileFromPoint (mapgen.js), antes de aplicar el pan/zoom de la
+  // cámara. Misma fórmula que ya usaba _zoomAt para anclar el punto bajo el
+  // cursor al hacer zoom (contentX/contentY ahí abajo) — expuesta aquí como
+  // método público para que cualquier mecánica que necesite saber "a qué
+  // punto del mapa corresponde este clic de pantalla" (p.ej. la habilidad
+  // Visión Lejana, js/abilities.js) no tenga que duplicar la cuenta ni
+  // conocer panX/panY/scale por su cuenta.
+  clientToContent(cx, cy) {
+    return {
+      x: (cx - this.panX) / this.scale,
+      y: (cy - this.panY) / this.scale,
+    };
   },
 
   _zoomAt(cx, cy, factor) {
@@ -254,6 +301,17 @@ const BoardView = {
       const dy = e.clientY - this._dragState.lastY;
       this._dragState.lastX = e.clientX;
       this._dragState.lastY = e.clientY;
+      // Bug encontrado y corregido: "arrastrar el escenario para mover la
+      // cámara no deselecciona el personaje seleccionado" — el arrastre
+      // termina en un mouseup sobre el propio #board-viewport, y ese
+      // elemento también escucha "click" (ver units.js, deselecciona al
+      // hacer clic en una casilla vacía). Soltar tras arrastrar SIGUE
+      // disparando ese "click" nativo (mismo elemento en mousedown y
+      // mouseup), así que sin esta marca cualquier arrastre de cámara
+      // deseleccionaba al personaje como si hubiera sido un clic en vacío.
+      // Se marca aquí (en el primer movimiento real, no en el mousedown)
+      // para que un clic normal sin arrastre no active nunca este bloqueo.
+      this._dragMoved = true;
       this._panBy(dx, dy);
     });
 
@@ -262,6 +320,21 @@ const BoardView = {
       this._dragState = null;
       vp.classList.remove("dragging");
     });
+
+    // Bloquea el "click" de deseleccionar (ver units.js) cuando en realidad
+    // es el final de un arrastre de cámara, no un toque real sobre una
+    // casilla vacía. capture:true para que se ejecute ANTES que el listener
+    // de units.js, que está en fase de burbuja sobre este mismo elemento.
+    vp.addEventListener(
+      "click",
+      (e) => {
+        if (this._dragMoved) {
+          e.stopImmediatePropagation();
+          this._dragMoved = false;
+        }
+      },
+      { capture: true }
+    );
 
     // ---- Táctil: un dedo para desplazar, dos dedos (pellizco) para zoom ----
     const touchDist = (t1, t2) =>
@@ -298,6 +371,7 @@ const BoardView = {
           const dy = t.clientY - this._touchState.lastY;
           this._touchState.lastX = t.clientX;
           this._touchState.lastY = t.clientY;
+          this._dragMoved = true; // mismo bloqueo que el arrastre con ratón, ver mousemove arriba
           this._panBy(dx, dy);
         } else if (this._touchState.mode === "pinch" && e.touches.length === 2) {
           const [t1, t2] = e.touches;
@@ -328,6 +402,72 @@ const BoardView = {
       this.panY = this.targetPanY;
       this._apply();
     });
+  },
+
+  // ---- Desplazamiento con teclado (flechas/WASD) ----
+  _bindKeyboard() {
+    window.addEventListener("keydown", (e) => {
+      const key = e.key.toLowerCase();
+      if (!(key in BOARD_PAN_KEYS)) return;
+      // No robar la tecla si el foco está en un campo de texto de verdad
+      // (el juego no tiene ninguno ahora mismo, pero es la comprobación
+      // estándar por si algún día lo hay) — así nunca compite con escribir.
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      e.preventDefault();
+      this._keysPressed.add(key);
+      this._startKeyboardLoop();
+    });
+
+    window.addEventListener("keyup", (e) => {
+      this._keysPressed.delete(e.key.toLowerCase());
+    });
+
+    // Si la ventana/pestaña pierde el foco con una tecla a medio pulsar
+    // (p.ej. Alt+Tab), sin este "soltar" a la fuerza la cámara se quedaría
+    // desplazándose sola para siempre — el keyup real nunca llega a
+    // disparase porque la tecla se soltó fuera de esta página.
+    window.addEventListener("blur", () => this._keysPressed.clear());
+
+    // Bucle propio (independiente del de suavizado de _startLoop): solo
+    // corre mientras haya alguna tecla de desplazamiento pulsada, y en cada
+    // fotograma llama a _panBy con la distancia de ESE fotograma (velocidad
+    // constante en px/segundo, no en px/fotograma, para no depender de la
+    // frecuencia de refresco de cada pantalla).
+    this._startKeyboardLoop = () => {
+      if (this._keyLoopId) return;
+      this._lastKeyFrameTime = performance.now();
+      const step = (now) => {
+        if (this._keysPressed.size === 0) {
+          this._keyLoopId = null;
+          return;
+        }
+        // dt limitado a 100ms: si la pestaña estuvo un rato inactiva entre
+        // dos fotogramas (p.ej. cambiando de ventana), evita un salto de
+        // cámara enorme de golpe al volver.
+        const dt = Math.min(now - this._lastKeyFrameTime, 100) / 1000;
+        this._lastKeyFrameTime = now;
+
+        let dx = 0;
+        let dy = 0;
+        this._keysPressed.forEach((key) => {
+          const dir = BOARD_PAN_KEYS[key];
+          if (!dir) return;
+          dx += dir[0];
+          dy += dir[1];
+        });
+        // Normalizado: dos teclas a la vez (p.ej. W+D, diagonal) no deben
+        // moverse más rápido que una sola por ir sumando componentes.
+        if (dx !== 0 || dy !== 0) {
+          const len = Math.hypot(dx, dy);
+          const dist = this.KEY_PAN_SPEED * dt;
+          this._panBy((dx / len) * dist, (dy / len) * dist);
+        }
+
+        this._keyLoopId = requestAnimationFrame(step);
+      };
+      this._keyLoopId = requestAnimationFrame(step);
+    };
   },
 };
 

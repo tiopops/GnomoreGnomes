@@ -47,6 +47,7 @@
 const SHOP_COUNT = 1; // "en un principio solo habra una"
 const SHOP_SLOT_COUNT = 4; // "a diferencia de la mochila solo tiene 4 casillas"
 const SHOP_SPRITE = "assets/edificios/tienda_goblin.png";
+const SHOP_INTERACT_RANGE = 1; // cuerpo a cuerpo, igual que VILLAGE_ATTACK_RANGE/Combat.attackRange
 
 // Lo que vende la tienda — mismo itemId que ITEM_TYPES (js/backpack.js),
 // con el precio en Puntos de Gloria propio de ESTA tienda (el día de
@@ -377,4 +378,118 @@ const Shops = {
     SFX.buy();
     this._renderSlots();
   },
+
+  // ---------- Proveedor de rango (ver cabecera de units.js) ----------
+  // Pedido explícito: "si el movimiento del personaje permite llegar a la
+  // tienda para abrirla, el personaje se movera hasta la casilla adyacente
+  // mas cercana y la tienda se abrira" — hasta ahora solo se podía abrir
+  // con un personaje YA de pie junto a la tienda (shop--interactive/
+  // refreshAll, más arriba); eso sigue funcionando tal cual (un clic
+  // directo la abre gratis, sin gastar ninguna acción, aunque no haya
+  // nada seleccionado). Esto añade el caso que faltaba: con una unidad
+  // SELECCIONADA que todavía no está al lado pero SÍ puede llegar
+  // moviéndose este turno, aparece una mira (mismo patrón que
+  // Villages/Combat) que la acerca sola y abre la tienda en un único
+  // clic. Mismo findApproachTile que Villages.findApproachTile, adaptado
+  // aquí (SHOP_INTERACT_RANGE en vez de VILLAGE_ATTACK_RANGE y sin la
+  // condición de llevar un gnomo cogido: cualquier personaje puede
+  // comprar).
+  findApproachTile(unit, shop) {
+    const type = UNIT_TYPES[unit.typeId];
+    const moveRange = type.movimiento;
+
+    const distToShop = (row, col) => Math.max(Math.abs(row - shop.row), Math.abs(col - shop.col));
+
+    if (distToShop(unit.row, unit.col) <= SHOP_INTERACT_RANGE) {
+      return { row: unit.row, col: unit.col };
+    }
+
+    let best = null;
+    let bestDist = Infinity;
+    for (let row = 0; row < Units.boardSize; row++) {
+      for (let col = 0; col < Units.boardSize; col++) {
+        if (row === unit.row && col === unit.col) continue;
+        if (distToShop(row, col) > SHOP_INTERACT_RANGE) continue;
+        if (Units.unitAt(row, col)) continue;
+        if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
+        if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
+        if (this.at(row, col)) continue; // la tienda (la misma u otra)
+        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
+        if (moveDist > moveRange) continue;
+        if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
+        if (moveDist < bestDist) {
+          bestDist = moveDist;
+          best = { row, col };
+        }
+      }
+    }
+    return best;
+  },
+
+  // Solo pinta una mira de "ir y abrir" para las tiendas que TODAVÍA no
+  // están al alcance directo (esas ya se abren con un simple clic, ver
+  // refreshAll/el listener de _create) pero sí se puede llegar a ellas
+  // moviéndose este turno — evita un marcador redundante encima de una
+  // tienda que ya se podía abrir sin él.
+  showFor(unit) {
+    if (unit.team !== "player") return;
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+    this.list.forEach((shop, i) => {
+      const dist = Math.max(Math.abs(shop.row - unit.row), Math.abs(shop.col - unit.col));
+      if (dist <= SHOP_INTERACT_RANGE) return;
+      if (typeof Fog !== "undefined" && Fog.isFogged(shop.row, shop.col)) return;
+      if (!this.findApproachTile(unit, shop)) return;
+      Units.addMarker({
+        className: "attack-marker shop-open-marker",
+        row: shop.row,
+        col: shop.col,
+        zOffset: 2,
+        delayIndex: i,
+        visibleClass: "attack-marker--visible",
+        owner: "shops",
+        onClick: () => this.approachAndOpen(unit, shop),
+        buildContent: (marker) => {
+          const icon = document.createElement("i");
+          icon.className = "ph ph-storefront attack-marker__icon";
+          marker.appendChild(icon);
+        },
+      });
+    });
+  },
+
+  onClear() {
+    // Nada que limpiar aparte de los propios marcadores (ya los borra
+    // Units.clearRangeOverlays/refreshProviderFor por su cuenta) — a
+    // diferencia de Villages, esta mecánica no marca la propia tienda con
+    // ninguna clase "--targeted" (el clic directo sobre su sprite sigue
+    // dependiendo solo de shop--interactive, no de la selección actual).
+  },
+
+  // Igual que Combat.approachAndAttack/Villages.approachAndAttack: se
+  // acerca (si hace falta) a la loseta desde la que ya se puede abrir y
+  // abre el popup desde ahí, todo en un único clic sobre la mira. Mismo
+  // criterio que Movement.moveTo para gastar la acción del turno: SOLO si
+  // de verdad hizo falta moverse (si ya estaba al lado, esta mira ni
+  // siquiera se pinta, ver showFor) — abrir/comprar en sí nunca ha
+  // costado una acción (mismo comportamiento de siempre al abrir con un
+  // clic directo estando ya al lado).
+  async approachAndOpen(unit, shop) {
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+    Units.clearRangeOverlays();
+    const approach = this.findApproachTile(unit, shop);
+    if (!approach) return; // se movieron/ya no cabe justo antes del clic
+    if (approach.row !== unit.row || approach.col !== unit.col) {
+      const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
+      await Units.walkPath(unit, path);
+      // Mismo bug ya corregido en Combat/Gnome/Villages.approachAndAttack:
+      // acercarse a pie tiene que revelar niebla nueva al detenerse.
+      if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
+      if (typeof Turns !== "undefined") Turns.useAction(unit);
+    }
+    this.openPopup(shop);
+    Units.refreshRange(unit);
+  },
 };
+
+Units.registerRangeProvider(Shops);

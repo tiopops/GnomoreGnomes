@@ -51,4 +51,17 @@ const UI_LAYOUT = {
     startAngle: -34,
     endAngle: 11,
   },
+  // Botón de habilidad especial (js/abilities.js) — mismo círculo de
+  // información como centro y mismo radio que actionButtons, pero en su
+  // PROPIO ángulo, bastante más arriba que el abanico de golpear/pasar
+  // (-34°/11°, siempre a la derecha): así nunca colisiona con esos dos
+  // botones aunque un personaje lleve el gnomo cogido Y tenga además una
+  // habilidad sin gastar al mismo tiempo. Hacia arriba porque, como ya
+  // explica actionButtons más arriba, hacia abajo apenas queda margen
+  // antes del borde de la pantalla.
+  abilityButton: {
+    size: 51,
+    radius: 92,
+    angle: -55,
+  },
 };
