@@ -272,6 +272,10 @@ function spawnTestUnits(size, raceId) {
   // que tapaba el marcador de Puntos de Gloria (ver ese archivo) — visible
   // mientras dura la partida, oculto al salir por su propia opción.
   if (typeof SettingsMenu !== "undefined") SettingsMenu.showButton();
+  // Mochila (js/backpack.js) — ahora SIEMPRE visible durante la partida
+  // (recurso de equipo, no de una unidad concreta, ver cabecera de ese
+  // archivo), igual que el resto de "mobiliario" fijo del HUD de arriba.
+  if (typeof Backpack !== "undefined") Backpack.showButton();
 
   // Niebla de guerra (js/fog.js) — estado de visibilidad inicial: con todos
   // los rivales y gnomos ya colocados y el revelado inicial de cada

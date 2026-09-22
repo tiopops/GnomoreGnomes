@@ -58,6 +58,10 @@ const Turns = {
     this.activeTeam = "player";
     this.actionsUsed = {};
     this._aiRunning = false;
+    // Habilidades especiales (js/abilities.js) — partida nueva, quita
+    // cualquier mina/apuntado/control mental que hubiera quedado de una
+    // partida anterior.
+    if (typeof Abilities !== "undefined") Abilities.resetAll();
     Units.list.forEach((u) => this._applyExhaustedClass(u));
     this._ensureButton();
     this._updateButtonState();
@@ -102,6 +106,19 @@ const Turns = {
     if (!unit.el) return;
     const exhausted = (this.actionsUsed[unit.id] || 0) >= TURNS_MAX_ACTIONS;
     unit.el.classList.toggle("unit--exhausted", exhausted);
+    // Indicador de acciones restantes (js/unitinfo.js) — se llama desde
+    // AQUÍ (no desde useAction directamente) porque este método ya es el
+    // único punto de paso de todos los sitios que tocan actionsUsed
+    // (useAction, refreshExhaustedClass, _resetTeamActions y reset(), ver
+    // cabecera del archivo), así el indicador se mantiene al día sin
+    // duplicar el aviso en cada uno. Solo repinta si `unit` es la que está
+    // seleccionada ahora mismo (refreshActionDots ya hace esa comprobación).
+    if (typeof UnitInfo !== "undefined") UnitInfo.refreshActionDots();
+    // Botón de habilidad especial (js/abilities.js) — mismo motivo que
+    // UnitInfo arriba: aparece/desaparece según si la unidad SELECCIONADA
+    // ahora mismo todavía puede actuar, así que se avisa desde este único
+    // punto de paso en vez de repetirlo en cada sitio que toca actionsUsed.
+    if (typeof Abilities !== "undefined") Abilities.refresh();
   },
 
   // Versión pública de lo de arriba — para archivos que a propósito
@@ -122,7 +139,16 @@ const Turns = {
     Units.list
       .filter((u) => u.team === team)
       .forEach((u) => {
-        this.actionsUsed[u.id] = 0;
+        // "Nudillos Rocosos" (PuñoRoca) y la trampa de TruenoEspora
+        // (js/abilities.js) dejan a su víctima agotada DESDE EL PRINCIPIO
+        // de su turno siguiente, en vez de con las 2 acciones normales de
+        // cualquier otro turno — se consume aquí, una sola vez.
+        if (u.forcedRestNextTurn) {
+          u.forcedRestNextTurn = false;
+          this.actionsUsed[u.id] = TURNS_MAX_ACTIONS;
+        } else {
+          this.actionsUsed[u.id] = 0;
+        }
         this._applyExhaustedClass(u);
       });
   },
@@ -278,6 +304,12 @@ const Turns = {
   async endTurn() {
     if (this._aiRunning || this.activeTeam !== "player") return;
     Units.deselect();
+    // Habilidad "Voluntad Quebrada" (UrgaMentes, js/abilities.js) —
+    // "toma el control...durante el resto de este turno": el control
+    // termina aquí, al pasar turno, tanto si se llegaron a gastar sus 2
+    // acciones como si no (vuelve a su equipo, agotada, para que la IA
+    // rival no la use este mismo round).
+    if (typeof Abilities !== "undefined") Abilities.releaseMindControl();
     // Pedido explícito: "los gnomos que están sueltos... pierden 5 puntos
     // cada vez que alguien pulsa el botón PASAR TURNO" — CADA pulsación
     // cuenta, así que se llama aquí (la del jugador) Y otra vez más abajo,

@@ -184,6 +184,16 @@ const Combat = {
       // se quede corto de visión al llegar.
       if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
     }
+    // Habilidad pasiva de PuñoRoca (Units.walkPath -> _applyPunorocaWobble,
+    // js/units.js) — pedido explícito: "si atacase sin un urgamentes al
+    // lado a un personaje y el segundo y tercer movimiento lo alejan del
+    // area de la que pueda pegar...entonces no le pega al enemigo". El
+    // camino real pudo acabar dando tumbos lejos de la casilla de
+    // aproximación calculada arriba, así que se reconfirma la distancia YA
+    // MOVIDO antes de golpear en vez de asumir que llegó donde tocaba.
+    const type = UNIT_TYPES[unit.typeId];
+    const distNow = Math.max(Math.abs(unit.row - target.row), Math.abs(unit.col - target.col));
+    if (distNow > type.attackRange) return;
     await this.attack(unit, target);
   },
 
@@ -224,6 +234,28 @@ const Combat = {
       setTimeout(() => attacker.el.classList.remove("unit--punching"), 320);
     }
 
+    // Habilidad "Golem de Espinas" (GolemCorteza, js/abilities.js) — "si un
+    // enemigo le golpea se hace un punto de daño a si mismo tambien":
+    // target.thorny es permanente desde que se activa (no caduca por
+    // turno), así que se comprueba en CADA golpe que reciba de aquí en
+    // adelante. Si eso deja al propio atacante a 0, muere IGUAL que
+    // cualquier otra baja (mismo removeUnit/dropHeldBy/Gloria de abajo,
+    // solo que el crédito va para el equipo de `target`, no el de
+    // `attacker` — fue su espina la que lo mató).
+    let attackerDiedFromThorns = false;
+    if (target.thorny && attacker.hp > 0) {
+      attacker.hp = Math.max(0, attacker.hp - 1);
+      Units.updateHpBar(attacker);
+      Units.spawnFloatingText(attacker, "-1", { className: "dmg-popup" });
+      Units.playShake(attacker);
+      if (attacker.hp <= 0) attackerDiedFromThorns = true;
+    }
+    if (attackerDiedFromThorns) {
+      if (typeof Glory !== "undefined") Glory.queueKillBonus(target.team);
+      await Units.removeUnit(attacker);
+      if (typeof Gnome !== "undefined") await Gnome.dropHeldBy(attacker);
+    }
+
     if (target.hp <= 0) {
       // Pedido explícito sobre el ORDEN: "primero, el enemigo muere, luego
       // el gnomo aparece en la casilla en la que murió y luego el gnomo
@@ -245,11 +277,13 @@ const Combat = {
       if (typeof Glory !== "undefined") Glory.queueKillBonus(attacker.team);
       await Units.removeUnit(target);
       if (typeof Gnome !== "undefined") await Gnome.dropHeldBy(target);
-    } else {
+    } else if (!attackerDiedFromThorns) {
+      // Si las espinas ya se lo llevaron por delante (ver arriba), no hay
+      // quien empuje a `target` ni cuyo rango refrescar más abajo.
       await this.pushBack(attacker, target);
     }
 
-    Units.refreshRange(attacker);
+    if (!attackerDiedFromThorns) Units.refreshRange(attacker);
   },
 
   // Empujón: se restan las FUERZAs (atacante - objetivo) y, si sale positivo,

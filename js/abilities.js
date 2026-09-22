@@ -1,0 +1,703 @@
+/* Gnomore Gnomes — habilidades especiales de personaje, un solo uso por
+   partida (pedido explícito: "vayamos a darles habilidades exclusivas de un
+   solo uso... la diferencia es que si el personaje lo consume, este
+   desaparece" — el ICONO de la habilidad desaparece para siempre en cuanto
+   se activa, nunca vuelve a estar disponible esa misma partida).
+   Regla de oro: un archivo por mecánica. Este archivo sabe:
+     - Qué habilidad tiene cada tipo de personaje (ABILITIES) y su icono/
+       descripción, mostrados también en el popup de estadísticas (ver
+       js/unitinfo.js).
+     - El botón fijo de "usar habilidad" (mismo patrón que Gnome._hitBtn/
+       _passBtn, colocado con UI_LAYOUT en vez de números sueltos) que
+       aparece cuando la unidad seleccionada tiene una habilidad sin gastar
+       y todavía puede actuar.
+     - Cada habilidad en sí — ver cada bloque más abajo, uno por personaje.
+
+   Se registra como "oyente de selección" (Units.registerSelectionListener,
+   igual que js/unitinfo.js) en vez de "proveedor de rango"
+   (Units.registerRangeProvider, como movement.js/combat.js): una habilidad
+   no pinta losetas alcanzables sobre el tablero, es un botón fijo aparte,
+   igual que golpear/pasar el gnomo. */
+
+const ABILITIES = {
+  hombre_arbol: {
+    name: "Golem de Espinas",
+    icon: "ph-shield",
+    description:
+      "Se cura hasta su vida máxima de base y se envuelve de espinas para el resto de la partida: a partir de ahora, cualquiera que lo golpee se hace 1 punto de daño a sí mismo. Gasta 1 acción. Un solo uso por partida.",
+  },
+  surcabosques: {
+    name: "Visión Lejana",
+    icon: "ph-eye",
+    description:
+      "Revela una zona cualquiera del mapa (3 casillas alrededor del punto elegido), esté donde esté. Tras activarla, el cursor se convierte en un ojo: el siguiente clic sobre el mapa la usa ahí mismo. Gasta 1 acción. Un solo uso por partida.",
+  },
+  seta_artificiero: {
+    name: "Hongo Trampa",
+    icon: "ph-bomb",
+    description:
+      "Coloca una seta-trampa invisible para el enemigo en una casilla adyacente libre. Si una unidad enemiga la pisa, explota: le quita 1 punto de vida y la deja inactiva hasta su siguiente turno. Gasta 1 acción. Un solo uso por partida.",
+  },
+  urgamentes: {
+    name: "Voluntad Quebrada",
+    icon: "ph-brain",
+    description:
+      "Toma el control total de un personaje enemigo adyacente durante el resto de este turno: se puede mover, atacar, coger/golpear/pasar su gnomo o incluso usar su propia habilidad, como si fuera propio. Gasta 1 acción. Un solo uso por partida.",
+  },
+  punoroca: {
+    name: "Nudillos Rocosos",
+    icon: "ph-hand-fist",
+    description:
+      "Golpea y empuja 4 casillas en línea recta a un enemigo adyacente (se detiene en el primer obstáculo). PuñoRoca queda agotado el siguiente turno. Gasta 1 acción. Un solo uso por partida.",
+  },
+  goblin_lanzador: {
+    name: "Resorte Goblin",
+    icon: "ph-hand-grabbing",
+    description:
+      "Agarra a un personaje adyacente (amigo o enemigo, incluso si lleva el gnomo cogido) y lo lanza a cualquier casilla libre dentro de su propia área de movimiento. Gasta 1 acción. Un solo uso por partida.",
+  },
+};
+
+const Abilities = {
+  _btn: null,
+  _iconEl: null,
+  _currentUnit: null,
+
+  // ---------- Selección (Units.registerSelectionListener) ----------
+
+  onSelect(unit) {
+    this._currentUnit = unit;
+    this._refreshButton();
+  },
+
+  onDeselect() {
+    this._currentUnit = null;
+    this._cancelTargeting();
+    this._cancelThrowPicking();
+    this._hideButton();
+  },
+
+  // Turns.js llama aquí cada vez que cambian las acciones de CUALQUIER
+  // unidad (ver _applyExhaustedClass) — así el botón aparece/desaparece
+  // solo si afecta a la unidad seleccionada ahora mismo, sin que cada
+  // mecánica tenga que acordarse de avisar por separado.
+  refresh() {
+    this._refreshButton();
+  },
+
+  // ---------- Botón fijo "usar habilidad" ----------
+
+  _ensureButton() {
+    if (this._btn) return;
+    const btn = document.createElement("button");
+    btn.className = "ability-btn";
+    btn.innerHTML = '<i class="ph ability-btn__icon"></i>';
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this._activate();
+    });
+    document.body.appendChild(btn);
+    this._btn = btn;
+    this._iconEl = btn.querySelector(".ability-btn__icon");
+    this._positionButton();
+  },
+
+  // Colocado con su propio ángulo en UI_LAYOUT.abilityButton (js/uiconfig.js)
+  // — más arriba que golpear/pasar el gnomo (esos usan UI_LAYOUT.actionButtons,
+  // siempre a la derecha del círculo de información), así nunca compiten
+  // por el mismo hueco aunque un personaje lleve el gnomo cogido Y tenga
+  // además una habilidad sin gastar a la vez.
+  _positionButton() {
+    const info = window.innerWidth <= 480 ? UI_LAYOUT.infoCircleMobile : UI_LAYOUT.infoCircle;
+    const layout = UI_LAYOUT.abilityButton;
+    const centerX = info.left + info.size / 2;
+    const centerY = info.bottom + info.size / 2;
+    const rad = (layout.angle * Math.PI) / 180;
+    const bx = centerX + layout.radius * Math.cos(rad);
+    const by = centerY - layout.radius * Math.sin(rad);
+    this._btn.style.left = `${bx - layout.size / 2}px`;
+    this._btn.style.bottom = `${by - layout.size / 2}px`;
+    this._btn.style.width = `${layout.size}px`;
+    this._btn.style.height = `${layout.size}px`;
+  },
+
+  _refreshButton() {
+    const unit = this._currentUnit;
+    const ability = unit ? ABILITIES[unit.typeId] : null;
+    const canShow =
+      unit &&
+      ability &&
+      !unit.abilityUsed &&
+      unit.team === "player" &&
+      (typeof Turns === "undefined" || Turns.canAct(unit));
+    if (!canShow) {
+      this._hideButton();
+      return;
+    }
+    this._ensureButton();
+    this._iconEl.className = `ph ${ability.icon} ability-btn__icon`;
+    this._btn.setAttribute("aria-label", `Usar habilidad: ${ability.name}`);
+    this._btn.classList.add("ability-btn--visible");
+  },
+
+  _hideButton() {
+    if (this._btn) this._btn.classList.remove("ability-btn--visible");
+  },
+
+  // Gasta la acción y marca la habilidad como usada PARA SIEMPRE (pedido
+  // explícito) — el único sitio que hace esto de verdad, cada habilidad de
+  // abajo lo llama justo cuando su efecto YA se ha confirmado (nunca si el
+  // jugador cancela algo a medio camino, ver _cancelTargeting).
+  _consume(unit) {
+    unit.abilityUsed = true;
+    if (typeof Turns !== "undefined") Turns.useAction(unit);
+    this._refreshButton();
+  },
+
+  _activate() {
+    const unit = this._currentUnit;
+    if (!unit || unit.abilityUsed) return;
+    if (!ABILITIES[unit.typeId]) return;
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+
+    switch (unit.typeId) {
+      case "hombre_arbol":
+        this._activateThorns(unit);
+        break;
+      case "surcabosques":
+        this._startVisionTargeting(unit);
+        break;
+      case "seta_artificiero":
+        this._activateMine(unit);
+        break;
+      case "urgamentes":
+        this._activateMindControl(unit);
+        break;
+      case "punoroca":
+        this._activateKnockback(unit);
+        break;
+      case "goblin_lanzador":
+        this._activateThrow(unit);
+        break;
+      default:
+        break;
+    }
+  },
+
+  // ---------- GolemCorteza: Golem de Espinas ----------
+  // "el golem se envuelve de espinas, se cura hasta su vida maxima de base,
+  // si un enemigo le golpea se hace un punto de daño a si mismo tambien"
+  // (pedido explícito, reemplaza a la antigua Corteza Milenaria) — a
+  // diferencia de la anterior, esto NO caduca solo al empezar su siguiente
+  // turno: unit.thorny se queda a true el resto de la partida en cuanto se
+  // activa (ver combat.js, target.thorny, que es quien de verdad aplica el
+  // punto de daño reflejado cada vez que le golpean).
+
+  _activateThorns(unit) {
+    const type = UNIT_TYPES[unit.typeId];
+    unit.hp = type.aguante;
+    unit.maxHp = type.aguante;
+    Units.updateHpBar(unit);
+    unit.thorny = true;
+    unit.el.classList.add("unit--thorny");
+    SFX.click();
+    Units.spawnFloatingText(unit, "¡ESPINAS!", { className: "dmg-popup gnome-points-popup" });
+    this._consume(unit);
+  },
+
+  // ---------- SurcaBosques: Visión Lejana ----------
+  // Modo de apuntado con cursor propio (ojo) — un clic en cualquier punto
+  // del mapa revela 3 casillas alrededor. Pedido explícito: un clic sobre
+  // CUALQUIER elemento de interfaz fija (icono de cara, otro botón de
+  // habilidad, otra unidad propia, cualquier icono) cancela el apuntado SIN
+  // gastar la habilidad — se puede volver a intentar después.
+
+  _startVisionTargeting(unit) {
+    if (this._targetingUnit) return; // ya hay un apuntado en marcha
+    this._targetingUnit = unit;
+    document.body.classList.add("ability-targeting--eye");
+    // capture:true para interceptar el clic ANTES que cualquier otro
+    // listener del tablero (seleccionar/deseleccionar unidades, marcadores,
+    // clic-en-vacío...) — mientras se apunta, ningún otro sistema debe
+    // reaccionar a ese clic.
+    this._visionClickHandler = (e) => this._onVisionClick(e);
+    window.addEventListener("click", this._visionClickHandler, { capture: true });
+  },
+
+  _cancelTargeting() {
+    if (!this._targetingUnit) return;
+    this._targetingUnit = null;
+    document.body.classList.remove("ability-targeting--eye");
+    if (this._visionClickHandler) {
+      window.removeEventListener("click", this._visionClickHandler, { capture: true });
+      this._visionClickHandler = null;
+    }
+  },
+
+  _onVisionClick(e) {
+    const isOwnUnit = e.target.closest(".unit--player");
+    const isFixedUi = e.target.closest(
+      ".unit-info-btn, .ability-btn, .gnome-action-btn, .end-turn-btn, .settings-gear-btn, .backpack-btn, .backpack-close-btn, .glory-counter, .unit-info-overlay, .settings-panel"
+    );
+    if (isOwnUnit || isFixedUi) {
+      // "se quita el uso de la habilidad pero no se ha gastado, por lo que
+      // se puede usar de nuevo" — cancela sin más, el botón sigue ahí.
+      e.preventDefault();
+      e.stopPropagation();
+      this._cancelTargeting();
+      return;
+    }
+
+    const viewportEl = document.getElementById("board-viewport");
+    if (!viewportEl || !viewportEl.contains(e.target)) return; // clic fuera del tablero del todo, se ignora sin cancelar (deja seguir arrastrando/apuntando)
+    e.preventDefault();
+    e.stopPropagation();
+
+    const unit = this._targetingUnit;
+    this._cancelTargeting();
+    if (!unit || unit.abilityUsed) return;
+
+    const rect = viewportEl.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    const { x: contentX, y: contentY } = BoardView.clientToContent(cx, cy);
+    const { row, col } = getTileFromPoint(contentX, contentY, Units.boardSize);
+
+    if (typeof Fog !== "undefined") Fog.revealAround(row, col, 3);
+    SFX.click();
+    Units.spawnFloatingText(unit, "¡VISIÓN!", { className: "dmg-popup gnome-points-popup" });
+    this._consume(unit);
+  },
+
+  // ---------- TruenoEspora: seta-trampa ----------
+  // "coloca una seta explosiva invisible para los enemigos...si un enemigo
+  // la pisa, EXPLOTA, resta un punto de vida y deja el jugador enemigo
+  // inactivo hasta el siguiente turno" — se dispara desde Units.hopTo (ver
+  // checkTrigger más abajo), el único punto de paso real de cualquier
+  // desplazamiento del proyecto.
+
+  _mines: [], // { row, col, ownerTeam, el }
+
+  _activateMine(unit) {
+    const spot = this._findAdjacentFreeTile(unit);
+    if (!spot) return; // no queda ninguna casilla libre alrededor, no se gasta la habilidad
+    const el = document.createElement("div");
+    el.className = "ability-mine";
+    const img = document.createElement("img");
+    img.className = "ability-mine__sprite";
+    // Sprite provisional (pedido explícito): "faltara el sprite, te lo
+    // pasare mas tarde de momento usa la imagen de setacoiris tintada de
+    // rojo" — el tinte vive en CSS (.ability-mine__sprite, filter).
+    img.src = "assets/iconos/setarcoiris.png";
+    img.alt = "";
+    el.appendChild(img);
+    Units.container.appendChild(el);
+    const { x, y } = getTileCenter(spot.row, spot.col, Units.boardSize);
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.zIndex = String((spot.row + spot.col) * 10 + 4);
+    this._mines.push({ row: spot.row, col: spot.col, ownerTeam: unit.team, el });
+    SFX.click();
+    this._consume(unit);
+  },
+
+  _findAdjacentFreeTile(unit) {
+    const offsets = [
+      [0, 1],
+      [0, -1],
+      [1, 0],
+      [-1, 0],
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ];
+    for (const [dr, dc] of offsets) {
+      const r = unit.row + dr;
+      const c = unit.col + dc;
+      if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
+      if (Units.unitAt(r, c)) continue;
+      if (typeof Gnome !== "undefined" && Gnome.isAt(r, c)) continue;
+      if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
+      if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
+      if (this._mines.some((m) => m.row === r && m.col === c)) continue;
+      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
+      return { row: r, col: c };
+    }
+    return null;
+  },
+
+  // Llamado desde Units.hopTo (js/units.js) cada vez que CUALQUIER unidad
+  // termina de pisar una casilla nueva — así movement.js/combat.js/gnome.js
+  // no necesitan saber que las minas existen.
+  checkTrigger(unit) {
+    if (this._mines.length === 0) return;
+    const idx = this._mines.findIndex(
+      (m) => m.row === unit.row && m.col === unit.col && m.ownerTeam !== unit.team
+    );
+    if (idx === -1) return;
+    const mine = this._mines[idx];
+    this._mines.splice(idx, 1);
+    mine.el.remove();
+
+    // Feedback nivel Triple A (pedido explícito): "temblor de camara y la
+    // pantalla blanca un instante y un mensaje para dar feedback de lo que
+    // ha ocurrido" — mismo lenguaje visual que ya usa el golpe mortal a un
+    // poblado (Villages._playEpicSmash: board-viewport--shake + destello
+    // blanco global #epic-smash-flash + mensaje grande), reutilizado tal
+    // cual (mismas clases CSS) en vez de inventar un segundo sistema de
+    // "impacto grande" por separado.
+    this._playExplosionFeedback(unit);
+
+    unit.hp = Math.max(0, unit.hp - 1);
+    Units.updateHpBar(unit);
+    Units.spawnFloatingText(unit, "-1", { className: "dmg-popup" });
+    Units.playShake(unit);
+    if (typeof SFX !== "undefined") SFX.hit();
+    // "deja el jugador enemigo inactivo hasta el siguiente turno" — mismo
+    // mecanismo que Nudillos Rocosos (ver turns.js, _resetTeamActions):
+    // no le quita las acciones que le quedaran YA, solo le fuerza a
+    // empezar agotada su PRÓXIMA vez.
+    unit.forcedRestNextTurn = true;
+
+    if (unit.hp <= 0) {
+      Units.removeUnit(unit);
+      if (typeof Gnome !== "undefined") Gnome.dropHeldBy(unit);
+    }
+  },
+
+  // Temblor de cámara + destello blanco + mensaje grande — se llama ANTES
+  // de resolver el daño en sí, para que el jugador entienda de un vistazo
+  // "algo grande acaba de explotar" antes de fijarse en el "-1" concreto.
+  _playExplosionFeedback(unit) {
+    const viewportEl = document.getElementById("board-viewport");
+    if (viewportEl) {
+      viewportEl.classList.remove("board-viewport--shake");
+      void viewportEl.offsetWidth;
+      viewportEl.classList.add("board-viewport--shake");
+      setTimeout(() => viewportEl.classList.remove("board-viewport--shake"), 420);
+    }
+    this._flashScreen();
+    if (typeof SFX !== "undefined") SFX.glory(); // mismo "impacto grande" que usa Villages para su golpe mortal
+    Units.spawnFloatingText(unit, "¡BOOM!", { className: "dmg-popup gnome-points-popup" });
+  },
+
+  // Reutiliza el MISMO elemento global de destello blanco que ya crea
+  // Villages._flashScreen (id="epic-smash-flash") en vez de crear uno
+  // propio — si Villages lo creó primero se reusa tal cual, y si esta
+  // habilidad se dispara antes, lo crea ella; cualquiera de los dos vale,
+  // es un único destello de pantalla completa, no algo propio de cada
+  // mecánica.
+  _flashScreen() {
+    let el = document.getElementById("epic-smash-flash");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "epic-smash-flash";
+      document.body.appendChild(el);
+    }
+    el.classList.remove("epic-smash-flash--active");
+    void el.offsetWidth;
+    el.classList.add("epic-smash-flash--active");
+  },
+
+  // ---------- UrgaMentes: Voluntad Quebrada ----------
+  // Truco central: en vez de reimplementar "mover/atacar/coger el gnomo/
+  // atacar un tótem" para una unidad ajena, se le cambia el team AL DEL
+  // JUGADOR mientras dura el control — TODO lo demás (movement.js/
+  // combat.js/gnome.js/villages.js/shops.js) ya gatea en unit.team==="player",
+  // así que empieza a funcionar solo, sin tocar ni una línea de esos
+  // archivos. Vuelve a su equipo original en Turns.endTurn (ver turns.js).
+
+  _mindControlled: null, // { unitId, originalTeam }
+
+  _activateMindControl(unit) {
+    const target = Units.list.find(
+      (u) =>
+        u.team !== unit.team &&
+        Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <= 1 &&
+        (typeof Fog === "undefined" || !Fog.isFogged(u.row, u.col))
+    );
+    if (!target) return; // no hay ningún rival adyacente, no se gasta la habilidad
+
+    this._mindControlled = { unitId: target.id, originalTeam: target.team };
+    target.el.classList.remove(`unit--${target.team}`);
+    target.team = unit.team;
+    target.el.classList.add(`unit--${unit.team}`);
+    target.el.classList.add("unit--mind-controlled");
+    if (typeof Turns !== "undefined") Turns.actionsUsed[target.id] = 0;
+
+    SFX.click();
+    Units.spawnFloatingText(target, "¡CONTROLADO!", { className: "dmg-popup gnome-points-popup" });
+
+    this._consume(unit);
+    Units.deselect();
+    Units.select(target);
+  },
+
+  // "durante el resto de este turno" — termina aquí, llamado desde
+  // Turns.endTurn justo antes de que empiece el turno rival de verdad,
+  // tanto si el jugador llegó a gastar sus 2 acciones como si no.
+  releaseMindControl() {
+    if (!this._mindControlled) return;
+    const target = Units.list.find((u) => u.id === this._mindControlled.unitId);
+    if (target) {
+      const original = this._mindControlled.originalTeam;
+      target.el.classList.remove(`unit--${target.team}`, "unit--mind-controlled");
+      target.team = original;
+      target.el.classList.add(`unit--${original}`);
+      if (typeof Turns !== "undefined") {
+        Turns.actionsUsed[target.id] = TURNS_MAX_ACTIONS;
+        Turns._applyExhaustedClass(target);
+      }
+      if (Units.selectedId === target.id) Units.deselect();
+    }
+    this._mindControlled = null;
+  },
+
+  // ---------- PuñoRoca: Nudillos Rocosos ----------
+  // Empuje a distancia FIJA (a diferencia de Combat.pushBack, que depende
+  // de la diferencia de fuerza) — mismo patrón de pararse en el primer
+  // obstáculo, ver Combat.pushBack para más detalle de por qué se hace
+  // paso a paso en vez de en bloque.
+
+  async _activateKnockback(unit) {
+    const target = Units.list.find(
+      (u) => u.team !== unit.team && Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <= 1
+    );
+    if (!target) return; // no hay ningún rival adyacente, no se gasta la habilidad
+
+    Units.clearRangeOverlays();
+    Units.faceTowardsTile(unit, target.row, target.col);
+    this._consume(unit);
+    // "el proximo turno el personaje no puede utilzarse y aparece inactivo
+    // como si hubiera gastado sus 2 acciones" — mismo mecanismo que la
+    // trampa de TruenoEspora (ver turns.js, _resetTeamActions).
+    unit.forcedRestNextTurn = true;
+
+    if (unit.el) {
+      unit.el.classList.remove("unit--punching");
+      void unit.spriteEl.offsetWidth;
+      unit.el.classList.add("unit--punching");
+      setTimeout(() => unit.el.classList.remove("unit--punching"), 320);
+    }
+    Units.playShake(target);
+    SFX.hit();
+
+    await this._pushBackFixed(target, unit, 4);
+    Units.refreshRange(unit);
+  },
+
+  async _pushBackFixed(target, attacker, distance) {
+    const dRow = Math.sign(target.row - attacker.row);
+    const dCol = Math.sign(target.col - attacker.col);
+    if (dRow === 0 && dCol === 0) return;
+
+    const path = [];
+    let row = target.row;
+    let col = target.col;
+    for (let i = 0; i < distance; i++) {
+      const nextRow = row + dRow;
+      const nextCol = col + dCol;
+      if (nextRow < 0 || nextCol < 0 || nextRow >= Units.boardSize || nextCol >= Units.boardSize) break;
+      if (Units.unitAt(nextRow, nextCol)) break;
+      if (typeof Gnome !== "undefined" && Gnome.isAt(nextRow, nextCol)) break;
+      if (typeof Villages !== "undefined" && Villages.at(nextRow, nextCol)) break;
+      if (typeof Shops !== "undefined" && Shops.at(nextRow, nextCol)) break;
+      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(nextRow, nextCol)) break;
+      path.push({ row: nextRow, col: nextCol });
+      row = nextRow;
+      col = nextCol;
+    }
+    if (path.length === 0) return;
+
+    target.el.classList.add("unit--moving");
+    for (const step of path) {
+      await new Promise((resolve) => {
+        target.row = step.row;
+        target.col = step.col;
+        const { x, y } = getTileCenter(step.row, step.col, Units.boardSize);
+        target.el.style.left = `${x}px`;
+        target.el.style.top = `${y}px`;
+        target.el.style.zIndex = String((step.row + step.col) * 10 + 5);
+        target.spriteEl.classList.remove("unit__sprite--hop");
+        void target.spriteEl.offsetWidth;
+        target.spriteEl.classList.add("unit__sprite--hop");
+        SFX.hop();
+        setTimeout(resolve, 140);
+      });
+    }
+    target.el.classList.remove("unit--moving");
+    target.spriteEl.classList.remove("unit__sprite--hop");
+    if (typeof Fog !== "undefined") Fog.applyVisibility();
+  },
+
+  // ---------- LanzaGnomos: Lanzamiento ----------
+  // "puede lanzar un personaje adyacente amigo o enemigo a una casilla
+  // dentro de su area de movimiento. incluyendo a un personaje con un
+  // gnomo" (pedido explícito) — dos pasos: 1) elegir A QUIÉN se agarra
+  // (automático si solo hay un adyacente, si no se pide un clic more) y 2)
+  // elegir DÓNDE se lanza (círculos de rango, igual que un movimiento
+  // normal, pero centrados en el propio LanzaGnomos, no en quien se lanza).
+  // Un personaje con el gnomo cogido se puede lanzar sin más: el gnomo vive
+  // como hijo DOM de unit.flipEl (ver GnomeInstance.attachTo, gnome.js), así
+  // que viaja solo con él sin que esta habilidad tenga que saber que existe.
+
+  _activateThrow(unit) {
+    const adjacent = Units.list.filter(
+      (u) => u.id !== unit.id && Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <= 1
+    );
+    if (adjacent.length === 0) return; // no hay nadie al lado, no se gasta la habilidad
+    if (adjacent.length === 1) {
+      this._startThrowDestination(unit, adjacent[0]);
+    } else {
+      this._startThrowPicking(unit);
+    }
+  },
+
+  // Modo de apuntado para elegir A QUIÉN se agarra, solo cuando hay más de
+  // un adyacente posible — mismas reglas de cancelado que Visión Lejana
+  // (clic en icono/UI fija o unidad propia cancela sin gastar), pero aquí
+  // un clic válido es sobre CUALQUIER unidad (propia o rival) adyacente.
+  _startThrowPicking(unit) {
+    if (this._targetingUnit) return;
+    this._targetingUnit = unit;
+    document.body.classList.add("ability-targeting--throw");
+    this._throwPickHandler = (e) => this._onThrowPickClick(e, unit);
+    window.addEventListener("click", this._throwPickHandler, { capture: true });
+  },
+
+  _cancelThrowPicking() {
+    if (!this._throwPickHandler) return;
+    this._targetingUnit = null;
+    document.body.classList.remove("ability-targeting--throw");
+    window.removeEventListener("click", this._throwPickHandler, { capture: true });
+    this._throwPickHandler = null;
+  },
+
+  _onThrowPickClick(e, unit) {
+    const isFixedUi = e.target.closest(
+      ".unit-info-btn, .ability-btn, .gnome-action-btn, .end-turn-btn, .settings-gear-btn, .backpack-btn, .backpack-close-btn, .glory-counter, .unit-info-overlay, .settings-panel"
+    );
+    const unitEl = e.target.closest(".unit");
+    e.preventDefault();
+    e.stopPropagation();
+    this._cancelThrowPicking();
+    if (isFixedUi || !unitEl) return; // cancela sin gastar, se puede reintentar
+
+    // dataset.unitId solo lo llevan las unidades DE VERDAD (Units.spawnUnit)
+    // — un tótem/tienda reutiliza la clase "unit" solo para su
+    // posicionamiento (ver villages.js/shops.js) pero nunca vive en
+    // Units.list, así que el find() de abajo ya los descarta solo.
+    const target = Units.list.find((u) => u.id === unitEl.dataset.unitId);
+    const isAdjacent =
+      target && target.id !== unit.id && Math.max(Math.abs(target.row - unit.row), Math.abs(target.col - unit.col)) <= 1;
+    if (!isAdjacent) return;
+    this._startThrowDestination(unit, target);
+  },
+
+  // Círculos de destino (mismo estilo que Movement.showFor) dentro del
+  // propio alcance de movimiento del LanzaGnomos, centrados en SU posición
+  // (no en la de quien se lanza) — pedido explícito: "a una casilla dentro
+  // de su area de movimiento".
+  _startThrowDestination(goblin, thrown) {
+    Units.clearRangeOverlays();
+    const range = UNIT_TYPES[goblin.typeId].movimiento;
+    const tiles = [];
+    for (let row = 0; row < Units.boardSize; row++) {
+      for (let col = 0; col < Units.boardSize; col++) {
+        if (row === thrown.row && col === thrown.col) continue; // misma casilla, no tiene sentido lanzarlo ahí
+        const dist = Math.max(Math.abs(row - goblin.row), Math.abs(col - goblin.col));
+        if (dist > range) continue;
+        if (Units.unitAt(row, col)) continue;
+        if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
+        if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
+        if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
+        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;
+        tiles.push({ row, col });
+      }
+    }
+    if (tiles.length === 0) return; // no hay ninguna casilla válida, no se gasta la habilidad
+
+    tiles.forEach((tile, i) => {
+      Units.addMarker({
+        className: "range-marker ability-throw-marker",
+        row: tile.row,
+        col: tile.col,
+        zOffset: 2,
+        alwaysOnTop: true,
+        delayMs: Units.staggerDelay(i, tiles.length),
+        visibleClass: "range-marker--visible",
+        onClick: () => this._resolveThrow(goblin, thrown, tile.row, tile.col),
+      });
+    });
+    // Cancelar es gratis: un clic en vacío deselecciona al LanzaGnomos (ver
+    // units.js) y eso ya limpia estos marcadores solo, vía
+    // Units.clearRangeOverlays — no hace falta un cancelador aparte aquí.
+  },
+
+  async _resolveThrow(goblin, thrown, destRow, destCol) {
+    Units.clearRangeOverlays();
+    this._consume(goblin);
+    await this._throwUnitTo(thrown, destRow, destCol);
+  },
+
+  // Vuelo en parábola (nivel Triple A: un lanzamiento no debería sentirse
+  // como un simple teletransporte) — interpola left/top fotograma a
+  // fotograma con un arco añadido encima, en vez de reutilizar
+  // Units.walkPath (ese es para caminar casilla a casilla en línea recta,
+  // esto es un único salto largo por el aire).
+  async _throwUnitTo(unit, destRow, destCol) {
+    const start = getTileCenter(unit.row, unit.col, Units.boardSize);
+    const end = getTileCenter(destRow, destCol, Units.boardSize);
+    unit.el.classList.add("unit--thrown");
+    const DURATION_MS = 460;
+    await new Promise((resolve) => {
+      const t0 = performance.now();
+      const step = (now) => {
+        const t = Math.min(1, (now - t0) / DURATION_MS);
+        const x = start.x + (end.x - start.x) * t;
+        const y = start.y + (end.y - start.y) * t;
+        const arc = -70 * 4 * t * (1 - t); // parábola, pico en t=0.5, negativo = hacia arriba en pantalla
+        unit.el.style.left = `${x}px`;
+        unit.el.style.top = `${y + arc}px`;
+        if (t < 1) requestAnimationFrame(step);
+        else resolve();
+      };
+      requestAnimationFrame(step);
+    });
+
+    unit.row = destRow;
+    unit.col = destCol;
+    const { x, y } = getTileCenter(destRow, destCol, Units.boardSize);
+    unit.el.style.left = `${x}px`;
+    unit.el.style.top = `${y}px`;
+    unit.el.style.zIndex = String((destRow + destCol) * 10 + 5);
+    unit.el.classList.remove("unit--thrown");
+
+    SFX.hop();
+    Units.playShake(unit);
+    // Trampa de TruenoEspora (ver checkTrigger arriba) — un lanzamiento
+    // también puede hacer aterrizar a alguien justo encima de una mina.
+    this.checkTrigger(unit);
+    if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
+    if (typeof Villages !== "undefined") Villages.refreshOcclusion();
+    if (typeof Shops !== "undefined") Shops.refreshAll();
+    Units.refreshRange(unit);
+  },
+
+  // ---------- Partida nueva ----------
+
+  resetAll() {
+    this._mines.forEach((m) => m.el.remove());
+    this._mines = [];
+    this._mindControlled = null;
+    this._currentUnit = null;
+    this._cancelTargeting();
+    this._cancelThrowPicking();
+    Units.clearRangeOverlays();
+    this._hideButton();
+  },
+};
+
+Units.registerSelectionListener(Abilities);

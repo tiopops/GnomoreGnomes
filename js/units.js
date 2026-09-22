@@ -219,6 +219,17 @@ const Units = {
     el.className = `unit unit--${team}`;
     el.dataset.unitId = id;
 
+    // Indicador opcional de equipo (js/teammarkers.js, apagado por
+    // defecto) — círculo en el suelo, bajo el personaje: se inserta como
+    // PRIMER hijo (antes que flipEl) para que quede pintado por detrás del
+    // sprite sin necesitar ningún z-index especial, mismo truco que ya usa
+    // el resto de "capas de suelo" de este archivo (orden de inserción, no
+    // apilamiento explícito). Su visibilidad la decide un único toggle de
+    // clase en <body> (ver TeamMarkers), nunca JS por unidad.
+    const teamMarkerEl = document.createElement("div");
+    teamMarkerEl.className = `unit__team-marker unit__team-marker--${team}`;
+    el.appendChild(teamMarkerEl);
+
     const flipEl = document.createElement("div");
     flipEl.className = "unit__flip";
 
@@ -301,6 +312,20 @@ const Units = {
       hpBarEl,
       hpSegmentEls,
       _fearTimer: null, // ver startFearLoop/stopFearLoop más abajo
+      // Habilidades especiales de un solo uso (js/abilities.js) — pedido
+      // explícito: "si el personaje lo consume, este desaparece", así que
+      // basta un booleano por unidad, nunca se vuelve a poner a false.
+      abilityUsed: false,
+      // "Golem de Espinas" (GolemCorteza) — una vez activada, PERMANENTE
+      // para el resto de la partida (no caduca por turno): cualquiera que
+      // golpee a esta unidad se hace 1 punto de daño a sí mismo (ver
+      // combat.js, Combat.attack).
+      thorny: false,
+      // "Nudillos Rocosos" (PuñoRoca) y la trampa de TruenoEspora dejan a
+      // su víctima agotada DESDE EL PRINCIPIO de su turno siguiente en vez
+      // de con las 2 acciones normales — ver Turns._resetTeamActions, que
+      // consume esta marca la primera vez que le toca su turno.
+      forcedRestNextTurn: false,
     };
     this.list.push(unit);
 
@@ -697,6 +722,15 @@ const Units = {
   // después en el CSS) — al vivir en un único sitio, ninguna mecánica que
   // reutilice esto puede reintroducir ese bug por accidente.
   async walkPath(unit, path) {
+    // PuñoRoca (pedido explícito: "el troll puñoroca mueve mucho para su
+    // fuerza...tienes que cambiar su movimiento") — sin un UrgaMentes
+    // aliado justo a su lado ANTES de arrancar el movimiento, el primer
+    // paso sale bien pero del segundo en adelante da tumbos al azar. Único
+    // punto de paso de CUALQUIER desplazamiento paso a paso del proyecto
+    // (ver comentario de más abajo), así que esto cubre moverse normal,
+    // acercarse a atacar/coger el gnomo/un tótem/abrir la tienda... sin
+    // tener que tocar cada mecánica por separado.
+    if (unit.typeId === "punoroca") path = this._applyPunorocaWobble(unit, path);
     unit.el.classList.add("unit--moving");
     for (const step of path) {
       await this.hopTo(unit, step.row, step.col);
@@ -723,6 +757,58 @@ const Units = {
     if (typeof Shops !== "undefined") Shops.refreshAll();
   },
 
+  // "el jugador indica a donde quiere moverse, pero el segundo y tercer
+  // paso lo hace hacia una direccion aleatoria. la unica manera de que de
+  // los 3 pasos en la direccion indicada es teniendo a un urgamentes a su
+  // lado" (pedido explícito, habilidades de PuñoRoca/UrgaMentes) — el
+  // aliado se comprueba ANTES de arrancar (su posición de origen, no la de
+  // cada paso intermedio): si está al lado, el camino se respeta tal cual;
+  // si no, el primer paso es siempre el indicado, y desde el segundo cada
+  // paso elige un vecino libre al azar encadenado desde el anterior,
+  // deteniéndose antes de tiempo si no queda ningún vecino válido (nunca
+  // "salta" a uno lejano). Vive en Units (no en Movement) porque es el
+  // único punto de paso real de CUALQUIER desplazamiento del proyecto (ver
+  // walkPath) — así cubre moverse normal, acercarse a atacar, acercarse al
+  // gnomo/tótem/tienda, todo por igual, sin tocar cada mecánica.
+  _applyPunorocaWobble(unit, path) {
+    if (path.length < 2) return path;
+    const hasUrgaAlly = this.list.some(
+      (u) =>
+        u.typeId === "urgamentes" &&
+        u.team === unit.team &&
+        u.id !== unit.id &&
+        Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <= 1
+    );
+    if (hasUrgaAlly) return path;
+
+    const wobbled = [path[0]];
+    let curRow = path[0].row;
+    let curCol = path[0].col;
+    for (let i = 1; i < path.length; i++) {
+      const neighbors = [];
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const r = curRow + dr;
+          const c = curCol + dc;
+          if (r < 0 || c < 0 || r >= this.boardSize || c >= this.boardSize) continue;
+          if (this.unitAt(r, c)) continue;
+          if (typeof Gnome !== "undefined" && Gnome.isAt(r, c)) continue;
+          if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
+          if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
+          if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
+          neighbors.push({ row: r, col: c });
+        }
+      }
+      if (neighbors.length === 0) break; // ya no puede seguir dando tumbos, se queda donde llegó
+      const pick = neighbors[Math.floor(Math.random() * neighbors.length)];
+      wobbled.push(pick);
+      curRow = pick.row;
+      curCol = pick.col;
+    }
+    return wobbled;
+  },
+
   hopTo(unit, row, col) {
     return new Promise((resolve) => {
       this.faceTowardsTile(unit, row, col);
@@ -733,6 +819,12 @@ const Units = {
       unit.el.style.left = `${x}px`;
       unit.el.style.top = `${y}px`;
       unit.el.style.zIndex = String((row + col) * 10 + 5);
+
+      // Trampa de TruenoEspora (js/abilities.js) — se comprueba en CADA
+      // paso, no solo al final del camino, para que explote en el instante
+      // exacto en que un enemigo pisa esa casilla (aunque solo sea de paso
+      // hacia otra).
+      if (typeof Abilities !== "undefined") Abilities.checkTrigger(unit);
 
       // Reinicia la animación de salto en cada paso (aunque sea la misma clase).
       unit.spriteEl.classList.remove("unit__sprite--hop");

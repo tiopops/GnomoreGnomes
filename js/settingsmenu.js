@@ -89,6 +89,63 @@ const SettingsMenu = {
     });
     panel.appendChild(shadowsBtn);
 
+    // Pedido explícito: "añade a configuracion otro checkbox que desconecte
+    // los efectos de sonido (ojo! en un futuro habra musica, pero eso ira
+    // por un lado distinto a los efectos de sonido)" — mismo patrón exacto
+    // que el interruptor de Sombras de arriba, pero para SFX (js/sfx.js).
+    // Interruptor propio, independiente a propósito: el día que exista
+    // música de fondo, será OTRO checkbox aparte con su propia clave de
+    // localStorage, nunca compartido con este.
+    const sfxBtn = document.createElement("button");
+    sfxBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
+    const sfxChecked = typeof SFX !== "undefined" ? SFX.enabled : true;
+    sfxBtn.innerHTML =
+      '<span class="settings-panel__option-main">' +
+      '<i class="ph ph-speaker-high settings-panel__option-icon"></i>' +
+      '<span class="p5-banner__label">Efectos de sonido</span>' +
+      "</span>" +
+      `<span class="settings-toggle" data-checked="${sfxChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
+    sfxBtn.addEventListener("click", () => {
+      const next = typeof SFX !== "undefined" ? !SFX.enabled : true;
+      // El propio clic del checkbox solo tiene que sonar si el sonido
+      // queda ACTIVADO tras este toque — por eso, a diferencia del resto
+      // de botones del panel, aquí el orden importa: activar primero (para
+      // que el gain maestro ya esté a 1 cuando suene el clic) y solo
+      // silenciar después de reproducirlo; al desactivar, ni se intenta.
+      if (next) {
+        if (typeof SFX !== "undefined") SFX.setEnabled(next);
+        SFX.click();
+      } else if (typeof SFX !== "undefined") {
+        SFX.setEnabled(next);
+      }
+      sfxBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+    });
+    panel.appendChild(sfxBtn);
+
+    // Pedido explícito: "otra opcion en el menu de configuracion, otro
+    // chekbox, llamado mostrar equipos. esta opcion por defecto viene
+    // desabilitada, si se habilita muestra un circulo azul bajo los
+    // aliados y uno rojo bajo los enemigos en la casilla en la que estan"
+    // — mismo patrón exacto que Sombras/SFX de arriba, pero para
+    // TeamMarkers (js/teammarkers.js), que por defecto empieza en false en
+    // vez de true.
+    const teamMarkersBtn = document.createElement("button");
+    teamMarkersBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
+    const teamMarkersChecked = typeof TeamMarkers !== "undefined" ? TeamMarkers.enabled : false;
+    teamMarkersBtn.innerHTML =
+      '<span class="settings-panel__option-main">' +
+      '<i class="ph ph-users-three settings-panel__option-icon"></i>' +
+      '<span class="p5-banner__label">Mostrar equipos</span>' +
+      "</span>" +
+      `<span class="settings-toggle" data-checked="${teamMarkersChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
+    teamMarkersBtn.addEventListener("click", () => {
+      SFX.click();
+      const next = typeof TeamMarkers !== "undefined" ? !TeamMarkers.enabled : false;
+      if (typeof TeamMarkers !== "undefined") TeamMarkers.setEnabled(next);
+      teamMarkersBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+    });
+    panel.appendChild(teamMarkersBtn);
+
     const exitBtn = document.createElement("button");
     exitBtn.className = "p5-banner p5-banner--action settings-panel__option";
     exitBtn.innerHTML =
@@ -148,6 +205,7 @@ const SettingsMenu = {
     // visible la próxima vez que se abra el menú.
     if (typeof Turns !== "undefined") Turns.hideButton();
     if (typeof Glory !== "undefined") Glory.hideHud();
+    if (typeof Backpack !== "undefined") Backpack.hideButton();
     this.hideButton();
   },
 };

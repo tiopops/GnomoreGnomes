@@ -728,8 +728,17 @@ h2 {
   -webkit-user-select: none;
 }
 
+/* CORRECCIÓN (pedido explícito): "hacer clic y arrastrar para mover el
+   escenario debe mostrar la flecha blanca...ahora aparece la mano de
+   windows" — el arreglo de arriba (.board-viewport) ya dejaba el reposo en
+   el cursor propio del juego, pero se olvidó de este estado (MIENTRAS se
+   arrastra de verdad): seguía siendo "grabbing", la manita nativa del
+   sistema operativo. Mismo cursor blanco de reposo también aquí, ya que
+   este juego no tiene un cursor "amarillo" dedicado a "arrastrando" en su
+   sistema de tres colores (ver la nota larga en :root) — el objeto bajo el
+   puntero durante un arrastre de cámara nunca es un punto de interés. */
 .board-viewport.dragging {
-  cursor: grabbing;
+  cursor: var(--cursor-default);
 }
 
 .board-camera {
@@ -879,6 +888,39 @@ h2 {
     opacity 0.4s ease, visibility 0s linear 0s, transform 0.15s ease, filter 0.15s ease;
 }
 
+/* Indicador opcional de equipo (js/teammarkers.js) — pedido explícito:
+   "circulo azul bajo los aliados y uno rojo bajo los enemigos en la
+   casilla en la que estan". Oculto por defecto (display:none): un único
+   toggle de clase en <body> (ver TeamMarkers.setEnabled) lo enseña/oculta
+   para TODAS las unidades a la vez, sin tocar cada una por separado.
+   Posicionado al 50%/92% de la propia caja de .unit (el mismo punto que
+   .unit ya usa para anclarse al centro real de la loseta, ver su propio
+   transform: translate(-50%,-92%) arriba) para quedar centrado en el
+   suelo bajo los pies, no bajo el centro del sprite entero. */
+.unit__team-marker {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 92%;
+  width: 50px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+body.team-markers--visible .unit__team-marker {
+  display: block;
+}
+
+.unit__team-marker--player {
+  background: radial-gradient(ellipse at center, rgba(84, 164, 255, 0.9) 0%, rgba(84, 164, 255, 0.55) 55%, rgba(84, 164, 255, 0) 100%);
+}
+
+.unit__team-marker--enemy {
+  background: radial-gradient(ellipse at center, rgba(255, 84, 84, 0.9) 0%, rgba(255, 84, 84, 0.55) 55%, rgba(255, 84, 84, 0) 100%);
+}
+
 /* Pedido explícito: "todos los elementos de la interfaz deben reaccionar al
    raton al pasarlo por encima" — a los propios personajes/rivales del
    tablero (clicables para seleccionar, ver Units._onUnitClick) les faltaba
@@ -890,6 +932,20 @@ h2 {
 .unit:hover {
   transform: translate(-50%, -92%) scale(1.05);
   filter: brightness(1.12);
+}
+
+/* CORRECCIÓN (pedido explícito): "cuando selecciono la tienda goblin, esta
+   no debe elevarse sobre el suelo" — .shop reutiliza la clase ".unit" solo
+   por su posicionamiento (ver la nota en js/shops.js), pero .unit:hover de
+   arriba tiene más especificidad que ".shop" (una pseudo-clase cuenta más
+   que una clase sola) y por eso GANABA sobre el propio translateY(30px) de
+   .shop (pedido explícito anterior, "bajalo mas") en cuanto se pasaba el
+   ratón por encima: perdía su posición bajada Y además se encogía/crecía
+   como cualquier personaje. La tienda es un edificio fijo, no un
+   personaje — se queda con el mismo brillo sutil de aviso pero SIN
+   levantarse ni cambiar de tamaño, en su posición de siempre. */
+.shop:hover {
+  transform: translate(-50%, -92%) translateY(30px);
 }
 
 /* Pedido explícito: "que se ponga amarillo cuando haya un punto de
@@ -1391,6 +1447,21 @@ h2 {
   text-shadow: 0 0 10px rgba(0, 0, 0, 0.75), 0 0 22px rgba(255, 50, 50, 1);
 }
 
+/* Mira de "ir y abrir" de la Tienda Goblin (js/shops.js, Shops.showFor) —
+   mismo tamaño/animación que .attack-marker, pero en el amarillo de la
+   tienda (el mismo tono que su cursor de siempre, #ffcf3f) en vez del rojo
+   de una mira de ataque: no se está agrediendo a nadie, solo indicando que
+   ahí se puede comprar. */
+.shop-open-marker .attack-marker__icon {
+  color: #ffcf3f;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 207, 63, 0.85);
+}
+
+.shop-open-marker.attack-marker--visible:hover .attack-marker__icon {
+  color: #ffe07a;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.75), 0 0 22px rgba(255, 224, 122, 1);
+}
+
 /* Ya no hay un cursor de "diana" especial para .unit--targeted/
    .village--targeted (objetivo atacable al alcance) — pedido explícito
    tras probar el juego: "no me gusta el tarjet phosphor que pusimos".
@@ -1880,20 +1951,86 @@ h2 {
 .unit-info-btn__face-wrap {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
-  overflow: hidden;
   display: block;
+  /* position:relative (no overflow:hidden aquí, ver más abajo) — el
+     recorte circular de la cara vive en .unit-info-btn__face en vez de
+     aquí, para que el indicador de acciones (.unit-info-action-dots) SÍ
+     pueda asomar por encima/fuera del círculo, arriba-izquierda. */
+  position: relative;
 }
 
 .unit-info-btn__face {
   width: 100%;
   height: 100%;
   display: block;
+  border-radius: 50%;
+  overflow: hidden;
   background-repeat: no-repeat;
   /* background-image / background-position / background-size llegan
      inline desde FACE_OFFSETS (js/unitinfo.js) — varían por personaje
      (calibrados con debug/calibrar-char.html), así que no hay valores
      fijos aquí. */
+}
+
+/* Indicador de acciones restantes (pedido explícito, mockup aprobado) —
+   misma silueta irregular compartida --gg-badge-clip/--gg-badge-tilt que
+   .settings-gear-btn/.backpack-close-btn/.gnome-points-badge (ver :root):
+   doble capa, ::before = contorno negro, ::after = relleno de color, y las
+   2 bolitas contrarrotadas para quedar siempre en horizontal. Arriba-
+   izquierda de la cara: el abanico de botones de acción del gnomo solo
+   aparece a la DERECHA (UI_LAYOUT.actionButtons) y la mochila vive justo
+   ENCIMA de este círculo, así que ese hueco es el único libre. */
+.unit-info-action-dots {
+  position: absolute;
+  top: -10px;
+  left: -14px;
+  width: 44px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transform: rotate(var(--gg-badge-tilt));
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.55));
+  z-index: 3;
+  pointer-events: none;
+}
+
+.unit-info-action-dots::before,
+.unit-info-action-dots::after {
+  content: "";
+  position: absolute;
+  clip-path: var(--gg-badge-clip);
+}
+
+.unit-info-action-dots::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.unit-info-action-dots::after {
+  inset: var(--gg-frame-outline-width);
+  background: var(--p5-tone-dark, #2b2730);
+  z-index: 1;
+}
+
+.unit-info-action-dot {
+  position: relative;
+  z-index: 2;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #ffcf3f;
+  border: 2px solid #000;
+  box-shadow: 0 0 6px rgba(255, 207, 63, 0.9);
+  transform: rotate(calc(-1 * var(--gg-badge-tilt)));
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.unit-info-action-dot--spent {
+  background: #3a3a42;
+  box-shadow: none;
 }
 
 /* .unit-info-btn__face--enemy ya no lleva ningún tinte propio (ver la nota
@@ -2394,6 +2531,180 @@ h2 {
   border-color: var(--accent-hover);
 }
 
+/* Botón de habilidad especial (js/abilities.js) — mismo estilo que
+   .gnome-action-btn (círculo fijo junto al de información), colocado por JS
+   con su propio ángulo (UI_LAYOUT.abilityButton) para no competir nunca con
+   golpear/pasar el gnomo. Un tono dorado propio (en vez del morado de
+   --accent) para que se lea de un vistazo como "algo especial", distinto de
+   cualquier acción normal. */
+.ability-btn {
+  position: fixed;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 207, 63, 0.5);
+  background: var(--bg-elevated);
+  color: #ffcf3f;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: var(--cursor-pointer);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 10px rgba(255, 207, 63, 0.25);
+  opacity: 0;
+  transform: translateY(14px) scale(0.7);
+  pointer-events: none;
+  z-index: 500;
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.ability-btn--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.ability-btn:hover {
+  background: #ffcf3f;
+  color: #201c14;
+  border-color: #ffe07a;
+  transform: translateY(-3px) scale(1.08);
+}
+
+/* Golem de Espinas (GolemCorteza, js/abilities.js) — resplandor verde
+   permanente (no caduca por turno, a diferencia de la antigua Corteza
+   Milenaria) para que se note a simple vista que esta unidad refleja daño
+   por el resto de la partida. */
+.unit--thorny .unit__sprite {
+  filter: drop-shadow(0 0 8px rgba(140, 200, 90, 0.85)) drop-shadow(0 0 3px rgba(90, 140, 40, 0.9));
+}
+
+/* Seta-trampa de TruenoEspora (js/abilities.js) — vive dentro de
+   Units.container (igual que cualquier elemento sobre una loseta), pero NO
+   reutiliza la clase "unit" a propósito: no debe reaccionar a clics de
+   selección ni aparecer en Units.list. Pedido explícito: "usa la imagen de
+   setacoiris tintada de rojo" hasta que llegue su sprite definitivo. */
+.ability-mine {
+  position: absolute;
+  transform: translate(-50%, -85%);
+  pointer-events: none;
+}
+
+.ability-mine__sprite {
+  display: block;
+  width: 70px;
+  filter: sepia(1) saturate(6) hue-rotate(-40deg) brightness(0.9) drop-shadow(0 6px 6px rgba(0, 0, 0, 0.45));
+  animation: ability-mine-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes ability-mine-pulse {
+  0%, 100% { opacity: 0.88; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+
+/* Voluntad Quebrada (UrgaMentes, js/abilities.js) — halo distintivo sobre
+   quien está siendo controlado ahora mismo (ya cambiado de bando de verdad,
+   ver Abilities._activateMindControl), para que se note a simple vista que
+   ese personaje concreto no es "de siempre" de ese equipo. */
+.unit--mind-controlled .unit__sprite {
+  filter: drop-shadow(0 0 10px rgba(180, 130, 255, 0.85)) drop-shadow(0 0 4px rgba(180, 130, 255, 0.6));
+}
+
+/* Modo de apuntado de Visión Lejana (SurcaBosques, js/abilities.js) — "que
+   cambie el puntero por el icono de un ojo" mientras se espera el clic que
+   decide dónde revelar. Cursor SVG inline (mismo patrón que el resto de
+   cursores del proyecto, ver --cursor-default/--cursor-pointer/--cursor-enemy
+   en :root) en vez de una imagen aparte. */
+body.ability-targeting--eye,
+body.ability-targeting--eye * {
+  cursor:
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><ellipse cx="16" cy="16" rx="13" ry="8" fill="none" stroke="white" stroke-width="2.5"/><circle cx="16" cy="16" r="4.5" fill="white"/></svg>')
+      16 16,
+    pointer !important;
+}
+
+/* Modo de apuntado de Lanzamiento (LanzaGnomos, js/abilities.js) — mismo
+   patrón que el ojo de Visión Lejana, pero con una mano abierta ("a quién
+   agarro") mientras se espera el clic sobre el personaje adyacente. */
+body.ability-targeting--throw,
+body.ability-targeting--throw * {
+  cursor:
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M10 17 V9a2 2 0 0 1 4 0v6M14 15V7a2 2 0 0 1 4 0v8M18 15V8a2 2 0 0 1 4 0v9M22 16v-3a2 2 0 0 1 4 0v6c0 4-3 7-7 7h-4c-3 0-4-1-6-4l-3-5c-1-1.6.6-3.4 2.3-2.4L10 17" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>')
+      10 16,
+    pointer !important;
+}
+
+/* Círculos de destino de Lanzamiento — mismo range-marker de siempre
+   (Movement.showFor), con un tinte dorado para que no se confundan con el
+   radio de movimiento normal (violeta) mientras se elige dónde lanzar. */
+.ability-throw-marker {
+  filter: hue-rotate(140deg) saturate(1.4);
+}
+
+/* Vuelo por el aire de Lanzamiento (ver Abilities._throwUnitTo) — un giro
+   completo mientras dura el arco, para que se lea como un lanzamiento de
+   verdad y no un simple deslizamiento. Vive en .unit__sprite (no en
+   .unit__flip, que ya usa su propio transform para --facing-scale, ver
+   arriba) para no pelearse por la misma propiedad. */
+.unit--thrown .unit__sprite {
+  animation: ability-throw-spin 0.46s ease-in-out;
+}
+
+@keyframes ability-throw-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.15); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+/* Bloque de habilidad especial dentro del popup de estadísticas (ver
+   js/unitinfo.js) — mismo espíritu que .unit-info-desc, pero con su propia
+   cajita para que se distinga de la descripción de flavor. */
+.unit-info-ability {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 207, 63, 0.35);
+  background: rgba(255, 207, 63, 0.08);
+  text-align: left;
+}
+
+.unit-info-ability--used {
+  opacity: 0.6;
+  border-color: rgba(244, 242, 248, 0.2);
+  background: rgba(244, 242, 248, 0.05);
+}
+
+.unit-info-ability__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: #ffcf3f;
+}
+
+.unit-info-ability--used .unit-info-ability__header {
+  color: var(--ink);
+}
+
+.unit-info-ability__name {
+  font-size: 0.95rem;
+}
+
+.unit-info-ability__tag {
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.unit-info-ability__desc {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  opacity: 0.85;
+}
+
 /* Contador de puntos DE UN GNOMO CONCRETO, flotante sobre él (o sobre quien
    lo lleve cogido) — pedido explícito: como puede haber varios gnomos a la
    vez, ya no tiene sentido un único marcador fijo siempre visible (lo que
@@ -2413,6 +2724,16 @@ h2 {
    unit--selected). */
 /* CORRECCIÓN (pedido explícito: "aplica esa correccion a TODOS LOS
    BOTONES...EN TODO EL JUEGO") — mismo defecto/arreglo que el resto. */
+/* CORRECCIÓN (pedido explícito: "los puntos de los gnomos deben mostrarse
+   en un cuadrado irregular como las X de cerrar las interfaces o el boton
+   de configuracion, el color esta bien pero corrige eso") — el hexágono
+   propio de este badge (polygon de 6 puntos de antes) no era la misma
+   silueta que el resto de "banderines irregulares" del juego; ahora usa
+   la MISMA silueta compartida (--gg-badge-clip/--gg-badge-tilt, ver :root)
+   que .settings-gear-btn/.backpack-close-btn — mismo patrón: el
+   contenedor gira --gg-badge-tilt, y el valor de dentro (.gnome-points-
+   badge__value) se contrarrota para quedar recto, igual que el engranaje
+   de settings o el icono de option-card__icon. */
 .gnome-points-badge {
   position: absolute;
   display: flex;
@@ -2423,7 +2744,7 @@ h2 {
   background: none;
   white-space: nowrap;
   filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.5));
-  transform: translate(-50%, -8px) scale(0.6);
+  transform: translate(-50%, -8px) scale(0.6) rotate(var(--gg-badge-tilt));
   transform-origin: bottom center;
   opacity: 0;
   pointer-events: none;
@@ -2434,7 +2755,7 @@ h2 {
 .gnome-points-badge::after {
   content: "";
   position: absolute;
-  clip-path: polygon(18% 0%, 82% 0%, 100% 32%, 88% 100%, 12% 100%, 0% 30%);
+  clip-path: var(--gg-badge-clip);
 }
 
 .gnome-points-badge::before {
@@ -2451,7 +2772,7 @@ h2 {
 
 .gnome-points-badge--visible {
   opacity: 1;
-  transform: translate(-50%, -14px) scale(1);
+  transform: translate(-50%, -14px) scale(1) rotate(var(--gg-badge-tilt));
   pointer-events: auto;
 }
 
@@ -2463,6 +2784,7 @@ h2 {
   line-height: 1;
   color: var(--ink);
   text-align: center;
+  transform: rotate(calc(-1 * var(--gg-badge-tilt)));
 }
 
 /* Pequeño "pulso" al sumar puntos — es un elemento de un solo disparo por
@@ -2475,9 +2797,9 @@ h2 {
 }
 
 @keyframes gnome-points-bump {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.35); color: var(--accent-hover); }
-  100% { transform: scale(1); }
+  0% { transform: rotate(calc(-1 * var(--gg-badge-tilt))) scale(1); }
+  40% { transform: rotate(calc(-1 * var(--gg-badge-tilt))) scale(1.35); color: var(--accent-hover); }
+  100% { transform: rotate(calc(-1 * var(--gg-badge-tilt))) scale(1); }
 }
 
 /* Modo táctil / pantallas pequeñas */
@@ -3423,17 +3745,32 @@ h2 {
 }
 
 /* ---------- Mochila (js/backpack.js) ----------
-   Pedido explícito: "la mochila se representa como un icono circular
-   situado arriba de donde aparecen las caras de los personajes al
-   seleccionarlos...Solo se mostrará al tener un personaje
-   seleccionado...en caso de no tener ningun objeto en la mochila este
-   icono no se mostrara...el tamaño del icono de la mochila es un tercio
-   mas pequeño que el de la cara del personaje...el color de fondo del
-   icono de la mochila es el mismo que el del fondo del icono que muestra
-   la cara de los personajes". Mismo patrón fixed + "--visible" que
-   .unit-info-btn (ver más arriba), un tercio más pequeño (110px * 2/3 ≈
-   73px) y justo encima de él (mismo left, bottom = 20 + 110 + 14 de
-   hueco). */
+   Pedido explícito (original): "la mochila se representa como un icono
+   circular situado arriba de donde aparecen las caras de los personajes
+   al seleccionarlos...el tamaño del icono de la mochila es un tercio mas
+   pequeño que el de la cara del personaje...el color de fondo del icono
+   de la mochila es el mismo que el del fondo del icono que muestra la
+   cara de los personajes". Mismo patrón fixed que .unit-info-btn (ver más
+   arriba), un tercio más pequeño (110px * 2/3 ≈ 73px) y justo encima de
+   él (mismo left, bottom = 20 + 110 + 14 de hueco) — este es su hueco
+   PEQUEÑO, el que ocupa en cuanto hay una unidad propia seleccionada.
+
+   ACTUALIZADO — pedido explícito: "El icono de la mochila, como es comun
+   para todos...siempre debe mostrarse" — .backpack-btn--visible ya no
+   depende de selección/inventario (ver Backpack.showButton/hideButton en
+   backpack.js), solo de si hay una partida en curso, igual que
+   .settings-gear-btn--visible/.end-turn-btn--visible.
+
+   Decisión de diseño (tras valorar fijo-siempre vs. migración dinámica,
+   "hazlo lo mas profesional posible"): en vez de un icono fijo que deja
+   un hueco muerto bajo él cuando no hay cara que mostrar, la mochila
+   MIGRA de ancla — .backpack-btn--anchor-large la lleva al sitio grande
+   de la cara (mismos left/bottom/size que .unit-info-btn) cuando no hay
+   selección propia, y vuelve aquí, a su hueco pequeño de siempre, en
+   cuanto la hay. Width/height/bottom se añaden a la transition ya
+   existente (misma curva "spring" que ya usaban aparición/hover, para no
+   introducir un timing nuevo) así que el cambio de hueco se ve como el
+   mismo lenguaje de movimiento que el resto del HUD, no como un salto. */
 .backpack-btn {
   position: fixed;
   left: 20px;
@@ -3454,7 +3791,8 @@ h2 {
   pointer-events: none;
   z-index: 500;
   transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, background-color 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease, width 0.32s cubic-bezier(0.34, 1.3, 0.64, 1), height 0.32s cubic-bezier(0.34, 1.3, 0.64, 1),
+    bottom 0.32s cubic-bezier(0.34, 1.3, 0.64, 1);
 }
 
 .backpack-btn--visible {
@@ -3463,10 +3801,23 @@ h2 {
   pointer-events: auto;
 }
 
+.backpack-btn--visible.backpack-btn--anchor-large {
+  bottom: 20px;
+  width: 110px;
+  height: 110px;
+}
+
 .backpack-btn:hover {
   background: var(--accent);
   border-color: var(--accent-hover);
   transform: translateY(-3px) scale(1.08);
+}
+
+.backpack-btn--anchor-large:hover {
+  /* El hover normal sube 3px + escala 1.08 — en el hueco grande, sobre un
+     círculo de 110px, ese mismo desplazamiento se nota menos proporcionalmente
+     (buscado: que el "peso" del hover se sienta igual en los dos tamaños). */
+  transform: translateY(-4px) scale(1.055);
 }
 
 .backpack-btn__icon {

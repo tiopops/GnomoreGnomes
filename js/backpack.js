@@ -11,11 +11,10 @@
        Gnome.spawnNear para hacer aparecer al gnomo, Turns.registerTurnEndListener
        para contar rondas).
 
-   Pedido explícito: "la mochila se representa como un icono circular
-   situado arriba de donde aparecen las caras de los personajes al
-   seleccionarlos. Solo se mostrará al tener un personaje seleccionado, en
-   caso de no tener ningun objeto en la mochila este icono no se
-   mostrara...al pulsar la mochila se abrira una interfaz popup...Esta
+   Pedido explícito (versión original): "la mochila se representa como un
+   icono circular situado arriba de donde aparecen las caras de los
+   personajes al seleccionarlos. Solo se mostrará al tener un personaje
+   seleccionado...al pulsar la mochila se abrira una interfaz popup...Esta
    interfaz se puede cerrar haciendo clic fuera de ella o desde una X en la
    esquina superior derecha...La mochila mostrara huecos como un
    inventario de juego triple A que se iran comprando en la tienda
@@ -25,6 +24,29 @@
    resaltado debe mostrar una descripcion en la parte de abajo...de
    momento los objetos de la mochila no son stackeables...inicialmente la
    mochila aparece vacia salvo con una seta arcoiris".
+
+   ACTUALIZADO — pedido explícito: "El icono de la mochila, como es comun
+   para todos...siempre debe mostrarse" + decisión de diseño acordada tras
+   valorar las dos opciones ("hazlo lo mas profesional posible"): a
+   diferencia de la cara del personaje o de la habilidad (ligadas a UNA
+   unidad concreta), la mochila es un recurso compartido por todo el
+   equipo — de hecho _adjacentToPlayerTiles ya mira TODAS las unidades del
+   jugador, no solo la seleccionada — así que esconderla sin selección era
+   una herencia arbitraria del icono de la cara, no algo propio de ella.
+   Ahora el icono está SIEMPRE visible durante la partida (igual que
+   end-turn-btn/settings-gear-btn, ver showButton/hideButton más abajo),
+   sin depender de si hay inventario o selección.
+
+   Para evitar el hueco muerto que dejaría bajo un icono fijo pequeño
+   cuando no hay cara que mostrar debajo, la mochila migra de "ancla":
+   sin ningún personaje propio seleccionado ocupa el hueco GRANDE de la
+   esquina (mismo tamaño/posición que .unit-info-btn, que en ese momento
+   no se muestra), y en cuanto se selecciona una unidad propia encoge y
+   sube a su hueco pequeño de siempre, cediéndole el grande a la cara
+   (ver .backpack-btn--anchor-large en style.css, misma curva de aparición
+   que ya usaban unit-info-btn/backpack-btn para no introducir un timing
+   nuevo). onSelect/onDeselect (más abajo) ya no tocan la visibilidad,
+   solo este ancla.
 
    Colocación de la Setarcoiris: "el jugador podra colocar en una casilla
    adyacente a uno de sus jugadores...se coloca sobre una casilla
@@ -100,7 +122,7 @@ const Backpack = {
     // la comida favorita de los gnomos."
     this.inventory.push({ uid: this._nextUid++, itemId: "setarcoiris" });
     this._ensureButton();
-    this._updateButtonVisibility();
+    this._updateAnchor();
     if (typeof Turns !== "undefined" && !this._turnListenerRegistered) {
       Turns.registerTurnEndListener(this);
       this._turnListenerRegistered = true;
@@ -135,7 +157,7 @@ const Backpack = {
   // ---------- Conectado a la selección de unidades (Units.registerSelectionListener) ----------
   onSelect(unit) {
     this._hasPlayerSelection = unit.team === "player";
-    this._updateButtonVisibility();
+    this._updateAnchor();
   },
 
   onDeselect() {
@@ -147,14 +169,36 @@ const Backpack = {
     if (this._placingUid !== null) {
       this._placingUid = null;
     }
-    this._updateButtonVisibility();
+    this._updateAnchor();
     this.closePopup();
   },
 
-  _updateButtonVisibility() {
+  // Alterna entre los dos "huecos" de la esquina inferior izquierda — ver
+  // la nota de cabecera de este archivo. Sin selección propia: ancla
+  // grande, ocupando el sitio de la cara (esté o no en curso una
+  // colocación — sin unidad seleccionada tampoco hay cara que mostrar
+  // debajo, así que el hueco grande sigue siendo el correcto). Con
+  // selección propia: ancla pequeña de siempre, encima de la cara.
+  _updateAnchor() {
+    if (!this._btnEl) return;
+    this._btnEl.classList.toggle("backpack-btn--anchor-large", !this._hasPlayerSelection);
+  },
+
+  // ---------- Visibilidad durante la partida ----------
+  // Mismo patrón que SettingsMenu.showButton/hideButton y
+  // Turns.showButton/hideButton — el icono vive fuera de #screen-board
+  // (para no desaparecer solo al volver al menú desde el propio tablero),
+  // así que su visibilidad se controla a mano: visible mientras hay una
+  // partida en curso (llamado desde newgame-flow.js, junto al resto del
+  // HUD de partida), oculto al salir (ver SettingsMenu._exitMatch).
+  showButton() {
     this._ensureButton();
-    const shouldShow = this.inventory.length > 0 && (this._hasPlayerSelection || this._placingUid !== null);
-    this._btnEl.classList.toggle("backpack-btn--visible", shouldShow);
+    this._btnEl.classList.add("backpack-btn--visible");
+    this._updateAnchor();
+  },
+
+  hideButton() {
+    if (this._btnEl) this._btnEl.classList.remove("backpack-btn--visible");
   },
 
   // ---------- Popup ----------
@@ -287,7 +331,6 @@ const Backpack = {
   // de gastar el recurso que sea) — simplemente añade y refresca el icono.
   addItem(itemId) {
     this.inventory.push({ uid: this._nextUid++, itemId });
-    this._updateButtonVisibility();
   },
 
   _useItem(uid) {
@@ -302,12 +345,19 @@ const Backpack = {
   // movement.js) a CUALQUIERA de los personajes del jugador, no solo el
   // seleccionado ahora mismo — "el jugador podra colocar en una casilla
   // adyacente a uno de sus jugadores", sin especificar cuál.
+  // CORRECCIÓN (pedido explícito): "los objetos que se usan en una casilla
+  // adyacente a un personaje solo pueden ser personajes activos, si alguno
+  // termino sus 2 acciones no mostrara sus casillas donde colocar" — antes
+  // se ofrecían las casillas de CUALQUIER personaje propio, incluido uno
+  // ya sin acciones (unit--exhausted); mismo criterio que ya usa cualquier
+  // otra mecánica del proyecto (Movement/Combat/Villages/Shops, todas se
+  // blindan con Turns.canAct antes de ofrecer nada).
   _adjacentToPlayerTiles() {
     if (typeof Units === "undefined") return [];
     const seen = new Set();
     const tiles = [];
     Units.list
-      .filter((u) => u.team === "player")
+      .filter((u) => u.team === "player" && (typeof Turns === "undefined" || Turns.canAct(u)))
       .forEach((u) => {
         for (let dr = -1; dr <= 1; dr++) {
           for (let dc = -1; dc <= 1; dc++) {
@@ -341,7 +391,6 @@ const Backpack = {
 
   _startPlacingSetarcoiris(uid) {
     this._placingUid = uid;
-    this._updateButtonVisibility();
     // Pedido explícito: "cuando se va a colocar objetos, solo se muestran
     // los circulos amarillos donde se puede colocar, los de movimiento no
     // deben aparecer" — hasta ahora esto solo AÑADÍA las casillas amarillas
@@ -382,7 +431,6 @@ const Backpack = {
       m.remove();
       return false;
     });
-    this._updateButtonVisibility();
     this._restoreNormalRange();
   },
 
@@ -396,7 +444,6 @@ const Backpack = {
       return false;
     });
     this.inventory = this.inventory.filter((it) => it.uid !== uid);
-    this._updateButtonVisibility();
     this._restoreNormalRange();
 
     const el = document.createElement("div");
