@@ -2904,6 +2904,15 @@ h2 {
      del juego que no sea la de atacar". */
   cursor: var(--cursor-default);
   pointer-events: none;
+  /* Pedido explícito: "el sprite de la seta debe aparecer un 15% mas abajo
+     en la casilla" — un 15% de la altura de LA CASILLA (TILE_TOP_HEIGHT =
+     115px, ver js/mapgen.js), no del propio sprite: 115 * 0.15 ≈ 17px. Se
+     añade como translateY(17px) fijo DESPUÉS del translate(-50%,-92%) que
+     .board-item hereda de .unit (posicionamiento base compartido con
+     personajes/tótems, sin tocar esa regla) — al vivir dentro del mismo
+     contenedor que escala con la cámara/zoom del tablero, este desplazamiento
+     en px se escala junto con todo lo demás y se mantiene proporcional. */
+  transform: translate(-50%, -92%) translateY(17px);
 }
 
 .board-item__sprite {

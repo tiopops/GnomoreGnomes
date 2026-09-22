@@ -286,6 +286,12 @@ const Backpack = {
             const col = u.col + dc;
             if (row < 0 || col < 0 || row >= Units.boardSize || col >= Units.boardSize) continue;
             if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+            // Pedido explícito: "no se pueden colocar setas en lugares
+            // donde hay totems o edificios" — mismo criterio que ya usan
+            // Combat/GnomeInstance/Villages al buscar casilla libre
+            // (Villages.at, ver js/villages.js) para no ofrecer un tótem
+            // como destino válido de movimiento/ataque.
+            if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
             // Igual que cualquier otra mecánica del proyecto: no se ofrece
             // colocar nada sobre una loseta que ni siquiera se ha revelado.
             if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;

@@ -111,7 +111,15 @@ const Movement = {
     // solo DESPUÉS se refrescan las casillas de movimiento — nunca en
     // paralelo, para que no se vea el radio actualizándose mientras el
     // gnomo todavía está huyendo.
-    if (typeof Gnome !== "undefined") await Gnome.reactToPlayerMove(unit);
+    // Pedido explícito (bug reportado): "cuando aparece un gnomo por efecto
+    // del cebo de la setarcoiris, despues de aparecer se mueve 3 casillas
+    // alejandose de los jugadores" — esta llamada faltaba el mismo filtro
+    // "unit.team === 'player'" que ya usa Fog.revealForUnit justo arriba:
+    // Movement.moveTo también es el que mueve a las unidades RIVALES (ver
+    // comentario de moveTo, "la IA rival llama a esto directamente"), así
+    // que un gnomo recién nacido (p.ej. justo tras onRoundEnd) huía también
+    // de cada movimiento de la IA en su propio turno, no solo del jugador.
+    if (typeof Gnome !== "undefined" && unit.team === "player") await Gnome.reactToPlayerMove(unit);
     Units.refreshRange(unit);
   },
 };
