@@ -2548,24 +2548,30 @@ body.team-markers--visible .unit__team-marker {
    golpear/pasar el gnomo. Un tono dorado propio (en vez del morado de
    --accent) para que se lea de un vistazo como "algo especial", distinto de
    cualquier acción normal. */
+/* Pedido explícito: "los iconos de las habilidades no deben estar
+   contenidos dentro de un circulo, si no sueltos, y deben ser mas grandes,
+   del tamaño del circulo que habia antes" — se quita la placa circular
+   (fondo/borde/box-shadow) que tenía el botón: ahora es un hit-area
+   invisible del mismo tamaño de siempre (UI_LAYOUT.abilityButton.size,
+   51px) y lo único que se ve es el icono suelto, a ese mismo tamaño. El
+   drop-shadow (en vez del box-shadow de antes) es lo que le da contraste
+   contra el tablero ahora que no hay placa detrás. */
 .ability-btn {
   position: fixed;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 207, 63, 0.5);
-  background: var(--bg-elevated);
+  border: none;
+  background: transparent;
   color: #ffcf3f;
-  font-size: 1.4rem;
+  font-size: 2.6rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: var(--cursor-pointer);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 10px rgba(255, 207, 63, 0.25);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
   opacity: 0;
   transform: translateY(14px) scale(0.7);
   pointer-events: none;
   z-index: 500;
-  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, background-color 0.15s ease,
-    border-color 0.15s ease;
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, filter 0.15s ease;
 }
 
 .ability-btn--visible {
@@ -2575,20 +2581,20 @@ body.team-markers--visible .unit__team-marker {
 }
 
 .ability-btn:hover {
-  background: #ffcf3f;
-  color: #201c14;
-  border-color: #ffe07a;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 207, 63, 0.85));
   transform: translateY(-3px) scale(1.08);
 }
 
 /* Icono real de la habilidad (ver ABILITIES.*.iconImg, js/abilities.js) —
    oculto por defecto: _refreshButton solo le añade --visible cuando la
    habilidad tiene una imagen propia, dejando el <i> Phosphor como respaldo
-   para las que no (p.ej. Nudillos Rocosos, que no llegó con icono). */
+   para las que no (p.ej. Nudillos Rocosos, que no llegó con icono). Ocupa
+   el tamaño completo del botón (51px, el mismo que tenía el círculo
+   eliminado) en vez del icono pequeño de antes. */
 .ability-btn__icon-img {
   display: none;
-  width: 30px;
-  height: 30px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   pointer-events: none;
 }
