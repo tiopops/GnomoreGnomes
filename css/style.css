@@ -2651,6 +2651,14 @@ body.ability-targeting--throw * {
   filter: hue-rotate(140deg) saturate(1.4);
 }
 
+/* Círculos de destino de Hongo Trampa (TruenoEspora) — mismo range-marker,
+   con un tinte rojizo ("trampa") para no confundirse con el radio normal de
+   movimiento ni con el dorado de Resorte Goblin mientras se elige dónde
+   colocar la seta. */
+.ability-mine-marker {
+  filter: hue-rotate(320deg) saturate(1.6);
+}
+
 /* Vuelo por el aire de Lanzamiento (ver Abilities._throwUnitTo) — un giro
    completo mientras dura el arco, para que se lea como un lanzamiento de
    verdad y no un simple deslizamiento. Vive en .unit__sprite (no en

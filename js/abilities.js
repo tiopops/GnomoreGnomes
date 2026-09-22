@@ -215,6 +215,15 @@ const Abilities = {
   _startVisionTargeting(unit) {
     if (this._targetingUnit) return; // ya hay un apuntado en marcha
     this._targetingUnit = unit;
+    // Pedido explícito: "cuando se da a elegir casillas para habilidades,
+    // las de movimiento se ocultan, esto ocurre para todos" — el radio de
+    // movimiento/ataque normal de la unidad (Movement/Combat/Gnome/
+    // Villages/Shops, todos vía registerRangeProvider) se queda pintado
+    // por debajo del cursor-ojo si no se limpia aquí, y confunde con el
+    // punto que de verdad se va a revelar. Se restaura en _cancelTargeting
+    // si se cancela, y tras usarla con éxito en _onVisionClick (la unidad
+    // sigue seleccionada, puede que le quede la otra acción).
+    Units.clearRangeOverlays();
     document.body.classList.add("ability-targeting--eye");
     // capture:true para interceptar el clic ANTES que cualquier otro
     // listener del tablero (seleccionar/deseleccionar unidades, marcadores,
@@ -226,12 +235,18 @@ const Abilities = {
 
   _cancelTargeting() {
     if (!this._targetingUnit) return;
+    const unit = this._targetingUnit;
     this._targetingUnit = null;
     document.body.classList.remove("ability-targeting--eye");
     if (this._visionClickHandler) {
       window.removeEventListener("click", this._visionClickHandler, { capture: true });
       this._visionClickHandler = null;
     }
+    // Se canceló sin gastar la habilidad (ver nota de cabecera de esta
+    // sección) — devuelve el radio de movimiento normal que se ocultó al
+    // empezar a apuntar, o la unidad se queda sin ningún círculo hasta que
+    // se deselecciona y se vuelve a seleccionar.
+    this._restoreNormalRange(unit);
   },
 
   _onVisionClick(e) {
@@ -267,6 +282,20 @@ const Abilities = {
     SFX.click();
     Units.spawnFloatingText(unit, "¡VISIÓN!", { className: "dmg-popup gnome-points-popup" });
     this._consume(unit);
+    // La unidad sigue seleccionada tras usarla (puede que le quede la otra
+    // acción) — vuelve a mostrar su radio normal, oculto al empezar a
+    // apuntar (ver _startVisionTargeting).
+    this._restoreNormalRange(unit);
+  },
+
+  // Devuelve el radio de movimiento/ataque normal (Movement/Combat/Gnome/
+  // Villages/Shops) que cualquier modo de apuntado de habilidad oculta al
+  // empezar (pedido explícito: "cuando se da a elegir casillas para
+  // habilidades, las de movimiento se ocultan, esto ocurre para todos") —
+  // solo si esa unidad sigue siendo la seleccionada ahora mismo (pudo
+  // deseleccionarse sola mientras tanto, p.ej. al gastar su última acción).
+  _restoreNormalRange(unit) {
+    if (unit && unit.el && Units.selectedId === unit.id) Units.refreshRange(unit);
   },
 
   // ---------- TruenoEspora: seta-trampa ----------
@@ -275,12 +304,82 @@ const Abilities = {
   // inactivo hasta el siguiente turno" — se dispara desde Units.hopTo (ver
   // checkTrigger más abajo), el único punto de paso real de cualquier
   // desplazamiento del proyecto.
+  //
+  // ACTUALIZADO — pedido explícito: "la seta bomba...debe dejar colocarla
+  // en una casilla adyacente a el a eleccion del jugador" — antes se
+  // colocaba sola en la primera casilla libre que encontraba; ahora pinta
+  // una mira en CADA casilla adyacente libre (mismo patrón que los
+  // círculos de destino de Lanzamiento, ver _startThrowDestination) y
+  // espera un clic. Cancelar sigue siendo gratis: un clic en vacío
+  // deselecciona a TruenoEspora (ver units.js) y eso ya limpia estos
+  // marcadores solo, vía Units.clearRangeOverlays.
 
   _mines: [], // { row, col, ownerTeam, el }
 
   _activateMine(unit) {
-    const spot = this._findAdjacentFreeTile(unit);
-    if (!spot) return; // no queda ninguna casilla libre alrededor, no se gasta la habilidad
+    const tiles = this._adjacentFreeTiles(unit);
+    if (tiles.length === 0) return; // no queda ninguna casilla libre alrededor, no se gasta la habilidad
+    this._startMinePlacement(unit, tiles);
+  },
+
+  _adjacentFreeTiles(unit) {
+    const offsets = [
+      [0, 1],
+      [0, -1],
+      [1, 0],
+      [-1, 0],
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ];
+    const tiles = [];
+    for (const [dr, dc] of offsets) {
+      const r = unit.row + dr;
+      const c = unit.col + dc;
+      if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
+      if (Units.unitAt(r, c)) continue;
+      if (typeof Gnome !== "undefined" && Gnome.isAt(r, c)) continue;
+      if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
+      if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
+      if (this._mines.some((m) => m.row === r && m.col === c)) continue;
+      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
+      tiles.push({ row: r, col: c });
+    }
+    return tiles;
+  },
+
+  // Mismo patrón exacto que _startThrowDestination: marcadores de rango
+  // reutilizados (Units.addMarker) sobre cada casilla válida, con un tinte
+  // propio (rojizo, "trampa") para no confundirse con el radio normal de
+  // movimiento ni con el dorado de Lanzamiento — ver .ability-mine-marker
+  // en style.css.
+  _startMinePlacement(unit, tiles) {
+    Units.clearRangeOverlays();
+    tiles.forEach((tile, i) => {
+      Units.addMarker({
+        className: "range-marker ability-mine-marker",
+        row: tile.row,
+        col: tile.col,
+        zOffset: 2,
+        alwaysOnTop: true,
+        delayMs: Units.staggerDelay(i, tiles.length),
+        visibleClass: "range-marker--visible",
+        onClick: () => this._resolveMinePlacement(unit, tile.row, tile.col),
+      });
+    });
+  },
+
+  _resolveMinePlacement(unit, row, col) {
+    Units.clearRangeOverlays();
+    this._placeMineAt(unit, row, col);
+    this._consume(unit);
+    // La unidad sigue seleccionada tras colocar la mina (puede que le
+    // quede la otra acción) — recupera su radio normal.
+    this._restoreNormalRange(unit);
+  },
+
+  _placeMineAt(unit, row, col) {
     const el = document.createElement("div");
     el.className = "ability-mine";
     const img = document.createElement("img");
@@ -292,39 +391,12 @@ const Abilities = {
     img.alt = "";
     el.appendChild(img);
     Units.container.appendChild(el);
-    const { x, y } = getTileCenter(spot.row, spot.col, Units.boardSize);
+    const { x, y } = getTileCenter(row, col, Units.boardSize);
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
-    el.style.zIndex = String((spot.row + spot.col) * 10 + 4);
-    this._mines.push({ row: spot.row, col: spot.col, ownerTeam: unit.team, el });
+    el.style.zIndex = String((row + col) * 10 + 4);
+    this._mines.push({ row, col, ownerTeam: unit.team, el });
     SFX.click();
-    this._consume(unit);
-  },
-
-  _findAdjacentFreeTile(unit) {
-    const offsets = [
-      [0, 1],
-      [0, -1],
-      [1, 0],
-      [-1, 0],
-      [1, 1],
-      [1, -1],
-      [-1, 1],
-      [-1, -1],
-    ];
-    for (const [dr, dc] of offsets) {
-      const r = unit.row + dr;
-      const c = unit.col + dc;
-      if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
-      if (Units.unitAt(r, c)) continue;
-      if (typeof Gnome !== "undefined" && Gnome.isAt(r, c)) continue;
-      if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
-      if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
-      if (this._mines.some((m) => m.row === r && m.col === c)) continue;
-      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
-      return { row: r, col: c };
-    }
-    return null;
   },
 
   // Llamado desde Units.hopTo (js/units.js) cada vez que CUALQUIER unidad
