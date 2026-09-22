@@ -1,6 +1,29 @@
 /* Gnomore Gnomes — estilos base.
    Regla de oro: preparado para escalar (más pantallas, más idiomas, más temas). */
 
+/* Tipografía del juego — pedido explícito: "existe alguna tipografia
+   angular que pegue con el estilo visual de nuestro juego?...me encanta,
+   implementala en todo nuestro juego". Russo One (Google Fonts, licencia
+   OFL) aprobada tras un mockup real sobre la pantalla de selección de
+   raza. Auto-alojada en assets/fonts/ (un solo peso, 400) en vez de
+   cargarla desde fonts.googleapis.com: un archivo local de 7KB es más
+   rápido y no depende de que Google Fonts esté accesible.
+   Russo One solo trae el peso 400 y no trae itálica de verdad — el resto
+   de la interfaz pide font-weight:900/font-style:italic por todas partes
+   (heredado de la fuente de sistema anterior), así que sin más ese texto
+   se vería con una "negrita"/"itálica" FALSA que el navegador sintetiza
+   (font-synthesis), y Russo One ya es bien gruesa por diseño — sintetizar
+   más negrita encima la vuelve un borrón. body más abajo pone
+   font-synthesis:none para que ese peso/ángulo pedidos se ignoren sin
+   tener que tocar una por una las docenas de reglas que ya los piden. */
+@font-face {
+  font-family: "Russo One";
+  src: url("../assets/fonts/RussoOne-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg: #1f2430;
   --bg-elevated: #262c3a;
@@ -33,33 +56,98 @@
      exactamente la misma forma sin repetirla dos veces. */
   --gg-badge-clip: polygon(10% 3%, 95% 0%, 100% 87%, 5% 100%);
   --gg-badge-tilt: 9deg;
+  /* Silueta compartida para las casillas de inventario/tienda — cuadro
+     ladeado, esquinas sin redondear, MISMA técnica de contorno de doble
+     capa que los rombos de arriba (ver --gg-frame-outline-width y la nota
+     larga en .backpack-slot). Menos inclinada que --gg-badge-clip (esa es
+     para insignias pequeñas muy vistosas; esta es para casillas grandes
+     que llevan un icono dentro, tiene que notarse "irregular" sin
+     resultar mareante). */
+  --gg-slot-clip: polygon(4% 0%, 100% 3%, 97% 100%, 0% 96%);
+  /* Pedido explícito: "aplica esa correccion a TODOS LOS BOTONES de las
+     interfaces...ya que tenian ese mismo defecto" — un `border` normal (o
+     un `box-shadow`/`filter:drop-shadow` con MUCHAS sombras apiladas en
+     varias direcciones) NUNCA sigue bien un contorno con clip-path
+     inclinado/irregular: el border no se dibuja en absoluto sobre las
+     aristas nuevas que crea el recorte, y encadenar muchos drop-shadow en
+     un mismo filter resultó, tras comprobarlo a fondo, muy poco fiable
+     (cada drop-shadow se aplica sobre el resultado del anterior en vez de
+     sumarse todos por igual, así que el contorno salía incompleto o casi
+     invisible en los lados diagonales — el "efecto máscara" reportado).
+     Técnica de verdad, la única fiable: DOS capas del MISMO polígono,
+     ninguna de las dos con clip-path puesto en el elemento real (un
+     clip-path en el elemento recortaría también a sus propios
+     pseudo-elementos/hijos, volviendo a tapar el contorno) — un
+     ::before más grande de fondo (el color del contorno) y un ::after/
+     hijo más pequeño encima (el color de relleno real); el aro que queda
+     entre los dos ES el contorno, completo en todo el perímetro sin
+     depender de sombras. Este es el grosor de ese aro, en px, para
+     reusarlo igual en todos los botones. */
+  --gg-frame-outline-width: 2.5px;
 
-  /* Punteros de ratón — SOLO escritorio, pedido explícito: "para el
-     puntero de raton usa cursor de phosphor en color amarillo relleno
-     como los menus, para cosas clicables usa han-ponting de phhospor
-     relleno blanco... nota: los punteros son para el modo escritorio, ya
-     que en el modo movil todo se hace con el dedo" — no hace falta ninguna
-     media query para cumplir eso: "cursor" no tiene ningún efecto en
-     pantallas táctiles (no hay puntero que dibujar), así que basta con
-     definir estas dos variables aquí y usarlas en TODOS los "cursor:
-     pointer" del proyecto (reemplazados más abajo) para que el cambio de
-     icono sea uno solo, no 16 copias del mismo SVG.
-     - Puntero por defecto ("Cursor" de Phosphor): la flecha clásica,
-       rellena en amarillo (#ffcf3f, el mismo amarillo ya usado en el
-       resto de la interfaz — "como los menus") con un contorno negro para
-       que se lea también sobre fondos claros.
-     - Pedido explícito: "eliminamos el cursor de la mano, siempre la
-       flecha amarilla salvo al atacar" — se retira el HandPointing y
-       --cursor-pointer pasa a apuntar a la misma flecha amarilla que
-       --cursor-default (se deja la variable para no tocar cada uno de
-       los ~18 "cursor: var(--cursor-pointer);" ya repartidos por el
-       archivo). El cursor rojo de ataque (crosshair-simple) no cambia. */
-  --cursor-default: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 256 256"><polygon points="34,20 34,214 79,172 112,242 148,225 116,155 200,155" fill="%23ffcf3f" stroke="%23000000" stroke-width="14" stroke-linejoin="round"/></svg>') 4 2, auto;
-  --cursor-pointer: var(--cursor-default);
+  /* Punteros de ratón — SOLO escritorio (en móvil "cursor" no tiene ningún
+     efecto, no hace falta media query). Misma flecha (Phosphor "Cursor")
+     en tres colores según lo que haya debajo, todas con contorno negro
+     para leerse también sobre fondos claros.
+     Pedido explícito (última pasada): "quiero que ese cursor este siempre
+     blanco, y se ponga amarillo cuando haya un punto de interes, como uno
+     de los personajes del usuario o cualquier objeto seleccionable. SALVO
+     cuando sea un enemigo o estructura enemiga, que se pondra de color
+     rojo" — sustituye el esquema anterior (amarillo siempre, salvo al
+     atacar) por tres variables:
+     - --cursor-default (blanco): puntero de reposo, cualquier zona del
+       tablero/interfaz sin nada interactivo debajo (losetas vacías,
+       botones deshabilitados, huecos vacíos de la mochila...).
+     - --cursor-pointer (amarillo, el mismo tono #ffcf3f de siempre): sobre
+       cualquier "punto de interés" — personajes propios, el gnomo
+       (neutral, capturable por cualquiera), tótems propios o aún sin
+       dueño, objetos colocados en el tablero, y cualquier botón/menú/
+       marcador clicable de la interfaz.
+     - --cursor-enemy (rojo): sobre una unidad o estructura ENEMIGA (ver
+       .unit--enemy / .village--enemy más abajo) — pasar el ratón por
+       encima ya avisa de que es hostil, sin necesidad de tenerla
+       seleccionada como objetivo de ataque.
+     El cursor de diana (crosshair-simple rojo, para cuando SÍ se está
+     apuntando a un objetivo válido con una unidad seleccionada) sigue
+     siendo un tercer cursor aparte y no cambia — ver .unit--targeted /
+     .village.village--targeted más abajo, que gana siempre sobre estos
+     tres por especificidad. */
+  --cursor-default: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 256 256"><polygon points="34,20 34,214 79,172 112,242 148,225 116,155 200,155" fill="%23ffffff" stroke="%23000000" stroke-width="14" stroke-linejoin="round"/></svg>') 4 2, auto;
+  --cursor-pointer: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 256 256"><polygon points="34,20 34,214 79,172 112,242 148,225 116,155 200,155" fill="%23ffcf3f" stroke="%23000000" stroke-width="14" stroke-linejoin="round"/></svg>') 4 2, auto;
+  --cursor-enemy: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 256 256"><polygon points="34,20 34,214 79,172 112,242 148,225 116,155 200,155" fill="%23ff2d2d" stroke="%23000000" stroke-width="14" stroke-linejoin="round"/></svg>') 4 2, auto;
+  /* Cursor de la Tienda Goblin (js/shops.js) — pedido explícito: "el
+     puntero cambia phospor coins de color amarillo fill al pasar el raton
+     por encima de ella" (con captura del icono real de Phosphor
+     "coins", variante Fill). Mismo trazado SVG real del glifo (extraído
+     de phosphor-icons-web, glyph "coins-fill", viewBox 1024×1024 con el
+     flip vertical de la fuente — mismo procedimiento ya usado para
+     crosshair-simple, ver .unit--targeted más abajo) y el mismo doble
+     trazo negro-detrás/amarillo-delante que el resto de cursores propios
+     con un glifo de relleno compuesto. Solo se usa cuando SÍ hay un
+     personaje del jugador junto a la tienda (.shop--interactive, ver
+     style.css/js/shops.js) — el resto del tiempo la tienda es un punto de
+     interés normal, amarillo como cualquier otro (--cursor-pointer). */
+  --cursor-shop: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 1024 1024"><g transform="matrix(1,0,0,-1,0,896)"><path fill="%23000000" stroke="%23000000" stroke-width="48" stroke-linejoin="round" d="M736 601.72v22.28c0 100.32-151.32 176-352 176s-352-75.68-352-176v-160c0-83.56 105-149.96 256-169.84v-22.16c0-100.32 151.32-176 352-176s352 75.68 352 176v160c0 82.8-101.68 149.28-256 169.72zM224 372.52c-78.36 21.88-128 57.92-128 91.48v56.28c32.64-23.12 76.36-41.76 128-54.28zM544 466c51.64 12.52 95.36 31.16 128 54.28v-56.28c0-33.56-49.64-69.6-128-91.48zM480 180.52c-78.36 21.88-128 57.92-128 91.48v16.68c10.52-0.4 21.16-0.68 32-0.68 15.52 0 30.68 0.52 45.56 1.4 13.044-4.934 29.888-10.094 47.091-14.341l3.349-0.699zM480 359c-28.635-4.455-61.664-7-95.286-7-0.251 0-0.502 0-0.752 0h0.039c-0.212 0-0.463 0-0.714 0-33.623 0-66.651 2.545-98.903 7.453l3.616-0.453v95.16c28.521-3.922 61.48-6.161 94.962-6.161 0.365 0 0.73 0 1.094 0.001h-0.057c0.308 0 0.673-0.001 1.038-0.001 33.482 0 66.441 2.239 98.735 6.575l-3.773-0.414zM736 167c-28.849-4.455-62.127-7-96-7s-67.151 2.545-99.654 7.454l3.654-0.454v95.4c28.732-4.074 61.918-6.4 95.648-6.4 0.124 0 0.248 0 0.371 0h-0.019c0.308 0 0.673-0.001 1.038-0.001 33.482 0 66.441 2.239 98.735 6.575l-3.773-0.414zM928 272c0-33.56-49.64-69.6-128-91.48v93.48c51.64 12.52 95.36 31.16 128 54.28z"/></g><g transform="matrix(1,0,0,-1,0,896)"><path fill="%23ffcf3f" d="M736 601.72v22.28c0 100.32-151.32 176-352 176s-352-75.68-352-176v-160c0-83.56 105-149.96 256-169.84v-22.16c0-100.32 151.32-176 352-176s352 75.68 352 176v160c0 82.8-101.68 149.28-256 169.72zM224 372.52c-78.36 21.88-128 57.92-128 91.48v56.28c32.64-23.12 76.36-41.76 128-54.28zM544 466c51.64 12.52 95.36 31.16 128 54.28v-56.28c0-33.56-49.64-69.6-128-91.48zM480 180.52c-78.36 21.88-128 57.92-128 91.48v16.68c10.52-0.4 21.16-0.68 32-0.68 15.52 0 30.68 0.52 45.56 1.4 13.044-4.934 29.888-10.094 47.091-14.341l3.349-0.699zM480 359c-28.635-4.455-61.664-7-95.286-7-0.251 0-0.502 0-0.752 0h0.039c-0.212 0-0.463 0-0.714 0-33.623 0-66.651 2.545-98.903 7.453l3.616-0.453v95.16c28.521-3.922 61.48-6.161 94.962-6.161 0.365 0 0.73 0 1.094 0.001h-0.057c0.308 0 0.673-0.001 1.038-0.001 33.482 0 66.441 2.239 98.735 6.575l-3.773-0.414zM736 167c-28.849-4.455-62.127-7-96-7s-67.151 2.545-99.654 7.454l3.654-0.454v95.4c28.732-4.074 61.918-6.4 95.648-6.4 0.124 0 0.248 0 0.371 0h-0.019c0.308 0 0.673-0.001 1.038-0.001 33.482 0 66.441 2.239 98.735 6.575l-3.773-0.414zM928 272c0-33.56-49.64-69.6-128-91.48v93.48c51.64 12.52 95.36 31.16 128 54.28z"/></g></svg>') 48 48, pointer;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* BUG encontrado al implementar Russo One en todo el juego: un <button>
+   (o <input>/<textarea>/<select>) NUNCA hereda font-family/font-style de
+   sus antepasados por defecto en la hoja de estilos del propio navegador
+   — usa su fuente nativa (Arial en Chromium) salvo que se le diga lo
+   contrario. Como casi toda la interfaz del juego son <button> (.menu-btn,
+   .option-card, .p5-banner y compañía), NINGUNO de esos textos heredaba
+   nunca la tipografía de body, ni antes de Russo One ni ahora — con la
+   fuente de sistema anterior no se notaba tanto por lo parecidas que eran,
+   pero con Russo One el contraste lo hizo evidente. Reset estándar. */
+button, input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  font-style: inherit;
+  font-weight: inherit;
 }
 
 html, body {
@@ -70,7 +158,11 @@ html, body {
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Russo One", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Ver la nota de @font-face más arriba: sin negrita/itálica falsas
+     encima de una fuente que ya es gruesa por diseño y no trae itálica
+     real. */
+  font-synthesis: none;
   min-height: 100vh;
   cursor: var(--cursor-default);
 }
@@ -129,18 +221,46 @@ body {
   max-width: 420px;
 }
 
+/* CORRECCIÓN (pedido explícito: "aplica esa correccion a TODOS LOS
+   BOTONES...EN TODO EL JUEGO"): mismo defecto — border normal no sigue un
+   clip-path irregular. Un hexágono (6 puntos) tiene incluso MÁS lados en
+   ángulo que un banderín de 4, así que aquí se notaba todavía más. Doble
+   capa (::before/::after), sin texto dentro así que no hace falta tocar
+   z-index de ningún hijo. */
 .hex-logo {
+  position: relative;
   width: 60px;
   height: 68px;
   margin: 0 auto 22px;
-  background: var(--p5-tone);
-  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  border: 2px solid #000;
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
+  filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.55));
   transform: rotate(-4deg);
 }
 
+.hex-logo::before,
+.hex-logo::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.hex-logo::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.hex-logo::after {
+  inset: var(--gg-frame-outline-width);
+  background: var(--p5-tone);
+  z-index: 1;
+}
+
+/* Mismo defecto, mismo arreglo. El título ("Gnomore Gnomes") es texto
+   directo del propio <h1> (ver index.html) — con esta técnica necesita
+   vivir en su propio <span> para quedar por encima de las dos capas (ver
+   .main-menu h1 > span más abajo), así que se envolvió ahí. */
 .main-menu h1 {
+  position: relative;
   display: inline-block;
   width: auto;
   max-width: 100%;
@@ -152,12 +272,34 @@ body {
   margin: 0 0 32px;
   padding: 14px 32px;
   color: #fff;
-  background: var(--p5-tone);
-  clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
-  border: 2px solid #000;
-  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
+  background: none;
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
+  filter: drop-shadow(6px 6px 0 rgba(0, 0, 0, 0.55));
   transform: rotate(-1.2deg);
+}
+
+.main-menu h1::before,
+.main-menu h1::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
+}
+
+.main-menu h1::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.main-menu h1::after {
+  inset: var(--gg-frame-outline-width);
+  background: var(--p5-tone);
+  z-index: 1;
+}
+
+.main-menu h1 > span {
+  position: relative;
+  z-index: 2;
 }
 
 h2 {
@@ -183,7 +325,14 @@ h2 {
   gap: 16px;
 }
 
+/* CORRECCIÓN (pedido explícito: "aplica esa correccion a TODOS LOS
+   BOTONES...EN TODO EL JUEGO"): mismo defecto — border normal no sigue un
+   clip-path en diagonal. Doble capa (::before/::after) + sombra dura vía
+   filter:drop-shadow, "background: none" porque es un <button>. El icono
+   y el texto (hijos directos) necesitan position+z-index — ".menu-btn > *"
+   los cubre a los dos. */
 .menu-btn {
+  position: relative;
   width: 100%;
   padding: 15px 26px 15px 18px;
   font-size: 1rem;
@@ -192,13 +341,12 @@ h2 {
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: #fff;
-  background: var(--p5-tone);
-  clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
-  border: 2px solid #000;
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
+  background: none;
+  border: none;
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.7);
   cursor: var(--cursor-pointer);
-  transition: transform 0.15s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.15s ease, background 0.2s ease;
+  filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, 0.5));
+  transition: transform 0.15s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -214,6 +362,31 @@ h2 {
      encima...algunos botones pulsables no reaccionan". */
   --tilt: 0deg;
   transform: rotate(var(--tilt));
+}
+
+.menu-btn::before,
+.menu-btn::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
+}
+
+.menu-btn::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.menu-btn::after {
+  inset: var(--gg-frame-outline-width);
+  background: var(--p5-tone);
+  z-index: 1;
+  transition: background-color 0.2s ease;
+}
+
+.menu-btn > * {
+  position: relative;
+  z-index: 2;
 }
 
 /* Rotación propia por botón — pequeña a propósito (1-1.6deg), lo justo
@@ -243,20 +416,23 @@ h2 {
 
 .menu-btn:hover:not(:disabled) {
   transform: rotate(0deg) translate(-3px, -3px);
-  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.55);
+  filter: drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.55));
 }
 
 .menu-btn:active:not(:disabled) {
   transform: rotate(0deg) translate(1px, 1px);
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
 }
 
 .menu-btn:disabled {
-  background: #2b2731;
   color: rgba(255, 255, 255, 0.4);
   text-shadow: none;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.4));
   cursor: not-allowed;
+}
+
+.menu-btn:disabled::after {
+  background: #2b2731;
 }
 
 .menu-footer {
@@ -266,18 +442,43 @@ h2 {
   font-style: italic;
 }
 
+/* CORRECCIÓN (pedido explícito: "aplica esa correccion a TODOS LOS
+   BOTONES...EN TODO EL JUEGO") — mismo defecto/arreglo que el resto. */
 .menu-feedback {
+  position: relative;
   margin-top: 18px;
   padding: 10px 20px;
   color: #fff;
   font-size: 0.88rem;
   font-weight: 700;
-  background: var(--p5-tone);
-  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0% 100%);
-  border: 2px solid #000;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  background: none;
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.5));
   opacity: 0;
   transform: translateY(-4px);
+}
+
+.menu-feedback::before,
+.menu-feedback::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0% 100%);
+}
+
+.menu-feedback::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.menu-feedback::after {
+  inset: var(--gg-frame-outline-width);
+  background: var(--p5-tone);
+  z-index: 1;
+}
+
+.menu-feedback > * {
+  position: relative;
+  z-index: 2;
 }
 
 .menu-feedback--show {
@@ -291,7 +492,15 @@ h2 {
 
 /* ---------- Pantallas de selección (modo / raza / rivales) ---------- */
 
+/* CORRECCIÓN (pedido explícito: "aplica esa correccion a TODOS LOS
+   BOTONES...EN TODO EL JUEGO"): mismo defecto que el resto — border normal
+   no sigue un clip-path en diagonal. Doble capa (::before/::after) +
+   sombra dura vía filter:drop-shadow, "background: none" porque es un
+   <button> (ver la nota larga de .settings-gear-btn). El icono (i) y el
+   texto (span) necesitan position+z-index para quedar por encima de las
+   dos capas. */
 .back-btn {
+  position: relative;
   align-self: flex-start;
   display: flex;
   align-items: center;
@@ -305,17 +514,40 @@ h2 {
   cursor: var(--cursor-pointer);
   padding: 9px 22px 9px 14px;
   margin-bottom: 16px;
-  background: var(--p5-tone);
-  clip-path: polygon(0 0, 100% 0, 88% 100%, 0% 100%);
-  border: 2px solid #000;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  background: none;
+  border: none;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.7);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.5));
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.back-btn::before,
+.back-btn::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(0 0, 100% 0, 88% 100%, 0% 100%);
+}
+
+.back-btn::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.back-btn::after {
+  inset: var(--gg-frame-outline-width);
+  background: var(--p5-tone);
+  z-index: 1;
+}
+
+.back-btn > * {
+  position: relative;
+  z-index: 2;
 }
 
 .back-btn:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
+  filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, 0.55));
 }
 
 .back-btn--floating {
@@ -334,21 +566,34 @@ h2 {
   gap: 16px;
 }
 
+/* CORRECCIÓN (pedido explícito: "aplica esa correccion a TODOS LOS
+   BOTONES...EN TODO EL JUEGO", tras ver que el menú de razas seguía mal):
+   mismo defecto — border normal no sigue un clip-path en diagonal. Doble
+   capa (::before/::after) + sombra dura vía filter:drop-shadow,
+   "background: none" porque es un <button>. Los hijos (icono/título/
+   descripción) necesitan position+z-index para quedar por encima de las
+   dos capas — ".option-card > *" los cubre a los tres de una vez. */
 .option-card {
+  position: relative;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 5px;
-  padding: 18px 26px 18px 22px;
+  /* padding-top reducido (pedido explícito: "no me gusta que el boton
+     tenga tanto espacio libre en la parte alta") — antes el icono vivía
+     en el flujo normal arriba del título y necesitaba hueco para él; ahora
+     el icono es un rombo que sobresale por la esquina (ver
+     .option-card__icon más abajo, mismo patrón que .backpack-close-btn),
+     así que el título puede subir. */
+  padding: 14px 26px 18px 22px;
   color: #fff;
-  background: var(--p5-tone);
-  clip-path: polygon(3% 0, 100% 0, 97% 100%, 0% 100%);
-  border: 2px solid #000;
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
+  background: none;
+  border: none;
   cursor: var(--cursor-pointer);
   text-align: left;
-  transition: transform 0.15s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.15s ease;
+  filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, 0.5));
+  transition: transform 0.15s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.15s ease;
   /* Misma técnica que .menu-btn (ver su comentario más arriba): rotación
      vía variable para que :hover/:active nunca pierdan el pulso por
      especificidad frente al nth-child. */
@@ -356,36 +601,79 @@ h2 {
   transform: rotate(var(--tilt));
 }
 
+.option-card::before,
+.option-card::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(3% 0, 100% 0, 97% 100%, 0% 100%);
+}
+
+.option-card::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.option-card::after {
+  inset: var(--gg-frame-outline-width);
+  background: var(--p5-tone);
+  z-index: 1;
+}
+
+.option-card > * {
+  position: relative;
+  z-index: 2;
+}
+
 .option-list .option-card:nth-child(odd) { --tilt: -0.8deg; }
 .option-list .option-card:nth-child(even) { --tilt: 0.8deg; }
 
 .option-card:hover {
   transform: rotate(0deg) translate(-3px, -3px);
-  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.55);
+  filter: drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.55));
 }
 
 .option-card:active {
   transform: rotate(0deg) translate(1px, 1px);
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
 }
 
+/* Rombo del icono, ahora más grande y sobresaliendo por la esquina
+   superior derecha de la tarjeta — mismo patrón/silueta que
+   .backpack-close-btn (rombo --gg-badge-clip/--gg-badge-tilt que vive
+   fuera del flujo normal, con su propia sombra dura). Pedido explícito:
+   "el rombo con el icono de cada equipo, mas grande y en la parte
+   superior derecha como la X de cerrar" + "el icono...del color
+   pertinente...ejemplo Mushboom con el iconito en verde...y el recuadro
+   donde esta en color gris como el boton, pero mas oscuro".
+   - Color del glifo: var(--card-accent) — ya lo fija newgame-flow.js
+     (renderOptionCard) con el race.color de cada raza cuando existe;
+     sin ese dato (modo/rivales) cae en blanco.
+   - Fondo del recuadro: --p5-tone-dark, más oscuro que el --p5-tone del
+     propio botón. */
 .option-card__icon {
-  font-size: 1.4rem;
-  width: 34px;
-  height: 34px;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 58px;
+  height: 58px;
+  font-size: 1.6rem;
+  color: var(--card-accent, #fff);
+  background: var(--p5-tone-dark);
+  border: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transform: rotate(45deg);
-  margin-bottom: 6px;
+  clip-path: var(--gg-badge-clip);
+  transform: rotate(var(--gg-badge-tilt));
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
+  z-index: 5;
+  margin-bottom: 0;
 }
 
 .option-card__icon::before {
   display: inline-block;
-  transform: rotate(-45deg);
+  transform: rotate(calc(-1 * var(--gg-badge-tilt)));
 }
 
 .option-card__title {
@@ -419,7 +707,20 @@ h2 {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  cursor: grab;
+  /* Pedido explícito: "cuando pongo el puntero sobre las losetas, aparece
+     el icono de la mano de windows en el puntero...el puntero amarillo del
+     juego en este caso" — este contenedor envuelve TODO el tablero
+     (tiles, unidades, marcadores...) y usaba "cursor: grab" (la manita
+     nativa del sistema operativo, pensada para indicar que se puede
+     arrastrar para mover la cámara) como cursor por defecto, y ningún
+     elemento hijo lo sobreescribía de vuelta al amarillo del juego salvo
+     los que ya tenían su propio "cursor: var(--cursor-pointer)" (botones,
+     marcadores...). Una loseta normal, sin nada que hacer al hacer clic,
+     se quedaba con esa manita heredada en vez del cursor amarillo por
+     defecto. Se deja "grab"/"grabbing" solo para cuando SÍ se está
+     arrastrando de verdad (.board-viewport--dragging más abajo) y el resto
+     del tiempo se usa el cursor amarillo normal del juego. */
+  cursor: var(--cursor-default);
   /* BUG encontrado y corregido: "este error grafico aparece a veces, es
      como si estuvieran seleccionados como texto" — el arrastre para mover
      la cámara (js/boardview.js, mousedown+mousemove) no evitaba el gesto
@@ -599,6 +900,21 @@ h2 {
 .unit:hover {
   transform: translate(-50%, -92%) scale(1.05);
   filter: brightness(1.12);
+}
+
+/* Pedido explícito: "que se ponga amarillo cuando haya un punto de
+   interes... SALVO cuando sea un enemigo, que se pondra de color rojo" —
+   .unit ya deja el cursor en amarillo (--cursor-pointer, arriba) para
+   CUALQUIER unidad por defecto; esta regla sube ese cambio a rojo solo
+   para las rivales. Misma especificidad que ".unit" (una sola clase cada
+   una) a propósito: basta con que esta declaración venga DESPUÉS en el
+   archivo (como aquí) para ganar en el empate, sin falta de encadenar
+   ".unit.unit--enemy" — el mismo patrón que ya usa ".village" más abajo.
+   ".unit--targeted" (más abajo del todo, el cursor de diana al atacar)
+   sigue ganando a esta por venir después también, así que el orden real
+   de prioridad queda: diana > enemigo > amigo/neutral. */
+.unit--enemy {
+  cursor: var(--cursor-enemy);
 }
 
 .unit--selected {
@@ -785,6 +1101,73 @@ h2 {
   35% { transform: translateY(-18px) scale(1.08, 0.92); }
   70% { transform: translateY(0) scale(0.95, 1.06); }
   100% { transform: translateY(0) scale(1, 1); }
+}
+
+/* ---------- Sombras proyectadas (js/shadows.js) ----------
+   Pedido explícito: "un sistema de sombras proyectando los propios sprites
+   de manera diagonal hacia arriba a la derecha" — clon aplanado/inclinado
+   del propio sprite (Shadows.attach lo inserta como hermano SIGUIENTE
+   inmediato del sprite real, mismo <img>/mismo src) en vez de una elipse
+   genérica, así nunca desentona con el dibujo real de cada personaje/
+   edificio. Vive DETRÁS del sprite (z-index:-1) dentro del mismo
+   contenedor posicionado (unit__flip, o el elemento raíz de tienda/
+   poblado), así que nunca necesita su propio wrapper aparte.
+
+   Pensado para consumir muy pocos recursos (pedido explícito): sin blur
+   (filter:brightness(0) sola ya aplana a silueta negra, sin ese coste de
+   repintado), degradado de abajo (transparente, pegado a los pies) a
+   arriba (opaco) vía mask-image en vez de difuminar píxeles de verdad, y
+   sin animación propia salvo durante el salto — ver más abajo, esa
+   sincronización es 100% CSS (selector de hermano adyacente), cero coste
+   de JS por fotograma.
+
+   Ángulo/alargamiento ajustados a base de mockups aprobados: "no tan
+   alargada ni tan ladeada" bajó el skew/scale de la primera propuesta.
+
+   Toggle global: Shadows.setEnabled (js/shadows.js) alterna
+   body.gg-shadows-off (ver esa regla al final de este bloque) — más
+   barato que crear/destruir el <img> de cada sprite cada vez que se toca
+   el checkbox de ajustes. */
+.gg-cast-shadow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  transform-origin: 50% 100%;
+  filter: brightness(0);
+  opacity: 0.32;
+  z-index: -1;
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, rgba(0, 0, 0, 1) 55%);
+  mask-image: linear-gradient(to top, transparent 0%, rgba(0, 0, 0, 1) 55%);
+  transform: scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px);
+}
+
+/* Durante el salto (.unit__sprite--hop, reutilizada tal cual por
+   units.js/gnome.js/combat.js): la sombra NUNCA se traslada hacia arriba
+   con el sprite — se queda anclada al suelo — solo se encoge/atenúa en el
+   punto más alto del salto y vuelve a su tamaño normal al aterrizar. Esa
+   separación creciente entre el personaje (que sube) y la sombra (que se
+   queda abajo, más pequeña) es lo que vende la ilusión de estar en el
+   aire. Selector de hermano adyacente = se dispara solo, automáticamente,
+   cada vez que cualquier mecánica añade esa clase al sprite (mismo
+   remove/reflow/add que ya usan para re-disparar su propia animación), sin
+   tocar ni una línea de units.js/gnome.js/combat.js. */
+.unit__sprite--hop + .gg-cast-shadow {
+  animation: gg-shadow-hop 0.22s ease-out;
+}
+
+@keyframes gg-shadow-hop {
+  0% { transform: scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px) scale(1); opacity: 0.32; }
+  35% { transform: scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px) scale(0.7); opacity: 0.14; }
+  70% { transform: scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px) scale(0.88); opacity: 0.24; }
+  100% { transform: scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px) scale(1); opacity: 0.32; }
+}
+
+.gg-shadows-off .gg-cast-shadow {
+  display: none;
 }
 
 /* Golpear al gnomo mientras se lleva cogido (ver Gnome.hit) — retroalimentación
@@ -1286,12 +1669,17 @@ h2 {
    el icono dentro de la fila, así que la caja queda más estrecha de
    verdad — el hueco que le sobra es justo el que necesita el propio texto,
    no el que necesitaba compartir con el rombo. */
+/* CORRECCIÓN (pedido explícito: "aplica esa correccion a TODOS LOS
+   BOTONES...EN TODO EL JUEGO"): mismo defecto que el resto (border normal
+   no sigue un clip-path en diagonal) — misma técnica de doble capa
+   (::before/::after) y sombra dura vía filter:drop-shadow en vez de
+   box-shadow (ver notas largas en .p5-banner más arriba). El texto
+   (.end-turn-btn__label) necesita quedar POR ENCIMA de las dos capas, ver
+   esa regla más abajo. */
 .end-turn-btn__bg {
+  position: relative;
   display: block;
   padding: 10px 26px 10px 44px;
-  clip-path: polygon(7% 0, 100% 0, 93% 100%, 0% 100%);
-  border: 2px solid #000;
-  background: var(--p5-tone);
   color: #fff;
   font-size: 0.98rem;
   font-weight: 900;
@@ -1300,76 +1688,116 @@ h2 {
   letter-spacing: 0.03em;
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
   white-space: nowrap;
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
-  transition: background 0.2s ease, box-shadow 0.15s ease;
+  filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, 0.55));
+  transition: filter 0.15s ease;
+}
+
+.end-turn-btn__bg::before,
+.end-turn-btn__bg::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(7% 0, 100% 0, 93% 100%, 0% 100%);
+}
+
+.end-turn-btn__bg::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.end-turn-btn__bg::after {
+  inset: var(--gg-frame-outline-width);
+  background: var(--p5-tone);
+  z-index: 1;
+  transition: background-color 0.2s ease;
+}
+
+.end-turn-btn__label {
+  position: relative;
+  z-index: 2;
 }
 
 .end-turn-btn:hover:not(:disabled) .end-turn-btn__bg {
-  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.6);
+  filter: drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.6));
 }
 
 .end-turn-btn:active:not(:disabled) .end-turn-btn__bg {
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.6));
 }
 
 /* El rombo — ya NO vive dentro de la fila del texto (position:absolute,
    fuera del flujo) y ya NO es un rombo perfecto: silueta irregular
    compartida con .settings-gear-btn (--gg-badge-clip/--gg-badge-tilt, ver
-   :root), más grande que antes (46px -> 60px) y sin "border" (un border
-   normal no sigue bien un contorno irregular/girado, se ve desigual en las
-   diagonales — el contorno negro ahora es ::after, una segunda silueta
-   idéntica y un poco más grande, DEBAJO, así los cuatro lados quedan
-   perfectamente rectos). top:50% + translateY(-50%) centra el rombo con la
-   misma línea horizontal que el propio botón (antes quedaba descolgado
-   hacia arriba, como dos piezas en dos alturas distintas) — sigue
+   :root), más grande que antes (46px -> 60px). top:50% + margin-top centra
+   el rombo con la misma línea horizontal que el propio botón — sigue
    saliéndose por la izquierda, ya no hacia arriba.
-   IMPORTANTE: Turns.js (_ensureButton/_updateButtonState) pone la clase
-   "end-turn-btn__icon" DIRECTAMENTE sobre el <i> del icono — no hay un div
-   contenedor separado, así que aquí el propio icono ES el rombo y el glifo
-   se endereza con su ::before (mismo patrón de siempre). */
+   CORRECCIÓN (pedido explícito: "aplica esa correccion a TODOS LOS
+   BOTONES...ya que tenian ese mismo defecto"): el contorno negro ya NO es
+   un filter:drop-shadow con muchas copias apiladas — esa técnica, tras
+   comprobarla a fondo con las casillas de la tienda, resultó nada fiable
+   en los lados diagonales del clip-path (el contorno salía incompleto,
+   "como tapado por una máscara"). Ahora es la técnica de doble capa (ver
+   --gg-frame-outline-width en :root): ::before = el contorno (silueta
+   completa, negra), ::after = el relleno amarillo real (silueta un poco
+   más pequeña, ENCIMA) — el aro que queda entre las dos es el contorno,
+   completo en todo el perímetro. Por eso este elemento ya NO lleva
+   clip-path/background propios (un clip-path en el elemento real recortaría
+   también a sus ::before/::after, volviendo a tapar el aro): es solo un
+   contenedor posicionado + girado, y las dos capas + el glifo (ver
+   .end-turn-btn__icon-glyph) son quienes de verdad se ven.
+   IMPORTANTE: desde este cambio, el glifo del icono (reloj de
+   arena/check/spinner) YA NO vive directamente en este elemento — Phosphor
+   pinta el glifo con el ::before de SU PROPIO elemento, y este rombo
+   necesitaba su ::before/::after libres para el contorno de doble capa, así
+   que Turns.js (_ensureButton) ahora crea un <i class="end-turn-btn__icon-
+   glyph"> hijo aparte para el glifo (ver _setIcon, que ya solo sustituye
+   ESE hijo, nunca el rombo). */
 .end-turn-btn__icon {
   position: absolute;
-  /* Centrado en vertical con margin-top (mitad de los 60px de alto) en vez
-     de translateY(-50%): así el "transform" de este icono contiene SOLO el
-     giro (rotate), igual que .settings-gear-btn — necesario para que los
-     dos puedan compartir la misma animación de giro (end-turn-hourglass-
-     spin) sin que uno lleve un translateY de más que el otro no necesita. */
   top: 50%;
   margin-top: -30px;
   left: -26px;
   width: 60px;
   height: 60px;
-  background: #ffcf3d;
-  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: visible;
-  font-size: 1.95rem;
-  font-style: normal;
   flex-shrink: 0;
-  clip-path: var(--gg-badge-clip);
   transform: rotate(var(--gg-badge-tilt));
-  /* El contorno negro y la sombra dura son un "filter", no un border ni un
-     segundo elemento — un border normal no sigue bien un clip-path
-     irregular/girado (queda desigual en las diagonales, motivo por el que
-     se cambió), y un box-shadow o un ::after normal se recortarían por el
-     propio clip-path de este mismo elemento (clip-path recorta TAMBIÉN a
-     sus hijos/pseudo-elementos, no solo su propio relleno). drop-shadow, en
-     cambio, se calcula sobre la silueta YA recortada pero se PINTA sin que
-     ese mismo clip-path se la coma — es la única forma de conseguir un
-     contorno recto de verdad sobre una forma irregular. Ocho copias en
-     círculo (arriba/abajo/izq/dcha/diagonales) a 2px simulan un trazo
-     uniforme; la última, más grande y semitransparente, es la sombra dura
-     de profundidad de siempre (mismo lenguaje que el resto de recuadros). */
-  filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000)
-    drop-shadow(0 -2px 0 #000) drop-shadow(1.5px 1.5px 0 #000) drop-shadow(-1.5px 1.5px 0 #000)
-    drop-shadow(1.5px -1.5px 0 #000) drop-shadow(-1.5px -1.5px 0 #000) drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
+  /* Sombra dura de profundidad — UN solo drop-shadow (no encadenado), esto
+     sí es fiable: el problema de antes era encadenar MUCHAS copias para
+     simular un contorno, no usar drop-shadow en sí. */
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
   z-index: 2;
 }
 
+.end-turn-btn__icon::before,
+.end-turn-btn__icon::after {
+  content: "";
+  position: absolute;
+  clip-path: var(--gg-badge-clip);
+}
+
 .end-turn-btn__icon::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.end-turn-btn__icon::after {
+  inset: var(--gg-frame-outline-width);
+  background: #ffcf3d;
+  z-index: 1;
+}
+
+.end-turn-btn__icon-glyph {
+  position: relative;
+  z-index: 2;
   display: inline-block;
+  color: #000;
+  font-size: 1.95rem;
+  font-style: normal;
   transform: rotate(calc(-1 * var(--gg-badge-tilt)));
 }
 
@@ -1386,7 +1814,13 @@ h2 {
    propias animaciones y no deben heredar esta. Reutilizada tal cual por
    .settings-gear-btn:hover más abajo, así los dos rombos giran con la
    misma física exacta. */
-.end-turn-btn:hover .end-turn-btn__icon.ph-hourglass-simple {
+/* ".ph-hourglass-simple" vivía antes en este MISMO elemento (el rombo era
+   el propio icono); ahora ese glifo vive en el <i> hijo
+   (.end-turn-btn__icon-glyph, ver más arriba) así que Turns._setIcon marca
+   aparte al rombo con este modificador cuando el reloj de arena está
+   activo, para poder seguir enganchando aquí la misma animación de
+   siempre. */
+.end-turn-btn:hover .end-turn-btn__icon--hourglass {
   animation: end-turn-hourglass-spin 0.85s cubic-bezier(0.1, 0.82, 0.25, 1) 1;
 }
 
@@ -1400,16 +1834,19 @@ h2 {
    tono apagado y plano en vez del amarillo, con el icono girando sin parar
    para que se lea como "pensando", no como un botón roto que no responde. */
 .end-turn-btn--thinking {
-  /* Pedido explícito: "el cursor amarillo debe mostrarse en cualquier area
-     del juego que no sea la de atacar" — usaba el cursor nativo del
-     navegador en vez de la flecha amarilla propia. */
+  /* Deshabilitado mientras la IA piensa — no es un punto de interés (no
+     hace nada al clicarlo ahora mismo), así que usa la flecha blanca de
+     reposo en vez de la amarilla de "cosa clicable". */
   cursor: var(--cursor-default);
 }
 
 .end-turn-btn--thinking .end-turn-btn__bg {
-  background: #26212a;
   color: rgba(255, 255, 255, 0.55);
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
+  filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.4));
+}
+
+.end-turn-btn--thinking .end-turn-btn__bg::after {
+  background: #26212a;
 }
 
 .end-turn-btn--thinking .end-turn-btn__icon {
@@ -1445,12 +1882,17 @@ h2 {
   50% { transform: translateY(-2px) scale(1.03); }
 }
 
+/* CORRECCIÓN: ya no puede ser box-shadow con spread (0 0 0 Npx) — el
+   elemento ya no tiene clip-path propio para que ese box-shadow lo siga
+   (ver notas de arriba), así que el "anillo" que se expandía se sustituye
+   por un resplandor difuminado equivalente vía filter:drop-shadow
+   (blur en vez de spread) — mismo efecto de pulso, misma duración/curva. */
 @keyframes end-turn-pulse-shadow {
   0%, 100% {
-    box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55), 0 0 0 0 rgba(255, 255, 255, 0.4);
+    filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 0 rgba(255, 255, 255, 0));
   }
   50% {
-    box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.55), 0 0 0 8px rgba(255, 255, 255, 0);
+    filter: drop-shadow(7px 7px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
   }
 }
 
@@ -1990,6 +2432,8 @@ h2 {
    color plano (var(--accent) sólido, sin degradado) a juego con el resto
    de la paleta de selección del tablero (el mismo morado del glow de
    unit--selected). */
+/* CORRECCIÓN (pedido explícito: "aplica esa correccion a TODOS LOS
+   BOTONES...EN TODO EL JUEGO") — mismo defecto/arreglo que el resto. */
 .gnome-points-badge {
   position: absolute;
   display: flex;
@@ -1997,16 +2441,33 @@ h2 {
   justify-content: center;
   width: 50px;
   height: 46px;
-  clip-path: polygon(18% 0%, 82% 0%, 100% 32%, 88% 100%, 12% 100%, 0% 30%);
-  background: var(--accent);
-  border: 2px solid #000;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  background: none;
   white-space: nowrap;
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.5));
   transform: translate(-50%, -8px) scale(0.6);
   transform-origin: bottom center;
   opacity: 0;
   pointer-events: none;
   transition: transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s ease;
+}
+
+.gnome-points-badge::before,
+.gnome-points-badge::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(18% 0%, 82% 0%, 100% 32%, 88% 100%, 12% 100%, 0% 30%);
+}
+
+.gnome-points-badge::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.gnome-points-badge::after {
+  inset: var(--gg-frame-outline-width);
+  background: var(--accent);
+  z-index: 1;
 }
 
 .gnome-points-badge--visible {
@@ -2016,6 +2477,8 @@ h2 {
 }
 
 .gnome-points-badge__value {
+  position: relative;
+  z-index: 2;
   font-weight: 800;
   font-size: 1.5rem;
   line-height: 1;
@@ -2158,6 +2621,12 @@ h2 {
    amarillo plano que .end-turn-btn__icon/.settings-gear-btn (#ffcf3d), así
    que el texto pasa de tonos ámbar claro (pensados para un fondo oscuro) a
    negro, igual que el resto de piezas amarillas de la interfaz. */
+/* CORRECCIÓN (pedido explícito: "aplica esa correccion a TODOS LOS
+   BOTONES...EN TODO EL JUEGO") — mismo defecto/arreglo que el resto. El
+   z-index:1 de aquí es el de siempre (para solaparse POR DEBAJO del icono
+   de la raza, ver nota de cabecera) — las dos capas nuevas (::before/
+   ::after) y el contenido (value/preview) usan su PROPIA escala de
+   z-index (0/1/2) dentro de este mismo elemento, así que no chocan. */
 .glory-hud__main {
   position: relative;
   z-index: 1;
@@ -2169,10 +2638,27 @@ h2 {
      en su centro — ver nota de cabecera. */
   margin-left: -42px;
   padding: 8px 28px 8px 50px;
+  background: none;
+  filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, 0.5));
+}
+
+.glory-hud__main::before,
+.glory-hud__main::after {
+  content: "";
+  position: absolute;
   clip-path: polygon(0 0, 100% 0, 89% 100%, 0% 100%);
+}
+
+.glory-hud__main::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.glory-hud__main::after {
+  inset: var(--gg-frame-outline-width);
   background: #ffcf3d;
-  border: 2px solid #000;
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
+  z-index: 1;
 }
 
 /* Sin icono de raza (partida vieja sin raceId válido, ver Glory._ensureHud)
@@ -2182,10 +2668,16 @@ h2 {
 .glory-hud--no-icon .glory-hud__main {
   margin-left: 0;
   padding-left: 22px;
+}
+
+.glory-hud--no-icon .glory-hud__main::before,
+.glory-hud--no-icon .glory-hud__main::after {
   clip-path: polygon(0 0, 100% 0, 91% 100%, 0% 100%);
 }
 
 .glory-hud__value {
+  position: relative;
+  z-index: 2;
   font-weight: 800;
   /* Pedido explícito: "el numero de puntos de gloria debe ser mas grande" —
      de 1.6rem a 2.1rem. */
@@ -2199,6 +2691,8 @@ h2 {
    arriba a propósito (ver nota de cabecera) — solo informa, no compite por
    la atención. */
 .glory-hud__preview {
+  position: relative;
+  z-index: 2;
   /* Pedido explícito: "el de los puntos de gloria persistentes cambien un
      poco mas" — sube algo menos que glory-hud__value de arriba, sigue
      siendo claramente secundario. */
@@ -2252,19 +2746,57 @@ h2 {
    mismo (más claro arriba, más oscuro abajo) en vez de mezclarse con un
    segundo color — la irregularidad viene de la forma (clip-path) y la
    sombra dura, nunca del color. */
+/* CORRECCIÓN (pedido explícito: "aplica esa correccion a TODOS LOS
+   BOTONES...EN TODO EL JUEGO"): esta pieza base (reusada por CASI todos
+   los botones/paneles del juego — mochila, tienda, ajustes...) tenía el
+   MISMO defecto que los rombos: un `border` normal no sigue un clip-path
+   inclinado (aquí, en diagonal), así que se veía incompleto/"cortado por
+   una máscara" en el lado en ángulo. Misma técnica de doble capa que el
+   resto (ver --gg-frame-outline-width en :root): ::before = contorno
+   negro, ::after = relleno real, ninguno de los dos en el elemento real
+   (que ya NO lleva clip-path, para que sus pseudo-elementos no se recorten
+   entre sí). La "sombra dura" deja de ser box-shadow (se recortaría por
+   el propio clip-path si siguiera en el elemento, y ya no está ahí) y pasa
+   a ser un ÚNICO filter:drop-shadow — se calcula sobre la silueta final ya
+   compuesta (::before+::after+contenido), así que sigue dibujando la
+   sombra con la forma de bandera correcta. Es un <button> en algunos usos
+   (.p5-banner--action) y un <div> en otros — "background: none" hace
+   falta en los dos casos por igual (ver la nota larga de
+   .settings-gear-btn: sin esto, un <button> pinta su propio fondo nativo
+   opaco por debajo). */
 .p5-banner {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--p5-tone);
-  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0% 100%);
-  border: 2px solid #000;
+  background: none;
+  border: none;
   padding: 10px 24px;
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
+  filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, 0.55));
+}
+
+.p5-banner::before,
+.p5-banner::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0% 100%);
+}
+
+.p5-banner::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.p5-banner::after {
+  inset: var(--gg-frame-outline-width);
+  background: var(--p5-tone);
+  z-index: 1;
 }
 
 .p5-banner__label {
+  position: relative;
+  z-index: 2;
   font-weight: 900;
   font-style: italic;
   letter-spacing: 0.03em;
@@ -2274,19 +2806,32 @@ h2 {
   white-space: nowrap;
 }
 
+/* Un .p5-banner puede aparecer DENTRO de otro .p5-banner (ej. el botón
+   "Salir de la partida" dentro del panel de ajustes, o "COMPRAR" dentro
+   del panel de la mochila). Como .p5-banner usa position:relative SIN
+   z-index explícito, no crea su propio "stacking context": el z-index:2
+   de sus hijos (icono/label) se compara de forma "aplanada" contra el
+   ::after (z-index:1) del panel EXTERIOR, y todo el botón anidado queda
+   tapado por la capa de relleno del panel. Esta regla le da al
+   .p5-banner anidado su propio z-index alto para que pinte por encima
+   del ::after del contenedor. */
+.p5-banner .p5-banner {
+  z-index: 3;
+}
+
 .p5-banner--action {
   cursor: var(--cursor-pointer);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, filter 0.15s ease;
 }
 
 .p5-banner--action:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.6);
+  filter: drop-shadow(7px 7px 0 rgba(0, 0, 0, 0.6));
 }
 
 .p5-banner--action:active {
   transform: translate(1px, 1px);
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.6));
 }
 
 /* Icono de engranaje — esquina superior derecha, mismo patrón fixed +
@@ -2313,16 +2858,30 @@ h2 {
    derecho, y comparte con .end-turn-btn__icon la misma animación de giro al
    pasar el ratón (end-turn-hourglass-spin) con la física exacta, ya que los
    dos ahora solo rotan (sin translateY de por medio). */
+/* CORRECCIÓN (misma que .end-turn-btn__icon más arriba, ver esa nota
+   larga): el contorno negro deja de ser un filter:drop-shadow con muchas
+   copias apiladas (nada fiable en los lados diagonales) y pasa a ser la
+   técnica de doble capa — ::before (contorno) + ::after (relleno amarillo,
+   un poco más pequeño). El icono del engranaje SÍ vive en su propio <i>
+   hijo (.settings-gear-btn__icon) desde siempre, así que aquí no hace
+   falta tocar el JS: ::before/::after ya estaban libres. */
 .settings-gear-btn {
   position: fixed;
   top: 20px;
   right: 20px;
   width: 64px;
   height: 64px;
-  background: #ffcf3d;
+  /* BUG encontrado y corregido al revisar el contorno de doble capa: es
+     un <button>, y sin un "background" explícito en el propio elemento
+     Chromium sigue pintando su fondo nativo (gris casi blanco, buttonface)
+     POR DEBAJO de ::before/::after — invisible cuando ambas capas son
+     opacas como aquí, pero es lo que causaba el "efecto máscara" en
+     .backpack-slot (ring casi blanco sólido en vez de translúcido) cuando
+     la capa tiene alpha. Se neutraliza en los tres botones que usan esta
+     técnica, opacos o no, para no depender de que la capa de encima cubra
+     el 100% siempre. */
+  background: none;
   border: none;
-  clip-path: var(--gg-badge-clip);
-  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2331,17 +2890,32 @@ h2 {
   opacity: 0;
   transform: scale(0.7) rotate(var(--gg-badge-tilt));
   pointer-events: none;
-  filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000)
-    drop-shadow(0 -2px 0 #000) drop-shadow(1.5px 1.5px 0 #000) drop-shadow(-1.5px 1.5px 0 #000)
-    drop-shadow(1.5px -1.5px 0 #000) drop-shadow(-1.5px -1.5px 0 #000) drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
   transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, filter 0.2s ease;
+}
+
+.settings-gear-btn::before,
+.settings-gear-btn::after {
+  content: "";
+  position: absolute;
+  clip-path: var(--gg-badge-clip);
+}
+
+.settings-gear-btn::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.settings-gear-btn::after {
+  inset: var(--gg-frame-outline-width);
+  background: #ffcf3d;
+  z-index: 1;
 }
 
 .settings-gear-btn:hover {
   animation: end-turn-hourglass-spin 0.85s cubic-bezier(0.1, 0.82, 0.25, 1) 1;
-  filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000)
-    drop-shadow(0 -2px 0 #000) drop-shadow(1.5px 1.5px 0 #000) drop-shadow(-1.5px 1.5px 0 #000)
-    drop-shadow(1.5px -1.5px 0 #000) drop-shadow(-1.5px -1.5px 0 #000) drop-shadow(6px 6px 0 rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(6px 6px 0 rgba(0, 0, 0, 0.6));
 }
 
 .settings-gear-btn--visible {
@@ -2355,6 +2929,9 @@ h2 {
 }
 
 .settings-gear-btn__icon {
+  position: relative;
+  z-index: 2;
+  color: #000;
   font-size: 1.9rem;
   transform: rotate(calc(-1 * var(--gg-badge-tilt)));
 }
@@ -2403,10 +2980,21 @@ h2 {
   border-bottom: 3px solid rgba(255, 255, 255, 0.4);
 }
 
+/* Forma/color propios de esta variante — ya no se pueden fijar como
+   "clip-path"/"background" directos en el elemento (.p5-banner ya no
+   pinta nada por sí solo, ver su nota larga), así que se apuntan
+   directamente a las capas ::before/::after que SÍ crea .p5-banner. */
 .settings-panel__option {
   gap: 14px;
   padding: 14px 30px;
+}
+
+.settings-panel__option::before,
+.settings-panel__option::after {
   clip-path: polygon(6% 0, 100% 0, 94% 100%, 0% 100%);
+}
+
+.settings-panel__option::after {
   /* El propio .p5-banner ya pone el tono berenjena-gris de base; aquí un
      pelín más claro (--p5-tone-light, plano, sin degradado — pedido
      explícito: "colores planos para las interfaces") para que se distinga
@@ -2415,9 +3003,71 @@ h2 {
 }
 
 .settings-panel__option-icon {
+  position: relative;
+  z-index: 2;
   font-size: 1.3rem;
   color: #fff;
   flex-shrink: 0;
+}
+
+/* Variante checkbox — pedido explícito: "haz que se puedan activar/
+   desactivar con un checkbox del estilo que estamos haciendo" (sombras
+   proyectadas, ver js/shadows.js). Icono+etiqueta agrupados a la izquierda
+   (.settings-panel__option-main, único hijo directo real junto al
+   indicador, así ambos se reparten con justify-content:space-between) y el
+   indicador (.settings-toggle) a la derecha, con la misma silueta plana/
+   ladeada sin esquinas redondeadas que el resto de la interfaz en vez de
+   un <input type="checkbox"> nativo (que sí las tendría). */
+.settings-panel__option--toggle {
+  justify-content: space-between;
+}
+
+.settings-panel__option-main {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.settings-toggle {
+  /* Sin esto queda tapado por completo por la capa de relleno ::after del
+     propio botón (.p5-banner), z-index:1 — mismo bug/mismo arreglo que
+     .settings-panel__option-main aquí arriba y que .backpack-slots/
+     .backpack-desc (ver su nota larga en style.css): un hijo directo
+     nuevo de un .p5-banner necesita su PROPIA posición+z-index, no lo
+     hereda de ningún sitio. */
+  position: relative;
+  z-index: 2;
+  width: 32px;
+  height: 24px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--p5-tone-dark);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  clip-path: polygon(12% 0, 100% 0, 88% 100%, 0% 100%);
+  transition: background-color 0.15s ease;
+}
+
+.settings-toggle[data-checked="true"] {
+  background: #ffcf3f;
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.settings-toggle__check {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #241f28;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.settings-toggle[data-checked="true"] .settings-toggle__check {
+  opacity: 1;
+  transform: scale(1);
 }
 
 /* ---------- Poblados neutrales (js/villages.js) ----------
@@ -2430,11 +3080,22 @@ h2 {
    para el porqué) — nunca entra en Units.list, así que nada del motor de
    combate/movimiento lo confunde con una unidad real. */
 .village {
-  /* Pedido explícito: "el cursor amarillo debe mostrarse en cualquier area
-     del juego que no sea la de atacar" — un tótem que NO está en rango de
-     ataque ahora mismo (ver .village.village--targeted más arriba, que sí
-     usa el cursor de diana) usaba el cursor nativo del navegador. */
-  cursor: var(--cursor-default);
+  /* Pedido explícito: "amarillo cuando haya un punto de interes... SALVO
+     cuando sea un enemigo o estructura enemiga, que se pondra de color
+     rojo" — un tótem (propio, ajeno o sin dueño) siempre es un punto de
+     interés: se puede conquistar o (si ya es rival) atacar, así que usa
+     el mismo amarillo que una unidad propia por defecto; .village--enemy
+     (justo debajo) lo sube a rojo solo cuando ya pertenece al rival.
+     .village.village--targeted (más arriba, el cursor de diana) sigue
+     ganando a ambas por especificidad — ver su propio comentario. */
+  cursor: var(--cursor-pointer);
+}
+
+.village--enemy {
+  /* Misma especificidad que ".village" (una sola clase): basta con venir
+     DESPUÉS en el archivo, como aquí, para ganar el empate — igual que
+     ".unit--enemy" más arriba. */
+  cursor: var(--cursor-enemy);
 }
 
 .village__sprite {
@@ -2497,6 +3158,166 @@ h2 {
   40% { transform: translate(-50%, -92%) scale(1.18); filter: brightness(1.5); }
   100% { transform: translate(-50%, -92%) scale(1); filter: brightness(1); }
 }
+
+/* ---------- Tienda Goblin (js/shops.js) ----------
+   Pedido explícito: "vamos a implementar la mecanica LA TIENDA GOBLIN...un
+   jugador o enemigo no puede ocupar esta casilla ni se pueden colocar
+   objetos sobre ella...cuando el personaje de un jugador esta en una
+   casilla adyacente a la tienda goblin, el puntero cambia phospor coins
+   de color amarillo fill al pasar el raton por encima de ella. al hacer
+   clic sobre ella se habre una interfaz igual que la de la mochila, pero
+   es una tienda". Reutiliza ".unit" solo por su posicionamiento base
+   (translate(-50%,-92%)) — igual que .village/.board-item, nunca entra en
+   Units.list, así que nada del motor de combate/movimiento la confunde
+   con una unidad real. Sin barra de vida (nunca se ataca, a diferencia de
+   un poblado). */
+.shop {
+  /* Sin --cursor-pointer por defecto a propósito: solo se activa (ver
+     .shop--interactive más abajo) con un personaje del jugador al lado —
+     el resto del tiempo es un edificio con el que no se puede interactuar
+     todavía, así que se queda con la flecha blanca de reposo en vez de
+     invitar a un clic que no hace nada. */
+  cursor: var(--cursor-default);
+  /* Pedido explícito: "bajalo mas" — mismo patrón que .board-item (ver su
+     comentario más abajo): translateY fijo en px DESPUÉS del
+     translate(-50%,-92%) que .shop hereda de .unit, para que se mantenga
+     proporcional al escalar/hacer zoom el tablero. */
+  transform: translate(-50%, -92%) translateY(30px);
+}
+
+.shop__sprite {
+  display: block;
+  width: 190px;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 8px 6px rgba(0, 0, 0, 0.45));
+  transform-origin: 50% 100%;
+  animation: unit-idle-breathe 3.2s ease-in-out infinite;
+}
+
+/* "cuando el personaje de un jugador esta en una casilla adyacente a la
+   tienda goblin" (ver Shops.refreshAll, js/shops.js) — mismo patrón de
+   especificidad que .unit--enemy/.village--enemy (ver arriba): una sola
+   clase, gana por venir DESPUÉS en el archivo. */
+.shop--interactive {
+  cursor: var(--cursor-shop);
+}
+
+/* ---------- Interfaz de la tienda (popup) ----------
+   "se habre una interfaz igual que la de la mochila, pero es una tienda" —
+   reutiliza LITERALMENTE las mismas clases del popup de la mochila
+   (backpack-overlay/backpack-panel/backpack-panel__bg/backpack-close-btn/
+   backpack-panel__title/backpack-slots/backpack-slot/backpack-desc/
+   backpack-desc__text, ver más abajo) desde Shops.openPopup — así cualquier
+   ajuste futuro de tamaño/posición/animación de ESE popup (ya iterado
+   muchas veces) vale también para la tienda sin duplicar una sola regla.
+   Lo único propio de la tienda son el rombo de precio en la esquina de
+   cada casilla, la línea de precio dentro de la descripción y el botón
+   COMPRAR, los tres aquí abajo. */
+
+/* Rombo de precio — pedido explícito: "me gustaria que el precio estviera
+   en una esquina de la casilla sobre un rombo irregular como el de cerrar
+   la interfaz, pero de color amarillo con el numero del precio en negro".
+   Mismo patrón que .backpack-close-btn (silueta compartida
+   --gg-badge-clip/--gg-badge-tilt, asomando de verdad por la esquina con
+   coordenadas negativas) solo que en amarillo con el número en negro en
+   vez de rojo con una X blanca. .backpack-slot ya es position:relative
+   (ver arriba), así que este rombo se ancla directamente a SU esquina sin
+   necesitar ningún contenedor extra.
+   CORRECCIÓN (misma técnica que el resto de rombos, ver notas largas en
+   .end-turn-btn__icon): contorno de doble capa en vez de drop-shadow
+   apilado — aquí el número SÍ era texto directo del elemento (sin hijo
+   propio), así que ahora vive en un <span> aparte (.shop-slot__price__num,
+   ver Shops._renderSlots) para poder colocarlo POR ENCIMA de las dos
+   capas con su propio z-index. */
+.shop-slot__price {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 34px;
+  height: 34px;
+  transform: rotate(var(--gg-badge-tilt));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+  z-index: 2;
+}
+
+.shop-slot__price::before,
+.shop-slot__price::after {
+  content: "";
+  position: absolute;
+  clip-path: var(--gg-badge-clip);
+}
+
+.shop-slot__price::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.shop-slot__price::after {
+  inset: var(--gg-frame-outline-width);
+  background: #ffcf3f;
+  z-index: 1;
+}
+
+.shop-slot__price__num {
+  position: relative;
+  z-index: 2;
+  color: #241f28;
+  font-weight: 900;
+  font-size: 0.8rem;
+}
+
+/* "en la descripcion de cada objeto debe indicarse 'Este objeto cuesta X
+   puntos de gloria.' en color amarillo en negrita" — línea añadida DENTRO
+   de .backpack-desc__text (ver Shops._updateDescAndPrice), nunca sustituye
+   al texto de sabor de ITEM_DESCRIPTIONS. */
+.shop-desc__price-line {
+  display: inline-block;
+  color: #ffcf3f;
+  font-weight: 900;
+}
+
+/* Botón "COMPRAR" — pedido explícito: "pulsar un boton amarillo en la
+   interfaz llamado COMPRAR". Mismo lenguaje visual plano que el resto del
+   proyecto (.p5-banner/.p5-banner--action, ver arriba), solo que en
+   amarillo en vez del berenjena-gris de siempre — es la única acción
+   "positiva/de gasto" del juego, se distingue a propósito del resto de
+   botones. */
+/* Color propio de esta variante — apuntado a ::after (el relleno real,
+   ver .p5-banner), no al elemento (que ya no pinta nada por sí solo). */
+.shop-buy-btn {
+  align-self: center;
+  color: #241f28;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  padding: 14px 42px;
+}
+
+.shop-buy-btn::after {
+  background: #ffcf3f;
+}
+
+.shop-buy-btn:disabled {
+  cursor: var(--cursor-default);
+  color: rgba(244, 242, 248, 0.6);
+  filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, 0.35));
+  transform: none;
+}
+
+.shop-buy-btn:disabled::after {
+  background: var(--disabled);
+}
+
+/* Precio tachado sobre un hueco ya vendido/sin fondos — de momento la
+   tienda no repone existencias (pedido explícito: "de momento pondremos a
+   la venta 2 setas"), así que un hueco vacío tras comprar se ve
+   exactamente igual que uno vacío de la mochila (.backpack-slot--empty). */
 
 /* ---------- Golpe mortal en un solo golpe contra un poblado ---------- */
 /* Ver Villages._playEpicSmash (js/villages.js). Pedido explícito: "saltara
@@ -2709,17 +3530,13 @@ h2 {
 }
 
 .backpack-panel {
+  /* Pedido explícito (con mockup previo aprobado): "la x de cerrar...puede
+     sobresalir por la esquina" — este contenedor EXTERIOR ya no lleva el
+     clip-path en banderín (se movió a .backpack-panel__bg, ver abajo):
+     así .backpack-close-btn, hermano de esa capa recortada, puede vivir
+     con coordenadas NEGATIVAS y asomar de verdad medio fuera del panel sin
+     que ningún clip-path se lo coma. */
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  /* Historial de tamaño del popup: original (420px/18px de gap) → mitad
-     (210px/9px) → intermedio (315px/13px) → Pedido explícito (última
-     pasada): "el doble de grande de lo que es ahora" — se dobla el
-     intermedio (315→630, 13→26 y el resto de piezas internas más abajo en
-     la misma proporción), no el original. */
-  gap: 26px;
-  padding: 60px 60px 44px;
   /* width fijo, no min-width: .p5-banner es inline-flex (se ajusta a su
      contenido) y el hueco con el icono de la Setarcoiris (imagen de
      origen ~260px) empujaba el ancho "natural" de la grid muy por encima
@@ -2740,6 +3557,18 @@ h2 {
   transform: rotate(-1.2deg) scale(1);
 }
 
+.backpack-panel__bg {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  /* Historial de tamaño del popup: original (420px/18px de gap) → mitad
+     (210px/9px) → intermedio (315px/13px) → doble del intermedio
+     (315→630, 13→26 y el resto de piezas internas más abajo en la misma
+     proporción). Se conserva tal cual al mover el clip-path aquí. */
+  gap: 26px;
+  padding: 60px 60px 44px;
+}
+
 .backpack-panel__title {
   align-self: center;
   font-size: 2.2rem;
@@ -2750,37 +3579,58 @@ h2 {
 /* Botón de cerrar — "sera roja con la X en blanco, sera un rombo
    irregular igual que el del boton configuracion" — misma silueta
    compartida (--gg-badge-clip/--gg-badge-tilt) que .settings-gear-btn,
-   solo que en rojo y bastante más pequeño, asomando por la esquina
-   superior derecha del panel (posición absoluta, la mitad fuera) en vez
-   de vivir dentro del flujo normal del popup. */
+   solo que en rojo y bastante más pequeño, asomando DE VERDAD por la
+   esquina superior derecha del panel (posición absoluta, la mitad fuera)
+   en vez de vivir dentro del flujo normal del popup. */
+/* CORRECCIÓN (misma técnica que .end-turn-btn__icon/.settings-gear-btn,
+   ver esas notas): contorno de doble capa en vez de drop-shadow apilado.
+   El icono (X) vive en su propio <i> hijo (.backpack-close-btn__icon)
+   desde siempre, así que ::before/::after ya estaban libres. */
 .backpack-close-btn {
-  /* top/right en positivo (nunca fuera del propio panel): .backpack-panel
-     hereda el clip-path irregular de .p5-banner, que recorta CUALQUIER
-     hijo que se salga de su silueta (aunque tenga overflow visible) — el
-     mismo motivo por el que .end-turn-btn separa el rombo del reloj a su
-     propia capa (ver esa nota en style.css). Más simple aquí: en vez de
-     montar una segunda capa sin recortar, basta con mantener el botón
-     DENTRO del área que el propio clip-path no recorta (needs margen, no
-     un asomo real por la esquina). */
+  /* top/right en NEGATIVO a propósito, ahora que sí puede: es hermano de
+     .backpack-panel__bg (que lleva el clip-path en banderín, ver arriba),
+     no su hijo, así ese recorte no le come la mitad que sobresale — mismo
+     truco que .end-turn-btn separa el rombo del reloj a su propia capa
+     (ver esa nota en style.css). Mockup de aprobación previo: pedido
+     explícito "la x de cerrar...puede sobresalir por la esquina...antes
+     de añadirlo al juego muestramelo" → "eso es perfecto". */
   position: absolute;
-  top: 18px;
-  right: 18px;
+  top: -22px;
+  right: -22px;
   width: 66px;
   height: 66px;
-  background: #e0313f;
+  /* Ver la nota de .settings-gear-btn más arriba: sin esto, el fondo
+     nativo del <button> (buttonface) se pinta por debajo de ::before/
+     ::after. */
+  background: none;
   border: none;
-  clip-path: var(--gg-badge-clip);
-  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: var(--cursor-pointer);
   transform: rotate(var(--gg-badge-tilt));
-  filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000)
-    drop-shadow(0 -2px 0 #000) drop-shadow(1.5px 1.5px 0 #000) drop-shadow(-1.5px 1.5px 0 #000)
-    drop-shadow(1.5px -1.5px 0 #000) drop-shadow(-1.5px -1.5px 0 #000) drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
   transition: transform 0.15s ease, filter 0.15s ease;
   z-index: 5;
+}
+
+.backpack-close-btn::before,
+.backpack-close-btn::after {
+  content: "";
+  position: absolute;
+  clip-path: var(--gg-badge-clip);
+}
+
+.backpack-close-btn::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.backpack-close-btn::after {
+  inset: var(--gg-frame-outline-width);
+  background: #e0313f;
+  z-index: 1;
 }
 
 .backpack-close-btn:hover {
@@ -2792,6 +3642,9 @@ h2 {
 }
 
 .backpack-close-btn__icon {
+  position: relative;
+  z-index: 2;
+  color: #fff;
   font-size: 1.8rem;
   font-weight: 900;
   transform: rotate(calc(-1 * var(--gg-badge-tilt)));
@@ -2803,12 +3656,33 @@ h2 {
    rejilla: los primeros BACKPACK_SLOT_COUNT huecos ocupados por el
    inventario en orden, el resto vacíos (backpack-slot--empty) a la
    espera de la tienda. */
+/* CORRECCIÓN encontrada al revisar TODO el juego (pedido explícito): al
+   convertir .p5-banner (el panel de fondo, .backpack-panel__bg) a la
+   técnica de doble capa, su ::after (relleno, z-index:1) se pinta POR
+   ENCIMA de cualquier hijo normal SIN position/z-index propios — antes no
+   pasaba nada porque el panel no tenía pseudo-elementos posicionados. Este
+   grid de casillas (y .backpack-desc más abajo) son hijos directos de ese
+   panel, así que necesitan su propio position+z-index para no quedar
+   tapados por el relleno del panel. */
 .backpack-slots {
+  position: relative;
+  z-index: 2;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 18px;
 }
 
+/* Pedido explícito: "las casillas donde estan los iconos pueden ser
+   cuadros irregulares con las esquinas sin redondear?...me enseñas como
+   seria antes de implementarlo?" — aprobado tras 3 mockups (ver
+   _preview_slot_shape.html, ya borrado): cuadro ladeado (--gg-slot-clip,
+   ver :root), esquinas sin redondear, contorno de doble capa igual que
+   los rombos (::before = contorno, ::after = relleno, ver
+   --gg-frame-outline-width) — un border/border-radius normal no sigue el
+   recorte inclinado (motivo del "efecto máscara" que se detectó en los
+   mockups). Como el propio elemento YA NO lleva clip-path (solo sus
+   pseudo-elementos), el icono y la insignia de precio (.shop-slot__price)
+   pueden vivir dentro sin que nada les recorte una esquina. */
 .backpack-slot {
   position: relative;
   aspect-ratio: 1;
@@ -2820,41 +3694,78 @@ h2 {
      columna sí respeta el ancho disponible y el popup encoge de verdad. */
   min-width: 0;
   padding: 0;
-  border: 2px solid rgba(244, 242, 248, 0.3);
-  border-radius: 16px;
-  background: var(--bg);
+  /* Ver la nota de .settings-gear-btn más arriba (misma familia de
+     botones con contorno de doble capa): sin esto, el fondo nativo del
+     <button> (buttonface, casi blanco opaco) se pinta por debajo de
+     ::before/::after — es justo lo que causaba el aro casi blanco sólido
+     en vez de translúcido en las casillas vacías (alpha baja, así que el
+     fondo nativo se notaba mucho más que en las llenas). */
+  background: none;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: var(--cursor-pointer);
-  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+  transition: transform 0.15s ease;
+}
+
+.backpack-slot::before,
+.backpack-slot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: var(--gg-slot-clip);
+  transition: background-color 0.15s ease;
+}
+
+.backpack-slot::before {
+  background: rgba(244, 242, 248, 0.55);
+  z-index: 0;
+}
+
+.backpack-slot::after {
+  inset: var(--gg-frame-outline-width);
+  background: var(--bg);
+  z-index: 0;
 }
 
 .backpack-slot:hover {
-  border-color: rgba(244, 242, 248, 0.6);
   transform: translateY(-2px);
 }
 
+.backpack-slot:hover::before {
+  background: rgba(244, 242, 248, 0.75);
+}
+
 .backpack-slot--empty {
-  border-style: dashed;
-  border-color: rgba(244, 242, 248, 0.18);
-  /* Pedido explícito: "el cursor amarillo debe mostrarse en cualquier area
-     del juego que no sea la de atacar". */
+  /* Hueco vacío, no hay nada que seleccionar — flecha blanca de reposo. */
   cursor: var(--cursor-default);
   pointer-events: none;
 }
 
+.backpack-slot--empty::before {
+  background: rgba(244, 242, 248, 0.18);
+}
+
 /* Resaltado — "si pulsas sobre un icono en la mochila, este se resalta" */
 .backpack-slot--selected {
-  border-color: #ffcf3f;
-  background: color-mix(in srgb, #ffcf3f 18%, var(--bg));
   box-shadow: 0 0 14px rgba(255, 207, 63, 0.55);
   transform: translateY(-2px) scale(1.04);
 }
 
+.backpack-slot--selected::before {
+  background: #ffcf3f;
+}
+
+.backpack-slot--selected::after {
+  background: color-mix(in srgb, #ffcf3f 18%, var(--bg));
+}
+
 .backpack-slot__icon {
-  width: 78%;
-  height: 78%;
+  position: relative;
+  z-index: 1;
+  width: 72%;
+  height: 72%;
   object-fit: contain;
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
   pointer-events: none;
@@ -2864,7 +3775,14 @@ h2 {
    parte de abajo...en un textbox con la interfaz estilo a las que
    hacemos ahora": mismo tono/recorte que .settings-panel__option, un
    simple cuadro con el berenjena-gris claro plano de siempre. */
+/* position/z-index: mismo motivo que .backpack-slots más arriba — hijo
+   directo del panel (.p5-banner), necesita quedar por encima de su
+   relleno. Su propio clip-path (sin border) no tenía el defecto de
+   máscara — solo lo tenían clip-path+border juntos — así que se queda
+   igual. */
 .backpack-desc {
+  position: relative;
+  z-index: 2;
   min-height: 82px;
   padding: 20px 26px;
   clip-path: polygon(2% 0, 100% 0, 98% 100%, 0% 100%);
@@ -2900,9 +3818,10 @@ h2 {
    así que nada del motor de combate/movimiento lo confunde con una unidad
    real (mismo motivo que .village, ver más arriba). */
 .board-item {
-  /* Pedido explícito: "el cursor amarillo debe mostrarse en cualquier area
-     del juego que no sea la de atacar". */
-  cursor: var(--cursor-default);
+  /* Objeto colocado por el jugador — punto de interés, amarillo (aunque
+     ahora mismo no se note: lleva pointer-events: none más abajo, así que
+     el cursor real lo pone lo que haya debajo). */
+  cursor: var(--cursor-pointer);
   pointer-events: none;
   /* Pedido explícito: "el sprite de la seta debe aparecer un 15% mas abajo
      en la casilla" — un 15% de la altura de LA CASILLA (TILE_TOP_HEIGHT =

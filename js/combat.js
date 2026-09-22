@@ -50,6 +50,7 @@ const Combat = {
         if (Units.unitAt(row, col)) continue; // ocupada (por el propio rival u otra unidad)
         if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue; // ocupada por el gnomo (js/gnome.js)
         if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
+        if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue; // agua (js/mapgen.js)
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange) continue;
@@ -276,6 +277,7 @@ const Combat = {
       if (Units.unitAt(nextRow, nextCol)) break;
       if (typeof Gnome !== "undefined" && Gnome.isAt(nextRow, nextCol)) break;
       if (typeof Villages !== "undefined" && Villages.at(nextRow, nextCol)) break; // poblado (js/villages.js)
+      if (typeof Shops !== "undefined" && Shops.at(nextRow, nextCol)) break; // Tienda Goblin (js/shops.js)
       path.push({ row: nextRow, col: nextCol });
       row = nextRow;
       col = nextCol;

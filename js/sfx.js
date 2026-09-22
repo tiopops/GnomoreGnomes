@@ -253,12 +253,27 @@ const SFX = {
     this._pluck("item-eaten-bite", 210, "square", 0.1, 0.36);
     setTimeout(() => this._pluck("item-eaten-sparkle", 980, "triangle", 0.22, 0.3), 90);
   },
+
+  // Tienda Goblin (js/shops.js) — comprar un objeto: reutiliza el mismo
+  // espíritu "tintineo de monedas" que glory()/captureVillage() (arpegio
+  // ascendente y brillante, nada de golpe grave inicial: aquí no se ha
+  // vencido a nadie, solo se ha hecho un buen trato), pero con solo dos
+  // notas rápidas — más corto que captureVillage() a propósito, para que
+  // comprar dos objetos seguidos no se sienta repetitivo ni pesado.
+  buy() {
+    this._pluck("buy-1", 720, "triangle", 0.14, 0.26);
+    setTimeout(() => this._pluck("buy-2", 1040, "triangle", 0.2, 0.3), 80);
+  },
 };
 
 const SFX_TARGETS =
   ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .attack-marker, .unit, .unit-info-btn, " +
   ".catch-marker, .pass-marker, .gnome-action-btn, .settings-gear-btn, .settings-panel__option, " +
   ".backpack-btn, .backpack-slot:not(:disabled), .backpack-close-btn, " +
+  // Tienda Goblin (js/shops.js) — reutiliza el popup de la mochila tal
+  // cual (mismas clases .backpack-slot/.backpack-close-btn de arriba, ya
+  // cubiertas), solo el botón COMPRAR es propio de este popup.
+  ".shop-buy-btn:not(:disabled), " +
   // Pedido explícito: "el boton pasar turno no hace sonido cuando el
   // raton pasa sobre el" — faltaba en la lista de objetivos con sonido de
   // hover (ver js/turns.js, btn.className = "end-turn-btn"). :not(:disabled)

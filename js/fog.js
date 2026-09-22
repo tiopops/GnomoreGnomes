@@ -191,5 +191,13 @@ const Fog = {
         item.el.classList.toggle("unit--fog-hidden", this.isFogged(item.row, item.col));
       });
     }
+    // Tienda Goblin (js/shops.js) — mismo criterio sin excepción que un
+    // tótem: "NADA debe verse si tiene niebla encima", aunque sea neutral.
+    if (typeof Shops !== "undefined") {
+      Shops.list.forEach((shop) => {
+        if (!shop.el) return;
+        shop.el.classList.toggle("unit--fog-hidden", this.isFogged(shop.row, shop.col));
+      });
+    }
   },
 };

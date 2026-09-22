@@ -145,13 +145,27 @@ const Turns = {
     // el texto de este span, no del botón entero.
     const bg = document.createElement("span");
     bg.className = "end-turn-btn__bg";
+    // Pedido explícito: "aplica esa correccion [contorno de doble capa] a
+    // TODOS LOS BOTONES...ya que tenian ese mismo defecto" — el rombo
+    // (end-turn-btn__icon) pasa a ser un contenedor ESTABLE que nunca se
+    // sustituye (lleva la silueta + el contorno de doble capa, ver
+    // style.css), y el glifo en sí vive en su PROPIO <i> hijo
+    // (end-turn-btn__icon-glyph) que SÍ se sustituye en cada cambio de
+    // estado (ver _setIcon) — antes el icono ERA el rombo directamente,
+    // pero el webfont de Phosphor pinta el glifo con el ::before de ese
+    // mismo elemento, y el contorno de doble capa TAMBIÉN necesita su
+    // propio ::before/::after libres, así que ya no pueden compartir un
+    // único elemento.
+    const iconWrap = document.createElement("span");
+    iconWrap.className = "end-turn-btn__icon";
     const icon = document.createElement("i");
-    icon.className = "ph ph-flag-checkered end-turn-btn__icon";
+    icon.className = "ph ph-flag-checkered end-turn-btn__icon-glyph";
+    iconWrap.appendChild(icon);
     const label = document.createElement("span");
     label.className = "end-turn-btn__label";
     bg.appendChild(label);
     btn.appendChild(bg);
-    btn.appendChild(icon);
+    btn.appendChild(iconWrap);
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       this.endTurn();
@@ -160,6 +174,7 @@ const Turns = {
     this._btn = btn;
     this._btnLabelEl = label;
     this._btnIconEl = icon;
+    this._btnIconWrapEl = iconWrap;
   },
 
   // Pedido explícito: "creo que el icono phosphor de pasar turno esta
@@ -179,16 +194,36 @@ const Turns = {
   // la forma correcta y más robusta de cambiar el icono desde JS (crea un
   // <i> limpio en vez de mutar uno ya existente), así que se queda aunque
   // no fuera la causa del "duplicado".
+  // `className` llega como "ph ph-xxx end-turn-btn__icon" desde las tres
+  // llamadas de abajo (se queda así por no tocar esas tres líneas) — pero
+  // desde que el rombo (end-turn-btn__icon) es un contenedor ESTABLE
+  // aparte (ver _ensureButton), aquí solo hace falta la clase del GLIFO en
+  // sí (end-turn-btn__icon-glyph), nunca la del rombo.
   _setIcon(className) {
-    if (this._btnIconEl && this._btnIconEl.className === className) return;
+    const glyphClassName = className.replace(
+      "end-turn-btn__icon",
+      "end-turn-btn__icon-glyph"
+    );
+    if (this._btnIconEl && this._btnIconEl.className === glyphClassName) return;
     const icon = document.createElement("i");
-    icon.className = className;
+    icon.className = glyphClassName;
     if (this._btnIconEl && this._btnIconEl.parentNode) {
       this._btnIconEl.replaceWith(icon);
-    } else if (this._btn) {
-      this._btn.insertBefore(icon, this._btn.firstChild);
+    } else if (this._btnIconWrapEl) {
+      this._btnIconWrapEl.appendChild(icon);
     }
     this._btnIconEl = icon;
+    // El giro al pasar el ratón (end-turn-hourglass-spin, ver style.css)
+    // solo debe pasar con el reloj de arena — antes se seleccionaba con
+    // ".end-turn-btn__icon.ph-hourglass-simple" porque ambas clases vivían
+    // en el mismo elemento; ahora viven en elementos distintos, así que se
+    // marca aparte en el rombo (el que de verdad gira).
+    if (this._btnIconWrapEl) {
+      this._btnIconWrapEl.classList.toggle(
+        "end-turn-btn__icon--hourglass",
+        glyphClassName.includes("ph-hourglass-simple")
+      );
+    }
   },
 
   // Se llama desde js/settingsmenu.js al salir de la partida (opción "Salir

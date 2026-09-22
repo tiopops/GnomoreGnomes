@@ -176,7 +176,15 @@ function createGnomeInstance() {
     spawnNear(row, col) {
       const walkable = (r, c) => typeof TerrainMap === "undefined" || TerrainMap.isWalkable(r, c);
       const noVillage = (r, c) => typeof Villages === "undefined" || !Villages.at(r, c);
-      if (!Units.unitAt(row, col) && !Gnome._otherGnomeAt(this, row, col) && walkable(row, col) && noVillage(row, col)) {
+      // Tienda Goblin (js/shops.js) — tampoco aparece encima de una.
+      const noShop = (r, c) => typeof Shops === "undefined" || !Shops.at(r, c);
+      if (
+        !Units.unitAt(row, col) &&
+        !Gnome._otherGnomeAt(this, row, col) &&
+        walkable(row, col) &&
+        noVillage(row, col) &&
+        noShop(row, col)
+      ) {
         this.spawn(row, col);
         return;
       }
@@ -194,6 +202,8 @@ function createGnomeInstance() {
             if (!walkable(r, c)) continue;
             // Poblados (js/villages.js) — tampoco aparece encima de uno.
             if (!noVillage(r, c)) continue;
+            // Tienda Goblin (js/shops.js) — tampoco aparece encima de una.
+            if (!noShop(r, c)) continue;
             this.spawn(r, c);
             return;
           }
@@ -216,6 +226,10 @@ function createGnomeInstance() {
       spriteEl.style.width = `${GNOME_SIZES.ground}px`;
 
       flipEl.appendChild(spriteEl);
+      // Sombra proyectada (js/shadows.js) — se sincroniza sola con los
+      // cambios de src/ancho que hace este mismo archivo más abajo (idle
+      // <-> grita, ground <-> flying).
+      if (typeof Shadows !== "undefined") Shadows.attach(spriteEl);
       el.appendChild(flipEl);
       Units.container.appendChild(el);
 
@@ -385,6 +399,7 @@ function createGnomeInstance() {
           if (Units.unitAt(row, col)) continue;
           if (Gnome._otherGnomeAt(this, row, col)) continue;
           if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
+          if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
           if (moveDist > moveRange) continue;
@@ -839,6 +854,7 @@ function createGnomeInstance() {
           if (Units.unitAt(row, col)) continue;
           if (Gnome._otherGnomeAt(this, row, col)) continue;
           if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
+          if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const minDist = Units.list.reduce(
             (min, u) => Math.min(min, Math.max(Math.abs(u.row - row), Math.abs(u.col - col))),
@@ -1005,6 +1021,31 @@ function createGnomeInstance() {
       this.spriteEl.style.width = `${GNOME_SIZES.ground}px`;
       SFX.dropFail();
 
+      // Pedido explícito (bug reportado): "el jugador muere, el gnomo
+      // aparece en la casilla donde estaba el jugador, el gnomo corre los
+      // pasos pertinentes a la huida — ahora el gnomo directamente
+      // aparecia en una casilla a la que se alejaba, pero no se le veia
+      // andar hacia ella ni aparecer inicialmente en la casilla donde
+      // murio el jugador o enemigo". Entre desocultar el gnomo aquí arriba
+      // (estaba con display:none mientras iba cogido, ver attachTo) y el
+      // primer paso de la huida (_fleeAwayFrom más abajo, cuyo primer
+      // hopTo también reposiciona el elemento) no había NINGÚN punto en el
+      // que el navegador tuviera ocasión de pintar — todo, desde
+      // Units._placeInstant de arriba hasta el primer hopTo de la huida,
+      // corre en el mismo tick de JS sin ceder el control ni una vez
+      // (walkPath/hopTo solo ceden DESPUÉS de fijar la nueva posición, vía
+      // setTimeout). El navegador se saltaba directamente al primer
+      // fotograma que sí llegaba a pintarse: la posición YA tras el primer
+      // paso de la huida, nunca la de "recién aparecido en la casilla
+      // donde murió". Dos requestAnimationFrame anidados (el primero solo
+      // garantiza "antes del próximo repintado", el segundo ya se dispara
+      // DESPUÉS de que ese repintado haya ocurrido de verdad) fuerzan a
+      // que el navegador pinte primero al gnomo quieto ahí, y la pausa
+      // corta que sigue le da tiempo al jugador a leer la escena antes de
+      // que arranque a correr.
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await new Promise((resolve) => setTimeout(resolve, 260));
+
       // "alejándose de los jugadores" (plural, no solo de quien lo llevaba,
       // que ya no está) — se usa como referencia el personaje del JUGADOR
       // vivo más cercano a donde ha caído; si no queda ninguno (partida ya
@@ -1046,6 +1087,7 @@ function createGnomeInstance() {
           if (Units.unitAt(r, c)) continue;
           if (Gnome._otherGnomeAt(this, r, c)) continue;
           if (typeof Villages !== "undefined" && Villages.at(r, c)) continue; // poblado (js/villages.js)
+          if (typeof Shops !== "undefined" && Shops.at(r, c)) continue; // Tienda Goblin (js/shops.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           const alignment = dr * dRow + dc * dCol;
           const openness = this._tileOpenness(r, c);
@@ -1075,6 +1117,7 @@ function createGnomeInstance() {
           if (Units.unitAt(r, c)) continue;
           if (Gnome._otherGnomeAt(this, r, c)) continue;
           if (typeof Villages !== "undefined" && Villages.at(r, c)) continue; // poblado (js/villages.js)
+          if (typeof Shops !== "undefined" && Shops.at(r, c)) continue; // Tienda Goblin (js/shops.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           free++;
         }

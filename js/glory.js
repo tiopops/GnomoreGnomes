@@ -87,6 +87,24 @@ const Glory = {
     this._renderPreview(team);
   },
 
+  // Gastar puntos — pedido explícito (js/shops.js, Tienda Goblin): "al
+  // comprar un objeto, se descuentan los puntos de gloria". Primer (y de
+  // momento único) sitio del juego que RESTA puntos en vez de sumarlos, así
+  // que vive aparte de grantTurnStart en vez de reutilizarlo con un valor
+  // negativo — ese método también dispara el "bump" visual/sonido de
+  // recompensa de cada inicio de turno, que no pega aquí (gastar no es un
+  // logro). Devuelve false sin tocar nada si no hay suficientes puntos —
+  // quien llama a esto (Shops._buySelected) ya comprueba esto antes, pero
+  // se repite aquí por seguridad, mismo patrón que Turns.canAct en el resto
+  // del proyecto.
+  spend(team, amount) {
+    if (!(team in this.points) || amount <= 0) return false;
+    if (this.points[team] < amount) return false;
+    this.points[team] -= amount;
+    this._render(team);
+    return true;
+  },
+
   // Lo llama Villages._capture (js/villages.js) justo al cambiar el dueño
   // de un poblado — el bonus persistente por poblado (ver _villagesBonus)
   // depende de Villages.ownedCount, que cambia en ese momento, así que el

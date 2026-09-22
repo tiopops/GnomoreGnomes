@@ -238,6 +238,10 @@ const Units = {
     }
 
     flipEl.appendChild(spriteEl);
+    // Sombra proyectada (js/shadows.js) — se sincroniza sola con
+    // salto/cambios de src futuros, no hace falta guardar su referencia
+    // aquí.
+    if (typeof Shadows !== "undefined") Shadows.attach(spriteEl);
     el.appendChild(flipEl);
 
     // Icono de "a punto de morir" — pedido explícito: "puedes mostrar un
@@ -710,6 +714,13 @@ const Units = {
     // haber dejado de estarlo): ver Villages.refreshOcclusion en
     // js/villages.js, que reusa este mismo punto único de paso.
     if (typeof Villages !== "undefined") Villages.refreshOcclusion();
+    // Tienda Goblin (js/shops.js) — quien acaba de moverse puede haber
+    // quedado junto a una tienda (o haberse alejado de una): este es el
+    // ÚNICO punto de paso de cualquier desplazamiento del proyecto
+    // (movimiento normal, acercarse a atacar/coger el gnomo/un tótem,
+    // huida del gnomo...), así que basta con recalcularlo aquí una vez en
+    // vez de repetir la llamada en cada mecánica que use walkPath.
+    if (typeof Shops !== "undefined") Shops.refreshAll();
   },
 
   hopTo(unit, row, col) {
@@ -832,6 +843,10 @@ const Units = {
     await new Promise((resolve) => setTimeout(resolve, 420));
     unit.el.remove();
     this.list = this.list.filter((u) => u.id !== unit.id);
+    // Tienda Goblin (js/shops.js) — si el personaje que acaba de morir era
+    // el único que mantenía una tienda accesible, deja de estarlo (y su
+    // popup, si estaba abierto, se cierra solo — ver Shops.refreshAll).
+    if (typeof Shops !== "undefined") Shops.refreshAll();
   },
 };
 

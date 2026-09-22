@@ -240,6 +240,15 @@ function spawnTestUnits(size, raceId) {
     Villages.spawn(size);
   }
 
+  // Tienda Goblin (js/shops.js) — DESPUÉS de Villages.spawn (para poder
+  // evitar sus casillas al elegir dónde aparece, ver Shops.spawn) y ANTES
+  // de Turns.reset por coherencia con el resto de "mobiliario" del
+  // tablero de aquí arriba, aunque no le afecte directamente.
+  if (typeof Shops !== "undefined") {
+    Shops.resetAll();
+    Shops.spawn(size);
+  }
+
   // Turnos (js/turns.js) — se resetea AL FINAL, con todos los personajes y
   // gnomos ya colocados: siempre empieza el turno del jugador con las 2
   // acciones de cada uno intactas, y (re)aparece el botón de PASAR TURNO.
@@ -274,6 +283,10 @@ function spawnTestUnits(size, raceId) {
   // Totems (js/villages.js) — comprueba de entrada si algún personaje ha
   // quedado colocado justo detrás de un totem (solapamiento en pantalla).
   if (typeof Villages !== "undefined") Villages.refreshOcclusion();
+  // Tienda Goblin (js/shops.js) — por si algún personaje ha arrancado ya
+  // pegado a una (mapa pequeño), su cursor de moneda debe estar activo
+  // desde el primer fotograma, no solo tras el primer movimiento.
+  if (typeof Shops !== "undefined") Shops.refreshAll();
 }
 
 // Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del

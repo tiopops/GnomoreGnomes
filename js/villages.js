@@ -136,6 +136,9 @@ const Villages = {
     spriteEl.alt = "";
     spriteEl.draggable = false;
     el.appendChild(spriteEl);
+    // Sombra proyectada (js/shadows.js) — se sincroniza sola si el sprite
+    // cambia de raza propietaria (spriteFor, más abajo).
+    if (typeof Shadows !== "undefined") Shadows.attach(spriteEl);
 
     // Barra de vida — mismas piezas/clases que Units.updateHpBar espera
     // (unit__hpbar-segment / --filled / --low / --pop), así se reutiliza esa
@@ -353,6 +356,7 @@ const Villages = {
         if (Units.unitAt(row, col)) continue;
         if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
         if (this.at(row, col)) continue; // poblado (el mismo u otro)
+        if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange) continue;

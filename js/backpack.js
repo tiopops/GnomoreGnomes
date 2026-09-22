@@ -167,9 +167,21 @@ const Backpack = {
     overlay.className = "backpack-overlay";
     overlay.addEventListener("click", () => this.closePopup());
 
+    // Pedido explícito (con mockup de aprobación previo, ver captura): "la
+    // x de cerrar...puede sobresalir por la esquina" — para que el rombo
+    // pueda asomar de verdad medio fuera del panel, el clip-path en
+    // banderín (p5-banner) ya NO vive en `panel` (el contenedor exterior,
+    // sin recorte) sino en un hijo aparte (`panelBg`); el botón de cerrar
+    // es HERMANO de panelBg, no su hijo, así el clip-path de panelBg no
+    // llega a recortarlo. Mismo truco que .end-turn-btn separa su rombo
+    // del reloj en su propia capa (ver ese comentario en style.css).
     const panel = document.createElement("div");
-    panel.className = "p5-banner backpack-panel";
+    panel.className = "backpack-panel";
     panel.addEventListener("click", (e) => e.stopPropagation());
+
+    const panelBg = document.createElement("div");
+    panelBg.className = "p5-banner backpack-panel__bg";
+    panel.appendChild(panelBg);
 
     const closeBtn = document.createElement("button");
     closeBtn.className = "backpack-close-btn";
@@ -184,17 +196,17 @@ const Backpack = {
     const title = document.createElement("div");
     title.className = "p5-banner__label backpack-panel__title";
     title.textContent = "MOCHILA";
-    panel.appendChild(title);
+    panelBg.appendChild(title);
 
     const slots = document.createElement("div");
     slots.className = "backpack-slots";
-    panel.appendChild(slots);
+    panelBg.appendChild(slots);
     this._slotsEl = slots;
 
     const desc = document.createElement("div");
     desc.className = "backpack-desc";
     desc.innerHTML = '<p class="backpack-desc__text"></p>';
-    panel.appendChild(desc);
+    panelBg.appendChild(desc);
     this._descEl = desc.querySelector(".backpack-desc__text");
 
     overlay.appendChild(panel);
@@ -260,6 +272,24 @@ const Backpack = {
     this._descEl.textContent = entry ? ITEM_DESCRIPTIONS[entry.itemId] || "" : "";
   },
 
+  // Hueco libre en la mochila ahora mismo — lo consulta Shops (js/shops.js)
+  // antes de dejar comprar nada: "la Tienda Goblin...el objeto pasa a la
+  // mochila del jugador que lo compró" da por hecho que hay sitio.
+  hasFreeSlot() {
+    return this.inventory.length < BACKPACK_SLOT_COUNT;
+  },
+
+  // Añade un objeto directamente al inventario sin pasar por el tablero —
+  // a diferencia de _placeSetarcoirisAt (que coloca sobre una loseta), esto
+  // es para cualquier objeto que entra YA guardado, como una compra en la
+  // Tienda Goblin (js/shops.js). No comprueba hueco libre por su cuenta
+  // (quien llama a esto ya lo hizo con hasFreeSlot, para poder avisar ANTES
+  // de gastar el recurso que sea) — simplemente añade y refresca el icono.
+  addItem(itemId) {
+    this.inventory.push({ uid: this._nextUid++, itemId });
+    this._updateButtonVisibility();
+  },
+
   _useItem(uid) {
     const entry = this.inventory.find((it) => it.uid === uid);
     if (!entry) return;
@@ -292,6 +322,10 @@ const Backpack = {
             // (Villages.at, ver js/villages.js) para no ofrecer un tótem
             // como destino válido de movimiento/ataque.
             if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
+            // Pedido explícito (Tienda Goblin, js/shops.js): "no se pueden
+            // colocar objetos sobre ella" — mismo criterio que un tótem,
+            // justo arriba.
+            if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
             // Igual que cualquier otra mecánica del proyecto: no se ofrece
             // colocar nada sobre una loseta que ni siquiera se ha revelado.
             if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;

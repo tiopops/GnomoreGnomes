@@ -66,6 +66,29 @@ const SettingsMenu = {
     title.textContent = "AJUSTES";
     panel.appendChild(title);
 
+    // Pedido explícito: "haz que se puedan activar/desactivar con un
+    // checkbox del estilo que estamos haciendo" — interruptor de las
+    // sombras proyectadas (js/shadows.js). Estado inicial leído de
+    // Shadows.enabled (ya cargado de localStorage por Shadows.init, que
+    // corre en su propio DOMContentLoaded antes de que el jugador pueda
+    // llegar a abrir este popup).
+    const shadowsBtn = document.createElement("button");
+    shadowsBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
+    const shadowsChecked = typeof Shadows !== "undefined" ? Shadows.enabled : true;
+    shadowsBtn.innerHTML =
+      '<span class="settings-panel__option-main">' +
+      '<i class="ph ph-sun settings-panel__option-icon"></i>' +
+      '<span class="p5-banner__label">Sombras</span>' +
+      "</span>" +
+      `<span class="settings-toggle" data-checked="${shadowsChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
+    shadowsBtn.addEventListener("click", () => {
+      SFX.click();
+      const next = typeof Shadows !== "undefined" ? !Shadows.enabled : true;
+      if (typeof Shadows !== "undefined") Shadows.setEnabled(next);
+      shadowsBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+    });
+    panel.appendChild(shadowsBtn);
+
     const exitBtn = document.createElement("button");
     exitBtn.className = "p5-banner p5-banner--action settings-panel__option";
     exitBtn.innerHTML =
