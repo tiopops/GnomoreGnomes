@@ -4206,3 +4206,83 @@ body.ability-targeting--throw * {
   40% { transform: scale(1.3, 0.6); opacity: 1; }
   100% { transform: scale(0.1, 0.1); opacity: 0; }
 }
+
+/* ---------- Aviso de error al crear la partida (js/newgame-flow.js) ----------
+   Red de seguridad tras el bug reportado "el juego no se abre...se queda
+   asi": si algo revienta a media construcción de la partida (startMatch/
+   resumeMatch), en vez de dejar al jugador mirando una pantalla congelada
+   sin explicación, se muestra este aviso fijo abajo — mismo lenguaje visual
+   que .settings-panel (panel .p5-banner en vertical), pero con acento
+   ROJO en vez del dorado/gris habitual para que se lea claramente como
+   alerta, y SIN overlay oscuro detrás (el jugador debe poder seguir viendo
+   qué pantalla tenía debajo mientras decide qué hacer). Pensado ante todo
+   para poder hacerle una captura de pantalla y mandarla — por eso no
+   desaparece solo ni tiene temporizador, solo el botón "Cerrar". */
+.start-error-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: min(560px, calc(100vw - 40px));
+  padding: 22px 30px;
+  z-index: 2000;
+}
+
+.start-error-banner::after {
+  /* Mismo truco que .settings-panel__option--danger si lo hubiera: el
+     relleno normal de .p5-banner es --p5-tone (gris neutro); aquí se
+     sustituye por un tono rojo oscuro propio, sin tocar la variable
+     global (que usan el resto de paneles del juego). */
+  background: #3a1414;
+}
+
+.start-error-banner__title {
+  color: #ff8a7a;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+.start-error-banner__msg {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+.start-error-banner__stack {
+  position: relative;
+  z-index: 2;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: monospace;
+  font-size: 0.72rem;
+  text-align: center;
+  word-break: break-word;
+}
+
+.start-error-banner__close {
+  position: relative;
+  z-index: 2;
+  margin-top: 6px;
+  padding: 8px 22px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: var(--cursor-pointer);
+  transition: background-color 0.15s ease;
+}
+
+.start-error-banner__close:hover {
+  background: rgba(255, 255, 255, 0.22);
+}

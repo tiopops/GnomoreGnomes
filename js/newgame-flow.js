@@ -99,46 +99,106 @@ function populateOpponentSelect() {
 }
 
 function startMatch({ modeId, raceId, opponents }) {
-  const size = getBoardSize(opponents);
-  const map = generateMap(size);
+  // Bug reportado: "el juego no se abre....se queda asi" — al pulsar "1
+  // rival" el marcador de Puntos de Gloria (Glory.init, dentro de
+  // spawnTestUnits) llegaba a pintarse, pero la pantalla se quedaba
+  // encallada en "elige el número de rivales": la única forma de que eso
+  // pase es que algo lance una excepción a media construcción de la
+  // partida, ANTES de llegar a showScreen("screen-board") — con el juego
+  // así, el jugador se queda mirando una pantalla "congelada" sin ningún
+  // aviso, y yo sin forma de saber qué línea ha fallado en su máquina. Todo
+  // el cuerpo de la función va ahora en un try/catch: si algo revienta, en
+  // vez de quedar a medias se deshace lo poco que se llegó a mostrar
+  // (_recoverFromFailedMatchStart) y se enseña el error EN PANTALLA
+  // (_showStartMatchError) para poder mandarlo por captura.
+  try {
+    const size = getBoardSize(opponents);
+    const map = generateMap(size);
 
-  SaveGame.save({
-    modeId,
-    raceId,
-    opponents,
-    size,
-    tiles: map.tiles,
-    createdAt: Date.now(),
-  });
+    SaveGame.save({
+      modeId,
+      raceId,
+      opponents,
+      size,
+      tiles: map.tiles,
+      createdAt: Date.now(),
+    });
 
-  renderMap(map, document.getElementById("board-tiles"));
-  // Terreno real (js/mapgen.js) — DESPUÉS de renderMap (necesita que los
-  // overlays .tile__terrain-reveal ya existan en el DOM para cachearlos,
-  // igual que Fog.init) y ANTES de spawnTestUnits (que ya necesita poder
-  // consultar TerrainMap.isWalkable para no colocar rivales/gnomos sobre
-  // agua).
-  if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
-  spawnTestUnits(size, raceId);
-  showScreen("screen-board");
-  screenHistory.length = 0;
-  screenHistory.push("main-menu", "screen-board");
-  syncBoardCamera();
+    renderMap(map, document.getElementById("board-tiles"));
+    // Terreno real (js/mapgen.js) — DESPUÉS de renderMap (necesita que los
+    // overlays .tile__terrain-reveal ya existan en el DOM para cachearlos,
+    // igual que Fog.init) y ANTES de spawnTestUnits (que ya necesita poder
+    // consultar TerrainMap.isWalkable para no colocar rivales/gnomos sobre
+    // agua).
+    if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
+    spawnTestUnits(size, raceId);
+    showScreen("screen-board");
+    screenHistory.length = 0;
+    screenHistory.push("main-menu", "screen-board");
+    syncBoardCamera();
 
-  const resumeBtn = document.getElementById("btn-resume-game");
-  if (resumeBtn) resumeBtn.disabled = false;
+    const resumeBtn = document.getElementById("btn-resume-game");
+    if (resumeBtn) resumeBtn.disabled = false;
+  } catch (err) {
+    _recoverFromFailedMatchStart();
+    _showStartMatchError(err);
+  }
 }
 
 function resumeMatch() {
-  const saved = SaveGame.load();
-  if (!saved || !saved.tiles) return;
-  const map = { size: saved.size, tiles: saved.tiles };
-  renderMap(map, document.getElementById("board-tiles"));
-  if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
-  spawnTestUnits(saved.size, saved.raceId);
-  showScreen("screen-board");
-  screenHistory.length = 0;
-  screenHistory.push("main-menu", "screen-board");
-  syncBoardCamera();
+  try {
+    const saved = SaveGame.load();
+    if (!saved || !saved.tiles) return;
+    const map = { size: saved.size, tiles: saved.tiles };
+    renderMap(map, document.getElementById("board-tiles"));
+    if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
+    spawnTestUnits(saved.size, saved.raceId);
+    showScreen("screen-board");
+    screenHistory.length = 0;
+    screenHistory.push("main-menu", "screen-board");
+    syncBoardCamera();
+  } catch (err) {
+    _recoverFromFailedMatchStart();
+    _showStartMatchError(err);
+  }
+}
+
+// Deja la interfaz en un estado limpio tras un arranque de partida fallido
+// — el HUD fijo (marcador de Gloria, botón de ajustes, mochila, pasar
+// turno) vive fuera de #screen-board y se controla a mano (ver
+// showButton/hideButton de cada uno), así que si la construcción de la
+// partida revienta a medias hay que ocultarlo otra vez uno a uno o se
+// queda flotando sobre el menú, como pasaba antes de esta red de
+// seguridad.
+function _recoverFromFailedMatchStart() {
+  if (typeof Glory !== "undefined") Glory.hideHud();
+  if (typeof Turns !== "undefined") Turns.hideButton();
+  if (typeof SettingsMenu !== "undefined") SettingsMenu.hideButton();
+  if (typeof Backpack !== "undefined") Backpack.hideButton();
+}
+
+// Aviso en pantalla del error — mismo lenguaje visual que el resto del
+// juego (.p5-banner), pero SIN depender de ningún módulo de habilidades o
+// combate (podrían ser justo los que han fallado), así que se construye
+// aquí a mano con lo mínimo. Pensado para poder hacerle una captura y
+// mandármela: el mensaje técnico (err.message + primera línea del stack)
+// se queda visible hasta que se cierra a propósito, nunca desaparece solo.
+function _showStartMatchError(err) {
+  console.error("[Gnomore Gnomes] Error al crear la partida:", err);
+  const existing = document.querySelector(".start-error-banner");
+  if (existing) existing.remove();
+
+  const banner = document.createElement("div");
+  banner.className = "p5-banner start-error-banner";
+  const stackLine = err && err.stack ? String(err.stack).split("\n")[1] || "" : "";
+  banner.innerHTML = `
+    <div class="p5-banner__label start-error-banner__title">No se ha podido crear la partida</div>
+    <div class="start-error-banner__msg">${(err && err.message) || String(err)}</div>
+    ${stackLine ? `<div class="start-error-banner__stack">${stackLine.trim()}</div>` : ""}
+    <button class="start-error-banner__close" type="button">Cerrar</button>
+  `;
+  banner.querySelector(".start-error-banner__close").addEventListener("click", () => banner.remove());
+  document.body.appendChild(banner);
 }
 
 // Coloca los 3 tipos de unidad del equipo de la raza elegida, uno junto a
