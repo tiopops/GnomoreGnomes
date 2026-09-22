@@ -81,7 +81,13 @@ function populateOpponentSelect() {
     const label = I18N.t(n === 1 ? "opponents_label" : "opponents_label_plural", { n });
     list.appendChild(
       renderOptionCard({
-        icon: "ph-users-three",
+        // Bug reportado: "el icono de 1 rival deberia ser un usuario, no 3"
+        // — antes era "ph-users-three" fijo para cualquier n. Ahora refleja
+        // de verdad la cantidad: un solo icono de persona para n === 1,
+        // grupo de tres para 2 o más (mismo icono de sobra para cuando en
+        // el futuro haya opciones de más rivales, ver OPPONENT_OPTIONS en
+        // matchsetup.js).
+        icon: n === 1 ? "ph-user" : "ph-users-three",
         title: label,
         onClick: () => {
           matchDraft.opponents = n;
