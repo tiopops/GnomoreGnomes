@@ -134,6 +134,8 @@ const UNIT_TYPES = {
     name: "LanzaGnomos",
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_01.png",
+    machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_goblin_lanzador.png",
+    machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_goblin_lanzador_impacto.png",
     aguante: 2,
     movimiento: 3,
     fuerza: 1,
@@ -163,9 +165,13 @@ const UNIT_TYPES = {
   punoroca: {
     name: "Puñorroca",
     raceId: "colinas_rockntroll",
+    // Los sprites machacagnomos_punoroca(.png/_impacto.png) que había aquí
+    // eran en realidad el goblin verde de LanzaGnomos (capucha roja, puños
+    // envueltos) — se reasignaron a goblin_lanzador, que es a quien
+    // pertenecen de verdad. Puñorroca (el troll azul) no tiene sprites de
+    // machaca/impacto propios subidos todavía, así que usa el de iddle en
+    // esas poses (cascada de Units.machacaSpriteFor/impactSpriteFor).
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_03.png",
-    machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca.png",
-    machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca_impacto.png",
     aguante: 5,
     movimiento: 3,
     fuerza: 5,
