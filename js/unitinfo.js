@@ -233,7 +233,11 @@ const UnitInfo = {
           ability
             ? `<div class="unit-info-ability${unit.abilityUsed ? " unit-info-ability--used" : ""}">
                 <div class="unit-info-ability__header">
-                  <i class="ph ${ability.icon}"></i>
+                  ${
+                    ability.iconImg
+                      ? `<img class="unit-info-ability__icon-img" src="${ability.iconImg}" alt="">`
+                      : `<i class="ph ${ability.icon}"></i>`
+                  }
                   <span class="unit-info-ability__name">${ability.name}</span>
                   ${unit.abilityUsed ? '<span class="unit-info-ability__tag">Ya usada</span>' : ""}
                 </div>

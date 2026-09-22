@@ -68,6 +68,16 @@ const ITEM_TYPES = {
     iconUrl: "assets/iconos/setarcoiris.png",
     hatchRounds: 2, // "hace aparecer un gnomo...en 2 turnos"
   },
+  // Pedido explícito: "añadimos un nuevo objeto a la tienda 'BeVida'.
+  // restaura los puntos de salud al maximo de base del personaje aliado al
+  // que se le da. Cuesta 5 puntos de Gloria" — a diferencia de la
+  // Setarcoiris (se coloca sobre una CASILLA), la BeVida se usa
+  // directamente sobre un PERSONAJE aliado (ver _startGivingBevida más
+  // abajo), así que no tiene hatchRounds ni nada relacionado con el tablero.
+  bevida: {
+    name: "BeVida",
+    iconUrl: "assets/iconos/bevida.png",
+  },
 };
 
 // Editable desde debug/objetos-mochila.html (genera el bloque listo para
@@ -76,6 +86,7 @@ const ITEM_TYPES = {
 // ningún texto bajo el hueco resaltado.
 const ITEM_DESCRIPTIONS = {
   setarcoiris: "La comida favorita de los gnomos. Colócala junto a uno de tus personajes: en dos turnos atraerá a un gnomo hambriento.",
+  bevida: "Un brebaje revitalizante. Dáselo a un personaje aliado (pulsa sobre él en el tablero) para restaurar toda su vida hasta su máximo de base.",
 };
 
 const Backpack = {
@@ -97,6 +108,13 @@ const Backpack = {
   // cancela la colocación en vez de abrir el popup normal.
   _placingUid: null,
 
+  // uid de la BeVida en curso de "dárselo a alguien" (null si no hay
+  // ninguna en curso) — mismo espíritu que _placingUid pero para un objeto
+  // que se usa sobre un PERSONAJE en vez de sobre una casilla (ver
+  // _startGivingBevida más abajo).
+  _givingUid: null,
+  _bevidaGiveHandler: null,
+
   _hasPlayerSelection: false,
 
   _btnEl: null,
@@ -116,6 +134,7 @@ const Backpack = {
     this._nextUid = 1;
     this._selectedUid = null;
     this._placingUid = null;
+    this._givingUid = null;
     this._hasPlayerSelection = false;
     this.closePopup();
     // "inicialmente la mochila aparece vacia salvo con una seta arcoiris,
@@ -150,6 +169,10 @@ const Backpack = {
       this._cancelPlacing();
       return;
     }
+    if (this._givingUid !== null) {
+      this._cancelGivingBevida();
+      return;
+    }
     if (this._overlayEl) return; // ya abierto, nada que hacer (se cierra con la X o clic fuera)
     this.openPopup();
   },
@@ -168,6 +191,12 @@ const Backpack = {
     // devolviendo el objeto al inventario en vez de dejarlo "colgado".
     if (this._placingUid !== null) {
       this._placingUid = null;
+    }
+    // Mismo motivo que la colocación de arriba: si se estaba a medio dar
+    // una BeVida y se pierde la selección, se cancela devolviendo el
+    // objeto en vez de dejarlo "colgado" a mitad de camino.
+    if (this._givingUid !== null) {
+      this._cancelGivingBevida();
     }
     this._updateAnchor();
     this.closePopup();
@@ -338,6 +367,65 @@ const Backpack = {
     if (!entry) return;
     this.closePopup();
     if (entry.itemId === "setarcoiris") this._startPlacingSetarcoiris(uid);
+    else if (entry.itemId === "bevida") this._startGivingBevida(uid);
+  },
+
+  // ---------- BeVida: dársela a un personaje aliado ----------
+  // "restaura los puntos de salud al maximo de base del personaje aliado al
+  // que se le da" (pedido explícito) — a diferencia de la Setarcoiris, esto
+  // no se coloca sobre una casilla: se elige directamente A QUÉ PERSONAJE se
+  // le da, con el mismo patrón de "modo de apuntado + clic en cualquier
+  // parte con capture:true" que ya usa Abilities._startUnitPicking
+  // (js/abilities.js) para elegir objetivo cuando hay varios candidatos —
+  // aquí vive su propia copia porque Backpack es un archivo aparte y el
+  // candidato no tiene por qué estar adyacente a nadie.
+  _startGivingBevida(uid) {
+    this._givingUid = uid;
+    Units.clearRangeOverlays();
+    document.body.classList.add("backpack-giving--bevida");
+    Units.list
+      .filter((u) => u.team === "player")
+      .forEach((u) => u.el.classList.add("unit--giveable-target"));
+    this._bevidaGiveHandler = (e) => this._onBevidaGiveClick(e);
+    window.addEventListener("click", this._bevidaGiveHandler, { capture: true });
+  },
+
+  _cancelGivingBevida() {
+    if (this._givingUid === null) return;
+    this._givingUid = null;
+    document.body.classList.remove("backpack-giving--bevida");
+    Units.list.forEach((u) => u.el.classList.remove("unit--giveable-target"));
+    if (this._bevidaGiveHandler) {
+      window.removeEventListener("click", this._bevidaGiveHandler, { capture: true });
+      this._bevidaGiveHandler = null;
+    }
+    this._restoreNormalRange();
+  },
+
+  _onBevidaGiveClick(e) {
+    const isFixedUi = e.target.closest(
+      ".unit-info-btn, .ability-btn, .gnome-action-btn, .end-turn-btn, .settings-gear-btn, .backpack-btn, .backpack-close-btn, .glory-counter, .unit-info-overlay, .settings-panel"
+    );
+    const unitEl = e.target.closest(".unit");
+    e.preventDefault();
+    e.stopPropagation();
+    const uid = this._givingUid;
+    this._cancelGivingBevida();
+    if (isFixedUi || !unitEl) return; // cancela sin gastar, se puede reintentar
+
+    const target = Units.list.find((u) => u.id === unitEl.dataset.unitId);
+    if (!target || target.team !== "player") return;
+    this._giveBevidaTo(uid, target);
+  },
+
+  _giveBevidaTo(uid, target) {
+    this.inventory = this.inventory.filter((it) => it.uid !== uid);
+    const type = UNIT_TYPES[target.typeId];
+    target.hp = type.aguante;
+    target.maxHp = type.aguante;
+    Units.updateHpBar(target);
+    SFX.itemEaten();
+    Units.spawnFloatingText(target, "¡BEVIDA!", { className: "dmg-popup gnome-points-popup" });
   },
 
   // ---------- Colocación sobre el tablero ----------

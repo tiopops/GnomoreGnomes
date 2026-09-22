@@ -83,6 +83,13 @@ const UNIT_TYPES = {
     // machaca (y ese a su vez con el de iddle) cuando un personaje no lo
     // tiene todavía.
     machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_hombre_arbol_impacto.png",
+    // Sprite de la transformación "Golem de Espinas" (habilidad
+    // Abilities._activateThorns, ver js/abilities.js) — pedido explícito:
+    // "ahora no hace falta que se vuelva de color gris, solo cambia el
+    // sprite, pero anima el personaje cuando se transforme para que quede
+    // epico". Sustituye por completo al sprite normal (spriteUrl) mientras
+    // dura la partida, sin recolor por CSS.
+    espinasUrl: "assets/equipos/MushboomForest/golem_espinas_hombre_arbol.png",
     aguante: 4,
     movimiento: 1,
     fuerza: 3,
@@ -99,6 +106,8 @@ const UNIT_TYPES = {
     name: "SurcaBosques",
     raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_02.png",
+    machacaUrl: "assets/equipos/MushboomForest/machacagnomos_surcabosques.png",
+    machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_surcabosques_impacto.png",
     aguante: 1,
     movimiento: 4,
     fuerza: 1,
@@ -111,6 +120,8 @@ const UNIT_TYPES = {
     name: "TruenoEspora",
     raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_03.png",
+    machacaUrl: "assets/equipos/MushboomForest/machacagnomos_seta_artificiero.png",
+    machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_seta_artificiero_impacto.png",
     aguante: 2,
     movimiento: 2,
     fuerza: 2,
@@ -135,6 +146,8 @@ const UNIT_TYPES = {
     name: "UrgaMentes",
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_02.png",
+    machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_urgamentes.png",
+    machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_urgamentes_impacto.png",
     aguante: 2,
     movimiento: 3,
     fuerza: 2,
@@ -151,6 +164,8 @@ const UNIT_TYPES = {
     name: "Puñorroca",
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_03.png",
+    machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca.png",
+    machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca_impacto.png",
     aguante: 5,
     movimiento: 3,
     fuerza: 5,

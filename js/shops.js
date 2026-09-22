@@ -57,6 +57,10 @@ const SHOP_INTERACT_RANGE = 1; // cuerpo a cuerpo, igual que VILLAGE_ATTACK_RANG
 const SHOP_STOCK_TEMPLATE = [
   { itemId: "setarcoiris", price: 5 },
   { itemId: "setarcoiris", price: 5 },
+  // Pedido explícito: "añadimos un nuevo objeto a la tienda 'BeVida'...
+  // Cuesta 5 puntos de Gloria" (ver ITEM_TYPES.bevida/ITEM_DESCRIPTIONS.bevida
+  // en js/backpack.js).
+  { itemId: "bevida", price: 5 },
 ];
 
 const Shops = {

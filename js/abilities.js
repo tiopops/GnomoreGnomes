@@ -23,36 +23,47 @@ const ABILITIES = {
   hombre_arbol: {
     name: "Golem de Espinas",
     icon: "ph-shield",
+    // Icono real (pedido explícito: "tambien tienes adjunto los iconos para
+    // las habilidades de todos los personajes") — `icon` (Phosphor) se deja
+    // como respaldo, ver _ensureButton/_refreshButton más abajo y
+    // js/unitinfo.js, que usan iconImg si existe y si no caen a `icon`.
+    iconImg: "assets/iconos/golem_espinas.png",
     description:
       "Se cura hasta su vida máxima de base y se envuelve de espinas para el resto de la partida: a partir de ahora, cualquiera que lo golpee se hace 1 punto de daño a sí mismo. Gasta 1 acción. Un solo uso por partida.",
   },
   surcabosques: {
     name: "Visión Lejana",
     icon: "ph-eye",
+    iconImg: "assets/iconos/vision_lejana.png",
     description:
       "Revela una zona cualquiera del mapa (3 casillas alrededor del punto elegido), esté donde esté. Tras activarla, el cursor se convierte en un ojo: el siguiente clic sobre el mapa la usa ahí mismo. Gasta 1 acción. Un solo uso por partida.",
   },
   seta_artificiero: {
     name: "Hongo Trampa",
     icon: "ph-bomb",
+    iconImg: "assets/iconos/hongo_trampa.png",
     description:
       "Coloca una seta-trampa invisible para el enemigo en una casilla adyacente libre. Si una unidad enemiga la pisa, explota: le quita 1 punto de vida y la deja inactiva hasta su siguiente turno. Gasta 1 acción. Un solo uso por partida.",
   },
   urgamentes: {
     name: "Voluntad Quebrada",
     icon: "ph-brain",
+    iconImg: "assets/iconos/voluntad_quebrada.png",
     description:
       "Toma el control total de un personaje enemigo adyacente durante el resto de este turno: se puede mover, atacar, coger/golpear/pasar su gnomo o incluso usar su propia habilidad, como si fuera propio. Gasta 1 acción. Un solo uso por partida.",
   },
   punoroca: {
     name: "Nudillos Rocosos",
     icon: "ph-hand-fist",
+    // Sin iconImg a propósito: no llegó un icono para esta habilidad (solo
+    // se adjuntaron 5 de los 6) — se queda con el Phosphor de siempre.
     description:
       "Golpea y empuja 4 casillas en línea recta a un enemigo adyacente (se detiene en el primer obstáculo); el golpeado queda agotado el siguiente turno. Gasta 1 acción. Un solo uso por partida. Puñorroca es tan bruto que, si no tiene un aliado (cualquiera) justo al lado nada más empezar a andar, da tumbos al azar en vez de ir donde se le indica.",
   },
   goblin_lanzador: {
     name: "Resorte Goblin",
     icon: "ph-hand-grabbing",
+    iconImg: "assets/iconos/resorte_goblin.png",
     description:
       "Agarra a un personaje adyacente (amigo o enemigo, incluso si lleva el gnomo cogido) y lo lanza a cualquier casilla libre dentro de su propia área de movimiento. Gasta 1 acción. Un solo uso por partida.",
   },
@@ -91,7 +102,12 @@ const Abilities = {
     if (this._btn) return;
     const btn = document.createElement("button");
     btn.className = "ability-btn";
-    btn.innerHTML = '<i class="ph ability-btn__icon"></i>';
+    // Icono real (imagen) cuando la habilidad tiene uno (ver ABILITIES
+    // arriba); el Phosphor <i> se queda siempre en el DOM como respaldo
+    // (p.ej. Nudillos Rocosos, que no tiene iconImg) — _refreshButton
+    // decide cuál de los dos se ve.
+    btn.innerHTML =
+      '<i class="ph ability-btn__icon"></i><img class="ability-btn__icon-img" alt="" draggable="false">';
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       this._activate();
@@ -99,6 +115,7 @@ const Abilities = {
     document.body.appendChild(btn);
     this._btn = btn;
     this._iconEl = btn.querySelector(".ability-btn__icon");
+    this._iconImgEl = btn.querySelector(".ability-btn__icon-img");
     this._positionButton();
   },
 
@@ -135,7 +152,17 @@ const Abilities = {
       return;
     }
     this._ensureButton();
-    this._iconEl.className = `ph ${ability.icon} ability-btn__icon`;
+    // Imagen real si la habilidad tiene una (ver ABILITIES); si no, se queda
+    // con el icono Phosphor de siempre (p.ej. Nudillos Rocosos).
+    if (ability.iconImg) {
+      this._iconImgEl.src = ability.iconImg;
+      this._iconImgEl.classList.add("ability-btn__icon-img--visible");
+      this._iconEl.className = "ability-btn__icon";
+    } else {
+      this._iconImgEl.classList.remove("ability-btn__icon-img--visible");
+      this._iconImgEl.removeAttribute("src");
+      this._iconEl.className = `ph ${ability.icon} ability-btn__icon`;
+    }
     this._btn.setAttribute("aria-label", `Usar habilidad: ${ability.name}`);
     this._btn.classList.add("ability-btn--visible");
   },
@@ -200,7 +227,36 @@ const Abilities = {
     Units.updateHpBar(unit);
     unit.thorny = true;
     unit.el.classList.add("unit--thorny");
-    SFX.click();
+
+    // Pedido explícito: "el sprite de la transformacion del golemcorteza a
+    // golem de espinas, ahora no hace falta que se vuelva de color gris,
+    // solo cambia el sprite, pero anima el personaje cuando se transforme
+    // para que quede epico" — sustituye el sprite normal por el de Golem de
+    // Espinas (sin ningún recolor CSS) y reutiliza el MISMO lenguaje visual
+    // de "impacto grande" que ya usa Villages._playEpicSmash/
+    // Abilities._playExplosionFeedback (temblor de cámara + destello blanco
+    // + mensaje grande), en vez de inventar un tercer sistema de feedback
+    // épico por separado.
+    if (type.espinasUrl) unit.spriteEl.src = type.espinasUrl;
+    const viewportEl = document.getElementById("board-viewport");
+    if (viewportEl) {
+      viewportEl.classList.remove("board-viewport--shake");
+      void viewportEl.offsetWidth;
+      viewportEl.classList.add("board-viewport--shake");
+      setTimeout(() => viewportEl.classList.remove("board-viewport--shake"), 420);
+    }
+    this._flashScreen();
+    // Pop de escala/brillo de un solo uso sobre el propio sprite (mismo
+    // patrón toggle-de-clase que .unit__flip--turning, ver css/style.css) —
+    // vive separado del resplandor permanente de .unit--thorny, que no debe
+    // tocarse aquí.
+    unit.el.classList.remove("unit--transforming");
+    void unit.spriteEl.offsetWidth;
+    unit.el.classList.add("unit--transforming");
+    setTimeout(() => unit.el.classList.remove("unit--transforming"), 650);
+
+    SFX.glory();
+    Units.playShake(unit);
     Units.spawnFloatingText(unit, "¡ESPINAS!", { className: "dmg-popup gnome-points-popup" });
     this._consume(unit);
   },
@@ -384,10 +440,10 @@ const Abilities = {
     el.className = "ability-mine";
     const img = document.createElement("img");
     img.className = "ability-mine__sprite";
-    // Sprite provisional (pedido explícito): "faltara el sprite, te lo
-    // pasare mas tarde de momento usa la imagen de setacoiris tintada de
-    // rojo" — el tinte vive en CSS (.ability-mine__sprite, filter).
-    img.src = "assets/iconos/setarcoiris.png";
+    // Sprite real de la seta-trampa (pedido explícito, ya no hace falta el
+    // tinte rojo provisional sobre Setarcoiris — ver css/style.css, donde se
+    // ha quitado el filter de recolor).
+    img.src = "assets/iconos/seta_trampa.png";
     img.alt = "";
     el.appendChild(img);
     Units.container.appendChild(el);
