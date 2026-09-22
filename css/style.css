@@ -107,27 +107,17 @@
        .unit--enemy / .village--enemy más abajo) — pasar el ratón por
        encima ya avisa de que es hostil, sin necesidad de tenerla
        seleccionada como objetivo de ataque.
-     El cursor de diana (crosshair-simple rojo, para cuando SÍ se está
-     apuntando a un objetivo válido con una unidad seleccionada) sigue
-     siendo un tercer cursor aparte y no cambia — ver .unit--targeted /
-     .village.village--targeted más abajo, que gana siempre sobre estos
-     tres por especificidad. */
+     Pedido explícito (pasada posterior, tras probar el juego): "no me ha
+     gustado lo de los iconos phosphor de las monedas [tienda]... cuando
+     haya un enemigo prefiero el puntero de la flecha en rojo, no me gusta
+     el tarjet phosphor que pusimos" — se quitaron el cursor de "diana"
+     (crosshair-simple, para .unit--targeted/.village--targeted al atacar)
+     y el cursor especial de monedas de la Tienda Goblin (--cursor-shop);
+     ambos casos caen ahora en estas mismas tres variables de siempre
+     (rojo si es enemigo, amarillo si es un punto de interés normal). */
   --cursor-default: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 256 256"><polygon points="34,20 34,214 79,172 112,242 148,225 116,155 200,155" fill="%23ffffff" stroke="%23000000" stroke-width="14" stroke-linejoin="round"/></svg>') 4 2, auto;
   --cursor-pointer: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 256 256"><polygon points="34,20 34,214 79,172 112,242 148,225 116,155 200,155" fill="%23ffcf3f" stroke="%23000000" stroke-width="14" stroke-linejoin="round"/></svg>') 4 2, auto;
   --cursor-enemy: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 256 256"><polygon points="34,20 34,214 79,172 112,242 148,225 116,155 200,155" fill="%23ff2d2d" stroke="%23000000" stroke-width="14" stroke-linejoin="round"/></svg>') 4 2, auto;
-  /* Cursor de la Tienda Goblin (js/shops.js) — pedido explícito: "el
-     puntero cambia phospor coins de color amarillo fill al pasar el raton
-     por encima de ella" (con captura del icono real de Phosphor
-     "coins", variante Fill). Mismo trazado SVG real del glifo (extraído
-     de phosphor-icons-web, glyph "coins-fill", viewBox 1024×1024 con el
-     flip vertical de la fuente — mismo procedimiento ya usado para
-     crosshair-simple, ver .unit--targeted más abajo) y el mismo doble
-     trazo negro-detrás/amarillo-delante que el resto de cursores propios
-     con un glifo de relleno compuesto. Solo se usa cuando SÍ hay un
-     personaje del jugador junto a la tienda (.shop--interactive, ver
-     style.css/js/shops.js) — el resto del tiempo la tienda es un punto de
-     interés normal, amarillo como cualquier otro (--cursor-pointer). */
-  --cursor-shop: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 1024 1024"><g transform="matrix(1,0,0,-1,0,896)"><path fill="%23000000" stroke="%23000000" stroke-width="48" stroke-linejoin="round" d="M736 601.72v22.28c0 100.32-151.32 176-352 176s-352-75.68-352-176v-160c0-83.56 105-149.96 256-169.84v-22.16c0-100.32 151.32-176 352-176s352 75.68 352 176v160c0 82.8-101.68 149.28-256 169.72zM224 372.52c-78.36 21.88-128 57.92-128 91.48v56.28c32.64-23.12 76.36-41.76 128-54.28zM544 466c51.64 12.52 95.36 31.16 128 54.28v-56.28c0-33.56-49.64-69.6-128-91.48zM480 180.52c-78.36 21.88-128 57.92-128 91.48v16.68c10.52-0.4 21.16-0.68 32-0.68 15.52 0 30.68 0.52 45.56 1.4 13.044-4.934 29.888-10.094 47.091-14.341l3.349-0.699zM480 359c-28.635-4.455-61.664-7-95.286-7-0.251 0-0.502 0-0.752 0h0.039c-0.212 0-0.463 0-0.714 0-33.623 0-66.651 2.545-98.903 7.453l3.616-0.453v95.16c28.521-3.922 61.48-6.161 94.962-6.161 0.365 0 0.73 0 1.094 0.001h-0.057c0.308 0 0.673-0.001 1.038-0.001 33.482 0 66.441 2.239 98.735 6.575l-3.773-0.414zM736 167c-28.849-4.455-62.127-7-96-7s-67.151 2.545-99.654 7.454l3.654-0.454v95.4c28.732-4.074 61.918-6.4 95.648-6.4 0.124 0 0.248 0 0.371 0h-0.019c0.308 0 0.673-0.001 1.038-0.001 33.482 0 66.441 2.239 98.735 6.575l-3.773-0.414zM928 272c0-33.56-49.64-69.6-128-91.48v93.48c51.64 12.52 95.36 31.16 128 54.28z"/></g><g transform="matrix(1,0,0,-1,0,896)"><path fill="%23ffcf3f" d="M736 601.72v22.28c0 100.32-151.32 176-352 176s-352-75.68-352-176v-160c0-83.56 105-149.96 256-169.84v-22.16c0-100.32 151.32-176 352-176s352 75.68 352 176v160c0 82.8-101.68 149.28-256 169.72zM224 372.52c-78.36 21.88-128 57.92-128 91.48v56.28c32.64-23.12 76.36-41.76 128-54.28zM544 466c51.64 12.52 95.36 31.16 128 54.28v-56.28c0-33.56-49.64-69.6-128-91.48zM480 180.52c-78.36 21.88-128 57.92-128 91.48v16.68c10.52-0.4 21.16-0.68 32-0.68 15.52 0 30.68 0.52 45.56 1.4 13.044-4.934 29.888-10.094 47.091-14.341l3.349-0.699zM480 359c-28.635-4.455-61.664-7-95.286-7-0.251 0-0.502 0-0.752 0h0.039c-0.212 0-0.463 0-0.714 0-33.623 0-66.651 2.545-98.903 7.453l3.616-0.453v95.16c28.521-3.922 61.48-6.161 94.962-6.161 0.365 0 0.73 0 1.094 0.001h-0.057c0.308 0 0.673-0.001 1.038-0.001 33.482 0 66.441 2.239 98.735 6.575l-3.773-0.414zM736 167c-28.849-4.455-62.127-7-96-7s-67.151 2.545-99.654 7.454l3.654-0.454v95.4c28.732-4.074 61.918-6.4 95.648-6.4 0.124 0 0.248 0 0.371 0h-0.019c0.308 0 0.673-0.001 1.038-0.001 33.482 0 66.441 2.239 98.735 6.575l-3.773-0.414zM928 272c0-33.56-49.64-69.6-128-91.48v93.48c51.64 12.52 95.36 31.16 128 54.28z"/></g></svg>') 48 48, pointer;
 }
 
 * {
@@ -910,9 +900,9 @@ h2 {
    una) a propósito: basta con que esta declaración venga DESPUÉS en el
    archivo (como aquí) para ganar en el empate, sin falta de encadenar
    ".unit.unit--enemy" — el mismo patrón que ya usa ".village" más abajo.
-   ".unit--targeted" (más abajo del todo, el cursor de diana al atacar)
-   sigue ganando a esta por venir después también, así que el orden real
-   de prioridad queda: diana > enemigo > amigo/neutral. */
+   Ya no hay un cursor de "diana" aparte para apuntar a atacar (ver nota en
+   :root sobre --cursor-enemy/--cursor-pointer) — al atacar un rival, este
+   mismo rojo sigue mostrándose tal cual. */
 .unit--enemy {
   cursor: var(--cursor-enemy);
 }
@@ -1127,7 +1117,21 @@ h2 {
    Toggle global: Shadows.setEnabled (js/shadows.js) alterna
    body.gg-shadows-off (ver esa regla al final de este bloque) — más
    barato que crear/destruir el <img> de cada sprite cada vez que se toca
-   el checkbox de ajustes. */
+   el checkbox de ajustes.
+
+   Contra-flip (scaleX(var(--facing-scale))): la sombra vive DENTRO de
+   unit__flip, el mismo contenedor que se espeja con scaleX(--facing-scale)
+   al girar el personaje (ver Units._applyFacing más arriba). Sin corregirlo
+   la sombra se espejaba junto con el sprite, invirtiendo su inclinación
+   cada vez que el personaje cambiaba de sentido — un error real, reportado
+   al probar el juego: una sombra de verdad no gira con el personaje, la
+   proyecta una luz fija. Como --facing-scale vale siempre 1 o -1, se
+   hereda del propio unit__flip (custom property, herencia normal de CSS) y
+   se antepone aquí como el ÚLTIMO factor en aplicarse (primero en la
+   lista): el doble scaleX(--facing-scale) · scaleX(--facing-scale) se
+   cancela (±1 al cuadrado = 1), así que en pantalla la sombra queda
+   SIEMPRE con la misma inclinación/dirección, mire el personaje hacia
+   donde mire. */
 .gg-cast-shadow {
   position: absolute;
   left: 0;
@@ -1142,7 +1146,7 @@ h2 {
   z-index: -1;
   -webkit-mask-image: linear-gradient(to top, transparent 0%, rgba(0, 0, 0, 1) 55%);
   mask-image: linear-gradient(to top, transparent 0%, rgba(0, 0, 0, 1) 55%);
-  transform: scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px);
+  transform: scaleX(var(--facing-scale, 1)) scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px);
 }
 
 /* Durante el salto (.unit__sprite--hop, reutilizada tal cual por
@@ -1160,10 +1164,10 @@ h2 {
 }
 
 @keyframes gg-shadow-hop {
-  0% { transform: scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px) scale(1); opacity: 0.32; }
-  35% { transform: scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px) scale(0.7); opacity: 0.14; }
-  70% { transform: scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px) scale(0.88); opacity: 0.24; }
-  100% { transform: scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px) scale(1); opacity: 0.32; }
+  0% { transform: scaleX(var(--facing-scale, 1)) scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px) scale(1); opacity: 0.32; }
+  35% { transform: scaleX(var(--facing-scale, 1)) scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px) scale(0.7); opacity: 0.14; }
+  70% { transform: scaleX(var(--facing-scale, 1)) scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px) scale(0.88); opacity: 0.24; }
+  100% { transform: scaleX(var(--facing-scale, 1)) scaleY(var(--gg-shadow-scale-y, 0.68)) skewX(-28deg) translate(16px, -16px) scale(1); opacity: 0.32; }
 }
 
 .gg-shadows-off .gg-cast-shadow {
@@ -1387,37 +1391,12 @@ h2 {
   text-shadow: 0 0 10px rgba(0, 0, 0, 0.75), 0 0 22px rgba(255, 50, 50, 1);
 }
 
-/* Cursor de diana al pasar por encima de un objetivo atacable directamente
-   (unit--targeted: rival al alcance de Combat; village--targeted: tótem al
-   alcance de Villages con un gnomo en la mano). Pedido explícito (primera
-   pasada): "el icono del puntero al atacar debe ser crosshair" — el cursor
-   nativo del navegador. Pedido explícito (segunda pasada): "el icono del
-   raton de atacar es el phosphor crosshair-simple de color rojo el doble
-   de grande". Pedido explícito (tercera y cuarta pasada, con capturas del
-   icono real de Phosphor): las dos versiones anteriores (líneas cruzando
-   el centro sin círculo; luego círculo con 4 marcas SEPARADAS de él por
-   fuera) seguían sin ser el glifo real — el "crosshair-simple" real es un
-   aro (círculo con grosor) con 4 marcas que nacen DESDE ese aro hacia
-   DENTRO, dejando un hueco vacío en el centro (nunca lo tocan). Esta vez
-   se usa el trazado SVG real del glifo (extraído del propio paquete
-   phosphor-icons-web, glyph "crosshair-simple", unicode U+E1D8; viewBox
-   1024×1024, con el flip vertical que exige el formato de fuente SVG) en
-   vez de redibujarlo a mano, para no volver a fallar la silueta. Mismo
-   doble trazo negro-detrás/rojo-delante que el resto de cursores propios:
-   como aquí el glifo es un relleno compuesto (no líneas sueltas), el
-   "trazo negro" se consigue con fill+stroke negro (agranda la silueta
-   negra por dentro y por fuera de sus bordes) debajo de una copia idéntica
-   rellena solo en rojo. */
-.unit--targeted,
-.village.village--targeted {
-  /* .village.village--targeted (dos clases, no una) a propósito: más abajo
-     en este mismo archivo ".village { cursor: default; }" tiene la MISMA
-     especificidad que un simple ".village--targeted" y gana por venir
-     después en cascada — encadenar las dos clases sube la especificidad
-     para que el cursor de diana gane siempre, venga en el orden que venga
-     el resto de reglas. */
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 1024 1024"><g transform="matrix(1,0,0,-1,0,896)"><path fill="%23000000" stroke="%23000000" stroke-width="48" stroke-linejoin="round" d="M512 864c-229.75 0-416-186.25-416-416s186.25-416 416-416c229.75 0 416 186.25 416 416v0c-0.25 229.65-186.35 415.75-415.976 416h-0.024zM544 97.48v126.52c0 17.673-14.327 32-32 32s-32-14.327-32-32v0-126.52c-169.036 16.113-302.407 149.484-318.41 317.097l-0.11 1.423h126.52c17.673 0 32 14.327 32 32s-14.327 32-32 32v0h-126.52c16.113 169.036 149.484 302.407 317.097 318.41l1.423 0.11v-126.52c0-17.673 14.327-32 32-32s32 14.327 32 32v0 126.52c169.036-16.113 302.407-149.484 318.41-317.097l0.11-1.423h-126.52c-17.673 0-32-14.327-32-32s14.327-32 32-32v0h126.52c-16.113-169.036-149.484-302.407-317.097-318.41l-1.423-0.11z"/></g><g transform="matrix(1,0,0,-1,0,896)"><path fill="%23ff2d2d" d="M512 864c-229.75 0-416-186.25-416-416s186.25-416 416-416c229.75 0 416 186.25 416 416v0c-0.25 229.65-186.35 415.75-415.976 416h-0.024zM544 97.48v126.52c0 17.673-14.327 32-32 32s-32-14.327-32-32v0-126.52c-169.036 16.113-302.407 149.484-318.41 317.097l-0.11 1.423h126.52c17.673 0 32 14.327 32 32s-14.327 32-32 32v0h-126.52c16.113 169.036 149.484 302.407 317.097 318.41l1.423 0.11v-126.52c0-17.673 14.327-32 32-32s32 14.327 32 32v0 126.52c169.036-16.113 302.407-149.484 318.41-317.097l0.11-1.423h-126.52c-17.673 0-32-14.327-32-32s14.327-32 32-32v0h126.52c-16.113-169.036-149.484-302.407-317.097-318.41l-1.423-0.11z"/></g></svg>') 48 48, crosshair;
-}
+/* Ya no hay un cursor de "diana" especial para .unit--targeted/
+   .village--targeted (objetivo atacable al alcance) — pedido explícito
+   tras probar el juego: "no me gusta el tarjet phosphor que pusimos".
+   Ahora el cursor lo decide únicamente si el objetivo es enemigo o no
+   (.unit--enemy/.village--enemy = rojo, resto = amarillo, ver :root), sin
+   ningún caso especial aparte para cuando además está al alcance. */
 
 /* Barrita de vida: solo visible mientras esa unidad concreta está
    seleccionada (amiga o rival), encima de la cabeza.
@@ -3199,9 +3178,13 @@ h2 {
 /* "cuando el personaje de un jugador esta en una casilla adyacente a la
    tienda goblin" (ver Shops.refreshAll, js/shops.js) — mismo patrón de
    especificidad que .unit--enemy/.village--enemy (ver arriba): una sola
-   clase, gana por venir DESPUÉS en el archivo. */
+   clase, gana por venir DESPUÉS en el archivo. Pedido explícito (pasada
+   posterior): "que la tienda muestre el puntero amarillo, no me ha
+   gustado lo de los iconos phosphor de las monedas" — se quitó el cursor
+   especial de monedas (--cursor-shop); ahora usa el mismo amarillo que
+   cualquier otro punto de interés. */
 .shop--interactive {
-  cursor: var(--cursor-shop);
+  cursor: var(--cursor-pointer);
 }
 
 /* ---------- Interfaz de la tienda (popup) ----------
