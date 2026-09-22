@@ -195,6 +195,20 @@ const SPRITE_SCALES = {
   punoroca: 1.5,
 };
 
+// Tamaño de las poses "machaca"/"impacto" (ver machacaUrl/machacaImpactUrl
+// arriba) — pedido explícito: "configurar personajes debe dejar configurar
+// tambien el tamaño de los sprites de cada jugador, dejando al lado el de
+// iddle siempre que es el que esta correcto". Cada archivo de pose tiene su
+// propio recorte/proporción (no todos vienen encajados igual que el
+// iddle), así que un único SPRITE_SCALES ya no basta para las tres poses.
+// SIN entrada = "todavía no se ha afinado por separado, usa el mismo tamaño
+// que la pose de la que depende" (Units.machacaScaleFor/impactScaleFor más
+// abajo hacen ese relleno), igual de opcional que machacaUrl/
+// machacaImpactUrl — así un personaje sin calibrar aún no aparece con un
+// tamaño distinto sin querer.
+const SPRITE_SCALES_MACHACA = {};
+const SPRITE_SCALES_IMPACT = {};
+
 const Units = {
   boardSize: 0,
   container: null,
@@ -406,6 +420,27 @@ const Units = {
     const def = UNIT_TYPES[typeId];
     if (!def) return "";
     return def.machacaImpactUrl || def.machacaUrl || def.spriteUrl || "";
+  },
+
+  // Tamaño (multiplicador del ancho base de 120px) de la pose "machaca" —
+  // mismo relleno en cascada que machacaSpriteFor/impactSpriteFor de arriba
+  // pero para SPRITE_SCALES_MACHACA/SPRITE_SCALES_IMPACT: sin calibrar
+  // todavía por separado, usa el mismo tamaño que ya tenía la pose iddle
+  // (SPRITE_SCALES), así un personaje nuevo nunca cambia de tamaño al
+  // entrar en esta pose hasta que alguien lo afine a propósito desde
+  // debug/configurar-personajes.html.
+  machacaScaleFor(typeId) {
+    const v = SPRITE_SCALES_MACHACA[typeId];
+    return v != null ? v : SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default;
+  },
+
+  // Igual que machacaScaleFor pero para la pose de impacto — sin calibrar,
+  // cae en cascada al tamaño de la pose "machaca" (que a su vez cae en el
+  // de iddle si tampoco esa se ha afinado), igual que hace impactSpriteFor
+  // con las URLs.
+  impactScaleFor(typeId) {
+    const v = SPRITE_SCALES_IMPACT[typeId];
+    return v != null ? v : this.machacaScaleFor(typeId);
   },
 
   _placeInstant(unit) {

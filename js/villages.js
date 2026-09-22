@@ -552,7 +552,15 @@ const Villages = {
     // tanto el sprite del propio personaje como, si sigue con el gnomo
     // enganchado en este instante, la posición calibrada de esa pose (ver
     // GnomeInstance.setAttachPose, gnome.js).
-    if (unit.spriteEl && machacaSrc) unit.spriteEl.src = machacaSrc;
+    if (unit.spriteEl && machacaSrc) {
+      unit.spriteEl.src = machacaSrc;
+      // Cada pose puede tener su propio tamaño calibrado por separado (ver
+      // SPRITE_SCALES_MACHACA/Units.machacaScaleFor, js/units.js y pedido
+      // explícito en debug/configurar-personajes.html) — sin eso, un
+      // personaje con el recorte de esta pose más grande/pequeño que el de
+      // iddle se vería mal encajado en el tablero.
+      unit.spriteEl.style.width = Math.round(120 * Units.machacaScaleFor(typeId)) + "px";
+    }
     if (gnome) gnome.setAttachPose(unit, "machaca");
     unit.el.classList.remove("unit--epic-smash");
     void unit.spriteEl.offsetWidth;
@@ -579,7 +587,10 @@ const Villages = {
     // tiene que aparecer", por eso este cambio de sprite va JUSTO ANTES de
     // Gnome.destroyInstance(gnome) más abajo, no después.
     const impactSrc = typeof Units !== "undefined" ? Units.impactSpriteFor(typeId) : machacaSrc;
-    if (unit.spriteEl && impactSrc) unit.spriteEl.src = impactSrc;
+    if (unit.spriteEl && impactSrc) {
+      unit.spriteEl.src = impactSrc;
+      unit.spriteEl.style.width = Math.round(120 * Units.impactScaleFor(typeId)) + "px";
+    }
     Units.updateHpBar(village);
     Units.spawnFloatingText(village, `-${damage}`, { className: "dmg-popup" });
     Units.spawnFloatingText(village, "¡GOLPE MORTAL!", { className: "dmg-popup gnome-points-popup" });
@@ -610,7 +621,14 @@ const Villages = {
 
     // ---- Fin de la animación: vuelve todo a la normalidad ----
     unit.el.classList.remove("unit--epic-smash");
-    if (unit.spriteEl && idleSrc) unit.spriteEl.src = idleSrc;
+    if (unit.spriteEl && idleSrc) {
+      unit.spriteEl.src = idleSrc;
+      // Devuelve también el tamaño de la pose iddle (SPRITE_SCALES de
+      // siempre) — las dos poses de arriba pueden haber dejado un ancho
+      // distinto puesto a mano.
+      const idleScale = (typeof SPRITE_SCALES !== "undefined" && (SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default)) || 1;
+      unit.spriteEl.style.width = Math.round(120 * idleScale) + "px";
+    }
   },
 
   // Destello blanco de pantalla completa en el instante del impacto — mismo

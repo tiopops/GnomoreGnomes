@@ -100,6 +100,61 @@
   .card__stage-inner .unit { left: 94px; top: 58.5px; }
   .card__stage-inner .unit__hpbar { display: none; }
 
+  /* Poses "machaca"/"impacto" — mismo patrón que .card__stage de arriba
+     (misma loseta real a escala, misma ancla), pero en miniatura y una al
+     lado de la otra, justo debajo del sprite de iddle grande, para poder
+     compararlos mientras se ajusta cada tamaño por separado (pedido
+     explícito: "dejando al lado el de iddle siempre que es el que esta
+     correcto" — el de iddle se queda arriba tal cual, sin tocar). */
+  .card__pose-row {
+    display: flex;
+    gap: 10px;
+  }
+  .card__pose-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .card__pose-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  /* Pedido explícito: "el tamaño de las losetas debe ser el mismo que el de
+     iddle para que el ajuste visual sea mas preciso" — misma loseta EXACTA
+     (188px, igual que .card__stage-inner arriba) en vez de una en miniatura:
+     comparar tamaños a ojo es mucho más fiable con la misma escala real que
+     usa el tablero, no con una versión reducida. Mismo cálculo de margen que
+     .card__stage (440px) por la misma razón: hasta el personaje más grande
+     al tope del slider (2.5x) no debe cortarse por arriba. */
+  .card__pose-stage {
+    position: relative;
+    width: 100%;
+    height: 440px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background:
+      linear-gradient(rgba(244,242,248,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(244,242,248,0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+    border-radius: 8px;
+    overflow: visible;
+  }
+  .card__pose-stage-inner { position: relative; width: 188px; height: 164px; overflow: visible; }
+  .card__pose-stage-inner img.tile-ref { position: absolute; left: 0; top: 0; width: 188px; display: block; }
+  .card__pose-stage-inner .unit { left: 94px; top: 58.5px; }
+  .card__pose-stage-inner .unit__hpbar { display: none; }
+  .card__pose-none {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-style: italic;
+    padding: 4px 0;
+  }
+
   /* Descripción de flavor (UNIT_DESCRIPTIONS en js/unitinfo.js) — misma
      idea que el resto de la tarjeta: editable aquí, con vista previa igual
      de cursiva/apagada que en el popup real (.unit-info-desc). */
@@ -241,17 +296,24 @@
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
     }
 
-    // tuned[typeId] = { scale, aguante, movimiento, fuerza, agilidad, percepcion, description }.
-    // Arranca desde lo que ya haya en el juego real (SPRITE_SCALES/UNIT_TYPES/
+    // tuned[typeId] = { scale, scaleMachaca, scaleImpacto, aguante,
+    // movimiento, fuerza, agilidad, percepcion, description }.
+    // Arranca desde lo que ya haya en el juego real (SPRITE_SCALES/
+    // SPRITE_SCALES_MACHACA/SPRITE_SCALES_IMPACT/UNIT_TYPES/
     // UNIT_DESCRIPTIONS) y lo que se haya guardado localmente encima —
     // reabrir la herramienta o cambiar de equipo nunca pierde ajustes a
-    // medio hacer.
+    // medio hacer. scaleMachaca/scaleImpacto arrancan del mismo relleno en
+    // cascada que usa el juego real (Units.machacaScaleFor/impactScaleFor,
+    // js/units.js) — así por defecto se ve exactamente igual que en
+    // partida, hasta que se toque su slider a propósito.
     const tuned = loadTuned();
     Object.keys(UNIT_TYPES).forEach((typeId) => {
       const saved = tuned[typeId] || {};
       const type = UNIT_TYPES[typeId];
       tuned[typeId] = {
         scale: saved.scale ?? (SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default),
+        scaleMachaca: saved.scaleMachaca ?? Units.machacaScaleFor(typeId),
+        scaleImpacto: saved.scaleImpacto ?? Units.impactScaleFor(typeId),
         aguante: saved.aguante ?? type.aguante,
         movimiento: saved.movimiento ?? type.movimiento,
         fuerza: saved.fuerza ?? type.fuerza,
@@ -318,6 +380,101 @@
       stage.appendChild(stageInner);
       card.appendChild(stage);
 
+      // Otras poses ("machaca"/"impacto", ver machacaUrl/machacaImpactUrl en
+      // js/units.js) — pedido explícito: "configurar personajes debe dejar
+      // configurar tambien el tamaño de los sprites de cada jugador,
+      // dejando al lado el de iddle siempre que es el que esta correcto".
+      // Se deja el sprite de iddle grande arriba tal cual (ese YA está bien
+      // calibrado, no hace falta tocarlo aquí) y debajo, uno al lado del
+      // otro para comparar, dos vistas previas pequeñas con su propio
+      // control de tamaño — solo para las poses que este personaje tenga de
+      // verdad (si no tiene sprite propio de esa pose, Units.machacaSpriteFor/
+      // impactSpriteFor ya caen al de iddle solos, así que no tiene sentido
+      // dejar calibrar un tamaño aparte para algo que en el juego real ni se
+      // va a ver distinto).
+      const poseRow = document.createElement("div");
+      poseRow.className = "card__pose-row";
+      card.appendChild(poseRow);
+
+      function buildPoseColumn(poseKey, label, spriteUrl, scaleField) {
+        const col = document.createElement("div");
+        col.className = "card__pose-col";
+
+        const colLabel = document.createElement("div");
+        colLabel.className = "card__pose-label";
+        colLabel.textContent = label;
+        col.appendChild(colLabel);
+
+        const poseStage = document.createElement("div");
+        poseStage.className = "card__pose-stage";
+        const poseInner = document.createElement("div");
+        poseInner.className = "card__pose-stage-inner";
+        const poseTile = document.createElement("img");
+        poseTile.className = "tile-ref";
+        poseTile.src = "../assets/losetas/hierba_01.png";
+        poseTile.alt = "";
+        poseInner.appendChild(poseTile);
+        const poseUnitEl = document.createElement("div");
+        poseUnitEl.className = "unit unit--player";
+        const poseFlipEl = document.createElement("div");
+        poseFlipEl.className = "unit__flip";
+        const poseSpriteEl = document.createElement("img");
+        poseSpriteEl.className = "unit__sprite";
+        poseSpriteEl.src = "../" + spriteUrl;
+        poseSpriteEl.draggable = false;
+        poseSpriteEl.alt = "";
+        poseSpriteEl.style.width = Math.round(120 * v[scaleField]) + "px";
+        poseFlipEl.appendChild(poseSpriteEl);
+        poseUnitEl.appendChild(poseFlipEl);
+        poseInner.appendChild(poseUnitEl);
+        poseStage.appendChild(poseInner);
+        col.appendChild(poseStage);
+
+        const row = document.createElement("div");
+        row.className = "card__slider-row";
+        const lbl = document.createElement("label");
+        lbl.textContent = "Tamaño (" + label + ")";
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = "0.4";
+        slider.max = "2.5";
+        slider.step = "0.05";
+        slider.value = String(v[scaleField]);
+        const valueEl = document.createElement("span");
+        valueEl.className = "value";
+        const renderValue = () => Number(slider.value).toFixed(2) + "x";
+        valueEl.textContent = renderValue();
+        row.appendChild(lbl);
+        row.appendChild(slider);
+        row.appendChild(valueEl);
+        col.appendChild(row);
+        slider.addEventListener("input", () => {
+          const num = Number(slider.value);
+          v[scaleField] = num;
+          valueEl.textContent = renderValue();
+          poseSpriteEl.style.width = Math.round(120 * num) + "px";
+          saveTuned(tuned);
+          updateOutput();
+        });
+
+        poseRow.appendChild(col);
+      }
+
+      const machacaUrl = Units.machacaSpriteFor(typeId);
+      const impactUrl = Units.impactSpriteFor(typeId);
+      if (machacaUrl && machacaUrl !== type.spriteUrl) {
+        buildPoseColumn("machaca", "machaca", machacaUrl, "scaleMachaca");
+      }
+      if (impactUrl && impactUrl !== machacaUrl) {
+        buildPoseColumn("impacto", "impacto", impactUrl, "scaleImpacto");
+      }
+      if (poseRow.children.length === 0) {
+        const note = document.createElement("div");
+        note.className = "card__pose-none";
+        note.textContent = "Este personaje todavía no tiene sprites propios de machaca/impacto — usa el de iddle en el juego real, nada que calibrar aquí.";
+        poseRow.appendChild(note);
+      }
+
       // Descripción de flavor — debajo del sprite (pedido explícito), igual
       // que en el popup real (ver .unit-info-desc en css/style.css).
       const descLabel = document.createElement("div");
@@ -369,7 +526,7 @@
         });
       }
 
-      addSlider("scale", "Tamaño", 0.4, 2.5, 0.05, 2, "x");
+      addSlider("scale", "Tamaño (iddle)", 0.4, 2.5, 0.05, 2, "x");
 
       // Estadísticas: misma fila de 5 "pips" que el popup real de
       // js/unitinfo.js (statRow), pero editable — clic en un pip la fija a
@@ -448,6 +605,8 @@
       resetBtn.addEventListener("click", () => {
         tuned[typeId] = {
           scale: SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default,
+          scaleMachaca: Units.machacaScaleFor(typeId),
+          scaleImpacto: Units.impactScaleFor(typeId),
           aguante: type.aguante,
           movimiento: type.movimiento,
           fuerza: type.fuerza,
@@ -477,6 +636,28 @@
         `  default: ${SPRITE_SCALES.default},`,
       ];
       typeIds.forEach((typeId) => lines.push(`  ${typeId}: ${tuned[typeId].scale},`));
+      lines.push("};");
+      lines.push("");
+      // Solo los personajes que de verdad tienen sprite propio de esa pose
+      // (ver machacaUrl/machacaImpactUrl en UNIT_TYPES) — igual que hace el
+      // propio juego, no tiene sentido calibrar aparte un tamaño para una
+      // pose que en partida real cae al sprite de iddle.
+      lines.push("// --- js/units.js — SPRITE_SCALES_MACHACA (solo quien tiene machacaUrl propio) ---");
+      lines.push("const SPRITE_SCALES_MACHACA = {");
+      typeIds.forEach((typeId) => {
+        const type = UNIT_TYPES[typeId];
+        if (Units.machacaSpriteFor(typeId) === type.spriteUrl) return;
+        lines.push(`  ${typeId}: ${tuned[typeId].scaleMachaca},`);
+      });
+      lines.push("};");
+      lines.push("");
+      lines.push("// --- js/units.js — SPRITE_SCALES_IMPACT (solo quien tiene machacaImpactUrl propio) ---");
+      lines.push("const SPRITE_SCALES_IMPACT = {");
+      typeIds.forEach((typeId) => {
+        const type = UNIT_TYPES[typeId];
+        if (Units.impactSpriteFor(typeId) === Units.machacaSpriteFor(typeId)) return;
+        lines.push(`  ${typeId}: ${tuned[typeId].scaleImpacto},`);
+      });
       lines.push("};");
       lines.push("");
       lines.push("// --- js/units.js — estadísticas (aguante/movimiento/fuerza/agilidad/percepcion) por personaje ---");
