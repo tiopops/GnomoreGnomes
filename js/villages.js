@@ -266,7 +266,15 @@ const Villages = {
   // del totem solo funciona cuando un jugador esta en la casilla de
   // detras del mismo, es decir la adyacente hacia arriba a la que esta
   // plantado el totem". Solo UNA loseta cuenta como "detrás" — no
-  // cualquier solape visual. En la proyección isométrica de este proyecto
+  // cualquier solape visual.
+  // Pedido explícito (v3, revierte la exclusión de rivales de la v2): "si
+  // un enemigo esta detras de un totem...debe hacerse transparente de la
+  // misma manera que ya lo hace para los jugadores aliados, para poder
+  // interactuar con el, por ejemplo para pegarle" — ya no importa el
+  // equipo de quien se esconde, solo que sea una unidad YA VISIBLE (no
+  // oculta por niebla, ver el filtro de abajo): un rival visible detrás de
+  // un tótem debe poder atacarse igual que uno propio debe poder
+  // seleccionarse. En la proyección isométrica de este proyecto
   // (ver getTileTopLeft en mapgen.js: x=(col-row)*halfW, y=(col+row)*halfH)
   // la loseta que queda justo ARRIBA en pantalla, sin desplazamiento
   // horizontal, es (row-1, col-1) — la fila Y la columna bajan a la vez
@@ -288,7 +296,6 @@ const Villages = {
       }
       const behindUnit = Units.list.find(
         (unit) =>
-          unit.team === "player" &&
           unit.row === village.row - 1 &&
           unit.col === village.col - 1 &&
           unit.el &&

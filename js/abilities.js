@@ -73,7 +73,7 @@ const Abilities = {
   onDeselect() {
     this._currentUnit = null;
     this._cancelTargeting();
-    this._cancelThrowPicking();
+    this._cancelUnitPicking();
     this._hideButton();
   },
 
@@ -483,20 +483,45 @@ const Abilities = {
   _mindControlled: null, // { unitId, originalTeam }
 
   _activateMindControl(unit) {
-    const target = Units.list.find(
-      (u) =>
-        u.team !== unit.team &&
-        Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <= 1 &&
-        (typeof Fog === "undefined" || !Fog.isFogged(u.row, u.col))
-    );
-    if (!target) return; // no hay ningún rival adyacente, no se gasta la habilidad
+    // Pedido explícito: "todas las habilidades deben dejar hacer esto"
+    // (elegir objetivo cuando hay varios) — antes se tomaba siempre el
+    // PRIMER rival adyacente encontrado (Units.list.find), sin dejar elegir.
+    const isValidTarget = (u) =>
+      u.team !== unit.team &&
+      Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <= 1 &&
+      (typeof Fog === "undefined" || !Fog.isFogged(u.row, u.col));
+    const targets = Units.list.filter(isValidTarget);
+    if (targets.length === 0) return; // no hay ningún rival adyacente visible, no se gasta la habilidad
+    if (targets.length === 1) {
+      this._resolveMindControl(unit, targets[0]);
+    } else {
+      this._startUnitPicking(unit, {
+        cursorClass: "ability-targeting--mind",
+        filter: isValidTarget,
+        onPick: (target) => this._resolveMindControl(unit, target),
+      });
+    }
+  },
 
+  _resolveMindControl(unit, target) {
     this._mindControlled = { unitId: target.id, originalTeam: target.team };
     target.el.classList.remove(`unit--${target.team}`);
     target.team = unit.team;
     target.el.classList.add(`unit--${unit.team}`);
     target.el.classList.add("unit--mind-controlled");
-    if (typeof Turns !== "undefined") Turns.actionsUsed[target.id] = 0;
+    // Pedido explícito: "la habilidad del urgamentes maneja una unica
+    // accion del enemigo, no dos...imagina que el enemigo tiene el
+    // gnomo...el urgamentes se hacerca y le hace control mental. entonces
+    // hace que el enemigo le pase el gnomo a uno del equipo amigo" — antes
+    // se le daban las 2 acciones normales de un turno entero
+    // (Turns.actionsUsed = 0); ahora se le deja solo con UNA disponible,
+    // suficiente para una sola orden (mover, atacar, coger/golpear/pasar el
+    // gnomo o su propia habilidad), marcándolo como si ya hubiera gastado
+    // la primera de las dos.
+    if (typeof Turns !== "undefined") {
+      Turns.actionsUsed[target.id] = TURNS_MAX_ACTIONS - 1;
+      Turns._applyExhaustedClass(target);
+    }
 
     SFX.click();
     Units.spawnFloatingText(target, "¡CONTROLADO!", { className: "dmg-popup gnome-points-popup" });
@@ -532,12 +557,27 @@ const Abilities = {
   // obstáculo, ver Combat.pushBack para más detalle de por qué se hace
   // paso a paso en vez de en bloque.
 
-  async _activateKnockback(unit) {
-    const target = Units.list.find(
-      (u) => u.team !== unit.team && Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <= 1
-    );
-    if (!target) return; // no hay ningún rival adyacente, no se gasta la habilidad
+  _activateKnockback(unit) {
+    // Pedido explícito: "la habilidad especial de puño roca debe dejar
+    // elegir al objetivo, si hay varios...todas las habilidades deben
+    // dejar hacer esto en este caso en concreto" — antes se tomaba siempre
+    // el PRIMER rival adyacente encontrado, sin dejar elegir.
+    const isValidTarget = (u) =>
+      u.team !== unit.team && Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <= 1;
+    const targets = Units.list.filter(isValidTarget);
+    if (targets.length === 0) return; // no hay ningún rival adyacente, no se gasta la habilidad
+    if (targets.length === 1) {
+      this._resolveKnockback(unit, targets[0]);
+    } else {
+      this._startUnitPicking(unit, {
+        cursorClass: "ability-targeting--punch",
+        filter: isValidTarget,
+        onPick: (target) => this._resolveKnockback(unit, target),
+      });
+    }
+  },
 
+  async _resolveKnockback(unit, target) {
     Units.clearRangeOverlays();
     Units.faceTowardsTile(unit, target.row, target.col);
     this._consume(unit);
@@ -615,45 +655,66 @@ const Abilities = {
   // que viaja solo con él sin que esta habilidad tenga que saber que existe.
 
   _activateThrow(unit) {
-    const adjacent = Units.list.filter(
-      (u) => u.id !== unit.id && Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <= 1
-    );
+    const isAdjacent = (u) => u.id !== unit.id && Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <= 1;
+    const adjacent = Units.list.filter(isAdjacent);
     if (adjacent.length === 0) return; // no hay nadie al lado, no se gasta la habilidad
     if (adjacent.length === 1) {
       this._startThrowDestination(unit, adjacent[0]);
     } else {
-      this._startThrowPicking(unit);
+      this._startUnitPicking(unit, {
+        cursorClass: "ability-targeting--throw",
+        filter: isAdjacent,
+        onPick: (target) => this._startThrowDestination(unit, target),
+      });
     }
   },
 
-  // Modo de apuntado para elegir A QUIÉN se agarra, solo cuando hay más de
-  // un adyacente posible — mismas reglas de cancelado que Visión Lejana
-  // (clic en icono/UI fija o unidad propia cancela sin gastar), pero aquí
-  // un clic válido es sobre CUALQUIER unidad (propia o rival) adyacente.
-  _startThrowPicking(unit) {
+  // ---------- Elegir A QUIÉN se aplica una habilidad, cuando hay más de un
+  // objetivo posible ----------
+  // Pedido explícito: "todas las habilidades deben dejar hacer esto" (elegir
+  // el objetivo cuando hay varios) — antes solo Resorte Goblin (Lanzamiento)
+  // lo hacía, con su propio código; ahora es un único mecanismo compartido
+  // (mismo patrón que _startVisionTargeting: cursor propio + clic-en-
+  // cualquier-parte con capture:true) parametrizado con un filtro (quién
+  // cuenta como objetivo válido para ESA habilidad en concreto: cualquier
+  // adyacente para Lanzamiento, solo rivales adyacentes para Nudillos
+  // Rocosos/Voluntad Quebrada) y un callback (qué hacer con el objetivo
+  // elegido). Mismas reglas de cancelado que Visión Lejana: un clic en
+  // icono/UI fija o en una unidad que no cumple el filtro cancela sin
+  // gastar la habilidad, se puede reintentar.
+  _startUnitPicking(unit, { cursorClass, filter, onPick }) {
     if (this._targetingUnit) return;
     this._targetingUnit = unit;
-    document.body.classList.add("ability-targeting--throw");
-    this._throwPickHandler = (e) => this._onThrowPickClick(e, unit);
-    window.addEventListener("click", this._throwPickHandler, { capture: true });
+    // "cuando se da a elegir casillas para habilidades, las de movimiento
+    // se ocultan, esto ocurre para todos" — aplica igual eligiendo una
+    // UNIDAD objetivo, no solo una casilla: el radio normal confundiría con
+    // quién se puede elegir.
+    Units.clearRangeOverlays();
+    document.body.classList.add(cursorClass);
+    this._pickCursorClass = cursorClass;
+    this._pickHandler = (e) => this._onUnitPickClick(e, unit, filter, onPick);
+    window.addEventListener("click", this._pickHandler, { capture: true });
   },
 
-  _cancelThrowPicking() {
-    if (!this._throwPickHandler) return;
+  _cancelUnitPicking() {
+    if (!this._pickHandler) return;
+    const unit = this._targetingUnit;
     this._targetingUnit = null;
-    document.body.classList.remove("ability-targeting--throw");
-    window.removeEventListener("click", this._throwPickHandler, { capture: true });
-    this._throwPickHandler = null;
+    if (this._pickCursorClass) document.body.classList.remove(this._pickCursorClass);
+    this._pickCursorClass = null;
+    window.removeEventListener("click", this._pickHandler, { capture: true });
+    this._pickHandler = null;
+    this._restoreNormalRange(unit);
   },
 
-  _onThrowPickClick(e, unit) {
+  _onUnitPickClick(e, unit, filter, onPick) {
     const isFixedUi = e.target.closest(
       ".unit-info-btn, .ability-btn, .gnome-action-btn, .end-turn-btn, .settings-gear-btn, .backpack-btn, .backpack-close-btn, .glory-counter, .unit-info-overlay, .settings-panel"
     );
     const unitEl = e.target.closest(".unit");
     e.preventDefault();
     e.stopPropagation();
-    this._cancelThrowPicking();
+    this._cancelUnitPicking();
     if (isFixedUi || !unitEl) return; // cancela sin gastar, se puede reintentar
 
     // dataset.unitId solo lo llevan las unidades DE VERDAD (Units.spawnUnit)
@@ -661,10 +722,8 @@ const Abilities = {
     // posicionamiento (ver villages.js/shops.js) pero nunca vive en
     // Units.list, así que el find() de abajo ya los descarta solo.
     const target = Units.list.find((u) => u.id === unitEl.dataset.unitId);
-    const isAdjacent =
-      target && target.id !== unit.id && Math.max(Math.abs(target.row - unit.row), Math.abs(target.col - unit.col)) <= 1;
-    if (!isAdjacent) return;
-    this._startThrowDestination(unit, target);
+    if (!target || !filter(target)) return;
+    onPick(target);
   },
 
   // Círculos de destino (mismo estilo que Movement.showFor) dentro del
@@ -766,7 +825,7 @@ const Abilities = {
     this._mindControlled = null;
     this._currentUnit = null;
     this._cancelTargeting();
-    this._cancelThrowPicking();
+    this._cancelUnitPicking();
     Units.clearRangeOverlays();
     this._hideButton();
   },

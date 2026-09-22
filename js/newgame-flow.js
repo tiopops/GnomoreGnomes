@@ -131,11 +131,12 @@ function startMatch({ modeId, raceId, opponents }) {
     // consultar TerrainMap.isWalkable para no colocar rivales/gnomos sobre
     // agua).
     if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
-    spawnTestUnits(size, raceId);
+    const { playerSpawnSpots } = spawnTestUnits(size, raceId);
     showScreen("screen-board");
     screenHistory.length = 0;
     screenHistory.push("main-menu", "screen-board");
     syncBoardCamera();
+    _playInitialFogReveal(playerSpawnSpots);
 
     const resumeBtn = document.getElementById("btn-resume-game");
     if (resumeBtn) resumeBtn.disabled = false;
@@ -152,11 +153,12 @@ function resumeMatch() {
     const map = { size: saved.size, tiles: saved.tiles };
     renderMap(map, document.getElementById("board-tiles"));
     if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
-    spawnTestUnits(saved.size, saved.raceId);
+    const { playerSpawnSpots } = spawnTestUnits(saved.size, saved.raceId);
     showScreen("screen-board");
     screenHistory.length = 0;
     screenHistory.push("main-menu", "screen-board");
     syncBoardCamera();
+    _playInitialFogReveal(playerSpawnSpots);
   } catch (err) {
     _recoverFromFailedMatchStart();
     _showStartMatchError(err);
@@ -255,14 +257,21 @@ function spawnTestUnits(size, raceId) {
   // necesita cachear.
   if (typeof Fog !== "undefined") Fog.init(size, boardTiles);
 
+  // Pedido explícito: "puedes hacer que se precargue la partida antes de
+  // mostrarla?...la niebla ocupada por los jugadores desaparece de golpe"
+  // — el revelado inicial (Fog.revealInitial) YA NO se dispara aquí, en el
+  // mismo instante de JS en que se coloca cada personaje: se anota su
+  // casilla y es quien llama a spawnTestUnits (startMatch/resumeMatch)
+  // quien decide CUÁNDO revelarla de verdad, después de que el tablero ya
+  // esté visible (ver _playInitialFogReveal más abajo) — así el jugador
+  // llega a ver primero la partida entera ya montada, cubierta de niebla,
+  // y la revelación es un momento aparte, no algo que se pierde en el
+  // mismo fotograma en que aparece el tablero.
+  const playerSpawnSpots = [];
   finalRoster.forEach((typeId, i) => {
     const spot = spawnSpots[i] || spawnSpots[spawnSpots.length - 1];
     Units.spawnTestUnit(spot.row, spot.col, typeId);
-    // Revelado inicial FIJO alrededor de cada personaje del jugador (pedido
-    // explícito: "cuando inicia el juego 2 losetas alrededor de cada
-    // personaje de radio están reveladas") — NO se revela nada alrededor
-    // del rival: la niebla es la del jugador, no la suya.
-    if (typeof Fog !== "undefined") Fog.revealInitial(spot.row, spot.col);
+    playerSpawnSpots.push(spot);
   });
 
   // El equipo rival se coloca en su propio bucle (roster independiente del
@@ -357,6 +366,28 @@ function spawnTestUnits(size, raceId) {
   // pegado a una (mapa pequeño), su cursor de moneda debe estar activo
   // desde el primer fotograma, no solo tras el primer movimiento.
   if (typeof Shops !== "undefined") Shops.refreshAll();
+
+  return { playerSpawnSpots };
+}
+
+// Dispara el revelado inicial de niebla alrededor de cada personaje del
+// jugador DESPUÉS de que el tablero ya es visible (ver startMatch/
+// resumeMatch) — pedido explícito: "que se precargue la partida antes de
+// mostrarla...la niebla desaparece de golpe, un caos que no queda bonito".
+// Un pequeño respiro inicial (deja notarse el tablero ya montado antes de
+// que pase nada) y un personaje DETRÁS de otro, no los 3 a la vez, para
+// que cada zona se sienta como su propio momento de descubrimiento en vez
+// de una única nube gigante disipándose de golpe.
+const FOG_REVEAL_START_DELAY_MS = 260;
+const FOG_REVEAL_STAGGER_MS = 260;
+
+function _playInitialFogReveal(playerSpawnSpots) {
+  if (typeof Fog === "undefined" || !playerSpawnSpots) return;
+  playerSpawnSpots.forEach((spot, i) => {
+    setTimeout(() => {
+      Fog.revealInitial(spot.row, spot.col);
+    }, FOG_REVEAL_START_DELAY_MS + i * FOG_REVEAL_STAGGER_MS);
+  });
 }
 
 // Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del
