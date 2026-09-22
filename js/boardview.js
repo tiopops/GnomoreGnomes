@@ -291,9 +291,23 @@ const BoardView = {
       // segunda barrera). preventDefault() en el propio mousedown ataja el
       // problema de raíz: nunca llega a iniciarse esa selección.
       e.preventDefault();
-      this._dragState = { lastX: e.clientX, lastY: e.clientY };
+      this._dragState = { lastX: e.clientX, lastY: e.clientY, startX: e.clientX, startY: e.clientY };
       vp.classList.add("dragging");
     });
+
+    // Bug reportado: "a veces seleccionar un jugador falla...hago clic
+    // sobre el sprite y no lo escoge" — antes _dragMoved se marcaba a true
+    // con el primer mousemove por mínimo que fuera (incluso 1px), algo que
+    // pasa constantemente en un clic real y quieto (temblor natural de la
+    // mano, más aún con trackpad); eso bastaba para que el bloqueo de
+    // abajo (pensado solo para un arrastre de cámara de verdad) tratara
+    // cualquier clic normal como si fuera el final de un arrastre y lo
+    // anulara entero, incluso cayendo justo encima de un personaje. Ahora
+    // hace falta superar un pequeño margen de tolerancia (en píxeles de
+    // pantalla, medido desde el propio mousedown, no paso a paso) antes de
+    // considerarlo un arrastre real — un clic con temblor normal nunca lo
+    // alcanza, un arrastre de cámara de verdad lo supera enseguida.
+    const DRAG_THRESHOLD_PX = 4;
 
     window.addEventListener("mousemove", (e) => {
       if (!this._dragState) return;
@@ -309,9 +323,14 @@ const BoardView = {
       // disparando ese "click" nativo (mismo elemento en mousedown y
       // mouseup), así que sin esta marca cualquier arrastre de cámara
       // deseleccionaba al personaje como si hubiera sido un clic en vacío.
-      // Se marca aquí (en el primer movimiento real, no en el mousedown)
-      // para que un clic normal sin arrastre no active nunca este bloqueo.
-      this._dragMoved = true;
+      // Solo se marca cuando el desplazamiento TOTAL desde el mousedown
+      // (no el de este solo frame) supera el margen de tolerancia de
+      // arriba — ver DRAG_THRESHOLD_PX.
+      if (!this._dragMoved) {
+        const totalDx = e.clientX - this._dragState.startX;
+        const totalDy = e.clientY - this._dragState.startY;
+        if (Math.hypot(totalDx, totalDy) > DRAG_THRESHOLD_PX) this._dragMoved = true;
+      }
       this._panBy(dx, dy);
     });
 
@@ -345,7 +364,7 @@ const BoardView = {
       (e) => {
         if (e.touches.length === 1) {
           const t = e.touches[0];
-          this._touchState = { mode: "pan", lastX: t.clientX, lastY: t.clientY };
+          this._touchState = { mode: "pan", lastX: t.clientX, lastY: t.clientY, startX: t.clientX, startY: t.clientY };
         } else if (e.touches.length === 2) {
           const [t1, t2] = e.touches;
           this._touchState = {
@@ -371,7 +390,15 @@ const BoardView = {
           const dy = t.clientY - this._touchState.lastY;
           this._touchState.lastX = t.clientX;
           this._touchState.lastY = t.clientY;
-          this._dragMoved = true; // mismo bloqueo que el arrastre con ratón, ver mousemove arriba
+          // Mismo margen de tolerancia que el arrastre con ratón (ver
+          // DRAG_THRESHOLD_PX más arriba) — un toque quieto con el dedo
+          // también tiembla un poco, no cualquier movimiento cuenta como
+          // arrastre real.
+          if (!this._dragMoved) {
+            const totalDx = t.clientX - this._touchState.startX;
+            const totalDy = t.clientY - this._touchState.startY;
+            if (Math.hypot(totalDx, totalDy) > DRAG_THRESHOLD_PX) this._dragMoved = true;
+          }
           this._panBy(dx, dy);
         } else if (this._touchState.mode === "pinch" && e.touches.length === 2) {
           const [t1, t2] = e.touches;
