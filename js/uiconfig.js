@@ -45,8 +45,15 @@ const UI_LAYOUT = {
   // Hacia arriba sobra pantalla de sobra, así que el abanico se inclina
   // más hacia arriba (startAngle más negativo) que hacia abajo (endAngle
   // pequeño), mientras se sigue viendo como un semicírculo a la derecha.
+  // hitSize/passSize por separado (pedido explícito: "quiero que se pueda
+  // ajustar de manera individual el tamaño de los botones de habilidades
+  // normales y especiales desde debug") — antes un único "size" compartido
+  // por golpear y pasar; radius/startAngle/endAngle (la POSICIÓN del
+  // semicírculo) se quedan compartidos porque nadie pidió tocar eso, solo
+  // el tamaño de cada botón por separado.
   actionButtons: {
-    size: 51,
+    hitSize: 51,
+    passSize: 51,
     radius: 92,
     startAngle: -34,
     endAngle: 11,
@@ -59,8 +66,13 @@ const UI_LAYOUT = {
   // habilidad sin gastar al mismo tiempo. Hacia arriba porque, como ya
   // explica actionButtons más arriba, hacia abajo apenas queda margen
   // antes del borde de la pantalla.
+  // size a 64 (subido desde 51, pedido explícito: "los iconos de las
+  // habilidades especiales siguen siendo pequeños respecto al de las
+  // habilidades normales") — ahora calibrable a mano desde
+  // debug/calibrar-char.html (sección "Botón de habilidad especial"), que
+  // genera este mismo bloque listo para pegar si hace falta ajustarlo más.
   abilityButton: {
-    size: 51,
+    size: 64,
     radius: 92,
     angle: -55,
   },

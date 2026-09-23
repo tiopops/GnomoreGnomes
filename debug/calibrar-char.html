@@ -245,10 +245,39 @@
         <input type="range" id="btnEnd" min="0" max="90" step="1" value="11">
       </div>
       <div class="control">
-        <label for="btnSize">Tamaño de cada botón — <span class="value" id="btnSizeVal">51</span> px</label>
-        <input type="range" id="btnSize" min="30" max="90" step="1" value="51">
+        <label for="btnHitSize">Tamaño de golpear — <span class="value" id="btnHitSizeVal">51</span> px</label>
+        <input type="range" id="btnHitSize" min="30" max="120" step="1" value="51">
       </div>
-      <span class="hint">0° = justo a la derecha del círculo principal. Negativo = arriba, positivo = abajo.</span>
+      <div class="control">
+        <label for="btnPassSize">Tamaño de pasar — <span class="value" id="btnPassSizeVal">51</span> px</label>
+        <input type="range" id="btnPassSize" min="30" max="120" step="1" value="51">
+      </div>
+      <span class="hint">0° = justo a la derecha del círculo principal. Negativo = arriba, positivo = abajo. Radio y ángulos son compartidos (posición del abanico); el tamaño de cada botón ahora es independiente.</span>
+
+      <!-- Pedido explícito: "la habilidad especial de los jugadores
+           pertenece al grupo de habilidades como pegar al gnomo o pasar,
+           debe ser configurable desde debug también" — hasta ahora esta
+           herramienta solo calibraba actionButtons (golpear/pasar,
+           js/gnome.js); el botón de habilidad especial (js/abilities.js)
+           vive en su PROPIO ángulo de UI_LAYOUT (abilityButton, un solo
+           botón en vez de un abanico de dos) así que se calibra aparte,
+           con sus mismos tres números (radio/ángulo/tamaño) y su propia
+           vista previa en dorado para que se vea igual que en la partida
+           real (color --accent dorado del botón, ver .ability-btn). -->
+      <div class="section-title">Botón de habilidad especial</div>
+      <div class="control">
+        <label for="abilRadius">Distancia al centro — <span class="value" id="abilRadiusVal">92</span> px</label>
+        <input type="range" id="abilRadius" min="40" max="180" step="1" value="92">
+      </div>
+      <div class="control">
+        <label for="abilAngle">Ángulo — <span class="value" id="abilAngleVal">-55</span>°</label>
+        <input type="range" id="abilAngle" min="-90" max="90" step="1" value="-55">
+      </div>
+      <div class="control">
+        <label for="abilSize">Tamaño del icono — <span class="value" id="abilSizeVal">64</span> px</label>
+        <input type="range" id="abilSize" min="30" max="120" step="1" value="64">
+      </div>
+      <span class="hint">Mismo centro y mismo 0°/negativo/positivo que el semicírculo de arriba, pero en su propio ángulo fijo (un único botón, no un abanico) para no competir nunca con golpear/pasar.</span>
     </div>
 
     <div class="previews">
@@ -283,10 +312,12 @@
     const FACE_STORAGE_KEY = "gnomore-cara-offsets-v2";
     const CIRCLE_SIZE_STORAGE_KEY = "gnomore-circulo-tamano-v1";
     const BTN_LAYOUT_STORAGE_KEY = "gnomore-botones-layout-v1";
+    const ABIL_BTN_STORAGE_KEY = "gnomore-boton-habilidad-layout-v1";
 
     const FACE_DEFAULT = { x: 50, y: 15, zoom: 230 };
     const CIRCLE_SIZE_DEFAULT = 110;
-    const BTN_LAYOUT_DEFAULT = { radius: 86, startAngle: -34, endAngle: 11, size: 51 };
+    const BTN_LAYOUT_DEFAULT = { radius: 86, startAngle: -34, endAngle: 11, hitSize: 51, passSize: 51 };
+    const ABIL_BTN_DEFAULT = { radius: 92, angle: -55, size: 64 };
 
     function loadFaceOffsets() {
       try { return JSON.parse(localStorage.getItem(FACE_STORAGE_KEY)) || {}; } catch (e) { return {}; }
@@ -310,10 +341,18 @@
     function saveBtnLayout(data) {
       try { localStorage.setItem(BTN_LAYOUT_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
     }
+    function loadAbilBtnLayout() {
+      try { return Object.assign({}, ABIL_BTN_DEFAULT, JSON.parse(localStorage.getItem(ABIL_BTN_STORAGE_KEY)) || {}); }
+      catch (e) { return Object.assign({}, ABIL_BTN_DEFAULT); }
+    }
+    function saveAbilBtnLayout(data) {
+      try { localStorage.setItem(ABIL_BTN_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+    }
 
     let faceOffsets = loadFaceOffsets();
     let circleSize = loadCircleSize();
     let btnLayout = loadBtnLayout();
+    let abilBtnLayout = loadAbilBtnLayout();
 
     const teamSelect = document.getElementById("teamSelect");
     const charSelect = document.getElementById("charSelect");
@@ -330,11 +369,19 @@
     const btnRadius = document.getElementById("btnRadius");
     const btnStart = document.getElementById("btnStart");
     const btnEnd = document.getElementById("btnEnd");
-    const btnSize = document.getElementById("btnSize");
+    const btnHitSize = document.getElementById("btnHitSize");
+    const btnPassSize = document.getElementById("btnPassSize");
     const btnRadiusVal = document.getElementById("btnRadiusVal");
     const btnStartVal = document.getElementById("btnStartVal");
     const btnEndVal = document.getElementById("btnEndVal");
-    const btnSizeVal = document.getElementById("btnSizeVal");
+    const btnHitSizeVal = document.getElementById("btnHitSizeVal");
+    const btnPassSizeVal = document.getElementById("btnPassSizeVal");
+    const abilRadius = document.getElementById("abilRadius");
+    const abilAngle = document.getElementById("abilAngle");
+    const abilSize = document.getElementById("abilSize");
+    const abilRadiusVal = document.getElementById("abilRadiusVal");
+    const abilAngleVal = document.getElementById("abilAngleVal");
+    const abilSizeVal = document.getElementById("abilSizeVal");
     const actionPreview = document.getElementById("actionPreview");
     const output = document.getElementById("output");
     const copyBtn = document.getElementById("copyBtn");
@@ -461,11 +508,17 @@
         radius: r,
         startAngle: Number(btnStart.value),
         endAngle: Number(btnEnd.value),
-        size: Number(btnSize.value),
       };
-      const icons = ["ph-boxing-glove", "ph-paper-plane-tilt"];
+      // Un tamaño propio por botón (pedido explícito: "ajustar de manera
+      // individual el tamaño de los botones de habilidades normales... desde
+      // debug") — golpear y pasar comparten radio/ángulos (posición del
+      // abanico) pero ya no comparten tamaño.
+      const icons = [
+        { cls: "ph-boxing-glove", size: Number(btnHitSize.value) },
+        { cls: "ph-paper-plane-tilt", size: Number(btnPassSize.value) },
+      ];
       const n = icons.length;
-      icons.forEach((iconClass, i) => {
+      icons.forEach(({ cls, size }, i) => {
         const angleDeg = n === 1 ? (layout.startAngle + layout.endAngle) / 2
           : layout.startAngle + (i * (layout.endAngle - layout.startAngle)) / (n - 1);
         const angleRad = (angleDeg * Math.PI) / 180;
@@ -473,29 +526,76 @@
         const by = centerY - layout.radius * Math.sin(angleRad);
         const btn = document.createElement("div");
         btn.className = "ap-btn";
-        btn.style.left = bx - layout.size / 2 + "px";
-        btn.style.bottom = by - layout.size / 2 + "px";
-        btn.style.width = layout.size + "px";
-        btn.style.height = layout.size + "px";
-        btn.innerHTML = `<i class="ph ${iconClass}"></i>`;
+        btn.style.left = bx - size / 2 + "px";
+        btn.style.bottom = by - size / 2 + "px";
+        btn.style.width = size + "px";
+        btn.style.height = size + "px";
+        btn.innerHTML = `<i class="ph ${cls}"></i>`;
         actionPreview.appendChild(btn);
       });
 
       btnRadiusVal.textContent = layout.radius;
       btnStartVal.textContent = layout.startAngle;
       btnEndVal.textContent = layout.endAngle;
-      btnSizeVal.textContent = layout.size;
+      btnHitSizeVal.textContent = icons[0].size;
+      btnPassSizeVal.textContent = icons[1].size;
+
+      // Botón de habilidad especial — mismo centro que el círculo de
+      // información, su propio ángulo fijo (no un abanico), pintado "suelto"
+      // sin plato circular (mismo estilo que .ability-btn en el juego real:
+      // color dorado, sin fondo ni borde) para que la vista previa aquí
+      // coincida exactamente con lo que se ve en partida.
+      const abilLayout = {
+        radius: Number(abilRadius.value),
+        angle: Number(abilAngle.value),
+        size: Number(abilSize.value),
+      };
+      const abilRad = (abilLayout.angle * Math.PI) / 180;
+      const abx = centerX + abilLayout.radius * Math.cos(abilRad);
+      const aby = centerY - abilLayout.radius * Math.sin(abilRad);
+      const abilBtn = document.createElement("div");
+      abilBtn.style.position = "absolute";
+      abilBtn.style.left = abx - abilLayout.size / 2 + "px";
+      abilBtn.style.bottom = aby - abilLayout.size / 2 + "px";
+      abilBtn.style.width = abilLayout.size + "px";
+      abilBtn.style.height = abilLayout.size + "px";
+      abilBtn.style.display = "flex";
+      abilBtn.style.alignItems = "center";
+      abilBtn.style.justifyContent = "center";
+      abilBtn.style.color = "#ffcf3f";
+      abilBtn.style.fontSize = abilLayout.size * 0.9 + "px";
+      abilBtn.style.filter = "drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55))";
+      abilBtn.innerHTML = '<i class="ph ph-sparkle"></i>';
+      actionPreview.appendChild(abilBtn);
+
+      abilRadiusVal.textContent = abilLayout.radius;
+      abilAngleVal.textContent = abilLayout.angle;
+      abilSizeVal.textContent = abilLayout.size;
     }
 
-    [btnRadius, btnStart, btnEnd, btnSize].forEach((input) => {
+    [btnRadius, btnStart, btnEnd, btnHitSize, btnPassSize].forEach((input) => {
       input.addEventListener("input", () => {
         btnLayout = {
           radius: Number(btnRadius.value),
           startAngle: Number(btnStart.value),
           endAngle: Number(btnEnd.value),
-          size: Number(btnSize.value),
+          hitSize: Number(btnHitSize.value),
+          passSize: Number(btnPassSize.value),
         };
         saveBtnLayout(btnLayout);
+        renderActionPreview();
+        updateOutput();
+      });
+    });
+
+    [abilRadius, abilAngle, abilSize].forEach((input) => {
+      input.addEventListener("input", () => {
+        abilBtnLayout = {
+          radius: Number(abilRadius.value),
+          angle: Number(abilAngle.value),
+          size: Number(abilSize.value),
+        };
+        saveAbilBtnLayout(abilBtnLayout);
         renderActionPreview();
         updateOutput();
       });
@@ -532,10 +632,16 @@
         `    size: ${circleSize},`,
         "  },",
         "  actionButtons: {",
-        `    size: ${btnLayout.size},`,
+        `    hitSize: ${btnLayout.hitSize},`,
+        `    passSize: ${btnLayout.passSize},`,
         `    radius: ${btnLayout.radius},`,
         `    startAngle: ${btnLayout.startAngle},`,
         `    endAngle: ${btnLayout.endAngle},`,
+        "  },",
+        "  abilityButton: {",
+        `    size: ${abilBtnLayout.size},`,
+        `    radius: ${abilBtnLayout.radius},`,
+        `    angle: ${abilBtnLayout.angle},`,
         "  },",
         "};"
       );
@@ -556,7 +662,11 @@
     btnRadius.value = btnLayout.radius;
     btnStart.value = btnLayout.startAngle;
     btnEnd.value = btnLayout.endAngle;
-    btnSize.value = btnLayout.size;
+    btnHitSize.value = btnLayout.hitSize;
+    btnPassSize.value = btnLayout.passSize;
+    abilRadius.value = abilBtnLayout.radius;
+    abilAngle.value = abilBtnLayout.angle;
+    abilSize.value = abilBtnLayout.size;
     circleSizeInput.value = circleSize;
 
     loadTeam(teamSelect.value);

@@ -1500,19 +1500,28 @@ const Gnome = {
     const centerX = info.left + info.size / 2;
     const centerY = info.bottom + info.size / 2; // medido "desde abajo", como el bottom de CSS
 
-    const buttons = [this._hitBtn, this._passBtn].filter(Boolean);
-    const n = buttons.length;
-    buttons.forEach((btn, i) => {
+    // Cada botón con su propio tamaño (UI_LAYOUT.actionButtons.hitSize/
+    // passSize, pedido explícito: "ajustar de manera individual el tamaño
+    // de los botones de habilidades normales... desde debug") — el ángulo
+    // de cada uno se sigue calculando por POSICIÓN en el reparto (i / n-1
+    // entre startAngle y endAngle), no por tamaño, así que se guarda el
+    // tamaño junto al botón en vez de asumir que todos miden lo mismo.
+    const entries = [
+      { btn: this._hitBtn, size: layout.hitSize },
+      { btn: this._passBtn, size: layout.passSize },
+    ].filter((e) => e.btn);
+    const n = entries.length;
+    entries.forEach(({ btn, size }, i) => {
       const angleDeg =
         n === 1 ? (layout.startAngle + layout.endAngle) / 2 : layout.startAngle + (i * (layout.endAngle - layout.startAngle)) / (n - 1);
       const angleRad = (angleDeg * Math.PI) / 180;
       const bx = centerX + layout.radius * Math.cos(angleRad);
       // ángulo negativo = "hacia arriba" → más bottom, de ahí el signo menos.
       const by = centerY - layout.radius * Math.sin(angleRad);
-      btn.style.left = `${bx - layout.size / 2}px`;
-      btn.style.bottom = `${by - layout.size / 2}px`;
-      btn.style.width = `${layout.size}px`;
-      btn.style.height = `${layout.size}px`;
+      btn.style.left = `${bx - size / 2}px`;
+      btn.style.bottom = `${by - size / 2}px`;
+      btn.style.width = `${size}px`;
+      btn.style.height = `${size}px`;
     });
   },
 

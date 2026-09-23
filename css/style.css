@@ -853,7 +853,26 @@ h2 {
      quedar detrás, y una "delante" (loseta más cercana a cámara que
      todavía tapa lo que hay detrás) sigue ocultándolo correctamente, que
      es la oclusión normal esperada en isométrico. */
-  will-change: transform, opacity, filter;
+  /* Rendimiento móvil — pedido explícito: "el rendimiento en smartphone es
+     lamentable, el juego es injugable, va lento, tiene errores gráficos" —
+     causa raíz encontrada: con un tablero de hasta 17x17 (289 losetas,
+     BOARD_SIZE_BY_OPPONENTS en js/matchsetup.js) TODAS empiezan con su
+     niebla visible y en reposo (fog-idle-drift, infinita) a la vez. Antes
+     esta regla base tenía "will-change: transform, opacity, filter" — pero
+     fog-idle-drift SOLO anima transform (ver @keyframes debajo); promocionar
+     opacity Y filter también, de fábrica, en las ~289 losetas en reposo a
+     la vez, fuerza al navegador a crear una capa de composición GPU aparte
+     por cada una CON soporte para filtro (mucho más cara que una capa
+     simple de transform/opacity: en varios móviles ese tipo de capa no
+     puede acelerarse igual de bien por hardware) — ahí es donde se iba la memoria
+     de vídeo y aparecían los "errores gráficos" (parpadeos, texturas mal
+     compuestas) además de la lentitud general. Con solo "transform" aquí,
+     las losetas en reposo piden la capa más barata posible; el combo
+     completo (transform+opacity+filter) se mueve a .tile__fog--revealed
+     más abajo, que sí anima las tres a la vez pero solo en las pocas
+     losetas que se están revelando en un momento dado (nunca las 289 juntas)
+     y solo durante su animación de 1.2s, no todo el partido. */
+  will-change: transform;
   animation: fog-idle-drift 8s ease-in-out infinite;
 }
 
@@ -870,6 +889,12 @@ h2 {
    golpe al primero al terminar; js/fog.js la esconde del todo
    (display:none) cuando acaba, vía animationend. */
 .tile__fog--revealed {
+  /* Aquí SÍ se promociona opacity y filter además de transform (a
+     diferencia de .tile__fog de arriba) — esta clase solo la llevan las
+     pocas losetas que se están disipando en un instante dado (nunca el
+     tablero entero a la vez), así que el coste extra de esa capa más
+     pesada es puntual y pequeño. */
+  will-change: transform, opacity, filter;
   /* SOLO 0% y 100% a propósito — la primera versión (con un keyframe
      intermedio al 35%, y luego la siguiente con varios al 25/50/75%) tenía
      el mismo problema de fondo: cuando una animación CSS lleva varios
@@ -2950,6 +2975,50 @@ body.ability-targeting--mind * {
     min-width: 0;
     width: calc(100vw - 48px);
   }
+
+  /* Pedido explícito: "el menú de configuración no se ajusta correctamente
+     a la interfaz móvil" — cada fila (.settings-panel__option) tenía
+     "padding: 14px 30px" y su etiqueta "font-size" heredado del body a
+     tamaño normal SIEMPRE, sin recorte para móvil (a diferencia de
+     .menu-btn, que sí baja su font-size aquí abajo) — en un móvil normal
+     (~360-412px de ancho), con el panel ya reducido a
+     "calc(100vw - 48px)" y esos 60px de padding horizontal por fila
+     comiéndose aún más sitio, una etiqueta larga como "Efectos de sonido"
+     o "Mostrar equipos" no cabía junto a su icono y su interruptor — ver
+     min-width:0 en .settings-panel__option-main más arriba para la otra
+     mitad del arreglo. Menos padding/gap + fuente más pequeña le devuelve
+     sitio de sobra a las tres columnas (icono/etiqueta/interruptor) sin
+     tener que depender solo de que el texto rompa en dos líneas. */
+  .settings-panel__option {
+    padding: 14px 16px;
+    gap: 8px;
+  }
+
+  .settings-panel__option-main {
+    gap: 8px;
+  }
+
+  .settings-panel__option .p5-banner__label {
+    font-size: 0.86rem;
+    /* Red de seguridad: si aun así no cupiera de sobra (móvil MUY
+       estrecho), que rompa en dos líneas en vez de desbordar la fila —
+       ver min-width:0 en .settings-panel__option-main, que es lo que
+       permite que esto llegue a tener efecto. */
+    white-space: normal;
+  }
+
+  .settings-panel__option-icon {
+    font-size: 1.05rem;
+  }
+
+  .settings-toggle {
+    width: 28px;
+    height: 21px;
+  }
+
+  .settings-toggle__check {
+    font-size: 0.8rem;
+  }
 }
 
 /* ---------- Marcador de Puntos de Gloria (js/glory.js) ----------
@@ -3423,6 +3492,22 @@ body.ability-targeting--mind * {
   display: inline-flex;
   align-items: center;
   gap: 14px;
+  /* Pedido explícito: "el menú de configuración no se ajusta correctamente
+     a la interfaz móvil" — causa raíz encontrada: .p5-banner__label lleva
+     "white-space: nowrap" (para no partirse en dos líneas en botones
+     cortos como "Sombras"), pero un elemento flex tiene por defecto
+     "min-width: auto", que en la práctica es "nunca encojas por debajo del
+     contenido" — combinado con nowrap, esto le impedía encogerse NADA. En
+     una fila estrecha (móvil) con una etiqueta larga ("Efectos de sonido",
+     "Mostrar equipos"), el grupo icono+etiqueta se negaba a ceder sitio y
+     empujaba el interruptor (.settings-toggle) literalmente fuera del
+     ancho de la fila — se veía flotando suelto fuera del panel, sin
+     relación visual con su opción. min-width:0 permite que este grupo SÍ
+     encoja cuando hace falta sitio (el texto pasa a envolver en dos líneas
+     en vez de desbordar — ver white-space:normal más abajo, solo en
+     móvil). Se deja puesto siempre (no solo en móvil) porque en pantallas
+     anchas nunca hay tan poco sitio como para que esto cambie nada. */
+  min-width: 0;
 }
 
 .settings-toggle {

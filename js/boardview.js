@@ -382,7 +382,6 @@ const BoardView = {
       (e) => {
         if (!this._touchState) return;
         e.preventDefault();
-        const rect = vp.getBoundingClientRect();
 
         if (this._touchState.mode === "pan" && e.touches.length === 1) {
           const t = e.touches[0];
@@ -401,6 +400,15 @@ const BoardView = {
           }
           this._panBy(dx, dy);
         } else if (this._touchState.mode === "pinch" && e.touches.length === 2) {
+          // getBoundingClientRect() solo hace falta aquí (para convertir el
+          // punto medio del pellizco a coordenadas locales del viewport) —
+          // antes se llamaba en CADA touchmove sin importar el modo,
+          // incluyendo el arrastre normal de un dedo, que no lo necesita
+          // para nada; en un móvil de gama baja, con eventos táctiles
+          // disparando a 60-120Hz durante un arrastre, ese cálculo de más
+          // en cada evento suma (pedido explícito de optimizar el
+          // rendimiento en smartphone).
+          const rect = vp.getBoundingClientRect();
           const [t1, t2] = e.touches;
           const dist = touchDist(t1, t2);
           const midX = (t1.clientX + t2.clientX) / 2 - rect.left;
