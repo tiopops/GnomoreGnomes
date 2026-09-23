@@ -41,18 +41,17 @@
 // versión compartida por todos los personajes (un único objeto) en una
 // pasada anterior, pero se pide volver a UNA ENTRADA POR TIPO DE PERSONAJE,
 // como al principio. `default` es el respaldo para cualquier typeId sin
-// entrada propia todavía; de momento las 6 arrancan con los mismos valores
-// que tenía el recorte compartido (los de GolemCorteza) como punto de
-// partida — recalíbralas una a una desde debug/calibrar-char.html si hace
-// falta ajustar alguna en particular.
+// entrada propia todavía. Las 6 ya están calibradas por separado desde
+// debug/calibrar-char.html — recalíbralas una a una ahí si hace falta
+// ajustar alguna en particular.
 // Calibrado con debug/calibrar-char.html.
 const FACE_OFFSETS = {
   hombre_arbol: { x: 72, y: 14, zoom: 225 },
-  surcabosques: { x: 72, y: 14, zoom: 225 },
-  seta_artificiero: { x: 72, y: 14, zoom: 225 },
-  goblin_lanzador: { x: 72, y: 14, zoom: 225 },
-  urgamentes: { x: 72, y: 14, zoom: 225 },
-  punoroca: { x: 72, y: 14, zoom: 225 },
+  surcabosques: { x: 86, y: 24, zoom: 180 },
+  seta_artificiero: { x: 72, y: 29, zoom: 180 },
+  goblin_lanzador: { x: 76, y: 25, zoom: 195 },
+  urgamentes: { x: 79, y: 10, zoom: 155 },
+  punoroca: { x: 92, y: 14, zoom: 200 },
   default: { x: 72, y: 14, zoom: 225 },
 };
 
