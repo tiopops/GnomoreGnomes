@@ -36,16 +36,25 @@
 //   x/y: background-position (%), 0=borde izq./sup., 100=borde der./inf.
 //   zoom: background-size, en % del ancho del círculo (100% = la imagen
 //         cubre el círculo justo; más alto = más cerca/recortado).
-// Pedido explícito: "TODOS tienen que tener la misma configuracion que
-// GolemCorteza, que no quiero configurarlos todos... de hecho deberia ser
-// comun para todos los jugadores este debug ya que es la interfaz" — antes
-// había una entrada por typeId (una por personaje, cada una calibrada a
-// mano); ahora es UN solo recorte compartido por todos los personajes, con
-// los valores que ya tenía calibrados GolemCorteza (hombre_arbol), porque
-// esto es un ajuste de interfaz (dónde cae el círculo sobre CUALQUIER
-// sprite cuadrado), no algo que deba variar personaje a personaje.
+// Pedido explícito (vuelta atrás): "El recorte de la cara debe ser
+// individual para cada pesrsonaje en calibrar char" — se prueba una
+// versión compartida por todos los personajes (un único objeto) en una
+// pasada anterior, pero se pide volver a UNA ENTRADA POR TIPO DE PERSONAJE,
+// como al principio. `default` es el respaldo para cualquier typeId sin
+// entrada propia todavía; de momento las 6 arrancan con los mismos valores
+// que tenía el recorte compartido (los de GolemCorteza) como punto de
+// partida — recalíbralas una a una desde debug/calibrar-char.html si hace
+// falta ajustar alguna en particular.
 // Calibrado con debug/calibrar-char.html.
-const FACE_OFFSETS = { x: 72, y: 14, zoom: 225 };
+const FACE_OFFSETS = {
+  hombre_arbol: { x: 72, y: 14, zoom: 225 },
+  surcabosques: { x: 72, y: 14, zoom: 225 },
+  seta_artificiero: { x: 72, y: 14, zoom: 225 },
+  goblin_lanzador: { x: 72, y: 14, zoom: 225 },
+  urgamentes: { x: 72, y: 14, zoom: 225 },
+  punoroca: { x: 72, y: 14, zoom: 225 },
+  default: { x: 72, y: 14, zoom: 225 },
+};
 
 // Descripción corta de cada personaje, mostrada en el popup justo debajo de
 // su sprite (pedido explícito: "vamos a añadirle a los popup una pequeña
@@ -126,10 +135,10 @@ const UnitInfo = {
     const type = UNIT_TYPES[unit.typeId];
     this.faceEl.setAttribute("aria-label", type.name);
     this.faceEl.classList.toggle("unit-info-btn__face--enemy", unit.team === "enemy");
-    // Recorte compartido (ver FACE_OFFSETS arriba) — el mismo para
-    // cualquier personaje, se aplica inline igual que antes porque el resto
-    // de reglas de .unit-info-btn__face sí son fijas en el CSS.
-    const face = FACE_OFFSETS;
+    // Recorte individual por personaje (ver FACE_OFFSETS arriba) — se
+    // aplica inline porque el resto de reglas de .unit-info-btn__face sí
+    // son fijas en el CSS.
+    const face = FACE_OFFSETS[unit.typeId] || FACE_OFFSETS.default;
     this.faceEl.style.backgroundImage = `url(${type.spriteUrl})`;
     this.faceEl.style.backgroundPosition = `${face.x}% ${face.y}%`;
     this.faceEl.style.backgroundSize = `${face.zoom}% auto`;
@@ -233,7 +242,7 @@ const UnitInfo = {
                 <div class="unit-info-ability__header">
                   ${
                     ability.iconImg
-                      ? `<img class="unit-info-ability__icon-img" src="${ability.iconImg}" alt="">`
+                      ? `<img class="unit-info-ability__icon-img${unit.typeId === "surcabosques" ? " unit-info-ability__icon-img--surcabosques" : ""}" src="${ability.iconImg}" alt="">`
                       : `<i class="ph ${ability.icon}"></i>`
                   }
                   <span class="unit-info-ability__name">${ability.name}</span>

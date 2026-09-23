@@ -63,6 +63,19 @@ const SHOP_STOCK_TEMPLATE = [
   { itemId: "bevida", price: 5 },
 ];
 
+// Pedido explícito: "Las tiendas goblin reponen existencias cada 5 turnos,
+// con objetos aleatorios de su stock (ahora mismo solo tenemos pociones y
+// setas arcoiris pero habran mas)". Fondo del que se sortea CADA hueco al
+// reponer — separado de SHOP_STOCK_TEMPLATE (que solo describe la primera
+// tienda al empezar la partida): mismos itemId/precio de momento, pero es
+// aquí donde habrá que añadir cualquier objeto nuevo el día de mañana para
+// que también pueda salir en una reposición.
+const SHOP_RESTOCK_POOL = [
+  { itemId: "setarcoiris", price: 5 },
+  { itemId: "bevida", price: 5 },
+];
+const SHOP_RESTOCK_INTERVAL = 5; // turnos
+
 const Shops = {
   list: [],
   _nextId: 1,
@@ -83,6 +96,10 @@ const Shops = {
     this.closePopup();
     this.list.forEach((s) => s.el.remove());
     this.list = [];
+    // ---------- Reposición cada 5 turnos (ver más abajo) ----------
+    this._teamTurnCounts = {};
+    this._restockPool = [];
+    this._pickNextRestockTarget();
   },
 
   // Coloca SHOP_COUNT tiendas en losetas transitables, libres (sin unidad,
@@ -494,6 +511,112 @@ const Shops = {
     this.openPopup(shop);
     Units.refreshRange(unit);
   },
+
+  // ---------- Reposición cada 5 turnos ----------
+  // Pedido explícito: "Las tiendas goblin reponen existencias cada 5
+  // turnos, con objetos aleatorios de su stock...Cuando esto ocurra se
+  // avisara con un mensaje en pantalla al empezar el turno. (el turno
+  // donde se reponen las existencias no siempre sera el del mismo
+  // jugador, sera cada 5 turnos pero el juego hara de forma aleatoria que
+  // quinto turno pertenece, de manera que el proximo 5 turno sera uno de
+  // los otros jugadores restantes y asi hasta que todos hayan sido
+  // beneficiados. una vez todos hayan tenido esto, se reiniciara la
+  // seleccion aleatoria). los objetos son comunes para todos los
+  // jugadores, si un jugaor compra todos, se gastan hasta que repongan."
+  //
+  // Se cuentan los turnos DE CADA EQUIPO por separado (this._teamTurnCounts,
+  // incrementado desde Turns.registerTurnStartListener más abajo). El
+  // "quinto turno" que dispara la reposición no es siempre el mismo
+  // equipo: this._restockPool es una baraja (orden al azar) de los equipos
+  // en juego que se va vaciando un equipo cada vez que le toca beneficiarse
+  // de una reposición — cuando se vacía del todo (todos ya se han
+  // beneficiado una vez) se vuelve a barajar entera para el siguiente
+  // ciclo. Motor actual = siempre 2 equipos (jugador/rival, ver
+  // js/turns.js), pero está escrito para poder crecer sin tocar esta lógica
+  // el día que haya más.
+  _teamTurnCounts: {},
+  _restockPool: [],
+  _nextRestockTeam: null,
+  _nextRestockAt: null,
+  _restockMsgEl: null,
+
+  _activeTeams() {
+    return ["player", "enemy"];
+  },
+
+  _shuffled(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  },
+
+  // Elige a qué equipo le "toca" la próxima reposición (this._nextRestockTeam)
+  // y en qué turno SUYO ocurrirá (this._nextRestockAt = su contador actual
+  // + 5) — sacando el siguiente nombre de this._restockPool (rebarajando
+  // una baraja nueva si estaba vacía).
+  _pickNextRestockTarget() {
+    if (this._restockPool.length === 0) this._restockPool = this._shuffled(this._activeTeams());
+    this._nextRestockTeam = this._restockPool.shift();
+    const current = this._teamTurnCounts[this._nextRestockTeam] || 0;
+    this._nextRestockAt = current + SHOP_RESTOCK_INTERVAL;
+  },
+
+  // Registrado como oyente de "inicio de turno" (ver Turns.registerTurnStartListener,
+  // js/turns.js) — se llama con CADA turno individual, del jugador y del
+  // rival, nunca una vez por ronda.
+  onTurnStart(team) {
+    this._teamTurnCounts[team] = (this._teamTurnCounts[team] || 0) + 1;
+    if (team === this._nextRestockTeam && this._teamTurnCounts[team] >= this._nextRestockAt) {
+      this._restock();
+      this._pickNextRestockTarget();
+    }
+  },
+
+  // Reposición de verdad: cada tienda vuelve a tener SHOP_SLOT_COUNT
+  // huecos llenos, cada uno un objeto al azar de SHOP_RESTOCK_POOL (con
+  // repetición — nada impide que salgan dos iguales, como ya pasaba con
+  // las "2 setas" iniciales).
+  _restock() {
+    if (this.list.length === 0) return; // nada que reponer sin tiendas en el mapa
+    this.list.forEach((shop) => {
+      shop.stock = [];
+      for (let i = 0; i < SHOP_SLOT_COUNT; i++) {
+        const pick = SHOP_RESTOCK_POOL[Math.floor(Math.random() * SHOP_RESTOCK_POOL.length)];
+        shop.stock.push({ uid: this._nextStockUid++, itemId: pick.itemId, price: pick.price });
+      }
+    });
+    // Si el popup de una tienda está abierto ahora mismo, refresca sus
+    // huecos en el sitio — no tiene sentido dejar viendo unas existencias
+    // ya viejas mientras el aviso de reposición está en pantalla.
+    if (this._activeShop) {
+      this._selectedUid = null;
+      this._renderSlots();
+    }
+    SFX.captureVillage(); // mismo "sonido de satisfacción" que conquistar un tótem — encaja igual aquí
+    this._showRestockMessage();
+  },
+
+  // Aviso central en pantalla (mismo patrón "crear una vez, reutilizar" que
+  // Villages._flashScreen/#epic-smash-flash) — pedido explícito: "se
+  // avisara con un mensaje en pantalla al empezar el turno".
+  _showRestockMessage() {
+    if (!this._restockMsgEl) {
+      const el = document.createElement("div");
+      el.className = "shop-restock-msg";
+      el.innerHTML =
+        '<i class="ph ph-storefront shop-restock-msg__icon"></i>' +
+        '<span class="p5-banner__label">¡La Tienda Goblin ha repuesto existencias!</span>';
+      document.body.appendChild(el);
+      this._restockMsgEl = el;
+    }
+    this._restockMsgEl.classList.remove("shop-restock-msg--visible");
+    void this._restockMsgEl.offsetWidth;
+    this._restockMsgEl.classList.add("shop-restock-msg--visible");
+  },
 };
 
 Units.registerRangeProvider(Shops);
+if (typeof Turns !== "undefined") Turns.registerTurnStartListener(Shops);

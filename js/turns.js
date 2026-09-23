@@ -50,6 +50,21 @@ const Turns = {
     this._turnEndListeners.push(listener);
   },
 
+  // Igual que registerTurnEndListener pero para el INICIO de CADA turno
+  // individual (el del jugador Y el del rival, no solo una vez por ronda
+  // completa) — lo usa js/shops.js para la reposición de existencias cada
+  // 5 turnos ("se avisara con un mensaje en pantalla al empezar el turno").
+  // Se llama con el equipo (team) al que le toca justo ahora: una vez en
+  // reset() (el primer turno de la partida, del jugador) y dos veces por
+  // cada vuelta de endTurn() (al pasar al rival y al volver al jugador).
+  _turnStartListeners: [],
+  registerTurnStartListener(listener) {
+    this._turnStartListeners.push(listener);
+  },
+  _fireTurnStart(team) {
+    this._turnStartListeners.forEach((l) => l.onTurnStart && l.onTurnStart(team));
+  },
+
   // Se llama al empezar cada partida nueva (spawnTestUnits, ver
   // newgame-flow.js), DESPUÉS de crear todos los personajes y gnomos —
   // deja limpio el contador, siempre empieza el jugador, y (re)crea/muestra
@@ -69,6 +84,7 @@ const Turns = {
     // cada turno se generan automaticamente 2 puntos de gloria", y el
     // primer turno de la partida (el del jugador) no es una excepción.
     if (typeof Glory !== "undefined") Glory.grantTurnStart("player");
+    this._fireTurnStart("player");
   },
 
   // true si `unit` puede gastar todavía alguna de sus 2 acciones ESTE turno
@@ -325,6 +341,7 @@ const Turns = {
     // cabecera de glory.js), pero el rival igualmente acumula los suyos por
     // dentro para cuando su IA los pueda gastar más adelante.
     if (typeof Glory !== "undefined") Glory.grantTurnStart("enemy");
+    this._fireTurnStart("enemy");
 
     await this._runEnemyTurn();
 
@@ -334,6 +351,7 @@ const Turns = {
     this._resetTeamActions("player");
     this._updateButtonState();
     if (typeof Glory !== "undefined") Glory.grantTurnStart("player");
+    this._fireTurnStart("player");
     // "una vez por ronda completa" (ver registerTurnEndListener arriba) —
     // aquí, justo al terminar, no en ningún punto intermedio de la IA.
     this._turnEndListeners.forEach((l) => l.onRoundEnd && l.onRoundEnd());

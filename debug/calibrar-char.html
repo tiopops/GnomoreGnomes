@@ -193,21 +193,19 @@
 <body>
 
   <h1>Calibrar cara e iconos del círculo de información
-    <small>Recorte de la cara (compartido por TODOS los personajes) + tamaño del círculo, y semicírculo de golpear/pasar. Fondo = el mismo color que detrás del tablero sin escenario.</small>
+    <small>Recorte de la cara (uno por personaje) + tamaño del círculo, y semicírculo de golpear/pasar. Fondo = el mismo color que detrás del tablero sin escenario.</small>
   </h1>
 
   <div class="main">
     <div class="controls">
-      <!-- Pedido explícito: "TODOS tienen que tener la misma configuracion
-           que GolemCorteza, que no quiero configurarlos todos... de hecho
-           deberia ser comun para todos los jugadores este debug ya que es
-           la interfaz" — antes había un recorte de cara GUARDADO POR
-           PERSONAJE (un valor x/y/zoom distinto por typeId). Ahora es UNO
-           SOLO, compartido por todos; el selector de personaje de abajo ya
-           no cambia qué se está editando, solo qué sprite se ve en la
-           vista previa para comprobar que el recorte compartido le queda
-           bien a cualquiera. -->
-      <div class="section-title">Personaje (solo para previsualizar)</div>
+      <!-- Vuelta atrás — pedido explícito: "El recorte de la cara debe ser
+           individual para cada pesrsonaje en calibrar char". Hubo una
+           pasada intermedia con un recorte ÚNICO compartido por todos los
+           personajes (queda descartada); vuelve a haber un recorte de cara
+           GUARDADO POR PERSONAJE — el selector de personaje de abajo elige
+           de verdad qué typeId se está editando, cada uno con sus propios
+           sliders. -->
+      <div class="section-title">Personaje</div>
       <div class="control">
         <label for="teamSelect">Equipo</label>
         <select id="teamSelect"></select>
@@ -217,7 +215,7 @@
         <select id="charSelect"></select>
       </div>
 
-      <div class="section-title">Recorte de la cara (compartido por todos)</div>
+      <div class="section-title">Recorte de la cara (de este personaje)</div>
       <div class="control">
         <label for="faceX">Horizontal — <span class="value" id="faceXVal">50</span>%</label>
         <input type="range" id="faceX" min="0" max="100" step="1" value="50">
@@ -318,11 +316,13 @@
   <script src="../js/races.js"></script>
   <script src="../js/units.js"></script>
   <script>
-    // v3: un único recorte compartido por todos los personajes, en vez de
-    // un mapa por typeId (ver comentario junto a "Personaje (solo para
-    // previsualizar)" arriba). Valores por defecto = los que ya tenía
-    // calibrados GolemCorteza en js/unitinfo.js.
-    const FACE_STORAGE_KEY = "gnomore-cara-offsets-v3";
+    // v4: vuelta atrás — pedido explícito: "El recorte de la cara debe ser
+    // individual para cada pesrsonaje en calibrar char". La v3 (un único
+    // recorte compartido por todos los personajes) queda descartada; ahora
+    // vuelve a ser un mapa POR typeId, uno por personaje, cada uno
+    // calibrable por separado. Bump de versión de storage porque la forma
+    // de los datos cambia (de un objeto plano a un mapa de objetos).
+    const FACE_STORAGE_KEY = "gnomore-cara-offsets-v4";
     const CIRCLE_SIZE_STORAGE_KEY = "gnomore-circulo-tamano-v1";
     const BTN_LAYOUT_STORAGE_KEY = "gnomore-botones-layout-v1";
     const ABIL_BTN_STORAGE_KEY = "gnomore-boton-habilidad-layout-v1";
@@ -332,12 +332,17 @@
     const BTN_LAYOUT_DEFAULT = { radius: 86, startAngle: -34, endAngle: 11, hitSize: 51, passSize: 51 };
     const ABIL_BTN_DEFAULT = { radius: 92, angle: -55, size: 64 };
 
+    // Mapa typeId -> { x, y, zoom }; cualquier typeId sin entrada propia
+    // todavía cae a FACE_DEFAULT (ver getFaceFor más abajo).
     function loadFaceOffsets() {
-      try { return Object.assign({}, FACE_DEFAULT, JSON.parse(localStorage.getItem(FACE_STORAGE_KEY)) || {}); }
-      catch (e) { return Object.assign({}, FACE_DEFAULT); }
+      try { return JSON.parse(localStorage.getItem(FACE_STORAGE_KEY)) || {}; }
+      catch (e) { return {}; }
     }
     function saveFaceOffsets(data) {
       try { localStorage.setItem(FACE_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+    function getFaceFor(typeId) {
+      return Object.assign({}, FACE_DEFAULT, faceOffsets[typeId] || {});
     }
     function loadCircleSize() {
       try {
@@ -444,15 +449,16 @@
       circleSizeVal.textContent = circleSize;
     }
 
-    // Ya no depende del typeId: solo cambia la imagen de fondo para
-    // previsualizar, los sliders siempre reflejan el recorte COMPARTIDO
-    // (faceOffsets), igual da qué personaje esté seleccionado.
+    // Vuelve a depender del typeId (vuelta atrás, ver comentario junto a
+    // FACE_STORAGE_KEY): cambia la imagen de fondo Y los sliders reflejan
+    // el recorte PROPIO de este personaje (getFaceFor), no uno compartido.
     function loadCharacter(typeId) {
       const type = UNIT_TYPES[typeId];
       faceCircle.style.backgroundImage = `url(../${type.spriteUrl})`;
-      faceX.value = faceOffsets.x;
-      faceY.value = faceOffsets.y;
-      faceZoom.value = faceOffsets.zoom;
+      const face = getFaceFor(typeId);
+      faceX.value = face.x;
+      faceY.value = face.y;
+      faceZoom.value = face.zoom;
       applyFaceToCircle();
     }
 
@@ -462,7 +468,7 @@
     }
 
     function persistCurrentFace() {
-      faceOffsets = currentFaceValues();
+      faceOffsets[charSelect.value] = currentFaceValues();
       saveFaceOffsets(faceOffsets);
       updateOutput();
     }
@@ -476,7 +482,7 @@
       });
     });
     faceResetBtn.addEventListener("click", () => {
-      faceOffsets = Object.assign({}, FACE_DEFAULT);
+      delete faceOffsets[charSelect.value];
       saveFaceOffsets(faceOffsets);
       loadCharacter(charSelect.value);
       updateOutput();
@@ -615,15 +621,22 @@
       });
     });
 
-    // El textarea de salida lleva SIEMPRE UN solo objeto FACE_OFFSETS
-    // (compartido por todos los personajes, ya no una entrada por typeId)
-    // — Jesús copia y pega tal cual en js/unitinfo.js.
+    // El textarea de salida lleva SIEMPRE el mapa FACE_OFFSETS COMPLETO
+    // (una entrada por typeId, más "default") — Jesús copia y pega tal cual
+    // en js/unitinfo.js. Recorre TODOS los typeId conocidos (no solo el
+    // equipo que se esté previsualizando ahora mismo) para no perder los
+    // que ya estuvieran calibrados de otra raza.
     function updateOutput() {
       const lines = [
-        "// --- js/unitinfo.js — FACE_OFFSETS completo (compartido por TODOS los personajes) ---",
-        `const FACE_OFFSETS = { x: ${faceOffsets.x}, y: ${faceOffsets.y}, zoom: ${faceOffsets.zoom} };`,
-        "",
+        "// --- js/unitinfo.js — FACE_OFFSETS completo (un recorte por personaje) ---",
+        "const FACE_OFFSETS = {",
       ];
+      Object.keys(UNIT_TYPES).forEach((typeId) => {
+        const f = getFaceFor(typeId);
+        lines.push(`  ${typeId}: { x: ${f.x}, y: ${f.y}, zoom: ${f.zoom} },`);
+      });
+      lines.push(`  default: { x: ${FACE_DEFAULT.x}, y: ${FACE_DEFAULT.y}, zoom: ${FACE_DEFAULT.zoom} },`);
+      lines.push("};", "");
       lines.push(
         "// --- js/uiconfig.js — UI_LAYOUT completo ---",
         "const UI_LAYOUT = {",

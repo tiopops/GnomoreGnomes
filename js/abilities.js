@@ -55,8 +55,9 @@ const ABILITIES = {
   punoroca: {
     name: "Nudillos Rocosos",
     icon: "ph-hand-fist",
-    // Sin iconImg a propósito: no llegó un icono para esta habilidad (solo
-    // se adjuntaron 5 de los 6) — se queda con el Phosphor de siempre.
+    // Icono real recibido en esta pasada (antes solo llegaron 5 de los 6 —
+    // ver el resto de comentarios "iconImg" de este archivo).
+    iconImg: "assets/iconos/nudillos_rocosos.png",
     description:
       "Golpea y empuja 4 casillas en línea recta a un enemigo adyacente (se detiene en el primer obstáculo); el golpeado queda agotado el siguiente turno. Gasta 1 acción. Un solo uso por partida. Puñorroca es tan bruto que, si no tiene un aliado (cualquiera) justo al lado nada más empezar a andar, da tumbos al azar en vez de ir donde se le indica.",
   },
@@ -152,6 +153,12 @@ const Abilities = {
       return;
     }
     this._ensureButton();
+    // Pedido explícito: "el icono...de la habilidad vision de la
+    // surcabosques un poquito mas grande y de color azul turquesa" — se
+    // identifica el botón con la habilidad concreta que muestra ahora mismo
+    // (data-ability) para poder afinar SOLO ese icono por CSS sin tocar el
+    // resto (ver .ability-btn[data-ability="surcabosques"] en style.css).
+    this._btn.dataset.ability = unit.typeId;
     // Imagen real si la habilidad tiene una (ver ABILITIES); si no, se queda
     // con el icono Phosphor de siempre (p.ej. Nudillos Rocosos).
     if (ability.iconImg) {
@@ -751,6 +758,22 @@ const Abilities = {
     this._pickCursorClass = cursorClass;
     this._pickHandler = (e) => this._onUnitPickClick(e, unit, filter, onPick);
     window.addEventListener("click", this._pickHandler, { capture: true });
+    // Pedido explícito: "cuando se use una habilidad y esta este esperando
+    // a que el usuario haga algo (por ejemplo: selecciona a un personaje)"
+    // — resaltar las casillas/objetivos válidos. Un marcador puramente
+    // visual (pointer-events:none, ver .ability-pick-marker en style.css)
+    // bajo cada objetivo elegible ahora mismo; el clic en sí lo sigue
+    // resolviendo _onUnitPickClick por delegación (arriba), este marcador
+    // nunca lo intercepta.
+    this._pickMarkerEls = Units.list.filter(filter).map((target) =>
+      Units.addMarker({
+        className: "ability-pick-marker",
+        row: target.row,
+        col: target.col,
+        zOffset: 1,
+        visibleClass: "ability-pick-marker--visible",
+      })
+    );
   },
 
   _cancelUnitPicking() {
@@ -761,6 +784,10 @@ const Abilities = {
     this._pickCursorClass = null;
     window.removeEventListener("click", this._pickHandler, { capture: true });
     this._pickHandler = null;
+    if (this._pickMarkerEls) {
+      this._pickMarkerEls.forEach((m) => m.remove());
+      this._pickMarkerEls = null;
+    }
     this._restoreNormalRange(unit);
   },
 

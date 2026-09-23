@@ -54,9 +54,9 @@ const UI_LAYOUT = {
   actionButtons: {
     hitSize: 51,
     passSize: 51,
-    radius: 92,
-    startAngle: -34,
-    endAngle: 11,
+    radius: 94,
+    startAngle: -22,
+    endAngle: 18,
   },
   // Botón de habilidad especial (js/abilities.js) — mismo círculo de
   // información como centro y mismo radio que actionButtons, pero en su
@@ -73,7 +73,7 @@ const UI_LAYOUT = {
   // genera este mismo bloque listo para pegar si hace falta ajustarlo más.
   abilityButton: {
     size: 64,
-    radius: 92,
-    angle: -55,
+    radius: 94,
+    angle: -56,
   },
 };

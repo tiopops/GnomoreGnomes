@@ -969,8 +969,10 @@ body.gg-fog-anim-off .tile__fog:not(.tile__fog--revealed) {
   position: absolute;
   left: 50%;
   top: 92%;
-  width: 50px;
-  height: 24px;
+  /* Pedido explícito: "el circulo de mostrar equipos debe ser mas grande,
+     el doble" — 50x24 -> 100x48, mismo anclaje (centro bajo los pies). */
+  width: 100px;
+  height: 48px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   pointer-events: none;
@@ -1402,6 +1404,32 @@ body.team-markers--visible .unit__team-marker {
 @keyframes unit-doom-icon-pulse {
   0%, 100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 0.85; }
   50% { transform: translateX(-50%) translateY(-3px) scale(1.18); opacity: 1; }
+}
+
+/* Pedido explícito: "cuando hay que seleccionar una casilla aparecen
+   cirulos sobre ella...pero parece que solo el interior del circulo tiene
+   efecto en la seleccion, en realidad cualquier parte de la casilla es
+   seleccionar esa casilla". Cada marcador (círculo de movimiento, mira de
+   ataque, destino de lanzamiento, etc. — TODOS llevan la clase genérica
+   "board-marker", ver Units.addMarker) se PINTA más pequeño que la loseta
+   completa por estética, pero su zona clicable debe cubrir la loseta
+   entera bajo él. Un ::before invisible, del tamaño real de la loseta
+   (TILE_WIDTH x TILE_TOP_HEIGHT, ver mapgen.js) y recortado con el mismo
+   rombo isométrico, centrado en el mismo punto que el propio marcador (su
+   caja SIEMPRE queda centrada en el centro de la loseta, sea cual sea su
+   tamaño visual — ver los distintos margin-left/margin-top negativos de
+   cada variante más abajo), capta el clic en cualquier punto de la loseta
+   y lo propaga (bubbling, mismo elemento) sin tocar el aspecto visual. */
+.board-marker::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 178px;
+  height: 115px;
+  transform: translate(-50%, -50%);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  pointer-events: auto;
 }
 
 /* Losetas alcanzables: elipse aplanada (no un círculo) para que se asiente
@@ -2598,6 +2626,16 @@ body.team-markers--visible .unit__team-marker {
   border-color: var(--accent-hover);
 }
 
+/* Iconos reales de golpear/pasar (ver gnome.js, _ensureHoldingButtons) —
+   mismo patrón que .ability-btn__icon-img: ocupan el 100% del botón
+   circular en vez del glifo Phosphor pequeño de antes. */
+.gnome-action-btn__icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
 /* Botón de habilidad especial (js/abilities.js) — mismo estilo que
    .gnome-action-btn (círculo fijo junto al de información), colocado por JS
    con su propio ángulo (UI_LAYOUT.abilityButton) para no competir nunca con
@@ -2657,6 +2695,17 @@ body.team-markers--visible .unit__team-marker {
 
 .ability-btn__icon-img--visible {
   display: block;
+}
+
+/* Pedido explícito: "el icono...de la habilidad vision de la surcabosques
+   un poquito mas grande y de color azul turquesa" — un poco más grande
+   (scale, el <img> ya ocupa el 100% del botón así que agrandarlo de verdad
+   significaría tocar el tamaño del botón entero para las demás habilidades
+   también) y con un halo turquesa que tiñe su lectura sin desvirtuar los
+   colores propios del icono (data-ability lo pone _refreshButton). */
+.ability-btn[data-ability="surcabosques"] .ability-btn__icon-img {
+  transform: scale(1.16);
+  filter: drop-shadow(0 0 7px rgba(45, 212, 191, 0.95)) drop-shadow(0 0 3px rgba(45, 212, 191, 0.8));
 }
 
 /* Golem de Espinas (GolemCorteza, js/abilities.js) — resplandor verde
@@ -2764,6 +2813,45 @@ body.ability-targeting--mind * {
     pointer !important;
 }
 
+/* Pedido explícito: "cuando se use una habilidad y esta este esperando a
+   que el usuario haga algo (por ejemplo: selecciona a un personaje)" —
+   resaltar los objetivos válidos. Puramente visual (pointer-events:none:
+   el clic de verdad lo sigue resolviendo la delegación de
+   Abilities._onUnitPickClick, este anillo nunca debe interceptarlo) bajo
+   cada personaje que se puede elegir ahora mismo (ver
+   Abilities._startUnitPicking). Un anillo pulsante en vez de un círculo
+   fijo (a diferencia de .range-marker) para que se note que es "elige
+   aquí", no "muévete aquí". */
+.ability-pick-marker {
+  position: absolute;
+  width: 120px;
+  height: 65px;
+  margin-left: -60px;
+  margin-top: -33px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 207, 63, 0.9);
+  box-shadow: 0 0 14px rgba(255, 207, 63, 0.75);
+  pointer-events: none;
+  opacity: 0;
+  /* Solo "opacity" en transition a propósito (nunca "transform" aquí): en
+     cuanto se hace --visible, "transform" pasa a estar controlado ENTERO
+     por la animation de pulso de abajo — mezclar una transition y una
+     animation sobre la misma propiedad hace que el navegador las siga
+     disputando entre sí, visto como parpadeos (mismo motivo ya documentado
+     para .range-marker más abajo). */
+  transition: opacity 0.2s ease;
+}
+
+.ability-pick-marker--visible {
+  opacity: 1;
+  animation: ability-pick-marker-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes ability-pick-marker-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
 /* Círculos de destino de Lanzamiento — mismo range-marker de siempre
    (Movement.showFor), con un tinte dorado para que no se confundan con el
    radio de movimiento normal (violeta) mientras se elige dónde lanzar. */
@@ -2829,6 +2917,14 @@ body.ability-targeting--mind * {
   height: 18px;
   object-fit: contain;
   flex-shrink: 0;
+}
+
+/* Misma mejora que en .ability-btn[data-ability="surcabosques"] de arriba,
+   aquí dentro del popup de estadísticas del personaje. */
+.unit-info-ability__icon-img--surcabosques {
+  width: 21px;
+  height: 21px;
+  filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.9));
 }
 
 .unit-info-ability--used .unit-info-ability__header {
@@ -3829,10 +3925,52 @@ body.ability-targeting--mind * {
   background: var(--disabled);
 }
 
-/* Precio tachado sobre un hueco ya vendido/sin fondos — de momento la
-   tienda no repone existencias (pedido explícito: "de momento pondremos a
-   la venta 2 setas"), así que un hueco vacío tras comprar se ve
-   exactamente igual que uno vacío de la mochila (.backpack-slot--empty). */
+/* Un hueco vacío tras comprar se ve exactamente igual que uno vacío de la
+   mochila (.backpack-slot--empty) hasta la siguiente reposición (ver
+   Shops._restock, js/shops.js — "reponen existencias cada 5 turnos"). */
+
+/* Aviso central de reposición de la Tienda Goblin (Shops._showRestockMessage,
+   js/shops.js) — pedido explícito: "se avisara con un mensaje en pantalla
+   al empezar el turno". Mismo patrón "crear una vez, reutilizar" que
+   #epic-smash-flash: fixed, centrado arriba, con una entrada/salida
+   marcada (nunca un simple fundido) para que se note incluso durante el
+   turno del rival, que es cuando puede tocarle sin que el jugador esté
+   haciendo nada más en ese instante. */
+.shop-restock-msg {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  transform: translate(-50%, -30px) scale(0.85);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 2px solid rgba(255, 207, 63, 0.85);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 207, 63, 0.4);
+  color: #ffcf3f;
+  font-weight: 800;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 6000;
+}
+
+.shop-restock-msg__icon {
+  font-size: 1.4rem;
+}
+
+.shop-restock-msg--visible {
+  animation: shop-restock-msg-pop 2.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes shop-restock-msg-pop {
+  0% { opacity: 0; transform: translate(-50%, -30px) scale(0.85); }
+  12% { opacity: 1; transform: translate(-50%, 0) scale(1.05); }
+  20% { transform: translate(-50%, 0) scale(1); }
+  85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -14px) scale(0.92); }
+}
 
 /* ---------- Golpe mortal en un solo golpe contra un poblado ---------- */
 /* Ver Villages._playEpicSmash (js/villages.js). Pedido explícito: "saltara
@@ -3863,12 +4001,26 @@ body.ability-targeting--mind * {
    instante justo en que empieza a caer en picado desde el punto más
    alto), así el cambio de sprite/temblor de cámara/destello coincide con
    el ARRANQUE de la caída, no con el aterrizaje. */
+/* Pedido explícito: "el salto de machacar gnomo se realizara siempre, solo
+   que cuando sea eliminar de golpe todos los puntos de un totem, el salto
+   sera el doble de alto y el temblor el doble de grande" — antes el salto
+   épico SOLO ocurría en el golpe mortal de un solo tiro (oneHitKill, ver
+   Villages.attack); ahora Villages._playEpicSmash se llama SIEMPRE que se
+   golpea un tótem, con el mismo arco de siempre pero a MITAD de altura
+   (@keyframes unit-epic-smash, más abajo) — el modificador
+   --big (añadido por JS solo cuando el golpe es mortal de un solo tiro)
+   sube la animación a la de doble altura (@keyframes unit-epic-smash-big,
+   que son los valores originales de antes de este cambio). */
 .unit--epic-smash {
   z-index: 9999 !important;
 }
 
 .unit--epic-smash .unit__sprite {
   animation: unit-epic-smash 1.3s cubic-bezier(0.22, 0, 0.3, 1);
+}
+
+.unit--epic-smash--big .unit__sprite {
+  animation-name: unit-epic-smash-big;
 }
 
 /* "cuando el personaje salta, el gnomo debe seguir la trayectoria del salto
@@ -3886,7 +4038,25 @@ body.ability-targeting--mind * {
   animation: unit-epic-smash 1.3s cubic-bezier(0.22, 0, 0.3, 1);
 }
 
+.unit--epic-smash--big .gnome-attach {
+  animation-name: unit-epic-smash-big;
+}
+
 @keyframes unit-epic-smash {
+  /* Versión "normal" (siempre, en CUALQUIER golpe a un tótem) — mismo
+     arco/curva que la versión "--big" de abajo, a mitad de altura de
+     salto (translateY a mitad: -190px -> -95px, -16px -> -8px). El
+     squash/stretch (scale/rotate) se deja igual de marcado en las dos
+     versiones, solo cambia la altura del salto en sí. */
+  0%   { transform: translateY(0) scale(1, 1) rotate(0deg); }
+  60%  { transform: translateY(-95px) scale(1.18, 0.88) rotate(-10deg); }
+  68%  { transform: translateY(-95px) scale(1.3, 0.76) rotate(-14deg); }
+  78%  { transform: translateY(5px) scale(1.46, 0.5) rotate(5deg); }
+  88%  { transform: translateY(-8px) scale(0.82, 1.28) rotate(-3deg); }
+  100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+}
+
+@keyframes unit-epic-smash-big {
   /* "anima disorsionando (estirando y contrayendo)...para darle dinamismo"
      (pedido explícito) sigue aplicando (mismo squash/stretch marcado de
      siempre). Timing reestructurado (pedido explícito, segunda pasada):
@@ -3943,7 +4113,28 @@ body.ability-targeting--mind * {
   animation: board-viewport-shake 0.42s ease-in-out;
 }
 
+/* Pedido explícito: "el temblor sera el doble de grande" cuando el golpe
+   elimina de golpe todos los puntos de un tótem — .board-viewport--shake
+   (arriba) pasa a ser el temblor NORMAL (mitad de amplitud, para
+   CUALQUIER golpe a un tótem); este modificador dobla esa amplitud otra
+   vez hasta los valores originales, solo para el golpe mortal de un solo
+   tiro (ver Villages._playEpicSmash). */
+.board-viewport--shake--big {
+  animation: board-viewport-shake-big 0.42s ease-in-out;
+}
+
 @keyframes board-viewport-shake {
+  0% { transform: translate(0, 0); }
+  12% { transform: translate(-7px, 4px); }
+  27% { transform: translate(6px, -5px); }
+  42% { transform: translate(-5px, 4px); }
+  58% { transform: translate(4px, -3px); }
+  73% { transform: translate(-3px, 2px); }
+  88% { transform: translate(2px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes board-viewport-shake-big {
   0% { transform: translate(0, 0); }
   12% { transform: translate(-13px, 8px); }
   27% { transform: translate(11px, -9px); }

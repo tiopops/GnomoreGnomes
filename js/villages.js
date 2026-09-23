@@ -493,32 +493,18 @@ const Villages = {
     // propio momento de gloria, no desteñido a media animación.
     if (oneHitKill && unit.el) unit.el.classList.remove("unit--exhausted");
 
-    if (oneHitKill) {
-      // La animación épica se encarga ella sola de la retroalimentación de
-      // impacto (barra de vida, texto flotante, temblor, sonido, destruir
-      // el gnomo) EN EL MOMENTO justo del golpe contra el suelo, no antes —
-      // ver _playEpicSmash más abajo.
-      await this._playEpicSmash(unit, village, damage);
-    } else {
-      Units.updateHpBar(village);
-      Units.spawnFloatingText(village, `-${damage}`, { className: "dmg-popup" });
-      Units.playShake(village);
-      SFX.hit();
-
-      // Retroalimentación en quien golpea, mismo gesto que Combat.attack.
-      if (unit.el) {
-        unit.el.classList.remove("unit--punching");
-        void unit.spriteEl.offsetWidth;
-        unit.el.classList.add("unit--punching");
-        setTimeout(() => unit.el.classList.remove("unit--punching"), 320);
-      }
-
-      // "cuando se pega con un gnomo a un poblado el gnomo muere y
-      // desaparece del juego" — a diferencia de un pase fallido o de
-      // soltarlo al morir quien lo llevaba, aquí NO huye ni queda suelto:
-      // desaparece del todo.
-      Gnome.destroyInstance(gnome);
-    }
+    // Pedido explícito: "el salto de machacar gnomo se realizara siempre,
+    // solo que cuando sea eliminar de golpe todos los puntos de un totem,
+    // el salto sera el doble de alto y el temblor el doble de grande" — ya
+    // no hay una rama alternativa "sin salto" (el viejo unit--punching +
+    // daño normal): CUALQUIER golpe contra un tótem hace el salto épico;
+    // `big` (oneHitKill) es lo único que decide si es la versión doblada
+    // (con destello, texto "¡GOLPE MORTAL!" y 2 de bonus de gloria) o la
+    // normal. La animación épica se encarga ella sola de la
+    // retroalimentación de impacto (barra de vida, texto flotante,
+    // temblor, sonido, destruir el gnomo) EN EL MOMENTO justo del golpe
+    // contra el suelo, no antes — ver _playEpicSmash más abajo.
+    await this._playEpicSmash(unit, village, damage, oneHitKill);
 
     if (village.hp <= 0) {
       this._capture(village, unit.team, oneHitKill ? 2 : 1);
@@ -541,7 +527,7 @@ const Villages = {
   // que toda la secuencia termina, así attack() espera a que acabe antes de
   // seguir con la captura — igual de bloqueante para el resto del turno que
   // cualquier otra acción, no hace falta más sincronización.
-  async _playEpicSmash(unit, village, damage) {
+  async _playEpicSmash(unit, village, damage, big) {
     const typeId = unit.typeId;
     const idleSrc = (typeof UNIT_TYPES !== "undefined" && UNIT_TYPES[typeId] && UNIT_TYPES[typeId].spriteUrl) || "";
     const machacaSrc = typeof Units !== "undefined" ? Units.machacaSpriteFor(typeId) : idleSrc;
@@ -562,9 +548,12 @@ const Villages = {
       unit.spriteEl.style.width = Math.round(120 * Units.machacaScaleFor(typeId)) + "px";
     }
     if (gnome) gnome.setAttachPose(unit, "machaca");
-    unit.el.classList.remove("unit--epic-smash");
+    unit.el.classList.remove("unit--epic-smash", "unit--epic-smash--big");
     void unit.spriteEl.offsetWidth;
     unit.el.classList.add("unit--epic-smash");
+    // `big` (golpe mortal de un solo tiro) dobla la altura del salto — ver
+    // .unit--epic-smash--big / @keyframes unit-epic-smash-big en style.css.
+    if (big) unit.el.classList.add("unit--epic-smash--big");
     if (typeof SFX !== "undefined") SFX.hit();
 
     // Sincronizado a mano con @keyframes unit-epic-smash (style.css).
@@ -593,34 +582,45 @@ const Villages = {
     }
     Units.updateHpBar(village);
     Units.spawnFloatingText(village, `-${damage}`, { className: "dmg-popup" });
-    Units.spawnFloatingText(village, "¡GOLPE MORTAL!", { className: "dmg-popup gnome-points-popup" });
+    // "¡GOLPE MORTAL!" solo tiene sentido cuando de verdad lo es (golpe que
+    // elimina de golpe TODOS los puntos de un tótem a plena vida) — un
+    // golpe normal (ahora también con salto, pero sin remate) solo muestra
+    // el número de daño de siempre.
+    if (big) Units.spawnFloatingText(village, "¡GOLPE MORTAL!", { className: "dmg-popup gnome-points-popup" });
     Units.playShake(village);
-    if (typeof SFX !== "undefined") SFX.glory();
-    // "la camara debe temblar al impactar contra el suelo" — sobre
-    // board-viewport (nunca board-camera: ese ya lleva su propio transform
-    // de paneo/zoom puesto por JS en boardview.js, y una animación CSS ahí
-    // lo pisaría durante el temblor) para que se note en todo el tablero
-    // visible sin pelearse con el paneo/zoom del jugador.
+    if (typeof SFX !== "undefined") (big ? SFX.glory() : SFX.hit());
+    // "la camara debe temblar al impactar contra el suelo...el temblor sera
+    // el doble de grande" (en el golpe mortal) — sobre board-viewport (nunca
+    // board-camera: ese ya lleva su propio transform de paneo/zoom puesto
+    // por JS en boardview.js, y una animación CSS ahí lo pisaría durante el
+    // temblor) para que se note en todo el tablero visible sin pelearse con
+    // el paneo/zoom del jugador. board-viewport--shake es ahora el temblor
+    // NORMAL (cualquier golpe a un tótem); --big lo dobla para el golpe
+    // mortal de un solo tiro.
     const viewportEl = document.getElementById("board-viewport");
     if (viewportEl) {
-      viewportEl.classList.remove("board-viewport--shake");
+      const shakeClass = big ? "board-viewport--shake--big" : "board-viewport--shake";
+      viewportEl.classList.remove("board-viewport--shake", "board-viewport--shake--big");
       void viewportEl.offsetWidth;
-      viewportEl.classList.add("board-viewport--shake");
-      setTimeout(() => viewportEl.classList.remove("board-viewport--shake"), 420);
+      viewportEl.classList.add(shakeClass);
+      setTimeout(() => viewportEl.classList.remove(shakeClass), 420);
     }
     // "cuando se pega con un gnomo a un poblado el gnomo muere y desaparece
-    // del juego" — en el golpe mortal, desaparece justo en el instante del
-    // machacón contra el suelo, no al principio del salto.
+    // del juego" — en CUALQUIER golpe a un tótem (ya no solo el golpe
+    // mortal, ahora que el salto siempre pasa por este mismo punto de
+    // impacto), desaparece justo en el instante del machacón contra el
+    // suelo, no al principio del salto.
     if (gnome) Gnome.destroyInstance(gnome);
     // "un pequeño destello blanco puede iluminar la pantalla un instante"
-    // (pedido explícito) — mismo instante que el temblor de cámara de
-    // arriba, ver _flashScreen().
-    this._flashScreen();
+    // (pedido explícito) — reservado para el golpe mortal, que es el
+    // momento realmente "épico"; un golpe normal (ahora con salto pero sin
+    // remate) no lo dispara para no deslumbrar en cada golpe cualquiera.
+    if (big) this._flashScreen();
 
     await new Promise((resolve) => setTimeout(resolve, TOTAL_MS - IMPACT_DELAY_MS));
 
     // ---- Fin de la animación: vuelve todo a la normalidad ----
-    unit.el.classList.remove("unit--epic-smash");
+    unit.el.classList.remove("unit--epic-smash", "unit--epic-smash--big");
     if (unit.spriteEl && idleSrc) {
       unit.spriteEl.src = idleSrc;
       // Devuelve también el tamaño de la pose iddle (SPRITE_SCALES de
