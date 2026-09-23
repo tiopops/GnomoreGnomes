@@ -881,6 +881,37 @@ h2 {
   50% { transform: translate(-50%, -47%) scale(1.035) rotate(0.6deg); }
 }
 
+/* Pedido explícito: "añade un checkbox para desactivar/activar la
+   animacion de la niebla en configuracion" — ver Fog.setAnimEnabled en
+   js/fog.js, que solo alterna esta clase en <body> (nunca recorre las
+   losetas una a una). Quita TANTO la animación como el will-change de la
+   regla base de arriba — no basta con parar fog-idle-drift, will-change
+   por sí solo ya reserva una capa de composición GPU por loseta aunque no
+   se esté animando nada, que es justo lo que se quiere ahorrar en el móvil
+   más flojo. :not(.tile__fog--revealed) para no pisar nunca la animación
+   de disipado (fog-dissipate, más abajo) de las pocas losetas que se estén
+   revelando en ese instante — esa es barata de por sí (nunca las 289 a la
+   vez) y debe seguir viéndose igual de bien con el checkbox desactivado. */
+body.gg-fog-anim-off .tile__fog:not(.tile__fog--revealed) {
+  animation: none;
+  will-change: auto;
+}
+
+/* Pedido explícito: "¿se podrían desactivar las losetas de niebla que no
+   aparecen en pantalla hasta que la cámara se mueva y sea visible?" — ver
+   Fog.updateCulling (js/fog.js) y BoardView._apply (js/boardview.js), que
+   recalculan esto en cada frame de cámara SOLO con la animación activada
+   (comprobado: sin animación no compensa el coste de recalcular). Oculta
+   por completo (display:none, ni siquiera se pinta) cualquier loseta de
+   niebla fuera del viewport + un margen amplio (3 losetas de ancho) —
+   probado contra el peor caso de "popping" (un arrastre que cubra de
+   golpe todo el rango de la cámara en una sola ráfaga de eventos
+   táctiles): con un margen más ajustado (1.5 losetas) se veía un hueco en
+   ese caso límite, con este no. */
+.tile__fog--culled {
+  display: none;
+}
+
 /* Al revelarse (Fog.revealForUnit) sustituye por completo la animación de
    reposo (misma propiedad "animation", gana por ir después en la hoja de
    estilos) — nunca las dos compitiendo por transform a la vez, mismo patrón

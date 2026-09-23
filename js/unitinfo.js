@@ -36,18 +36,16 @@
 //   x/y: background-position (%), 0=borde izq./sup., 100=borde der./inf.
 //   zoom: background-size, en % del ancho del círculo (100% = la imagen
 //         cubre el círculo justo; más alto = más cerca/recortado).
-// "default" se usa para cualquier tipo sin entrada propia. Calibrado con
-// debug/calibrar-char.html — pega ahí el bloque que genere esa
-// herramienta cuando haga falta reajustar algún personaje.
-const FACE_OFFSETS = {
-  default: { x: 50, y: 15, zoom: 230 },
-  hombre_arbol: { x: 72, y: 14, zoom: 225 },
-  surcabosques: { x: 87, y: 23, zoom: 165 },
-  seta_artificiero: { x: 72, y: 32, zoom: 180 },
-  goblin_lanzador: { x: 70, y: 21, zoom: 190 },
-  urgamentes: { x: 75, y: 12, zoom: 160 },
-  punoroca: { x: 89, y: 13, zoom: 210 },
-};
+// Pedido explícito: "TODOS tienen que tener la misma configuracion que
+// GolemCorteza, que no quiero configurarlos todos... de hecho deberia ser
+// comun para todos los jugadores este debug ya que es la interfaz" — antes
+// había una entrada por typeId (una por personaje, cada una calibrada a
+// mano); ahora es UN solo recorte compartido por todos los personajes, con
+// los valores que ya tenía calibrados GolemCorteza (hombre_arbol), porque
+// esto es un ajuste de interfaz (dónde cae el círculo sobre CUALQUIER
+// sprite cuadrado), no algo que deba variar personaje a personaje.
+// Calibrado con debug/calibrar-char.html.
+const FACE_OFFSETS = { x: 72, y: 14, zoom: 225 };
 
 // Descripción corta de cada personaje, mostrada en el popup justo debajo de
 // su sprite (pedido explícito: "vamos a añadirle a los popup una pequeña
@@ -128,10 +126,10 @@ const UnitInfo = {
     const type = UNIT_TYPES[unit.typeId];
     this.faceEl.setAttribute("aria-label", type.name);
     this.faceEl.classList.toggle("unit-info-btn__face--enemy", unit.team === "enemy");
-    // Recorte propio de este personaje (ver FACE_OFFSETS arriba) — se
-    // aplica inline porque depende del typeId, a diferencia del resto de
-    // reglas de .unit-info-btn__face que sí son fijas en el CSS.
-    const face = FACE_OFFSETS[unit.typeId] || FACE_OFFSETS.default;
+    // Recorte compartido (ver FACE_OFFSETS arriba) — el mismo para
+    // cualquier personaje, se aplica inline igual que antes porque el resto
+    // de reglas de .unit-info-btn__face sí son fijas en el CSS.
+    const face = FACE_OFFSETS;
     this.faceEl.style.backgroundImage = `url(${type.spriteUrl})`;
     this.faceEl.style.backgroundPosition = `${face.x}% ${face.y}%`;
     this.faceEl.style.backgroundSize = `${face.zoom}% auto`;

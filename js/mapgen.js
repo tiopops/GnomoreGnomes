@@ -132,9 +132,17 @@ const TerrainMap = {
 // justo en getTileCenter(row,col) con transform: translate(-50%,-50%) —
 // mismo patrón que un marcador (Units.addMarker) o el ancla de pies de una
 // unidad, solo que centrada en vez de "de pie".
+// Pedido explícito: "quiero sustituirlo por este [niebla_01.png nuevo],
+// pero guarda una copia del otro por si me arrepiento" — la nube anterior
+// queda guardada tal cual en assets/losetas/niebla_01_original.png, sin
+// usarse en ningún sitio del código (si algún día Jesús quiere volver a
+// ella, basta con copiarla de vuelta encima de niebla_01.png). El nuevo
+// PNG conserva la misma proporción (700×600 = 1295×1110, mismo ratio
+// ancho/alto) así que el resto de la fórmula de FOG_OVERHANG no cambia,
+// solo estas dos medidas nativas.
 const FOG_SRC = "assets/losetas/niebla_01.png";
-const FOG_NATIVE_WIDTH = 1295;
-const FOG_NATIVE_HEIGHT = 1110;
+const FOG_NATIVE_WIDTH = 700;
+const FOG_NATIVE_HEIGHT = 600;
 const FOG_OVERHANG = 1.7; // veces TILE_WIDTH — cuánto sobresale la nube de su loseta.
 
 // Dimensiones nativas del archivo de imagen hierba_01.png (no cambian).

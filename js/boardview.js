@@ -152,6 +152,18 @@ const BoardView = {
 
   _apply() {
     this.cameraEl.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.scale})`;
+    // Pedido explícito: "¿se podrían desactivar las losetas de niebla que
+    // no aparecen en pantalla?" — recalcula qué losetas de niebla caen
+    // dentro del viewport (+margen de seguridad, ver Fog.updateCulling)
+    // en cada frame de cámara. Solo cuando la animación está activada
+    // (medido: con la animación desactivada, que ya es tan barata de
+    // pintar de por sí, recorrer las 289 losetas en cada frame cuesta MÁS
+    // de lo que ahorra).
+    if (typeof Fog !== "undefined" && Fog.updateCulling && Fog.animEnabled) {
+      Fog.updateCulling(this.panX, this.panY, this.scale, this.viewportEl.clientWidth, this.viewportEl.clientHeight);
+    } else if (typeof Fog !== "undefined" && Fog._cullCount && !Fog.animEnabled) {
+      Fog.clearCulling();
+    }
   },
 
   // Aplica el ancla de zoom activa (this._zoomAnchor) a una escala concreta:

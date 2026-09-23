@@ -24,10 +24,108 @@
 // del primer movimiento, ver Fog.revealForUnit).
 const FOG_INITIAL_RADIUS = 2;
 
+// Pedido explícito: "añade un checkbox para desactivar/activar la animacion
+// de la niebla en configuracion. en la interfaz movil por defecto estara
+// desactivada" — mismo patrón EXACTO que Shadows.enabled/setEnabled
+// (js/shadows.js): una sola clase en <body>, nunca se recorren las 289
+// losetas al tocar el checkbox. La animación en sí (fog-idle-drift) y el
+// will-change que promociona cada loseta a su propia capa de composición
+// viven en la regla base .tile__fog de style.css; con animEnabled=false se
+// anulan ambos con "body.gg-fog-anim-off .tile__fog" (ver style.css) — no
+// solo se para la animación, también se quita will-change, que si no
+// seguiría reservando una capa GPU por loseta aunque no se moviera nada.
+// Umbral de "interfaz móvil" — el mismo que ya usan gnome.js/abilities.js
+// para elegir entre UI_LAYOUT.infoCircle/infoCircleMobile.
+const FOG_ANIM_STORAGE_KEY = "gnomoregnomes_fog_anim";
+const FOG_ANIM_MOBILE_BREAKPOINT = 480;
+
 const Fog = {
   size: 0,
   revealedGrid: null, // boolean[row][col], o null si todavía no se ha inicializado esta partida
   _fogEls: null, // Map "row,col" -> elemento .tile__fog de esa loseta
+  animEnabled: true,
+
+  // Se llama UNA vez al cargar la página (igual que Shadows.init), no por
+  // partida — el propio checkbox de configuración vive fuera de cualquier
+  // partida concreta (ver js/settingsmenu.js) y su preferencia debe
+  // aplicarse ANTES de que exista ninguna loseta de niebla todavía (a la
+  // primera partida nueva ya le toca crear sus <img> de niebla con la
+  // clase de <body> ya puesta, sin parpadeo).
+  initAnimPref() {
+    const saved = localStorage.getItem(FOG_ANIM_STORAGE_KEY);
+    if (saved === null) {
+      // Sin preferencia guardada todavía: activada en escritorio, apagada
+      // por defecto en móvil (pedido explícito) — se decide una sola vez
+      // aquí; a partir de la primera vez que el jugador toque el
+      // checkbox, su elección se respeta siempre, sea cual sea el ancho
+      // de pantalla en partidas futuras.
+      this.animEnabled = window.innerWidth > FOG_ANIM_MOBILE_BREAKPOINT;
+    } else {
+      this.animEnabled = saved === "1";
+    }
+    this._applyAnimToggle();
+  },
+
+  setAnimEnabled(enabled) {
+    this.animEnabled = !!enabled;
+    localStorage.setItem(FOG_ANIM_STORAGE_KEY, this.animEnabled ? "1" : "0");
+    this._applyAnimToggle();
+    // Pedido explícito: "¿se podrían desactivar las losetas de niebla que
+    // no aparecen en pantalla hasta que la cámara se mueva?" — el culling
+    // de abajo (updateCulling) solo merece la pena cuando hay animación
+    // que ahorrar (medido: con la animación desactivada, recorrer las 289
+    // losetas en cada frame de cámara cuesta MÁS de lo que ahorra). Al
+    // apagar la animación hay que devolver a visibles las que estuvieran
+    // "culled" (si no, se quedarían ocultas para siempre, porque
+    // BoardView deja de llamar a updateCulling con animEnabled=false); al
+    // activarla, calcular el culling YA MISMO en vez de esperar al
+    // siguiente movimiento de cámara.
+    if (!this.animEnabled) {
+      this.clearCulling();
+    } else if (typeof BoardView !== "undefined" && BoardView.viewportEl) {
+      this.updateCulling(BoardView.panX, BoardView.panY, BoardView.scale, BoardView.viewportEl.clientWidth, BoardView.viewportEl.clientHeight);
+    }
+  },
+
+  _applyAnimToggle() {
+    document.body.classList.toggle("gg-fog-anim-off", !this.animEnabled);
+  },
+
+  // Pedido explícito: "¿se podrían desactivar las losetas de niebla que no
+  // aparecen en pantalla hasta que la cámara se mueva y sea visible? ¿o
+  // habría popping?" — comprobado con pruebas antes de implementar (ver
+  // conversación): con un margen de 1.5 losetas SÍ llegaba a fallar en el
+  // peor caso posible (un arrastre que cubra de golpe todo el rango de la
+  // cámara en una sola ráfaga, quedaba a solo 3.4px de mostrar un hueco).
+  // x3 TILE_WIDTH deja margen de sobra incluso en ese caso límite, medido
+  // con el mismo peor-caso synthetic (sobran ~270px). Con margen x1.5 la
+  // mejora de fps era mayor, pero no merece la pena arriesgarse a un
+  // parpadeo visible por ese margen extra de rendimiento.
+  _cullCount: 0,
+  clearCulling() {
+    if (!this._fogEls) return;
+    this._fogEls.forEach((fogEl) => fogEl.classList.remove("tile__fog--culled"));
+    this._cullCount = 0;
+  },
+  updateCulling(panX, panY, scale, viewportW, viewportH) {
+    if (!this._fogEls) return;
+    const margin = TILE_WIDTH * 3 * scale;
+    let visibleCount = 0;
+    this._fogEls.forEach((fogEl, key) => {
+      if (fogEl.style.display === "none") return; // ya revelada y oculta del todo
+      if (fogEl.classList.contains("tile__fog--revealed")) return; // disipándose, no tocar
+      const commaIdx = key.indexOf(",");
+      const row = Number(key.slice(0, commaIdx));
+      const col = Number(key.slice(commaIdx + 1));
+      const c = getTileCenter(row, col, this.size);
+      const screenX = panX + c.x * scale;
+      const screenY = panY + c.y * scale;
+      const visible = screenX > -margin && screenX < viewportW + margin && screenY > -margin && screenY < viewportH + margin;
+      if (visible) visibleCount++;
+      fogEl.classList.toggle("tile__fog--culled", !visible);
+    });
+    this._cullCount = visibleCount;
+  },
 
   // Se llama UNA vez al generar/pintar cada mapa nuevo (spawnTestUnits en
   // newgame-flow.js), DESPUÉS de renderMap — necesita que los .tile ya
@@ -201,3 +299,5 @@ const Fog = {
     }
   },
 };
+
+document.addEventListener("DOMContentLoaded", () => Fog.initAnimPref());

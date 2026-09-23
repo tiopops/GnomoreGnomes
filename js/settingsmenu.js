@@ -146,6 +146,31 @@ const SettingsMenu = {
     });
     panel.appendChild(teamMarkersBtn);
 
+    // Pedido explícito: "añade un checkbox para desactivar activar la
+    // animacion de la niebla en configuracion. en la interfaz movil por
+    // defecto estara desactivada" — mismo patrón exacto que
+    // Sombras/SFX/Mostrar equipos de arriba, pero para Fog.animEnabled
+    // (js/fog.js), cuyo valor por defecto (si nunca se ha tocado este
+    // checkbox) ya depende del ancho de pantalla al cargar la página —
+    // aquí solo se lee y se alterna, la lógica del valor inicial vive en
+    // Fog.initAnimPref.
+    const fogAnimBtn = document.createElement("button");
+    fogAnimBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
+    const fogAnimChecked = typeof Fog !== "undefined" ? Fog.animEnabled : true;
+    fogAnimBtn.innerHTML =
+      '<span class="settings-panel__option-main">' +
+      '<i class="ph ph-cloud-fog settings-panel__option-icon"></i>' +
+      '<span class="p5-banner__label">Animación de niebla</span>' +
+      "</span>" +
+      `<span class="settings-toggle" data-checked="${fogAnimChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
+    fogAnimBtn.addEventListener("click", () => {
+      SFX.click();
+      const next = typeof Fog !== "undefined" ? !Fog.animEnabled : true;
+      if (typeof Fog !== "undefined") Fog.setAnimEnabled(next);
+      fogAnimBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+    });
+    panel.appendChild(fogAnimBtn);
+
     const exitBtn = document.createElement("button");
     exitBtn.className = "p5-banner p5-banner--action settings-panel__option";
     exitBtn.innerHTML =
