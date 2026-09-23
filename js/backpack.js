@@ -464,6 +464,7 @@ const Backpack = {
             // colocar objetos sobre ella" — mismo criterio que un tótem,
             // justo arriba.
             if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
+            if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
             // Igual que cualquier otra mecánica del proyecto: no se ofrece
             // colocar nada sobre una loseta que ni siquiera se ha revelado.
             if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;

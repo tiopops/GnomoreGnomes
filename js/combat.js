@@ -51,6 +51,7 @@ const Combat = {
         if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue; // ocupada por el gnomo (js/gnome.js)
         if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
+        if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue; // agua (js/mapgen.js)
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange) continue;
@@ -312,6 +313,7 @@ const Combat = {
       if (typeof Gnome !== "undefined" && Gnome.isAt(nextRow, nextCol)) break;
       if (typeof Villages !== "undefined" && Villages.at(nextRow, nextCol)) break; // poblado (js/villages.js)
       if (typeof Shops !== "undefined" && Shops.at(nextRow, nextCol)) break; // Tienda Goblin (js/shops.js)
+      if (typeof Obelisks !== "undefined" && Obelisks.at(nextRow, nextCol)) break; // Obelisco Ancestral (js/obelisks.js)
       path.push({ row: nextRow, col: nextCol });
       row = nextRow;
       col = nextCol;

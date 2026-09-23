@@ -203,30 +203,25 @@ function _showStartMatchError(err) {
   document.body.appendChild(banner);
 }
 
-// Coloca los 3 tipos de unidad del equipo de la raza elegida, uno junto a
-// otro cerca del centro del tablero (ver UNIT_TYPES en units.js — el orden
-// en el que aparecen ahí es el mismo con el que se colocan aquí), más el
-// equipo RIVAL: la otra raza que el jugador NO escogió, con su propio arte
-// (ya no hace falta el tinte rojo de antes, "de momento solo hay arte de un
-// mismo tipo" — pedido explícito: "no pongas a mi mismo equipo con los
-// colores cambiados... coloca al otro equipo que queda libre y no escogí").
-// El roster se calcula filtrando UNIT_TYPES por raceId en vez de tener una
-// lista fija: así un personaje nuevo que se añada a una raza aparece aquí
-// solo, sin tocar este archivo.
+// Ya NO coloca ningún personaje de partida (pedido explícito, mecánica de
+// Obeliscos Ancestrales, ver js/obelisks.js): "cada equipo empieza en su
+// obelisco con cero unidades reclutadas en juego". Esta función se queda
+// con su mismo nombre/firma (la llaman startMatch/resumeMatch más abajo)
+// para no tocar esos dos sitios, pero ahora solo prepara el tablero
+// (tablero, niebla, gnomos, tótems, tienda, Obeliscos de cada equipo,
+// Puntos de Gloria, turnos) — el roster de cada raza (UNIT_TYPES filtrado
+// por raceId) ya no se usa aquí para colocar nada, lo consulta Obelisks al
+// abrir su menú de "Reclutar".
 function spawnTestUnits(size, raceId) {
   if (typeof Units === "undefined") return;
   const boardTiles = document.getElementById("board-tiles");
   Units.init(boardTiles, size);
-  const mid = Math.floor(size / 2);
 
   const roster = Object.keys(UNIT_TYPES).filter((typeId) => UNIT_TYPES[typeId].raceId === raceId);
   // Si por lo que sea no hay raza válida (partida guardada antigua sin
-  // raceId, etc.) se cae de vuelta al roster de Mushboom Forest de siempre
-  // en vez de dejar el tablero sin personajes del jugador.
+  // raceId, etc.) se cae de vuelta a Mushboom Forest de siempre en vez de
+  // dejar al jugador sin raza asignada a su Obelisco.
   const finalRaceId = roster.length > 0 ? raceId : "mushboom_forest";
-  const finalRoster = roster.length > 0
-    ? roster
-    : Object.keys(UNIT_TYPES).filter((typeId) => UNIT_TYPES[typeId].raceId === "mushboom_forest");
 
   // La raza rival es la que "queda libre": cualquier otra disponible en
   // RACES que NO sea la que el jugador acaba de elegir — con solo 2 razas
@@ -239,17 +234,8 @@ function spawnTestUnits(size, raceId) {
   const enemyRace = (typeof RACES !== "undefined" ? RACES : []).find(
     (r) => r.available && r.id !== finalRaceId
   );
-  const enemyRoster = enemyRace
-    ? Object.keys(UNIT_TYPES).filter((typeId) => UNIT_TYPES[typeId].raceId === enemyRace.id)
-    : finalRoster;
+  const finalEnemyRaceId = enemyRace ? enemyRace.id : finalRaceId;
 
-  // Mismas 3 casillas relativas al centro que se usaban antes — de momento
-  // solo hay razas con 3 personajes, así que alcanza con 3 posiciones fijas.
-  const spawnSpots = [
-    { row: mid, col: mid },
-    { row: mid, col: mid - 1 },
-    { row: mid - 1, col: mid },
-  ];
   // Niebla de guerra (js/fog.js): TODO el mapa arranca oculto — hay que
   // inicializarla ANTES de revelar nada, y DESPUÉS de renderMap (llamado
   // por quien invoque a esta función, ver startMatch/resumeMatch más
@@ -257,43 +243,45 @@ function spawnTestUnits(size, raceId) {
   // necesita cachear.
   if (typeof Fog !== "undefined") Fog.init(size, boardTiles);
 
+  // Obeliscos Ancestrales (js/obelisks.js) — pedido explícito: "cada equipo
+  // tiene un obelisco ancestral...cada equipo empieza en su obelisco con
+  // cero unidades reclutadas en juego". Van PRIMERO de todo el "mobiliario"
+  // del tablero (antes de gnomos/tótems/tienda) para que esos puedan evitar
+  // sus casillas al colocarse (ver Obelisks.at, ya consultado desde
+  // Villages.spawn/Shops.spawn/Gnome.spawnNear). El jugador arranca cerca
+  // del centro del mapa (mismo punto que antes ocupaban sus personajes de
+  // prueba) y el rival lo más lejos posible de él.
+  if (typeof Obelisks !== "undefined") {
+    Obelisks.resetAll();
+    Obelisks.init(finalRaceId, finalEnemyRaceId);
+    Obelisks.spawn(size, finalRaceId, finalEnemyRaceId);
+  }
   // Pedido explícito: "puedes hacer que se precargue la partida antes de
   // mostrarla?...la niebla ocupada por los jugadores desaparece de golpe"
   // — el revelado inicial (Fog.revealInitial) YA NO se dispara aquí, en el
-  // mismo instante de JS en que se coloca cada personaje: se anota su
-  // casilla y es quien llama a spawnTestUnits (startMatch/resumeMatch)
-  // quien decide CUÁNDO revelarla de verdad, después de que el tablero ya
-  // esté visible (ver _playInitialFogReveal más abajo) — así el jugador
-  // llega a ver primero la partida entera ya montada, cubierta de niebla,
-  // y la revelación es un momento aparte, no algo que se pierde en el
-  // mismo fotograma en que aparece el tablero.
-  const playerSpawnSpots = [];
-  finalRoster.forEach((typeId, i) => {
-    const spot = spawnSpots[i] || spawnSpots[spawnSpots.length - 1];
-    Units.spawnTestUnit(spot.row, spot.col, typeId);
-    playerSpawnSpots.push(spot);
-  });
-
-  // El equipo rival se coloca en su propio bucle (roster independiente del
-  // jugador: puede tener otro número de personajes el día que las razas no
-  // tengan siempre 3) en casillas al azar del tablero, como ya hacía antes.
-  enemyRoster.forEach((typeId) => {
-    Units.spawnRandomEnemy(typeId);
-  });
+  // mismo instante de JS en que se coloca cada cosa: solo se anota el
+  // punto a revelar (el Obelisco del jugador, ahora que ya no hay
+  // personajes de partida) y es quien llama a spawnTestUnits (startMatch/
+  // resumeMatch) quien decide CUÁNDO revelarla de verdad, después de que
+  // el tablero ya esté visible (ver _playInitialFogReveal más abajo).
+  const playerObelisk = typeof Obelisks !== "undefined" ? Obelisks.byTeam("player") : null;
+  const playerSpawnSpots = playerObelisk ? [{ row: playerObelisk.row, col: playerObelisk.col }] : [];
 
   // Los gnomos (js/gnome.js): PUEDE HABER VARIOS a la vez (pedido
   // explícito, "de echo para hacer pruebas pon 3 gnomos en la partida de
   // pruebas") — Gnome.resetAll() detiene primero los temporizadores de los
   // de la partida anterior (si los había) y vacía la lista antes de crear
   // los nuevos. spawnNear busca la loseta libre más próxima a cada punto si
-  // esa ya está ocupada (por los personajes de arriba, por un rival o por
-  // otro gnomo ya colocado — nunca pueden coincidir dos gnomos en la misma
-  // casilla), así que basta con pedir puntos de partida sin calcular a mano
-  // qué queda libre. Posiciones AL AZAR en todo el tablero (pedido
-  // explícito: "al iniciar la fase de pruebas los gnomos aparecen en
-  // posiciones aleatorias del mapa") — pueden caer bajo niebla sin
-  // problema, es parte de la gracia de explorar: se descubren al revelarse
-  // esa zona, igual que un rival.
+  // esa ya está ocupada (por un Obelisco, un rival o por otro gnomo ya
+  // colocado — nunca pueden coincidir dos gnomos en la misma casilla), así
+  // que basta con pedir puntos de partida sin calcular a mano qué queda
+  // libre. Posiciones AL AZAR en todo el tablero (pedido explícito: "al
+  // iniciar la fase de pruebas los gnomos aparecen en posiciones aleatorias
+  // del mapa") — pueden caer bajo niebla sin problema, es parte de la
+  // gracia de explorar: se descubren al revelarse esa zona, igual que un
+  // rival. La reaparición ambiental de gnomos sueltos (Gnome.ensureLooseGnome,
+  // enganchada a cada inicio de turno) se encarga de mantener al menos uno
+  // libre durante el resto de la partida, esto es solo el reparto inicial.
   if (typeof Gnome !== "undefined") {
     Gnome.resetAll();
     for (let i = 0; i < 3; i++) {
@@ -305,13 +293,14 @@ function spawnTestUnits(size, raceId) {
 
   // Poblados neutrales (js/villages.js) — pedido explícito: "los poblados
   // neutrales aparecen desperdigados por el mapa, de momento puedes poner
-  // 2". DESPUÉS de colocar personajes y gnomos (para que Villages.spawn
-  // pueda evitar sus casillas al elegir dónde aparecen) y ANTES de
-  // Glory.init (para que el marcador de gloria, si algún día arranca con un
-  // poblado ya conquistado, lo tenga en cuenta desde el primer turno).
+  // 2". DESPUÉS de colocar los Obeliscos y los gnomos (para que
+  // Villages.spawn pueda evitar sus casillas al elegir dónde aparecen) y
+  // ANTES de Glory.init (para que el marcador de gloria, si algún día
+  // arranca con un poblado ya conquistado, lo tenga en cuenta desde el
+  // primer turno).
   if (typeof Villages !== "undefined") {
     Villages.resetAll();
-    Villages.init(finalRaceId, enemyRace ? enemyRace.id : finalRaceId);
+    Villages.init(finalRaceId, finalEnemyRaceId);
     Villages.spawn(size);
   }
 
@@ -324,16 +313,15 @@ function spawnTestUnits(size, raceId) {
     Shops.spawn(size);
   }
 
-  // Turnos (js/turns.js) — se resetea AL FINAL, con todos los personajes y
-  // gnomos ya colocados: siempre empieza el turno del jugador con las 2
-  // acciones de cada uno intactas, y (re)aparece el botón de PASAR TURNO.
-  // Puntos de Gloria (js/glory.js) — se inicializa ANTES de Turns.reset()
-  // (justo debajo) para que el marcador ya exista cuando Turns.reset()
-  // conceda el +2 inicial del primer turno del jugador (ver
+  // Turnos (js/turns.js) — se resetea AL FINAL, con el resto del tablero ya
+  // colocado: siempre empieza el turno del jugador, y (re)aparece el botón
+  // de PASAR TURNO. Puntos de Gloria (js/glory.js) — se inicializa ANTES de
+  // Turns.reset() (justo debajo) para que el marcador ya exista cuando
+  // Turns.reset() conceda el +2 inicial del primer turno del jugador (ver
   // Turns.reset -> Glory.grantTurnStart). La raza rival puede no existir
   // (ver nota de enemyRace más arriba) — Glory.init ya tolera un id sin
   // raza asociada (simplemente no pinta icono).
-  if (typeof Glory !== "undefined") Glory.init(finalRaceId, enemyRace ? enemyRace.id : finalRaceId);
+  if (typeof Glory !== "undefined") Glory.init(finalRaceId, finalEnemyRaceId);
 
   // Mochila (js/backpack.js) — deja el inventario limpio con la Setarcoiris
   // inicial. ANTES de Turns.reset() (igual que Glory arriba) porque se
@@ -352,12 +340,12 @@ function spawnTestUnits(size, raceId) {
   // archivo), igual que el resto de "mobiliario" fijo del HUD de arriba.
   if (typeof Backpack !== "undefined") Backpack.showButton();
 
-  // Niebla de guerra (js/fog.js) — estado de visibilidad inicial: con todos
-  // los rivales y gnomos ya colocados y el revelado inicial de cada
-  // personaje del jugador ya hecho (arriba), toca ocultar a quien haya
-  // caído fuera de esas zonas reveladas. Va AL FINAL de todo a propósito
-  // (después de spawnear rivales/gnomos, no antes) — pedido explícito: "los
-  // elementos de debajo de la niebla no deben renderizarse para el jugador".
+  // Niebla de guerra (js/fog.js) — estado de visibilidad inicial: con el
+  // rival y los gnomos ya colocados y el revelado inicial de la zona del
+  // jugador ya hecho (arriba), toca ocultar lo que haya caído fuera de esas
+  // zonas reveladas. Va AL FINAL de todo a propósito — pedido explícito:
+  // "los elementos de debajo de la niebla no deben renderizarse para el
+  // jugador".
   if (typeof Fog !== "undefined") Fog.applyVisibility();
   // Totems (js/villages.js) — comprueba de entrada si algún personaje ha
   // quedado colocado justo detrás de un totem (solapamiento en pantalla).
@@ -366,6 +354,10 @@ function spawnTestUnits(size, raceId) {
   // pegado a una (mapa pequeño), su cursor de moneda debe estar activo
   // desde el primer fotograma, no solo tras el primer movimiento.
   if (typeof Shops !== "undefined") Shops.refreshAll();
+  // Obeliscos Ancestrales (js/obelisks.js) — indicador de población y pulso
+  // de "vacío" ya al día desde el primer fotograma (ambos arrancan en 0
+  // unidades reclutadas, así que el pulso debe verse ya mismo).
+  if (typeof Obelisks !== "undefined") Obelisks.refreshAll();
 
   return { playerSpawnSpots };
 }

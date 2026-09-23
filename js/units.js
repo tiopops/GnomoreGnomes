@@ -211,6 +211,25 @@ const SPRITE_SCALES = {
 const SPRITE_SCALES_MACHACA = {};
 const SPRITE_SCALES_IMPACT = {};
 
+// Precio de reclutar cada tipo de personaje desde el Obelisco Ancestral de
+// su equipo (js/obelisks.js), en Puntos de Gloria — pedido explícito: "cada
+// unidad a reclutar tiene un precio, debe ser configurable desde el debug
+// de configurar personajes, inicialmente todos costaran 2 para hacer
+// pruebas, pero añadelo al debug ya". Mismo patrón que SPRITE_SCALES:
+// "default" es el respaldo para cualquier typeId sin entrada propia
+// todavía (nunca debería hacer falta con las 6 de abajo ya cubiertas, pero
+// evita un precio "undefined" si se añade un personaje nuevo sin pasar
+// primero por el debug).
+const RECRUIT_PRICES = {
+  default: 2,
+  hombre_arbol: 2,
+  surcabosques: 2,
+  seta_artificiero: 2,
+  goblin_lanzador: 2,
+  urgamentes: 2,
+  punoroca: 2,
+};
+
 const Units = {
   boardSize: 0,
   container: null,
@@ -445,6 +464,12 @@ const Units = {
     return v != null ? v : this.machacaScaleFor(typeId);
   },
 
+  // Precio de reclutar (ver RECRUIT_PRICES arriba) — usado por
+  // js/obelisks.js y por debug/configurar-personajes.html.
+  recruitPriceFor(typeId) {
+    return RECRUIT_PRICES[typeId] ?? RECRUIT_PRICES.default;
+  },
+
   _placeInstant(unit) {
     const { x, y } = getTileCenter(unit.row, unit.col, this.boardSize);
     unit.el.style.left = `${x}px`;
@@ -515,6 +540,10 @@ const Units = {
 
   select(unit) {
     this.deselect();
+    // Obelisco Ancestral (js/obelisks.js) — solo una cosa "abierta" a la vez
+    // sobre el tablero: seleccionar una unidad cierra el obelisco propio que
+    // estuviera mostrando sus iconos de reclutar/habilidades.
+    if (typeof Obelisks !== "undefined") Obelisks.deselect();
     this.selectedId = unit.id;
     unit.el.classList.add("unit--selected");
     SFX.click();
@@ -852,6 +881,7 @@ const Units = {
           if (typeof Gnome !== "undefined" && Gnome.isAt(r, c)) continue;
           if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
           if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
+          if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           neighbors.push({ row: r, col: c });
         }
@@ -995,6 +1025,11 @@ const Units = {
     // el único que mantenía una tienda accesible, deja de estarlo (y su
     // popup, si estaba abierto, se cierra solo — ver Shops.refreshAll).
     if (typeof Shops !== "undefined") Shops.refreshAll();
+    // Obelisco Ancestral (js/obelisks.js) — la población en juego de su
+    // equipo acaba de bajar en 1 (una unidad menos sobre el tablero), así
+    // que su indicador/pulso de "obelisco vacío" puede necesitar
+    // actualizarse ya mismo, no esperar al próximo inicio de turno.
+    if (typeof Obelisks !== "undefined") Obelisks.refreshAll();
   },
 };
 
@@ -1011,5 +1046,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // gnomo abierta (ver js/gnome.js) — igual que deseleccionar, es el
     // comportamiento esperado al "hacer clic fuera".
     if (typeof Gnome !== "undefined") Gnome.hideAllBadges();
+    // Obelisco Ancestral (js/obelisks.js) — un clic en casilla vacía también
+    // deselecciona el obelisco propio que estuviera "abierto" (con sus
+    // iconos de reclutar/habilidades asomando), igual que con una unidad.
+    if (typeof Obelisks !== "undefined") Obelisks.deselect();
   });
 });

@@ -320,6 +320,7 @@
         agilidad: saved.agilidad ?? type.agilidad,
         percepcion: saved.percepcion ?? type.percepcion,
         description: saved.description ?? (UNIT_DESCRIPTIONS[typeId] ?? ""),
+        recruitPrice: saved.recruitPrice ?? Units.recruitPriceFor(typeId),
       };
     });
 
@@ -527,6 +528,11 @@
       }
 
       addSlider("scale", "Tamaño (iddle)", 0.4, 2.5, 0.05, 2, "x");
+      // Pedido explícito: "cada unidad a reclutar tiene un precio, debe ser
+      // configurable desde el debug de configurar personajes" (ver
+      // RECRUIT_PRICES en js/units.js, usado por el menú del Obelisco
+      // Ancestral, js/obelisks.js).
+      addSlider("recruitPrice", "Precio de reclutar (Puntos de Gloria)", 1, 20, 1, 0, "");
 
       // Estadísticas: misma fila de 5 "pips" que el popup real de
       // js/unitinfo.js (statRow), pero editable — clic en un pip la fija a
@@ -613,6 +619,7 @@
           agilidad: type.agilidad,
           percepcion: type.percepcion,
           description: UNIT_DESCRIPTIONS[typeId] ?? "",
+          recruitPrice: Units.recruitPriceFor(typeId),
         };
         saveTuned(tuned);
         renderTeam(teamSelect.value);
@@ -667,6 +674,12 @@
           `  ${typeId}: { aguante: ${v.aguante}, movimiento: ${v.movimiento}, fuerza: ${v.fuerza}, agilidad: ${v.agilidad}, percepcion: ${v.percepcion}, },`
         );
       });
+      lines.push("");
+      lines.push("// --- js/units.js — RECRUIT_PRICES completo ---");
+      lines.push("const RECRUIT_PRICES = {");
+      lines.push(`  default: ${RECRUIT_PRICES.default},`);
+      typeIds.forEach((typeId) => lines.push(`  ${typeId}: ${tuned[typeId].recruitPrice},`));
+      lines.push("};");
       lines.push("");
       lines.push("// --- js/unitinfo.js — UNIT_DESCRIPTIONS completo ---");
       lines.push("const UNIT_DESCRIPTIONS = {");

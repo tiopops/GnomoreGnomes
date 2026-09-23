@@ -32,6 +32,7 @@ const Movement = {
         if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
         if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
+        if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
         // Niebla de guerra (js/fog.js) — pedido explícito: "un personaje no
         // puede moverse a una zona que esté cubierta por niebla, pero sí a
         // una adyacente a la misma". No hace falta comprobar el CAMINO hacia

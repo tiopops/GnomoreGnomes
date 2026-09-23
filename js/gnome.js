@@ -178,12 +178,15 @@ function createGnomeInstance() {
       const noVillage = (r, c) => typeof Villages === "undefined" || !Villages.at(r, c);
       // Tienda Goblin (js/shops.js) — tampoco aparece encima de una.
       const noShop = (r, c) => typeof Shops === "undefined" || !Shops.at(r, c);
+      // Obelisco Ancestral (js/obelisks.js) — tampoco aparece encima de uno.
+      const noObelisk = (r, c) => typeof Obelisks === "undefined" || !Obelisks.at(r, c);
       if (
         !Units.unitAt(row, col) &&
         !Gnome._otherGnomeAt(this, row, col) &&
         walkable(row, col) &&
         noVillage(row, col) &&
-        noShop(row, col)
+        noShop(row, col) &&
+        noObelisk(row, col)
       ) {
         this.spawn(row, col);
         return;
@@ -204,6 +207,8 @@ function createGnomeInstance() {
             if (!noVillage(r, c)) continue;
             // Tienda Goblin (js/shops.js) — tampoco aparece encima de una.
             if (!noShop(r, c)) continue;
+            // Obelisco Ancestral (js/obelisks.js) — tampoco aparece encima de uno.
+            if (!noObelisk(r, c)) continue;
             this.spawn(r, c);
             return;
           }
@@ -400,6 +405,7 @@ function createGnomeInstance() {
           if (Gnome._otherGnomeAt(this, row, col)) continue;
           if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
           if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
+          if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
           if (moveDist > moveRange) continue;
@@ -855,6 +861,7 @@ function createGnomeInstance() {
           if (Gnome._otherGnomeAt(this, row, col)) continue;
           if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
           if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
+          if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const minDist = Units.list.reduce(
             (min, u) => Math.min(min, Math.max(Math.abs(u.row - row), Math.abs(u.col - col))),
@@ -1088,6 +1095,7 @@ function createGnomeInstance() {
           if (Gnome._otherGnomeAt(this, r, c)) continue;
           if (typeof Villages !== "undefined" && Villages.at(r, c)) continue; // poblado (js/villages.js)
           if (typeof Shops !== "undefined" && Shops.at(r, c)) continue; // Tienda Goblin (js/shops.js)
+          if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           const alignment = dr * dRow + dc * dCol;
           const openness = this._tileOpenness(r, c);
@@ -1118,6 +1126,7 @@ function createGnomeInstance() {
           if (Gnome._otherGnomeAt(this, r, c)) continue;
           if (typeof Villages !== "undefined" && Villages.at(r, c)) continue; // poblado (js/villages.js)
           if (typeof Shops !== "undefined" && Shops.at(r, c)) continue; // Tienda Goblin (js/shops.js)
+          if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           free++;
         }
@@ -1553,9 +1562,65 @@ const Gnome = {
       this._passBtn.classList.remove("gnome-action-btn--aiming");
     }
   },
+
+  // ---------- Reaparición ambiental de gnomos sueltos ----------
+  // Pedido explícito: "ahora iran apareciendo gnomos en zonas alejadas de
+  // los jugadores de manera que siempre hay al menos un gnomo suelto sin
+  // estar agarrado por un jugador" — se comprueba en cada inicio de turno
+  // individual (ver Turns.registerTurnStartListener al final del archivo:
+  // se dispara para el jugador Y el rival, pero basta con comprobarlo una
+  // vez, da igual de quién sea el turno que lo dispara). Si YA hay al menos
+  // un gnomo suelto (heldBy null) ahora mismo no hace nada — la condición
+  // es "siempre hay AL MENOS uno", no "uno por cada X turnos".
+  onTurnStart() {
+    this.ensureLooseGnome();
+  },
+
+  // Mismo espíritu que Shops.spawn/Villages.spawn ("intenta unas cuantas
+  // veces al azar, quédate con el mejor candidato, nunca bloquees la
+  // partida"): unas cuantas losetas al azar, transitables, y se queda con
+  // la que quede más lejos (distancia Chebyshev) de CUALQUIER personaje en
+  // juego — "en zonas alejadas de los jugadores", sin distinguir equipo (un
+  // gnomo suelto es codiciado por los dos). Reutiliza Gnome.spawnNear (ya
+  // busca la loseta libre más cercana en espiral, evitando otros gnomos/
+  // poblados/tiendas/obeliscos) para el colocado final, así este método solo
+  // tiene que decidir DÓNDE apuntar esa búsqueda.
+  ensureLooseGnome() {
+    if (typeof Units === "undefined" || !Units.boardSize) return;
+    if (this.list.some((g) => !g.heldBy)) return; // ya hay uno suelto, nada que hacer
+    const size = Units.boardSize;
+    let best = null;
+    let bestMinDist = -1;
+    for (let attempts = 0; attempts < 60; attempts++) {
+      const row = Math.floor(Math.random() * size);
+      const col = Math.floor(Math.random() * size);
+      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+      const minDist = Units.list.reduce((min, u) => {
+        const d = Math.max(Math.abs(u.row - row), Math.abs(u.col - col));
+        return Math.min(min, d);
+      }, Infinity);
+      if (minDist > bestMinDist) {
+        bestMinDist = minDist;
+        best = { row, col };
+      }
+      if (minDist >= Math.floor(size / 2)) break; // ya lo bastante lejos, no hace falta seguir
+    }
+    if (best) this.spawnNear(best.row, best.col);
+  },
 };
 
 Units.registerRangeProvider(Gnome);
+// Registrado dentro de DOMContentLoaded (no directamente aquí abajo, a
+// diferencia de Shops/Abilities) porque este archivo se carga en index.html
+// ANTES que js/turns.js — "typeof Turns !== 'undefined'" fallaría en el
+// momento en que se ejecuta este archivo. Para cuando el navegador dispara
+// DOMContentLoaded ya se han ejecutado TODOS los <script> de la página
+// (mismo motivo por el que units.js usa este mismo evento para su propio
+// listener de "clic fuera", ver el final de ese archivo), así que Turns ya
+// existe siempre en este punto.
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof Turns !== "undefined") Turns.registerTurnStartListener(Gnome);
+});
 
 // Cierra el contador de puntos de "mantener pulsado" (ver
 // GnomeInstance.showBadge) al soltar en CUALQUIER punto de la pantalla, no

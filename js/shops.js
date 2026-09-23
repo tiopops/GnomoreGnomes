@@ -127,6 +127,7 @@ const Shops = {
       if (typeof Units !== "undefined" && Units.unitAt(row, col)) continue;
       if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
       if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
+      if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
       if (this.at(row, col)) continue;
       this._create(row, col);
     }

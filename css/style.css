@@ -4696,3 +4696,266 @@ body.backpack-giving--bevida * {
 .start-error-banner__close:hover {
   background: rgba(255, 255, 255, 0.22);
 }
+
+/* ---------------------------------------------------------------------
+   Obeliscos Ancestrales (js/obelisks.js) — pedido explícito: "cada equipo
+   tiene un obelisco ancestral, es como los totems pero mas grande y
+   vistoso...tiene un menu de reclutar y otro de habilidades que aparecen
+   arriba del obelisco al seleccionarlo y desaparecen al deseleccionar...un
+   indicador de poblacion que solo ve su propio jugador...30 puntos de
+   vida, al llegar a 0 se destruye y ese jugador queda eliminado".
+   Reutiliza el mismo patrón "unit" de posicionamiento que .village/.shop
+   (ver esos bloques más arriba) — nunca entra en Units.list. ----------- */
+
+.obelisk {
+  cursor: var(--cursor-pointer);
+}
+
+.obelisk--enemy {
+  /* Misma especificidad que ".obelisk" — basta con venir DESPUÉS en el
+     archivo para ganar el empate, igual que .village--enemy/.unit--enemy. */
+  cursor: var(--cursor-enemy);
+}
+
+.obelisk__sprite {
+  display: block;
+  /* "mas grande y vistoso" que un tótem (.village__sprite, 168px) — el
+     doble de ancho, mismo espíritu que "el círculo de mostrar equipos debe
+     ser el doble" de esta misma pasada. */
+  width: 260px;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.5));
+  transform-origin: 50% 100%;
+  animation: unit-idle-breathe 2.6s ease-in-out infinite;
+}
+
+/* Barra de vida — 30 segmentos (VILLAGE_MAX_HP eran 10) en un marco más
+   ancho para que quepan sin apelmazarse; SIEMPRE visible, igual que la de
+   un tótem (nunca se selecciona, así que no hay ningún otro momento en que
+   pudiera revelarse). */
+.obelisk .unit__hpbar {
+  opacity: 1;
+  top: -26px;
+  width: 220px;
+  height: 10px;
+  gap: 0.6px;
+}
+
+/* Pulso de "obelisco vacío" (pedido implícito, feedback nivel Triple A del
+   proyecto) — cuando el equipo dueño no tiene NINGUNA unidad reclutada en
+   juego ahora mismo (Obelisks._refreshEmptyPulse), para que salte a la
+   vista que urge reclutar. Sobre el sprite, nunca sobre .obelisk entero
+   (que también contiene el menú/indicador, que no deben palpitar). */
+.obelisk--empty .obelisk__sprite {
+  animation: unit-idle-breathe 2.6s ease-in-out infinite, obelisk-empty-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes obelisk-empty-pulse {
+  0%, 100% { filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 0 rgba(255, 207, 63, 0)); }
+  50% { filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 22px rgba(255, 207, 63, 0.85)); }
+}
+
+/* Destrucción del Obelisco (Obelisks._destroy) — mismo tiempo (420ms) que
+   Units.removeUnit, un apagón seco antes de quitarlo del DOM. */
+.obelisk--destroyed {
+  transition: opacity 0.42s ease, transform 0.42s ease;
+  opacity: 0;
+  transform: scale(0.7) translateY(20px);
+}
+
+/* Indicador de población — "solo lo ve su propio jugador" (pedido
+   explícito): Obelisks._create ni siquiera CREA este elemento para el
+   Obelisco del rival, así que esta regla nunca tiene nada que pintar ahí.
+   Mismo rombo irregular compartido (--gg-badge-clip/--gg-badge-tilt) que
+   .shop-slot__price/.unit-info-action-dots, ancho en vez de cuadrado para
+   caber "3 / 5" sin recortarse. */
+.obelisk__pop-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 46px;
+  height: 30px;
+  padding: 0 8px;
+  transform: rotate(var(--gg-badge-tilt));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
+  z-index: 6;
+  color: #241f28;
+  font-weight: 900;
+  font-size: 0.78rem;
+  background: #8fd6ff;
+  clip-path: var(--gg-badge-clip);
+  border: var(--gg-frame-outline-width) solid #000;
+  box-sizing: border-box;
+}
+
+/* Menú de reclutar/habilidades — "aparecen arriba del obelisco al
+   seleccionarlo, desaparecen al deseleccionar" (pedido explícito). Vive
+   siempre en el DOM (ver Obelisks._create); su visibilidad la decide
+   "obelisk--selected" en el propio .obelisk, nunca se crea/destruye en
+   cada clic — mismo espíritu que .ability-pick-marker (transition de
+   opacidad, nunca mezclada con la animation de aparición). */
+.obelisk__menu {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.16s ease;
+}
+
+.obelisk--selected .obelisk__menu {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Sin placa circular detrás — mismo criterio ya aplicado a los botones de
+   habilidad especial (pedido explícito: "los iconos de las habilidades no
+   deben estar contenidos dentro de un circulo, si no sueltos", ver
+   .ability-btn arriba): aquí solo un hit-area transparente con el icono
+   suelto y su propio drop-shadow de contraste contra el tablero. */
+.obelisk__menu-btn {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: var(--cursor-pointer);
+  transform: scale(0.6);
+  opacity: 0;
+  transition: transform 0.22s cubic-bezier(0.34, 1.6, 0.64, 1), opacity 0.16s ease, filter 0.15s ease;
+}
+
+.obelisk--selected .obelisk__menu-btn {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.obelisk__menu-btn:hover {
+  filter: drop-shadow(0 0 10px rgba(255, 207, 63, 0.85));
+  transform: scale(1.08);
+}
+
+/* Pedido explícito: "respetaremos el tamaño y medidas del icono de
+   habilidad especial" (ver .ability-btn__icon-img, 51px). */
+.obelisk__menu-icon {
+  width: 51px;
+  height: 51px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
+}
+
+/* ---------- Mira de ataque / colocación (reutilizan .attack-marker y
+   .range-marker tal cual, ver más arriba — estas dos clases extra no
+   necesitan ninguna regla propia, solo sirven para que Obelisks pueda
+   distinguir sus propios marcadores de los de Villages/Shops si algún día
+   hiciera falta, ver Units.refreshProviderFor). ---------- */
+
+/* ---------- Popup de habilidades (placeholder) ---------- */
+.obelisk-abilities-panel__soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 34px 20px 10px;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.obelisk-abilities-panel__soon i {
+  font-size: 2.2rem;
+  color: #ffcf3f;
+}
+
+/* ---------- Pantalla de fin de partida ---------- */
+/* Mismo lenguaje visual que .start-error-banner (banderín .p5-banner
+   grande) pero a pantalla COMPLETA con fondo oscuro propio (a diferencia
+   de esa, aquí la partida ya terminó: no tiene sentido seguir viendo el
+   tablero detrás con total claridad) y bloqueando cualquier clic. */
+.obelisk-gameover-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 8, 12, 0.78);
+  opacity: 0;
+  transition: opacity 0.32s ease;
+}
+
+.obelisk-gameover-overlay--visible {
+  opacity: 1;
+}
+
+.obelisk-gameover-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 54px;
+  max-width: min(480px, calc(100vw - 40px));
+  transform: scale(0.85);
+  transition: transform 0.32s cubic-bezier(0.34, 1.6, 0.64, 1);
+}
+
+.obelisk-gameover-overlay--visible .obelisk-gameover-panel {
+  transform: scale(1);
+}
+
+.obelisk-gameover-panel__icon {
+  font-size: 3.4rem;
+}
+
+.obelisk-gameover-panel--win .obelisk-gameover-panel__icon,
+.obelisk-gameover-panel--win .obelisk-gameover-panel__title {
+  color: #ffcf3f;
+}
+
+.obelisk-gameover-panel--win::after {
+  background: #2a2410;
+}
+
+.obelisk-gameover-panel--lose .obelisk-gameover-panel__icon,
+.obelisk-gameover-panel--lose .obelisk-gameover-panel__title {
+  color: #ff8a7a;
+}
+
+.obelisk-gameover-panel--lose::after {
+  background: #3a1414;
+}
+
+.obelisk-gameover-panel__title {
+  font-size: 1.6rem;
+}
+
+.obelisk-gameover-panel__msg {
+  position: relative;
+  z-index: 2;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.obelisk-gameover-panel__btn {
+  margin-top: 10px;
+}

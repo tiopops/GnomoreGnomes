@@ -83,6 +83,7 @@ const Villages = {
       if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
       if (typeof Units !== "undefined" && Units.unitAt(row, col)) continue;
       if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
+      if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
       if (this.at(row, col)) continue;
       const tooClose = this.list.some(
         (v) => Math.max(Math.abs(v.row - row), Math.abs(v.col - col)) < MIN_SEPARATION
@@ -364,6 +365,7 @@ const Villages = {
         if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
         if (this.at(row, col)) continue; // poblado (el mismo u otro)
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
+        if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange) continue;
