@@ -350,6 +350,10 @@ function spawnTestUnits(size, raceId) {
   // Totems (js/villages.js) — comprueba de entrada si algún personaje ha
   // quedado colocado justo detrás de un totem (solapamiento en pantalla).
   if (typeof Villages !== "undefined") Villages.refreshOcclusion();
+  // Obeliscos Ancestrales (js/obelisks.js) — mismo motivo que Villages
+  // justo arriba: comprueba de entrada si algún personaje ha quedado
+  // colocado justo detrás de uno.
+  if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
   // Tienda Goblin (js/shops.js) — por si algún personaje ha arrancado ya
   // pegado a una (mapa pequeño), su cursor de moneda debe estar activo
   // desde el primer fotograma, no solo tras el primer movimiento.

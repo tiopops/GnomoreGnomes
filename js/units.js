@@ -163,7 +163,7 @@ const UNIT_TYPES = {
   // propias estadísticas calibradas por separado en
   // debug/configurar-personajes.html.
   punoroca: {
-    name: "Puñorroca",
+    name: "PuñoRroca",
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_03.png",
     machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca.png",

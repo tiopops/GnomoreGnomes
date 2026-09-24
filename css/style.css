@@ -4765,6 +4765,17 @@ body.backpack-giving--bevida * {
   transform: scale(0.7) translateY(20px);
 }
 
+/* "Si alguien se esconde detras de un obelisco y no deja seleccionarlo"
+   (pedido explícito, mismo comportamiento que .village--occluding más
+   arriba — ver Obelisks.refreshOcclusion, js/obelisks.js): pointer-events
+   none en TODO el .obelisk para que los clics atraviesen hasta quien esté
+   debajo, la semitransparencia deja intuir que hay alguien oculto. */
+.obelisk--occluding {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
 /* Indicador de población — "solo lo ve su propio jugador" (pedido
    explícito): Obelisks._create ni siquiera CREA este elemento para el
    Obelisco del rival, así que esta regla nunca tiene nada que pintar ahí.

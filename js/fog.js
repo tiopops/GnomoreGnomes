@@ -297,6 +297,18 @@ const Fog = {
         shop.el.classList.toggle("unit--fog-hidden", this.isFogged(shop.row, shop.col));
       });
     }
+    // Obeliscos Ancestrales (js/obelisks.js) — pedido explícito: "los
+    // obeliscos enemigos deben estar ocultos en la niebla hasta que se
+    // descubran". A diferencia de un tótem (siempre oculto bajo niebla, sea
+    // de quien sea), aquí SÍ hay excepción para "player" — mismo criterio
+    // que las unidades de arriba: el jugador siempre sabe dónde está el
+    // suyo propio, solo el del rival puede quedar sin descubrir todavía.
+    if (typeof Obelisks !== "undefined") {
+      Obelisks.list.forEach((o) => {
+        if (o.team === "player" || !o.el) return;
+        o.el.classList.toggle("unit--fog-hidden", this.isFogged(o.row, o.col));
+      });
+    }
   },
 };
 

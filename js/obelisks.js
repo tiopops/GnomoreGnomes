@@ -98,6 +98,7 @@ const Obelisks = {
   init(playerRaceId, enemyRaceId) {
     this._raceIds = { player: playerRaceId, enemy: enemyRaceId };
     this.gameOver = false;
+    this._initMouseTracking();
   },
 
   resetAll() {
@@ -315,6 +316,57 @@ const Obelisks = {
     obelisk.el.style.left = `${x}px`;
     obelisk.el.style.top = `${y}px`;
     obelisk.el.style.zIndex = String((obelisk.row + obelisk.col) * 10 + 5);
+  },
+
+  // ---------- Ocultar personajes propios/rivales escondidos detrás de un
+  // Obelisco (mismo mecanismo que Villages.refreshOcclusion, js/villages.js
+  // — pedido explícito: "cuando un personaje esta detras de un obelisco,
+  // este debe hacerse transparente al igual que ocurre con los totems").
+  // Los tótems ya funcionan para AMBOS equipos, no solo el propio (ver la
+  // nota "v3" en Villages.refreshOcclusion: cualquier unidad ya VISIBLE
+  // cuenta, sea aliada o rival, para poder interactuar con ella igual —
+  // seleccionarla o atacarla) — aquí se replica exactamente ese mismo
+  // criterio, sin distinción de equipo. ----------
+  _lastMouseX: null,
+  _lastMouseY: null,
+  _mouseTrackingReady: false,
+  _initMouseTracking() {
+    if (this._mouseTrackingReady) return;
+    this._mouseTrackingReady = true;
+    window.addEventListener("mousemove", (e) => {
+      this._lastMouseX = e.clientX;
+      this._lastMouseY = e.clientY;
+      this.refreshOcclusion(e.clientX, e.clientY);
+    });
+  },
+
+  refreshOcclusion(mouseX, mouseY) {
+    if (typeof Units === "undefined") return;
+    const mx = typeof mouseX === "number" ? mouseX : this._lastMouseX;
+    const my = typeof mouseY === "number" ? mouseY : this._lastMouseY;
+    this.list.forEach((obelisk) => {
+      if (!obelisk.spriteEl) return;
+      if (obelisk.el.classList.contains("unit--fog-hidden") || mx === null || my === null) {
+        obelisk.el.classList.remove("obelisk--occluding");
+        return;
+      }
+      const behindUnit = Units.list.find(
+        (unit) =>
+          unit.row === obelisk.row - 1 &&
+          unit.col === obelisk.col - 1 &&
+          unit.el &&
+          !unit.el.classList.contains("unit--fog-hidden")
+      );
+      let occluding = false;
+      if (behindUnit) {
+        const oRect = obelisk.spriteEl.getBoundingClientRect();
+        const uRect = behindUnit.el.getBoundingClientRect();
+        const mouseOverObelisk = mx >= oRect.left && mx <= oRect.right && my >= oRect.top && my <= oRect.bottom;
+        const mouseOverUnit = mx >= uRect.left && mx <= uRect.right && my >= uRect.top && my <= uRect.bottom;
+        occluding = mouseOverObelisk || mouseOverUnit;
+      }
+      obelisk.el.classList.toggle("obelisk--occluding", occluding);
+    });
   },
 
   // ---------- Selección propia (menú reclutar/habilidades) ----------
