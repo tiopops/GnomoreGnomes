@@ -2195,6 +2195,12 @@ body.team-markers--visible .unit__team-marker {
   pointer-events: none;
   transition: opacity 0.2s ease;
   z-index: 600;
+  /* Mismo arreglo de parpadeo en móvil que .p5-banner (ver su nota larga)
+     — este es el ÚNICO overlay del juego con backdrop-filter (un desenfoque
+     de pantalla completa en cada fotograma de su propia transición de
+     opacidad es justo el tipo de coste que hace parpadear), así que se
+     promociona a su propia capa GPU igual que el resto. */
+  transform: translateZ(0);
 }
 
 .unit-info-overlay--visible {
@@ -3471,6 +3477,36 @@ body.ability-targeting--mind * {
    falta en los dos casos por igual (ver la nota larga de
    .settings-gear-btn: sin esto, un <button> pinta su propio fondo nativo
    opaco por debajo). */
+/* Pedido explícito: "algunos menus siguen parpadeando en mi movil...algo
+   sencillo que mejore el rendimiento drasticamente" — causa conocida y muy
+   común en Safari/Chrome de móvil: un elemento con clip-path (en los
+   pseudo-elementos, ver ::before/::after más abajo) + filter (aquí mismo)
+   SIN una capa de composición GPU propia obliga al navegador a repintar
+   TODO su contenido en cada fotograma de cualquier transición/animación
+   que ocurra cerca (la suya propia o incluso la de un hermano), y eso es
+   justo lo que se percibe como parpadeo — .p5-banner es la base de
+   prácticamente todos los menús/botones del juego, así que un solo
+   arreglo aquí cubre "algunos menús" de golpe. transform:translateZ(0) (un
+   truco viejo pero todavía el más compatible) empuja al elemento a su
+   propia capa GPU estable de una vez, en vez de recalcularla cada frame —
+   coste de memoria mínimo (una capa más por banderín visible en pantalla,
+   nunca decenas a la vez) a cambio de eliminar el repintado constante. No
+   cambia nada visual: 0px en las tres dimensiones.
+   OJO: los paneles grandes (.settings-panel/.backpack-panel__bg/
+   .obelisk-gameover-panel/.unit-info-card...) ponen SU PROPIO "transform"
+   (el balanceo/escala de aparición del panel) en una regla que viene
+   DESPUÉS en el archivo, así que ese transform:translateZ(0) de aquí
+   queda sustituido del todo para ellos — sigue sirviendo tal cual para los
+   botones sueltos que no redeclaran transform (shop-buy-btn, las filas de
+   configuración...), pero NO es lo que evita el parpadeo en los paneles
+   grandes. Para esos, "will-change" es la parte que de verdad cuenta: a
+   diferencia de "transform", nunca se redeclara en ningún sitio, así que
+   llega intacto a TODOS los .p5-banner por igual y le avisa al navegador
+   de antemano que va a animar transform/opacity/filter — sin este aviso,
+   el navegador crea la capa de composición JUSTO al empezar cada
+   animación (abrir el menú, por ejemplo), y ese momento exacto de "crear
+   la capa" es un culpable muy típico del parpadeo que se nota al abrir un
+   popup en móvil. */
 .p5-banner {
   position: relative;
   display: inline-flex;
@@ -3480,6 +3516,9 @@ body.ability-targeting--mind * {
   border: none;
   padding: 10px 24px;
   filter: drop-shadow(5px 5px 0 rgba(0, 0, 0, 0.55));
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity, filter;
 }
 
 .p5-banner::before,
@@ -3685,6 +3724,11 @@ body.perf-mode .attack-cursor-fx {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
+  /* Mismo arreglo de parpadeo en móvil que .p5-banner (ver su nota larga) —
+     avisa de antemano de la transición de opacidad para que la capa de
+     composición ya exista al empezar a abrirse, en vez de crearse justo en
+     ese instante. */
+  will-change: opacity;
   /* Mismo arreglo que .backpack-overlay (ver su nota larga, pedido
      explícito: interfaces cortadas en el móvil) — deja hacer scroll si el
      panel de ajustes no cabe entero en pantallas bajas. */
@@ -4591,6 +4635,9 @@ body.perf-mode .attack-cursor-fx {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
+  /* Mismo arreglo de parpadeo en móvil que .settings-overlay/.p5-banner
+     (ver sus notas largas). */
+  will-change: opacity;
   /* Pedido explícito: "algunas interfaces no se muestran COMPLETAS en la
      pantalla de mi smartphone y no puedo darle a continuar o comprar" — el
      overlay no dejaba hacer scroll, así que en una pantalla baja (o con una
@@ -5318,6 +5365,8 @@ body.backpack-giving--bevida * {
   background: rgba(10, 8, 12, 0.78);
   opacity: 0;
   transition: opacity 0.32s ease;
+  /* Mismo arreglo de parpadeo en móvil que .settings-overlay/.p5-banner. */
+  will-change: opacity;
   /* Ver la nota larga de .backpack-overlay (pedido explícito: interfaces
      cortadas en el móvil) — con la tabla de estadísticas nueva, este panel
      puede pasar de sobra de 100vh en una pantalla baja. */
