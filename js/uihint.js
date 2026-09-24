@@ -20,8 +20,21 @@ const UiHint = {
     if (this.el) return;
     const el = document.createElement("div");
     el.className = "ui-hint";
+    // Pedido explícito: "las interfaces con texto de instrucciones deben
+    // ser cuadradas con las esquinas irregulares como el resto de las
+    // interfaces...ahora tienen los bordes redondeados" — este aviso
+    // migra al mismo doble-capa recortado en diagonal que el resto (ver
+    // .ui-hint en style.css), así que el texto necesita vivir en su PROPIO
+    // hijo con position:relative+z-index:2 (igual que .end-turn-btn__label
+    // o cualquier otro contenido dentro de un banderín), nunca directamente
+    // como textContent del contenedor — si no, el ::after (relleno) lo
+    // taparía.
+    const label = document.createElement("span");
+    label.className = "ui-hint__label";
+    el.appendChild(label);
     document.body.appendChild(el);
     this.el = el;
+    this._labelEl = label;
   },
 
   // Muestra el aviso con el texto dado. Llamar de nuevo con otro texto
@@ -29,7 +42,7 @@ const UiHint = {
   // y volver a mostrarlo).
   show(text) {
     this._ensure();
-    this.el.textContent = text;
+    this._labelEl.textContent = text;
     this.el.classList.add("ui-hint--visible");
   },
 

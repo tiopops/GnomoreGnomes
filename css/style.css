@@ -1032,21 +1032,30 @@ body.team-markers--visible .unit__team-marker {
   cursor: var(--cursor-enemy);
 }
 
-/* Pedido explícito: "la animacion de seleccionar personaje/obelisco acaba
-   muy brusca...que sea mas suave" — con "ease" a secas, el tramo de vuelta
-   (40%→100%, el 60% restante de la animación) desacelera de forma pareja y
-   se nota un corte seco justo al llegar a scale(1). Cambiado a la misma
-   curva "spring" ya establecida en el proyecto (cubic-bezier(0.34,1.4,0.64,1),
-   ver .ability-btn/.backpack-panel) — sube rápido y se posa con un asentamiento
-   suave en vez de frenar en seco, y se alarga ligeramente (0.4s → 0.5s) para
-   que ese asentamiento se note sin precipitarse. */
+/* Pedido explícito (segunda vuelta): "la animacion...acaba con un tiron,
+   demasiado brusca...sigue sin estar corregido". El intento anterior
+   (cubic-bezier(0.34,1.4,0.64,1) para TODA la animación) no arreglaba el
+   problema de raíz: esa curva tiene un "overshoot" (su segundo punto de
+   control pasa de 1.0) pensado para dar un rebote en el CRECIMIENTO
+   inicial, pero aplicada también al tramo de VUELTA (45%→100%) hace que el
+   valor se pase de scale(1), vuelva atrás y se frene en seco justo al
+   llegar — eso es el "tirón" que se seguía notando, más notorio cuanto más
+   corto es ese tramo final.
+   Arreglo real: un "timing-function" DISTINTO por tramo (soportado dentro
+   de cada regla de @keyframes, se aplica al segmento que EMPIEZA en esa
+   marca) — el tramo de crecimiento (0%→45%) se queda con el rebote/resorte
+   de siempre (da vidilla al gesto de seleccionar), pero el tramo de vuelta
+   (45%→100%) pasa a una curva de deceleración pura, SIN overshoot
+   (cubic-bezier(0.16,1,0.3,1), un "ease-out" fuerte que llega exactamente
+   a scale(1) sin pasarse ni rebotar) — así el final es un asentamiento
+   suave de verdad, no un frenazo. */
 .unit--selected {
-  animation: unit-select-pulse 0.5s cubic-bezier(0.34, 1.4, 0.64, 1);
+  animation: unit-select-pulse 0.5s ease;
 }
 
 @keyframes unit-select-pulse {
-  0% { transform: translate(-50%, -92%) scale(1); }
-  45% { transform: translate(-50%, -92%) scale(1.14); }
+  0% { transform: translate(-50%, -92%) scale(1); animation-timing-function: cubic-bezier(0.34, 1.4, 0.64, 1); }
+  45% { transform: translate(-50%, -92%) scale(1.14); animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
   100% { transform: translate(-50%, -92%) scale(1); }
 }
 
@@ -1850,7 +1859,17 @@ body.team-markers--visible .unit__team-marker {
 /* Pedido explícito: "arriba del texto PASAR TURNO del boton, debe
    indicarse en que turno estamos...X/30" — línea pequeña y más apagada
    encima del texto principal, dentro de la misma caja recortada. */
+/* Bug reportado: "el indicador de en que turno estamos sigue sin
+   mostrarse". Causa real encontrada: a esta regla se le olvidó el
+   position:relative + z-index:2 que SÍ lleva su hermano .end-turn-btn__label
+   un poco más abajo — sin eso, este texto se pintaba por DEBAJO del
+   ::after de .end-turn-btn__bg (el relleno real del botón, z-index:1, ver
+   la nota larga de .p5-banner sobre por qué todo hijo directo de un
+   "banderín" necesita su propio z-index) — no es que no se generara, es
+   que estaba ahí pero completamente tapado por el propio fondo del botón. */
 .end-turn-btn__turn-counter {
+  position: relative;
+  z-index: 2;
   font-size: 0.66rem;
   font-weight: 700;
   font-style: normal;
@@ -2297,24 +2316,43 @@ body.team-markers--visible .unit__team-marker {
   flex-shrink: 0;
 }
 
+/* Pedido explícito: "los puntos...me gustan en color morado, pero quiero
+   que sean como las barras de vida, el mismo estilo visual, con 5 casillas
+   y coloreando las que deban estar coloreadas" — se abandona la píldora
+   redondeada de antes (fuera de estilo, ver la migración de .unit-info-card
+   a .p5-banner un poco más arriba) y se reutiliza LITERALMENTE el mismo
+   lenguaje que .unit__hpbar/.unit__hpbar-segment (marco astillado +
+   segmentos con corte diagonal en punta, primero plano): mismo
+   clip-path, mismo hueco entre casillas, mismo criterio de "el marco hace
+   de fondo, cada casilla es un recorte" — la única diferencia real es el
+   color de relleno (morado, no verde) y que aquí SIEMPRE son 5 casillas
+   fijas (el máximo de cualquier estadística) en vez de una por punto de
+   aguante variable. */
 .unit-stat-pips {
   display: flex;
-  gap: 5px;
+  gap: 1.1px;
   flex: 1;
+  height: 10px;
+  padding: 1.5px 3px;
+  box-sizing: border-box;
+  background: var(--p5-tone);
+  clip-path: polygon(0% 0%, 100% 11%, 98.5% 100%, 0% 89%);
 }
 
 .unit-stat-pip {
-  flex: 1;
-  height: 10px;
-  border-radius: 4px;
-  background: rgba(244, 242, 248, 0.12);
-  border: 1px solid rgba(244, 242, 248, 0.2);
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  clip-path: polygon(2.5px 0%, 100% 0%, calc(100% - 2.5px) 100%, 0% 100%);
+}
+
+.unit-stat-pip:first-child {
+  clip-path: polygon(0% 0%, 100% 0%, calc(100% - 2.5px) 100%, 0% 100%);
 }
 
 .unit-stat-pip--filled {
-  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
-  border-color: var(--accent-hover);
-  box-shadow: 0 0 6px rgba(122, 62, 240, 0.6);
+  background: var(--accent-hover);
 }
 
 .tile:hover img {
@@ -2933,19 +2971,26 @@ body.ability-targeting--mind * {
 /* Bloque de habilidad especial dentro del popup de estadísticas (ver
    js/unitinfo.js) — mismo espíritu que .unit-info-desc, pero con su propia
    cajita para que se distinga de la descripción de flavor. */
+/* Pedido explícito: "el estilo visual de los menus de informacion de los
+   personajes no es del todo como el que venimos haciendo...el textbox de
+   la descripcion tiene los bordes redondeados" — igual que
+   .unit-info-card un poco más arriba, este recuadro se había quedado con
+   border-radius+border de antes de que el proyecto adoptara el recorte
+   plano en diagonal. Se sustituye por EXACTAMENTE el mismo patrón que
+   .backpack-desc (la caja de descripción del popup de mochila/tienda):
+   clip-path en banderín sutil + fondo de color plano, sin border ni
+   border-radius en ningún lado. */
 .unit-info-ability {
   margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 207, 63, 0.35);
-  background: rgba(255, 207, 63, 0.08);
+  padding: 10px 14px;
+  clip-path: polygon(2% 0, 100% 0, 98% 100%, 0% 100%);
+  background: rgba(255, 207, 63, 0.12);
   text-align: left;
 }
 
 .unit-info-ability--used {
   opacity: 0.6;
-  border-color: rgba(244, 242, 248, 0.2);
-  background: rgba(244, 242, 248, 0.05);
+  background: rgba(244, 242, 248, 0.08);
 }
 
 .unit-info-ability__header {
@@ -3482,14 +3527,30 @@ body.ability-targeting--mind * {
 }
 
 /* Modo rendimiento (js/perfmode.js) — ver la nota larga de ese archivo.
-   filter:drop-shadow y backdrop-filter:blur son las propiedades más caras
-   de componer en móviles de gama baja y se usan por TODO el juego (este
-   propio .p5-banner el primero); en vez de tocar cada regla suelta, una
-   sola regla universal los apaga de golpe en cuanto <body> lleva esta
-   clase. No toca ninguna forma/clip-path, solo el sombreado/desenfoque. */
+   Pedido explícito (bug reportado): "cuando un personaje se queda sin
+   acciones debe aparecer desactivado como antes...su color no pasa a color
+   desactivado" — la primera versión de esta regla usaba un
+   "body.perf-mode * { filter: none !important; }" universal, y filter NO
+   es solo sombreado decorativo en este juego: .unit--exhausted (arriba,
+   "pierde saturación para leerse como inactivo") usa ese MISMO filter con
+   saturate()/brightness() para comunicar estado de juego, así que
+   activar el modo rendimiento lo apagaba también sin querer, junto con
+   cualquier otro filtro con significado (tinte de equipo, flashes de
+   habilidad, etc.).
+   Ahora la regla es mucho más quirúrgica: SOLO backdrop-filter:blur
+   (siempre decorativo, el desenfoque de fondo de los overlays) y
+   filter:drop-shadow en los sitios donde de verdad es solo un adorno sin
+   ningún significado de estado — el "banderín" .p5-banner (su sombra
+   dura) y el halo pulsante del cursor de ataque. Todo lo demás que use
+   filter (incluido .unit--exhausted) se queda intacto pase lo que pase
+   con este ajuste. */
 body.perf-mode * {
-  filter: none !important;
   backdrop-filter: none !important;
+}
+
+body.perf-mode .p5-banner,
+body.perf-mode .attack-cursor-fx {
+  filter: none !important;
 }
 
 .p5-banner--action {
@@ -3701,6 +3762,20 @@ body.perf-mode * {
   justify-content: space-between;
 }
 
+/* Pedido explícito: "cuando el modo rendimiento esta activado, las
+   sombras y la animacion de niebla deben estar bloqueadas" — Sombras/
+   Animación de niebla se quedan visibles (el jugador ve que existen y por
+   qué están apagados) pero no clicables mientras el Modo rendimiento los
+   fuerce apagados (ver SettingsMenu._syncPerfLock, que añade/quita esta
+   clase; el propio click de esos dos botones también comprueba
+   PerfMode.enabled por si acaso, doble cinturón). cursor:not-allowed en
+   vez del puntero normal para que se lea como "bloqueado", no como "roto". */
+.settings-panel__option--locked {
+  opacity: 0.5;
+  cursor: var(--cursor-default);
+  pointer-events: none;
+}
+
 .settings-panel__option-main {
   position: relative;
   z-index: 2;
@@ -3909,7 +3984,7 @@ body.perf-mode * {
    clase de un solo uso ya que la tienda no tiene un estado de "selección"
    persistente propio (ver Shops._create). */
 .shop--click-pulse {
-  animation: unit-select-pulse 0.5s cubic-bezier(0.34, 1.4, 0.64, 1);
+  animation: unit-select-pulse 0.5s ease;
 }
 
 /* ---------- Interfaz de la tienda (popup) ----------
@@ -4113,23 +4188,58 @@ body.perf-mode * {
    transición de opacidad/posición en vez de una animation temporizada —
    150px desde arriba, debajo del hueco que ya ocupa .shop-restock-msg
    (90px) por si algún día coincidieran los dos a la vez. */
+/* Pedido explícito: "las interfaces con texto de instrucciones deben ser
+   cuadradas con las esquinas irregulares como el resto de las
+   interfaces...ahora tienen los bordes redondeados" — la píldora
+   (border-radius:999px) + border + box-shadow de antes se sustituye por el
+   mismo doble-capa recortado en diagonal que el resto del HUD (ver
+   .p5-banner/.end-turn-btn__bg): ::before = contorno negro, ::after =
+   relleno (un azul oscuro propio, no el berenjena-gris neutro de siempre,
+   para conservar la identidad cian de este aviso), sombra dura vía
+   filter:drop-shadow en vez de box-shadow. El texto vive en su propio hijo
+   (.ui-hint__label, ver js/uihint.js) con position:relative+z-index:2 —
+   sin eso quedaría tapado por el ::after, mismo motivo que en cualquier
+   otro "banderín" del juego. */
 .ui-hint {
   position: fixed;
   top: 150px;
   left: 50%;
   transform: translate(-50%, -14px);
   padding: 12px 28px;
-  border-radius: 999px;
-  background: var(--bg-elevated);
-  border: 2px solid rgba(143, 214, 255, 0.85);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 18px rgba(143, 214, 255, 0.35);
-  color: #8fd6ff;
-  font-weight: 800;
+  background: none;
+  border: none;
+  filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 16px rgba(143, 214, 255, 0.4));
   text-align: center;
   opacity: 0;
   pointer-events: none;
   z-index: 6000;
   transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.ui-hint::before,
+.ui-hint::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0% 100%);
+}
+
+.ui-hint::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.ui-hint::after {
+  inset: var(--gg-frame-outline-width);
+  background: #182c36;
+  z-index: 1;
+}
+
+.ui-hint__label {
+  position: relative;
+  z-index: 2;
+  color: #8fd6ff;
+  font-weight: 800;
 }
 
 .ui-hint--visible {
@@ -5049,8 +5159,8 @@ body.backpack-giving--bevida * {
    caber "3 / 5" sin recortarse. */
 .obelisk__pop-badge {
   position: absolute;
-  top: -6px;
-  right: -8px;
+  top: -26px;
+  right: -20px;
   min-width: 46px;
   height: 30px;
   padding: 0 8px;
@@ -5059,14 +5169,18 @@ body.backpack-giving--bevida * {
   align-items: center;
   justify-content: center;
   filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
-  /* Pedido explícito: "el indicador de poblacion...esta embutido dentro de
-     una mascara, hay que sacarlo fuera" — .obelisk (su contenedor directo)
-     no tiene overflow/clip-path propio y popEl ya es hermano de
-     .obelisk__sprite (nunca hijo suyo), así que no hay ningún overflow:hidden
-     recortándolo. Por si el "recorte" percibido viene de que otra unidad/
-     losa vecina con más profundidad (z-index de Units._depthZ) pinte por
-     encima, se sube su z-index muy por encima de cualquier vecino posible
-     para garantizar que SIEMPRE quede en primer plano. */
+  /* Bug reportado, segunda vuelta: "sigue estando mal, corrige la mascara
+     que lo incrustra para que este por fuera". No había NINGÚN
+     overflow/clip-path recortándolo de verdad (ya investigado a fondo, ver
+     comprobación con capturas reales de Playwright) — lo que sí se
+     confirmó mirando el propio pixel es que con "top:-6px" se quedaba
+     pegado casi tocando el follaje de la copa del Obelisco (que se
+     ensancha justo ahí, hacia el top-right), así que a ojo se leía como si
+     estuviera "incrustado" en el propio sprite aunque técnicamente
+     pintara por encima (z-index ya de sobra). Subido a la misma altura que
+     la barra de vida (top:-26px, ver .obelisk .unit__hpbar) y desplazado
+     más a la derecha (right:-8px -> -20px) para que quede flotando en
+     espacio despejado, igual que la barra, nunca solapando el dibujo. */
   z-index: 50;
   color: #241f28;
   font-weight: 900;
@@ -5111,7 +5225,7 @@ body.backpack-giving--bevida * {
    (obelisk--selected, ver Obelisks.select), así que basta con colgar la
    animación de esa misma clase — solo se reproduce una vez, al añadirse. */
 .obelisk--selected {
-  animation: unit-select-pulse 0.5s cubic-bezier(0.34, 1.4, 0.64, 1);
+  animation: unit-select-pulse 0.5s ease;
 }
 
 .obelisk--selected .obelisk__menu {

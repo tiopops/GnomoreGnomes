@@ -82,6 +82,11 @@ const SettingsMenu = {
       "</span>" +
       `<span class="settings-toggle" data-checked="${shadowsChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
     shadowsBtn.addEventListener("click", () => {
+      // Pedido explícito: "cuando el modo rendimiento esta activado, las
+      // sombras y la animacion de niebla deben estar bloqueadas" — con el
+      // modo rendimiento encendido este checkbox no hace nada (ver
+      // _syncPerfLock más abajo, que además lo pinta visualmente apagado).
+      if (typeof PerfMode !== "undefined" && PerfMode.enabled) return;
       SFX.click();
       const next = typeof Shadows !== "undefined" ? !Shadows.enabled : true;
       if (typeof Shadows !== "undefined") Shadows.setEnabled(next);
@@ -164,6 +169,9 @@ const SettingsMenu = {
       "</span>" +
       `<span class="settings-toggle" data-checked="${fogAnimChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
     fogAnimBtn.addEventListener("click", () => {
+      // Ver la nota de shadowsBtn de arriba — mismo bloqueo mientras el
+      // modo rendimiento esté activado.
+      if (typeof PerfMode !== "undefined" && PerfMode.enabled) return;
       SFX.click();
       const next = typeof Fog !== "undefined" ? !Fog.animEnabled : true;
       if (typeof Fog !== "undefined") Fog.setAnimEnabled(next);
@@ -191,8 +199,28 @@ const SettingsMenu = {
       const next = typeof PerfMode !== "undefined" ? !PerfMode.enabled : false;
       if (typeof PerfMode !== "undefined") PerfMode.setEnabled(next);
       perfModeBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+      // Pedido explícito: "el modo rendimiento deberia desactivar por
+      // defecto las sombras y la niebla animada" — PerfMode.setEnabled ya
+      // apaga Shadows/Fog.animEnabled por su cuenta (ver perfmode.js), pero
+      // esos dos interruptores son botones APARTE con su propio dibujo en
+      // pantalla: si este panel sigue abierto hay que refrescarlos a mano
+      // para que no se queden mostrando "activado" cuando en realidad ya
+      // se acaban de apagar por debajo.
+      if (next) {
+        shadowsBtn.querySelector(".settings-toggle").dataset.checked = "false";
+        fogAnimBtn.querySelector(".settings-toggle").dataset.checked = "false";
+      }
+      // Segundo pedido explícito, encima del anterior: "cuando el modo
+      // rendimiento esta activado, las sombras y la animacion de niebla
+      // deben estar bloqueadas" — no basta con apagarlos una vez, hay que
+      // impedir que el jugador los vuelva a encender A MANO mientras el
+      // modo rendimiento siga activo (ver _syncPerfLock).
+      this._syncPerfLock();
     });
     panel.appendChild(perfModeBtn);
+    this._shadowsBtn = shadowsBtn;
+    this._fogAnimBtn = fogAnimBtn;
+    this._syncPerfLock();
 
     const exitBtn = document.createElement("button");
     exitBtn.className = "p5-banner p5-banner--action settings-panel__option";
@@ -214,8 +242,26 @@ const SettingsMenu = {
 
   open() {
     this._ensurePopup();
+    this._syncPerfLock();
     SFX.click();
     this._overlay.classList.add("settings-overlay--visible");
+  },
+
+  // Pedido explícito: "cuando el modo rendimiento esta activado, las
+  // sombras y la animacion de niebla deben estar bloqueadas" — pinta
+  // Sombras/Animación de niebla como "deshabilitados" (opacidad baja,
+  // cursor de prohibido) y hace que sus propios listeners de clic no
+  // hagan nada mientras dure (ver esos dos listeners más arriba) en vez de
+  // ocultarlos o quitarlos del DOM — así el jugador sigue viendo qué
+  // opciones existen, solo que no se pueden tocar mientras el modo
+  // rendimiento las esté forzando apagadas.
+  _syncPerfLock() {
+    if (!this._shadowsBtn || !this._fogAnimBtn) return;
+    const locked = typeof PerfMode !== "undefined" && PerfMode.enabled;
+    [this._shadowsBtn, this._fogAnimBtn].forEach((btn) => {
+      btn.classList.toggle("settings-panel__option--locked", locked);
+      btn.setAttribute("aria-disabled", String(locked));
+    });
   },
 
   close() {

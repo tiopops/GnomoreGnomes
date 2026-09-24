@@ -170,23 +170,44 @@ const Shops = {
       })),
     };
 
-    // "al hacer clic sobre ella se habre una interfaz" — SOLO si hay un
-    // personaje del jugador al lado ahora mismo (ver .shop--interactive,
-    // actualizada por refreshAll más abajo); mismo patrón que el clic
-    // directo sobre un tótem atacable (Villages._create).
+    // "al hacer clic sobre ella se habre una interfaz" — con un personaje
+    // del jugador YA al lado (.shop--interactive, actualizada por
+    // refreshAll más abajo) esto sigue abriendo gratis, sin gastar ninguna
+    // acción; mismo patrón que el clic directo sobre un tótem atacable
+    // (Villages._create).
     el.addEventListener("click", (e) => {
-      if (!el.classList.contains("shop--interactive")) return;
+      if (el.classList.contains("shop--interactive")) {
+        e.stopPropagation();
+        // Pedido explícito: "al hacer clic sobre... la tienda goblin este
+        // debe reaccionar al clic como ocurre con los personajes" — mismo
+        // pulso que Units.select (.unit--selected/unit-select-pulse, ver
+        // style.css); la tienda no tiene un estado "seleccionada" propio, así
+        // que se dispara como una clase de un solo uso, reiniciando la
+        // animación con un reflow forzado por si se pulsa varias veces.
+        el.classList.remove("shop--click-pulse");
+        void el.offsetWidth;
+        el.classList.add("shop--click-pulse");
+        this.openPopup(shop);
+        return;
+      }
+      // Segundo pedido explícito: "si la tienda goblin esta dentro del
+      // rango de movimiento de un personaje y la pulso deberia moverse
+      // hasta la casilla adyacente mas cercana y abrirse la tienda al
+      // pulsar sobre el" — hasta ahora esto SOLO se podía hacer con la mira
+      // amarilla aparte (Shops.showFor/approachAndOpen, más abajo en este
+      // mismo archivo — esa mira ya existía y ya funcionaba), nunca
+      // pulsando la propia tienda directamente. Un jugador que pulsa la
+      // tienda esperando que su personaje seleccionado se acerque solo es
+      // exactamente ese mismo caso, así que si hay una unidad propia
+      // seleccionada que puede llegar este turno, el clic directo hace
+      // AHORA lo mismo que pulsar esa mira — sin duplicar la lógica de
+      // acercarse/abrir, reutiliza approachAndOpen tal cual.
+      const unit = typeof Units !== "undefined" ? Units.list.find((u) => u.id === Units.selectedId) : null;
+      if (!unit || unit.team !== "player") return;
+      if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+      if (!this.findApproachTile(unit, shop)) return;
       e.stopPropagation();
-      // Pedido explícito: "al hacer clic sobre... la tienda goblin este
-      // debe reaccionar al clic como ocurre con los personajes" — mismo
-      // pulso que Units.select (.unit--selected/unit-select-pulse, ver
-      // style.css); la tienda no tiene un estado "seleccionada" propio, así
-      // que se dispara como una clase de un solo uso, reiniciando la
-      // animación con un reflow forzado por si se pulsa varias veces.
-      el.classList.remove("shop--click-pulse");
-      void el.offsetWidth;
-      el.classList.add("shop--click-pulse");
-      this.openPopup(shop);
+      this.approachAndOpen(unit, shop);
     });
 
     if (typeof Units !== "undefined") Units.container.appendChild(el);
