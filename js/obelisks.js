@@ -667,7 +667,18 @@ const Obelisks = {
     panelBg.appendChild(title);
 
     const slots = document.createElement("div");
-    slots.className = "backpack-slots";
+    // Pedido explícito: "La interfaz de reclutar debe ajustar el ancho
+    // total del numero de unidades al del texbox donde se muestra la
+    // descripcion...si decidimos añadir una nueva se ajustara
+    // automaticamente tambien" — a diferencia de la mochila/tienda (rejilla
+    // fija de 4 columnas, con huecos vacíos de relleno), aquí NUNCA hay
+    // huecos vacíos (un hueco por unidad de la raza, ver _renderRecruitSlots
+    // más abajo), así que un modificador propio (ver .backpack-slots--recruit
+    // en style.css) cambia a auto-fit: siempre reparte el ancho disponible
+    // (el mismo que .backpack-desc, ambos hijos directos de .backpack-panel__bg
+    // con align-items:stretch) entre las columnas que hagan falta, ni una
+    // fila a medias ni límite fijo si el roster crece.
+    slots.className = "backpack-slots backpack-slots--recruit";
     panelBg.appendChild(slots);
     this._slotsEl = slots;
 
@@ -748,10 +759,21 @@ const Obelisks = {
     const price = typeId ? Units.recruitPriceFor(typeId) : 0;
 
     if (def) {
+      // Pedido explícito: "el texto de la descripcion...no habla sobre las
+      // habilidades de los personajes ni nada...le falta 'chicha'" — antes
+      // solo mostraba las estadísticas en crudo. Ahora reutiliza el mismo
+      // texto de sabor que ya existe para el popup de información
+      // (UNIT_DESCRIPTIONS, js/unitinfo.js) y añade el nombre de la
+      // habilidad especial (ABILITIES, js/abilities.js) cuando la tiene, así
+      // sí se habla de verdad de sus habilidades antes de reclutarlo.
+      const flavor = typeof UNIT_DESCRIPTIONS !== "undefined" ? UNIT_DESCRIPTIONS[typeId] : null;
+      const ability = typeof ABILITIES !== "undefined" ? ABILITIES[typeId] : null;
       this._descEl.innerHTML =
         `<strong>${def.name}</strong><br>` +
-        `Aguante ${def.aguante} · Movimiento ${def.movimiento} · Fuerza ${def.fuerza} · Agilidad ${def.agilidad} · Percepción ${def.percepcion}` +
-        `<br><br><strong class="shop-desc__price-line">Reclutar cuesta ${price} puntos de gloria.</strong>`;
+        (flavor ? `${flavor}<br>` : "") +
+        (ability ? `<em class="recruit-desc__ability">Habilidad especial: ${ability.name}</em><br>` : "") +
+        `<span class="recruit-desc__stats">Aguante ${def.aguante} · Movimiento ${def.movimiento} · Fuerza ${def.fuerza} · Agilidad ${def.agilidad} · Percepción ${def.percepcion}</span>` +
+        `<br><strong class="shop-desc__price-line">Reclutar cuesta ${price} puntos de gloria.</strong>`;
     } else {
       this._descEl.textContent = "";
     }
@@ -789,6 +811,7 @@ const Obelisks = {
   _startPlacementMode(obelisk, typeId, price) {
     this._cancelPlacementMode();
     this._pendingRecruit = { obelisk, typeId, price };
+    if (typeof UiHint !== "undefined") UiHint.show("Elige una casilla para colocar tu nueva unidad");
     const tiles = this._adjacentFreeTiles(obelisk);
     tiles.forEach((tile, i) => {
       const marker = Units.addMarker({
@@ -809,6 +832,7 @@ const Obelisks = {
     this._placementMarkers.forEach((m) => m.remove());
     this._placementMarkers = [];
     this._pendingRecruit = null;
+    if (typeof UiHint !== "undefined") UiHint.hide();
   },
 
   _adjacentFreeTiles(obelisk) {

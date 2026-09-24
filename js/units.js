@@ -623,6 +623,10 @@ const Units = {
     this.rangeProviders.forEach((p) => {
       if (p.onClear) p.onClear();
     });
+    // Cualquier "elige una casilla" que dependiera de estos marcadores
+    // (p.ej. destino de Lanzamiento, js/abilities.js) termina aquí también
+    // — punto de paso único, ver UiHint (js/uihint.js).
+    if (typeof UiHint !== "undefined") UiHint.hide();
   },
 
   // Crea, posiciona y anima la aparición de un marcador interactivo sobre

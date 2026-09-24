@@ -177,6 +177,15 @@ const Shops = {
     el.addEventListener("click", (e) => {
       if (!el.classList.contains("shop--interactive")) return;
       e.stopPropagation();
+      // Pedido explícito: "al hacer clic sobre... la tienda goblin este
+      // debe reaccionar al clic como ocurre con los personajes" — mismo
+      // pulso que Units.select (.unit--selected/unit-select-pulse, ver
+      // style.css); la tienda no tiene un estado "seleccionada" propio, así
+      // que se dispara como una clase de un solo uso, reiniciando la
+      // animación con un reflow forzado por si se pulsa varias veces.
+      el.classList.remove("shop--click-pulse");
+      void el.offsetWidth;
+      el.classList.add("shop--click-pulse");
       this.openPopup(shop);
     });
 
@@ -282,6 +291,19 @@ const Shops = {
     panelBg.appendChild(buyBtn);
     this._buyBtnEl = buyBtn;
 
+    // Pedido explícito: "en la tienda goblin si intentas comprar un objeto
+    // y tienes insuficientes puntos, debe avisarte con un mensaje en rojo
+    // en la misma interfaz" — antes solo había un title (tooltip nativo,
+    // hay que dejar el ratón quieto encima para verlo). Este mensaje vive
+    // siempre en el DOM (igual que .obelisk__menu) y solo se hace visible
+    // desde _buySelected cuando el intento de compra falla por falta de
+    // Puntos de Gloria.
+    const warning = document.createElement("div");
+    warning.className = "shop-warning";
+    warning.textContent = "No tienes suficientes Puntos de Gloria";
+    panelBg.appendChild(warning);
+    this._warningEl = warning;
+
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
     this._overlayEl = overlay;
@@ -297,6 +319,7 @@ const Shops = {
     this._slotsEl = null;
     this._descEl = null;
     this._buyBtnEl = null;
+    this._warningEl = null;
     this._selectedUid = null;
     this._activeShop = null;
     el.classList.remove("backpack-overlay--visible");
@@ -345,6 +368,7 @@ const Shops = {
   _onSlotClick(uid) {
     SFX.click();
     this._selectedUid = this._selectedUid === uid ? null : uid;
+    if (this._warningEl) this._warningEl.classList.remove("shop-warning--visible");
     this._renderSlots();
   },
 
@@ -371,15 +395,20 @@ const Shops = {
       const playerPoints = typeof Glory !== "undefined" ? Glory.points.player : 0;
       const canAfford = !!entry && playerPoints >= entry.price;
       const hasRoom = typeof Backpack === "undefined" || Backpack.hasFreeSlot();
-      this._buyBtnEl.disabled = !entry || !canAfford || !hasRoom;
-      // Pequeño aviso de por qué no se puede comprar ahora mismo, sin
-      // cambiar el texto del propio botón (siempre "COMPRAR") — un
-      // tooltip nativo basta, esto no es un mensaje central del juego.
+      // Pedido explícito: "si intentas comprar un objeto y tienes
+      // insuficientes puntos, debe avisarte con un mensaje en rojo en la
+      // misma interfaz" — el botón se deja PULSABLE cuando lo único que
+      // falta son Puntos de Gloria (para que el clic llegue a
+      // _buySelected y muestre el aviso en rojo); solo se deshabilita de
+      // verdad cuando no hay nada seleccionado o no hay sitio en la
+      // mochila, casos donde comprar no tiene ningún sentido posible.
+      this._buyBtnEl.disabled = !entry || !hasRoom;
       if (!entry) this._buyBtnEl.title = "";
       else if (!hasRoom) this._buyBtnEl.title = "La mochila está llena";
       else if (!canAfford) this._buyBtnEl.title = "No tienes suficientes Puntos de Gloria";
       else this._buyBtnEl.title = "";
     }
+    if (this._warningEl) this._warningEl.classList.remove("shop-warning--visible");
   },
 
   _buySelected() {
@@ -388,6 +417,25 @@ const Shops = {
     const entry = shop.stock.find((it) => it.uid === this._selectedUid);
     if (!entry) return;
     if (typeof Backpack === "undefined" || !Backpack.hasFreeSlot()) return;
+    const playerPoints = typeof Glory !== "undefined" ? Glory.points.player : 0;
+    if (playerPoints < entry.price) {
+      // Pedido explícito: aviso en rojo DENTRO de la interfaz, no solo un
+      // title nativo — reutiliza el mismo golpe de "shake" que ya usa el
+      // resto del proyecto para feedback de rechazo (ver
+      // .shop-warning--visible en style.css).
+      if (this._warningEl) {
+        this._warningEl.classList.remove("shop-warning--visible");
+        // Fuerza un reflow para poder reiniciar la animación de shake si
+        // el aviso ya estaba visible (dos intentos seguidos).
+        void this._warningEl.offsetWidth;
+        this._warningEl.classList.add("shop-warning--visible");
+      }
+      // Reutiliza el sonido de "fallo" que ya existe (Gnome.dropFail no
+      // aplica aquí — SFX.dropFail es genérico, un sawtooth grave que
+      // lee claramente como "no" sin necesitar un sonido nuevo).
+      SFX.dropFail();
+      return;
+    }
     if (typeof Glory === "undefined" || !Glory.spend("player", entry.price)) return;
 
     // "el objeto pasa a la mochila del jugador que lo compro"

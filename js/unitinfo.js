@@ -158,13 +158,15 @@ const UnitInfo = {
   // esté disponible, apagada (gris) en cuanto se gasta. Se llama al
   // seleccionar (onSelect) y cada vez que Turns cambia el conteo de
   // acciones de la unidad seleccionada ahora mismo (ver refreshActionDots).
+  // Pedido explícito: "debe invertirse el orden...primero se consume el de
+  // la izquierda y luego el de la derecha" — antes se apagaba desde la
+  // derecha (i >= remaining); ahora se apaga desde la izquierda según el
+  // número YA gastado (i < used), sin tocar el orden de los <span> en el DOM.
   _renderActionDots(unit) {
     if (!this.actionDotEls || this.actionDotEls.length === 0) return;
     const used = typeof Turns !== "undefined" ? Turns.actionsUsed[unit.id] || 0 : 0;
-    const max = typeof TURNS_MAX_ACTIONS !== "undefined" ? TURNS_MAX_ACTIONS : 2;
-    const remaining = Math.max(0, max - used);
     this.actionDotEls.forEach((dot, i) => {
-      dot.classList.toggle("unit-info-action-dot--spent", i >= remaining);
+      dot.classList.toggle("unit-info-action-dot--spent", i < used);
     });
   },
 

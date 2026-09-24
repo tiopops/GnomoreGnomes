@@ -2581,6 +2581,15 @@ body.team-markers--visible .unit__team-marker {
    mismo estilo que .unit-info-btn (misma fila, a su derecha) — ver
    gnome.js. Se define aparte en vez de reusar la clase para poder colocar
    cada uno en su propio left sin pisar el botón de información. */
+/* Pedido explícito: "los iconos comunes de los personajes de pegar al
+   gnomo y lanzar al gnomo no deben estar contenidos dentro de un circulo,
+   ademas deben ser tan grandes como el de la habilidad especial" — mismo
+   criterio ya aplicado a .ability-btn (ver arriba): se quita la placa
+   circular (fondo/borde/box-shadow) y queda solo un hit-area transparente
+   con el icono suelto + drop-shadow de contraste. El tamaño ya lo decide
+   UI_LAYOUT.actionButtons.hitSize/passSize (js/uiconfig.js, 51px — igual
+   que UI_LAYOUT.abilityButton.size), así que numéricamente ya coincidían;
+   solo hacía falta quitar el círculo. */
 .gnome-action-btn {
   /* left/bottom/width/height NO van aquí: los calcula
      Gnome._positionActionButtons (js/gnome.js) a partir de UI_LAYOUT
@@ -2588,22 +2597,20 @@ body.team-markers--visible .unit__team-marker {
      información — necesita trigonometría para repartirlos en ángulo, así
      que el JS es quien manda en su posición, no el CSS. */
   position: fixed;
-  border-radius: 50%;
-  border: 2px solid rgba(244, 242, 248, 0.35);
-  background: var(--bg-elevated);
+  border: none;
+  background: transparent;
   color: var(--ink);
   font-size: 1.4rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: var(--cursor-pointer);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
   opacity: 0;
   transform: translateY(14px) scale(0.7);
   pointer-events: none;
   z-index: 500;
-  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, background-color 0.15s ease,
-    border-color 0.15s ease;
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, filter 0.15s ease;
 }
 
 .gnome-action-btn--visible {
@@ -2613,22 +2620,21 @@ body.team-markers--visible .unit__team-marker {
 }
 
 .gnome-action-btn:hover {
-  background: var(--accent);
-  border-color: var(--accent-hover);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 207, 63, 0.85));
   transform: translateY(-3px) scale(1.08);
 }
 
 /* Modo "apuntando pase": el botón de pasar se queda resaltado mientras las
    miras de destino están en pantalla, para que quede claro que sigue activo
-   (y que un segundo clic lo cancela). */
+   (y que un segundo clic lo cancela) — sin placa circular ya no hay fondo
+   que teñir, así que el resalte pasa al propio icono (glow dorado, mismo
+   tono que .ability-btn:hover). */
 .gnome-action-btn--pass.gnome-action-btn--aiming {
-  background: var(--accent);
-  border-color: var(--accent-hover);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 207, 63, 0.85));
 }
 
 /* Iconos reales de golpear/pasar (ver gnome.js, _ensureHoldingButtons) —
-   mismo patrón que .ability-btn__icon-img: ocupan el 100% del botón
-   circular en vez del glifo Phosphor pequeño de antes. */
+   ocupan el 100% del hit-area (ya sin placa circular detrás). */
 .gnome-action-btn__icon-img {
   width: 100%;
   height: 100%;
@@ -3145,6 +3151,19 @@ body.ability-targeting--mind * {
 
   .settings-toggle__check {
     font-size: 0.8rem;
+  }
+
+  /* Pedido explícito: "sobretodo en el movil aparece demasiado grande,
+     queda poco estetico" — un paso más pequeño todavía que el general de
+     arriba (.backpack-desc__text, 1.05rem) para que el párrafo más largo de
+     reclutar quepa cómodo en una pantalla estrecha. */
+  .backpack-desc__text {
+    font-size: 0.88rem;
+    line-height: 1.4;
+  }
+
+  .backpack-panel__bg {
+    padding: 36px 26px 30px;
   }
 }
 
@@ -3815,6 +3834,15 @@ body.ability-targeting--mind * {
   cursor: var(--cursor-pointer);
 }
 
+/* Pedido explícito: "al hacer clic sobre... la tienda goblin este debe
+   reaccionar al clic como ocurre con los personajes" — mismo pulso que
+   .unit--selected (unit-select-pulse, ver arriba), disparado por JS como
+   clase de un solo uso ya que la tienda no tiene un estado de "selección"
+   persistente propio (ver Shops._create). */
+.shop--click-pulse {
+  animation: unit-select-pulse 0.4s ease;
+}
+
 /* ---------- Interfaz de la tienda (popup) ----------
    "se habre una interfaz igual que la de la mochila, pero es una tienda" —
    reutiliza LITERALMENTE las mismas clases del popup de la mochila
@@ -3925,6 +3953,41 @@ body.ability-targeting--mind * {
   background: var(--disabled);
 }
 
+/* Aviso de fondos insuficientes (js/shops.js, _buySelected) — pedido
+   explícito: "si intentas comprar un objeto y tienes insuficientes puntos,
+   debe avisarte con un mensaje en rojo en la misma interfaz". Vive siempre
+   en el DOM bajo el botón COMPRAR (mismo espíritu que .obelisk__menu: crear
+   una vez, solo cambiar su visibilidad) y añade un "shake" corto al
+   aparecer para que se note incluso si el jugador no está mirando el texto
+   directamente. */
+.shop-warning {
+  align-self: center;
+  margin-top: 10px;
+  color: #ff5c5c;
+  font-weight: 900;
+  font-size: 0.82rem;
+  text-align: center;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 0.15s ease;
+}
+
+.shop-warning--visible {
+  opacity: 1;
+  max-height: 40px;
+  animation: shop-warning-shake 0.4s ease;
+}
+
+@keyframes shop-warning-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
 /* Un hueco vacío tras comprar se ve exactamente igual que uno vacío de la
    mochila (.backpack-slot--empty) hasta la siguiente reposición (ver
    Shops._restock, js/shops.js — "reponen existencias cada 5 turnos"). */
@@ -3970,6 +4033,95 @@ body.ability-targeting--mind * {
   20% { transform: translate(-50%, 0) scale(1); }
   85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -14px) scale(0.92); }
+}
+
+/* Aviso central de "esperando una acción del jugador" (js/uihint.js,
+   UiHint) — pedido explícito: "estos mensajes deben mostrarse en pantalla
+   en una zona donde no entorpezca y donde sea claramente visible". A
+   diferencia de .shop-restock-msg (un aviso puntual que se autooculta),
+   este se queda en pantalla MIENTRAS dure el modo de espera (colocar una
+   unidad reclutada, apuntar una habilidad...), así que usa una simple
+   transición de opacidad/posición en vez de una animation temporizada —
+   150px desde arriba, debajo del hueco que ya ocupa .shop-restock-msg
+   (90px) por si algún día coincidieran los dos a la vez. */
+.ui-hint {
+  position: fixed;
+  top: 150px;
+  left: 50%;
+  transform: translate(-50%, -14px);
+  padding: 12px 28px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 2px solid rgba(143, 214, 255, 0.85);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 18px rgba(143, 214, 255, 0.35);
+  color: #8fd6ff;
+  font-weight: 800;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 6000;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.ui-hint--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Tooltip de escritorio (js/tooltip.js, Tooltip) — pedido explícito: "debe
+   aparecer al lado del puntero un texto con el nombre de esa habilidad".
+   Pegado a coordenadas de ratón (left/top en px, ver Tooltip._position),
+   nunca a un elemento — así sigue al puntero también con mousemove. */
+.gg-tooltip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(20, 18, 24, 0.92);
+  border: 1px solid rgba(244, 242, 248, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 8000;
+  transition: opacity 0.12s ease;
+}
+
+.gg-tooltip--visible {
+  opacity: 1;
+}
+
+/* Halo de ataque pulsante (js/attackcursor.js, AttackCursorFx) — pedido
+   explícito: "cuando el puntero se pone rojo porque representa un posible
+   ataque, este debe palpitar energicamente". Sigue al ratón con mousemove;
+   ver la nota larga en attackcursor.js sobre por qué no se anima el cursor
+   nativo directamente. */
+.attack-cursor-fx {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 48px;
+  height: 48px;
+  margin-left: -24px;
+  margin-top: -24px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 45, 45, 0.55) 0%, rgba(255, 45, 45, 0.25) 45%, rgba(255, 45, 45, 0) 72%);
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+}
+
+.attack-cursor-fx--visible {
+  animation: attack-cursor-pulse 0.55s ease-in-out infinite;
+}
+
+@keyframes attack-cursor-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.75); }
+  50% { opacity: 1; transform: scale(1.15); }
 }
 
 /* ---------- Golpe mortal en un solo golpe contra un poblado ---------- */
@@ -4172,6 +4324,12 @@ body.ability-targeting--mind * {
    existente (misma curva "spring" que ya usaban aparición/hover, para no
    introducir un timing nuevo) así que el cambio de hueco se ve como el
    mismo lenguaje de movimiento que el resto del HUD, no como un salto. */
+/* Pedido explícito: "El icono de la mochila tampoco lo quiero contenido
+   dentro de un circulo" — mismo criterio que .ability-btn/.gnome-action-btn
+   (ver arriba): sin placa circular, solo hit-area transparente + icono
+   suelto con su propio drop-shadow (ver .backpack-btn__icon más abajo, que
+   ya traía uno). Se conserva intacta la migración de ancla (hueco
+   pequeño/grande) de la decisión de diseño previa. */
 .backpack-btn {
   position: fixed;
   left: 20px;
@@ -4179,20 +4337,18 @@ body.ability-targeting--mind * {
   width: 73px;
   height: 73px;
   padding: 0;
-  border-radius: 50%;
-  border: 2px solid rgba(244, 242, 248, 0.35);
-  background: var(--bg-elevated);
+  border: none;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: var(--cursor-pointer);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   opacity: 0;
   transform: translateY(14px) scale(0.7);
   pointer-events: none;
   z-index: 500;
-  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, background-color 0.15s ease,
-    border-color 0.15s ease, width 0.32s cubic-bezier(0.34, 1.3, 0.64, 1), height 0.32s cubic-bezier(0.34, 1.3, 0.64, 1),
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.2s ease, filter 0.15s ease,
+    width 0.32s cubic-bezier(0.34, 1.3, 0.64, 1), height 0.32s cubic-bezier(0.34, 1.3, 0.64, 1),
     bottom 0.32s cubic-bezier(0.34, 1.3, 0.64, 1);
 }
 
@@ -4209,8 +4365,7 @@ body.ability-targeting--mind * {
 }
 
 .backpack-btn:hover {
-  background: var(--accent);
-  border-color: var(--accent-hover);
+  filter: drop-shadow(0 0 10px rgba(255, 207, 63, 0.85));
   transform: translateY(-3px) scale(1.08);
 }
 
@@ -4407,6 +4562,16 @@ body.ability-targeting--mind * {
   gap: 18px;
 }
 
+/* Reclutar (js/obelisks.js, openRecruitPopup) — ver la nota larga en ese
+   archivo: aquí no hay huecos vacíos de relleno, así que las columnas se
+   ajustan solas al número real de unidades reclutables en vez de quedarse
+   fijas en 4. minmax(90px, 1fr) evita que una casilla se encoja demasiado
+   con un roster grande; el ancho total sigue siendo el mismo que
+   .backpack-desc (hermano directo, mismo padre con align-items:stretch). */
+.backpack-slots--recruit {
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+}
+
 /* Pedido explícito: "las casillas donde estan los iconos pueden ser
    cuadros irregulares con las esquinas sin redondear?...me enseñas como
    seria antes de implementarlo?" — aprobado tras 3 mockups (ver
@@ -4523,14 +4688,34 @@ body.ability-targeting--mind * {
   clip-path: polygon(2% 0, 100% 0, 98% 100%, 0% 100%);
   background: var(--p5-tone-light);
   display: flex;
-  align-items: center;
+  /* Antes centrado en vertical (align-items:center) — pensado para una
+     única línea de precio. Ahora (recruit popup, ver obelisks.js) puede
+     traer varias líneas (nombre/sabor/habilidad/stats/precio), así que
+     arranca arriba como cualquier bloque de texto normal. */
+  align-items: flex-start;
 }
 
+/* Pedido explícito: "el texto de la descripcion debe ser mas pequeño y mas
+   detallado...sobretodo en el movil aparece demasiado grande, queda poco
+   estetico". Baja de 1.5rem (pensado para una sola línea corta) a un
+   tamaño legible pero compacto que aguanta el párrafo más largo que ahora
+   trae la descripción de reclutar (ver obelisks.js, _updateRecruitDescAndButton). */
 .backpack-desc__text {
   margin: 0;
-  font-size: 1.5rem;
-  line-height: 1.4;
+  font-size: 1.05rem;
+  line-height: 1.45;
   color: var(--ink);
+}
+
+.recruit-desc__ability {
+  color: #ffcf3f;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.recruit-desc__stats {
+  opacity: 0.85;
+  font-size: 0.92em;
 }
 
 /* Círculos de colocación de objetos — mismo círculo base que
@@ -4794,7 +4979,15 @@ body.backpack-giving--bevida * {
   align-items: center;
   justify-content: center;
   filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
-  z-index: 6;
+  /* Pedido explícito: "el indicador de poblacion...esta embutido dentro de
+     una mascara, hay que sacarlo fuera" — .obelisk (su contenedor directo)
+     no tiene overflow/clip-path propio y popEl ya es hermano de
+     .obelisk__sprite (nunca hijo suyo), así que no hay ningún overflow:hidden
+     recortándolo. Por si el "recorte" percibido viene de que otra unidad/
+     losa vecina con más profundidad (z-index de Units._depthZ) pinte por
+     encima, se sube su z-index muy por encima de cualquier vecino posible
+     para garantizar que SIEMPRE quede en primer plano. */
+  z-index: 50;
   color: #241f28;
   font-weight: 900;
   font-size: 0.78rem;
@@ -4810,6 +5003,13 @@ body.backpack-giving--bevida * {
    "obelisk--selected" en el propio .obelisk, nunca se crea/destruye en
    cada clic — mismo espíritu que .ability-pick-marker (transition de
    opacidad, nunca mezclada con la animation de aparición). */
+/* Pedido explícito: "los iconos de reclutar y arbol de habilidades deben
+   aparecer mas arriba, donde estan tapan parte de la barra" — el menú se
+   posiciona relativo a TODO ".obelisk" (bottom:100% de su caja), pero la
+   barra de vida (.obelisk .unit__hpbar) vive a "top:-26px" por ENCIMA del
+   sprite, así que un margin-bottom de solo 14px dejaba el menú solapando
+   esos 26px de la barra. Se sube el hueco a 40px (26 de la barra + 14 de
+   aire) para que quede siempre por encima de ella, nunca pisándola. */
 .obelisk__menu {
   position: absolute;
   left: 50%;
@@ -4817,11 +5017,21 @@ body.backpack-giving--bevida * {
   transform: translateX(-50%);
   display: flex;
   gap: 14px;
-  margin-bottom: 14px;
+  margin-bottom: 40px;
   z-index: 20;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.16s ease;
+}
+
+/* Pedido explícito: "al hacer clic sobre el obelisco de tu equipo este
+   debe reaccionar al clic como ocurre con los personajes" — mismo pulso que
+   .unit--selected (unit-select-pulse, ver arriba); a diferencia de la
+   tienda, el Obelisco SÍ tiene un estado de selección persistente propio
+   (obelisk--selected, ver Obelisks.select), así que basta con colgar la
+   animación de esa misma clase — solo se reproduce una vez, al añadirse. */
+.obelisk--selected {
+  animation: unit-select-pulse 0.4s ease;
 }
 
 .obelisk--selected .obelisk__menu {
@@ -4836,8 +5046,8 @@ body.backpack-giving--bevida * {
    suelto y su propio drop-shadow de contraste contra el tablero. */
 .obelisk__menu-btn {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
   padding: 0;
   border: none;
   background: transparent;
@@ -4860,11 +5070,13 @@ body.backpack-giving--bevida * {
   transform: scale(1.08);
 }
 
-/* Pedido explícito: "respetaremos el tamaño y medidas del icono de
-   habilidad especial" (ver .ability-btn__icon-img, 51px). */
+/* Pedido explícito (segunda pasada): "ademas son demasiado pequeños" — en
+   el contexto de un Obelisco (mucho más grande que un personaje normal), el
+   mismo tamaño de .ability-btn__icon-img (51px) se quedaba corto; sube a
+   72px dentro del hit-area de 80px de .obelisk__menu-btn. */
 .obelisk__menu-icon {
-  width: 51px;
-  height: 51px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
   pointer-events: none;
   user-select: none;

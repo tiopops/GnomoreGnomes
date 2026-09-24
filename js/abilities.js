@@ -118,6 +118,14 @@ const Abilities = {
     this._iconEl = btn.querySelector(".ability-btn__icon");
     this._iconImgEl = btn.querySelector(".ability-btn__icon-img");
     this._positionButton();
+    // Pedido explícito: "en la interfaz de navegador de escritorio al
+    // colocar el raton y dejarlo quieto...sobre cualquier habilidad de un
+    // personaje, debe aparecer al lado del puntero un texto con el nombre
+    // de esa habilidad" — se lee dinámicamente del aria-label ya calculado
+    // en _refreshButton (siempre al día, sin duplicar el nombre aquí).
+    if (typeof Tooltip !== "undefined") {
+      Tooltip.attach(btn, () => (btn.getAttribute("aria-label") || "").replace(/^Usar habilidad: /, ""));
+    }
   },
 
   // Colocado con su propio ángulo en UI_LAYOUT.abilityButton (js/uiconfig.js)
@@ -288,6 +296,7 @@ const Abilities = {
     // sigue seleccionada, puede que le quede la otra acción).
     Units.clearRangeOverlays();
     document.body.classList.add("ability-targeting--eye");
+    if (typeof UiHint !== "undefined") UiHint.show("Elige un punto del mapa para revelarlo");
     // capture:true para interceptar el clic ANTES que cualquier otro
     // listener del tablero (seleccionar/deseleccionar unidades, marcadores,
     // clic-en-vacío...) — mientras se apunta, ningún otro sistema debe
@@ -301,6 +310,7 @@ const Abilities = {
     const unit = this._targetingUnit;
     this._targetingUnit = null;
     document.body.classList.remove("ability-targeting--eye");
+    if (typeof UiHint !== "undefined") UiHint.hide();
     if (this._visionClickHandler) {
       window.removeEventListener("click", this._visionClickHandler, { capture: true });
       this._visionClickHandler = null;
@@ -562,6 +572,7 @@ const Abilities = {
       this._startUnitPicking(unit, {
         cursorClass: "ability-targeting--mind",
         filter: isValidTarget,
+        hint: "Elige a qué rival controlar",
         onPick: (target) => this._resolveMindControl(unit, target),
       });
     }
@@ -636,6 +647,7 @@ const Abilities = {
       this._startUnitPicking(unit, {
         cursorClass: "ability-targeting--punch",
         filter: isValidTarget,
+        hint: "Elige a qué rival golpear",
         onPick: (target) => this._resolveKnockback(unit, target),
       });
     }
@@ -730,6 +742,7 @@ const Abilities = {
       this._startUnitPicking(unit, {
         cursorClass: "ability-targeting--throw",
         filter: isAdjacent,
+        hint: "Elige a quién lanzar",
         onPick: (target) => this._startThrowDestination(unit, target),
       });
     }
@@ -748,7 +761,7 @@ const Abilities = {
   // elegido). Mismas reglas de cancelado que Visión Lejana: un clic en
   // icono/UI fija o en una unidad que no cumple el filtro cancela sin
   // gastar la habilidad, se puede reintentar.
-  _startUnitPicking(unit, { cursorClass, filter, onPick }) {
+  _startUnitPicking(unit, { cursorClass, filter, onPick, hint }) {
     if (this._targetingUnit) return;
     this._targetingUnit = unit;
     // "cuando se da a elegir casillas para habilidades, las de movimiento
@@ -757,6 +770,7 @@ const Abilities = {
     // quién se puede elegir.
     Units.clearRangeOverlays();
     document.body.classList.add(cursorClass);
+    if (hint && typeof UiHint !== "undefined") UiHint.show(hint);
     this._pickCursorClass = cursorClass;
     this._pickHandler = (e) => this._onUnitPickClick(e, unit, filter, onPick);
     window.addEventListener("click", this._pickHandler, { capture: true });
@@ -784,6 +798,7 @@ const Abilities = {
     this._targetingUnit = null;
     if (this._pickCursorClass) document.body.classList.remove(this._pickCursorClass);
     this._pickCursorClass = null;
+    if (typeof UiHint !== "undefined") UiHint.hide();
     window.removeEventListener("click", this._pickHandler, { capture: true });
     this._pickHandler = null;
     if (this._pickMarkerEls) {
@@ -837,6 +852,7 @@ const Abilities = {
     }
     if (tiles.length === 0) return; // no hay ninguna casilla válida, no se gasta la habilidad
 
+    if (typeof UiHint !== "undefined") UiHint.show("Elige dónde lanzarlo");
     tiles.forEach((tile, i) => {
       Units.addMarker({
         className: "range-marker ability-throw-marker",

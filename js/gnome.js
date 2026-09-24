@@ -605,6 +605,7 @@ function createGnomeInstance() {
       Units.clearRangeOverlays();
       this.passing = true;
       Gnome._passBtn.classList.add("gnome-action-btn--aiming");
+      if (typeof UiHint !== "undefined") UiHint.show("Elige a quién pasarle el gnomo");
 
       Units.list
         .filter((u) => u.team === "player" && u.id !== unit.id)
@@ -658,6 +659,7 @@ function createGnomeInstance() {
         if (isPass) m.remove();
         return !isPass;
       });
+      if (typeof UiHint !== "undefined") UiHint.hide();
     },
 
     // Probabilidad de éxito del pase.
@@ -1484,6 +1486,10 @@ const Gnome = {
     });
     document.body.appendChild(hitBtn);
     this._hitBtn = hitBtn;
+    // Mismo tooltip de "ratón quieto encima" que las habilidades especiales
+    // (ver Abilities._ensureButton, js/abilities.js) — pedido explícito, el
+    // ejemplo dado fue justo "lanzar gnomo", el icono hermano de este.
+    if (typeof Tooltip !== "undefined") Tooltip.attach(hitBtn, "Golpear al gnomo");
 
     const passBtn = document.createElement("button");
     passBtn.className = "gnome-action-btn gnome-action-btn--pass";
@@ -1502,6 +1508,7 @@ const Gnome = {
     });
     document.body.appendChild(passBtn);
     this._passBtn = passBtn;
+    if (typeof Tooltip !== "undefined") Tooltip.attach(passBtn, "Pasar el gnomo");
 
     this._positionActionButtons();
   },
