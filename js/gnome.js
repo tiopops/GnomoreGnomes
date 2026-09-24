@@ -589,6 +589,25 @@ function createGnomeInstance() {
         unit.el.classList.remove("unit--punching");
         void unit.spriteEl.offsetWidth;
         unit.el.classList.add("unit--punching");
+        // Pedido explícito: "debe cambiarse en el instante que se usa la
+        // habilidad pegar gnomo para simular que lo golpea, todos tendran
+        // la suya, de momento solo se lo ponemos al golemcorteza" — mismo
+        // relleno en cascada que machacaSpriteFor (ver Units.pegarGnomoSpriteFor):
+        // un personaje sin sprite propio de golpe simplemente no cambia
+        // (la función devuelve su sprite normal, sin efecto visible). Se
+        // guarda el src ACTUAL (no unit type.spriteUrl a secas) para
+        // restaurar exactamente lo que hubiera, por si el personaje está en
+        // otra pose especial (p.ej. transformado en Golem de Espinas).
+        if (unit.spriteEl && typeof Units !== "undefined") {
+          const hitSrc = Units.pegarGnomoSpriteFor(unit.typeId);
+          const prevSrc = unit.spriteEl.src;
+          if (hitSrc && unit.spriteEl.src.indexOf(hitSrc) === -1) {
+            unit.spriteEl.src = hitSrc;
+            setTimeout(() => {
+              if (unit.spriteEl) unit.spriteEl.src = prevSrc;
+            }, 320);
+          }
+        }
         setTimeout(() => unit.el.classList.remove("unit--punching"), 320);
       }
       if (this.attachEl) {
@@ -765,6 +784,12 @@ function createGnomeInstance() {
         // desapercibidos sin abrir el contador a mano.
         Units.spawnFloatingText(target, `+${gained}`, { className: "dmg-popup gnome-points-popup" });
         SFX.passSuccess();
+        // Estadísticas de fin de partida (js/obelisks.js) — "NÚMERO DE
+        // PASES" del resumen comparativo; solo cuenta los que de verdad
+        // llegan a buen puerto, no cada intento.
+        if (typeof Obelisks !== "undefined" && typeof Obelisks.recordPass === "function") {
+          Obelisks.recordPass(holder.team);
+        }
       } else {
         await this.landAt(end);
       }

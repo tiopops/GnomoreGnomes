@@ -93,6 +93,23 @@ const Obelisks = {
   // ---------- Pantalla de fin de partida ----------
   _gameOverEl: null,
 
+  // Estadísticas para el resumen comparativo de fin de partida (pedido
+  // explícito: "TOTEMS CAPTURADOS, NUMERO DE PASES, MUERTES...ETC") — los
+  // totems capturados se leen en vivo de Villages.ownedCount (nunca hace
+  // falta llevar la cuenta aparte), pero pases/muertes no viven en ningún
+  // sitio todavía, así que se cuentan aquí (Gnome.executePass/
+  // Units.removeUnit avisan vía recordPass/recordDeath).
+  _passes: { player: 0, enemy: 0 },
+  _deaths: { player: 0, enemy: 0 },
+
+  recordPass(team) {
+    if (this._passes[team] != null) this._passes[team]++;
+  },
+
+  recordDeath(team) {
+    if (this._deaths[team] != null) this._deaths[team]++;
+  },
+
   // Se llama junto a Villages.init/Glory.init (newgame-flow.js) — mismo
   // patrón que esos dos: guarda qué raza pinta cada equipo.
   init(playerRaceId, enemyRaceId) {
@@ -111,6 +128,8 @@ const Obelisks = {
     this._selectedId = null;
     this._targetedIds = [];
     this.gameOver = false;
+    this._passes = { player: 0, enemy: 0 };
+    this._deaths = { player: 0, enemy: 0 };
   },
 
   at(row, col) {
@@ -573,35 +592,116 @@ const Obelisks = {
     }
   },
 
-  _endGame(winnerTeam) {
+  _endGame(winnerTeam, reason) {
     this.gameOver = true;
     this.closeRecruitPopup();
     this.closeAbilitiesPopup();
     this._cancelPlacementMode();
     if (typeof Units !== "undefined") Units.deselect();
     if (typeof Turns !== "undefined") Turns.hideButton();
-    this._showGameOverOverlay(winnerTeam);
+    this._showGameOverOverlay(winnerTeam, reason || "destroyed");
+  },
+
+  // Pedido explícito: "de momento habran un maximo de 30 turnos por
+  // partida...cuando acaben los turnos el equipo con mas vida en su
+  // obelisco gana la partida, en caso de empate se tendran en cuenta
+  // tambien el numero de totems conquistados y en caso de empate, la vida
+  // de los mismos" — se llama desde Turns.endTurn justo después de subir
+  // roundNumber (ver turns.js); si ninguno de los 3 criterios desempata de
+  // verdad, es un EMPATE de verdad (winnerTeam = null, ver _showGameOverOverlay).
+  checkTurnLimit(roundNumber) {
+    if (this.gameOver) return;
+    if (roundNumber <= TURNS_MAX_ROUNDS) return;
+
+    const hpOf = (team) => {
+      const o = this.byTeam(team);
+      return o ? o.hp : 0;
+    };
+    const totemsOf = (team) => (typeof Villages !== "undefined" ? Villages.ownedCount(team) : 0);
+    const totemHpOf = (team) =>
+      typeof Villages !== "undefined"
+        ? Villages.list.filter((v) => v.owner === team).reduce((sum, v) => sum + v.hp, 0)
+        : 0;
+
+    let winner = null;
+    const hpDiff = hpOf("player") - hpOf("enemy");
+    if (hpDiff > 0) winner = "player";
+    else if (hpDiff < 0) winner = "enemy";
+    else {
+      const totemDiff = totemsOf("player") - totemsOf("enemy");
+      if (totemDiff > 0) winner = "player";
+      else if (totemDiff < 0) winner = "enemy";
+      else {
+        const totemHpDiff = totemHpOf("player") - totemHpOf("enemy");
+        if (totemHpDiff > 0) winner = "player";
+        else if (totemHpDiff < 0) winner = "enemy";
+        // si sigue empatado en los 3 criterios, winner se queda en null: empate de verdad
+      }
+    }
+    this._endGame(winner, "turnLimit");
+  },
+
+  // Tabla comparativa (pedido explícito: "un popup...resumiendo los datos
+  // mas relevantes de la partida comparando un equipo con el otro. (ejemplo:
+  // TOTEMS CAPTURADOS, NUMERO DE PASES, MUERTES...ETC)") — se muestra en
+  // CUALQUIER final de partida, no solo por límite de turnos, así el
+  // jugador siempre ve el mismo resumen sea cual sea el motivo.
+  _statsRowsHtml() {
+    const rows = [
+      ["Vida del Obelisco", (t) => `${Math.max(0, this.byTeam(t)?.hp ?? 0)} / ${OBELISK_MAX_HP}`],
+      ["Totems capturados", (t) => (typeof Villages !== "undefined" ? Villages.ownedCount(t) : 0)],
+      ["Unidades reclutadas", (t) => this.recruitedCountFor(t)],
+      ["Pases de gnomo logrados", (t) => this._passes[t] || 0],
+      ["Bajas sufridas", (t) => this._deaths[t] || 0],
+    ];
+    return rows
+      .map(
+        ([label, fn]) => `
+        <div class="obelisk-gameover-stats__row">
+          <span class="obelisk-gameover-stats__value obelisk-gameover-stats__value--player">${fn("player")}</span>
+          <span class="obelisk-gameover-stats__label">${label}</span>
+          <span class="obelisk-gameover-stats__value obelisk-gameover-stats__value--enemy">${fn("enemy")}</span>
+        </div>`
+      )
+      .join("");
   },
 
   // Pantalla central de fin de partida — mismo lenguaje visual que
   // .start-error-banner (banderín .p5-banner grande) pero a pantalla
   // completa (bloquea cualquier clic sobre el tablero con su propio fondo,
   // ver CSS), con un único botón para volver al menú principal.
-  _showGameOverOverlay(winnerTeam) {
+  _showGameOverOverlay(winnerTeam, reason) {
     if (this._gameOverEl) this._gameOverEl.remove();
 
     const won = winnerTeam === "player";
+    const draw = winnerTeam == null;
+    const variantClass = draw ? "obelisk-gameover-panel--draw" : won ? "obelisk-gameover-panel--win" : "obelisk-gameover-panel--lose";
+    const icon = draw ? "ph-scales" : won ? "ph-trophy" : "ph-skull";
+    const title = draw ? "EMPATE" : won ? "¡VICTORIA!" : "DERROTA";
+    let msg;
+    if (reason === "turnLimit") {
+      msg = draw
+        ? "Se acabaron los 30 turnos y todo sigue exactamente igualado."
+        : "Se acabaron los 30 turnos — gana quien más resistió.";
+    } else {
+      msg = won ? "Has destruido el Obelisco Ancestral rival." : "Tu Obelisco Ancestral ha sido destruido.";
+    }
+
     const overlay = document.createElement("div");
     overlay.className = "obelisk-gameover-overlay";
     overlay.innerHTML = `
-      <div class="p5-banner obelisk-gameover-panel ${won ? "obelisk-gameover-panel--win" : "obelisk-gameover-panel--lose"}">
-        <i class="ph ${won ? "ph-trophy" : "ph-skull"} obelisk-gameover-panel__icon"></i>
-        <div class="p5-banner__label obelisk-gameover-panel__title">${won ? "¡VICTORIA!" : "DERROTA"}</div>
-        <div class="obelisk-gameover-panel__msg">${
-          won
-            ? "Has destruido el Obelisco Ancestral rival."
-            : "Tu Obelisco Ancestral ha sido destruido."
-        }</div>
+      <div class="p5-banner obelisk-gameover-panel ${variantClass}">
+        <i class="ph ${icon} obelisk-gameover-panel__icon"></i>
+        <div class="p5-banner__label obelisk-gameover-panel__title">${title}</div>
+        <div class="obelisk-gameover-panel__msg">${msg}</div>
+        <div class="obelisk-gameover-stats">
+          <div class="obelisk-gameover-stats__row obelisk-gameover-stats__row--header">
+            <span class="obelisk-gameover-stats__value obelisk-gameover-stats__value--player">TÚ</span>
+            <span class="obelisk-gameover-stats__label"></span>
+            <span class="obelisk-gameover-stats__value obelisk-gameover-stats__value--enemy">RIVAL</span>
+          </div>
+          ${this._statsRowsHtml()}
+        </div>
         <button type="button" class="p5-banner p5-banner--action obelisk-gameover-panel__btn">
           <span class="p5-banner__label">VOLVER AL MENÚ</span>
         </button>

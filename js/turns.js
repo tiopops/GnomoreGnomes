@@ -26,6 +26,13 @@
 
 const TURNS_MAX_ACTIONS = 2;
 
+// Pedido explícito: "de momento habran un maximo de 30 turnos por partida".
+// Un "turno" aquí es una RONDA COMPLETA (jugador + rival, un único pulso del
+// botón PASAR TURNO) — mismo criterio que ya usa registerTurnEndListener/
+// onRoundEnd (ver su comentario más abajo), así el contador que se muestra
+// sobre el botón cuenta lo mismo que ya cuentan los oyentes existentes.
+const TURNS_MAX_ROUNDS = 30;
+
 // Pedido explícito: "de momento para hacer pruebas, que los enemigos no
 // ataquen estamos en modo sandbox" — la IA rival (_aiActOnce más abajo)
 // sigue moviéndose y cogiendo/golpeando/pasando gnomos con total normalidad,
@@ -73,6 +80,9 @@ const Turns = {
     this.activeTeam = "player";
     this.actionsUsed = {};
     this._aiRunning = false;
+    // "de momento habran un maximo de 30 turnos por partida" — empieza en
+    // el turno 1, sube una vez por cada ronda completa (ver endTurn).
+    this.roundNumber = 1;
     // Habilidades especiales (js/abilities.js) — partida nueva, quita
     // cualquier mina/apuntado/control mental que hubiera quedado de una
     // partida anterior.
@@ -187,6 +197,14 @@ const Turns = {
     // el texto de este span, no del botón entero.
     const bg = document.createElement("span");
     bg.className = "end-turn-btn__bg";
+    // Pedido explícito: "arriba del texto PASAR TURNO del boton, debe
+    // indicarse en que turno estamos...X/30" — una línea pequeña encima del
+    // texto de siempre, dentro de la misma capa recortada (.end-turn-btn__bg)
+    // para que se mueva/anime siempre junto con el resto del botón.
+    const turnCounter = document.createElement("span");
+    turnCounter.className = "end-turn-btn__turn-counter";
+    bg.appendChild(turnCounter);
+    this._turnCounterEl = turnCounter;
     // Pedido explícito: "aplica esa correccion [contorno de doble capa] a
     // TODOS LOS BOTONES...ya que tenian ese mismo defecto" — el rombo
     // (end-turn-btn__icon) pasa a ser un contenedor ESTABLE que nunca se
@@ -292,6 +310,7 @@ const Turns = {
   _updateButtonState() {
     if (!this._btn) return;
     this._btn.classList.add("end-turn-btn--visible");
+    if (this._turnCounterEl) this._turnCounterEl.textContent = `Turno ${this.roundNumber} / ${TURNS_MAX_ROUNDS}`;
     const isPlayerTurn = this.activeTeam === "player" && !this._aiRunning;
     this._btn.disabled = !isPlayerTurn;
     this._btn.classList.toggle("end-turn-btn--thinking", !isPlayerTurn);
@@ -319,6 +338,10 @@ const Turns = {
 
   async endTurn() {
     if (this._aiRunning || this.activeTeam !== "player") return;
+    // Fin de partida por límite de turnos (ver Obelisks.checkTurnLimit,
+    // js/obelisks.js) — ya se decidió un ganador, no se procesa ningún
+    // turno más.
+    if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return;
     Units.deselect();
     // Habilidad "Voluntad Quebrada" (UrgaMentes, js/abilities.js) —
     // "toma el control...durante el resto de este turno": el control
@@ -349,12 +372,20 @@ const Turns = {
     this._aiRunning = false;
     this.activeTeam = "player";
     this._resetTeamActions("player");
+    // "de momento habran un maximo de 30 turnos por partida" — una ronda
+    // completa (jugador + rival) acaba de terminar, así que sube aquí,
+    // ANTES de repintar el botón (para que ya muestre el número nuevo) y
+    // antes de comprobar si toca acabar la partida.
+    this.roundNumber++;
     this._updateButtonState();
     if (typeof Glory !== "undefined") Glory.grantTurnStart("player");
     this._fireTurnStart("player");
     // "una vez por ronda completa" (ver registerTurnEndListener arriba) —
     // aquí, justo al terminar, no en ningún punto intermedio de la IA.
     this._turnEndListeners.forEach((l) => l.onRoundEnd && l.onRoundEnd());
+    if (typeof Obelisks !== "undefined" && typeof Obelisks.checkTurnLimit === "function") {
+      Obelisks.checkTurnLimit(this.roundNumber);
+    }
   },
 
   // ---------- IA del bando rival ----------

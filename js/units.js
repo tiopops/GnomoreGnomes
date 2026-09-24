@@ -90,6 +90,14 @@ const UNIT_TYPES = {
     // epico". Sustituye por completo al sprite normal (spriteUrl) mientras
     // dura la partida, sin recolor por CSS.
     espinasUrl: "assets/equipos/MushboomForest/golem_espinas_hombre_arbol.png",
+    // Sprite opcional para el INSTANTE de golpear al gnomo (habilidad común
+    // "pegar gnomo", ver Gnome.hit en js/gnome.js) — pedido explícito: "debe
+    // cambiarse en el instante que se usa la habilidad pegar gnomo para
+    // simular que lo golpea, todos tendran la suya, de momento solo se lo
+    // ponemos al golemcorteza". Mismo criterio opcional que machacaUrl/
+    // espinasUrl: un personaje sin esta entrada simplemente se queda con su
+    // sprite normal durante el golpe (ver Units.pegarGnomoSpriteFor).
+    pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_hombre_arbol.png",
     aguante: 4,
     movimiento: 1,
     fuerza: 3,
@@ -441,6 +449,15 @@ const Units = {
     const def = UNIT_TYPES[typeId];
     if (!def) return "";
     return def.machacaImpactUrl || def.machacaUrl || def.spriteUrl || "";
+  },
+
+  // Sprite del instante de golpear al gnomo (Gnome.hit, js/gnome.js) —
+  // mismo relleno en cascada que machacaSpriteFor: si el personaje no tiene
+  // pegarGnomoUrl propio todavía, se queda con su sprite normal.
+  pegarGnomoSpriteFor(typeId) {
+    const def = UNIT_TYPES[typeId];
+    if (!def) return "";
+    return def.pegarGnomoUrl || def.spriteUrl || "";
   },
 
   // Tamaño (multiplicador del ancho base de 120px) de la pose "machaca" —
@@ -1033,7 +1050,12 @@ const Units = {
     // equipo acaba de bajar en 1 (una unidad menos sobre el tablero), así
     // que su indicador/pulso de "obelisco vacío" puede necesitar
     // actualizarse ya mismo, no esperar al próximo inicio de turno.
-    if (typeof Obelisks !== "undefined") Obelisks.refreshAll();
+    if (typeof Obelisks !== "undefined") {
+      Obelisks.refreshAll();
+      // Estadísticas de fin de partida (js/obelisks.js) — pedido explícito:
+      // "MUERTES" en el resumen comparativo de fin de partida.
+      if (typeof Obelisks.recordDeath === "function") Obelisks.recordDeath(unit.team);
+    }
   },
 };
 
