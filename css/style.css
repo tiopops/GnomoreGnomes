@@ -2182,14 +2182,21 @@ body.team-markers--visible .unit__team-marker {
   opacity: 1;
 }
 
+/* Pedido explícito: "actualiza las interfaces...para que se adecuen al
+   estilo actual" — esta tarjeta llevaba el diseño ANTIGUO de antes de que
+   .p5-banner (el "banderín" de doble capa, ver la nota larga junto a su
+   definición) se convirtiera en el lenguaje visual estándar del resto de
+   paneles (.backpack-panel__bg/.settings-panel/.obelisk-gameover-panel).
+   Aquí se reutiliza tal cual: se quita el fondo/borde/border-radius/
+   box-shadow de antes (ese trabajo lo hacen ahora ::before/::after de
+   .p5-banner) y se sobreescriben solo display/tamaño/padding, igual que
+   hace .obelisk-gameover-panel con el suyo. */
 .unit-info-card {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: min(320px, 86vw);
-  background: linear-gradient(180deg, var(--bg-elevated), var(--bg));
-  border: 1px solid rgba(244, 242, 248, 0.18);
-  border-radius: 20px;
   padding: 28px 24px 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(122, 62, 240, 0.15);
   text-align: center;
   transform: scale(0.88) translateY(10px);
   transition: transform 0.22s cubic-bezier(0.34, 1.35, 0.64, 1);
@@ -2197,6 +2204,19 @@ body.team-markers--visible .unit__team-marker {
 
 .unit-info-overlay--visible .unit-info-card {
   transform: scale(1) translateY(0);
+}
+
+/* Todo el contenido real va dentro de este envoltorio con su propio
+   position:relative + z-index:2 — mismo motivo que .backpack-slots/
+   .obelisk-gameover-stats: .p5-banner::after (el relleno) pinta con
+   z-index:1, así que cualquier hijo sin posición/z-index propios quedaría
+   tapado debajo de él. Un solo envoltorio para toda la tarjeta evita tener
+   que repetir la regla en cada hijo suelto (portada/desc/nombre/vida/
+   stats/habilidad). */
+.unit-info-card__content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
 }
 
 /* Pedido explícito: aquí va el sprite del personaje tal cual, SIN
@@ -2895,19 +2915,19 @@ body.ability-targeting--mind * {
   filter: hue-rotate(320deg) saturate(1.6);
 }
 
-/* Vuelo por el aire de Lanzamiento (ver Abilities._throwUnitTo) — un giro
-   completo mientras dura el arco, para que se lea como un lanzamiento de
-   verdad y no un simple deslizamiento. Vive en .unit__sprite (no en
-   .unit__flip, que ya usa su propio transform para --facing-scale, ver
-   arriba) para no pelearse por la misma propiedad. */
+/* Vuelo por el aire de Lanzamiento (ver Abilities._throwUnitTo) — la
+   rotación/squash&stretch de verdad ahora se calcula fotograma a fotograma
+   en JS (sincronizada con la altura real del arco, ver la nota larga en
+   ese método), así que aquí solo hace falta apagar la respiración continua
+   (unit-idle-breathe, definida en .unit__sprite base) mientras dura el
+   vuelo — si se dejara activa, esa animation seguiría "ganando" la propiedad
+   transform cada fotograma y pisaría por completo el estilo puesto por JS
+   (una animation CSS activa siempre gana a un transform puesto por
+   style.transform inline). Vive en .unit__sprite (no en .unit__flip, que ya
+   usa su propio transform para --facing-scale, ver arriba) para no
+   pelearse por la misma propiedad. */
 .unit--thrown .unit__sprite {
-  animation: ability-throw-spin 0.46s ease-in-out;
-}
-
-@keyframes ability-throw-spin {
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(180deg) scale(1.15); }
-  100% { transform: rotate(360deg) scale(1); }
+  animation: none;
 }
 
 /* Bloque de habilidad especial dentro del popup de estadísticas (ver
@@ -3459,6 +3479,17 @@ body.ability-targeting--mind * {
    del ::after del contenedor. */
 .p5-banner .p5-banner {
   z-index: 3;
+}
+
+/* Modo rendimiento (js/perfmode.js) — ver la nota larga de ese archivo.
+   filter:drop-shadow y backdrop-filter:blur son las propiedades más caras
+   de componer en móviles de gama baja y se usan por TODO el juego (este
+   propio .p5-banner el primero); en vez de tocar cada regla suelta, una
+   sola regla universal los apaga de golpe en cuanto <body> lleva esta
+   clase. No toca ninguna forma/clip-path, solo el sombreado/desenfoque. */
+body.perf-mode * {
+  filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .p5-banner--action {

@@ -4,8 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gnomore Gnomes</title>
-<link rel="stylesheet" href="css/style.css?v=20260924221948">
+<link rel="stylesheet" href="css/style.css?v=20260924223136">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<script>
+  // Pedido explícito: "en la interfaz del smartphone, a veces tengo que
+  // hacer doble clic para seleccionar unidades o acciones...debe ser de
+  // una" — bug documentado de Safari/Chrome en iOS: cualquier elemento con
+  // estilos ":hover" y un manejador de clic necesita un PRIMER toque solo
+  // para "simular" el hover y un SEGUNDO toque de verdad para el clic, en
+  // cuanto la página no tiene ningún listener de touchstart registrado en
+  // absoluto. Añadir uno (aunque no haga nada) cambia esa heurística del
+  // navegador y hace que cada toque cuente como un clic de una sola vez —
+  // arreglo mínimo, sin tocar ningún :hover de los cientos que ya hay en
+  // style.css. Debe registrarse ANTES de cualquier interacción, así que va
+  // aquí arriba, no en un archivo cargado más tarde.
+  document.addEventListener("touchstart", function () {}, { passive: true });
+</script>
 </head>
 <body>
 
@@ -73,7 +87,7 @@
   <script src="js/boardview.js?v=20260923085815"></script>
   <script src="js/uiconfig.js?v=20260923220938"></script>
   <script src="js/uihint.js?v=20260924213550"></script>
-  <script src="js/tooltip.js?v=20260924213550"></script>
+  <script src="js/tooltip.js?v=20260924223136"></script>
   <script src="js/attackcursor.js?v=20260924213550"></script>
   <script src="js/shadows.js?v=20260922221531"></script>
   <script src="js/units.js?v=20260924221948"></script>
@@ -85,9 +99,10 @@
   <script src="js/turns.js?v=20260924221948"></script>
   <script src="js/obelisks.js?v=20260924221948"></script>
   <script src="js/teammarkers.js?v=20260922221531"></script>
-  <script src="js/settingsmenu.js?v=20260923081224"></script>
+  <script src="js/perfmode.js?v=20260924223136"></script>
+  <script src="js/settingsmenu.js?v=20260924223136"></script>
   <script src="js/gnomecalib.js?v=20260922221531"></script>
-  <script src="js/unitinfo.js?v=20260923223618"></script>
+  <script src="js/unitinfo.js?v=20260924223136"></script>
   <script src="js/backpack.js?v=20260923222645"></script>
   <script src="js/shops.js?v=20260923222645"></script>
   <script src="js/abilities.js?v=20260924213550"></script>

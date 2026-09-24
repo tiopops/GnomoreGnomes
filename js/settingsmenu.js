@@ -171,6 +171,29 @@ const SettingsMenu = {
     });
     panel.appendChild(fogAnimBtn);
 
+    // Pedido explícito: "tampoco veo la opcion de la configuracion de la
+    // resolucion dinamiga paara mejorar el rendimiento" — mismo patrón
+    // exacto que Sombras/SFX/Mostrar equipos/Animación de niebla de arriba,
+    // pero para PerfMode (js/perfmode.js), que por defecto empieza en
+    // false (es un compromiso visual a cambio de rendimiento, así que hay
+    // que pedirlo a propósito).
+    const perfModeBtn = document.createElement("button");
+    perfModeBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
+    const perfModeChecked = typeof PerfMode !== "undefined" ? PerfMode.enabled : false;
+    perfModeBtn.innerHTML =
+      '<span class="settings-panel__option-main">' +
+      '<i class="ph ph-gauge settings-panel__option-icon"></i>' +
+      '<span class="p5-banner__label">Modo rendimiento</span>' +
+      "</span>" +
+      `<span class="settings-toggle" data-checked="${perfModeChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
+    perfModeBtn.addEventListener("click", () => {
+      SFX.click();
+      const next = typeof PerfMode !== "undefined" ? !PerfMode.enabled : false;
+      if (typeof PerfMode !== "undefined") PerfMode.setEnabled(next);
+      perfModeBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+    });
+    panel.appendChild(perfModeBtn);
+
     const exitBtn = document.createElement("button");
     exitBtn.className = "p5-banner p5-banner--action settings-panel__option";
     exitBtn.innerHTML =

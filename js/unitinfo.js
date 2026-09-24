@@ -222,37 +222,52 @@ const UnitInfo = {
     // pointer-events: none en el propio overlay (ver CSS) — es solo un
     // resumen mientras se mantiene pulsado, no debe poder interceptar ni
     // absorber ningún clic/toque de la pantalla que hay debajo.
+    // Pedido explícito: "actualiza las interfaces que aparecen al pulsar la
+    // cara de los personajes para que se adecuen al estilo actual de
+    // interfaces, checkboxes, botones, etc" — esta tarjeta se quedó con el
+    // lenguaje visual ANTIGUO (borde/sombra/esquinas redondeadas normales,
+    // ver style.css) de antes de que el proyecto adoptara el "banderín" de
+    // doble capa (.p5-banner, el mismo que usan .backpack-panel__bg/
+    // .obelisk-gameover-panel/.settings-panel) — se añade esa clase aquí
+    // para que este popup use exactamente el mismo marco/sombra dura que
+    // todos los demás. Todo el contenido real vive dentro de
+    // .unit-info-card__content (position:relative + z-index propio, ver
+    // CSS): mismo motivo documentado ya varias veces en este archivo para
+    // .backpack-slots/.backpack-desc — sin eso, el ::after de relleno de
+    // .p5-banner (z-index:1) taparía cualquier hijo sin z-index propio.
     overlay.innerHTML = `
-      <div class="unit-info-card">
-        <div class="unit-info-portrait${unit.team === "enemy" ? " unit-info-portrait--enemy" : ""}">
-          <img src="${type.spriteUrl}" alt="">
+      <div class="p5-banner unit-info-card">
+        <div class="unit-info-card__content">
+          <div class="unit-info-portrait${unit.team === "enemy" ? " unit-info-portrait--enemy" : ""}">
+            <img src="${type.spriteUrl}" alt="">
+          </div>
+          ${desc ? `<p class="unit-info-desc">${desc}</p>` : ""}
+          <h2 class="unit-info-name">${type.name}</h2>
+          <div class="unit-info-hp"><i class="ph ph-heart"></i> ${unit.hp} / ${unit.maxHp}</div>
+          <div class="unit-info-stats">
+            ${this.statRow("ph-shield", "Aguante", type.aguante)}
+            ${this.statRow("ph-footprints", "Movimiento", type.movimiento)}
+            ${this.statRow("ph-boxing-glove", "Fuerza", type.fuerza)}
+            ${this.statRow("ph-wind", "Agilidad", type.agilidad)}
+            ${this.statRow("ph-eye", "Percepción", type.percepcion)}
+          </div>
+          ${
+            ability
+              ? `<div class="unit-info-ability${unit.abilityUsed ? " unit-info-ability--used" : ""}">
+                  <div class="unit-info-ability__header">
+                    ${
+                      ability.iconImg
+                        ? `<img class="unit-info-ability__icon-img${unit.typeId === "surcabosques" ? " unit-info-ability__icon-img--surcabosques" : ""}" src="${ability.iconImg}" alt="">`
+                        : `<i class="ph ${ability.icon}"></i>`
+                    }
+                    <span class="unit-info-ability__name">${ability.name}</span>
+                    ${unit.abilityUsed ? '<span class="unit-info-ability__tag">Ya usada</span>' : ""}
+                  </div>
+                  <p class="unit-info-ability__desc">${ability.description}</p>
+                </div>`
+              : ""
+          }
         </div>
-        ${desc ? `<p class="unit-info-desc">${desc}</p>` : ""}
-        <h2 class="unit-info-name">${type.name}</h2>
-        <div class="unit-info-hp"><i class="ph ph-heart"></i> ${unit.hp} / ${unit.maxHp}</div>
-        <div class="unit-info-stats">
-          ${this.statRow("ph-shield", "Aguante", type.aguante)}
-          ${this.statRow("ph-footprints", "Movimiento", type.movimiento)}
-          ${this.statRow("ph-boxing-glove", "Fuerza", type.fuerza)}
-          ${this.statRow("ph-wind", "Agilidad", type.agilidad)}
-          ${this.statRow("ph-eye", "Percepción", type.percepcion)}
-        </div>
-        ${
-          ability
-            ? `<div class="unit-info-ability${unit.abilityUsed ? " unit-info-ability--used" : ""}">
-                <div class="unit-info-ability__header">
-                  ${
-                    ability.iconImg
-                      ? `<img class="unit-info-ability__icon-img${unit.typeId === "surcabosques" ? " unit-info-ability__icon-img--surcabosques" : ""}" src="${ability.iconImg}" alt="">`
-                      : `<i class="ph ${ability.icon}"></i>`
-                  }
-                  <span class="unit-info-ability__name">${ability.name}</span>
-                  ${unit.abilityUsed ? '<span class="unit-info-ability__tag">Ya usada</span>' : ""}
-                </div>
-                <p class="unit-info-ability__desc">${ability.description}</p>
-              </div>`
-            : ""
-        }
       </div>`;
 
     document.body.appendChild(overlay);
