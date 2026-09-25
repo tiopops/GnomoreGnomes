@@ -51,9 +51,14 @@ const UI_LAYOUT = {
   // por golpear y pasar; radius/startAngle/endAngle (la POSICIÓN del
   // semicírculo) se quedan compartidos porque nadie pidió tocar eso, solo
   // el tamaño de cada botón por separado.
+  // Pedido explícito: "los iconos de las habilidades pasar el gnomo y
+  // pegar al gnomo son muy pequeños" — subidos de 51 a 64 (as they fill el
+  // 100% del botón, ver .gnome-action-btn__icon-img en style.css, esto
+  // agranda el icono directamente sin tocar su posición: el radio/ángulos
+  // del semicírculo no cambian).
   actionButtons: {
-    hitSize: 51,
-    passSize: 51,
+    hitSize: 64,
+    passSize: 64,
     radius: 94,
     startAngle: -22,
     endAngle: 18,

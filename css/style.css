@@ -4187,6 +4187,14 @@ body.perf-mode .attack-cursor-fx {
    marcada (nunca un simple fundido) para que se note incluso durante el
    turno del rival, que es cuando puede tocarle sin que el jugador esté
    haciendo nada más en ese instante. */
+/* Bug reportado: "el aviso de la tienda goblin actualizada tambien tiene
+   los bordes redondeados" — mismo arreglo que .ui-hint un poco más abajo
+   (ver su nota larga): se sustituye la píldora de antes por el mismo
+   doble-capa recortado en diagonal del resto del HUD, en el tono dorado
+   propio de la tienda. El texto ya vivía en un span .p5-banner__label
+   (ver js/shops.js) que YA lleva su position:relative+z-index:2 de fábrica
+   — aquí solo hace falta dárselo también al icono, que es hermano suyo
+   directo dentro de este mismo banderín. */
 .shop-restock-msg {
   position: fixed;
   top: 90px;
@@ -4196,10 +4204,9 @@ body.perf-mode .attack-cursor-fx {
   align-items: center;
   gap: 10px;
   padding: 14px 26px;
-  border-radius: 999px;
-  background: var(--bg-elevated);
-  border: 2px solid rgba(255, 207, 63, 0.85);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 207, 63, 0.4);
+  background: none;
+  border: none;
+  filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 16px rgba(255, 207, 63, 0.4));
   color: #ffcf3f;
   font-weight: 800;
   opacity: 0;
@@ -4207,7 +4214,28 @@ body.perf-mode .attack-cursor-fx {
   z-index: 6000;
 }
 
+.shop-restock-msg::before,
+.shop-restock-msg::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0% 100%);
+}
+
+.shop-restock-msg::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.shop-restock-msg::after {
+  inset: var(--gg-frame-outline-width);
+  background: #2a2410;
+  z-index: 1;
+}
+
 .shop-restock-msg__icon {
+  position: relative;
+  z-index: 2;
   font-size: 1.4rem;
 }
 

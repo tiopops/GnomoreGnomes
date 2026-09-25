@@ -328,6 +328,21 @@ const Villages = {
       this._lastMouseY = e.clientY;
       this.refreshOcclusion(e.clientX, e.clientY);
     });
+    // Pedido explícito: "el obelisco y los totems han dejado de ponerse
+    // transparentes para permitir seleccionar un personaje que este detras
+    // de ellos" — mismo arreglo que Obelisks._initMouseTracking (ver ahí
+    // el porqué): este mecanismo dependía solo de "mousemove", que un
+    // móvil no dispara al tocar, así que se alimenta también con las
+    // coordenadas reales del dedo.
+    const handleTouch = (e) => {
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      this._lastMouseX = t.clientX;
+      this._lastMouseY = t.clientY;
+      this.refreshOcclusion(t.clientX, t.clientY);
+    };
+    window.addEventListener("touchstart", handleTouch, { passive: true });
+    window.addEventListener("touchmove", handleTouch, { passive: true });
   },
 
   // Igual que Combat.findApproachTile/GnomeInstance.findApproachTile: la

@@ -58,6 +58,37 @@ const TILE_TYPES = {
   },
 };
 
+// Pedido explícito: "podrías crear una versión de niebla y las losetas de
+// muy baja resolución que se cambia por las originales cuando modo alto
+// rendimiento está activado? Todas las losetas que te adjunte a partir de
+// ahora deberán tener esta versión low res" — convención de nombres: la
+// versión ligera de "assets/losetas/nombre.png" vive en
+// "assets/losetas/nombre_lowres.png" (mismo nombre + "_lowres" antes de la
+// extensión). Con esta única función centralizada, añadir una loseta nueva
+// en el futuro solo necesita el archivo normal + su pareja "_lowres" — no
+// hace falta tocar ni esta función ni renderMap.
+function lowResTileSrc(originalSrc) {
+  return originalSrc.replace(/(\.[a-zA-Z0-9]+)$/, "_lowres$1");
+}
+
+// Alterna TODAS las losetas ya pintadas (hierba/agua base, overlay de
+// revelado y niebla) entre su versión normal y su versión "_lowres", sin
+// regenerar el mapa (evita perder el estado de niebla ya revelada). Cada
+// <img> guarda su ruta original en data-src-orig al crearse (ver
+// renderMap más abajo), así que esta función solo necesita leer ese dato y
+// decidir qué mitad de la pareja mostrar. La llama PerfMode.setEnabled
+// cada vez que el modo rendimiento se activa/desactiva a mitad de
+// partida — si todavía no hay partida en curso, el querySelectorAll
+// simplemente no encuentra nada y no pasa nada.
+function applyPerfModeTileSprites(enabled) {
+  const container = document.getElementById("board-tiles");
+  if (!container) return;
+  container.querySelectorAll("img[data-src-orig]").forEach((img) => {
+    const orig = img.dataset.srcOrig;
+    img.src = enabled ? lowResTileSrc(orig) : orig;
+  });
+}
+
 // Consulta del terreno real por casilla — lo usa cualquier mecánica que
 // necesite saber "¿se puede pisar/pasar por aquí?" (Movement, Combat,
 // Gnome, spawns...) sin tener que conocer TILE_TYPES ni cómo se generó el
@@ -341,7 +372,8 @@ function renderMap(map, container) {
       offsetY: TILE_TYPES.grass.offsetY != null ? TILE_TYPES.grass.offsetY : TILE_DEFAULT_ADJUST.offsetY,
     };
     const img = document.createElement("img");
-    img.src = baseSrc;
+    img.dataset.srcOrig = baseSrc;
+    img.src = typeof PerfMode !== "undefined" && PerfMode.enabled ? lowResTileSrc(baseSrc) : baseSrc;
     img.width = TILE_WIDTH * grassAdjust.scale;
     img.height = TILE_RENDER_HEIGHT * grassAdjust.scale;
     img.style.left = `${grassAdjust.offsetX}px`;
@@ -377,7 +409,8 @@ function renderMap(map, container) {
       const renderWidth = TILE_WIDTH * adjust.scale;
       const revealImg = document.createElement("img");
       revealImg.className = "tile__terrain-reveal";
-      revealImg.src = t.src;
+      revealImg.dataset.srcOrig = t.src;
+      revealImg.src = typeof PerfMode !== "undefined" && PerfMode.enabled ? lowResTileSrc(t.src) : t.src;
       revealImg.width = renderWidth;
       revealImg.height = Math.round((renderWidth * nativeH) / nativeW);
       revealImg.style.left = `${adjust.offsetX}px`;
@@ -429,7 +462,8 @@ function renderMap(map, container) {
     // detrás del jugador, según toque.
     const fogImg = document.createElement("img");
     fogImg.className = "tile__fog";
-    fogImg.src = FOG_SRC;
+    fogImg.dataset.srcOrig = FOG_SRC;
+    fogImg.src = typeof PerfMode !== "undefined" && PerfMode.enabled ? lowResTileSrc(FOG_SRC) : FOG_SRC;
     fogImg.style.zIndex = String((t.row + t.col) * 10 + 6);
     fogImg.draggable = false;
     fogImg.alt = "";

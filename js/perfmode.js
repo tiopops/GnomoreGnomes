@@ -30,7 +30,18 @@
    localStorage, como si el jugador hubiera destocado esos dos checkboxes
    a mano); DESACTIVAR el modo rendimiento NO los vuelve a encender solo —
    quedan como el jugador los deje, para no deshacerle una elección suya
-   sin pedirlo. */
+   sin pedirlo.
+
+   Tercer pedido explícito: "¿podrías crear una versión de niebla y las
+   losetas de muy baja resolución que se cambia por las originales cuando
+   modo alto rendimiento está activado?" — a diferencia de Shadows/Fog
+   (que SÍ quedan como el jugador las deje al desactivar el modo), las
+   losetas SIEMPRE vuelven a su versión normal al apagar el modo
+   rendimiento: no son una preferencia propia del jugador, son solo un
+   ahorro de rendimiento ligado 1:1 a este modo. Ver
+   applyPerfModeTileSprites/lowResTileSrc en js/mapgen.js — se llama tanto
+   al activar como al desactivar (por eso está fuera del "if (this.enabled)"
+   de abajo). */
 
 const PerfMode = {
   _STORAGE_KEY: "gnomoregnomes_perfmode",
@@ -50,6 +61,7 @@ const PerfMode = {
       if (typeof Shadows !== "undefined") Shadows.setEnabled(false);
       if (typeof Fog !== "undefined" && typeof Fog.setAnimEnabled === "function") Fog.setAnimEnabled(false);
     }
+    if (typeof applyPerfModeTileSprites === "function") applyPerfModeTileSprites(this.enabled);
   },
 
   _applyGlobalToggle() {

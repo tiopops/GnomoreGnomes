@@ -357,6 +357,25 @@ const Obelisks = {
       this._lastMouseY = e.clientY;
       this.refreshOcclusion(e.clientX, e.clientY);
     });
+    // Pedido explícito: "el obelisco y los totems han dejado de ponerse
+    // transparentes para permitir seleccionar un personaje que este detras
+    // de ellos" — este mecanismo dependía SOLO de "mousemove", que un
+    // móvil nunca dispara al tocar (no hay "ratón sobrevolando"). Antes
+    // colaba porque, sin ningún listener de touchstart registrado, iOS/
+    // Android generan eventos de ratón "de compatibilidad" tras cada
+    // toque — pero el arreglo del doble-toque (ver el touchstart vacío en
+    // index.html) cambió esa heurística y esos eventos sintéticos dejaron
+    // de llegar. Arreglo: alimentar refreshOcclusion también con las
+    // coordenadas reales del dedo.
+    const handleTouch = (e) => {
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      this._lastMouseX = t.clientX;
+      this._lastMouseY = t.clientY;
+      this.refreshOcclusion(t.clientX, t.clientY);
+    };
+    window.addEventListener("touchstart", handleTouch, { passive: true });
+    window.addEventListener("touchmove", handleTouch, { passive: true });
   },
 
   refreshOcclusion(mouseX, mouseY) {
