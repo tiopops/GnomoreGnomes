@@ -85,7 +85,18 @@ const Combat = {
       // se pueda "atacar a ciegas" algo que no se ve.
       if (typeof Fog !== "undefined" && Fog.isFogged(other.row, other.col)) return;
       const approach = this.findApproachTile(unit, other);
-      if (approach) targets.push({ target: other, approach });
+      if (!approach) return;
+      // Pedido explícito: "si un enemigo esta dentro del area de movimiento
+      // y pulso atacar, el personaje se mueve y ataca, eso son dos
+      // acciones" — si hace falta moverse primero (approach distinto de la
+      // casilla actual), esta mira de ataque ya no se ofrece con una sola
+      // acción restante: no llegaría para las dos (mover + golpear). Sin
+      // moverse (ya está a distancia) sigue costando una sola acción, como
+      // siempre — ver approachAndAttack/attack más abajo, que son quienes
+      // de verdad gastan las acciones.
+      const needsMove = approach.row !== unit.row || approach.col !== unit.col;
+      if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < 2) return;
+      targets.push({ target: other, approach });
     });
     return targets;
   },
@@ -176,8 +187,18 @@ const Combat = {
     const approach = this.findApproachTile(unit, target);
     if (!approach) return; // el rival se movió/murió justo antes del clic
     if (approach.row !== unit.row || approach.col !== unit.col) {
+      // Pedido explícito: "si un enemigo esta dentro del area de movimiento
+      // y pulso atacar, el personaje se mueve y ataca, eso son dos
+      // acciones" — attackableEnemies ya se aseguró de no ofrecer esta mira
+      // si no quedaban las 2 acciones necesarias, pero se repite aquí por
+      // seguridad (mismo patrón defensivo que el resto del archivo, ver
+      // attack() más abajo) antes de gastar nada. El movimiento consume su
+      // propia acción, igual que un movimiento normal (ver Movement.moveTo)
+      // — la segunda la gasta attack() más abajo, en el golpe en sí.
+      if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
       await Units.walkPath(unit, path);
+      if (typeof Turns !== "undefined") Turns.useAction(unit);
       // Mismo bug que en GnomeInstance.catchBy (js/gnome.js): acercarse
       // para atacar tampoco revelaba niebla nueva al detenerse, por la
       // misma razón (Units.walkPath no revela, solo reevalúa lo ya

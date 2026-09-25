@@ -230,6 +230,25 @@ const Obelisks = {
     el.appendChild(spriteEl);
     if (typeof Shadows !== "undefined") Shadows.attach(spriteEl);
 
+    // Pedido explícito: "si hago clic en la parte baja del obelisco,
+    // deberia dejarme seleccionarlo. se hace transparente cuando hay un
+    // personaje/enemigo detras y no me deja hacerlo. pueden coexistir
+    // ambas cosas?" — .obelisk--occluding pone pointer-events:none en TODO
+    // el .obelisk para que los clics atraviesen hasta la unidad escondida
+    // (ver esa regla en style.css), pero eso también bloqueaba clicar el
+    // propio obelisco por su base, que casi nunca tapa a nadie (la unidad
+    // se esconde detrás de la parte ALTA/tallada, no de la peana). Esta
+    // franja invisible cubre solo el tramo inferior del sprite, por
+    // encima de él en z-index, con pointer-events:auto explícito — un
+    // valor propio en un hijo siempre gana al "none" heredado del
+    // contenedor (ver .obelisk__base-hit en style.css), así que sigue
+    // pudiendo pulsarse (y el clic sigue burbujeando hasta el listener de
+    // `el` de más abajo, sin tocarlo) aunque el resto del obelisco esté
+    // atravesándose por la transparencia.
+    const baseHitEl = document.createElement("div");
+    baseHitEl.className = "obelisk__base-hit";
+    el.appendChild(baseHitEl);
+
     // Barra de vida — mismas piezas que Units.updateHpBar espera, 30
     // segmentos (VILLAGE_MAX_HP tenía 10; el marco/segmentos se encogen por
     // CSS para que quepan sin desbordar, ver .obelisk .unit__hpbar).
@@ -462,6 +481,17 @@ const Obelisks = {
     obelisk.popEl.textContent = `${used} / ${max}`;
   },
 
+  // Pedido explícito: "cuando un jugador cualquiera captura o pierde un
+  // totem, automaticamente deben actualizarse todos los marcadores de
+  // poblacion de los obeliscos" — lo llama Villages._capture cada vez que
+  // un tótem cambia de dueño (conquistado o destruido), para los DOS
+  // obeliscos a la vez; _refreshPopBadge ya no hace nada si el obelisco no
+  // tiene badge propio (el rival, ver cabecera de ese método), así que
+  // recorrer this.list entero es seguro sin comprobación extra.
+  refreshAllPopBadges() {
+    this.list.forEach((o) => this._refreshPopBadge(o));
+  },
+
   // ---------- Proveedor de rango (mira de ataque) ----------
   // Igual que Villages.showFor, pero SIN exigir llevar un gnomo cogido —
   // cualquier unidad puede atacar un Obelisco rival con un golpe normal.
@@ -470,7 +500,12 @@ const Obelisks = {
     this.list.forEach((obelisk, i) => {
       if (obelisk.team === unit.team) return;
       if (typeof Fog !== "undefined" && Fog.isFogged(obelisk.row, obelisk.col)) return;
-      if (!this.findApproachTile(unit, obelisk)) return;
+      const approach = this.findApproachTile(unit, obelisk);
+      if (!approach) return;
+      // Pedido explícito: "eso son dos acciones" — mismo criterio que
+      // Combat.attackableEnemies/Villages.showFor.
+      const needsMove = approach.row !== unit.row || approach.col !== unit.col;
+      if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < 2) return;
       Units.addMarker({
         className: "attack-marker obelisk-attack-marker",
         row: obelisk.row,
@@ -545,8 +580,12 @@ const Obelisks = {
     const approach = this.findApproachTile(unit, obelisk);
     if (!approach) return;
     if (approach.row !== unit.row || approach.col !== unit.col) {
+      // Pedido explícito: "eso son dos acciones" — ver la misma nota en
+      // Combat.approachAndAttack.
+      if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
       await Units.walkPath(unit, path);
+      if (typeof Turns !== "undefined") Turns.useAction(unit);
       if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
     }
     await this.attack(unit, obelisk);

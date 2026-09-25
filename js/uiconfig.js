@@ -56,12 +56,20 @@ const UI_LAYOUT = {
   // 100% del botón, ver .gnome-action-btn__icon-img en style.css, esto
   // agranda el icono directamente sin tocar su posición: el radio/ángulos
   // del semicírculo no cambian).
+  // Segundo pedido explícito: "haz un pelin mas grande los iconos de
+  // golpear gnomo y pasar gnomo, juntalos entre ellos 3 pixels" — subidos
+  // otro poco (64→68) y el ángulo entre los dos estrechado (40°→38°, medido
+  // con Gnome._positionActionButtons/getBoundingClientRect: la distancia
+  // centro a centro pasa de 64.3px a ~61.2px, 3px menos) para acercarlos
+  // entre sí sin tocar su distancia al círculo de información (el radio no
+  // cambia). Con el tamaño ya subido a la vez, quedan ligeramente
+  // solapados — es justo lo que se pidió ("juntalos"), no un fallo.
   actionButtons: {
-    hitSize: 64,
-    passSize: 64,
+    hitSize: 68,
+    passSize: 68,
     radius: 94,
-    startAngle: -22,
-    endAngle: 18,
+    startAngle: -21,
+    endAngle: 17,
   },
   // Botón de habilidad especial (js/abilities.js) — mismo círculo de
   // información como centro y mismo radio que actionButtons, pero en su

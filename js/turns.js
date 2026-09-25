@@ -106,6 +106,19 @@ const Turns = {
     return (this.actionsUsed[unit.id] || 0) < TURNS_MAX_ACTIONS;
   },
 
+  // Cuántas de sus 2 acciones le quedan por gastar ESTE turno a `unit` —
+  // pedido explícito: "si un enemigo esta dentro del area de movimiento y
+  // pulso atacar, el personaje se mueve y ataca, eso son dos acciones" —
+  // Combat/Villages/Obelisks lo consultan para NO ofrecer siquiera la mira
+  // de ataque sobre un objetivo que exige moverse primero si a la unidad
+  // solo le queda 1 acción (no le llegaría para las dos), aunque sí
+  // seguirían pudiendo atacar sin moverse (esa sigue constando de una sola
+  // acción, como siempre) con esa única acción restante.
+  remainingActions(unit) {
+    if (!unit) return 0;
+    return Math.max(0, TURNS_MAX_ACTIONS - (this.actionsUsed[unit.id] || 0));
+  },
+
   // Descuenta una acción de `unit` — lo llama cada mecánica justo cuando la
   // acción se confirma de verdad (ver cabecera del archivo). Si con esto
   // llega a las 2 y esa unidad es la seleccionada ahora mismo, se
@@ -435,16 +448,26 @@ const Turns = {
         // vez de rendirse a la primera).
         if (typeof Villages !== "undefined") {
           const inRange = Villages.attackableBy(unit);
-          if (inRange) {
+          // Pedido explícito: "los enemigos deben cargar de puntos al
+          // gnomo antes de machacarlo contra los totems/obelisco rival. no
+          // tiene sentido hacerlo si lleva 0 puntos cargados" — antes
+          // atacaba en cuanto tenía un tótem al alcance sin mirar los
+          // puntos del gnomo (un golpe de 0 de daño). Con un tótem al
+          // alcance pero el gnomo todavía a 0, cae a la rama de
+          // golpear/pasar de más abajo (misma que "sin tótem al alcance")
+          // en vez de malgastar el turno en un golpe que no hace nada.
+          if (inRange && held.points > 0) {
             await Villages.attack(unit, inRange);
             return true;
           }
-          const nearest = Villages.nearestUnowned(unit);
-          if (nearest) {
-            const dest = this._aiPickMoveTileToward(unit, nearest);
-            if (dest) {
-              await Movement.moveTo(unit, dest.row, dest.col);
-              return true;
+          if (!inRange) {
+            const nearest = Villages.nearestUnowned(unit);
+            if (nearest) {
+              const dest = this._aiPickMoveTileToward(unit, nearest);
+              if (dest) {
+                await Movement.moveTo(unit, dest.row, dest.col);
+                return true;
+              }
             }
           }
         }

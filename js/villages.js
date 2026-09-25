@@ -410,7 +410,15 @@ const Villages = {
       // Ahora contempla acercarse (ver findApproachTile arriba), no solo la
       // distancia ya existente — así un tótem dentro del movimiento de la
       // unidad, aunque no esté ya a 1 casilla, sí ofrece la mira de ataque.
-      if (!this.findApproachTile(unit, village)) return;
+      const approach = this.findApproachTile(unit, village);
+      if (!approach) return;
+      // Pedido explícito: "si un enemigo esta dentro del area de
+      // movimiento y pulso atacar, el personaje se mueve y ataca, eso son
+      // dos acciones" — mismo criterio que Combat.attackableEnemies: si
+      // hace falta moverse primero y solo queda 1 acción, no llegaría para
+      // las dos (mover + machacar), así que no se ofrece la mira.
+      const needsMove = approach.row !== unit.row || approach.col !== unit.col;
+      if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < 2) return;
       Units.addMarker({
         className: "attack-marker village-attack-marker",
         row: village.row,
@@ -452,8 +460,13 @@ const Villages = {
     const approach = this.findApproachTile(unit, village);
     if (!approach) return; // se movieron/perdió el gnomo justo antes del clic
     if (approach.row !== unit.row || approach.col !== unit.col) {
+      // Pedido explícito: "eso son dos acciones" — ver la misma nota en
+      // Combat.approachAndAttack; el movimiento gasta su propia acción
+      // aquí, la segunda la gasta attack() más abajo, en el machacón.
+      if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
       await Units.walkPath(unit, path);
+      if (typeof Turns !== "undefined") Turns.useAction(unit);
       // Mismo bug ya corregido en GnomeInstance.catchBy/Combat.approachAndAttack:
       // acercarse a pie tiene que revelar niebla nueva al detenerse.
       if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
@@ -718,6 +731,18 @@ const Villages = {
     if (typeof Glory !== "undefined") {
       Glory.refreshPreview(team);
       if (previousOwner !== "neutral" && previousOwner !== team) Glory.refreshPreview(previousOwner);
+    }
+    // Pedido explícito: "cuando un jugador cualquiera captura o pierde un
+    // totem, automaticamente deben actualizarse todos los marcadores de
+    // poblacion de los obeliscos" — Obelisks.populationFor ya se recalcula
+    // en vivo a partir de Villages.ownedCount (ver ese archivo), pero el
+    // TEXTO del badge en pantalla solo se repintaba en eventos propios de
+    // obelisks.js (reclutar...), nunca al cambiar de dueño un tótem, así
+    // que se quedaba desactualizado hasta el siguiente reclutamiento.
+    // refreshAllPopBadges repinta los DOS obeliscos a la vez (quien gana Y
+    // quien pierde el tótem, según corresponda).
+    if (typeof Obelisks !== "undefined" && typeof Obelisks.refreshAllPopBadges === "function") {
+      Obelisks.refreshAllPopBadges();
     }
   },
 };
