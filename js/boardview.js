@@ -219,10 +219,19 @@ const BoardView = {
     const s0 = -kx * x - ky * y;
     // Si el intervalo sale invertido (tMin > tMax) el viewport ya abarca más
     // filas/columnas de las que el mapa tiene a este zoom — no hay ningún
-    // desplazamiento que evite el hueco del todo, así que como mejor
-    // esfuerzo se centra en vez de recortar a un extremo arbitrario.
-    const t = tMin <= tMax ? Math.min(tMax, Math.max(tMin, t0)) : (tMin + tMax) / 2;
-    const s = sMin <= sMax ? Math.min(sMax, Math.max(sMin, s0)) : (sMin + sMax) / 2;
+    // desplazamiento que evite el hueco del todo en ESE eje. BUG encontrado
+    // tras enviar la primera versión de este arreglo: "los errores graficos
+    // se han corregido pero no puedo mover la camara" — aquí se recortaba
+    // ese caso a un punto FIJO (el punto medio del intervalo invertido) que
+    // no depende en absoluto de x/y, y con un mapa normal y un viewport
+    // corriente este caso "sin solución perfecta" es el habitual (no una
+    // rareza de esquina), así que la cámara quedaba clavada siempre en ese
+    // mismo punto pasara lo que pasara al arrastrar. Corregido: cuando no
+    // hay forma de evitar el hueco del todo en un eje, simplemente no se
+    // toca ese eje (se deja tal cual venía del recorte de rectángulo, que
+    // ya evita los casos más extremos) en vez de forzarlo a un punto fijo.
+    const t = tMin <= tMax ? Math.min(tMax, Math.max(tMin, t0)) : t0;
+    const s = sMin <= sMax ? Math.min(sMax, Math.max(sMin, s0)) : s0;
 
     return {
       x: (t - s) / (2 * kx),
