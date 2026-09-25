@@ -143,6 +143,22 @@ button, input, textarea, select {
 html, body {
   margin: 0;
   height: 100%;
+  /* Pedido explícito, sigue reportándose tras el arreglo anterior del
+     touchstart vacío (ver index.html): "aún tengo que hacer doble clic en
+     la versión móvil para hacer casi todo...mover, seleccionar". El
+     touchstart vacío arreglaba el retraso de Safari/Chrome iOS ligado al
+     simulacro de :hover, pero NO el otro retraso, independiente y mucho
+     más extendido: sin "touch-action", el navegador espera unos 300ms tras
+     CADA toque por si llega un segundo dedo formando un doble-toque para
+     hacer zoom nativo, antes de disparar el clic — con el juego entero a
+     pantalla completa y su propio pellizco-para-zoom ya implementado a
+     mano en boardview.js (con preventDefault propio), ese gesto nativo del
+     navegador nunca hace falta y solo añade esa espera a CADA toque de
+     CUALQUIER botón/unidad/casilla. "manipulation" desactiva el
+     doble-toque-zoom nativo (y con él ese retraso) sin tocar el
+     desplazamiento propio, que sigue funcionando exactamente igual porque
+     ya se gestiona a mano vía touchmove/preventDefault. */
+  touch-action: manipulation;
 }
 
 body {

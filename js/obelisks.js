@@ -552,12 +552,23 @@ const Obelisks = {
     await this.attack(unit, obelisk);
   },
 
-  // Igual que Combat.attack pero contra un Obelisco: daño = FUERZA del
-  // atacante (nunca puntos de gnomo, a diferencia de Villages.attack — un
-  // Obelisco no exige llevar uno cogido, ver cabecera). Reutiliza el mismo
-  // salto épico que un tótem (Villages._playEpicSmash: tolera perfectamente
-  // que `unit` no lleve ningún gnomo encima, ver ese método) para no
-  // duplicar la animación.
+  // Igual que Combat.attack pero contra un Obelisco: por defecto daño =
+  // FUERZA del atacante (un Obelisco no exige llevar un gnomo cogido para
+  // golpearlo, a diferencia de un tótem, ver cabecera). Reutiliza el mismo
+  // salto épico que un tótem (Villages._playEpicSmash) para no duplicar la
+  // animación.
+  //
+  // Pedido explícito: "no se puede atacar, se tiene que descontar sus
+  // puntos de vida como ocurre con los tótems, machacando el gnomo" —
+  // _playEpicSmash ya destruye CUALQUIER gnomo que lleve encima quien
+  // ataca, sea contra un tótem o un Obelisco (busca por unit.id sin
+  // distinguir el objetivo, ver esa función en villages.js). Sin este
+  // cambio, un portador que atacaba un Obelisco perdía su gnomo igualmente
+  // pero solo a cambio de su fuerza — en vez del valor que llevaba
+  // acumulado, como sí ocurre correctamente contra un tótem. Ahora, si
+  // quien ataca lleva un gnomo cogido, el daño pasa a ser sus PUNTOS
+  // acumulados (igual que Villages.attack); sin gnomo cogido, sigue siendo
+  // la fuerza del atacante, como siempre.
   async attack(unit, obelisk) {
     if (this.gameOver) return;
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
@@ -566,7 +577,8 @@ const Obelisks = {
     Units.clearRangeOverlays();
     Units.faceTowardsTile(unit, obelisk.row, obelisk.col);
 
-    const damage = UNIT_TYPES[unit.typeId].fuerza;
+    const carriedGnome = typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === unit.id) : null;
+    const damage = carriedGnome ? carriedGnome.points : UNIT_TYPES[unit.typeId].fuerza;
     const wasFullHp = obelisk.hp >= obelisk.maxHp;
     obelisk.hp = Math.max(0, obelisk.hp - damage);
     const oneHitKill = wasFullHp && obelisk.hp <= 0;

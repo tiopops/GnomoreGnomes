@@ -2,9 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- maximum-scale=1, user-scalable=no: refuerza el touch-action:manipulation de
+     style.css (ver esa nota) — sin esto, el navegador puede seguir esperando
+     un posible doble-toque-zoom en pantallas fuera del tablero (menús,
+     selección de modo/raza...), donde el pan/pinch a mano de boardview.js no
+     existe para tomar el control del gesto. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Gnomore Gnomes</title>
-<link rel="stylesheet" href="css/style.css?v=20260924231721">
+<link rel="stylesheet" href="css/style.css?v=20260925063043">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
 <script>
   // Pedido explícito: "en la interfaz del smartphone, a veces tengo que
@@ -97,7 +102,7 @@
   <script src="js/villages.js?v=20260924231721"></script>
   <script src="js/glory.js?v=20260922221531"></script>
   <script src="js/turns.js?v=20260924221948"></script>
-  <script src="js/obelisks.js?v=20260924231721"></script>
+  <script src="js/obelisks.js?v=20260925063043"></script>
   <script src="js/teammarkers.js?v=20260922221531"></script>
   <script src="js/perfmode.js?v=20260925054820"></script>
   <script src="js/settingsmenu.js?v=20260924230535"></script>
