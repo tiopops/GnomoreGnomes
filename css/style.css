@@ -778,6 +778,30 @@ h2 {
 
 .board-tiles {
   position: relative;
+  /* Pedido explícito: "cuando la ventana del navegador no esta en modo
+     maximizado hay errores graficos" — el tablero en isométrico es un rombo
+     inscrito en ESTE rectángulo (su ancho/alto los pone mapgen.js según
+     map.size), y las 4 esquinas del rectángulo quedan siempre fuera del
+     rombo, sin ninguna loseta que pintar ahí (ver la nota larga de
+     BoardView._clampPanFor en js/boardview.js sobre por qué no se puede
+     evitar del todo con matemática de desplazamiento sin dejar la cámara
+     clavada). En vez de dejar esas esquinas con el fondo oscuro normal de
+     la página (que se leía como un hueco negro, un "error"), se rellenan
+     con la MISMA textura de niebla que ya se usa para lo no explorado —
+     coherente con el propio juego (ahí, literalmente, no hay nada que
+     explorar) y sin ningún coste de render extra ya que es solo el fondo
+     CSS de este contenedor, no losetas de verdad. */
+  /* La imagen de niebla es una "nube" individual con bordes irregulares y
+     esquinas transparentes (no una textura sin costuras) — repetida sola
+     como fondo deja huecos entre nube y nube por los que se seguía
+     colando el fondo oscuro de la página. El color de relleno de abajo es
+     el tono medio de la propia imagen (muestreado con Pillow, solo
+     píxeles no transparentes), así que esos huecos se rellenan con un gris
+     azulado que se funde con la niebla en vez de notarse como un parche. */
+  background-color: #c2cccb;
+  background-image: url("../assets/losetas/niebla_01.png");
+  background-repeat: repeat;
+  background-size: 300px 257px;
 }
 
 .tile {

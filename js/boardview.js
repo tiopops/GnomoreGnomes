@@ -129,6 +129,36 @@ const BoardView = {
   // Límites de desplazamiento para una escala dada (no necesariamente la
   // mostrada ni la objetivo — el ancla de zoom los necesita para cualquier
   // escala intermedia mientras el zoom "alcanza" su valor final).
+  //
+  // HISTORIAL (dos intentos fallidos, por si se retoma esto): "cuando la
+  // ventana del navegador no esta en modo maximizado hay errores graficos"
+  // resultó ser que el tablero, en isométrico, es un rombo inscrito en el
+  // rectángulo que lo envuelve (contentWidth x contentHeight) — toca cada
+  // lado del rectángulo solo en su punto medio, así que las 4 ESQUINAS del
+  // rectángulo quedan siempre fuera del rombo, sin loseta que pintar ahí, y
+  // el fondo oscuro de body se veía como un hueco negro en cuanto la cámara
+  // alcanzaba a cubrir una de esas esquinas (en cualquier tamaño de
+  // ventana, con una más pequeña hace falta desplazar menos para llegar).
+  // El primer intento (_clampPanForDiamond, ya retirado) recortaba el
+  // desplazamiento con matemática exacta para que las 4 esquinas del
+  // VIEWPORT cayeran siempre dentro del rombo real — pero cuando el
+  // viewport abarca más filas/columnas de las que el mapa tiene a ese zoom
+  // (el caso NORMAL con un mapa no gigantesco y una ventana corriente, no
+  // una rareza de esquina) no hay ningún desplazamiento que lo consiga, y
+  // el primer intento recortaba ESE caso a un punto fijo → cámara clavada.
+  // El segundo intento dejaba ese caso sin recortar → el hueco volvía en
+  // cuanto se llegaba a una esquina, que es el caso normal de juego, no una
+  // rareza. Ambos fallaban porque intentaban resolverlo con matemática de
+  // desplazamiento (o se puede evitar el hueco del todo, o no se puede — no
+  // hay término medio que no sea o clavar la cámara o dejar el hueco).
+  //
+  // Se ha vuelto al recorte simple de rectángulo de siempre (déjalo así si
+  // se retoma esto) y en su lugar se tapa el hueco por el lado VISUAL: ver
+  // el fondo de niebla en #board-tiles (css/style.css) — el rectángulo que
+  // envuelve al tablero se pinta siempre con la misma textura de niebla que
+  // ya se usa para lo no explorado, así que cualquier esquina fuera del
+  // rombo se ve como "más niebla" (coherente con el propio juego: ahí no
+  // hay nada que explorar) en vez de un hueco negro que lee como un fallo.
   _clampPanFor(x, y, scale) {
     const vw = this.viewportEl.clientWidth;
     const vh = this.viewportEl.clientHeight;
@@ -140,103 +170,7 @@ const BoardView = {
     const minY = Math.min(0, vh - scaledH);
     const maxY = Math.max(0, vh - scaledH);
 
-    const rectClamped = { x: Math.min(maxX, Math.max(minX, x)), y: Math.min(maxY, Math.max(minY, y)) };
-    return this._clampPanForDiamond(rectClamped.x, rectClamped.y, scale, vw, vh);
-  },
-
-  // BUG encontrado y corregido: "cuando la ventana del navegador no esta en
-  // modo maximizado hay errores graficos" (dos capturas: un hueco negro,
-  // recto y en diagonal, comiéndose una esquina del tablero). Reproducido
-  // con Playwright panorámica hacia una esquina del mapa — y confirmado que
-  // pasaba IGUAL en una ventana grande/maximizada en cuanto se llegaba a esa
-  // esquina, y también con el culling de losetas (TerrainMap.updateCulling)
-  // completamente desactivado: no era ni un bug de ese culling ni algo
-  // exclusivo de ventana pequeña, sino que el límite de desplazamiento de
-  // ARRIBA (_clampPanFor, ya existente) solo evita salirse del RECTÁNGULO
-  // que envuelve al tablero — y ese rectángulo NO está lleno del todo: el
-  // tablero, en isométrico, es un rombo inscrito en él, tocando cada lado
-  // del rectángulo solo en su punto medio (la loseta de la esquina de fila,
-  // p.ej. fila 0, columna 0) — así que las 4 ESQUINAS del rectángulo quedan
-  // siempre fuera del rombo, sin ninguna loseta que pintar ahí, y ese "vacío
-  // detrás del mapa" (el fondo --bg de body, ver css/style.css) es lo que se
-  // veía como hueco negro en cuanto la cámara alcanzaba a cubrir una de esas
-  // esquinas — alcanzable en cualquier tamaño de ventana siempre que el
-  // contenido escalado sea mayor que el viewport en esa dirección (con la
-  // ventana más pequeña hace falta desplazar menos para llegar, de ahí que
-  // se notara antes ahí, pero el hueco YA estaba ahí de antes, sin relación
-  // con la virtualización del tablero añadida en esta misma sesión).
-  //
-  // Arreglo: además del límite de rectángulo de arriba (que se deja tal
-  // cual, sigue haciendo falta como red de seguridad barata para zooms muy
-  // alejados), esta función recorta el desplazamiento un poco más para que
-  // las 4 ESQUINAS del viewport (no del contenido) caigan siempre dentro
-  // del rombo real, no solo dentro de su rectángulo envolvente. La fórmula
-  // exacta explota que getTileFromPointRaw (js/mapgen.js, versión sin
-  // redondear ni recortar de getTileFromPoint) es una transformación LINEAL
-  // de (panX, panY): separando sus dos combinaciones lineales independientes
-  //   t = fila_por_panX - fila_por_panY   (con qué "fila cruda" cambia panX/panY)
-  //   s = columna_por_panX - columna_por_panY
-  // cada una se puede acotar de forma independiente (con las 4 esquinas del
-  // viewport evaluadas SIN pan, panX=panY=0, que da la parte que no depende
-  // del desplazamiento) y luego deshacer el cambio de variable para obtener
-  // el panX/panY límite exacto — sin iterar ni aproximar, y sin restringir
-  // el desplazamiento más de lo estrictamente necesario (se puede seguir
-  // llegando hasta el borde real de cualquier loseta límite del mapa).
-  _clampPanForDiamond(x, y, scale, vw, vh) {
-    const size = typeof TerrainMap !== "undefined" ? TerrainMap.size : 0;
-    if (!size || typeof getTileFromPointRaw !== "function") return { x, y };
-
-    const halfW = TILE_WIDTH / 2;
-    const halfH = TILE_TOP_HEIGHT / 2;
-    const kx = 1 / (scale * halfW);
-    const ky = 1 / (scale * halfH);
-    const S = size - 1;
-
-    // Las 4 esquinas del viewport, evaluadas SIN desplazamiento (panX=panY=0
-    // ⇒ contentX = screenX/scale) — la parte de fila/columna que NO depende
-    // de panX/panY, ver la nota larga de arriba.
-    const corners = [
-      { sx: 0, sy: 0 },
-      { sx: vw, sy: 0 },
-      { sx: 0, sy: vh },
-      { sx: vw, sy: vh },
-    ].map(({ sx, sy }) => getTileFromPointRaw(sx / scale, sy / scale, size));
-
-    let minFRow = Infinity, maxFRow = -Infinity, minFCol = Infinity, maxFCol = -Infinity;
-    corners.forEach(({ row, col }) => {
-      if (row < minFRow) minFRow = row;
-      if (row > maxFRow) maxFRow = row;
-      if (col < minFCol) minFCol = col;
-      if (col > maxFCol) maxFCol = col;
-    });
-
-    const tMin = -2 * minFRow;
-    const tMax = 2 * (S - maxFRow);
-    const sMin = -2 * minFCol;
-    const sMax = 2 * (S - maxFCol);
-
-    const t0 = kx * x - ky * y;
-    const s0 = -kx * x - ky * y;
-    // Si el intervalo sale invertido (tMin > tMax) el viewport ya abarca más
-    // filas/columnas de las que el mapa tiene a este zoom — no hay ningún
-    // desplazamiento que evite el hueco del todo en ESE eje. BUG encontrado
-    // tras enviar la primera versión de este arreglo: "los errores graficos
-    // se han corregido pero no puedo mover la camara" — aquí se recortaba
-    // ese caso a un punto FIJO (el punto medio del intervalo invertido) que
-    // no depende en absoluto de x/y, y con un mapa normal y un viewport
-    // corriente este caso "sin solución perfecta" es el habitual (no una
-    // rareza de esquina), así que la cámara quedaba clavada siempre en ese
-    // mismo punto pasara lo que pasara al arrastrar. Corregido: cuando no
-    // hay forma de evitar el hueco del todo en un eje, simplemente no se
-    // toca ese eje (se deja tal cual venía del recorte de rectángulo, que
-    // ya evita los casos más extremos) en vez de forzarlo a un punto fijo.
-    const t = tMin <= tMax ? Math.min(tMax, Math.max(tMin, t0)) : t0;
-    const s = sMin <= sMax ? Math.min(sMax, Math.max(sMin, s0)) : s0;
-
-    return {
-      x: (t - s) / (2 * kx),
-      y: -(t + s) / (2 * ky),
-    };
+    return { x: Math.min(maxX, Math.max(minX, x)), y: Math.min(maxY, Math.max(minY, y)) };
   },
 
   _clampTargetPan() {
