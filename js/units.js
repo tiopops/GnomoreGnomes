@@ -849,7 +849,16 @@ const Units = {
     // Un personaje puede haber quedado escondido detrás de un totem (o
     // haber dejado de estarlo): ver Villages.refreshOcclusion en
     // js/villages.js, que reusa este mismo punto único de paso.
+    //
+    // Pedido explícito: "con habilidades como lanza el gnomo los totems y
+    // el obelisco no se hacen transparentes si estan detras" — faltaba el
+    // equivalente de Obelisks aquí (solo se llamaba a Villages), así que un
+    // personaje que quedaba escondido detrás del Obelisco Ancestral tras
+    // CUALQUIER desplazamiento (walkPath es el único punto de paso de
+    // todos, ver comentario de arriba) nunca disparaba su transparencia,
+    // solo la de un tótem normal.
     if (typeof Villages !== "undefined") Villages.refreshOcclusion();
+    if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
     // Tienda Goblin (js/shops.js) — quien acaba de moverse puede haber
     // quedado junto a una tienda (o haberse alejado de una): este es el
     // ÚNICO punto de paso de cualquier desplazamiento del proyecto

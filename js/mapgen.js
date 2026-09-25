@@ -99,6 +99,12 @@ const TerrainMap = {
   size: 0,
   grid: null, // grid[row][col] = "grass" | "water" (tipo REAL, no el visual bajo niebla)
   _revealEls: null, // Map "row,col" -> <img class="tile__terrain-reveal"> de esa loseta (si no es hierba)
+  _tileEls: null, // Map "row,col" -> <div class="tile"> de esa loseta (ver updateCulling más abajo)
+  // Última "ventana" (rango de filas/columnas) que se dejó SIN cull, o null
+  // si todavía no se ha calculado ninguna (ver updateCulling). Se usa para
+  // solo tener que tocar las losetas que CAMBIAN de estado entre un frame y
+  // el siguiente, nunca las 289+ del mapa entero.
+  _cullRange: null,
 
   // Se llama tras generar/pintar cada mapa nuevo (startMatch/resumeMatch en
   // newgame-flow.js), DESPUÉS de renderMap — igual que Fog.init, necesita
@@ -113,6 +119,13 @@ const TerrainMap = {
     document.querySelectorAll(".tile__terrain-reveal").forEach((el) => {
       this._revealEls.set(`${el.dataset.row},${el.dataset.col}`, el);
     });
+    this._tileEls = new Map();
+    document.querySelectorAll(".tile").forEach((el) => {
+      this._tileEls.set(`${el.dataset.row},${el.dataset.col}`, el);
+    });
+    // null: la primera llamada a updateCulling todavía no tiene "ventana
+    // anterior" con la que comparar — ver ahí mismo cómo se trata ese caso.
+    this._cullRange = null;
   },
 
   typeAt(row, col) {
@@ -138,7 +151,124 @@ const TerrainMap = {
     const el = this._revealEls.get(`${row},${col}`);
     if (el) el.classList.add("tile__terrain-reveal--visible");
   },
+
+  // ---------- Virtualización del tablero (culling de losetas) ----------
+  // Pedido explícito: "si alejo mucho la camara aparecen errores graficos,
+  // como que le cuesta renderizar las losetas...tengo idea de hacer los
+  // escenarios mucho mas grandes y detallados, asi que esto va a suponer
+  // un problema grave...como lo arreglamos?" — investigado a fondo: cada
+  // loseta del mapa entero se crea UNA vez en renderMap y se queda montada
+  // en el DOM para siempre, se vea o no en pantalla (289 losetas en un
+  // tablero de 17x17 ya son ~1000 <img>, niebla incluida). Al alejar la
+  // cámara el navegador tiene que pintar/componer de golpe muchas más de
+  // esas imágenes a la vez, y ahí aparecen los glitches — el modo alto
+  // rendimiento lo disimula porque usa texturas mucho más ligeras, no
+  // porque cambie cuántos elementos hay. Si el escenario crece mucho más,
+  // el problema empeora aunque no se aleje la cámara.
+  //
+  // Solución (elegida junto con Jesús: "virtualizar el tablero"): dejar de
+  // pintar lo que no se ve. Mismo mecanismo YA probado en este proyecto
+  // para la niebla (Fog.updateCulling/clearCulling, js/fog.js: oculta con
+  // display:none, ni siquiera se pinta, cualquier loseta fuera del
+  // viewport + margen), extendido aquí a la loseta de terreno en sí (el
+  // grueso de las imágenes, no solo la nube) — ocultar el .tile entero
+  // (con display:none) esconde de un plumazo tanto su imagen base como su
+  // overlay de revelado (ambos hijos), sin tocar ni un pixel de la lógica
+  // de juego (todo lo demás sigue trabajando en coordenadas fila/columna,
+  // nunca en si el elemento está o no montado/visible).
+  //
+  // A diferencia de Fog.updateCulling (que SÍ recorre las 289+ losetas
+  // enteras en cada frame de cámara — asumible solo porque está atado a
+  // cuándo la animación de niebla compensa el coste, ver esa función), este
+  // culling tiene que escalar con "escenarios mucho mas grandes": recorrer
+  // el mapa ENTERO en cada frame durante un pan/zoom dejaría de compensar
+  // igual que le pasaría a la niebla sin esa salvedad. En su lugar,
+  // getVisibleTileRange (más abajo) calcula por matemática directa (sin
+  // recorrer nada) el rectángulo de filas/columnas que cae dentro del
+  // viewport + margen, y updateCulling solo toca las losetas que CAMBIAN
+  // de estado entre la ventana anterior (_cullRange) y la nueva — el
+  // trabajo por frame queda acotado por cuántas losetas caben en pantalla
+  // (siempre más o menos constante), nunca por el tamaño total del mapa.
+  updateCulling(panX, panY, scale, viewportW, viewportH) {
+    if (!this._tileEls) return;
+    const range = getVisibleTileRange(panX, panY, scale, viewportW, viewportH, this.size);
+    const prev = this._cullRange;
+    // null solo en la primerísima llamada tras TerrainMap.init (todavía no
+    // hay "ventana anterior" con la que comparar) — se trata como "todo el
+    // mapa estaba fuera", una única pasada completa (igual de barata que el
+    // propio renderMap, que ya recorre el mapa entero una vez al cargar) en
+    // vez de asumir sin comprobar que ya estaba todo bien oculto.
+    const prevRange = prev || { minRow: 0, maxRow: this.size - 1, minCol: 0, maxCol: this.size - 1 };
+    const insideNew = (r, c) => r >= range.minRow && r <= range.maxRow && c >= range.minCol && c <= range.maxCol;
+    const insidePrev = (r, c) => r >= prevRange.minRow && r <= prevRange.maxRow && c >= prevRange.minCol && c <= prevRange.maxCol;
+    // Oculta lo que estaba dentro de la ventana anterior y ha dejado de
+    // estar en la nueva.
+    for (let r = prevRange.minRow; r <= prevRange.maxRow; r++) {
+      for (let c = prevRange.minCol; c <= prevRange.maxCol; c++) {
+        if (insideNew(r, c)) continue;
+        const el = this._tileEls.get(`${r},${c}`);
+        if (el) el.classList.add("tile--culled");
+      }
+    }
+    // Muestra lo que entra nuevo en la ventana actual.
+    for (let r = range.minRow; r <= range.maxRow; r++) {
+      for (let c = range.minCol; c <= range.maxCol; c++) {
+        if (prev && insidePrev(r, c)) continue;
+        const el = this._tileEls.get(`${r},${c}`);
+        if (el) el.classList.remove("tile--culled");
+      }
+    }
+    this._cullRange = range;
+  },
+
+  // Vuelve a mostrar el mapa entero (p.ej. al desactivar por completo el
+  // culling, o como limpieza defensiva) — mismo patrón que Fog.clearCulling.
+  clearCulling() {
+    if (!this._tileEls) return;
+    this._tileEls.forEach((el) => el.classList.remove("tile--culled"));
+    this._cullRange = { minRow: 0, maxRow: this.size - 1, minCol: 0, maxCol: this.size - 1 };
+  },
 };
+
+// Rango de filas/columnas (inclusive, ya acotado a los límites del mapa)
+// que cae dentro del viewport de pantalla + un margen de seguridad, en
+// coordenadas de loseta — usado por TerrainMap.updateCulling (arriba) para
+// decidir qué losetas ocultar sin tener que recorrer el mapa entero.
+// Convierte las 4 ESQUINAS del viewport a espacio de "contenido" (el mismo
+// que usa getTileFromPoint, antes de pan/zoom) y de ahí a fila/columna con
+// esa misma función; el rectángulo fila/columna que las contiene a las 4
+// SIEMPRE cubre de sobra el rombo isométrico realmente visible (nunca al
+// revés, un rectángulo en pantalla mapea a un rombo en el espacio de
+// fila/columna, nunca a un rectángulo más pequeño) — más barato que
+// recorrer losetas y sin riesgo de dejar ninguna visible fuera del cálculo.
+// MARGIN_TILES de seguridad extra (mismo espíritu que el x3 de
+// Fog.updateCulling: cubrir incluso un arrastre/zoom brusco que mueva la
+// cámara de golpe en un solo frame sin dejar un hueco visible un instante).
+const TILE_CULL_MARGIN = 3;
+function getVisibleTileRange(panX, panY, scale, viewportW, viewportH, size) {
+  const corners = [
+    { x: 0, y: 0 },
+    { x: viewportW, y: 0 },
+    { x: 0, y: viewportH },
+    { x: viewportW, y: viewportH },
+  ];
+  let minRow = Infinity, maxRow = -Infinity, minCol = Infinity, maxCol = -Infinity;
+  corners.forEach(({ x, y }) => {
+    const contentX = (x - panX) / scale;
+    const contentY = (y - panY) / scale;
+    const { row, col } = getTileFromPoint(contentX, contentY, size);
+    if (row < minRow) minRow = row;
+    if (row > maxRow) maxRow = row;
+    if (col < minCol) minCol = col;
+    if (col > maxCol) maxCol = col;
+  });
+  return {
+    minRow: Math.max(0, minRow - TILE_CULL_MARGIN),
+    maxRow: Math.min(size - 1, maxRow + TILE_CULL_MARGIN),
+    minCol: Math.max(0, minCol - TILE_CULL_MARGIN),
+    maxCol: Math.min(size - 1, maxCol + TILE_CULL_MARGIN),
+  };
+}
 
 // Niebla de guerra (js/fog.js): NO es un TILE_TYPES más (no sustituye a la
 // loseta real, que sigue existiendo debajo tal cual la genera generateMap) —

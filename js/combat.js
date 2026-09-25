@@ -258,12 +258,13 @@ const Combat = {
 
     // Habilidad "Golem de Espinas" (GolemCorteza, js/abilities.js) — "si un
     // enemigo le golpea se hace un punto de daño a si mismo tambien":
-    // target.thorny es permanente desde que se activa (no caduca por
-    // turno), así que se comprueba en CADA golpe que reciba de aquí en
-    // adelante. Si eso deja al propio atacante a 0, muere IGUAL que
-    // cualquier otra baja (mismo removeUnit/dropHeldBy/Gloria de abajo,
-    // solo que el crédito va para el equipo de `target`, no el de
-    // `attacker` — fue su espina la que lo mató).
+    // target.thorny se comprueba en CADA golpe que reciba mientras dure
+    // (caduca sola al llegar el siguiente turno de su equipo, ver
+    // Abilities.onTurnStart en abilities.js). Si eso deja al propio
+    // atacante a 0, muere IGUAL que cualquier otra baja (mismo
+    // removeUnit/dropHeldBy/Gloria de abajo, solo que el crédito va para el
+    // equipo de `target`, no el de `attacker` — fue su espina la que lo
+    // mató).
     let attackerDiedFromThorns = false;
     if (target.thorny && attacker.hp > 0) {
       attacker.hp = Math.max(0, attacker.hp - 1);

@@ -268,10 +268,31 @@ const Obelisks = {
     // siquiera se crea, así nunca hay riesgo de que un cambio de CSS futuro
     // lo deje visible sin querer.
     let popEl = null;
+    let popLabelEl = null;
     if (team === "player") {
       popEl = document.createElement("div");
       popEl.className = "obelisk__pop-badge";
+      // Pedido explícito: "el cuadro irregular esta contenido dentro de
+      // una mascara, esto no debe ser asi, debe ser como el resto de
+      // elementos similares de la interfaz" — el recorte con clip-path
+      // directo sobre el propio elemento (borde + drop-shadow encima de
+      // una forma ya recortada) es justo el patrón que en TODo el resto
+      // del HUD se evita a propósito (ver .shop-restock-msg/.ui-hint en
+      // style.css): doble capa ::before (contorno)/::after (relleno)
+      // recortadas con clip-path, y el CONTENIDO en un hijo aparte con
+      // z-index propio para quedar por encima de las dos. Aquí van dos
+      // hijos: el icono y la etiqueta con el número.
+      const iconEl = document.createElement("i");
+      iconEl.className = "ph-fill ph-user obelisk__pop-badge-icon";
+      popEl.appendChild(iconEl);
+      popLabelEl = document.createElement("span");
+      popLabelEl.className = "obelisk__pop-badge-label";
+      popEl.appendChild(popLabelEl);
       el.appendChild(popEl);
+      // Pedido explícito: "si se hace mouseover debe indicar 'Población'"
+      // — mismo mecanismo que ya usan Gnome._hitBtn/_passBtn (js/gnome.js)
+      // y el botón de habilidad (js/abilities.js): Tooltip.attach.
+      if (typeof Tooltip !== "undefined") Tooltip.attach(popEl, "Población");
     }
 
     // Los dos iconos de menú (reclutar/habilidades) — "aparecen arriba del
@@ -338,6 +359,7 @@ const Obelisks = {
       hpBarEl,
       hpSegmentEls,
       popEl,
+      popLabelEl,
       menuEl,
     };
     this._placeInstant(obelisk);
@@ -478,7 +500,10 @@ const Obelisks = {
     if (!obelisk.popEl) return; // solo existe para "player" (ver _create)
     const used = this.recruitedCountFor(obelisk.team);
     const max = this.populationFor(obelisk.team);
-    obelisk.popEl.textContent = `${used} / ${max}`;
+    // El texto va en popLabelEl, no en popEl directamente (ver _create):
+    // popEl ahora solo es el marco de doble capa, con el icono y la
+    // etiqueta como hijos.
+    if (obelisk.popLabelEl) obelisk.popLabelEl.textContent = `${used} / ${max}`;
   },
 
   // Pedido explícito: "cuando un jugador cualquiera captura o pierde un
@@ -506,6 +531,18 @@ const Obelisks = {
       // Combat.attackableEnemies/Villages.showFor.
       const needsMove = approach.row !== unit.row || approach.col !== unit.col;
       if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < 2) return;
+      // Pedido explícito: "si un totem o el obelisco esta dentro del rango
+      // de movimiento del personaje seleccionado se puede machacar el
+      // gnomo contra el, siempre y cuando tenga 2 acciones" — el clic
+      // directo sobre el propio Obelisco (ver "obelisk--targeted" más
+      // abajo/el listener en _create) SOLO funciona cuando ya está
+      // adyacente (dist <= OBELISK_ATTACK_RANGE): si hace falta moverse
+      // primero, esta mira es el ÚNICO sitio donde se puede hacer clic. Pero
+      // obelisk.el se pinta con z-index (row+col)*10+5 (ver _create) y esta
+      // mira, sin alwaysOnTop, se quedaba en (row+col)*10+2 — POR DEBAJO del
+      // propio Obelisco en su misma loseta, así que el sprite (260px, mucho
+      // más grande que la mira) la tapaba entera y se comía el clic sin
+      // hacer nada. alwaysOnTop la sube muy por encima de cualquier loseta.
       Units.addMarker({
         className: "attack-marker obelisk-attack-marker",
         row: obelisk.row,
@@ -514,6 +551,7 @@ const Obelisks = {
         delayIndex: i,
         visibleClass: "attack-marker--visible",
         owner: "obelisks",
+        alwaysOnTop: true,
         onClick: () => this.approachAndAttack(unit, obelisk),
         buildContent: (marker) => {
           const icon = document.createElement("i");

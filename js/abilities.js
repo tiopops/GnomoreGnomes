@@ -29,7 +29,7 @@ const ABILITIES = {
     // js/unitinfo.js, que usan iconImg si existe y si no caen a `icon`.
     iconImg: "assets/iconos/golem_espinas.png",
     description:
-      "Se cura hasta su vida máxima de base y se envuelve de espinas para el resto de la partida: a partir de ahora, cualquiera que lo golpee se hace 1 punto de daño a sí mismo. Gasta 1 acción. Un solo uso por partida.",
+      "Se cura hasta su vida máxima de base y se envuelve de espinas hasta su próximo turno: mientras dure, cualquiera que lo golpee se hace 1 punto de daño a sí mismo. Gasta 1 acción. Un solo uso por partida.",
   },
   surcabosques: {
     name: "Visión Lejana",
@@ -229,11 +229,13 @@ const Abilities = {
   // ---------- GolemCorteza: Golem de Espinas ----------
   // "el golem se envuelve de espinas, se cura hasta su vida maxima de base,
   // si un enemigo le golpea se hace un punto de daño a si mismo tambien"
-  // (pedido explícito, reemplaza a la antigua Corteza Milenaria) — a
-  // diferencia de la anterior, esto NO caduca solo al empezar su siguiente
-  // turno: unit.thorny se queda a true el resto de la partida en cuanto se
-  // activa (ver combat.js, target.thorny, que es quien de verdad aplica el
-  // punto de daño reflejado cada vez que le golpean).
+  // (pedido explícito, reemplaza a la antigua Corteza Milenaria) —
+  // unit.thorny se pone a true en cuanto se activa (ver combat.js,
+  // target.thorny, que es quien de verdad aplica el punto de daño
+  // reflejado cada vez que le golpean) y caduca solo al llegar su PROPIO
+  // siguiente turno (pedido explícito, segunda pasada: "la habilidad del
+  // golem de espinas no es para toda la partida, si no hasta su proximo
+  // turno") — ver onTurnStart más abajo, que es quien la revierte.
 
   _activateThorns(unit) {
     const type = UNIT_TYPES[unit.typeId];
@@ -881,10 +883,28 @@ const Abilities = {
   // fotograma con un arco añadido encima, en vez de reutilizar
   // Units.walkPath (ese es para caminar casilla a casilla en línea recta,
   // esto es un único salto largo por el aire).
+  // Pedido explícito (segunda pasada): "la animacion de los personajes al
+  // ser lanzados por resorte goblin es cuanto menos lamentable...da un giro
+  // raro en el aire...mejorala digno de un triple A" — el giro raro era un
+  // spin COMPLETO de 360° a velocidad constante (ver el antiguo
+  // ability-throw-spin en style.css), que en un sprite plano se lee como
+  // una moneda girando sin parar, totalmente desacoplado del propio arco
+  // (una animation CSS con su propio timing, corriendo en paralelo sin
+  // saber nada de en qué punto del salto iba el personaje). Ahora la
+  // rotación y el squash&stretch se calculan fotograma a fotograma DENTRO
+  // de este mismo bucle, en función de la altura real del arco: sin giro
+  // en el despegue/aterrizaje, tumba limitada (nunca una vuelta completa)
+  // en el punto más alto, y una compresión de impacto en los dos extremos
+  // con un ligero estiramiento en el aire — el lenguaje visual clásico de
+  // animación (squash & stretch) en vez de un giro plano sin motivo.
   async _throwUnitTo(unit, destRow, destCol) {
     const start = getTileCenter(unit.row, unit.col, Units.boardSize);
     const end = getTileCenter(destRow, destCol, Units.boardSize);
     unit.el.classList.add("unit--thrown");
+    const spriteEl = unit.spriteEl;
+    // Sentido del giro: hacia donde viaja horizontalmente (una vuelta "hacia
+    // adelante" se lee mejor que una dirección aleatoria/siempre igual).
+    const spinSign = end.x >= start.x ? 1 : -1;
     const DURATION_MS = 460;
     await new Promise((resolve) => {
       const t0 = performance.now();
@@ -892,15 +912,29 @@ const Abilities = {
         const t = Math.min(1, (now - t0) / DURATION_MS);
         const x = start.x + (end.x - start.x) * t;
         const y = start.y + (end.y - start.y) * t;
-        const arc = -70 * 4 * t * (1 - t); // parábola, pico en t=0.5, negativo = hacia arriba en pantalla
+        const heightFactor = 4 * t * (1 - t); // 0 en los extremos, 1 en el pico (t=0.5)
+        const arc = -70 * heightFactor; // parábola, negativo = hacia arriba en pantalla
         unit.el.style.left = `${x}px`;
         unit.el.style.top = `${y + arc}px`;
+
+        // Tumba proporcional a la altura (máx. ~140°, nunca una vuelta
+        // entera) — el personaje "vuela" en el aire sin dar volteretas
+        // imposibles para su tamaño.
+        const rotateDeg = spinSign * heightFactor * 140;
+        // Squash&stretch: comprimido justo al despegar/aterrizar (impacto),
+        // ligeramente estirado en el punto más alto (vuelo libre).
+        const edgeCompress = t < 0.12 ? 1 - t / 0.12 : t > 0.88 ? (t - 0.88) / 0.12 : 0;
+        const scaleY = 1 + heightFactor * 0.12 - edgeCompress * 0.22;
+        const scaleX = 1 + edgeCompress * 0.16 - heightFactor * 0.05;
+        if (spriteEl) spriteEl.style.transform = `rotate(${rotateDeg}deg) scale(${scaleX}, ${scaleY})`;
+
         if (t < 1) requestAnimationFrame(step);
         else resolve();
       };
       requestAnimationFrame(step);
     });
 
+    if (spriteEl) spriteEl.style.transform = "";
     unit.row = destRow;
     unit.col = destCol;
     const { x, y } = getTileCenter(destRow, destCol, Units.boardSize);
@@ -915,9 +949,36 @@ const Abilities = {
     // también puede hacer aterrizar a alguien justo encima de una mina.
     this.checkTrigger(unit);
     if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
+    // Pedido explícito: "con habilidades como lanza el gnomo los totems y
+    // el obelisco no se hacen transparentes si estan detras" — mismo
+    // arreglo que Units.walkPath (js/units.js): faltaba Obelisks aquí,
+    // solo se recalculaba la transparencia de los tótems normales.
     if (typeof Villages !== "undefined") Villages.refreshOcclusion();
+    if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
     if (typeof Shops !== "undefined") Shops.refreshAll();
     Units.refreshRange(unit);
+  },
+
+  // ---------- GolemCorteza: caducidad de Golem de Espinas ----------
+  // Pedido explícito: "la habilidad del golem de espinas no es para toda
+  // la partida, si no hasta su proximo turno" — mismo mecanismo que
+  // Obelisks.onTurnStart/Shops.onTurnStart (registerTurnStartListener,
+  // js/turns.js): se dispara UNA vez por equipo al empezar SU turno.
+  // Recorre solo las unidades de ESE equipo (nunca las del rival, cuyo
+  // turno todavía no ha llegado) y a quien siga con las espinas puestas le
+  // quita tanto el flag (target.thorny, comprobado en cada golpe recibido,
+  // ver combat.js) como el sprite/aura visual — vuelve a su aspecto e
+  // interacción normal de GolemCorteza. La curación de _activateThorns no
+  // se toca aquí: esa parte del pedido original SÍ era permanente ("se cura
+  // hasta su vida máxima de base"), solo la protección de espinas caduca.
+  onTurnStart(team) {
+    Units.list.forEach((unit) => {
+      if (unit.team !== team || !unit.thorny) return;
+      unit.thorny = false;
+      if (unit.el) unit.el.classList.remove("unit--thorny");
+      const type = UNIT_TYPES[unit.typeId];
+      if (type && unit.spriteEl) unit.spriteEl.src = type.spriteUrl;
+    });
   },
 
   // ---------- Partida nueva ----------
@@ -935,3 +996,4 @@ const Abilities = {
 };
 
 Units.registerSelectionListener(Abilities);
+if (typeof Turns !== "undefined") Turns.registerTurnStartListener(Abilities);

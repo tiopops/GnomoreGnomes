@@ -164,6 +164,19 @@ const BoardView = {
     } else if (typeof Fog !== "undefined" && Fog._cullCount && !Fog.animEnabled) {
       Fog.clearCulling();
     }
+    // Pedido explícito: "si alejo mucho la camara aparecen errores
+    // graficos...tengo idea de hacer los escenarios mucho mas grandes y
+    // detallados, asi que esto va a suponer un problema grave...como lo
+    // arreglamos?" — virtualización del tablero (ver TerrainMap.
+    // updateCulling en js/mapgen.js): a diferencia del culling de niebla de
+    // arriba, este SIEMPRE se recalcula, no solo con la animación de
+    // niebla activada — el coste que ahorra (pintar de golpe cientos de
+    // losetas de terreno fuera de pantalla) no tiene nada que ver con esa
+    // animación, y el propio cálculo está pensado para no crecer con el
+    // tamaño del mapa (ver la nota larga en updateCulling).
+    if (typeof TerrainMap !== "undefined" && TerrainMap.updateCulling) {
+      TerrainMap.updateCulling(this.panX, this.panY, this.scale, this.viewportEl.clientWidth, this.viewportEl.clientHeight);
+    }
   },
 
   // Aplica el ancla de zoom activa (this._zoomAnchor) a una escala concreta:

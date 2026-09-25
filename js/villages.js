@@ -419,6 +419,16 @@ const Villages = {
       // las dos (mover + machacar), así que no se ofrece la mira.
       const needsMove = approach.row !== unit.row || approach.col !== unit.col;
       if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < 2) return;
+      // Pedido explícito: "si un totem o el obelisco esta dentro del rango
+      // de movimiento del personaje seleccionado se puede machacar el
+      // gnomo contra el" — mismo bug/arreglo que Obelisks.showFor: el clic
+      // directo sobre el propio tótem solo funciona ya adyacente
+      // ("village--targeted" más abajo); si hace falta moverse primero,
+      // esta mira es el ÚNICO sitio donde se puede pulsar, pero
+      // village.el se pinta con z-index (row+col)*10+5 (ver _create) y sin
+      // alwaysOnTop esta mira se quedaba en (row+col)*10+2 — por debajo del
+      // propio tótem en su misma loseta, que la tapaba entera y se comía
+      // el clic. alwaysOnTop la sube muy por encima de cualquier loseta.
       Units.addMarker({
         className: "attack-marker village-attack-marker",
         row: village.row,
@@ -427,6 +437,7 @@ const Villages = {
         delayIndex: i,
         visibleClass: "attack-marker--visible",
         owner: "villages",
+        alwaysOnTop: true,
         onClick: () => this.approachAndAttack(unit, village),
         buildContent: (marker) => {
           const icon = document.createElement("i");

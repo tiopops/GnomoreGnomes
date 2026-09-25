@@ -928,6 +928,21 @@ body.gg-fog-anim-off .tile__fog:not(.tile__fog--revealed) {
   display: none;
 }
 
+/* Pedido explícito: "si alejo mucho la camara aparecen errores graficos...
+   tengo idea de hacer los escenarios mucho mas grandes y detallados, asi
+   que esto va a suponer un problema grave...como lo arreglamos?" —
+   respuesta elegida: "virtualizar el tablero". Mismo mecanismo que
+   .tile__fog--culled de arriba, extendido ahora a la loseta de terreno en
+   sí (ver TerrainMap.updateCulling en js/mapgen.js, llamada desde
+   BoardView._apply en cada frame de cámara, SIEMPRE, no solo con la
+   niebla animada — a diferencia de la niebla, el coste que ahorra esto no
+   depende de ninguna animación). display:none en el .tile entero esconde
+   de un plumazo su imagen base Y su overlay de revelado (ambos hijos),
+   sin tocar la lógica de juego (todo sigue funcionando en fila/columna). */
+.tile--culled {
+  display: none;
+}
+
 /* Al revelarse (Fog.revealForUnit) sustituye por completo la animación de
    reposo (misma propiedad "animation", gana por ir después en la hoja de
    estilos) — nunca las dos compitiendo por transform a la vez, mismo patrón
@@ -5293,8 +5308,19 @@ body.backpack-giving--bevida * {
    caber "3 / 5" sin recortarse. */
 .obelisk__pop-badge {
   position: absolute;
-  top: -26px;
-  right: -20px;
+  /* Pedido explícito (cuarta vuelta): "tiene que estar un poco mas abajo y
+     un poco mas a la izquierda, para no solaparse con la barra de vida" —
+     la barra (.obelisk .unit__hpbar) vive a la MISMA altura (top:-26px) y
+     esta insignia asomaba justo por encima de su punta derecha. Bajarla
+     (top menos negativo) y acercarla hacia el centro (right menos
+     negativo, tira de ella hacia la izquierda) la separa de la punta de la
+     barra sin volver a montarse sobre el follaje del Obelisco (ver nota de
+     abajo, ya investigada a fondo esa vez). */
+  /* Pedido explícito (quinta vuelta): "un poco mas abajo y un poco mas a la
+     izquierda mas" — sigue el mismo criterio de la nota de arriba, un paso
+     más en la misma dirección. */
+  top: -10px;
+  right: 4px;
   min-width: 46px;
   height: 30px;
   padding: 0 8px;
@@ -5302,7 +5328,7 @@ body.backpack-giving--bevida * {
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
+  gap: 4px;
   /* Bug reportado, segunda vuelta: "sigue estando mal, corrige la mascara
      que lo incrustra para que este por fuera". No había NINGÚN
      overflow/clip-path recortándolo de verdad (ya investigado a fondo, ver
@@ -5319,10 +5345,50 @@ body.backpack-giving--bevida * {
   color: #241f28;
   font-weight: 900;
   font-size: 0.78rem;
-  background: #8fd6ff;
+  /* Pedido explícito (tercera vuelta): "el cuadro irregular esta contenido
+     dentro de una mascara, esto no debe ser asi, debe ser como el resto de
+     elementos similares de la interfaz" — clip-path aplicado DIRECTAMENTE
+     sobre el elemento (con su borde y su drop-shadow) es precisamente el
+     patrón que el resto del HUD evita a propósito, porque el borde/sombra
+     no sigue bien el recorte y se lee como si el contenido estuviera
+     "encajonado" dentro de una máscara rectangular. Mismo doble-capa que
+     .shop-restock-msg/.ui-hint: sin fondo/borde propios aquí, la forma y el
+     contorno los ponen ::before/::after de abajo, con su propio
+     clip-path cada uno; el filter:drop-shadow (que sí respeta la silueta
+     recortada) se queda en el elemento. */
+  background: none;
+  border: none;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
+}
+
+.obelisk__pop-badge::before,
+.obelisk__pop-badge::after {
+  content: "";
+  position: absolute;
   clip-path: var(--gg-badge-clip);
-  border: var(--gg-frame-outline-width) solid #000;
-  box-sizing: border-box;
+}
+
+.obelisk__pop-badge::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.obelisk__pop-badge::after {
+  inset: var(--gg-frame-outline-width);
+  background: #8fd6ff;
+  z-index: 1;
+}
+
+.obelisk__pop-badge-icon,
+.obelisk__pop-badge-label {
+  position: relative;
+  z-index: 2;
+}
+
+.obelisk__pop-badge-icon {
+  font-size: 0.85rem;
+  line-height: 1;
 }
 
 /* Menú de reclutar/habilidades — "aparecen arriba del obelisco al
