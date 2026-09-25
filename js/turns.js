@@ -33,12 +33,22 @@ const TURNS_MAX_ACTIONS = 2;
 // sobre el botón cuenta lo mismo que ya cuentan los oyentes existentes.
 const TURNS_MAX_ROUNDS = 30;
 
-// Pedido explícito: "de momento para hacer pruebas, que los enemigos no
-// ataquen estamos en modo sandbox" — la IA rival (_aiActOnce más abajo)
-// sigue moviéndose y cogiendo/golpeando/pasando gnomos con total normalidad,
-// solo se le desactiva la prioridad de ATACAR a los personajes del jugador.
-// Poner a false el día que se quiera que el rival ataque de verdad.
-const TURNS_SANDBOX_NO_ENEMY_ATTACK = true;
+// Pedido explícito (original, en pruebas): "de momento para hacer pruebas,
+// que los enemigos no ataquen estamos en modo sandbox" — la IA rival
+// (_aiActOnce más abajo) seguía moviéndose y cogiendo/golpeando/pasando
+// gnomos con total normalidad, solo se le desactivaba la prioridad de
+// ATACAR a los personajes del jugador.
+// Pedido explícito (segunda vuelta, ya fuera de pruebas): "ahora quiero que
+// los enemigos tambien puedan atacar a mis unidades cuando lo precisen o lo
+// vean necesario para ganar la partida" — a false, tal cual anticipaba el
+// comentario original ("poner a false el día que se quiera que el rival
+// ataque de verdad"). A partir de ahora _aiActOnce SÍ entra en la rama de
+// Combat.attackableEnemies (ver más abajo): un rival sin gnomo cogido que
+// tenga a algún personaje del jugador a su alcance (quedándose quieto o
+// moviéndose) lo ataca, con la misma prioridad que ya tenía esa rama antes
+// de desactivarse (por delante de perseguir un gnomo suelto, por detrás de
+// la rama de "llevo un gnomo cogido" que sigue intacta y sin tocar).
+const TURNS_SANDBOX_NO_ENEMY_ATTACK = false;
 
 const Turns = {
   activeTeam: "player", // "player" | "enemy"

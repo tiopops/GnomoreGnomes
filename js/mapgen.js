@@ -84,6 +84,12 @@ function applyPerfModeTileSprites(enabled) {
   const container = document.getElementById("board-tiles");
   if (!container) return;
   container.querySelectorAll("img[data-src-orig]").forEach((img) => {
+    // Pedido explícito (bug reportado): "en el modo alto rendimiento la
+    // niebla no tiene el efecto de disiparse" — ver la nota larga junto a
+    // fogImg.dataset.skipLowres en renderMap: la niebla se queda SIEMPRE en
+    // su resolución normal, nunca cambia con este toggle (a diferencia de
+    // hierba/agua, que sí lo hacen).
+    if (img.dataset.skipLowres) return;
     const orig = img.dataset.srcOrig;
     img.src = enabled ? lowResTileSrc(orig) : orig;
   });
@@ -592,8 +598,29 @@ function renderMap(map, container) {
     // detrás del jugador, según toque.
     const fogImg = document.createElement("img");
     fogImg.className = "tile__fog";
+    // Pedido explícito (bug reportado): "en el modo alto rendimiento la
+    // niebla no tiene el efecto de disiparse, simplemente desaparece
+    // bruscamente" — investigado a fondo: la animación fog-dissipate (ver
+    // style.css) SÍ se dispara igual en los dos modos (comprobado con
+    // capturas y con la curva de opacity fotograma a fotograma, idéntica en
+    // ambos) — lo que cambia es que ese efecto depende de que el propio
+    // navegador ESTIRE (scale 1.6) y DESENFOQUE (blur hasta 7px) la textura
+    // de la nube para que se lea como niebla disipándose; con la versión
+    // "_lowres" (mucho más pequeña/pixelada, pensada para ahorrar memoria
+    // de textura en losetas de terreno) ese estirado+desenfoque encima de
+    // un original ya de baja resolución no deja ver ninguna transición
+    // gradual real, solo un borrón que se desvanece de golpe. A diferencia
+    // de una loseta de terreno (un rectángulo fijo, sin animación), la
+    // niebla SIEMPRE depende de esa calidad de imagen para su propio
+    // efecto, así que se deja SIEMPRE en su resolución normal (un único
+    // archivo compartido por todas las nubes del mapa, igual de barato de
+    // decodificar sea cual sea el modo — no multiplica coste por loseta
+    // como si fuera una textura distinta cada vez) — applyPerfModeTileSprites
+    // (más abajo) respeta esta misma exclusión al alternar el modo a mitad
+    // de partida.
     fogImg.dataset.srcOrig = FOG_SRC;
-    fogImg.src = typeof PerfMode !== "undefined" && PerfMode.enabled ? lowResTileSrc(FOG_SRC) : FOG_SRC;
+    fogImg.dataset.skipLowres = "1";
+    fogImg.src = FOG_SRC;
     fogImg.style.zIndex = String((t.row + t.col) * 10 + 6);
     fogImg.draggable = false;
     fogImg.alt = "";
