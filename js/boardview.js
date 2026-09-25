@@ -140,7 +140,94 @@ const BoardView = {
     const minY = Math.min(0, vh - scaledH);
     const maxY = Math.max(0, vh - scaledH);
 
-    return { x: Math.min(maxX, Math.max(minX, x)), y: Math.min(maxY, Math.max(minY, y)) };
+    const rectClamped = { x: Math.min(maxX, Math.max(minX, x)), y: Math.min(maxY, Math.max(minY, y)) };
+    return this._clampPanForDiamond(rectClamped.x, rectClamped.y, scale, vw, vh);
+  },
+
+  // BUG encontrado y corregido: "cuando la ventana del navegador no esta en
+  // modo maximizado hay errores graficos" (dos capturas: un hueco negro,
+  // recto y en diagonal, comiéndose una esquina del tablero). Reproducido
+  // con Playwright panorámica hacia una esquina del mapa — y confirmado que
+  // pasaba IGUAL en una ventana grande/maximizada en cuanto se llegaba a esa
+  // esquina, y también con el culling de losetas (TerrainMap.updateCulling)
+  // completamente desactivado: no era ni un bug de ese culling ni algo
+  // exclusivo de ventana pequeña, sino que el límite de desplazamiento de
+  // ARRIBA (_clampPanFor, ya existente) solo evita salirse del RECTÁNGULO
+  // que envuelve al tablero — y ese rectángulo NO está lleno del todo: el
+  // tablero, en isométrico, es un rombo inscrito en él, tocando cada lado
+  // del rectángulo solo en su punto medio (la loseta de la esquina de fila,
+  // p.ej. fila 0, columna 0) — así que las 4 ESQUINAS del rectángulo quedan
+  // siempre fuera del rombo, sin ninguna loseta que pintar ahí, y ese "vacío
+  // detrás del mapa" (el fondo --bg de body, ver css/style.css) es lo que se
+  // veía como hueco negro en cuanto la cámara alcanzaba a cubrir una de esas
+  // esquinas — alcanzable en cualquier tamaño de ventana siempre que el
+  // contenido escalado sea mayor que el viewport en esa dirección (con la
+  // ventana más pequeña hace falta desplazar menos para llegar, de ahí que
+  // se notara antes ahí, pero el hueco YA estaba ahí de antes, sin relación
+  // con la virtualización del tablero añadida en esta misma sesión).
+  //
+  // Arreglo: además del límite de rectángulo de arriba (que se deja tal
+  // cual, sigue haciendo falta como red de seguridad barata para zooms muy
+  // alejados), esta función recorta el desplazamiento un poco más para que
+  // las 4 ESQUINAS del viewport (no del contenido) caigan siempre dentro
+  // del rombo real, no solo dentro de su rectángulo envolvente. La fórmula
+  // exacta explota que getTileFromPointRaw (js/mapgen.js, versión sin
+  // redondear ni recortar de getTileFromPoint) es una transformación LINEAL
+  // de (panX, panY): separando sus dos combinaciones lineales independientes
+  //   t = fila_por_panX - fila_por_panY   (con qué "fila cruda" cambia panX/panY)
+  //   s = columna_por_panX - columna_por_panY
+  // cada una se puede acotar de forma independiente (con las 4 esquinas del
+  // viewport evaluadas SIN pan, panX=panY=0, que da la parte que no depende
+  // del desplazamiento) y luego deshacer el cambio de variable para obtener
+  // el panX/panY límite exacto — sin iterar ni aproximar, y sin restringir
+  // el desplazamiento más de lo estrictamente necesario (se puede seguir
+  // llegando hasta el borde real de cualquier loseta límite del mapa).
+  _clampPanForDiamond(x, y, scale, vw, vh) {
+    const size = typeof TerrainMap !== "undefined" ? TerrainMap.size : 0;
+    if (!size || typeof getTileFromPointRaw !== "function") return { x, y };
+
+    const halfW = TILE_WIDTH / 2;
+    const halfH = TILE_TOP_HEIGHT / 2;
+    const kx = 1 / (scale * halfW);
+    const ky = 1 / (scale * halfH);
+    const S = size - 1;
+
+    // Las 4 esquinas del viewport, evaluadas SIN desplazamiento (panX=panY=0
+    // ⇒ contentX = screenX/scale) — la parte de fila/columna que NO depende
+    // de panX/panY, ver la nota larga de arriba.
+    const corners = [
+      { sx: 0, sy: 0 },
+      { sx: vw, sy: 0 },
+      { sx: 0, sy: vh },
+      { sx: vw, sy: vh },
+    ].map(({ sx, sy }) => getTileFromPointRaw(sx / scale, sy / scale, size));
+
+    let minFRow = Infinity, maxFRow = -Infinity, minFCol = Infinity, maxFCol = -Infinity;
+    corners.forEach(({ row, col }) => {
+      if (row < minFRow) minFRow = row;
+      if (row > maxFRow) maxFRow = row;
+      if (col < minFCol) minFCol = col;
+      if (col > maxFCol) maxFCol = col;
+    });
+
+    const tMin = -2 * minFRow;
+    const tMax = 2 * (S - maxFRow);
+    const sMin = -2 * minFCol;
+    const sMax = 2 * (S - maxFCol);
+
+    const t0 = kx * x - ky * y;
+    const s0 = -kx * x - ky * y;
+    // Si el intervalo sale invertido (tMin > tMax) el viewport ya abarca más
+    // filas/columnas de las que el mapa tiene a este zoom — no hay ningún
+    // desplazamiento que evite el hueco del todo, así que como mejor
+    // esfuerzo se centra en vez de recortar a un extremo arbitrario.
+    const t = tMin <= tMax ? Math.min(tMax, Math.max(tMin, t0)) : (tMin + tMax) / 2;
+    const s = sMin <= sMax ? Math.min(sMax, Math.max(sMin, s0)) : (sMin + sMax) / 2;
+
+    return {
+      x: (t - s) / (2 * kx),
+      y: -(t + s) / (2 * ky),
+    };
   },
 
   _clampTargetPan() {

@@ -358,7 +358,15 @@ function getTileCenter(row, col, size) {
 // escalabilidad), p.ej. la habilidad Visión Lejana (js/abilities.js), que
 // necesita saber dónde ha hecho clic el jugador en CUALQUIER punto del mapa,
 // esté o no cubierto por otra unidad/tótem/tienda encima de la loseta.
-function getTileFromPoint(x, y, size) {
+// Misma fórmula que getTileFromPoint pero SIN redondear a entero ni recortar
+// al tablero — devuelve la fila/columna "real" (con decimales, y pudiendo
+// caer fuera de [0, size-1]) del punto dado. getTileFromPoint la usa para un
+// clic concreto (donde SIEMPRE tiene sentido devolver la loseta válida más
+// cercana), pero BoardView._clampPanForDiamond (boardview.js) necesita el
+// valor sin recortar: para saber CUÁNTO se ha pasado la cámara del borde
+// real del rombo, no solo que se ha pasado (ver la nota larga de ese método
+// sobre el hueco negro en las esquinas al no estar maximizada la ventana).
+function getTileFromPointRaw(x, y, size) {
   const halfW = TILE_WIDTH / 2;
   const halfH = TILE_TOP_HEIGHT / 2;
   // Mismo centerX que getTileTopLeft, más el propio medio-ancho/alto que
@@ -366,11 +374,17 @@ function getTileFromPoint(x, y, size) {
   const centerX = (size - 1) * halfW + halfW;
   const u = x - centerX;
   const v = y - halfH;
-  const col = Math.round((u / halfW + v / halfH) / 2);
-  const row = Math.round((v / halfH - u / halfW) / 2);
   return {
-    row: Math.min(size - 1, Math.max(0, row)),
-    col: Math.min(size - 1, Math.max(0, col)),
+    row: (v / halfH - u / halfW) / 2,
+    col: (u / halfW + v / halfH) / 2,
+  };
+}
+
+function getTileFromPoint(x, y, size) {
+  const { row, col } = getTileFromPointRaw(x, y, size);
+  return {
+    row: Math.min(size - 1, Math.max(0, Math.round(row))),
+    col: Math.min(size - 1, Math.max(0, Math.round(col))),
   };
 }
 
