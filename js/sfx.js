@@ -370,7 +370,11 @@ const SFX = {
 document.addEventListener("DOMContentLoaded", () => SFX.init());
 
 const SFX_TARGETS =
-  ".menu-btn:not(:disabled), .option-card, .back-btn, .range-marker, .attack-marker, .unit, .unit-info-btn, " +
+  // Pedido explícito: "faltan los sonidos de la interfaz de seleccion de
+  // raza" — .race-card (js/newgame-flow.js, renderRaceCard) se quedó fuera
+  // de esta lista al crearse esa tarjeta propia para razas (antes de eso
+  // usaba .option-card, que sí estaba aquí desde el principio).
+  ".menu-btn:not(:disabled), .option-card, .race-card, .back-btn, .range-marker, .attack-marker, .unit, .unit-info-btn, " +
   ".catch-marker, .pass-marker, .gnome-action-btn, .settings-gear-btn, .settings-panel__option, " +
   ".backpack-btn, .backpack-slot:not(:disabled), .backpack-close-btn, " +
   // Tienda Goblin (js/shops.js) — reutiliza el popup de la mochila tal
@@ -411,7 +415,7 @@ document.addEventListener("click", (e) => {
     SFX.back();
     return;
   }
-  if (e.target.closest(".menu-btn:not(:disabled), .option-card")) {
+  if (e.target.closest(".menu-btn:not(:disabled), .option-card, .race-card")) {
     SFX.click();
   }
 });

@@ -98,13 +98,18 @@ const BoardView = {
 
   /* Se llama cada vez que se genera/carga un escenario nuevo, con el tamaño
      real (en px) del contenido a mostrar, para poder centrarlo y calcular
-     los límites de desplazamiento y zoom. */
-  setContent(width, height) {
+     los límites de desplazamiento y zoom. `focusPoint` opcional ({x, y} en
+     coordenadas de contenido, ver getTileCenter en js/mapgen.js) — pedido
+     explícito: "al empezar la partida la camara debe centrarse lo maximo
+     posible en la base del jugador" — sin él se centra en la mitad
+     geométrica del mapa entero como siempre (ver _centerContent). */
+  setContent(width, height, focusPoint) {
     this.contentWidth = width;
     this.contentHeight = height;
     this.targetScale = 1;
     this._zoomAnchor = null;
-    this._centerContent();
+    if (focusPoint) this.centerOnContentPoint(focusPoint.x, focusPoint.y);
+    else this._centerContent();
   },
 
   // Centra el contenido y, a diferencia de un gesto del jugador, lo hace
@@ -115,6 +120,28 @@ const BoardView = {
     const vh = this.viewportEl.clientHeight;
     this.targetPanX = (vw - this.contentWidth * this.targetScale) / 2;
     this.targetPanY = (vh - this.contentHeight * this.targetScale) / 2;
+    this._clampTargetPan();
+    this.scale = this.targetScale;
+    this.panX = this.targetPanX;
+    this.panY = this.targetPanY;
+    this._apply();
+  },
+
+  // Mismo centrado instantáneo que _centerContent, pero alrededor de un
+  // punto concreto del contenido en vez de su centro geométrico — usado
+  // para que la cámara arranque sobre el Obelisco del jugador (ver
+  // newgame-flow.js, syncBoardCamera) en vez de la mitad exacta del mapa,
+  // ahora que los jugadores arrancan en una esquina (Obelisks.spawn, js/
+  // obelisks.js) y no cerca del centro. Sigue pasando por _clampTargetPan:
+  // si el punto está pegado a un borde/esquina del mapa la cámara se queda
+  // lo más cerca posible sin salirse del contenido — el "lo maximo
+  // posible" del propio pedido, no siempre cabe un centrado exacto.
+  centerOnContentPoint(contentX, contentY) {
+    if (!this.viewportEl) return;
+    const vw = this.viewportEl.clientWidth;
+    const vh = this.viewportEl.clientHeight;
+    this.targetPanX = vw / 2 - contentX * this.targetScale;
+    this.targetPanY = vh / 2 - contentY * this.targetScale;
     this._clampTargetPan();
     this.scale = this.targetScale;
     this.panX = this.targetPanX;

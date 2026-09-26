@@ -184,7 +184,7 @@ function startMatch({ modeId, raceId, opponents }) {
     showScreen("screen-board");
     screenHistory.length = 0;
     screenHistory.push("main-menu", "screen-board");
-    syncBoardCamera();
+    syncBoardCamera(playerSpawnSpots[0]);
     _playInitialFogReveal(playerSpawnSpots);
 
     const resumeBtn = document.getElementById("btn-resume-game");
@@ -206,7 +206,7 @@ function resumeMatch() {
     showScreen("screen-board");
     screenHistory.length = 0;
     screenHistory.push("main-menu", "screen-board");
-    syncBoardCamera();
+    syncBoardCamera(playerSpawnSpots[0]);
     _playInitialFogReveal(playerSpawnSpots);
   } catch (err) {
     _recoverFromFailedMatchStart();
@@ -436,14 +436,22 @@ function _playInitialFogReveal(playerSpawnSpots) {
 }
 
 // Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del
-// escenario que se acaba de pintar, y lo centra en pantalla.
-function syncBoardCamera() {
+// escenario que se acaba de pintar, y lo centra en pantalla. Pedido
+// explícito: "al empezar la partida la camara debe centrarse lo maximo
+// posible en la base del jugador" — `focusSpot` ({row, col}, normalmente
+// playerSpawnSpots[0], el Obelisco propio) hace que se centre ahí en vez
+// de en la mitad geométrica del mapa (ver BoardView.centerOnContentPoint).
+function syncBoardCamera(focusSpot) {
   const boardTiles = document.getElementById("board-tiles");
   if (!boardTiles || typeof BoardView === "undefined") return;
   // Espera a que la pantalla sea visible (fin de la transición de fade) para
   // que el viewport ya tenga su tamaño final antes de centrar el contenido.
   requestAnimationFrame(() => {
-    BoardView.setContent(boardTiles.offsetWidth, boardTiles.offsetHeight);
+    let focusPoint = null;
+    if (focusSpot && typeof getTileCenter === "function" && typeof Units !== "undefined") {
+      focusPoint = getTileCenter(focusSpot.row, focusSpot.col, Units.boardSize);
+    }
+    BoardView.setContent(boardTiles.offsetWidth, boardTiles.offsetHeight, focusPoint);
   });
 }
 

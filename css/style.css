@@ -257,7 +257,12 @@ body {
 .main-logo {
   display: block;
   width: 100%;
-  max-width: 280px;
+  /* Pedido explícito: "el logo tiene que ser el triple de grande" — 280px
+     x3 = 840px, acotado con min() al ancho de viewport (mismo patrón que
+     ya usan otros paneles del juego, ver p.ej. .backpack-overlay más
+     abajo) para que en pantallas pequeñas no se salga ni fuerce scroll
+     horizontal en vez de quedarse fijo en un tamaño enorme. */
+  max-width: min(840px, 92vw);
   height: auto;
   margin: 0 auto 22px;
   filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.55));
@@ -5497,11 +5502,23 @@ body.backpack-giving--bevida * {
    js/backpack.js) — mismo patrón de cursor propio que el resto de "elegir
    a quién" del proyecto (ver ability-targeting--eye/--throw/--punch/--mind
    y backpack-giving--bevida más arriba), esta vez una mira de objetivo
-   ("a quién le disparo") en vez de un corazón. */
+   ("a quién le disparo") en vez de un corazón.
+   Pedido explícito: "el icono de target del misil que sea phosphor de
+   color rojo" — antes era una mira dibujada a mano (círculo+cruz); ahora
+   es el propio glifo real de Phosphor "crosshair-simple" (el MISMO icono
+   que ya usa .attack-marker__icon, ver js/villages.js/obelisks.js/
+   combat.js, así que se lee como el mismo lenguaje visual de mira en todo
+   el juego) — su trazado SVG oficial (asset regular de @phosphor-icons/
+   core, viewBox 0 0 256 256), no se puede usar el webfont/ligadura
+   directamente en un cursor CSS (solo admite una imagen). Relleno rojo
+   (%23ff3d2e, el mismo rojo de .unit--katapum-target más abajo) con una
+   silueta blanca ligeramente más grande por detrás a modo de contorno,
+   para que se siga leyendo bien sobre cualquier loseta (hierba, agua,
+   niebla...) igual que la mira anterior. */
 body.backpack-giving--katapum,
 body.backpack-giving--katapum * {
   cursor:
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="none" stroke="white" stroke-width="2.5"/><circle cx="16" cy="16" r="10" fill="none" stroke="%23ff4d3d" stroke-width="1.5"/><circle cx="16" cy="16" r="2.5" fill="%23ff4d3d" stroke="white" stroke-width="1"/><path d="M16 2 L16 8 M16 24 L16 30 M2 16 L8 16 M24 16 L30 16" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>')
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256"><g transform="translate(128,128) scale(1.18) translate(-128,-128)" fill="white"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,191.63V184a8,8,0,0,0-16,0v31.63A88.13,88.13,0,0,1,40.37,136H72a8,8,0,0,0,0-16H40.37A88.13,88.13,0,0,1,120,40.37V72a8,8,0,0,0,16,0V40.37A88.13,88.13,0,0,1,215.63,120H184a8,8,0,0,0,0,16h31.63A88.13,88.13,0,0,1,136,215.63Z"/></g><path fill="%23ff3d2e" d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,191.63V184a8,8,0,0,0-16,0v31.63A88.13,88.13,0,0,1,40.37,136H72a8,8,0,0,0,0-16H40.37A88.13,88.13,0,0,1,120,40.37V72a8,8,0,0,0,16,0V40.37A88.13,88.13,0,0,1,215.63,120H184a8,8,0,0,0,0,16h31.63A88.13,88.13,0,0,1,136,215.63Z"/></svg>')
       16 16,
     pointer !important;
 }
@@ -5588,7 +5605,11 @@ body.backpack-giving--katapum * {
 
 .katapum-projectile__sprite {
   display: block;
-  width: 54px;
+  /* Pedido explícito: "el misil...cuando se lanza, debe verse mas grande,
+     es minusculo" — 54px quedaba muy por debajo hasta del sprite de un
+     personaje normal (.unit__sprite, 120px); casi el doble ahora para que
+     se lea claramente en pleno vuelo. */
+  width: 100px;
   height: auto;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
   /* El rotate() real (dirección de vuelo) lo pone JS inline en cada
