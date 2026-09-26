@@ -295,7 +295,12 @@ const Glory = {
             )}
             ${this._sourceRow(
               "ph-house-simple",
-              villages > 0 ? `Poblados conquistados (${villages})` : "Sin poblados conquistados",
+              // Pedido explícito: "indica 'sin poblados conquistados'...poblados?
+              // son Totems!" — Villages.js sigue llamándose así por dentro (el
+              // nombre del archivo/mecánica no ha cambiado), pero el propio
+              // juego ya no usa la palabra "poblado" en ningún otro texto
+              // visible, todo dice "tótem" (ver races.js, backpack.js...).
+              villages > 0 ? `Tótems conquistados (${villages})` : "Sin tótems conquistados",
               villagesBonus,
               { muted: villagesBonus === 0 }
             )}

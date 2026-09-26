@@ -257,7 +257,17 @@ const Fog = {
     if (typeof Units !== "undefined") {
       Units.list.forEach((u) => {
         if (u.team === "player" || !u.el) return;
-        u.el.classList.toggle("unit--fog-hidden", this.isFogged(u.row, u.col));
+        // Arbustos (js/bushes.js) — pedido explícito: "el personaje queda
+        // ocultos a ojos del rival, el jugador dueño del personaje lo ve
+        // tras del arbusto". Se reutiliza tal cual la misma clase
+        // unit--fog-hidden (ya excluye aquí arriba a las unidades del propio
+        // jugador, que nunca deben ocultarse) en vez de inventar un segundo
+        // sistema de ocultación — a diferencia de la niebla normal, esto NO
+        // depende de si la loseta ya está revelada: un arbusto en zona ya
+        // explorada sigue ocultando a quien esté dentro hasta que se le
+        // emboque (ver Bushes._springAmbush) o se mueva por su cuenta.
+        const bushHidden = typeof Bushes !== "undefined" && Bushes.isHidingUnit(u);
+        u.el.classList.toggle("unit--fog-hidden", this.isFogged(u.row, u.col) || bushHidden);
       });
     }
     if (typeof Gnome !== "undefined") {

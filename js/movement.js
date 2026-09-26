@@ -25,7 +25,19 @@ const Movement = {
         if (row === unit.row && col === unit.col) continue;
         const dist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (dist > range) continue;
-        if (Units.unitAt(row, col)) continue;
+        // Arbustos (js/bushes.js) — pedido explícito: "puedes intentar
+        // esconderte dentro si te mueves hacia su casilla... si un jugador
+        // intenta meterse dentro del arbusto, pero ya habia un enemigo
+        // dentro, el enemigo revela su posicion". Una casilla ocupada por un
+        // rival ESCONDIDO en un arbusto (a ojos de `unit`) no se excluye del
+        // rango como cualquier otra ocupada: debe seguir ofreciéndose como
+        // destino normal, para que el intruso pueda "tropezarse" con la
+        // emboscada al llegar (ver Bushes.checkStepInto, disparado desde
+        // Units.walkPath igual que un cepo/mina). Sin este bypass, la propia
+        // Units.unitAt de abajo ya la excluiría como "ocupada" delatando que
+        // hay algo ahí sin necesidad de verlo.
+        const bushHidden = typeof Bushes !== "undefined" && Bushes.isHiddenFromTeam(row, col, unit.team);
+        if (Units.unitAt(row, col) && !bushHidden) continue;
         // El gnomo (js/gnome.js) no vive en Units.list -> Units.unitAt no lo
         // detecta; su propia loseta se excluye a mano para no ofrecer "mover
         // aquí" sobre una casilla que en realidad hay que capturar, no pisar.

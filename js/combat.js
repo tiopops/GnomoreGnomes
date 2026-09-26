@@ -84,6 +84,11 @@ const Combat = {
       // (z-index por encima de todo, ver mapgen.js), esto evita además que
       // se pueda "atacar a ciegas" algo que no se ve.
       if (typeof Fog !== "undefined" && Fog.isFogged(other.row, other.col)) return;
+      // Arbustos (js/bushes.js) — mismo criterio que la niebla: un rival
+      // escondido dentro de un arbusto (a ojos de `unit`) tampoco se puede
+      // atacar hasta que se revele (emboscada al pisarlo, o que se mueva por
+      // su cuenta), aunque su loseta ya esté explorada de antes.
+      if (typeof Bushes !== "undefined" && Bushes.isHiddenFromTeam(other.row, other.col, unit.team)) return;
       const approach = this.findApproachTile(unit, other);
       if (!approach) return;
       // Pedido explícito: "si un enemigo esta dentro del area de movimiento

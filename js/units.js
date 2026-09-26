@@ -835,6 +835,12 @@ const Units = {
     // acercarse a atacar/coger el gnomo/un tótem/abrir la tienda... sin
     // tener que tocar cada mecánica por separado.
     if (unit.typeId === "punoroca") path = this._applyPunorocaWobble(unit, path);
+    // Arbustos (js/bushes.js) — cualquier desplazamiento, sea a donde sea,
+    // implica dejar de estar escondido en el arbusto que se ocupara hasta
+    // ahora (si había alguno): se limpia ANTES del primer salto, no al
+    // final, para que quede libre de inmediato aunque el camino se corte a
+    // medias por otra cosa (una emboscada distinta, un cepo...).
+    if (typeof Bushes !== "undefined") Bushes.clearHiddenUnit(unit.id);
     unit.el.classList.add("unit--moving");
     for (const step of path) {
       await this.hopTo(unit, step.row, step.col);
@@ -846,6 +852,14 @@ const Units = {
       // activarlo. Si se dispara, se corta aquí el resto del camino —
       // "pierde el turno" no pegaría con seguir andando después.
       if (typeof Backpack !== "undefined" && Backpack.checkTrapAt(unit, step.row, step.col)) break;
+      // Arbustos (js/bushes.js) — pedido explícito: "puedes intentar
+      // esconderte dentro si te mueves hacia su casilla" / "si un jugador
+      // intenta meterse dentro del arbusto, pero ya habia un enemigo
+      // dentro...". Mismo patrón que el cepo de arriba: se comprueba en
+      // CADA salto (de paso también cuenta) y si dispara una emboscada se
+      // corta el resto del camino — "acaba todas sus acciones" no pegaría
+      // con seguir andando después.
+      if (typeof Bushes !== "undefined" && Bushes.checkStepInto(unit, step.row, step.col)) break;
     }
     unit.el.classList.remove("unit--moving");
     unit.spriteEl.classList.remove("unit__sprite--hop");
@@ -869,6 +883,7 @@ const Units = {
     // solo la de un tótem normal.
     if (typeof Villages !== "undefined") Villages.refreshOcclusion();
     if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
+    if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
     // Tienda Goblin (js/shops.js) — quien acaba de moverse puede haber
     // quedado junto a una tienda (o haberse alejado de una): este es el
     // ÚNICO punto de paso de cualquier desplazamiento del proyecto

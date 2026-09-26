@@ -362,6 +362,16 @@ function spawnTestUnits(size, raceId) {
     Shops.spawn(size);
   }
 
+  // Arbustos (js/bushes.js) — pedido explícito: "los arbustos... reparti-
+  // dos por el mapa... en zonas cercanas a totems, tiendas goblin y algunos
+  // puntos de interes". DESPUÉS de Villages/Shops/Obelisks.spawn (necesita
+  // esos puntos de interés ya colocados de los que partir).
+  if (typeof Bushes !== "undefined") {
+    Bushes.resetAll();
+    Bushes.init();
+    Bushes.spawn(size);
+  }
+
   // Turnos (js/turns.js) — se resetea AL FINAL, con el resto del tablero ya
   // colocado: siempre empieza el turno del jugador, y (re)aparece el botón
   // de PASAR TURNO. Puntos de Gloria (js/glory.js) — se inicializa ANTES de

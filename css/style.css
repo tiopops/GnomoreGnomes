@@ -266,6 +266,21 @@ body {
   height: auto;
   margin: 0 auto 22px;
   filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.55));
+  /* Pedido explícito: "puedes hacer que el logotipo flote arriba y abajo
+     muy sutilmente? creo que le puede dar animismo a la pantalla de
+     inicio" — mismo espíritu que unit-idle-breathe (personajes/tótems),
+     pero solo traslación vertical (sin escala): un logo "respirando" se
+     leería raro, un logo flotando encaja mejor con su propia quietud de
+     elemento estático de menú. will-change:transform de sobra aquí: es UN
+     solo elemento siempre en pantalla, no cientos de losetas a la vez
+     (nada que ver con el coste de la niebla). */
+  will-change: transform;
+  animation: main-logo-float 4.5s ease-in-out infinite;
+}
+
+@keyframes main-logo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 /* Utilidad estándar "visualmente oculto, presente para lectores de
@@ -1057,6 +1072,24 @@ h2 {
      más abajo, que sí anima las tres a la vez pero solo en las pocas
      losetas que se están revelando en un momento dado (nunca las 289 juntas)
      y solo durante su animación de 1.2s, no todo el partido. */
+}
+
+/* Pedido explícito: "la animacion de la niebla consume una cantidad de
+   recursos ingente...optimiza esa caracteristica para que apenas consuma
+   recursos" — la animación en sí no es el gasto real, es CUÁNTAS capas de
+   composición GPU separadas hace falta mantener a la vez (will-change
+   reserva una por loseta aunque casi no cueste nada de CPU por fotograma).
+   Con tableros ahora de hasta 25x25 (BOARD_SIZE_BY_OPPONENTS, js/
+   matchsetup.js) puede haber más de un centenar de nubes en reposo
+   visibles a la vez incluso con el recorte fuera-de-pantalla (Fog.
+   updateCulling) ya aplicado. Solución: SOLO una de cada dos losetas
+   anima de verdad (tile__fog--idle, ver el patrón fila+columna en
+   mapgen.js/renderMap) — la mitad de capas GPU simultáneas como techo, sin
+   tocar la animación en sí ("lo mas fiel posible" al pedido) ni cuántas
+   nubes se VEN (la otra mitad sigue pintando su nube, solo que
+   completamente quieta). Repartido por fila+columna en vez de al azar
+   para que quede parejo por todo el mapa, no en manchas. */
+.tile__fog--idle {
   will-change: transform;
   animation: fog-idle-drift 8s ease-in-out infinite;
 }
@@ -1070,14 +1103,14 @@ h2 {
    animacion de la niebla en configuracion" — ver Fog.setAnimEnabled en
    js/fog.js, que solo alterna esta clase en <body> (nunca recorre las
    losetas una a una). Quita TANTO la animación como el will-change de la
-   regla base de arriba — no basta con parar fog-idle-drift, will-change
-   por sí solo ya reserva una capa de composición GPU por loseta aunque no
-   se esté animando nada, que es justo lo que se quiere ahorrar en el móvil
-   más flojo. :not(.tile__fog--revealed) para no pisar nunca la animación
-   de disipado (fog-dissipate, más abajo) de las pocas losetas que se estén
-   revelando en ese instante — esa es barata de por sí (nunca las 289 a la
+   regla de arriba — no basta con parar fog-idle-drift, will-change por sí
+   solo ya reserva una capa de composición GPU por loseta aunque no se esté
+   animando nada, que es justo lo que se quiere ahorrar en el móvil más
+   flojo. :not(.tile__fog--revealed) para no pisar nunca la animación de
+   disipado (fog-dissipate, más abajo) de las pocas losetas que se estén
+   revelando en ese instante — esa es barata de por sí (nunca muchas a la
    vez) y debe seguir viéndose igual de bien con el checkbox desactivado. */
-body.gg-fog-anim-off .tile__fog:not(.tile__fog--revealed) {
+body.gg-fog-anim-off .tile__fog--idle:not(.tile__fog--revealed) {
   animation: none;
   will-change: auto;
 }
@@ -2215,7 +2248,11 @@ body.team-markers--visible .unit__team-marker {
 .end-turn-btn__icon {
   position: absolute;
   top: 50%;
-  margin-top: -30px;
+  /* Pedido explícito: "el recuadro amarillo que tiene el icono del reloj
+     de arena, subelo 15 pixels arriba" — -30px ya centraba el rombo en
+     vertical (mitad de sus propios 60px de alto); -45px lo sube esos 15px
+     extra sin tocar su centrado horizontal (left) ni el resto del botón. */
+  margin-top: -45px;
   left: -26px;
   width: 60px;
   height: 60px;
@@ -4404,6 +4441,41 @@ body.perf-mode .attack-cursor-fx {
    al heredarse, los clics atraviesen el tótem entero y lleguen a quien
    esté debajo; la semitransparencia deja intuir que hay alguien oculto. */
 .village--occluding {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+/* Arbustos (js/bushes.js) — nueva mecánica de emboscada, pedido explícito:
+   "introducimos nueva mecanica, los arbustos...puedes intentar esconderte
+   dentro si te mueves hacia su casilla". Reutiliza la clase ".unit" solo por
+   su posicionamiento base (translate(-50%,-92%), igual que un tótem/
+   personaje) — nunca entra en Units.list ni Movement/Combat lo confunden con
+   una unidad real (mismo motivo que .village, ver su comentario). */
+.bush {
+  cursor: default;
+}
+
+.bush__sprite {
+  display: block;
+  width: 132px;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4));
+  transform-origin: 50% 100%;
+  /* "todo lo que vive en el tablero respire igual" (mismo criterio ya
+     aplicado a .village__sprite/.obelisk__sprite) — reutiliza el mismo
+     keyframe de idle en vez de inventar una animación propia. */
+  animation: unit-idle-breathe 3s ease-in-out infinite;
+}
+
+/* "el arbusto tiene el mismo sistema de transparencia que los totems y
+   obeliscos para que el jugador pueda seleccionarlo" (pedido explícito) —
+   ver Bushes.refreshOcclusion en js/bushes.js. Mismo trío exacto que
+   .village--occluding/.obelisk--occluding: semitransparencia + clics
+   atravesándolo hasta quien esté debajo. */
+.bush--occluding {
   opacity: 0.45;
   pointer-events: none;
   transition: opacity 0.15s ease;

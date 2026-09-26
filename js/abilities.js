@@ -566,7 +566,10 @@ const Abilities = {
     const isValidTarget = (u) =>
       u.team !== unit.team &&
       Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <= 1 &&
-      (typeof Fog === "undefined" || !Fog.isFogged(u.row, u.col));
+      (typeof Fog === "undefined" || !Fog.isFogged(u.row, u.col)) &&
+      // Arbustos (js/bushes.js) — mismo criterio que la niebla: no se puede
+      // elegir como objetivo a un rival escondido dentro de uno.
+      !(typeof Bushes !== "undefined" && Bushes.isHiddenFromTeam(u.row, u.col, unit.team));
     const targets = Units.list.filter(isValidTarget);
     if (targets.length === 0) return; // no hay ningún rival adyacente visible, no se gasta la habilidad
     if (targets.length === 1) {
