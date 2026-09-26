@@ -486,11 +486,24 @@ const BoardView = {
 
     // Si la ventana cambia de tamaño, reajustamos los límites de desplazamiento
     // al instante (no es un gesto del jugador, no necesita suavizado).
+    // Pedido de rendimiento: "mejorar mucho el rendimiento en navegador" —
+    // arrastrar el borde de la ventana para redimensionarla dispara el
+    // evento "resize" muchísimas veces por segundo (no solo una vez al
+    // soltar), y cada uno de estos recalcula el culling de niebla/terreno
+    // de TODO el tablero visible (ver _apply). Coalescer con
+    // requestAnimationFrame hace como mucho un recálculo por fotograma real
+    // en vez de uno por cada evento "resize" bruto, sin cambiar el
+    // resultado (el último tamaño es el que siempre gana).
+    let resizeRafId = null;
     window.addEventListener("resize", () => {
-      this._clampTargetPan();
-      this.panX = this.targetPanX;
-      this.panY = this.targetPanY;
-      this._apply();
+      if (resizeRafId) return;
+      resizeRafId = requestAnimationFrame(() => {
+        resizeRafId = null;
+        this._clampTargetPan();
+        this.panX = this.targetPanX;
+        this.panY = this.targetPanY;
+        this._apply();
+      });
     });
   },
 

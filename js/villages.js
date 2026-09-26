@@ -132,6 +132,7 @@ const Villages = {
     el.className = "unit village village--neutral";
 
     const spriteEl = document.createElement("img");
+    spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     spriteEl.className = "village__sprite";
     spriteEl.src = VILLAGE_SPRITES.neutral;
     spriteEl.alt = "";

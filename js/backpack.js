@@ -404,7 +404,7 @@ const Backpack = {
 
   _onBevidaGiveClick(e) {
     const isFixedUi = e.target.closest(
-      ".unit-info-btn, .ability-btn, .gnome-action-btn, .end-turn-btn, .settings-gear-btn, .backpack-btn, .backpack-close-btn, .glory-counter, .unit-info-overlay, .settings-panel"
+      ".unit-info-btn, .ability-btn, .gnome-action-btn, .end-turn-btn, .settings-gear-btn, .backpack-btn, .backpack-close-btn, .glory-hud, .glory-popup-overlay, .unit-info-overlay, .settings-panel"
     );
     const unitEl = e.target.closest(".unit");
     e.preventDefault();
@@ -538,6 +538,7 @@ const Backpack = {
     const el = document.createElement("div");
     el.className = "unit board-item board-item--setarcoiris";
     const img = document.createElement("img");
+    img.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     img.className = "board-item__sprite";
     img.src = ITEM_TYPES.setarcoiris.iconUrl;
     img.draggable = false;

@@ -292,6 +292,7 @@ const Units = {
     flipEl.className = "unit__flip";
 
     const spriteEl = document.createElement("img");
+    spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     spriteEl.className = "unit__sprite";
     spriteEl.src = type.spriteUrl;
     spriteEl.draggable = false;
@@ -326,6 +327,7 @@ const Units = {
     // ver style.css), igual que el resto del estado "doomed" ya hace con el
     // sprite/glow.
     const doomIconEl = document.createElement("img");
+    doomIconEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     doomIconEl.className = "unit__doom-icon";
     doomIconEl.src = "assets/iconos/calavera_miedo.png";
     doomIconEl.alt = "";

@@ -18,9 +18,9 @@ const STRINGS = {
 
     choose_race: "Elige tu raza",
     race_mushboom_forest: "Bosque MushBoom",
-    race_mushboom_forest_desc: "GolemCorteza, SurcaBosques y TruenoEspora, habitantes del bosque, expertos en setas bomba.",
+    race_mushboom_forest_desc: "Virtudes: rápidos y ágiles, se mueven y golpean antes que nadie. Desventajas: poco aguante, caen en pocos golpes.",
     race_colinas_rockntroll: "Colinas Rock'n Troll",
-    race_colinas_rockntroll_desc: "LanzaGnomos, UrgaMentes y PuñoRroca, trolls de las colinas rocosas, tan duros de roer como su música.",
+    race_colinas_rockntroll_desc: "Virtudes: duros como la roca, aguantan y pegan fuerte cuerpo a cuerpo. Desventajas: más lentos, les cuesta llegar al combate.",
 
     choose_opponents: "Elige el número de rivales",
     opponents_label: "{n} rival",
@@ -43,9 +43,9 @@ const STRINGS = {
 
     choose_race: "Choose your race",
     race_mushboom_forest: "MushBoom Forest",
-    race_mushboom_forest_desc: "GolemCorteza, SurcaBosques and TruenoEspora, forest dwellers and masters of bomb mushrooms.",
+    race_mushboom_forest_desc: "Strengths: fast and agile, they move and strike before anyone else. Weaknesses: low toughness, they go down in a few hits.",
     race_colinas_rockntroll: "Rock'n Troll Hills",
-    race_colinas_rockntroll_desc: "LanzaGnomos, UrgaMentes and PuñoRroca, trolls from the rocky hills, as hard-headed as their music.",
+    race_colinas_rockntroll_desc: "Strengths: rock-hard, they take a beating and hit hard in melee. Weaknesses: slower, they struggle to reach the fight.",
 
     choose_opponents: "Choose number of opponents",
     opponents_label: "{n} opponent",

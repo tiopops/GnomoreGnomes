@@ -327,7 +327,7 @@ const Abilities = {
   _onVisionClick(e) {
     const isOwnUnit = e.target.closest(".unit--player");
     const isFixedUi = e.target.closest(
-      ".unit-info-btn, .ability-btn, .gnome-action-btn, .end-turn-btn, .settings-gear-btn, .backpack-btn, .backpack-close-btn, .glory-counter, .unit-info-overlay, .settings-panel"
+      ".unit-info-btn, .ability-btn, .gnome-action-btn, .end-turn-btn, .settings-gear-btn, .backpack-btn, .backpack-close-btn, .glory-hud, .glory-popup-overlay, .unit-info-overlay, .settings-panel"
     );
     if (isOwnUnit || isFixedUi) {
       // "se quita el uso de la habilidad pero no se ha gastado, por lo que
@@ -459,6 +459,7 @@ const Abilities = {
     const el = document.createElement("div");
     el.className = "ability-mine";
     const img = document.createElement("img");
+    img.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     img.className = "ability-mine__sprite";
     // Sprite real de la seta-trampa (pedido explícito, ya no hace falta el
     // tinte rojo provisional sobre Setarcoiris — ver css/style.css, donde se
@@ -812,7 +813,7 @@ const Abilities = {
 
   _onUnitPickClick(e, unit, filter, onPick) {
     const isFixedUi = e.target.closest(
-      ".unit-info-btn, .ability-btn, .gnome-action-btn, .end-turn-btn, .settings-gear-btn, .backpack-btn, .backpack-close-btn, .glory-counter, .unit-info-overlay, .settings-panel"
+      ".unit-info-btn, .ability-btn, .gnome-action-btn, .end-turn-btn, .settings-gear-btn, .backpack-btn, .backpack-close-btn, .glory-hud, .glory-popup-overlay, .unit-info-overlay, .settings-panel"
     );
     const unitEl = e.target.closest(".unit");
     e.preventDefault();

@@ -146,6 +146,7 @@ const Shops = {
     el.className = "unit shop";
 
     const spriteEl = document.createElement("img");
+    spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     spriteEl.className = "shop__sprite";
     spriteEl.src = SHOP_SPRITE;
     spriteEl.alt = "";

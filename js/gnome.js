@@ -224,6 +224,7 @@ function createGnomeInstance() {
       flipEl.className = "unit__flip gnome__flip";
 
       const spriteEl = document.createElement("img");
+      spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
       spriteEl.className = "unit__sprite gnome__sprite";
       spriteEl.src = GNOME_ASSETS.idle;
       spriteEl.draggable = false;
@@ -491,6 +492,7 @@ function createGnomeInstance() {
         const attachEl = document.createElement("div");
         attachEl.className = "gnome-attach";
         const img = document.createElement("img");
+        img.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
         img.className = "gnome-attach__sprite";
         img.draggable = false;
         img.alt = "";

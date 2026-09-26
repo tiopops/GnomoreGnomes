@@ -68,6 +68,7 @@ const Shadows = {
     if (!spriteEl || !spriteEl.parentElement) return null;
 
     const shadowEl = document.createElement("img");
+    shadowEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     shadowEl.className = "gg-cast-shadow";
     shadowEl.src = spriteEl.src;
     shadowEl.alt = "";

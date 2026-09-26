@@ -682,6 +682,17 @@ h2 {
   transform: rotate(calc(-1 * var(--gg-badge-tilt)));
 }
 
+/* Variante con imagen real en vez de glifo de Phosphor (pedido explícito:
+   "elminiamos el icono cutre de phospor que havia" — ver iconImg en
+   js/races.js y renderOptionCard en js/newgame-flow.js). Mismo rombo/
+   posición/sombra que .option-card__icon normal, solo que la ilustración
+   rellena el rombo entero (object-fit: cover) en vez de un glifo pequeño
+   centrado, y sin recolorear vía currentColor (el arte ya trae su color). */
+.option-card__icon--img {
+  padding: 9px;
+  object-fit: contain;
+}
+
 /* Pedido explícito: "el nombre de los equipos puede ser del color de sus
    iconos? ponles una sombrita oscura como a los botones al texto de los
    nombres de los equipos" — mismo var(--card-accent) que ya usa
@@ -785,23 +796,13 @@ h2 {
      rombo, sin ninguna loseta que pintar ahí (ver la nota larga de
      BoardView._clampPanFor en js/boardview.js sobre por qué no se puede
      evitar del todo con matemática de desplazamiento sin dejar la cámara
-     clavada). En vez de dejar esas esquinas con el fondo oscuro normal de
-     la página (que se leía como un hueco negro, un "error"), se rellenan
-     con la MISMA textura de niebla que ya se usa para lo no explorado —
-     coherente con el propio juego (ahí, literalmente, no hay nada que
-     explorar) y sin ningún coste de render extra ya que es solo el fondo
-     CSS de este contenedor, no losetas de verdad. */
-  /* La imagen de niebla es una "nube" individual con bordes irregulares y
-     esquinas transparentes (no una textura sin costuras) — repetida sola
-     como fondo deja huecos entre nube y nube por los que se seguía
-     colando el fondo oscuro de la página. El color de relleno de abajo es
-     el tono medio de la propia imagen (muestreado con Pillow, solo
-     píxeles no transparentes), así que esos huecos se rellenan con un gris
-     azulado que se funde con la niebla en vez de notarse como un parche. */
-  background-color: #c2cccb;
-  background-image: url("../assets/losetas/niebla_01.png");
-  background-repeat: repeat;
-  background-size: 300px 257px;
+     clavada). Un primer intento rellenaba esas esquinas con la textura de
+     niebla repetida, pero el propio usuario lo encontró "cutre" (la nube es
+     una imagen individual, no una textura sin costuras, así que repetida se
+     notaba el mosaico) — así que se deja simplemente el color de fondo liso
+     de la página (--bg), sin ninguna textura: se ve limpio y ya no hay
+     ningún hueco que lea como un fallo gráfico. */
+  background-color: var(--bg);
 }
 
 .tile {
@@ -3317,18 +3318,20 @@ body.ability-targeting--mind * {
     line-height: 1.4;
   }
 
-  .backpack-panel__bg {
-    padding: 36px 26px 30px;
+  /* Pedido explícito: "en la interfaz de smartphone hay que hacer mas
+     estrecho el boton de pasar turno" — el padding lateral (44px a la
+     izquierda, pensado para dejar aire de sobra en escritorio) y el
+     tamaño de fuente de escritorio se heredaban tal cual en móvil, así
+     que el botón ocupaba mucho más ancho del necesario en una pantalla
+     estrecha. Menos padding + texto un poco más pequeño, sin tocar nada
+     en escritorio (esta regla vive solo dentro de este @media). */
+  .end-turn-btn__bg {
+    padding: 8px 16px 8px 24px;
+    font-size: 0.82rem;
   }
 
-  /* Ver la nota larga en .backpack-overlay (más abajo en este archivo,
-     pedido explícito sobre interfaces cortadas en el móvil): en pantallas
-     bajas, sumar el margin-top de siempre (pensado para escritorio) al
-     padding nuevo del overlay dejaba MENOS aire todavía para el botón de
-     abajo — se reduce aquí solo en móvil, el overlay ya se encarga de que
-     se pueda hacer scroll si aun así no cupiera entero. */
-  .backpack-panel {
-    margin-top: 4vh;
+  .end-turn-btn__turn-counter {
+    font-size: 0.58rem;
   }
 }
 
@@ -3498,6 +3501,171 @@ body.ability-targeting--mind * {
   0% { transform: scale(1); }
   40% { transform: scale(1.3); color: #5c3d00; }
   100% { transform: scale(1); }
+}
+
+/* Pedido explícito: "si hago clic en la zona donde estan los puntos de
+   gloria aparecieses un popup...con el mismo estilo visual que el resto de
+   interfaces del juego" — el propio marcador se vuelve clicable (cursor
+   amarillo del juego, ver la nota larga de .board-viewport sobre por qué
+   NO se usa "pointer" nativo) y un pelín de "levantado" al pasar el ratón,
+   mismo lenguaje que .option-card/.backpack-btn del resto del juego. */
+.glory-hud--clickable {
+  cursor: var(--cursor-pointer);
+  transition: transform 0.15s ease;
+}
+
+.glory-hud--clickable:hover {
+  transform: scale(1.04);
+}
+
+/* ---------- Popup de origen de los Puntos de Gloria (js/glory.js) ----------
+   Mismo patrón overlay+panel que .unit-info-overlay/.unit-info-card (clic
+   fuera para cerrar, .p5-banner para el marco de "banderín" de doble capa)
+   — se reutiliza tal cual .backpack-close-btn para el botón de cerrar en
+   vez de duplicar esas reglas (mismo rombo rojo asomando por la esquina
+   que ya usa el resto de popups del juego). */
+.glory-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 11, 16, 0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 600;
+  /* Mismo arreglo de parpadeo en móvil que .unit-info-overlay/.p5-banner. */
+  transform: translateZ(0);
+  padding: 24px 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.glory-popup-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.glory-popup-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: min(380px, 90vw);
+  padding: 30px 26px 24px;
+  transform: scale(0.88) translateY(10px);
+  transition: transform 0.22s cubic-bezier(0.34, 1.35, 0.64, 1);
+  margin: auto;
+}
+
+.glory-popup-overlay--visible .glory-popup-card {
+  transform: scale(1) translateY(0);
+}
+
+/* Mismo motivo que .unit-info-card__content/.backpack-slots: .p5-banner
+   pinta su relleno con ::after en z-index:1, así que el contenido real
+   necesita su propia capa por encima. */
+.glory-popup-card__content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.glory-popup-title {
+  margin: 0 0 14px;
+  font-size: 1.3rem;
+  color: var(--ink);
+  text-align: center;
+}
+
+.glory-popup-total {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #ffce4a;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+  margin-bottom: 4px;
+}
+
+.glory-popup-total i {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+}
+
+.glory-popup-subtitle {
+  margin: 6px 0 12px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.glory-popup-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.glory-popup-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+
+.glory-popup-row__icon {
+  font-size: 1.1rem;
+  color: #ffce4a;
+  flex: none;
+}
+
+.glory-popup-row__label {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+.glory-popup-row__amount {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #7ee08a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Una fuente que hoy no aporta nada (sin bajas, sin poblados) se apaga en
+   vez de desaparecer — pedido de cabecera "todo bien especificado": se
+   sigue viendo QUÉ fuentes existen aunque hoy no den puntos, no solo las
+   que sí. */
+.glory-popup-row--muted {
+  opacity: 0.55;
+}
+
+.glory-popup-row--muted .glory-popup-row__icon,
+.glory-popup-row--muted .glory-popup-row__amount {
+  color: var(--muted);
+}
+
+.glory-popup-row--next {
+  margin-top: 6px;
+  background: rgba(255, 206, 74, 0.14);
+  border: 1px solid rgba(255, 206, 74, 0.35);
+}
+
+.glory-popup-row--next .glory-popup-row__label {
+  font-weight: 700;
+}
+
+.glory-popup-row--next .glory-popup-row__amount {
+  color: #ffce4a;
+  font-size: 1.1rem;
 }
 
 /* ---------- Menú de ajustes (js/settingsmenu.js) ----------
@@ -5681,4 +5849,59 @@ body.backpack-giving--bevida * {
 
 .obelisk-gameover-panel__btn {
   margin-top: 10px;
+}
+
+/* ---------- Reclutar en móvil: 3 iconos en una línea, sin scroll ---------- */
+/* Pedido explícito: "al igual que ocurre en la version de escritorio...
+   el menu de reclutar deberia mostrar los 3 iconos de los personajes
+   disponibles en la misma linea. ajusta los limites laterales de la
+   interfaz para ganar todo el espacio posible...me gustaria que el
+   popup entero junto al boton RECLUTAR se vea de un vistazo sin hacer
+   scroll".
+   NOTA TÉCNICA: este bloque vive aquí, al FINAL del archivo (y no dentro
+   del @media (max-width: 480px) general de más arriba, junto al resto de
+   ajustes de móvil), a propósito: las reglas base de .backpack-panel,
+   .backpack-panel__bg, .backpack-panel__title y .backpack-slots--recruit
+   (más arriba en este mismo archivo, sin @media) tienen la MISMA
+   especificidad que cualquier override dentro de ese @media temprano —
+   y en un empate de especificidad gana la regla que aparece DESPUÉS en el
+   archivo, sea o no la que está dentro de un @media. Como esas reglas base
+   viven más abajo que el @media general, un override allí quedaba
+   silenciosamente ignorado en la práctica (confirmado con una captura:
+   las 3 casillas seguían partiéndose en 2 líneas). Poniendo este bloque
+   al final del archivo se garantiza que siempre gana. */
+@media (max-width: 480px) {
+  /* Reclutar SIEMPRE tiene exactamente 3 unidades por raza (ver
+     UNIT_TYPES en js/units.js, 3 entradas por raceId): se fuerzan 3
+     columnas de verdad en vez de dejarlo en manos del auto-fit de la
+     regla base (pensada para un roster de tamaño variable), que con el
+     padding lateral de escritorio y menos ancho de pantalla dejaba caer
+     la tercera casilla a una segunda fila. */
+  .backpack-slots--recruit {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  /* Menos padding lateral (26px -> 14px) para ganar el máximo ancho
+     posible en las 3 columnas de arriba, y menos gap vertical entre
+     título/casillas/descripción/botón para que el popup completo quepa
+     de un vistazo sin scroll en una pantalla baja. */
+  .backpack-panel__bg {
+    padding: 28px 14px 22px;
+    gap: 16px;
+  }
+
+  .backpack-panel__title {
+    padding-bottom: 10px;
+  }
+
+  /* Ensancha el propio panel (92vw -> 97vw) para ganar todo el ancho
+     lateral posible, y sube el margen superior (10vh -> 3vh, pensado para
+     escritorio) para dejar más aire vertical al popup completo en una
+     pantalla baja — el overlay ya permite scroll si aun así no cupiera
+     entero (ver .backpack-overlay). */
+  .backpack-panel {
+    width: min(460px, 97vw);
+    margin-top: 3vh;
+  }
 }

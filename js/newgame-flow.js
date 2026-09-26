@@ -22,12 +22,20 @@ function goBack() {
 
 const matchDraft = { modeId: null, raceId: null, opponents: null };
 
-function renderOptionCard({ icon, title, desc, onClick, color }) {
+function renderOptionCard({ icon, iconImg, title, desc, onClick, color }) {
   const card = document.createElement("button");
   card.className = "option-card";
   if (color) card.style.setProperty("--card-accent", color);
+  // iconImg (pedido explícito: "añado los iconos de los equipos de MushBoom
+  // y RocknTroll...elminiamos el icono cutre de phospor que havia") tiene
+  // prioridad sobre el glifo de Phosphor — de momento solo las tarjetas de
+  // raza (js/races.js) traen iconImg; el resto (modo de juego, nº de
+  // rivales) sigue usando el icono de fuente de siempre, sin cambios.
+  const iconHtml = iconImg
+    ? `<img src="${iconImg}" alt="" class="option-card__icon option-card__icon--img" />`
+    : `<i class="ph ${icon} option-card__icon"></i>`;
   card.innerHTML = `
-    <i class="ph ${icon} option-card__icon"></i>
+    ${iconHtml}
     <span class="option-card__title">${title}</span>
     ${desc ? `<span class="option-card__desc">${desc}</span>` : ""}
   `;
@@ -61,6 +69,7 @@ function populateRaceSelect() {
     list.appendChild(
       renderOptionCard({
         icon: race.icon,
+        iconImg: race.iconImg,
         title: I18N.t(race.nameKey),
         desc: I18N.t(race.descKey),
         color: race.color,

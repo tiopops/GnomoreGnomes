@@ -165,6 +165,7 @@ const Glory = {
 
     if (race && race.gloryIcon) {
       const icon = document.createElement("img");
+      icon.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
       icon.className = "glory-hud__icon";
       icon.src = race.gloryIcon;
       icon.alt = "";
@@ -195,6 +196,22 @@ const Glory = {
     this._els[team] = el;
     this._valueEls[team] = value;
     this._previewEls[team] = preview;
+
+    // Pedido explícito: "si hago clic en la zona donde estan los puntos de
+    // gloria aparecieses un popup...donde me indicase los puntos que estoy
+    // consiguiendo por turno y sus origenes" — solo el marcador del
+    // JUGADOR es interactivo (el del rival ni siquiera se pinta, ver nota
+    // de cabecera), mismo patrón de overlay+panel que Backpack/UnitInfo
+    // (ver openPopup más abajo).
+    if (team === "player") {
+      el.classList.add("glory-hud--clickable");
+      el.setAttribute("role", "button");
+      el.setAttribute("aria-label", "Ver el origen de tus puntos de gloria");
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.openPopup();
+      });
+    }
   },
 
   _render(team, { bump = false, gained = 0 } = {}) {
@@ -220,5 +237,93 @@ const Glory = {
     if (!previewEl) return;
     const next = GLORY_PER_TURN_START + this.pendingBonus[team] + this._villagesBonus(team);
     previewEl.textContent = `+${next} / turno`;
+  },
+
+  // Una fila del desglose del popup: icono + etiqueta + valor con signo,
+  // mismo espíritu que UnitInfo.statRow (js/unitinfo.js) — una función
+  // compartida en vez de repetir el marcado por cada fuente de puntos.
+  _sourceRow(icon, label, amount, { muted = false } = {}) {
+    const sign = amount > 0 ? "+" : "";
+    return `
+      <div class="glory-popup-row${muted ? " glory-popup-row--muted" : ""}">
+        <i class="ph-fill ${icon} glory-popup-row__icon"></i>
+        <span class="glory-popup-row__label">${label}</span>
+        <span class="glory-popup-row__amount">${sign}${amount}</span>
+      </div>`;
+  },
+
+  // Pedido explícito: "un popup (con el mismo estilo visual que el resto de
+  // interfaces del juego) donde me indicase los puntos que estoy
+  // consiguiendo por turno y sus origenes. todo bien especificado" — mismo
+  // patrón overlay+panel que Backpack.openPopup/UnitInfo.openPopup (clic
+  // fuera o botón de cerrar para cerrar, .p5-banner para el marco). Solo
+  // existe para "player" (ver _ensureHud), así que no hace falta parámetro
+  // de equipo.
+  openPopup() {
+    if (this.overlayEl) return;
+    const team = "player";
+    SFX.click();
+
+    const villages = typeof Villages !== "undefined" ? Villages.ownedCount(team) : 0;
+    const villagesBonus = this._villagesBonus(team);
+    const killBonus = this.pendingBonus[team];
+    const nextTotal = GLORY_PER_TURN_START + killBonus + villagesBonus;
+
+    const overlay = document.createElement("div");
+    overlay.className = "glory-popup-overlay";
+    overlay.addEventListener("click", () => this.closePopup());
+
+    overlay.innerHTML = `
+      <div class="p5-banner glory-popup-card">
+        <div class="glory-popup-card__content">
+          <button class="backpack-close-btn" aria-label="Cerrar">
+            <i class="ph ph-x backpack-close-btn__icon"></i>
+          </button>
+          <h2 class="glory-popup-title">Puntos de Gloria</h2>
+          <div class="glory-popup-total">
+            <i class="ph-fill ph-trophy"></i>
+            <span>${this.points[team]}</span>
+          </div>
+          <p class="glory-popup-subtitle">Vas a ganar esto al empezar tu próximo turno:</p>
+          <div class="glory-popup-sources">
+            ${this._sourceRow("ph-sparkle", "Base de cada turno", GLORY_PER_TURN_START)}
+            ${this._sourceRow(
+              "ph-skull",
+              killBonus > 0 ? "Bajas conseguidas este turno" : "Sin bajas conseguidas este turno",
+              killBonus,
+              { muted: killBonus === 0 }
+            )}
+            ${this._sourceRow(
+              "ph-house-simple",
+              villages > 0 ? `Poblados conquistados (${villages})` : "Sin poblados conquistados",
+              villagesBonus,
+              { muted: villagesBonus === 0 }
+            )}
+          </div>
+          <div class="glory-popup-row glory-popup-row--next">
+            <span class="glory-popup-row__label">Próximo turno</span>
+            <span class="glory-popup-row__amount">+${nextTotal}</span>
+          </div>
+        </div>
+      </div>`;
+
+    overlay.querySelector(".glory-popup-card").addEventListener("click", (e) => e.stopPropagation());
+    overlay.querySelector(".backpack-close-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.closePopup();
+    });
+
+    document.body.appendChild(overlay);
+    this.overlayEl = overlay;
+    requestAnimationFrame(() => overlay.classList.add("glory-popup-overlay--visible"));
+  },
+
+  closePopup() {
+    if (!this.overlayEl) return;
+    const el = this.overlayEl;
+    this.overlayEl = null;
+    SFX.back();
+    el.classList.remove("glory-popup-overlay--visible");
+    setTimeout(() => el.remove(), 220);
   },
 };

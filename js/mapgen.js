@@ -522,6 +522,7 @@ function renderMap(map, container) {
       offsetY: TILE_TYPES.grass.offsetY != null ? TILE_TYPES.grass.offsetY : TILE_DEFAULT_ADJUST.offsetY,
     };
     const img = document.createElement("img");
+    img.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     img.dataset.srcOrig = baseSrc;
     img.src = typeof PerfMode !== "undefined" && PerfMode.enabled ? lowResTileSrc(baseSrc) : baseSrc;
     img.width = TILE_WIDTH * grassAdjust.scale;
@@ -558,6 +559,7 @@ function renderMap(map, container) {
       };
       const renderWidth = TILE_WIDTH * adjust.scale;
       const revealImg = document.createElement("img");
+      revealImg.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
       revealImg.className = "tile__terrain-reveal";
       revealImg.dataset.srcOrig = t.src;
       revealImg.src = typeof PerfMode !== "undefined" && PerfMode.enabled ? lowResTileSrc(t.src) : t.src;
@@ -611,6 +613,7 @@ function renderMap(map, container) {
     // dibujado decida correctamente si una nube vecina queda delante o
     // detrás del jugador, según toque.
     const fogImg = document.createElement("img");
+    fogImg.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     fogImg.className = "tile__fog";
     // Pedido explícito (bug reportado): "en el modo alto rendimiento la
     // niebla no tiene el efecto de disiparse, simplemente desaparece

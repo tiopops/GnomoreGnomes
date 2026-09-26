@@ -223,6 +223,7 @@ const Obelisks = {
     el.className = `unit obelisk obelisk--${team}`;
 
     const spriteEl = document.createElement("img");
+    spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     spriteEl.className = "obelisk__sprite";
     spriteEl.src = this.spriteFor(raceId);
     spriteEl.alt = "";
