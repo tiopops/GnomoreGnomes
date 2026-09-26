@@ -169,9 +169,16 @@ const SFX = {
   // grave), solo con un rango menos agresivo a juego con el resto.
   // duration en SEGUNDOS (a diferencia del resto de SFX, en ms) porque quien
   // llama a esto ya tiene la duración del vuelo en segundos a mano.
-  gnomeFly(duration) {
+  // Pedido explícito (cohete "KataPum!", js/backpack.js): "el mismo sonido
+  // de lanzamiento del gnomo algo mas agudo" — pitch multiplica TODAS las
+  // frecuencias (base, flick de despegue, caída y vibrato) por igual en vez
+  // de tocar el timbre, así sigue siendo reconociblemente "el mismo
+  // sonido", solo más agudo. 1 = idéntico a como sonaba antes de este
+  // parámetro (todas las llamadas existentes, ninguna lo pasaba).
+  gnomeFly(duration, pitch) {
     const ctx = this.ensureCtx();
     if (!ctx) return;
+    const mul = pitch || 1;
     try {
       if (ctx.state === "suspended") ctx.resume();
       const now = ctx.currentTime;
@@ -186,9 +193,9 @@ const SFX = {
       osc2.detune.value = 6;
 
       [osc1, osc2].forEach((osc) => {
-        osc.frequency.setValueAtTime(560, now);
-        osc.frequency.exponentialRampToValueAtTime(780, flickEnd); // "flick" de despegue hacia arriba
-        osc.frequency.exponentialRampToValueAtTime(300, now + dur); // y luego cae hasta aterrizar
+        osc.frequency.setValueAtTime(560 * mul, now);
+        osc.frequency.exponentialRampToValueAtTime(780 * mul, flickEnd); // "flick" de despegue hacia arriba
+        osc.frequency.exponentialRampToValueAtTime(300 * mul, now + dur); // y luego cae hasta aterrizar
       });
 
       const vibrato = ctx.createOscillator();
@@ -203,8 +210,8 @@ const SFX = {
       const filter = ctx.createBiquadFilter();
       filter.type = "lowpass";
       filter.Q.value = 0.7;
-      filter.frequency.setValueAtTime(2600, now);
-      filter.frequency.exponentialRampToValueAtTime(1400, now + dur);
+      filter.frequency.setValueAtTime(2600 * mul, now);
+      filter.frequency.exponentialRampToValueAtTime(1400 * mul, now + dur);
 
       const gain = ctx.createGain();
       gain.gain.setValueAtTime(0.0001, now);
@@ -294,6 +301,69 @@ const SFX = {
   buy() {
     this._pluck("buy-1", 720, "triangle", 0.14, 0.26);
     setTimeout(() => this._pluck("buy-2", 1040, "triangle", 0.2, 0.3), 80);
+  },
+
+  // Cohete "KataPum!" (Backpack, js/backpack.js) — "en el momento del
+  // impacto suena una explosion". A diferencia de TODO lo demás en este
+  // archivo (osciladores puros vía _pluck/_getVoice, pensados para
+  // pitidos/campanillas de interfaz), una explosión de verdad necesita
+  // RUIDO, no un tono — se genera un buffer de ruido blanco de una sola
+  // vez (bufferSource, no reutilizable como las voces persistentes de
+  // arriba, pero una explosión no se dispara nunca tan seguido como un
+  // hover/click como para que importe crear un nodo nuevo cada vez) con un
+  // filtro paso-bajo que se cierra rápido (el "crunch" grave del estallido
+  // apagándose) sumado a un golpe grave corto (el "thud" del impacto, mismo
+  // timbre que death-thud) para darle cuerpo por debajo del ruido.
+  explosion() {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      const dur = 0.5;
+
+      const bufferSize = Math.round(ctx.sampleRate * dur);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        // Ruido blanco con una envolvente propia ya incrustada en los
+        // propios samples (decae más rápido que la ganancia de fuera, ver
+        // abajo) para que el "cuerpo" del ruido ya suene a explosión y no
+        // solo a estática cortada en seco.
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.6);
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = "lowpass";
+      noiseFilter.Q.value = 0.9;
+      noiseFilter.frequency.setValueAtTime(3200, now);
+      noiseFilter.frequency.exponentialRampToValueAtTime(180, now + dur);
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.5, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+      noise.connect(noiseFilter).connect(noiseGain).connect(this.master);
+      noise.start(now);
+      noise.stop(now + dur);
+
+      // Golpe grave por debajo (mismo timbre que death-thud) para que se
+      // note el "puñetazo" del impacto, no solo el silbido del ruido.
+      const thump = ctx.createOscillator();
+      thump.type = "square";
+      thump.frequency.setValueAtTime(120, now);
+      thump.frequency.exponentialRampToValueAtTime(45, now + 0.22);
+      const thumpGain = ctx.createGain();
+      thumpGain.gain.setValueAtTime(0.4, now);
+      thumpGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+      thump.connect(thumpGain).connect(this.master);
+      thump.start(now);
+      thump.stop(now + 0.3);
+    } catch (e) {
+      // Audio no disponible — se ignora, no debe romper la animación.
+    }
   },
 };
 

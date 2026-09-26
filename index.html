@@ -9,7 +9,7 @@
      existe para tomar el control del gesto. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Gnomore Gnomes</title>
-<link rel="stylesheet" href="css/style.css?v=20260926131928">
+<link rel="stylesheet" href="css/style.css?v=20260926142927">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
 <script>
   // Pedido explícito: "en la interfaz del smartphone, a veces tengo que
@@ -30,8 +30,16 @@
 
   <!-- Menú principal -->
   <main class="screen screen--active main-menu" id="main-menu">
-    <div class="hex-logo"></div>
-    <h1><span data-i18n="game_title">Gnomore Gnomes</span></h1>
+    <!-- Pedido explícito: "en el menu principal aparece una especie de
+         poligono arriba de los botones, quiero que lo elimines y pongas el
+         logotipo que te paso". El logotipo real YA incluye el nombre del
+         juego dibujado como parte de la ilustración, así que el título de
+         texto (<h1>, el "banderín" que ponía "GNOMORE GNOMES" debajo del
+         hexágono) se retira también — mantenerlo habría repetido el mismo
+         texto dos veces seguidas. game_title (i18n) se queda en STRINGS
+         (js/i18n.js) sin usar aquí por si hiciera falta en otra pantalla. -->
+    <img class="main-logo" src="assets/ui/logo_principal.png?v=20260926142927" alt="Gnomore Gnomes" />
+    <h1 class="sr-only"><span data-i18n="game_title">Gnomore Gnomes</span></h1>
 
     <nav class="menu-buttons">
       <button id="btn-new-game" class="menu-btn">
@@ -62,7 +70,12 @@
   <main class="screen" id="screen-race-select">
     <button class="back-btn" data-back><i class="ph ph-arrow-left"></i> <span data-i18n="back">Volver</span></button>
     <h2 data-i18n="choose_race">Elige tu raza</h2>
-    <div class="option-list" id="race-list"></div>
+    <!-- Pedido explícito (segunda pasada): "queria CARTAS!!! formato carta
+         de juego de rol" — contenedor propio (no .option-list, pensado
+         para la lista vertical y estrecha de modo/rivales) para las
+         tarjetas de raza, más anchas y en fila (ver .race-card-list en
+         css/style.css y renderRaceCard en js/newgame-flow.js). -->
+    <div class="race-card-list" id="race-list"></div>
   </main>
 
   <!-- Selección de número de rivales -->
@@ -81,37 +94,37 @@
     </div>
   </main>
 
-  <script src="js/i18n.js?v=20260926131928"></script>
-  <script src="js/sfx.js?v=20260922221531"></script>
+  <script src="js/i18n.js?v=20260926142927"></script>
+  <script src="js/sfx.js?v=20260926142927"></script>
   <script src="js/savegame.js?v=20260922221531"></script>
   <script src="js/gamemodes.js?v=20260922221531"></script>
-  <script src="js/races.js?v=20260926131928"></script>
-  <script src="js/matchsetup.js?v=20260922221531"></script>
-  <script src="js/mapgen.js?v=20260926131928"></script>
-  <script src="js/fog.js?v=20260924213550"></script>
+  <script src="js/races.js?v=20260926142927"></script>
+  <script src="js/matchsetup.js?v=20260926142927"></script>
+  <script src="js/mapgen.js?v=20260926142927"></script>
+  <script src="js/fog.js?v=20260926142927"></script>
   <script src="js/boardview.js?v=20260926131928"></script>
   <script src="js/uiconfig.js?v=20260925200152"></script>
   <script src="js/uihint.js?v=20260924230535"></script>
   <script src="js/tooltip.js?v=20260924223136"></script>
   <script src="js/attackcursor.js?v=20260924213550"></script>
   <script src="js/shadows.js?v=20260926131928"></script>
-  <script src="js/units.js?v=20260926131928"></script>
+  <script src="js/units.js?v=20260926142927"></script>
   <script src="js/movement.js?v=20260923222645"></script>
   <script src="js/combat.js?v=20260925213811"></script>
-  <script src="js/gnome.js?v=20260926131928"></script>
-  <script src="js/villages.js?v=20260926131928"></script>
+  <script src="js/gnome.js?v=20260926142927"></script>
+  <script src="js/villages.js?v=20260926142927"></script>
   <script src="js/glory.js?v=20260926131928"></script>
-  <script src="js/turns.js?v=20260925215049"></script>
-  <script src="js/obelisks.js?v=20260926131928"></script>
+  <script src="js/turns.js?v=20260926142927"></script>
+  <script src="js/obelisks.js?v=20260926142927"></script>
   <script src="js/teammarkers.js?v=20260922221531"></script>
   <script src="js/perfmode.js?v=20260925054820"></script>
   <script src="js/settingsmenu.js?v=20260924230535"></script>
   <script src="js/gnomecalib.js?v=20260922221531"></script>
   <script src="js/unitinfo.js?v=20260924223136"></script>
-  <script src="js/backpack.js?v=20260926131928"></script>
-  <script src="js/shops.js?v=20260926131928"></script>
+  <script src="js/backpack.js?v=20260926142927"></script>
+  <script src="js/shops.js?v=20260926142927"></script>
   <script src="js/abilities.js?v=20260926131928"></script>
   <script src="js/menu.js?v=20260922221531"></script>
-  <script src="js/newgame-flow.js?v=20260926131928"></script>
+  <script src="js/newgame-flow.js?v=20260926142927"></script>
 </body>
 </html>

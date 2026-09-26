@@ -420,6 +420,19 @@ const Obelisks = {
     window.addEventListener("touchmove", handleTouch, { passive: true });
   },
 
+  // Pedido explícito (v2): "la transparencia tambien funciona cuando el
+  // personaje esta en la casilla de arriba a la derecha adyacente y arriba
+  // a la izquierda adyacente y arriba 2 casillas del propio totem/
+  // obelisco, ya que se solapa sobre los personajes" — mismas 4 casillas
+  // que Villages._OCCLUSION_OFFSETS (js/villages.js) y Fog.
+  // _UP_NEIGHBOR_OFFSETS (js/fog.js) para el mismo problema geométrico: un
+  // Obelisco es más ancho/alto que su propia loseta.
+  _OCCLUSION_OFFSETS: [
+    [-1, -1],
+    [-1, 0],
+    [0, -1],
+    [-2, -2],
+  ],
   refreshOcclusion(mouseX, mouseY) {
     if (typeof Units === "undefined") return;
     const mx = typeof mouseX === "number" ? mouseX : this._lastMouseX;
@@ -430,13 +443,12 @@ const Obelisks = {
         obelisk.el.classList.remove("obelisk--occluding");
         return;
       }
-      const behindUnit = Units.list.find(
-        (unit) =>
-          unit.row === obelisk.row - 1 &&
-          unit.col === obelisk.col - 1 &&
-          unit.el &&
-          !unit.el.classList.contains("unit--fog-hidden")
-      );
+      const behindUnit = Units.list.find((unit) => {
+        if (!unit.el || unit.el.classList.contains("unit--fog-hidden")) return false;
+        return this._OCCLUSION_OFFSETS.some(
+          ([dr, dc]) => unit.row === obelisk.row + dr && unit.col === obelisk.col + dc
+        );
+      });
       let occluding = false;
       if (behindUnit) {
         const oRect = obelisk.spriteEl.getBoundingClientRect();

@@ -43,6 +43,41 @@ function renderOptionCard({ icon, iconImg, title, desc, onClick, color }) {
   return card;
 }
 
+// Pedido explícito (segunda pasada, tras ver la primera versión con
+// .option-card): "enserio? te dije que ahora queria CARTAS!!! formato
+// carta de juego de rol donde aparezca en grande el logo de cada raza y
+// exppliucacion detallada de cad una de ellas con el estilo visual..." —
+// tarjeta VERTICAL propia solo para razas (mode/rivales siguen usando
+// renderOptionCard tal cual, no se han tocado): ilustración de la mascota
+// grande arriba, nombre en banderín, y la explicación separada en 3
+// bloques (ambientación/virtudes/desventajas, ver flavorKey/virtuesKey/
+// weaknessesKey en js/races.js) en vez de una sola frase corrida — mismo
+// lenguaje visual .p5-banner/doble-capa que el resto del juego.
+function renderRaceCard({ iconImg, title, flavor, virtues, weaknesses, onClick, color }) {
+  const card = document.createElement("button");
+  card.className = "race-card";
+  if (color) card.style.setProperty("--card-accent", color);
+  card.innerHTML = `
+    <span class="race-card__art-wrap">
+      <img src="${iconImg}" alt="" class="race-card__art" />
+    </span>
+    <span class="race-card__title">${title}</span>
+    <span class="race-card__body">
+      ${flavor ? `<span class="race-card__flavor">${flavor}</span>` : ""}
+      <span class="race-card__stat race-card__stat--virtue">
+        <i class="ph ph-check-circle race-card__stat-icon"></i>
+        <span>${virtues}</span>
+      </span>
+      <span class="race-card__stat race-card__stat--weakness">
+        <i class="ph ph-x-circle race-card__stat-icon"></i>
+        <span>${weaknesses}</span>
+      </span>
+    </span>
+  `;
+  card.addEventListener("click", onClick);
+  return card;
+}
+
 function populateModeSelect() {
   const list = document.getElementById("mode-list");
   list.innerHTML = "";
@@ -67,11 +102,12 @@ function populateRaceSelect() {
   list.innerHTML = "";
   RACES.filter((r) => r.available).forEach((race) => {
     list.appendChild(
-      renderOptionCard({
-        icon: race.icon,
+      renderRaceCard({
         iconImg: race.iconImg,
         title: I18N.t(race.nameKey),
-        desc: I18N.t(race.descKey),
+        flavor: I18N.t(race.flavorKey),
+        virtues: I18N.t(race.virtuesKey),
+        weaknesses: I18N.t(race.weaknessesKey),
         color: race.color,
         onClick: () => {
           matchDraft.raceId = race.id;
@@ -122,7 +158,11 @@ function startMatch({ modeId, raceId, opponents }) {
   // (_showStartMatchError) para poder mandarlo por captura.
   try {
     const size = getBoardSize(opponents);
-    const map = generateMap(size);
+    // Ríos (pedido explícito) — de momento solo el modo 1v1 los pide, así
+    // que se activan solo para "opponents === 1" en vez de para
+    // cualquier tamaño de escenario; el día que haya un modo con más
+    // rivales que también los quiera, basta con ampliar esta condición.
+    const map = generateMap(size, { rivers: opponents === 1 });
 
     SaveGame.save({
       modeId,

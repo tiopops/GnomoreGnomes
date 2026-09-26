@@ -148,6 +148,24 @@ const Turns = {
     this._updateButtonState();
   },
 
+  // Pedido explícito (cepo "AtrapaPinreles", js/backpack.js): "pierde
+  // automaticamente el turno" al caer en la trampa — a diferencia de
+  // useAction (descuenta UNA acción de las 2, la mecánica normal de cada
+  // turno), esto le quita TODAS las que le quedaran de golpe, sin esperar
+  // a que las gaste una a una. Reutiliza _applyExhaustedClass (mismo único
+  // punto de paso que useAction) para que el aviso visual/indicador de
+  // acciones/botón de habilidad se pongan al día igual que con cualquier
+  // otro cambio de actionsUsed.
+  forceOutOfActions(unit) {
+    if (!unit) return;
+    this.actionsUsed[unit.id] = TURNS_MAX_ACTIONS;
+    this._applyExhaustedClass(unit);
+    if (Units.selectedId === unit.id && !this.canAct(unit)) {
+      Units.deselect();
+    }
+    this._updateButtonState();
+  },
+
   // Saturación reducida (pedido explícito) en cuanto una unidad agota sus 2
   // acciones — puramente visual, "un jugador inactivo puede recibir un
   // pase" así que no bloquea ningún clic aquí, solo lo hacen canAct/showFor.

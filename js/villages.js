@@ -30,7 +30,10 @@
    existe, todos hablan solo con Units. */
 
 const VILLAGE_MAX_HP = 10;
-const VILLAGE_COUNT = 2; // "de momento puedes poner 2"
+// Pedido explícito (segunda pasada): "tambien habran 5 totems normales" —
+// de 2 a 5, junto con el escenario 25x25 (ver BOARD_SIZE_BY_OPPONENTS en
+// matchsetup.js) que ahora hay sitio de sobra para repartirlos.
+const VILLAGE_COUNT = 5;
 const VILLAGE_ATTACK_RANGE = 1; // cuerpo a cuerpo, igual que Combat.attackRange
 
 // Sprite de cada poblado según su dueño — "neutral" al generarse, y el de
@@ -284,6 +287,22 @@ const Villages = {
   // arriba). Se calcula así en vez de comparar rectángulos en pantalla
   // porque es justo esa relación de LOSETAS la que importa aquí, no cuánto
   // se solapen los sprites (que ya se sabía por la versión anterior).
+  // Pedido explícito (v4): "la transparencia tambien funciona cuando el
+  // personaje esta en la casilla de arriba a la derecha adyacente y arriba
+  // a la izquierda adyacente y arriba 2 casillas del propio totem, ya que
+  // se solapa sobre los personajes" — un tótem es más ancho y alto que su
+  // propia loseta, así que no solo la loseta "justo arriba" (row-1,col-1)
+  // puede quedar tapada por su sprite: también arriba-derecha (row-1,col),
+  // arriba-izquierda (row,col-1) y 2 casillas arriba del todo (row-2,
+  // col-2, para los tótems más altos) — misma geometría que usa
+  // Fog._UP_NEIGHBOR_OFFSETS (js/fog.js) para el mismo problema con la
+  // niebla, así que se reutiliza esa lista en vez de duplicarla.
+  _OCCLUSION_OFFSETS: [
+    [-1, -1],
+    [-1, 0],
+    [0, -1],
+    [-2, -2],
+  ],
   refreshOcclusion(mouseX, mouseY) {
     if (typeof Units === "undefined") return;
     const mx = typeof mouseX === "number" ? mouseX : this._lastMouseX;
@@ -296,13 +315,12 @@ const Villages = {
         village.el.classList.remove("village--occluding");
         return;
       }
-      const behindUnit = Units.list.find(
-        (unit) =>
-          unit.row === village.row - 1 &&
-          unit.col === village.col - 1 &&
-          unit.el &&
-          !unit.el.classList.contains("unit--fog-hidden")
-      );
+      const behindUnit = Units.list.find((unit) => {
+        if (!unit.el || unit.el.classList.contains("unit--fog-hidden")) return false;
+        return this._OCCLUSION_OFFSETS.some(
+          ([dr, dc]) => unit.row === village.row + dr && unit.col === village.col + dc
+        );
+      });
       let occluding = false;
       if (behindUnit) {
         const vRect = village.spriteEl.getBoundingClientRect();

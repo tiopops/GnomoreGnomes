@@ -838,6 +838,14 @@ const Units = {
     unit.el.classList.add("unit--moving");
     for (const step of path) {
       await this.hopTo(unit, step.row, step.col);
+      // Cepo "AtrapaPinreles" (Backpack, js/backpack.js) — pedido
+      // explícito: "si un enemigo cae en la misma casilla o pasa sobre
+      // ella, pierde automaticamente el turno". Se comprueba en CADA
+      // salto (no solo al final del camino) precisamente por el "pasa
+      // sobre ella": un enemigo de paso hacia otra casilla también debe
+      // activarlo. Si se dispara, se corta aquí el resto del camino —
+      // "pierde el turno" no pegaría con seguir andando después.
+      if (typeof Backpack !== "undefined" && Backpack.checkTrapAt(unit, step.row, step.col)) break;
     }
     unit.el.classList.remove("unit--moving");
     unit.spriteEl.classList.remove("unit__sprite--hop");

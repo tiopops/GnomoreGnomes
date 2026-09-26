@@ -1098,6 +1098,41 @@ function createGnomeInstance() {
       await this._fleeAwayFrom(ref.row, ref.col, 3);
     },
 
+    // Cepo "AtrapaPinreles" (Backpack, js/backpack.js) — pedido explícito:
+    // "si tuviera un gnomo cogido se le cae al suelo y hace su tipica
+    // huida". Mismo patrón EXACTO que dropFromDyingUnit de arriba (el
+    // gnomo cae a la loseta de quien lo llevaba y huye 3 casillas
+    // alejándose del jugador vivo más cercano), pero `unit` sigue vivo y
+    // sigue en Units.list de verdad — no hace falta guardar su row/col
+    // aparte como con deadUnit (ya siguen siendo válidos), así que se lee
+    // directamente de `unit`.
+    async dropFromStunnedUnit(unit) {
+      this.detachFrom();
+      this.row = unit.row;
+      this.col = unit.col;
+      this.el.style.display = "";
+      Units._placeInstant(this);
+      this.spriteEl.src = GNOME_ASSETS.idle;
+      this.spriteEl.style.width = `${GNOME_SIZES.ground}px`;
+      SFX.dropFail();
+
+      // Mismo respiro de 2 requestAnimationFrame + pausa que
+      // dropFromDyingUnit (ver ese comentario para el detalle exacto del
+      // porqué) — deja ver al gnomo caído un instante antes de que arranque
+      // a correr.
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await new Promise((resolve) => setTimeout(resolve, 260));
+
+      const nearestPlayer = Units.list
+        .filter((u) => u.team === "player")
+        .reduce((best, u) => {
+          const d = Math.max(Math.abs(u.row - this.row), Math.abs(u.col - this.col));
+          return !best || d < best.d ? { u, d } : best;
+        }, null);
+      const ref = nearestPlayer ? nearestPlayer.u : { row: this.row, col: this.col };
+      await this._fleeAwayFrom(ref.row, ref.col, 3);
+    },
+
     // Elige la mejor loseta vecina para huir. No basta con "la primera
     // dirección libre parecida a la deseada": eso podía llevar al gnomo,
     // paso a paso, hacia una esquina o un rincón cerrado de unidades sin

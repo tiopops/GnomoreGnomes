@@ -7,12 +7,12 @@
 const OPPONENT_OPTIONS = [1];
 
 const BOARD_SIZE_BY_OPPONENTS = {
-  // Pedido explícito, al introducir la loseta de agua: "hicieses más grande
-  // el escenario, con más losetas" — de 13x13 a 17x17 para dejar sitio de
-  // verdad a un borde de agua rodeando el escenario y algún lago suelto por
-  // dentro (ver TODO de agua en mapgen.js) sin comerse el espacio jugable
-  // que ya había.
-  1: 17,
+  // Pedido explícito (segunda pasada): "el escenario contra un jugador debe
+  // ser de 25x25 losetas" — de 17x17 a 25x25, ahora que además hay ríos que
+  // cruzan el mapa de lado a lado (ver generateRiver en mapgen.js) y 5
+  // tótems neutrales (ver VILLAGE_COUNT en villages.js) que necesitan sitio
+  // de sobra para repartirse sin quedar todos pegados entre sí.
+  1: 25,
 };
 
 function getBoardSize(numOpponents) {

@@ -161,8 +161,26 @@ html, body {
   touch-action: manipulation;
 }
 
+/* Pedido explícito: "tambien te paso el fondo para el menu principal...y
+   los submenus antes de empezar la partida" — se aplica en el <body> (no
+   en cada .screen por separado) precisamente porque .screen-board (el
+   tablero de la partida en sí) YA pinta su propio fondo opaco
+   (background:#171b24, ver esa regla más abajo) que lo tapa por completo:
+   así el fondo ilustrado se ve automáticamente en el menú principal y en
+   TODAS las pantallas de selección previas (modo/raza/rivales, ninguna
+   define fondo propio) sin tener que repetirlo pantalla por pantalla, y
+   desaparece solo en cuanto arranca la partida de verdad, sin lógica
+   extra. Degradado oscuro por encima (no solo el color liso var(--bg))
+   para que el texto blanco y los botones sigan leyéndose igual de bien
+   que antes sobre el bosque de fondo — var(--bg) se queda como
+   background-color de reserva mientras la imagen carga o si fallara. */
 body {
-  background: var(--bg);
+  /* Ruta relativa: OJO, dentro de css/style.css se resuelve relativa a la
+     carpeta css/, no a la raíz del sitio (bug ya encontrado antes con la
+     niebla de fondo del tablero) — de ahí el "../" delante. */
+  background: linear-gradient(180deg, rgba(15, 17, 23, 0.72), rgba(15, 17, 23, 0.85)),
+    url("../assets/ui/fondo_menu.jpg") center/cover no-repeat;
+  background-color: var(--bg);
   color: var(--ink);
   font-family: "Russo One", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   /* Ver la nota de @font-face más arriba: sin negrita/itálica falsas
@@ -227,85 +245,39 @@ body {
   max-width: 420px;
 }
 
-/* CORRECCIÓN (pedido explícito: "aplica esa correccion a TODOS LOS
-   BOTONES...EN TODO EL JUEGO"): mismo defecto — border normal no sigue un
-   clip-path irregular. Un hexágono (6 puntos) tiene incluso MÁS lados en
-   ángulo que un banderín de 4, así que aquí se notaba todavía más. Doble
-   capa (::before/::after), sin texto dentro así que no hace falta tocar
-   z-index de ningún hijo. */
-.hex-logo {
-  position: relative;
-  width: 60px;
-  height: 68px;
+/* Pedido explícito: "en el menu principal aparece una especie de poligono
+   arriba de los botones, quiero que lo elimines y pongas el logotipo que
+   te paso...un tamaño adecuado para un elemento como este" — sustituye al
+   antiguo .hex-logo (un hexágono decorativo sin texto, placeholder) y al
+   <h1> de texto que iba justo debajo (ver la nota en index.html: el
+   logotipo real ya lleva el nombre del juego dibujado, así que el texto
+   quedaba duplicado). Ancho limitado (no 100% del contenedor, que aquí
+   llega a 420px: el logo es muy apaisado y se vería enorme) + sombra dura
+   a juego con el resto del lenguaje visual del menú. */
+.main-logo {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
   margin: 0 auto 22px;
   filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.55));
-  transform: rotate(-4deg);
 }
 
-.hex-logo::before,
-.hex-logo::after {
-  content: "";
+/* Utilidad estándar "visualmente oculto, presente para lectores de
+   pantalla" — usada para el <h1> de texto (ver index.html): el título
+   semántico de la página se conserva para accesibilidad/SEO sin
+   duplicarse visualmente junto al logotipo, que ya muestra el nombre del
+   juego como parte de su propia ilustración. */
+.sr-only {
   position: absolute;
-  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-}
-
-.hex-logo::before {
-  inset: 0;
-  background: #000;
-  z-index: 0;
-}
-
-.hex-logo::after {
-  inset: var(--gg-frame-outline-width);
-  background: var(--p5-tone);
-  z-index: 1;
-}
-
-/* Mismo defecto, mismo arreglo. El título ("Gnomore Gnomes") es texto
-   directo del propio <h1> (ver index.html) — con esta técnica necesita
-   vivir en su propio <span> para quedar por encima de las dos capas (ver
-   .main-menu h1 > span más abajo), así que se envolvió ahí. */
-.main-menu h1 {
-  position: relative;
-  display: inline-block;
-  width: auto;
-  max-width: 100%;
-  font-size: clamp(1.5rem, 5vw, 2rem);
-  font-weight: 900;
-  font-style: italic;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  margin: 0 0 32px;
-  padding: 14px 32px;
-  color: #fff;
-  background: none;
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
-  filter: drop-shadow(6px 6px 0 rgba(0, 0, 0, 0.55));
-  transform: rotate(-1.2deg);
-}
-
-.main-menu h1::before,
-.main-menu h1::after {
-  content: "";
-  position: absolute;
-  clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
-}
-
-.main-menu h1::before {
-  inset: 0;
-  background: #000;
-  z-index: 0;
-}
-
-.main-menu h1::after {
-  inset: var(--gg-frame-outline-width);
-  background: var(--p5-tone);
-  z-index: 1;
-}
-
-.main-menu h1 > span {
-  position: relative;
-  z-index: 2;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 h2 {
@@ -719,6 +691,162 @@ h2 {
   font-style: italic;
 }
 
+/* ---------- Tarjetas de raza (pantalla "Elige tu raza") ----------
+   Pedido explícito (segunda pasada, tras ver la primera versión con
+   .option-card horizontal + rombo de icono pequeño en la esquina):
+   "enserio? te dije que ahora queria CARTAS!!! formato carta de juego de
+   rol donde aparezca en grande el logo de cada raza y exppliucacion
+   detallada de cad una de ellas con el estilo visual...". Tarjeta VERTICAL
+   (formato "carta de rol": ilustración grande arriba, nombre, texto
+   debajo) en vez de una tira horizontal — mismo lenguaje visual de doble
+   capa + sombra dura que el resto del juego (.option-card, .p5-banner),
+   solo que a mayor escala y con la mascota completa en vez de un icono
+   pequeño. Solo esta pantalla usa esta tarjeta; modo de juego y nº de
+   rivales siguen con renderOptionCard/.option-card tal cual, sin tocar. */
+.race-card-list {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 26px;
+}
+
+.race-card {
+  position: relative;
+  width: 300px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  color: #fff;
+  background: none;
+  border: none;
+  cursor: var(--cursor-pointer);
+  text-align: left;
+  filter: drop-shadow(6px 6px 0 rgba(0, 0, 0, 0.5));
+  transition: transform 0.15s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.15s ease;
+  --tilt: 0deg;
+  transform: rotate(var(--tilt));
+}
+
+.race-card-list .race-card:nth-child(odd) { --tilt: -1deg; }
+.race-card-list .race-card:nth-child(even) { --tilt: 1deg; }
+
+.race-card:hover {
+  transform: rotate(0deg) translateY(-4px);
+  filter: drop-shadow(9px 9px 0 rgba(0, 0, 0, 0.55));
+}
+
+.race-card:active {
+  transform: rotate(0deg) translate(1px, 1px);
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55));
+}
+
+/* Doble capa de siempre (::before = contorno, ::after = relleno) para todo
+   el cuerpo de la carta de un tirón — la ilustración (.race-card__art)
+   vive DENTRO de esta misma silueta recortada, así que no necesita su
+   propio clip-path aparte. */
+.race-card::before,
+.race-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(2% 0, 100% 0, 98% 100%, 0% 100%);
+}
+
+.race-card::before {
+  background: #000;
+  z-index: 0;
+}
+
+.race-card::after {
+  inset: var(--gg-frame-outline-width);
+  background: var(--p5-tone);
+  z-index: 1;
+}
+
+.race-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Ilustración grande de la mascota — pedido explícito: "que aparezca en
+   grande el logo de cada raza". Fondo con un resplandor radial del color
+   propio de la raza (--card-accent, lo fija newgame-flow.js igual que
+   antes) para que la imagen no quede flotando sobre el mismo tono liso
+   del resto de la carta. */
+.race-card__art-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 18px 6px;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--card-accent, #fff) 28%, transparent), transparent 72%);
+}
+
+.race-card__art {
+  width: 78%;
+  max-width: 200px;
+  height: auto;
+  filter: drop-shadow(3px 5px 0 rgba(0, 0, 0, 0.4));
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.race-card__title {
+  align-self: center;
+  margin: 4px 0 14px;
+  font-size: 1.15rem;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: var(--card-accent, #fff);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.65);
+}
+
+.race-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 20px 22px;
+}
+
+.race-card__flavor {
+  font-size: 0.82rem;
+  font-style: italic;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.6);
+  padding-bottom: 8px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+.race-card__stat {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.race-card__stat-icon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  margin-top: 1px;
+}
+
+.race-card__stat--virtue .race-card__stat-icon {
+  color: #7ee08a;
+}
+
+.race-card__stat--weakness .race-card__stat-icon {
+  color: #ff8a7a;
+}
+
 /* ---------- Tablero (escenario isométrico) ---------- */
 
 .screen-board {
@@ -799,10 +927,21 @@ h2 {
      clavada). Un primer intento rellenaba esas esquinas con la textura de
      niebla repetida, pero el propio usuario lo encontró "cutre" (la nube es
      una imagen individual, no una textura sin costuras, así que repetida se
-     notaba el mosaico) — así que se deja simplemente el color de fondo liso
-     de la página (--bg), sin ninguna textura: se ve limpio y ya no hay
-     ningún hueco que lea como un fallo gráfico. */
-  background-color: var(--bg);
+     notaba el mosaico).
+     BUG encontrado y corregido (pedido explícito: "el color del fondo debe
+     ser igual que el color de fondo del limite del nivel" — ver la captura
+     con las dos franjas de azul-negro distintas pegadas una a otra): el
+     siguiente intento rellenó esto con var(--bg) (#1f2430, el fondo
+     general de <body>), pero el contenedor real detrás de TODO el tablero
+     (.screen-board, más arriba en este archivo) usa su PROPIO color fijo
+     #171b24 — un tono distinto, así que quedaba una costura visible justo
+     donde terminaba el rectángulo de .board-tiles (el "límite del nivel")
+     y empezaba el fondo de .screen-board alrededor. Ya no se pinta ningún
+     color aquí: .board-viewport/.board-camera (los contenedores por medio)
+     tampoco pintan fondo propio, así que dejando esto transparente se ve
+     directamente el #171b24 de .screen-board sin ninguna costura posible,
+     vengan de donde vengan (esquinas del rombo o fuera del rectángulo del
+     mapa). */
 }
 
 .tile {
@@ -999,6 +1138,38 @@ body.gg-fog-anim-off .tile__fog:not(.tile__fog--revealed) {
 @keyframes fog-dissipate {
   0% { transform: translate(-50%, -50%) scale(1); opacity: 0.96; filter: blur(0px); }
   100% { transform: translate(-50%, -74%) scale(1.6); opacity: 0; filter: blur(7px); }
+}
+
+/* Pedido explícito: "mejora el efecto de disipacion de la niebla, en la
+   interfaz movil genera errores graficos y ralentiza el juego. en el modo
+   escritorio no toques nada" — de las tres propiedades que anima
+   fog-dissipate (transform/opacity/filter), filter:blur() es con
+   diferencia la más cara: un blur de verdad obliga al navegador a
+   componer un búfer aparte y difuminarlo píxel a píxel en cada fotograma,
+   mucho peor soportado por la GPU de un móvil que transform/opacity. Con
+   hasta 289 losetas de niebla en el tablero (BOARD_SIZE_BY_OPPONENTS,
+   js/matchsetup.js) y varias disipándose a la vez al revelar una zona
+   grande de un golpe (Fog.revealAround), ese coste se nota como los
+   "errores graficos" (parpadeos, texturas mal compuestas) y la
+   ralentización reportados. En vez de tocar fog-dissipate en sí (se vería
+   IGUAL en escritorio, y el pedido es tajante: "no toques nada" ahí), se
+   sustituye SOLO en este breakpoint por fog-dissipate-mobile: mismo
+   crecimiento + desvanecido, sin el filtro. Mismo breakpoint
+   (FOG_ANIM_MOBILE_BREAKPOINT = 480px, js/fog.js) que ya usa el resto de
+   ajustes de rendimiento para móvil de este archivo, así que cualquier
+   ventana de escritorio (por estrecha que sea) nunca entra aquí. */
+@media (max-width: 480px) {
+  .tile__fog--revealed {
+    animation-name: fog-dissipate-mobile;
+    /* Sin "filter" en la lista (a diferencia de la regla de escritorio,
+       justo arriba) — nada que promocionar si esta versión no lo anima. */
+    will-change: transform, opacity;
+  }
+
+  @keyframes fog-dissipate-mobile {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.96; }
+    100% { transform: translate(-50%, -72%) scale(1.4); opacity: 0; }
+  }
 }
 
 /* ---------- Unidades ---------- */
@@ -3324,9 +3495,21 @@ body.ability-targeting--mind * {
      tamaño de fuente de escritorio se heredaban tal cual en móvil, así
      que el botón ocupaba mucho más ancho del necesario en una pantalla
      estrecha. Menos padding + texto un poco más pequeño, sin tocar nada
-     en escritorio (esta regla vive solo dentro de este @media). */
+     en escritorio (esta regla vive solo dentro de este @media).
+     BUG encontrado y corregido (pedido explícito: "el texto...ahora no
+     muestra el texto completo...'TODOS LISTOS' se ve como 'ODOS
+     LISTOS'"): el rombo del icono (.end-turn-btn__icon) NO depende de
+     este padding — vive fuera de .end-turn-btn__bg, posicionado con
+     left:-26px y 60px de ancho, así que su borde derecho cae SIEMPRE a
+     34px del borde izquierdo del botón (ver esa regla más arriba) y
+     pinta por ENCIMA de todo (z-index:2, a propósito). padding-left a
+     24px dejaba el texto empezando ANTES de ese borde (a 24px, 10px por
+     dentro de donde termina el rombo), así que el propio icono tapaba
+     las primeras letras. 38px sí deja los 4px de margen mínimo para que
+     el rombo nunca monte encima del texto, y el botón sigue siendo
+     bastante más estrecho que los 44px de escritorio. */
   .end-turn-btn__bg {
-    padding: 8px 16px 8px 24px;
+    padding: 8px 16px 8px 38px;
     font-size: 0.82rem;
   }
 
@@ -5268,6 +5451,27 @@ body.backpack-giving--bevida * {
   filter: drop-shadow(0 0 10px rgba(255, 93, 122, 0.9)) drop-shadow(0 0 4px rgba(255, 93, 122, 0.65));
 }
 
+/* Modo de apuntado del cohete "KataPum!" (Backpack._startTargetingKatapum,
+   js/backpack.js) — mismo patrón de cursor propio que el resto de "elegir
+   a quién" del proyecto (ver ability-targeting--eye/--throw/--punch/--mind
+   y backpack-giving--bevida más arriba), esta vez una mira de objetivo
+   ("a quién le disparo") en vez de un corazón. */
+body.backpack-giving--katapum,
+body.backpack-giving--katapum * {
+  cursor:
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="none" stroke="white" stroke-width="2.5"/><circle cx="16" cy="16" r="10" fill="none" stroke="%23ff4d3d" stroke-width="1.5"/><circle cx="16" cy="16" r="2.5" fill="%23ff4d3d" stroke="white" stroke-width="1"/><path d="M16 2 L16 8 M16 24 L16 30 M2 16 L8 16 M24 16 L30 16" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>')
+      16 16,
+    pointer !important;
+}
+
+/* Resaltado sobre cada rival elegible mientras se apunta el KataPum! —
+   mismo lenguaje visual que .unit--giveable-target/--mind-controlled
+   (drop-shadow de color), en rojo intenso para leerse como "objetivo",
+   distinto del rojo/rosa más suave de la BeVida. */
+.unit--katapum-target .unit__sprite {
+  filter: drop-shadow(0 0 10px rgba(255, 61, 46, 0.95)) drop-shadow(0 0 5px rgba(255, 61, 46, 0.7));
+}
+
 /* Objetos colocados sobre el tablero (de momento solo la Setarcoiris).
    Reutiliza ".unit" SOLO por su posicionamiento base (translate(-50%,
    -92%), igual que un personaje o un tótem) — nunca entra en Units.list,
@@ -5316,6 +5520,87 @@ body.backpack-giving--bevida * {
   0% { transform: scale(1, 1); opacity: 1; }
   40% { transform: scale(1.3, 0.6); opacity: 1; }
   100% { transform: scale(0.1, 0.1); opacity: 0; }
+}
+
+/* Cepo "AtrapaPinreles" (js/backpack.js) — a diferencia de la Setarcoiris
+   (una seta viva) es metal inerte tirado en el suelo: la respiración
+   suave que .board-item__sprite hereda por defecto no pega con un objeto
+   sin vida, así que se anula solo para este. */
+.board-item--atrapapinreles .board-item__sprite {
+  animation: none;
+  width: 66px;
+}
+
+/* Cohete "KataPum!" en pleno vuelo (Backpack._animateKatapumThrow,
+   js/backpack.js) — posicionado a mano fotograma a fotograma (left/top en
+   px, como GnomeInstance.animateThrowTo), NUNCA con la transition normal
+   de .unit (se leería como un salto de loseta en loseta, no como un vuelo
+   libre en línea recta). Centrado en su punto (no el translate(-50%,-92%)
+   de un personaje de pie: un proyectil no "está de pie" sobre una
+   loseta). */
+.katapum-projectile {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.katapum-projectile__sprite {
+  display: block;
+  width: 54px;
+  height: auto;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+  /* El rotate() real (dirección de vuelo) lo pone JS inline en cada
+     lanzamiento (ver _animateKatapumThrow) — transform-origin centrado por
+     defecto ya vale tal cual, no hace falta tocarlo. */
+}
+
+/* Rastro de partículas cuadradas amarillas/rojas (pedido explícito) que
+   deja el cohete a su paso — se quedan quietas en el sitio donde se
+   crearon (nunca siguen al proyectil) y se desvanecen cayendo un poco,
+   como chispas sueltas. */
+.katapum-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  pointer-events: none;
+  animation: katapum-particle-fade 0.42s ease-out forwards;
+}
+
+.katapum-particle--yellow {
+  background: #ffd23f;
+  box-shadow: 0 0 4px rgba(255, 210, 63, 0.8);
+}
+
+.katapum-particle--red {
+  background: #ff5d3d;
+  box-shadow: 0 0 4px rgba(255, 93, 61, 0.8);
+}
+
+@keyframes katapum-particle-fade {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.95; }
+  100% { transform: translate(0, 10px) scale(0.4); opacity: 0; }
+}
+
+/* Anillo de explosión en la casilla de impacto (Backpack._spawnKatapumBlast)
+   — se expande y se desvanece rápido, a juego con el temblor de cámara/
+   destello blanco que se disparan en el mismo instante (ver
+   Backpack._explodeKatapum). */
+.katapum-blast {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  margin-top: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 235, 180, 0.95) 0%, rgba(255, 140, 60, 0.85) 35%, rgba(255, 61, 46, 0.6) 60%, rgba(255, 61, 46, 0) 75%);
+  pointer-events: none;
+  animation: katapum-blast-expand 0.5s ease-out forwards;
+}
+
+@keyframes katapum-blast-expand {
+  0% { transform: scale(0.3); opacity: 1; }
+  60% { opacity: 1; }
+  100% { transform: scale(6); opacity: 0; }
 }
 
 /* ---------- Aviso de error al crear la partida (js/newgame-flow.js) ----------

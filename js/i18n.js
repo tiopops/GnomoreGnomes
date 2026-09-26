@@ -18,9 +18,13 @@ const STRINGS = {
 
     choose_race: "Elige tu raza",
     race_mushboom_forest: "Bosque MushBoom",
-    race_mushboom_forest_desc: "Virtudes: rápidos y ágiles, se mueven y golpean antes que nadie. Desventajas: poco aguante, caen en pocos golpes.",
+    race_mushboom_forest_flavor: "Habitantes del bosque y expertos en setas explosivas: GolemCorteza, SurcaBosques y TruenoEspora.",
+    race_mushboom_forest_virtues: "Rápidos y ágiles: se mueven más casillas por turno y suelen golpear antes que el rival.",
+    race_mushboom_forest_weaknesses: "Poco aguante: caen en pocos golpes, hay que jugar con cuidado y no exponerlos de más.",
     race_colinas_rockntroll: "Colinas Rock'n Troll",
-    race_colinas_rockntroll_desc: "Virtudes: duros como la roca, aguantan y pegan fuerte cuerpo a cuerpo. Desventajas: más lentos, les cuesta llegar al combate.",
+    race_colinas_rockntroll_flavor: "Trolls de las colinas rocosas, tan duros de roer como su música: LanzaGnomos, UrgaMentes y PuñoRroca.",
+    race_colinas_rockntroll_virtues: "Duros como la roca: aguantan mucho castigo y golpean con fuerza cuerpo a cuerpo.",
+    race_colinas_rockntroll_weaknesses: "Más lentos: tardan más turnos en alcanzar la línea de combate.",
 
     choose_opponents: "Elige el número de rivales",
     opponents_label: "{n} rival",
@@ -43,9 +47,13 @@ const STRINGS = {
 
     choose_race: "Choose your race",
     race_mushboom_forest: "MushBoom Forest",
-    race_mushboom_forest_desc: "Strengths: fast and agile, they move and strike before anyone else. Weaknesses: low toughness, they go down in a few hits.",
+    race_mushboom_forest_flavor: "Forest dwellers and masters of bomb mushrooms: GolemCorteza, SurcaBosques and TruenoEspora.",
+    race_mushboom_forest_virtues: "Fast and agile: they cover more tiles per turn and usually strike before the enemy does.",
+    race_mushboom_forest_weaknesses: "Low toughness: they go down in a few hits, so play them carefully.",
     race_colinas_rockntroll: "Rock'n Troll Hills",
-    race_colinas_rockntroll_desc: "Strengths: rock-hard, they take a beating and hit hard in melee. Weaknesses: slower, they struggle to reach the fight.",
+    race_colinas_rockntroll_flavor: "Trolls from the rocky hills, as hard-headed as their music: LanzaGnomos, UrgaMentes and PuñoRroca.",
+    race_colinas_rockntroll_virtues: "Rock-hard: they take a lot of punishment and hit hard in melee.",
+    race_colinas_rockntroll_weaknesses: "Slower: they take more turns to reach the fight.",
 
     choose_opponents: "Choose number of opponents",
     opponents_label: "{n} opponent",

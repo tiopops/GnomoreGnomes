@@ -309,6 +309,83 @@ const Fog = {
         o.el.classList.toggle("unit--fog-hidden", this.isFogged(o.row, o.col));
       });
     }
+    // Pedido explícito: "algunas unidades asoman por la niebla a veces...
+    // asegurate de que se arregla eso" — lo de arriba oculta del todo a
+    // quien esté DE PIE sobre su propia loseta sin revelar, pero un
+    // personaje visible (su loseta YA revelada) tiene un sprite más alto
+    // que su propia loseta, así que puede asomar por encima dentro del
+    // hueco de pantalla de una loseta VECINA que sigue sin revelar (mismo
+    // solapamiento por FOG_OVERHANG que ya se investigó para el z-index de
+    // la niebla, ver mapgen.js). Se arregla aparte (_refreshFogCoverZ) en
+    // vez de aquí mismo.
+    this._refreshFogCoverZ();
+  },
+
+  // Casillas vecinas "hacia arriba en pantalla" de una unidad que pueden
+  // llevarse por delante parte de su sprite si siguen sin revelar — misma
+  // geometría exacta que Villages.refreshOcclusion (ver ese archivo para la
+  // explicación de por qué (fila-1,col-1) es "justo arriba" en pantalla) y
+  // el mismo conjunto de casillas que pidió extender la petición de los
+  // tótems/obeliscos: justo arriba, arriba-derecha adyacente, arriba-
+  // izquierda adyacente y 2 casillas arriba del todo (para sprites más
+  // altos, como el GolemCorteza).
+  _UP_NEIGHBOR_OFFSETS: [
+    [-1, -1], // justo arriba
+    [-1, 0], // arriba-derecha (adyacente)
+    [0, -1], // arriba-izquierda (adyacente)
+    [-2, -2], // 2 casillas arriba
+  ],
+
+  // z-index "de reposo" de una nube de niebla — mismo cálculo que pone
+  // mapgen.js al crearla (ver ese archivo, comentario del bug de z-index ya
+  // arreglado antes): (fila+columna)*10+6, +1 por encima de una unidad de
+  // pie en ESA MISMA loseta (+5) pero sin llegar al rango de la loseta
+  // siguiente, que es lo que deja que el orden normal por fila+columna
+  // decida el resto del tablero sin tocarlo.
+  _fogRestZ(row, col) {
+    return (row + col) * 10 + 6;
+  },
+
+  // Sube el z-index de SOLO las nubes vecinas "de arriba" que todavía
+  // sigan sin revelar y estén junto a una unidad (o gnomo suelto) visible
+  // — justo lo justo para taparla (su propio z-index +1), nunca más. No es
+  // un z-index fijo y enorme para TODA la niebla sin revelar (esa fue
+  // justo la solución equivocada de antes, ver comentario de mapgen.js: una
+  // nube lejana no debe tapar por delante a un personaje que en realidad
+  // está más cerca de cámara) — solo se sube la nube exacta que un sprite
+  // concreto necesita tener delante, y vuelve sola a su z-index de reposo
+  // en cuanto ya no haga falta (la unidad se aleja, o esa loseta se
+  // revela), porque cada llamada empieza reseteando todo antes de volver a
+  // subir lo que siga haciendo falta.
+  _refreshFogCoverZ() {
+    if (!this.revealedGrid || !this._fogEls) return;
+    this._fogEls.forEach((fogEl, key) => {
+      const [r, c] = key.split(",").map(Number);
+      if (!this.revealedGrid[r][c]) fogEl.style.zIndex = String(this._fogRestZ(r, c));
+    });
+    const coverFrom = (row, col, el) => {
+      if (!el || el.classList.contains("unit--fog-hidden")) return;
+      const z = (row + col) * 10 + 5;
+      this._UP_NEIGHBOR_OFFSETS.forEach(([dr, dc]) => {
+        const r = row + dr;
+        const c = col + dc;
+        if (r < 0 || c < 0 || r >= this.size || c >= this.size) return;
+        if (this.revealedGrid[r][c]) return;
+        const fogEl = this._fogEls.get(`${r},${c}`);
+        if (!fogEl) return;
+        const current = parseInt(fogEl.style.zIndex, 10) || 0;
+        fogEl.style.zIndex = String(Math.max(current, z + 1));
+      });
+    };
+    if (typeof Units !== "undefined") {
+      Units.list.forEach((u) => coverFrom(u.row, u.col, u.el));
+    }
+    if (typeof Gnome !== "undefined") {
+      Gnome.list.forEach((g) => {
+        if (g.heldBy) return; // vive dentro del personaje que lo lleva, hereda su cobertura
+        coverFrom(g.row, g.col, g.el);
+      });
+    }
   },
 };
 

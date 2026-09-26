@@ -61,6 +61,12 @@ const SHOP_STOCK_TEMPLATE = [
   // Cuesta 5 puntos de Gloria" (ver ITEM_TYPES.bevida/ITEM_DESCRIPTIONS.bevida
   // en js/backpack.js).
   { itemId: "bevida", price: 5 },
+  // Pedido explícito: "añadimos a la tienda goblin el cepo llamado
+  // 'AtrapaPinreles'" (ver ITEM_TYPES.atrapapinreles en js/backpack.js) —
+  // cuesta algo más que una Setarcoiris/BeVida al ser un objeto ofensivo de
+  // un solo uso garantizado (turno perdido + gnomo caído + daño), no solo
+  // utilidad.
+  { itemId: "atrapapinreles", price: 6 },
 ];
 
 // Pedido explícito: "Las tiendas goblin reponen existencias cada 5 turnos,
@@ -73,6 +79,12 @@ const SHOP_STOCK_TEMPLATE = [
 const SHOP_RESTOCK_POOL = [
   { itemId: "setarcoiris", price: 5 },
   { itemId: "bevida", price: 5 },
+  { itemId: "atrapapinreles", price: 6 },
+  // Pedido explícito: "añadimos a la tienda goblin un cohete llamado
+  // 'KataPum!'" (ver ITEM_TYPES.katapum en js/backpack.js) — el más caro
+  // de todos: daño a distancia teledirigido, sin ni siquiera tener que
+  // acercarse al objetivo.
+  { itemId: "katapum", price: 8 },
 ];
 const SHOP_RESTOCK_INTERVAL = 5; // turnos
 

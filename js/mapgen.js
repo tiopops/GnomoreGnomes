@@ -435,7 +435,74 @@ function growLake(grid, size, startRow, startCol, targetCount, forbidden) {
   }
 }
 
-function generateMap(size) {
+// Pedido explícito: "el escenario contra un jugador debe ser de 25x25
+// losetas. pueden haber rios que crucen el escenario, pero...deben haber
+// zonas por las que poder cruzarlo sin loseta de agua, al menos 2 si hay
+// un rio" — a diferencia de un lago (growLake, mancha orgánica sin
+// dirección fija), un río nace en un borde del mapa y cruza HASTA el
+// borde opuesto (arriba-abajo o izquierda-derecha, al azar) con una
+// trayectoria serpenteante (deriva aleatoria de -1/0/+1 por fila o columna
+// en cada paso, según toque) en vez de una línea recta de un tablero de
+// ajedrez. 2 o 3 puntos a lo largo de su recorrido, bien repartidos (nunca
+// los dos pegados ni los dos en la misma punta: uno por tercio/cuarto del
+// trayecto), se quedan SIN pintar de agua — un vado por el que cruzar a
+// pie — y cualquier casilla dentro de la zona segura de spawn (ver
+// SAFE_RADIUS en generateMap) tampoco se pinta nunca de agua, aunque esa
+// no cuenta como uno de los vados "oficiales" por si el río ni siquiera
+// llega a pasar por esa zona.
+function generateRiver(grid, size, inSafeZone) {
+  const horizontal = Math.random() < 0.5;
+  const path = [];
+  if (horizontal) {
+    let col = 3 + Math.floor(Math.random() * Math.max(1, size - 6));
+    for (let row = 0; row < size; row++) {
+      path.push({ row, col });
+      col += Math.floor(Math.random() * 3) - 1;
+      col = Math.max(1, Math.min(size - 2, col));
+    }
+  } else {
+    let row = 3 + Math.floor(Math.random() * Math.max(1, size - 6));
+    for (let col = 0; col < size; col++) {
+      path.push({ row, col });
+      row += Math.floor(Math.random() * 3) - 1;
+      row = Math.max(1, Math.min(size - 2, row));
+    }
+  }
+
+  const crossingCount = 2 + (Math.random() < 0.5 ? 0 : 1); // 2 o 3 vados
+  const segment = Math.floor(path.length / crossingCount);
+  const crossingIdx = new Set();
+  for (let i = 0; i < crossingCount; i++) {
+    const start = i * segment + Math.floor(segment * 0.25);
+    const end = i * segment + Math.floor(segment * 0.75);
+    const idx = start + Math.floor(Math.random() * Math.max(1, end - start));
+    crossingIdx.add(Math.min(path.length - 1, Math.max(0, idx)));
+  }
+
+  path.forEach((p, i) => {
+    if (crossingIdx.has(i)) return; // vado: se deja como tierra a propósito
+    if (inSafeZone(p.row, p.col)) return; // zona segura de spawn: nunca agua
+    grid[p.row][p.col] = "water";
+    // Ancho variable (a veces también la loseta de al lado) para que la
+    // orilla no se lea como una línea perfecta de 1 loseta — nunca en un
+    // vado ni en la zona segura, por la misma razón de arriba.
+    if (Math.random() < 0.45) {
+      const extra = horizontal ? { row: p.row, col: p.col + 1 } : { row: p.row + 1, col: p.col };
+      if (
+        extra.row >= 0 &&
+        extra.col >= 0 &&
+        extra.row < size &&
+        extra.col < size &&
+        !inSafeZone(extra.row, extra.col)
+      ) {
+        grid[extra.row][extra.col] = "water";
+      }
+    }
+  });
+}
+
+function generateMap(size, options) {
+  const opts = options || {};
   const grid = Array.from({ length: size }, () => new Array(size).fill("grass"));
   const mid = Math.floor(size / 2);
   // Radio (Chebyshev) alrededor del centro donde NUNCA se genera agua —
@@ -477,6 +544,13 @@ function generateMap(size) {
     const targetCount = 4 + Math.floor(Math.random() * 6);
     growLake(grid, size, seed.row, seed.col, targetCount, (row, col) => edgeDist(row, col) < 2 || inSafeZone(row, col));
   }
+
+  // --- Río (pedido explícito, solo en el modo 1v1 por ahora, ver
+  // newgame-flow.js) --- Va DESPUÉS de los lagos para que el trazado del
+  // río gane siempre si por casualidad se cruzan (un río debe leerse como
+  // una línea continua de orilla a orilla; un lago tapado a medias por
+  // encima no se notaría).
+  if (opts.rivers) generateRiver(grid, size, inSafeZone);
 
   const tiles = [];
   for (let row = 0; row < size; row++) {
