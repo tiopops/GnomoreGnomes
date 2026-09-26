@@ -73,16 +73,28 @@ const Villages = {
 
   // Coloca VILLAGE_COUNT poblados en losetas transitables, libres (sin
   // unidad, gnomo NI otro poblado) y no demasiado cerca unas de otras (para
-  // que no aparezcan las dos pegadas por pura casualidad) — mismo espíritu
-  // que Units.spawnRandomEnemy: intenta unas cuantas veces al azar antes de
-  // rendirse, nunca bloquea la partida si el mapa está muy lleno.
+  // que no aparezcan las dos pegadas por pura casualidad). Pedido
+  // explícito: "lo mismo ocurre con los totems, se intentara repartirlos
+  // de la manera mas equitativa posible, separandolos de ambos jugadores
+  // el mismo numero de casillas para que ninguno tenga ventaja" — mismo
+  // criterio de equidistancia (Chebyshev) a los Obeliscos de ambos equipos
+  // que Shops.spawn (js/shops.js), con la misma tolerancia creciente si el
+  // mapa está muy lleno para encontrar sitio perfectamente equidistante.
   spawn(boardSize) {
     const MIN_SEPARATION = 3;
+    const obeliskSpots = typeof Obelisks !== "undefined" ? Obelisks.list.map((o) => ({ row: o.row, col: o.col })) : [];
+    let maxImbalance = 1;
     let attempts = 0;
-    while (this.list.length < VILLAGE_COUNT && attempts < 500) {
+    while (this.list.length < VILLAGE_COUNT && attempts < 1500) {
       attempts++;
+      if (attempts % 150 === 0) maxImbalance++;
       const row = Math.floor(Math.random() * boardSize);
       const col = Math.floor(Math.random() * boardSize);
+      if (obeliskSpots.length) {
+        const dists = obeliskSpots.map((o) => Math.max(Math.abs(row - o.row), Math.abs(col - o.col)));
+        const imbalance = Math.max(...dists) - Math.min(...dists);
+        if (imbalance > maxImbalance) continue;
+      }
       if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
       if (typeof Units !== "undefined" && Units.unitAt(row, col)) continue;
       if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
@@ -303,6 +315,34 @@ const Villages = {
     [0, -1],
     [-2, -2],
   ],
+  // Pedido explícito: "si una zona seleccionable del terreno o personaje
+  // adyacente o algo asi por un objeto o habilidad cae en una casilla de
+  // las que hemos nombrado de transparencia de totem u obelisco, este
+  // tambien debe comportarse con el sistema de transparencia" — mismo
+  // mecanismo que Obelisks._behindElsFor (js/obelisks.js): además de una
+  // unidad, cualquier marcador de zona seleccionable (movimiento, ataque,
+  // alcance de habilidad/objeto, lanzar/pasar gnomo... todos pasan por
+  // Units.addMarker) en esas 4 casillas también activa la transparencia.
+  _behindElsFor(village) {
+    const els = [];
+    Units.list.forEach((unit) => {
+      if (!unit.el || unit.el.classList.contains("unit--fog-hidden")) return;
+      if (this._OCCLUSION_OFFSETS.some(([dr, dc]) => unit.row === village.row + dr && unit.col === village.col + dc)) {
+        els.push(unit.el);
+      }
+    });
+    Units.markerEls.forEach((m) => {
+      if (!m || !m.isConnected) return;
+      const r = Number(m.dataset.row);
+      const c = Number(m.dataset.col);
+      if (Number.isNaN(r) || Number.isNaN(c)) return;
+      if (this._OCCLUSION_OFFSETS.some(([dr, dc]) => r === village.row + dr && c === village.col + dc)) {
+        els.push(m);
+      }
+    });
+    return els;
+  },
+
   refreshOcclusion(mouseX, mouseY) {
     if (typeof Units === "undefined") return;
     const mx = typeof mouseX === "number" ? mouseX : this._lastMouseX;
@@ -315,19 +355,16 @@ const Villages = {
         village.el.classList.remove("village--occluding");
         return;
       }
-      const behindUnit = Units.list.find((unit) => {
-        if (!unit.el || unit.el.classList.contains("unit--fog-hidden")) return false;
-        return this._OCCLUSION_OFFSETS.some(
-          ([dr, dc]) => unit.row === village.row + dr && unit.col === village.col + dc
-        );
-      });
+      const behindEls = this._behindElsFor(village);
       let occluding = false;
-      if (behindUnit) {
+      if (behindEls.length) {
         const vRect = village.spriteEl.getBoundingClientRect();
-        const uRect = behindUnit.el.getBoundingClientRect();
         const mouseOverVillage = mx >= vRect.left && mx <= vRect.right && my >= vRect.top && my <= vRect.bottom;
-        const mouseOverUnit = mx >= uRect.left && mx <= uRect.right && my >= uRect.top && my <= uRect.bottom;
-        occluding = mouseOverVillage || mouseOverUnit;
+        const mouseOverBehind = behindEls.some((el) => {
+          const r = el.getBoundingClientRect();
+          return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom;
+        });
+        occluding = mouseOverVillage || mouseOverBehind;
       }
       village.el.classList.toggle("village--occluding", occluding);
     });

@@ -730,11 +730,38 @@ const Backpack = {
     return true;
   },
 
+  // Temblor de cámara + destello blanco global + mensaje grande — mismo
+  // trío exacto que usa la seta-trampa de TruenoEspora (Abilities.
+  // _playExplosionFeedback, js/abilities.js) y que KataPum ya reutiliza
+  // parcialmente aquí mismo (Villages._flashScreen). Se llama ANTES de
+  // resolver el daño, para que "algo ha activado el cepo" se lea de un
+  // vistazo antes de fijarse en el "-1" concreto.
+  _playTrapFeedback(unit) {
+    const viewportEl = document.getElementById("board-viewport");
+    if (viewportEl) {
+      viewportEl.classList.remove("board-viewport--shake");
+      void viewportEl.offsetWidth;
+      viewportEl.classList.add("board-viewport--shake");
+      setTimeout(() => viewportEl.classList.remove("board-viewport--shake"), 420);
+    }
+    if (typeof Villages !== "undefined") Villages._flashScreen();
+    if (typeof SFX !== "undefined") SFX.glory();
+    Units.spawnFloatingText(unit, "¡ATRAPADO!", { className: "dmg-popup gnome-points-popup" });
+  },
+
   _springTrap(trap, unit) {
     // Cepo de un solo uso — igual que cualquier trampa física, se "gasta"
     // al atrapar a su primera víctima en vez de quedarse ahí para siempre.
     this.traps = this.traps.filter((t) => t.uid !== trap.uid);
     if (trap.el) trap.el.remove();
+
+    // Pedido explícito: "si cae en ella aparece por pantalla para todos un
+    // mensaje informativo igual que el de la seta explosiva" — mismo
+    // lenguaje visual que Abilities._playExplosionFeedback (temblor de
+    // cámara + destello blanco global + mensaje grande) para la seta-trampa
+    // de TruenoEspora, reutilizado aquí tal cual (mismas clases CSS/
+    // Villages._flashScreen) en vez de un segundo sistema de feedback.
+    this._playTrapFeedback(unit);
 
     SFX.hit();
     Units.playShake(unit);

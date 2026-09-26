@@ -1735,6 +1735,48 @@ body.team-markers--visible .unit__team-marker {
   box-shadow: 0 0 16px color-mix(in srgb, var(--accent-hover) 85%, transparent);
 }
 
+/* Pedido explícito: "podemos tintar los circulos que marcan donde lanzar el
+   gnomo de colores segun la dificultad del pase...amarillo...naranja...rojo"
+   — sustituye el tinte único de arriba por 3 niveles según la probabilidad
+   de éxito de ESE pase concreto (Gnome.computePassSuccess, ver
+   _passDifficultyClass en js/gnome.js: fácil/intermedio/arriesgado).
+   Siempre van junto con .range-marker--pass-target en el className (mismo
+   círculo base), así que solo hace falta sobreescribir el color aquí; el
+   orden en el HTML no importa, solo el orden en la hoja (estas reglas van
+   DESPUÉS a propósito para ganar el empate de especificidad). */
+.range-marker--pass-easy {
+  background: color-mix(in srgb, #f4d03f 32%, transparent);
+  border-color: color-mix(in srgb, #f4d03f 85%, white 15%);
+  box-shadow: 0 0 10px color-mix(in srgb, #f4d03f 55%, transparent);
+}
+
+.range-marker--pass-easy:hover {
+  background: color-mix(in srgb, #f4d03f 55%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, #f4d03f 85%, transparent);
+}
+
+.range-marker--pass-medium {
+  background: color-mix(in srgb, #ef8f2e 32%, transparent);
+  border-color: color-mix(in srgb, #ef8f2e 85%, white 15%);
+  box-shadow: 0 0 10px color-mix(in srgb, #ef8f2e 55%, transparent);
+}
+
+.range-marker--pass-medium:hover {
+  background: color-mix(in srgb, #ef8f2e 55%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, #ef8f2e 85%, transparent);
+}
+
+.range-marker--pass-hard {
+  background: color-mix(in srgb, #e0453c 32%, transparent);
+  border-color: color-mix(in srgb, #e0453c 85%, white 15%);
+  box-shadow: 0 0 10px color-mix(in srgb, #e0453c 55%, transparent);
+}
+
+.range-marker--pass-hard:hover {
+  background: color-mix(in srgb, #e0453c 55%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, #e0453c 85%, transparent);
+}
+
 /* Loseta con un rival al alcance: la mira se pinta en la propia loseta del
    rival, MÁS GRANDE que un círculo de movimiento y POR DETRÁS de su sprite
    (z-index menor que el de la unidad, ver zOffset en combat.js) — se lee

@@ -505,13 +505,24 @@ function generateMap(size, options) {
   const opts = options || {};
   const grid = Array.from({ length: size }, () => new Array(size).fill("grass"));
   const mid = Math.floor(size / 2);
-  // Radio (Chebyshev) alrededor del centro donde NUNCA se genera agua —
-  // ahí es donde spawnTestUnits (newgame-flow.js) coloca siempre a los
-  // personajes del jugador (spawnSpots relativos a mid/mid), así que tiene
-  // que quedar garantizado transitable pase lo que pase con el resto del
-  // mapa.
+  // Radio (Chebyshev) alrededor de CADA esquina donde NUNCA se genera agua
+  // — pedido explícito: "ningun jugador debe aparecer en el centro del
+  // mapa, siempre en las esquinas del mismo", así que Obelisks.spawn
+  // (js/obelisks.js) ya no arranca cerca de mid/mid, sino cerca de una de
+  // las 4 esquinas (CORNER_INSET/CORNER_SAFE_RADIUS aquí deben coincidir
+  // con esos mismos valores en obelisks.js). Como el mapa se genera ANTES
+  // de saber qué par de esquinas opuestas tocará esta partida, se protegen
+  // las 4 por igual.
+  const CORNER_INSET = Math.min(3, Math.max(1, Math.floor(size / 8)));
   const SAFE_RADIUS = 4;
-  const inSafeZone = (row, col) => Math.max(Math.abs(row - mid), Math.abs(col - mid)) <= SAFE_RADIUS;
+  const corners = [
+    { row: CORNER_INSET, col: CORNER_INSET },
+    { row: CORNER_INSET, col: size - 1 - CORNER_INSET },
+    { row: size - 1 - CORNER_INSET, col: CORNER_INSET },
+    { row: size - 1 - CORNER_INSET, col: size - 1 - CORNER_INSET },
+  ];
+  const inSafeZone = (row, col) =>
+    corners.some((c) => Math.max(Math.abs(row - c.row), Math.abs(col - c.col)) <= SAFE_RADIUS);
   const edgeDist = (row, col) => Math.min(row, col, size - 1 - row, size - 1 - col);
 
   // --- Borde exterior (pedido explícito: "rodear la parte exterior del

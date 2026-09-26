@@ -160,32 +160,48 @@ const Obelisks = {
     return typeof Units !== "undefined" ? Units.list.filter((u) => u.team === team).length : 0;
   },
 
-  // Coloca los DOS Obeliscos: el del jugador cerca del centro del mapa (la
-  // loseta libre más próxima al centro exacto, buscando en espiral igual
-  // que Gnome.spawnNear) y el del rival tan lejos de él como sea posible
-  // (mismo espíritu "relaja la exigencia poco a poco" que Shops.spawn).
+  // Pedido explícito: "ningun jugador debe aparecer en el centro del mapa,
+  // siempre en las esquinas del mismo" — antes el jugador arrancaba cerca
+  // del centro exacto y el rival simplemente "lo más lejos posible"
+  // (podía caer en cualquier punto, no necesariamente una esquina). Ahora
+  // ambos arrancan siempre cerca de una esquina del mapa: se elige al azar
+  // uno de los 2 pares de esquinas EN DIAGONAL (la máxima separación
+  // posible entre las 4) y se reparte al azar cuál le toca a cada equipo.
+  _cornerInset(size) {
+    // Mismo cálculo que CORNER_INSET en generateMap (js/mapgen.js), que es
+    // quien garantiza esa zona libre de agua — deben coincidir.
+    return Math.min(3, Math.max(1, Math.floor(size / 8)));
+  },
+
+  _corners(size) {
+    const inset = this._cornerInset(size);
+    return [
+      { row: inset, col: inset }, // arriba-izquierda
+      { row: inset, col: size - 1 - inset }, // arriba-derecha
+      { row: size - 1 - inset, col: inset }, // abajo-izquierda
+      { row: size - 1 - inset, col: size - 1 - inset }, // abajo-derecha
+    ];
+  },
+
+  _pickOpposedCorners(size) {
+    const [topLeft, topRight, bottomLeft, bottomRight] = this._corners(size);
+    const diagonalPairs = [
+      [topLeft, bottomRight],
+      [topRight, bottomLeft],
+    ];
+    const pair = diagonalPairs[Math.floor(Math.random() * diagonalPairs.length)];
+    return Math.random() < 0.5 ? pair : [pair[1], pair[0]];
+  },
+
+  // Coloca los DOS Obeliscos, cada uno cerca de una esquina distinta (la
+  // loseta libre más próxima a esa esquina, buscando en espiral igual que
+  // Gnome.spawnNear).
   spawn(size, playerRaceId, enemyRaceId) {
-    const mid = Math.floor(size / 2);
-    const playerSpot = this._findFreeTileNear(mid, mid, size);
+    const [playerCorner, enemyCorner] = this._pickOpposedCorners(size);
+    const playerSpot = this._findFreeTileNear(playerCorner.row, playerCorner.col, size);
     if (playerSpot) this._create("player", playerSpot.row, playerSpot.col, playerRaceId);
 
-    let targetDist = Math.max(2, Math.floor(size / 2));
-    let attempts = 0;
-    let enemySpot = null;
-    while (!enemySpot && attempts < 800) {
-      attempts++;
-      if (attempts % 200 === 0) targetDist = Math.max(1, targetDist - 1);
-      const row = Math.floor(Math.random() * size);
-      const col = Math.floor(Math.random() * size);
-      const playerObelisk = this.byTeam("player");
-      const dist = playerObelisk
-        ? Math.max(Math.abs(row - playerObelisk.row), Math.abs(col - playerObelisk.col))
-        : Math.max(Math.abs(row - mid), Math.abs(col - mid));
-      if (dist < targetDist) continue;
-      if (!this._tileFree(row, col)) continue;
-      enemySpot = { row, col };
-    }
-    if (!enemySpot) enemySpot = this._findFreeTileNear(size - 1 - mid, size - 1 - mid, size);
+    const enemySpot = this._findFreeTileNear(enemyCorner.row, enemyCorner.col, size);
     if (enemySpot) this._create("enemy", enemySpot.row, enemySpot.col, enemyRaceId);
   },
 
@@ -433,6 +449,36 @@ const Obelisks = {
     [0, -1],
     [-2, -2],
   ],
+  // Pedido explícito: "si una zona seleccionable del terreno o personaje
+  // adyacente o algo asi por un objeto o habilidad cae en una casilla de
+  // las que hemos nombrado de transparencia de totem u obelisco, este
+  // tambien debe comportarse con el sistema de transparencia" — hasta
+  // ahora solo una UNIDAD en esas 4 casillas activaba la transparencia al
+  // pasar el ratón; ahora cualquier marcador de zona seleccionable
+  // (movimiento, ataque, alcance de habilidad/objeto, lanzar/pasar gnomo...
+  // TODOS pasan por Units.addMarker, ver js/units.js) que caiga en esas
+  // mismas casillas cuenta igual, con la misma lógica de "pasar el ratón
+  // por encima para verlo".
+  _behindElsFor(obelisk) {
+    const els = [];
+    Units.list.forEach((unit) => {
+      if (!unit.el || unit.el.classList.contains("unit--fog-hidden")) return;
+      if (this._OCCLUSION_OFFSETS.some(([dr, dc]) => unit.row === obelisk.row + dr && unit.col === obelisk.col + dc)) {
+        els.push(unit.el);
+      }
+    });
+    Units.markerEls.forEach((m) => {
+      if (!m || !m.isConnected) return;
+      const r = Number(m.dataset.row);
+      const c = Number(m.dataset.col);
+      if (Number.isNaN(r) || Number.isNaN(c)) return;
+      if (this._OCCLUSION_OFFSETS.some(([dr, dc]) => r === obelisk.row + dr && c === obelisk.col + dc)) {
+        els.push(m);
+      }
+    });
+    return els;
+  },
+
   refreshOcclusion(mouseX, mouseY) {
     if (typeof Units === "undefined") return;
     const mx = typeof mouseX === "number" ? mouseX : this._lastMouseX;
@@ -443,19 +489,16 @@ const Obelisks = {
         obelisk.el.classList.remove("obelisk--occluding");
         return;
       }
-      const behindUnit = Units.list.find((unit) => {
-        if (!unit.el || unit.el.classList.contains("unit--fog-hidden")) return false;
-        return this._OCCLUSION_OFFSETS.some(
-          ([dr, dc]) => unit.row === obelisk.row + dr && unit.col === obelisk.col + dc
-        );
-      });
+      const behindEls = this._behindElsFor(obelisk);
       let occluding = false;
-      if (behindUnit) {
+      if (behindEls.length) {
         const oRect = obelisk.spriteEl.getBoundingClientRect();
-        const uRect = behindUnit.el.getBoundingClientRect();
         const mouseOverObelisk = mx >= oRect.left && mx <= oRect.right && my >= oRect.top && my <= oRect.bottom;
-        const mouseOverUnit = mx >= uRect.left && mx <= uRect.right && my >= uRect.top && my <= uRect.bottom;
-        occluding = mouseOverObelisk || mouseOverUnit;
+        const mouseOverBehind = behindEls.some((el) => {
+          const r = el.getBoundingClientRect();
+          return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom;
+        });
+        occluding = mouseOverObelisk || mouseOverBehind;
       }
       obelisk.el.classList.toggle("obelisk--occluding", occluding);
     });

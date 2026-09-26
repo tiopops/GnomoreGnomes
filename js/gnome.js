@@ -628,8 +628,13 @@ function createGnomeInstance() {
       Gnome._passBtn.classList.add("gnome-action-btn--aiming");
       if (typeof UiHint !== "undefined") UiHint.show("Elige a quién pasarle el gnomo");
 
+      // Pedido explícito: "no se le puede pasar el gnomo a un personaje que
+      // ya tiene un gnomo, se excluira de la seleccion" — Gnome.isHeldBy ya
+      // existe (lo usa combat.js) y consulta TODOS los gnomos en juego, no
+      // solo este, así que un aliado cargando con OTRO gnomo también queda
+      // excluido.
       Units.list
-        .filter((u) => u.team === "player" && u.id !== unit.id)
+        .filter((u) => u.team === "player" && u.id !== unit.id && !Gnome.isHeldBy(u.id))
         .forEach((ally, i) => {
           Units.addMarker({
             className: "pass-marker",
@@ -658,9 +663,28 @@ function createGnomeInstance() {
       // la misma variable que .pass-marker__icon, así que si ese color
       // cambia algún día los círculos lo siguen automáticamente).
       if (typeof Movement !== "undefined") {
-        Movement.reachableTiles(unit).forEach((tile, i) => {
+        // Pedido explícito: "podemos tintar los circulos que marcan donde
+        // lanzar el gnomo de colores segun la dificultad del pase...
+        // amarillo...naranja...rojo". OJO: estas casillas son siempre
+        // DENTRO del propio alcance de movimiento de quien lanza (por eso
+        // salen de Movement.reachableTiles), así que computePassSuccess da
+        // ahí SIEMPRE overreach=0 (>=90% con cualquier agilidad) — usar esa
+        // probabilidad tal cual pintaría todos los círculos en amarillo,
+        // sin ningún degradado. La "dificultad" que se pide teñir es la
+        // sensación relativa DENTRO de ese alcance: adyacente (distancia 1)
+        // siempre amarillo, y a partir de ahí un tercio más cerca del
+        // alcance máximo alcanzable ESTE turno = naranja, el tercio final
+        // (el borde mismo del alcance) = rojo.
+        const reachable = Movement.reachableTiles(unit);
+        const maxReachDist = reachable.reduce(
+          (max, t) => Math.max(max, Math.max(Math.abs(t.row - unit.row), Math.abs(t.col - unit.col))),
+          1
+        );
+        reachable.forEach((tile, i) => {
+          const distance = Math.max(Math.abs(tile.row - unit.row), Math.abs(tile.col - unit.col));
+          const difficultyClass = this._passDifficultyClass(distance, maxReachDist);
           Units.addMarker({
-            className: "range-marker range-marker--pass-target",
+            className: `range-marker range-marker--pass-target ${difficultyClass}`,
             row: tile.row,
             col: tile.col,
             delayIndex: i,
@@ -670,6 +694,19 @@ function createGnomeInstance() {
           });
         });
       }
+    },
+
+    // amarillo (fácil) / naranja (intermedio) / rojo (arriesgado) según la
+    // distancia relativa dentro del propio alcance de movimiento alcanzable
+    // ESTE turno (maxDist = la más lejana de las propias reachableTiles, ya
+    // calculada arriba). La adyacente (distancia 1, "el color que esta
+    // ahora par las casillas adyacentes") siempre es la más segura.
+    _passDifficultyClass(distance, maxDist) {
+      if (distance <= 1) return "range-marker--pass-easy";
+      const ratio = distance / Math.max(1, maxDist);
+      if (ratio <= 0.55) return "range-marker--pass-easy";
+      if (ratio <= 0.85) return "range-marker--pass-medium";
+      return "range-marker--pass-hard";
     },
 
     _cancelPassAim() {

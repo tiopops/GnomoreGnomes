@@ -115,26 +115,37 @@ const Shops = {
   },
 
   // Coloca SHOP_COUNT tiendas en losetas transitables, libres (sin unidad,
-  // gnomo, poblado NI otra tienda) y alejadas del centro del mapa (donde
-  // arranca el jugador, ver cabecera de este archivo) — mismo espíritu que
-  // Villages.spawn: intenta unas cuantas veces al azar, primero exigiendo
-  // estar lejos de verdad y, si el mapa es demasiado pequeño o está muy
-  // lleno para encontrar sitio así, relaja la exigencia poco a poco en vez
-  // de no colocar ninguna tienda.
+  // gnomo, poblado NI otra tienda). Pedido explícito: "la tienda goblin
+  // debe aparecer en una zona alejada las mismas casillas de todos los
+  // jugadores, para evitar dar ventaja tactica a alguien" — ya no basta
+  // con "lejos del centro del mapa" (además ahora ningún jugador arranca
+  // ahí, ver Obelisks.spawn): se busca una loseta EQUIDISTANTE (Chebyshev)
+  // de los Obeliscos de ambos equipos, y también alejada de los dos (no
+  // pegada a ningún jugador) — mismo espíritu "relaja la exigencia poco a
+  // poco" que antes: si el mapa es pequeño o está muy lleno para
+  // encontrar una equidistancia perfecta, se tolera cada vez algo más de
+  // diferencia entre "el jugador más cerca" y "el más lejos" en vez de no
+  // colocar ninguna tienda.
   spawn(boardSize) {
-    const mid = Math.floor(boardSize / 2);
-    let targetDist = Math.max(1, Math.floor(boardSize / 2) - 2);
+    const obeliskSpots = typeof Obelisks !== "undefined" ? Obelisks.list.map((o) => ({ row: o.row, col: o.col })) : [];
+    let maxImbalance = 0; // diferencia tolerada entre la distancia al jugador más cerca y al más lejos
+    let minDist = Math.max(2, Math.floor(boardSize / 6)); // no pegada a ningún jugador
     let attempts = 0;
-    while (this.list.length < SHOP_COUNT && attempts < 800) {
+    while (this.list.length < SHOP_COUNT && attempts < 1500) {
       attempts++;
-      // Cada 200 intentos sin suerte, se acerca un poco el umbral de
-      // "lejos" en vez de rendirse — un mapa pequeño con pocos rivales
-      // puede no tener ninguna loseta libre tan al borde.
-      if (attempts % 200 === 0) targetDist = Math.max(1, targetDist - 1);
+      // Cada 150/300 intentos sin suerte se relaja un poco cada exigencia
+      // en vez de rendirse — un mapa pequeño puede no tener ninguna loseta
+      // perfectamente equidistante Y libre.
+      if (attempts % 150 === 0) maxImbalance++;
+      if (attempts % 300 === 0) minDist = Math.max(1, minDist - 1);
       const row = Math.floor(Math.random() * boardSize);
       const col = Math.floor(Math.random() * boardSize);
-      const dist = Math.max(Math.abs(row - mid), Math.abs(col - mid));
-      if (dist < targetDist) continue;
+      if (obeliskSpots.length) {
+        const dists = obeliskSpots.map((o) => Math.max(Math.abs(row - o.row), Math.abs(col - o.col)));
+        const imbalance = Math.max(...dists) - Math.min(...dists);
+        if (imbalance > maxImbalance) continue;
+        if (Math.min(...dists) < minDist) continue;
+      }
       if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
       if (typeof Units !== "undefined" && Units.unitAt(row, col)) continue;
       if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
