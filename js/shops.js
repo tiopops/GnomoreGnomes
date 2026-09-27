@@ -60,28 +60,52 @@ const SHOP_INTERACT_RANGE = 1; // cuerpo a cuerpo, igual que VILLAGE_ATTACK_RANG
 // solo en la reposición, ver SHOP_RESTOCK_POOL) y el TotemVision nuevo
 // (ver ITEM_TYPES.totemvision/js/totemvision.js) para que la partida
 // arranque ya con las 8 casillas llenas de variedad real.
+//
+// REEQUILIBRADO DE PRECIOS (pedido explícito: "analiza todos los productos
+// a la venta...evalua su precio segun la ventaja tactica...no te pases con
+// los precios, debe incentivar a la gente que vaya a comprar a la tienda,
+// si es muy caro no la tendran en cuenta"). El ancla de toda la economía de
+// Gloria es RECRUIT_PRICES (js/units.js): reclutar una unidad de combate
+// entera desde el Obelisco cuesta solo 2 de Gloria, y el ingreso base es de
+// GLORY_PER_TURN_START=2 por turno (js/glory.js) más bonus de poblados/
+// bajas. Con esa vara de medir, los precios antiguos (5 a 8) equivalían a
+// 2-4 unidades reclutadas por UN solo objeto de un solo uso — carísimo de
+// más y la razón de que nadie se pasara por la tienda. Precios nuevos,
+// todos entre 3 y 5 (1-2 turnos de ahorro, la mitad o menos de antes),
+// graduados según lo que de verdad cambia la partida:
+//   3 — Setarcoiris (economía diferida: un gnomo de puntos garantizado
+//       pero dentro de 2 turnos, nada inmediato), AtrapaPinreles (trampa
+//       situacional: solo hace algo si el rival pasa por encima) y
+//       TotemVision (solo visión, 1 punto de vida, no hace daño ni cura).
+//   4 — BeVida (cura completa instantánea: puede salvar una unidad ya
+//       invertida en la Armería, mucho más valor que un simple recluta) y
+//       Señuelo Explosivo (trampa que además ENGAÑA a la IA rival para que
+//       vaya a por ella sola, así que dispara con más fiabilidad que
+//       AtrapaPinreles).
+//   5 — KataPum! (el único daño a distancia garantizado sin tener que
+//       acercarse ni depender de que el rival "caiga" en nada — sigue
+//       siendo el más caro, pero ya no cuesta lo mismo que reclutar un
+//       pelotón entero).
 const SHOP_STOCK_TEMPLATE = [
-  { itemId: "setarcoiris", price: 5 },
-  { itemId: "setarcoiris", price: 5 },
-  // Pedido explícito: "añadimos un nuevo objeto a la tienda 'BeVida'...
-  // Cuesta 5 puntos de Gloria" (ver ITEM_TYPES.bevida/ITEM_DESCRIPTIONS.bevida
-  // en js/backpack.js).
-  { itemId: "bevida", price: 5 },
-  { itemId: "bevida", price: 5 },
+  { itemId: "setarcoiris", price: 3 },
+  { itemId: "setarcoiris", price: 3 },
+  // Pedido explícito: "añadimos un nuevo objeto a la tienda 'BeVida'..."
+  // (ver ITEM_TYPES.bevida/ITEM_DESCRIPTIONS.bevida en js/backpack.js) —
+  // precio ver reequilibrado arriba.
+  { itemId: "bevida", price: 4 },
+  { itemId: "bevida", price: 4 },
   // Pedido explícito: "añadimos a la tienda goblin el cepo llamado
   // 'AtrapaPinreles'" (ver ITEM_TYPES.atrapapinreles en js/backpack.js) —
-  // cuesta algo más que una Setarcoiris/BeVida al ser un objeto ofensivo de
-  // un solo uso garantizado (turno perdido + gnomo caído + daño), no solo
-  // utilidad.
-  { itemId: "atrapapinreles", price: 6 },
+  // precio ver reequilibrado arriba.
+  { itemId: "atrapapinreles", price: 3 },
   // Pedido explícito: "añadimos nuevo item a la tienda goblin
   // 'item_señuelo'" (ver ITEM_TYPES.senuelo en js/backpack.js) — sustituye
   // al segundo AtrapaPinreles (mismo espíritu de trampa ofensiva, así que
   // repetir los dos a la vez era más redundancia que variedad) para que la
   // partida arranque ya con las 8 casillas mostrando 8 objetos distintos.
-  { itemId: "senuelo", price: 7 },
-  { itemId: "katapum", price: 8 },
-  { itemId: "totemvision", price: 7 },
+  { itemId: "senuelo", price: 4 },
+  { itemId: "katapum", price: 5 },
+  { itemId: "totemvision", price: 3 },
 ];
 
 // Pedido explícito: "Las tiendas goblin reponen existencias cada 5 turnos,
@@ -90,22 +114,23 @@ const SHOP_STOCK_TEMPLATE = [
 // reponer — separado de SHOP_STOCK_TEMPLATE (que solo describe la primera
 // tienda al empezar la partida): mismos itemId/precio de momento, pero es
 // aquí donde habrá que añadir cualquier objeto nuevo el día de mañana para
-// que también pueda salir en una reposición.
+// que también pueda salir en una reposición. Precios reequilibrados igual
+// que arriba, para que una reposición no vuelva a encarecer nada.
 const SHOP_RESTOCK_POOL = [
-  { itemId: "setarcoiris", price: 5 },
-  { itemId: "bevida", price: 5 },
-  { itemId: "atrapapinreles", price: 6 },
+  { itemId: "setarcoiris", price: 3 },
+  { itemId: "bevida", price: 4 },
+  { itemId: "atrapapinreles", price: 3 },
   // Pedido explícito: "añadimos a la tienda goblin un cohete llamado
   // 'KataPum!'" (ver ITEM_TYPES.katapum en js/backpack.js) — el más caro
   // de todos: daño a distancia teledirigido, sin ni siquiera tener que
   // acercarse al objetivo.
-  { itemId: "katapum", price: 8 },
+  { itemId: "katapum", price: 5 },
   // TotemVision (js/totemvision.js) — igual que el resto de objetos
   // nuevos, también puede salir sorteado en cualquier reposición futura.
-  { itemId: "totemvision", price: 7 },
+  { itemId: "totemvision", price: 3 },
   // Señuelo Explosivo (ver ITEM_TYPES.senuelo en js/backpack.js) — igual
   // que el resto, también puede salir en cualquier reposición futura.
-  { itemId: "senuelo", price: 7 },
+  { itemId: "senuelo", price: 4 },
 ];
 const SHOP_RESTOCK_INTERVAL = 5; // turnos
 
