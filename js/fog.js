@@ -22,7 +22,21 @@
 // personaje AL EMPEZAR la partida — pedido explícito: FIJO, no depende de
 // la PERCEPCION de cada uno (esa estadística solo entra en juego a partir
 // del primer movimiento, ver Fog.revealForUnit).
-const FOG_INITIAL_RADIUS = 2;
+// Pedido explícito (pasada posterior): "al principio del juego se despejan
+// 3 casillas alrededor de tu obelisco en lugar de 2" — subido de 2 a 3.
+// Además de lo puramente visual, esto arregla una inconsistencia real: el
+// Obelisco propio (único "personaje" que usa este radio inicial, ver
+// playerSpawnSpots en newgame-flow.js — en este modo se empieza con 0
+// unidades reclutadas) ya tenía percepción PERMANENTE de radio 3
+// (FOG_OBELISK_PERCEPTION_RADIUS, ver más abajo), pero con el revelado
+// inicial en radio 2 ese tercer anillo quedaba "percibido" sin haber sido
+// nunca "revelado" (revealedGrid) — Fog.applyVisibility esconde una
+// entidad si CUALQUIERA de las dos cosas falla (isFogged || !isPerceived,
+// ver más abajo), así que esa nube nunca llegaba a disiparse aunque el
+// Obelisco ya la estuviera vigilando desde el primer fotograma. Con los
+// dos radios iguales, el aro que el Obelisco perciba siempre corresponde
+// al aro que se ve despejado.
+const FOG_INITIAL_RADIUS = 3;
 
 // Pedido explícito: "añade un checkbox para desactivar/activar la animacion
 // de la niebla en configuracion. en la interfaz movil por defecto estara
