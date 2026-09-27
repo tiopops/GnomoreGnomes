@@ -4566,6 +4566,21 @@ body.perf-mode .eye-cursor-fx {
   transform: translate(-50%, -92%) translateY(34px);
 }
 
+/* CORRECCIÓN (pedido explícito): "los arbustos...no deben elebarse al pasar
+   el raton sobre ellos, ampliarse un poquito como hace el obelisco si" —
+   mismo problema exacto que .shop:hover ya documenta arriba: .unit:hover
+   tiene más especificidad que .bush sola y GANABA sobre su translateY(34px)
+   propio en cuanto se pasaba el ratón, perdiendo su posición bajada de
+   golpe (se leía como si "saltara"). El Obelisco no sufre esto porque no
+   tiene ningún translateY propio que perder. Aquí SÍ se quiere el mismo
+   escalado sutil que .unit:hover (a diferencia de la tienda, que pidió
+   quedarse completamente quieta), solo que encadenado DESPUÉS del
+   translateY(34px) para conservarlo. */
+.bush:hover {
+  transform: translate(-50%, -92%) translateY(34px) scale(1.05);
+  filter: brightness(1.12);
+}
+
 .bush__sprite {
   display: block;
   width: 132px;
@@ -6481,6 +6496,18 @@ body.backpack-giving--katapum * {
   transform: translate(-50%, -92%) translateY(30px);
 }
 
+/* CORRECCIÓN (pedido explícito): "las rocas y menas no deben elebarse al
+   pasar el raton sobre ellos, ampliarse un poquito como hace el obelisco
+   si" — mismo arreglo exacto que .bush:hover (ver su nota más arriba):
+   .unit:hover ganaba por especificidad sobre el translateY(30px) propio de
+   .resource-node y lo perdía de golpe al pasar el ratón. Encadenado
+   después para conservarlo, con el mismo escalado sutil que sí se quiere
+   aquí (a diferencia de la tienda). */
+.resource-node:hover {
+  transform: translate(-50%, -92%) translateY(30px) scale(1.05);
+  filter: brightness(1.12);
+}
+
 .resource-node__sprite {
   display: block;
   width: 150px;
@@ -6578,7 +6605,18 @@ body.backpack-giving--katapum * {
    diferencia del rombo de precio de .shop-slot__price, que va anclado a la
    esquina de UNA casilla concreta, aquí son varias etiquetas sueltas en
    fila propia). */
+/* CORRECCIÓN (pedido explícito, encontrado al depurar "los recursos
+   recogidos no aparecen en la mochila"): igual que .backpack-slots/
+   .backpack-desc ya documentan arriba, un hijo DIRECTO de .backpack-panel__bg
+   (un .p5-banner) sin su propio position+z-index queda tapado por el
+   ::after de relleno del panel (z-index:1) — esta fila (hija directa tanto
+   del popup de la mochila como del de la Armería, ver Backpack.openPopup/
+   Armory.openPopup) se estaba pintando, pero invisible detrás del fondo.
+   Los números SÍ se actualizaban (refreshResourceBadges), simplemente no
+   se veían nunca. */
 .armory-resource-row {
+  position: relative;
+  z-index: 2;
   display: flex;
   justify-content: center;
   gap: 18px;
@@ -6615,7 +6653,13 @@ body.backpack-giving--katapum * {
    una linea amarilla como en un arbol de nodos...Cuando no, esta de color
    gris apagado." Reutiliza .backpack-panel/.backpack-overlay/.p5-banner
    (ver Armory.openPopup) — solo lo propio de este popup vive aquí. */
+/* Mismo motivo exacto que .armory-resource-row arriba: hija directa de
+   .backpack-panel__bg, necesita su propio position+z-index o el ::after del
+   panel la tapa entera (los 3 nodos de cada árbol también se estaban
+   pintando fuera de la vista). */
 .armory-tracks {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 22px;

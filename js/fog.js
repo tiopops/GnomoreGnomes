@@ -426,6 +426,48 @@ const Fog = {
         coverFrom(g.row, g.col, g.el);
       });
     }
+    // Pedido explícito: "a veces el indicador de poblacion y la barra de
+    // vida del obelisco se queda por debajo de la niebla, no debe ser asi".
+    // El obelisco (y el resto de objetos grandes y fijos del tablero: aldeas,
+    // tiendas, arbustos y nodos de recursos) tiene exactamente el mismo
+    // problema geométrico que ya se resolvía arriba solo para Units/Gnome:
+    // su sprite (con la barra de vida y el indicador de población flotando
+    // encima) es más alto que su propia loseta, así que puede asomar dentro
+    // del hueco de pantalla de una loseta VECINA todavía sin revelar. Antes
+    // de este arreglo estos objetos no pasaban nunca por coverFrom(), así
+    // que esa loseta vecina se quedaba en su z-index de "descanso" y el
+    // trozo asomado del obelisco/aldea/tienda/arbusto/recurso se veía POR
+    // ENCIMA de su niebla en vez de tapado por ella.
+    if (typeof Obelisks !== "undefined") {
+      Obelisks.list.forEach((o) => {
+        if (!o.el) return;
+        coverFrom(o.row, o.col, o.el);
+      });
+    }
+    if (typeof Villages !== "undefined") {
+      Villages.list.forEach((v) => {
+        if (!v.el) return;
+        coverFrom(v.row, v.col, v.el);
+      });
+    }
+    if (typeof Shops !== "undefined") {
+      Shops.list.forEach((s) => {
+        if (!s.el) return;
+        coverFrom(s.row, s.col, s.el);
+      });
+    }
+    if (typeof Bushes !== "undefined") {
+      Bushes.list.forEach((b) => {
+        if (!b.el) return;
+        coverFrom(b.row, b.col, b.el);
+      });
+    }
+    if (typeof Resources !== "undefined") {
+      Resources.list.forEach((r) => {
+        if (!r.el) return;
+        coverFrom(r.row, r.col, r.el);
+      });
+    }
   },
 };
 
