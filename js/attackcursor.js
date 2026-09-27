@@ -24,6 +24,25 @@
     return fxEl;
   }
 
+  // Halo turquesa del modo de apuntado "ojo" de Visión Lejana (Surcabosques,
+  // js/abilities.js) — pedido explícito: "el puntero de ojo de la habilidad
+  // vision lejana...debe palpitar y tener un brillo azul celeste". Mismo
+  // motivo exacto que el halo rojo de ataque de arriba (un cursor CSS nativo
+  // no se puede animar): un segundo halo que sigue al ratón, esta vez
+  // visible SIEMPRE que el modo esté activo (no solo al pasar sobre un
+  // objetivo concreto — aquí cualquier loseta del mapa es un objetivo
+  // válido, ver Abilities._startEyeTargeting), en vez de reutilizar el
+  // mismo fxEl de arriba (evita que dos modos a la vez, aunque no debería
+  // pasar, se pisen el uno al otro).
+  let eyeFxEl = null;
+  function ensureEyeFx() {
+    if (eyeFxEl) return eyeFxEl;
+    eyeFxEl = document.createElement("div");
+    eyeFxEl.className = "eye-cursor-fx";
+    document.body.appendChild(eyeFxEl);
+    return eyeFxEl;
+  }
+
   document.addEventListener("mousemove", (e) => {
     const el = ensure();
     const over = e.target && e.target.closest && e.target.closest(SELECTOR);
@@ -31,6 +50,14 @@
     if (over) {
       el.style.left = `${e.clientX}px`;
       el.style.top = `${e.clientY}px`;
+    }
+
+    const eyeEl = ensureEyeFx();
+    const eyeActive = document.body.classList.contains("ability-targeting--eye");
+    eyeEl.classList.toggle("eye-cursor-fx--visible", eyeActive);
+    if (eyeActive) {
+      eyeEl.style.left = `${e.clientX}px`;
+      eyeEl.style.top = `${e.clientY}px`;
     }
   });
 })();

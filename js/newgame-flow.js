@@ -57,6 +57,11 @@ function renderRaceCard({ iconImg, title, flavor, virtues, weaknesses, onClick, 
   const card = document.createElement("button");
   card.className = "race-card";
   if (color) card.style.setProperty("--card-accent", color);
+  // Pedido explícito: "las tarjetas de raza...deben flotar, cada una por su
+  // cuenta, que no vayan al compas" — delay negativo aleatorio (mismo truco
+  // que la niebla, ver mapgen.js) para desincronizar la animación
+  // race-card-float (style.css) de cada tarjeta entre sí.
+  card.style.setProperty("--float-delay", `-${(Math.random() * 4.2).toFixed(2)}s`);
   card.innerHTML = `
     <span class="race-card__art-wrap">
       <img src="${iconImg}" alt="" class="race-card__art" />

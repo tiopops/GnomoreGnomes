@@ -139,6 +139,12 @@ const SFX = {
   // en vez de un impacto.
   gnomeCooldown() { this._pluck("gnome-cooldown", 210, "sine", 0.28, 0.22); },
 
+  // Easter egg del logotipo del menú (js/menu.js) — pedido explícito: "un
+  // sonido de quejido de gnomo se reprodujera" al hacer clic sobre el logo.
+  // Mismo "pluck" simple que dropFail (sawtooth cayendo), pero más agudo y
+  // más corto: se lee como un "¡ay!" puntual, no como un fallo/error.
+  gnomeOuch() { this._pluck("gnome-ouch", 480, "sawtooth", 0.16, 0.36); },
+
   // Grito del gnomo mientras vuela por el aire (Gnome.animateThrowTo) —
   // pedido explícito: "un sonido... como iiiiiiiiu o que den un gritito...
   // asegúrate de que sea un sonido de calidad".

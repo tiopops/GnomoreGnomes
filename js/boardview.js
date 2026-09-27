@@ -391,6 +391,25 @@ const BoardView = {
     // alcanza, un arrastre de cámara de verdad lo supera enseguida.
     const DRAG_THRESHOLD_PX = 4;
 
+    // Pedido explícito (investigación de "sigo teniendo que hacer doble clic
+    // con mi dedo para casi todo en la interfaz desde el smartphone"): un
+    // dedo sobre una pantalla capacitiva tiembla mucho más que un ratón o un
+    // trackpad al quedarse "quieto" — 4px es un margen realista para un
+    // clic de ratón, pero en un toque normal con el dedo es MUY fácil
+    // superarlo sin querer arrastrar nada. Como el bloqueo de "click" de más
+    // abajo usa la MISMA bandera (_dragMoved) tanto para ratón como para
+    // dedo, ese temblor normal marcaba _dragMoved=true en el propio toque
+    // que el jugador solo quería usar para seleccionar una unidad o pulsar
+    // un botón del tablero — y el guardia de "click" en captura anulaba ESE
+    // mismo toque con stopImmediatePropagation, dejándolo sin efecto. El
+    // jugador lo interpretaba como que hacía falta un segundo toque (que sí
+    // funcionaba, por pura suerte de que esa segunda vez el temblor fue
+    // menor) cuando en realidad el primero SÍ se registraba, solo que se
+    // descartaba por error al confundirlo con un arrastre de cámara. Un
+    // margen mayor y propio para dedo (no para ratón, que no lo necesita)
+    // soluciona la causa raíz sin tocar nada del arrastre de cámara real.
+    const TOUCH_DRAG_THRESHOLD_PX = 14;
+
     window.addEventListener("mousemove", (e) => {
       if (!this._dragState) return;
       const dx = e.clientX - this._dragState.lastX;
@@ -478,7 +497,7 @@ const BoardView = {
           if (!this._dragMoved) {
             const totalDx = t.clientX - this._touchState.startX;
             const totalDy = t.clientY - this._touchState.startY;
-            if (Math.hypot(totalDx, totalDy) > DRAG_THRESHOLD_PX) this._dragMoved = true;
+            if (Math.hypot(totalDx, totalDy) > TOUCH_DRAG_THRESHOLD_PX) this._dragMoved = true;
           }
           this._panBy(dx, dy);
         } else if (this._touchState.mode === "pinch" && e.touches.length === 2) {

@@ -256,19 +256,45 @@ const Fog = {
     if (!this.revealedGrid) return;
     if (typeof Units !== "undefined") {
       Units.list.forEach((u) => {
-        if (u.team === "player" || !u.el) return;
-        // Arbustos (js/bushes.js) — pedido explícito: "el personaje queda
-        // ocultos a ojos del rival, el jugador dueño del personaje lo ve
-        // tras del arbusto". Se reutiliza tal cual la misma clase
-        // unit--fog-hidden (ya excluye aquí arriba a las unidades del propio
-        // jugador, que nunca deben ocultarse) en vez de inventar un segundo
-        // sistema de ocultación — a diferencia de la niebla normal, esto NO
-        // depende de si la loseta ya está revelada: un arbusto en zona ya
-        // explorada sigue ocultando a quien esté dentro hasta que se le
-        // emboque (ver Bushes._springAmbush) o se mueva por su cuenta.
-        const bushHidden = typeof Bushes !== "undefined" && Bushes.isHidingUnit(u);
-        u.el.classList.toggle("unit--fog-hidden", this.isFogged(u.row, u.col) || bushHidden);
+        if (!u.el) return;
+        // Arbustos (js/bushes.js) — pedido explícito (afinado en una pasada
+        // posterior): "los personajes que estan ocultos en un arbusto deben
+        // situarse detras del sprite del arbusto...el personaje se
+        // oscurecera un poco simulando que esta oculto en la sombra" — a
+        // diferencia de la ocultación total de un rival bajo niebla
+        // (unit--fog-hidden, visibility:hidden), el propio dueño SIGUE
+        // viendo a su personaje escondido, solo que atenuado y con un icono
+        // propio (unit--in-bush, ver style.css/Units.spawnUnit) — así que
+        // esto no puede vivir en el mismo toggle que unit--fog-hidden de
+        // abajo (ese sigue excluyendo SIEMPRE a "player").
+        const inBush = typeof Bushes !== "undefined" && Bushes.isHidingUnit(u);
+        u.el.classList.toggle("unit--in-bush", inBush);
+        // Por debajo del propio arbusto (mismo z-index de loseta que ya usa
+        // Units.hopTo/spawnUnit, -1 para perder el empate con el del
+        // arbusto, ver Bushes._placeInstant: misma fórmula +5) mientras dure
+        // escondido; en cuanto deja de estarlo, el próximo hopTo/spawn ya
+        // vuelve a fijar el +5 normal, así que no hace falta "restaurar"
+        // nada aquí explícitamente.
+        if (inBush) u.el.style.zIndex = String((u.row + u.col) * 10 + 4);
+
+        if (u.team === "player") return; // el jugador nunca oculta del todo a los suyos (niebla normal)
+        // Un rival escondido en un arbusto (a ojos del jugador, que es quien
+        // ve esta pantalla) sigue totalmente invisible, igual que bajo
+        // niebla sin revelar — reutiliza tal cual la misma clase
+        // unit--fog-hidden en vez de inventar un segundo sistema de
+        // ocultación, y NO depende de si la loseta ya está explorada: un
+        // arbusto en zona ya revelada sigue ocultando a quien esté dentro
+        // hasta que se le emboque (ver Bushes._springAmbush) o se mueva.
+        u.el.classList.toggle("unit--fog-hidden", this.isFogged(u.row, u.col) || inBush);
       });
+      // Arbustos (js/bushes.js) — mismo criterio sin excepción que un
+      // tótem/obelisco enemigo: "NADA debe verse si tiene niebla encima".
+      if (typeof Bushes !== "undefined") {
+        Bushes.list.forEach((b) => {
+          if (!b.el) return;
+          b.el.classList.toggle("unit--fog-hidden", this.isFogged(b.row, b.col));
+        });
+      }
     }
     if (typeof Gnome !== "undefined") {
       Gnome.list.forEach((g) => {

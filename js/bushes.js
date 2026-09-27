@@ -36,7 +36,9 @@
    hecho ya nacen invisibles para el rival) y ya se disparan igual si
    alguien entra ahí — no hace falta que este archivo sepa que existen. */
 
-const BUSH_COUNT = 8;
+// Pedido explícito (segunda pasada): "puedes repartir algun arbusto mas por
+// el escenario" — de 8 a 12.
+const BUSH_COUNT = 12;
 const BUSH_MIN_SEPARATION = 3; // entre dos arbustos, para que no se amontonen
 const BUSH_POI_RADIUS_START = 2;
 const BUSH_POI_RADIUS_MAX = 4;

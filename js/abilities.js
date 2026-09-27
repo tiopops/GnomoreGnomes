@@ -471,7 +471,13 @@ const Abilities = {
     const { x, y } = getTileCenter(row, col, Units.boardSize);
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
-    el.style.zIndex = String((row + col) * 10 + 4);
+    // Pedido explícito: "si un personaje aliado se coloca encima de un cepo
+    // u otro objeto aliado...el sprite del personaje siempre debe estar por
+    // debajo del objeto" — antes +4 (por debajo del +5 de una unidad de pie
+    // en la misma loseta, ver Units.spawnUnit/hopTo); ahora +6, mismo valor
+    // que ya usan el cepo AtrapaPinreles/Setarcoiris (ver backpack.js) para
+    // que el objeto se vea siempre por encima de quien lo pise.
+    el.style.zIndex = String((row + col) * 10 + 6);
     this._mines.push({ row, col, ownerTeam: unit.team, el });
     SFX.click();
   },

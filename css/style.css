@@ -276,11 +276,39 @@ body {
      (nada que ver con el coste de la niebla). */
   will-change: transform;
   animation: main-logo-float 4.5s ease-in-out infinite;
+  /* Easter egg (js/menu.js, .main-logo--punched más abajo): el logo entero
+     es clicable. */
+  cursor: pointer;
 }
 
 @keyframes main-logo-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
+}
+
+/* Easter egg (js/menu.js): clic en el logotipo — pedido explícito: "me
+   gustaria que si le hicieras clic al gnomo que aparece en el logotipo de
+   gnomoregnomes del menu principal el logo reaccionase como si le estuvieras
+   pegando y un sonido de quejido de gnomo se reprodujera". El logo es una
+   única imagen plana (no hay un elemento de gnomo aparte que recortar), así
+   que el clic se escucha sobre TODO el logotipo. Se listan las DOS
+   animaciones juntas (float + punch) en vez de sustituir la de reposo: misma
+   especificidad que .main-logo, pero al venir después en el archivo gana el
+   shorthand completo, así que el logo sigue flotando encogido/sacudido
+   mientras dura el golpe en vez de congelarse un instante. js/menu.js quita
+   la clase a los 400ms (duración de main-logo-punch) para volver a dejar
+   solo el float normal — mismo patrón "quitar/reflow/añadir" de un solo tiro
+   que el resto del proyecto (ver p.ej. Villages._playEpicSmash). */
+.main-logo--punched {
+  animation: main-logo-float 4.5s ease-in-out infinite, main-logo-punch 0.4s ease;
+}
+
+@keyframes main-logo-punch {
+  0% { transform: scale(1) rotate(0deg) translateX(0); }
+  20% { transform: scale(0.92, 1.08) rotate(-4deg) translateX(-10px); }
+  50% { transform: scale(1.06, 0.94) rotate(3deg) translateX(6px); }
+  75% { transform: scale(0.98, 1.02) rotate(-1deg) translateX(-2px); }
+  100% { transform: scale(1) rotate(0deg) translateX(0); }
 }
 
 /* Utilidad estándar "visualmente oculto, presente para lectores de
@@ -814,6 +842,23 @@ h2 {
   filter: drop-shadow(3px 5px 0 rgba(0, 0, 0, 0.4));
   user-select: none;
   -webkit-user-drag: none;
+  /* Pedido explícito: "al igual que el logo de gnomoregnomes, las tarjetas
+     de raza del menu deben flotar, cada una por su cuenta, que no vayan al
+     compas" — mismo espíritu que .main-logo (main-logo-float), pero aquí
+     solo la ilustración (no toda la .race-card: esa ya usa su propio
+     transform para el tilt/hover/active, ver más arriba, y una animation
+     ahí competiría con esos estados). --float-delay lo fija cada tarjeta al
+     crearse (ver renderRaceCard, js/newgame-flow.js) con un valor negativo
+     aleatorio, mismo truco de desincronización que ya usa la niebla
+     (fog-idle-drift) para que ninguna quede pegada a la otra. */
+  will-change: transform;
+  animation: race-card-float 4.2s ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+}
+
+@keyframes race-card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
 .race-card__title {
@@ -912,6 +957,17 @@ h2 {
      proteger dentro del tablero. */
   user-select: none;
   -webkit-user-select: none;
+  /* Pedido explícito: "cuando dejo pulsado sobre un elemento en la interfaz
+     del smartphone para ver el mensaje de mouseover, me aparecen las
+     opciones del navegador para descargar o ver el png de la imagen" — el
+     long-press que este juego usa para el tooltip táctil (ver
+     js/tooltip.js) coincide con el gesto nativo de Safari/Chrome para
+     abrir el menú "descargar imagen/copiar" sobre cualquier elemento
+     (sprites, iconos...). -webkit-touch-callout:none lo desactiva de raíz
+     en todo el tablero; el preventDefault sobre "contextmenu" en
+     js/touchfix.js queda como red de seguridad para el resto de
+     navegadores que no respeten esta propiedad. */
+  -webkit-touch-callout: none;
 }
 
 /* CORRECCIÓN (pedido explícito): "hacer clic y arrastrar para mover el
@@ -1686,6 +1742,47 @@ body.team-markers--visible .unit__team-marker {
 @keyframes unit-doom-icon-pulse {
   0%, 100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 0.85; }
   50% { transform: translateX(-50%) translateY(-3px) scale(1.18); opacity: 1; }
+}
+
+/* Escondido en un arbusto (js/bushes.js, Fog.applyVisibility) — pedido
+   explícito: "aparecera en azul el icono eye-slash de phosphor y el
+   personaje se oscurecera un poco simulando que esta oculto en la sombra".
+   Mismo patrón que .unit--doomed .unit__doom-icon de arriba: icono fuera de
+   unit__flip (nunca se gira con el personaje), oculto por defecto. Se
+   posiciona más abajo que el de calavera (-54px) para no competir con él si
+   algún día coinciden, y bien por encima de la barra de vida (-14px, ver
+   .unit__hpbar) para no taparla nunca. */
+.unit__bush-hide-icon {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: -40px;
+  transform: translateX(-50%);
+  font-size: 22px;
+  color: #4fd8ff;
+  filter: drop-shadow(0 0 6px rgba(79, 216, 255, 0.85)) drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.6));
+  z-index: 30;
+  pointer-events: none;
+}
+
+.unit--in-bush .unit__bush-hide-icon {
+  display: block;
+  animation: unit-bush-hide-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes unit-bush-hide-pulse {
+  0%, 100% { opacity: 0.75; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.15); }
+}
+
+/* "el personaje se oscurecera un poco simulando que esta oculto en la
+   sombra" — sobre el sprite, no sobre .unit entero (así el icono de arriba y
+   la barra de vida, si se selecciona, se quedan a su brillo normal). Ningún
+   otro estado (.unit--doomed, .unit--mind-controlled...) pone su propio
+   filter en .unit__sprite todavía, así que no hay conflicto de
+   especificidad que resolver aquí. */
+.unit--in-bush .unit__sprite {
+  filter: brightness(0.68) saturate(0.8);
 }
 
 /* Pedido explícito: "cuando hay que seleccionar una casilla aparecen
@@ -4085,7 +4182,8 @@ body.perf-mode * {
 }
 
 body.perf-mode .p5-banner,
-body.perf-mode .attack-cursor-fx {
+body.perf-mode .attack-cursor-fx,
+body.perf-mode .eye-cursor-fx {
   filter: none !important;
 }
 
@@ -4453,7 +4551,19 @@ body.perf-mode .attack-cursor-fx {
    personaje) — nunca entra en Units.list ni Movement/Combat lo confunden con
    una unidad real (mismo motivo que .village, ver su comentario). */
 .bush {
-  cursor: default;
+  /* Pedido explícito: "si coloco el raton sobre un arbusto el puntero debe
+     ser el cursor del juego en color blanco" — el mismo puntero de reposo
+     (--cursor-default) que el resto del tablero fuera de un punto de
+     interés, no el amarillo de "interactivo" (--cursor-pointer, el que sí
+     usan tótems/tiendas/obeliscos): el arbusto en sí no se ataca ni se
+     conquista, solo esconde. */
+  cursor: var(--cursor-default);
+  /* Pedido explícito: "el arbusto esta demasiado alto, bajalo mas" — mismo
+     patrón que .shop/.board-item (ver sus comentarios): translateY fijo en
+     px DESPUÉS del translate(-50%,-92%) heredado de .unit (pensado para un
+     personaje de pie, mucho más alto que ancho), para bajarlo hasta su
+     loseta sin perder que se escale proporcional con el zoom de cámara. */
+  transform: translate(-50%, -92%) translateY(34px);
 }
 
 .bush__sprite {
@@ -4904,6 +5014,36 @@ body.perf-mode .attack-cursor-fx {
 
 @keyframes attack-cursor-pulse {
   0%, 100% { opacity: 0.55; transform: scale(0.75); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* Halo turquesa del modo de apuntado "ojo" (js/attackcursor.js) — pedido
+   explícito: "el puntero de ojo de la habilidad vision lejana de la
+   surcabosques debe palpitar y tener un brillo azul celeste". Mismo tono
+   turquesa (#2dd4bf) ya usado para el propio cursor del ojo y el botón de
+   esta habilidad (ver body.ability-targeting--eye más arriba), para que
+   todo el lenguaje visual de Visión Lejana combine. */
+.eye-cursor-fx {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 52px;
+  height: 52px;
+  margin-left: -26px;
+  margin-top: -26px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.55) 0%, rgba(45, 212, 191, 0.22) 45%, rgba(45, 212, 191, 0) 72%);
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+}
+
+.eye-cursor-fx--visible {
+  animation: eye-cursor-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes eye-cursor-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.82); }
   50% { opacity: 1; transform: scale(1.15); }
 }
 
@@ -5586,11 +5726,15 @@ body.backpack-giving--bevida * {
    (%23ff3d2e, el mismo rojo de .unit--katapum-target más abajo) con una
    silueta blanca ligeramente más grande por detrás a modo de contorno,
    para que se siga leyendo bien sobre cualquier loseta (hierba, agua,
-   niebla...) igual que la mira anterior. */
+   niebla...) igual que la mira anterior.
+   Pedido explícito (segunda pasada): "el icono de tarjet de cuando lanzas
+   el cohete goblin, lo quiero phospor completamente rojo" — se quita el
+   halo blanco de contorno de detrás (capa <g fill="white"> de arriba), solo
+   queda el propio glifo en rojo. */
 body.backpack-giving--katapum,
 body.backpack-giving--katapum * {
   cursor:
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256"><g transform="translate(128,128) scale(1.18) translate(-128,-128)" fill="white"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,191.63V184a8,8,0,0,0-16,0v31.63A88.13,88.13,0,0,1,40.37,136H72a8,8,0,0,0,0-16H40.37A88.13,88.13,0,0,1,120,40.37V72a8,8,0,0,0,16,0V40.37A88.13,88.13,0,0,1,215.63,120H184a8,8,0,0,0,0,16h31.63A88.13,88.13,0,0,1,136,215.63Z"/></g><path fill="%23ff3d2e" d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,191.63V184a8,8,0,0,0-16,0v31.63A88.13,88.13,0,0,1,40.37,136H72a8,8,0,0,0,0-16H40.37A88.13,88.13,0,0,1,120,40.37V72a8,8,0,0,0,16,0V40.37A88.13,88.13,0,0,1,215.63,120H184a8,8,0,0,0,0,16h31.63A88.13,88.13,0,0,1,136,215.63Z"/></svg>')
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256"><path fill="%23ff3d2e" d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,191.63V184a8,8,0,0,0-16,0v31.63A88.13,88.13,0,0,1,40.37,136H72a8,8,0,0,0,0-16H40.37A88.13,88.13,0,0,1,120,40.37V72a8,8,0,0,0,16,0V40.37A88.13,88.13,0,0,1,215.63,120H184a8,8,0,0,0,0,16h31.63A88.13,88.13,0,0,1,136,215.63Z"/></svg>')
       16 16,
     pointer !important;
 }

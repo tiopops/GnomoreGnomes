@@ -49,6 +49,14 @@ const GNOME_ASSETS = {
   grita: "assets/equipos/MushboomForest/gnomo_grita.png",
 };
 
+// Pedido explícito: "la vision de los gnomos pasa a ser 3 casillas
+// alrededor asi que si no hay nadie en ese rango se quedan quietos y no
+// huyen" — radio (Chebyshev) dentro del cual un gnomo suelto "se entera" de
+// que una unidad se ha movido y reacciona huyendo (ver
+// GnomeInstance.reactToPlayerMove); fuera de él, o si quien se movió ha
+// quedado escondido en un arbusto (Bushes.isHidingUnit), no reacciona.
+const GNOME_VISION_RADIUS = 3;
+
 // Ancho (px) del sprite del gnomo en el suelo (parado/huyendo), en pleno
 // vuelo (ver GnomeInstance.animateThrowTo) y mientras lo llevan cogido —
 // calibrados con debug/calibrar-gnomo.html. "held" es UN ÚNICO valor
@@ -1034,8 +1042,20 @@ function createGnomeInstance() {
     // movimiento, así que el gestor necesita poder esperar (con
     // Promise.all) a que la huida de cada gnomo termine del todo antes de
     // refrescar el radio.
+    // Pedido explícito: "los gnomos no ven tampoco quien esta escondido en
+    // los arbustos, asi pues, si un personaje se mueve hasta un arbusto y
+    // hay un gnomo cerca (3 casillas de distancia), este no huira de el esta
+    // vez. La vision de los gnomos pasa a ser 3 casillas alrededor asi que
+    // si no hay nadie en ese rango se quedan quietos y no huyen" — antes
+    // huía SIEMPRE que cualquier unidad se moviera, a cualquier distancia;
+    // ahora hace falta que `mover` esté dentro de GNOME_VISION_RADIUS Y que
+    // no haya quedado escondido en un arbusto justo en este mismo
+    // movimiento (ver Bushes.isHidingUnit, js/bushes.js).
     async reactToPlayerMove(mover) {
       if (!this.el || this.heldBy || this.busy) return;
+      const dist = Math.max(Math.abs(mover.row - this.row), Math.abs(mover.col - this.col));
+      if (dist > GNOME_VISION_RADIUS) return; // fuera de su rango de visión, no se entera
+      if (typeof Bushes !== "undefined" && Bushes.isHidingUnit(mover)) return; // escondido en un arbusto, invisible también para el gnomo
       await this._fleeAwayFrom(mover.row, mover.col, 2);
     },
 

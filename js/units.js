@@ -333,6 +333,16 @@ const Units = {
     doomIconEl.alt = "";
     el.appendChild(doomIconEl);
 
+    // Icono de "escondido en un arbusto" (js/bushes.js) — pedido explícito:
+    // "aparecera en azul el icono eye-slash de phosphor y el personaje se
+    // oscurecera un poco simulando que esta oculto en la sombra". Mismo
+    // patrón que doomIconEl de arriba (fuera de unit__flip para no girarse
+    // con el personaje, se muestra/oculta y palpita solo por CSS vía
+    // .unit--in-bush, ver Fog.applyVisibility que pone esa clase).
+    const bushHideIconEl = document.createElement("i");
+    bushHideIconEl.className = "ph ph-eye-slash unit__bush-hide-icon";
+    el.appendChild(bushHideIconEl);
+
     // Barra de vida SECCIONADA — pedido explícito: "las barras de vida
     // pueden estar seccionadas? creo que así sería más visible a la hora de
     // ver cuántos puntos de vida quedan... implementa un diseño digno de un
@@ -369,6 +379,7 @@ const Units = {
       flipEl,
       spriteEl,
       doomIconEl,
+      bushHideIconEl,
       hpBarEl,
       hpSegmentEls,
       _fearTimer: null, // ver startFearLoop/stopFearLoop más abajo
