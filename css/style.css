@@ -6264,9 +6264,14 @@ body.backpack-giving--katapum * {
 /* TotemVision (js/totemvision.js) — objeto de tienda con 1 punto de vida
    plantado en el escenario, mismo lenguaje visual que un nodo de recurso
    (barra de vida propia, se rompe con la misma animación
-   .resource-node--destroyed, ver Resources en style.css). */
+   .resource-node--destroyed, ver Resources en style.css).
+   Pedido explícito: "el totemvision debe verse un poco mas grande sobre
+   las losetas" — de 70px a 92px (por encima incluso del tamaño por
+   defecto de .board-item__sprite, 84px): es un tótem plantado, no un
+   objeto pequeño como la seta o el cepo, así que conviene que se lea
+   como un punto de referencia en el mapa. */
 .board-item--totemvision .board-item__sprite {
-  width: 70px;
+  width: 92px;
 }
 
 .totemvision__hpbar {
