@@ -7183,9 +7183,12 @@ body.backpack-giving--katapum * {
   padding: 4px 12px 4px 6px;
 }
 
+/* Pedido explícito: "puedes hacer mas grandes los iconos que muestran los
+   recursos? tanto en la parte de arriba..." — de 28px a 38px, la fila de
+   existencias de la Armería (ver la nota de .resource-badge más arriba). */
 .resource-badge__icon {
-  width: 28px;
-  height: 28px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
   filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.5));
 }
@@ -7230,8 +7233,12 @@ body.backpack-giving--katapum * {
   margin-bottom: 8px;
 }
 
+/* Pedido explícito: "la palabra...ARMA y ARMADURA deben estar resaltadas
+   en amarillo" — nombre de cada árbol (ver ARMORY_TRACK_LABELS en
+   js/armory.js), de un gris apagado al mismo amarillo del resto de la
+   interfaz. */
 .armory-track__label-text {
-  color: rgba(244, 242, 248, 0.75);
+  color: #ffcf3f;
   font-weight: 900;
   font-size: 0.78rem;
   letter-spacing: 0.08em;
@@ -7245,8 +7252,11 @@ body.backpack-giving--katapum * {
   font-size: 0.74rem;
 }
 
+/* Pedido explícito: "la palabra Nivel X...deben estar resaltadas en
+   amarillo" — de un gris apagado al mismo amarillo del resto de la
+   interfaz. */
 .armory-track__label-lvl {
-  color: rgba(244, 242, 248, 0.55);
+  color: #ffcf3f;
 }
 
 .armory-track__label-stat .ph {
@@ -7498,6 +7508,13 @@ body.backpack-giving--katapum * {
   font-weight: 700;
 }
 
+/* Pedido explícito: "la palabra Nivel X y ARMA y ARMADURA deben estar
+   resaltadas en amarillo" — ver Armory._renderDesc, envuelve solo esos dos
+   tramos del texto en este span. */
+.armory-desc__row-label--highlight {
+  color: #ffcf3f;
+}
+
 .armory-desc__pills {
   display: flex;
   gap: 10px;
@@ -7519,9 +7536,13 @@ body.backpack-giving--katapum * {
   padding: 4px 10px 4px 5px;
 }
 
+/* Pedido explícito: "puedes hacer mas grandes los iconos que muestran los
+   recursos? tanto en la parte de arriba como en la descripcion de los
+   elementos" — de 22px a 30px, mismo criterio de tamaño que
+   .resource-badge__icon justo arriba en este archivo (los "de arriba"). */
 .armory-desc__pill-icon {
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
   filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.5));
 }

@@ -69,6 +69,23 @@ const Preload = {
     // la raza ni del mapa.
     "assets/iconos/atrapapinreles.png",
     "assets/iconos/katapum.png",
+    "assets/iconos/totemvision.png",
+    // Pedido explícito: "acercar alejar la camara hace que flickeen las
+    // losetas cuando resolucion adaptativa esta activado" — causa real:
+    // hierba_01.png/agua_01.png (la textura normal) SÍ estaban aquí desde
+    // el principio, pero su pareja "_midres" (ver SpriteQuality._TIER_SUFFIX
+    // en js/spritequality.js) nunca se pedía hasta el primer cruce del
+    // umbral de zoom — en ESE momento, hasta las 625 losetas del tablero
+    // (SpriteQuality._setTier recorre TODOS los sprites registrados de
+    // golpe) cambian su "src" a la vez a una imagen que el navegador no
+    // tenía todavía ni descargada ni decodificada, así que aparecían en
+    // blanco durante ese instante — el "flickeo". Con las dos ya
+    // precargadas y decodificadas de antemano (misma URL para las 625
+    // losetas, así que solo cuentan como 2 descargas reales), el cruce de
+    // zoom solo tiene que reasignar el "src" a algo que el navegador ya
+    // tiene listo, sin ningún parón visible.
+    "assets/losetas/hierba_01_midres.png",
+    "assets/losetas/agua_01_midres.png",
   ],
 
   // Se llama justo ANTES de construir una partida nueva o reanudada (ver

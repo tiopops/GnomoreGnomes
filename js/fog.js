@@ -733,6 +733,21 @@ const Fog = {
     if (typeof Obelisks !== "undefined") {
       Obelisks.list.forEach((o) => {
         if (!o.el) return;
+        // Pedido explícito (con captura): "el obelisco del jugador y sus
+        // iconos, deben sobresalir siempre por encima de la niebla" — el
+        // Obelisco PROPIO nunca está realmente bajo niebla (más arriba en
+        // este mismo archivo ni siquiera se le pone la clase
+        // unit--fog-hidden, team==="player" corta antes), así que su punta
+        // asomando por encima de una nube VECINA todavía sin revelar no es
+        // el mismo bug que la barra de vida/insignia "hundiéndose" bajo su
+        // propia niebla (ese sí se arregla con coverFrom, y sigue
+        // aplicándose tal cual al Obelisco rival): aquí es justo lo
+        // contrario, una base altísima que sobresale por encima del
+        // horizonte de niebla vecina sin explorar, algo normal y esperado
+        // visualmente, no un fallo. Se salta coverFrom solo para el propio,
+        // dejándolo siempre a su z-index natural (por encima de cualquier
+        // nube vecina); el del rival sigue pasando por aquí como siempre.
+        if (o.team === "player") return;
         coverFrom(o.row, o.col, o.el);
       });
     }

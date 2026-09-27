@@ -107,11 +107,15 @@ const ITEM_TYPES = {
   // mecánica de verdad (percepción/HP/ataque/rotura en arbusto) vive en su
   // propio archivo (js/totemvision.js, regla de oro: un archivo por
   // mecánica); aquí solo su ficha de catálogo, igual que el resto de
-  // objetos. Reutiliza el icono de Visión Lejana (misma idea de "ver más
-  // lejos") en vez de encargar arte nuevo solo para el inventario.
+  // objetos. Pedido explícito (con arte adjunto): "el icono de totemvision
+  // es el que te paso no ese que esta" — arte propio definitivo (mazo de
+  // madera con un ojo tallado, recortado a su contenido real con un margen
+  // pequeño), ya no reutiliza el icono de Visión Lejana. Registrado por
+  // SpriteQuality igual que cualquier otro sprite colocado en el tablero
+  // (ver js/totemvision.js), así que también lleva su pareja "_midres".
   totemvision: {
     name: "TotemVision",
-    iconUrl: "assets/iconos/vision_lejana.png",
+    iconUrl: "assets/iconos/totemvision.png",
   },
 };
 
@@ -609,43 +613,63 @@ const Backpack = {
   // ya sin acciones (unit--exhausted); mismo criterio que ya usa cualquier
   // otra mecánica del proyecto (Movement/Combat/Villages/Shops, todas se
   // blindan con Turns.canAct antes de ofrecer nada).
+  // Pedido explícito (pasada posterior): "cuando lo seleccionas dos
+  // veces, el juego te tiene que permitir colocarlos en una casilla
+  // adyacente a un jugador que aun este activo" — en el modo actual la
+  // partida arranca con CERO unidades reclutadas (solo el Obelisco, ver
+  // spawnTestUnits en newgame-flow.js), así que antes de reclutar al
+  // primer personaje esta función devolvía siempre una lista vacía (no
+  // había ninguna unidad de la que colgar casillas adyacentes) y ningún
+  // objeto de la mochila se podía colocar todavía, aunque el Obelisco
+  // propio —el "jugador" en el sentido amplio, tu base, siempre activa—
+  // ya estuviera en pie. Se añade el Obelisco propio como una fuente más
+  // de casillas adyacentes, con exactamente las mismas comprobaciones que
+  // ya usaba cada unidad (mismo bucle, extraído a _tilesAroundSource para
+  // no duplicar las ocho comprobaciones dos veces).
+  _tilesAroundSource(row, col, seen, tiles) {
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const r = row + dr;
+        const c = col + dc;
+        if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
+        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
+        // Pedido explícito: "no se pueden colocar setas en lugares
+        // donde hay totems o edificios" — mismo criterio que ya usan
+        // Combat/GnomeInstance/Villages al buscar casilla libre
+        // (Villages.at, ver js/villages.js) para no ofrecer un tótem
+        // como destino válido de movimiento/ataque.
+        if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
+        // Pedido explícito (Tienda Goblin, js/shops.js): "no se pueden
+        // colocar objetos sobre ella" — mismo criterio que un tótem,
+        // justo arriba.
+        if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
+        if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
+        if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
+        if (typeof TotemVision !== "undefined" && TotemVision.at(r, c)) continue; // TotemVision (js/totemvision.js)
+        // Igual que cualquier otra mecánica del proyecto: no se ofrece
+        // colocar nada sobre una loseta que ni siquiera se ha revelado.
+        if (typeof Fog !== "undefined" && Fog.isFogged(r, c)) continue;
+        const key = `${r},${c}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        tiles.push({ row: r, col: c });
+      }
+    }
+  },
+
   _adjacentToPlayerTiles() {
     if (typeof Units === "undefined") return [];
     const seen = new Set();
     const tiles = [];
     Units.list
       .filter((u) => u.team === "player" && (typeof Turns === "undefined" || Turns.canAct(u)))
-      .forEach((u) => {
-        for (let dr = -1; dr <= 1; dr++) {
-          for (let dc = -1; dc <= 1; dc++) {
-            if (dr === 0 && dc === 0) continue;
-            const row = u.row + dr;
-            const col = u.col + dc;
-            if (row < 0 || col < 0 || row >= Units.boardSize || col >= Units.boardSize) continue;
-            if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
-            // Pedido explícito: "no se pueden colocar setas en lugares
-            // donde hay totems o edificios" — mismo criterio que ya usan
-            // Combat/GnomeInstance/Villages al buscar casilla libre
-            // (Villages.at, ver js/villages.js) para no ofrecer un tótem
-            // como destino válido de movimiento/ataque.
-            if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
-            // Pedido explícito (Tienda Goblin, js/shops.js): "no se pueden
-            // colocar objetos sobre ella" — mismo criterio que un tótem,
-            // justo arriba.
-            if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
-            if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
-            if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
-            if (typeof TotemVision !== "undefined" && TotemVision.at(row, col)) continue; // TotemVision (js/totemvision.js)
-            // Igual que cualquier otra mecánica del proyecto: no se ofrece
-            // colocar nada sobre una loseta que ni siquiera se ha revelado.
-            if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;
-            const key = `${row},${col}`;
-            if (seen.has(key)) continue;
-            seen.add(key);
-            tiles.push({ row, col });
-          }
-        }
-      });
+      .forEach((u) => this._tilesAroundSource(u.row, u.col, seen, tiles));
+    if (typeof Obelisks !== "undefined") {
+      Obelisks.list
+        .filter((o) => o.team === "player")
+        .forEach((o) => this._tilesAroundSource(o.row, o.col, seen, tiles));
+    }
     return tiles;
   },
 

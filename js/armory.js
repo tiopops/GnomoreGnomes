@@ -326,9 +326,14 @@ const Armory = {
       })
       .join("");
 
+    // Pedido explícito: "la palabra Nivel X y ARMA y ARMADURA deben estar
+    // resaltadas en amarillo" — mismo amarillo (#ffcf3f) que ya usa
+    // .armory-desc__row-label--highlight/el resto de números destacados de
+    // esta interfaz, envolviendo solo esos dos tramos del texto (no toda la
+    // frase, "— coste" se queda en el gris normal de la etiqueta).
     this._descEl.innerHTML =
       `<div class="armory-desc__row">` +
-      `<span class="armory-desc__row-label">Nivel ${lvl} de ${ARMORY_TRACK_LABELS[kind]} — coste</span>` +
+      `<span class="armory-desc__row-label"><span class="armory-desc__row-label--highlight">Nivel ${lvl}</span> de <span class="armory-desc__row-label--highlight">${ARMORY_TRACK_LABELS[kind]}</span> — coste</span>` +
       `<span class="armory-desc__pills">${pills}</span>` +
       `</div>` +
       `<div class="armory-desc__row armory-desc__row--reward">` +
