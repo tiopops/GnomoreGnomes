@@ -53,9 +53,12 @@
    versión mostrar y cuándo, sin que quien registró el sprite tenga que
    volver a tocarlo. Punto de entrada único: cualquier sprite nuevo que se
    añada en el futuro solo necesita pasar por register() para heredar esto
-   gratis. Los que YA tenían assets "_lowres" (losetas, vía PerfMode) NO
-   pasan por aquí — siguen su propio mecanismo, atado al checkbox de
-   rendimiento, no al zoom.
+   gratis. Las losetas de terreno (hierba/agua base + overlay de revelado)
+   y la niebla también pasan por aquí (ver js/mapgen.js) — antes tenían su
+   propio mecanismo aparte, atado solo al checkbox de Modo Rendimiento y
+   no al zoom; pedido explícito posterior: "las losetas de terreno,
+   todas...hierba, agua...tambien deben verse afectadas por resolucion
+   dinamica, la de niebla tambien".
 
    Las sombras proyectadas (Shadows.attach) no necesitan registrarse aparte:
    su propio MutationObserver ya vigila el atributo "src" del sprite real y
@@ -200,6 +203,18 @@ const SpriteQuality = {
   // esta es la versión definitiva: sin fantasma, sin fundido, un solo
   // assignment de src.
   _swap(imgEl, tier) {
+    // Guarda de la niebla: bug ya corregido antes ("en el modo alto
+    // rendimiento la niebla no tiene el efecto de disiparse, simplemente
+    // desaparece bruscamente") — la textura "_lowres" de la niebla es
+    // demasiado pequeña/pixelada para que la animación de disipación
+    // (fog-dissipate: scale(1.6) + blur(7px)) siga leyéndose como un
+    // desvanecimiento gradual; con esa textura simplemente "salta". Una
+    // niebla que ya está revelándose/disipándose (.tile__fog--revealed) no
+    // debe cambiar de textura a media animación por un cruce de zoom — sí
+    // puede hacerlo con toda normalidad mientras está quieta/oculta (la
+    // inmensa mayoría de su vida visible), que es cuando esta función se
+    // llama para ella en la práctica.
+    if (imgEl.classList.contains("tile__fog--revealed")) return;
     const orig = imgEl.dataset.srcOrig;
     if (!orig) return;
     imgEl.src = this._srcForTier(orig, tier);

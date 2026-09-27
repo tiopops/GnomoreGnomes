@@ -315,7 +315,15 @@ const SettingsMenu = {
       // modo rendimiento siga activo (ver _syncPerfLock).
       this._syncPerfLock();
     });
-    colVisual.appendChild(perfModeBtn);
+    // Pedido explícito (pasada posterior): "coloca modo rendimiento en la
+    // columna de la izquierda, para que ambas columnas tengas los mismos
+    // botones" — antes esta columna (visual) tenía 5 filas frente a las 3
+    // de la izquierda (audio/interfaz); moviendo Modo rendimiento a la
+    // izquierda quedan 4 y 4. Solo cambia en qué <div> vive el botón, toda
+    // su lógica (bloqueo de Sombras/Niebla/Vegetación/Resolución
+    // adaptativa mientras esté activo) sigue intacta, esos otros botones
+    // siguen en colVisual.
+    colAudio.appendChild(perfModeBtn);
     this._shadowsBtn = shadowsBtn;
     this._fogAnimBtn = fogAnimBtn;
     this._vegetationBtn = vegetationBtn;

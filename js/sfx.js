@@ -283,6 +283,23 @@ const SFX = {
     setTimeout(() => this._pluck("capture-4", 1560, "triangle", 0.4, 0.34), 280);
   },
 
+  // Visión Lejana (SurcaBosques, js/abilities.js) — pedido explícito:
+  // "vision lejana al usarse debe reproducir un efecto de sonido agradable
+  // como de magia reveladora". Mismo espíritu de arpegio ascendente que
+  // glory()/captureVillage() de arriba (así se nota que es un "sonido
+  // bueno", coherente con el resto del juego) pero con tonos "sine" en vez
+  // de "triangle" — más suaves/etéreos, sin el filo metálico de una
+  // recompensa de monedas, para que se lea como algo mágico/misterioso
+  // abriéndose, no como un premio. Remata con una nota aguda breve y muy
+  // suave (peak bajo) a modo de "destello" final, en vez de sostenida como
+  // captureVillage — la revelación es instantánea, no un remate largo.
+  visionReveal() {
+    this._pluck("vision-1", 520, "sine", 0.22, 0.2);
+    setTimeout(() => this._pluck("vision-2", 780, "sine", 0.24, 0.22), 90);
+    setTimeout(() => this._pluck("vision-3", 1040, "sine", 0.3, 0.22), 180);
+    setTimeout(() => this._pluck("vision-4", 1660, "sine", 0.42, 0.14), 260);
+  },
+
   // Mochila (js/backpack.js) — colocar un objeto sobre el tablero: un
   // "plop" corto y limpio, distinto del click de menú/UI para que se lea
   // como una acción sobre el propio tablero, no como navegación.

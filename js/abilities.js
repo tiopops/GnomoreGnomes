@@ -377,7 +377,10 @@ const Abilities = {
       // el paisaje vacío (ver la nota larga en Fog.addTemporaryPerception).
       Fog.addTemporaryPerception(row, col, 3, 4000);
     }
-    SFX.click();
+    // Pedido explícito: "vision lejana al usarse debe reproducir un
+    // efecto de sonido agradable como de magia reveladora" — en vez del
+    // click genérico de UI de antes.
+    SFX.visionReveal();
     Units.spawnFloatingText(unit, "¡VISIÓN!", { className: "dmg-popup gnome-points-popup" });
     this._consume(unit);
     // La unidad sigue seleccionada tras usarla (puede que le quede la otra

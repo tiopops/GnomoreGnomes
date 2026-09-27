@@ -4534,6 +4534,76 @@ body.perf-mode .eye-cursor-fx {
   transform: rotate(calc(-1 * var(--gg-badge-tilt)));
 }
 
+/* ---------- Precarga antes de empezar partida (js/preload.js) ----------
+   Pedido explícito: "si precargasemos en local los elementos mas
+   pesados...poner una barrita de loading (respetando nuestro estilo
+   visual)". Mismo lenguaje que .settings-overlay/.settings-panel justo
+   debajo (overlay oscuro + panel .p5-banner girado), pero SIN botón de
+   cerrar ni clic-fuera: no es un menú, es un aviso de "espera un segundo"
+   que se cierra solo en cuanto Preload.run() termina. z-index por encima
+   de cualquier otra interfaz (900 es el más alto usado hasta ahora, ver
+   .settings-overlay) porque puede aparecer ANTES de que exista nada más
+   en pantalla (ni siquiera el tablero). */
+.match-loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 5, 8, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 950;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.match-loading-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.match-loading-panel {
+  width: min(360px, 88vw);
+  padding: 30px 34px;
+  transform: rotate(-1.2deg);
+}
+
+.match-loading-panel__content {
+  /* Mismo motivo que .settings-panel__option-main/.glory-popup-card__content:
+     .p5-banner pinta su relleno con ::after en z-index:1, así que el
+     contenido real necesita su propia capa por encima. */
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.match-loading-panel__title {
+  font-size: 1.05rem;
+  color: var(--ink);
+  text-align: center;
+}
+
+.match-loading-panel__track {
+  width: 100%;
+  height: 14px;
+  background: var(--p5-tone-dark);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  clip-path: var(--gg-slot-clip);
+  overflow: hidden;
+}
+
+.match-loading-panel__fill {
+  height: 100%;
+  width: 0%;
+  background: #ffcf3f;
+  /* Barrido sutil de brillo — nivel Triple A / feedback (regla de oro):
+     que se note viva, no una barra plana estática. */
+  transition: width 0.25s ease;
+}
+
 /* Popup de opciones — overlay estándar (fondo oscuro, clic fuera cierra,
    ver SettingsMenu.close) con el panel en sí como un .p5-banner grande
    girado un par de grados, para que incluso quieto se lea "irregular" en

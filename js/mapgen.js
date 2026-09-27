@@ -71,29 +71,20 @@ function lowResTileSrc(originalSrc) {
   return originalSrc.replace(/(\.[a-zA-Z0-9]+)$/, "_lowres$1");
 }
 
-// Alterna TODAS las losetas ya pintadas (hierba/agua base, overlay de
-// revelado y niebla) entre su versión normal y su versión "_lowres", sin
-// regenerar el mapa (evita perder el estado de niebla ya revelada). Cada
-// <img> guarda su ruta original en data-src-orig al crearse (ver
-// renderMap más abajo), así que esta función solo necesita leer ese dato y
-// decidir qué mitad de la pareja mostrar. La llama PerfMode.setEnabled
-// cada vez que el modo rendimiento se activa/desactiva a mitad de
-// partida — si todavía no hay partida en curso, el querySelectorAll
-// simplemente no encuentra nada y no pasa nada.
-function applyPerfModeTileSprites(enabled) {
-  const container = document.getElementById("board-tiles");
-  if (!container) return;
-  container.querySelectorAll("img[data-src-orig]").forEach((img) => {
-    // Pedido explícito (bug reportado): "en el modo alto rendimiento la
-    // niebla no tiene el efecto de disiparse" — ver la nota larga junto a
-    // fogImg.dataset.skipLowres en renderMap: la niebla se queda SIEMPRE en
-    // su resolución normal, nunca cambia con este toggle (a diferencia de
-    // hierba/agua, que sí lo hacen).
-    if (img.dataset.skipLowres) return;
-    const orig = img.dataset.srcOrig;
-    img.src = enabled ? lowResTileSrc(orig) : orig;
-  });
-}
+// RETIRADO (pedido explícito, pasada posterior): "las losetas de terreno,
+// todas...hierba, agua...tambien deben verse afectadas por resolucion
+// dinamica, la de niebla tambien" — hasta ahora hierba/agua/niebla usaban
+// este mecanismo PROPIO, ligado 1:1 al checkbox de Modo Rendimiento
+// (on/off, sin relación con el zoom real de la cámara), mientras que TODO
+// lo demás del tablero (unidades, recursos, hierbajos, arbustos, tótems,
+// Obeliscos, tienda...) ya usaba SpriteQuality (js/spritequality.js, 3
+// niveles según el zoom). Registrar también hierba/agua/niebla en
+// SpriteQuality (ver renderMap más abajo) dejó este mecanismo separado sin
+// ningún uso: un mismo <img> no puede obedecer a dos sistemas de golpe a
+// la vez sin pisarse el "src" el uno al otro. lowResTileSrc (justo
+// arriba) SIGUE viva — SpriteQuality._srcForTier la reutiliza tal cual
+// para su propio nivel "baja", así que la convención de nombre de archivo
+// no cambia en absoluto, solo quién decide CUÁNDO usarla.
 
 // Consulta del terreno real por casilla — lo usa cualquier mecánica que
 // necesite saber "¿se puede pisar/pasar por aquí?" (Movement, Combat,
@@ -172,6 +163,24 @@ const TerrainMap = {
       const baseImg = tileEl.querySelector("img:not(.tile__terrain-reveal)");
       if (baseImg) baseImg.style.display = "none";
     }
+  },
+
+  // Pedido explícito: "el color de las losetas del terreno que esten
+  // dentro de niebla de guerra tambien debe desaturarse como el resto de
+  // elementos" — hasta ahora solo tótems/Obeliscos/tiendas/recursos se
+  // atenuaban al dejar de estar bajo percepción EN DIRECTO (gg-remembered,
+  // ver Fog.applyVisibility); el propio SUELO revelado se quedaba siempre
+  // a color completo, sin distinguir "lo veo ahora mismo" de "lo recuerdo
+  // de antes". .gg-remembered (css/style.css) es genérica — filter+
+  // transition sobre CUALQUIER elemento, no depende de la clase .unit — así
+  // que basta con colgarla también del .tile entero (afecta a las dos
+  // capas de imagen de dentro, hierba base + textura real, como una sola
+  // unidad compuesta). Lo llama Fog.applyVisibility, nunca por su cuenta:
+  // este archivo solo sabe de terreno, no de percepción (regla de oro).
+  setRemembered(row, col, remembered) {
+    if (!this._tileEls) return;
+    const el = this._tileEls.get(`${row},${col}`);
+    if (el) el.classList.toggle("gg-remembered", remembered);
   },
 
   // ---------- Virtualización del tablero (culling de losetas) ----------
@@ -624,8 +633,12 @@ function renderMap(map, container) {
     };
     const img = document.createElement("img");
     img.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
-    img.dataset.srcOrig = baseSrc;
-    img.src = typeof PerfMode !== "undefined" && PerfMode.enabled ? lowResTileSrc(baseSrc) : baseSrc;
+    if (typeof SpriteQuality !== "undefined") {
+      SpriteQuality.register(img, baseSrc);
+    } else {
+      img.dataset.srcOrig = baseSrc;
+      img.src = baseSrc;
+    }
     img.width = TILE_WIDTH * grassAdjust.scale;
     img.height = TILE_RENDER_HEIGHT * grassAdjust.scale;
     img.style.left = `${grassAdjust.offsetX}px`;
@@ -662,8 +675,12 @@ function renderMap(map, container) {
       const revealImg = document.createElement("img");
       revealImg.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
       revealImg.className = "tile__terrain-reveal";
-      revealImg.dataset.srcOrig = t.src;
-      revealImg.src = typeof PerfMode !== "undefined" && PerfMode.enabled ? lowResTileSrc(t.src) : t.src;
+      if (typeof SpriteQuality !== "undefined") {
+        SpriteQuality.register(revealImg, t.src);
+      } else {
+        revealImg.dataset.srcOrig = t.src;
+        revealImg.src = t.src;
+      }
       revealImg.width = renderWidth;
       revealImg.height = Math.round((renderWidth * nativeH) / nativeW);
       revealImg.style.left = `${adjust.offsetX}px`;
@@ -747,29 +764,23 @@ function renderMap(map, container) {
     // enteras iguales, un patrón de rayas verticales muy regular) para que
     // el reparto no se lea como una cuadrícula obvia.
     fogImg.className = (t.row * 7 + t.col * 3) % 10 < 3 ? "tile__fog tile__fog--idle" : "tile__fog";
-    // Pedido explícito (bug reportado): "en el modo alto rendimiento la
-    // niebla no tiene el efecto de disiparse, simplemente desaparece
-    // bruscamente" — investigado a fondo: la animación fog-dissipate (ver
-    // style.css) SÍ se dispara igual en los dos modos (comprobado con
-    // capturas y con la curva de opacity fotograma a fotograma, idéntica en
-    // ambos) — lo que cambia es que ese efecto depende de que el propio
-    // navegador ESTIRE (scale 1.6) y DESENFOQUE (blur hasta 7px) la textura
-    // de la nube para que se lea como niebla disipándose; con la versión
-    // "_lowres" (mucho más pequeña/pixelada, pensada para ahorrar memoria
-    // de textura en losetas de terreno) ese estirado+desenfoque encima de
-    // un original ya de baja resolución no deja ver ninguna transición
-    // gradual real, solo un borrón que se desvanece de golpe. A diferencia
-    // de una loseta de terreno (un rectángulo fijo, sin animación), la
-    // niebla SIEMPRE depende de esa calidad de imagen para su propio
-    // efecto, así que se deja SIEMPRE en su resolución normal (un único
-    // archivo compartido por todas las nubes del mapa, igual de barato de
-    // decodificar sea cual sea el modo — no multiplica coste por loseta
-    // como si fuera una textura distinta cada vez) — applyPerfModeTileSprites
-    // (más abajo) respeta esta misma exclusión al alternar el modo a mitad
-    // de partida.
-    fogImg.dataset.srcOrig = FOG_SRC;
-    fogImg.dataset.skipLowres = "1";
-    fogImg.src = FOG_SRC;
+    // La niebla ahora SÍ participa en la resolución dinámica por zoom
+    // (SpriteQuality), igual que hierba/agua — pedido explícito: "las
+    // losetas de terreno, todas...hierba, agua...tambien deben verse
+    // afectadas por resolucion dinamica, la de niebla tambien". El único
+    // cuidado que sigue haciendo falta es NO cambiar de textura a media
+    // animación de disipación (bug ya corregido antes: con la versión
+    // "_lowres" de por medio, el estirado+desenfoque de fog-dissipate deja
+    // de leerse como un desvanecimiento gradual y "salta" de golpe) —
+    // SpriteQuality._swap ya tiene ese guard mirando la clase
+    // tile__fog--revealed, así que aquí no hace falta ningún caso especial:
+    // se registra igual que cualquier otro sprite del tablero.
+    if (typeof SpriteQuality !== "undefined") {
+      SpriteQuality.register(fogImg, FOG_SRC);
+    } else {
+      fogImg.dataset.srcOrig = FOG_SRC;
+      fogImg.src = FOG_SRC;
+    }
     fogImg.style.zIndex = String((t.row + t.col) * 10 + 6);
     fogImg.draggable = false;
     fogImg.alt = "";

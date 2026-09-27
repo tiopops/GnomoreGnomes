@@ -161,6 +161,14 @@ const Fog = {
     // (cualquier timeout pendiente de una partida anterior ya no debe
     // tocar el revealedGrid/perceivedGrid recién creados de arriba).
     this._tempPerceptionSources = [];
+    // Pedido explícito: "el color de las losetas del terreno que esten
+    // dentro de niebla de guerra tambien debe desaturarse". Lista simple
+    // (no todo revealedGrid) de las losetas YA reveladas — solo esas
+    // necesitan comprobar su percepción en cada applyVisibility (ver más
+    // abajo), evitando recorrer el tablero entero (hasta 625 losetas) en
+    // cada movimiento cuando, sobre todo al principio de la partida, la
+    // inmensa mayoría siguen sin descubrir.
+    this._revealedPositions = [];
     // .tile__fog ya no vive DENTRO de su .tile (ver comentario de FOG_SRC en
     // mapgen.js) — es un elemento hermano con su propio data-row/data-col,
     // así que se busca directamente en vez de a través de la loseta.
@@ -300,6 +308,7 @@ const Fog = {
   _reveal(row, col) {
     if (this.revealedGrid[row][col]) return;
     this.revealedGrid[row][col] = true;
+    this._revealedPositions.push({ row, col });
     const fogEl = this._fogEls.get(`${row},${col}`);
     if (!fogEl) return;
     // BUG encontrado y corregido: mapgen.js pone a cada niebla un
@@ -384,6 +393,20 @@ const Fog = {
     // dispara applyVisibility (movimiento, aparición, muerte, captura de
     // tótem...) necesita acordarse de recalcular esto por su cuenta.
     this._recomputePerception();
+    // Pedido explícito: "el color de las losetas del terreno que esten
+    // dentro de niebla de guerra tambien debe desaturarse como el resto de
+    // elementos" — mismo criterio "recordado" que tótems/Obeliscos/
+    // tiendas/recursos más abajo: una loseta YA revelada (isFogged=false)
+    // se queda a color completo mientras algo mío la perciba EN DIRECTO
+    // ahora mismo, y se atenúa (gg-remembered) en cuanto deja de estarlo —
+    // nunca vuelve a estar fogged, solo "recordada". Solo recorre las
+    // losetas de _revealedPositions (ver _reveal), nunca el tablero
+    // entero.
+    if (typeof TerrainMap !== "undefined" && TerrainMap.setRemembered) {
+      this._revealedPositions.forEach(({ row, col }) => {
+        TerrainMap.setRemembered(row, col, !this.isPerceived(row, col));
+      });
+    }
     if (typeof Units !== "undefined") {
       Units.list.forEach((u) => {
         if (!u.el) return;

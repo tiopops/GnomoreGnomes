@@ -148,7 +148,7 @@ function populateOpponentSelect() {
   });
 }
 
-function startMatch({ modeId, raceId, opponents }) {
+async function startMatch({ modeId, raceId, opponents }) {
   // Bug reportado: "el juego no se abre....se queda asi" — al pulsar "1
   // rival" el marcador de Puntos de Gloria (Glory.init, dentro de
   // spawnTestUnits) llegaba a pintarse, pero la pantalla se quedaba
@@ -161,7 +161,15 @@ function startMatch({ modeId, raceId, opponents }) {
   // vez de quedar a medias se deshace lo poco que se llegó a mostrar
   // (_recoverFromFailedMatchStart) y se enseña el error EN PANTALLA
   // (_showStartMatchError) para poder mandarlo por captura.
+  // Pedido explícito: "si precargasemos en local los elementos mas
+  // pesados...iria todo mejor?...barrita de loading...pocos segundos" —
+  // async/await (la función entera, ver también resumeMatch más abajo)
+  // justo para poder esperar aquí a Preload.run() (js/preload.js, con su
+  // propio tope de espera fijo) ANTES de construir la partida — quien
+  // llame a startMatch (un simple onClick) no necesita cambiar nada, un
+  // click en un botón no espera a que la función async termine.
   try {
+    if (typeof Preload !== "undefined") await Preload.run();
     const size = getBoardSize(opponents);
     // Ríos (pedido explícito) — de momento solo el modo 1v1 los pide, así
     // que se activan solo para "opponents === 1" en vez de para
@@ -200,10 +208,13 @@ function startMatch({ modeId, raceId, opponents }) {
   }
 }
 
-function resumeMatch() {
+async function resumeMatch() {
   try {
     const saved = SaveGame.load();
     if (!saved || !saved.tiles) return;
+    // Ver la nota larga de Preload en startMatch, justo arriba — mismo
+    // criterio aquí.
+    if (typeof Preload !== "undefined") await Preload.run();
     const map = { size: saved.size, tiles: saved.tiles };
     renderMap(map, document.getElementById("board-tiles"));
     if (typeof TerrainMap !== "undefined") TerrainMap.init(map);

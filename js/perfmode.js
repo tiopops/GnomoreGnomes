@@ -32,16 +32,21 @@
    quedan como el jugador los deje, para no deshacerle una elección suya
    sin pedirlo.
 
-   Tercer pedido explícito: "¿podrías crear una versión de niebla y las
-   losetas de muy baja resolución que se cambia por las originales cuando
-   modo alto rendimiento está activado?" — a diferencia de Shadows/Fog
-   (que SÍ quedan como el jugador las deje al desactivar el modo), las
-   losetas SIEMPRE vuelven a su versión normal al apagar el modo
-   rendimiento: no son una preferencia propia del jugador, son solo un
-   ahorro de rendimiento ligado 1:1 a este modo. Ver
-   applyPerfModeTileSprites/lowResTileSrc en js/mapgen.js — se llama tanto
-   al activar como al desactivar (por eso está fuera del "if (this.enabled)"
-   de abajo). */
+   Tercer pedido explícito (ya retirado, ver cuarto pedido abajo): "¿podrías
+   crear una versión de niebla y las losetas de muy baja resolución que se
+   cambia por las originales cuando modo alto rendimiento está activado?" —
+   las losetas y la niebla tenían su propio mecanismo aparte
+   (applyPerfModeTileSprites/lowResTileSrc en js/mapgen.js), ligado 1:1 a
+   este checkbox y no al zoom real de la cámara.
+
+   Cuarto pedido explícito (sustituye al anterior): "las losetas de
+   terreno, todas...hierba, agua...tambien deben verse afectadas por
+   resolucion dinamica, la de niebla tambien" — las losetas y la niebla
+   ahora se registran directamente en SpriteQuality (ver js/mapgen.js),
+   igual que el resto de sprites del tablero, así que ya no hace falta
+   ningún aviso aparte aquí: basta con que SpriteQuality.setEnabled(true)
+   arriba fuerce el mecanismo (si estaba apagado a mano) — el nivel
+   siempre lo decide el zoom, nunca este checkbox. */
 
 const PerfMode = {
   _STORAGE_KEY: "gnomoregnomes_perfmode",
@@ -71,7 +76,6 @@ const PerfMode = {
       // ganancia de rendimiento sin coste gráfico real.
       if (typeof SpriteQuality !== "undefined") SpriteQuality.setEnabled(true);
     }
-    if (typeof applyPerfModeTileSprites === "function") applyPerfModeTileSprites(this.enabled);
   },
 
   _applyGlobalToggle() {
