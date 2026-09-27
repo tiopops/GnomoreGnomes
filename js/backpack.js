@@ -99,6 +99,20 @@ const ITEM_TYPES = {
     name: "KataPum!",
     iconUrl: "assets/iconos/katapum.png",
   },
+  // Pedido explícito: "nuevo objeto para la tienda goblin TotemVision. Se
+  // coloca sobre una casilla libre (no de agua) del escenario y otorga
+  // vision como si tuviera percepcion 3. tiene 1 punto de vida, un enemigo
+  // puede golpearlo. se pueden ocultar dentro de un arbusto, pero si un
+  // personaje enemigo entra dentro del arbusto, el totem se rompe" — la
+  // mecánica de verdad (percepción/HP/ataque/rotura en arbusto) vive en su
+  // propio archivo (js/totemvision.js, regla de oro: un archivo por
+  // mecánica); aquí solo su ficha de catálogo, igual que el resto de
+  // objetos. Reutiliza el icono de Visión Lejana (misma idea de "ver más
+  // lejos") en vez de encargar arte nuevo solo para el inventario.
+  totemvision: {
+    name: "TotemVision",
+    iconUrl: "assets/iconos/vision_lejana.png",
+  },
 };
 
 // Editable desde debug/objetos-mochila.html (genera el bloque listo para
@@ -110,6 +124,7 @@ const ITEM_DESCRIPTIONS = {
   bevida: "Un brebaje revitalizante. Dáselo a un personaje aliado (pulsa sobre él en el tablero) para restaurar toda su vida hasta su máximo de base.",
   atrapapinreles: "Un cepo goblin oxidado. Colócalo junto a uno de tus personajes: el enemigo que caiga en su casilla o pase por encima pierde el turno, suelta cualquier gnomo que llevara encima y recibe 1 punto de daño.",
   katapum: "Un cohete goblin casero. Elige a un rival a la vista: el misil vuela teledirigido hasta él y le hace entre 1 y 2 puntos de daño en la explosión.",
+  totemvision: "Un tótem tallado con un ojo tallado en su punta. Colócalo sobre una casilla libre: otorga visión permanente en un radio de 3 casillas. Tiene 1 punto de vida (cualquier golpe lo destruye) y, si se esconde dentro de un arbusto, se rompe en cuanto un rival entra en él.",
 };
 
 const Backpack = {
@@ -180,6 +195,12 @@ const Backpack = {
     // "inicialmente la mochila aparece vacia salvo con una seta arcoiris,
     // la comida favorita de los gnomos."
     this.inventory.push({ uid: this._nextUid++, itemId: "setarcoiris" });
+    // Pedido explícito: "ahora los jugadores empiezan tambien con un
+    // TotemVision en la mochila al comienzo del juego" — mismo patrón que
+    // la Setarcoiris de arriba, un segundo item de regalo en cada partida
+    // nueva (solo para el jugador: esto es la mochila real, la del rival
+    // se simula aparte en Shops.attemptAutoBuy/Armory.attemptAutoUpgrade).
+    this.inventory.push({ uid: this._nextUid++, itemId: "totemvision" });
     this._ensureButton();
     this._updateAnchor();
     if (typeof Turns !== "undefined" && !this._turnListenerRegistered) {
@@ -514,6 +535,7 @@ const Backpack = {
     else if (entry.itemId === "bevida") this._startGivingBevida(uid);
     else if (entry.itemId === "atrapapinreles") this._startPlacingAtrapaPinreles(uid);
     else if (entry.itemId === "katapum") this._startTargetingKatapum(uid);
+    else if (entry.itemId === "totemvision") this._startPlacingTotemVision(uid);
   },
 
   // ---------- BeVida: dársela a un personaje aliado ----------
@@ -613,6 +635,7 @@ const Backpack = {
             if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
             if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
             if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
+            if (typeof TotemVision !== "undefined" && TotemVision.at(row, col)) continue; // TotemVision (js/totemvision.js)
             // Igual que cualquier otra mecánica del proyecto: no se ofrece
             // colocar nada sobre una loseta que ni siquiera se ha revelado.
             if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;
@@ -813,6 +836,48 @@ const Backpack = {
 
     SFX.itemPlace();
     this.traps.push({ uid, itemId: "atrapapinreles", row, col, el });
+  },
+
+  // ---------- TotemVision ----------
+  // Mismo flujo de colocación exacto que la Setarcoiris/AtrapaPinreles
+  // (casilla libre adyacente a un personaje propio aún activo) — la ficha
+  // solo dice "casilla libre del escenario", pero para mantener el mismo
+  // lenguaje de interacción que el resto de objetos colocables (y no tener
+  // que barrer el tablero entero buscando "cualquier" casilla libre) se
+  // reutiliza _adjacentToPlayerTiles tal cual. La creación de verdad del
+  // tótem (percepción, HP, ataque, rotura en arbusto) vive en su propio
+  // archivo — ver js/totemvision.js, regla de oro: un archivo por mecánica.
+  _startPlacingTotemVision(uid) {
+    this._placingUid = uid;
+    Units.clearRangeOverlays();
+    const tiles = this._adjacentToPlayerTiles();
+    tiles.forEach((tile, i) => {
+      Units.addMarker({
+        className: "range-marker range-marker--item-target",
+        row: tile.row,
+        col: tile.col,
+        delayIndex: i,
+        visibleClass: "range-marker--visible",
+        owner: "backpack",
+        onClick: () => this._placeTotemVisionAt(uid, tile.row, tile.col),
+      });
+    });
+  },
+
+  _placeTotemVisionAt(uid, row, col) {
+    this._placingUid = null;
+    Units.markerEls = Units.markerEls.filter((m) => {
+      if (m._owner !== "backpack") return true;
+      m.remove();
+      return false;
+    });
+    this.inventory = this.inventory.filter((it) => it.uid !== uid);
+    this._restoreNormalRange();
+
+    const unit = Units.list.find((u) => u.id === Units.selectedId);
+    const team = unit ? unit.team : "player";
+    if (typeof TotemVision !== "undefined") TotemVision.place(team, row, col);
+    SFX.itemPlace();
   },
 
   // Llamado desde Units.walkPath (js/units.js), EL único punto de paso de

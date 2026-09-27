@@ -98,9 +98,14 @@ const Resources = {
 
   // Recursos recolectados por el jugador esta partida — leído por
   // js/armory.js para saber qué se puede pagar, y por Backpack para pintar
-  // las etiquetas. Solo existe para "player": el rival no tiene mochila ni
-  // Armería en esta versión.
+  // las etiquetas.
   counts: { madera: 0, roca: 0, metal: 0 },
+  // Pedido explícito: "los enemigos tambien pueden recoger recursos e
+  // invertirlos en la armeria" — mismo pozo, pero SEPARADO del del
+  // jugador (nunca comparten inventario/Armería, ver Armory.state.enemy),
+  // leído por Turns._aiRunEconomyPhase (js/turns.js) para las mejoras
+  // automáticas del rival.
+  enemyCounts: { madera: 0, roca: 0, metal: 0 },
 
   init() {
     this._initMouseTracking();
@@ -114,6 +119,7 @@ const Resources = {
     this._ghosts.forEach((g) => g.el.remove());
     this._ghosts = [];
     this.counts = { madera: 0, roca: 0, metal: 0 };
+    this.enemyCounts = { madera: 0, roca: 0, metal: 0 };
     if (typeof Backpack !== "undefined") Backpack.refreshResourceBadges && Backpack.refreshResourceBadges();
   },
 
@@ -506,10 +512,14 @@ const Resources = {
     this.list = this.list.filter((n) => n.id !== node.id);
     const def = RESOURCE_NODE_TYPES[node.kind];
 
-    // Solo el jugador tiene mochila/Armería en esta versión — si es el
-    // rival quien la destruye (o la IA la ataca), desaparece sin más, sin
-    // animación de recolección (no hay a dónde volar).
-    const shouldCollect = destroyer && destroyer.team === "player";
+    // Solo el jugador tiene mochila en esta versión, así que solo él
+    // recibe la animación de recolección (vuelo hasta la mochila). Pedido
+    // explícito: "los enemigos tambien pueden recoger recursos e
+    // invertirlos en la armeria" — el rival SÍ recolecta ahora, pero de
+    // forma silenciosa (sin mochila a la que volar, ver
+    // enemyCounts/_collectSilently más abajo).
+    const isPlayerCollecting = destroyer && destroyer.team === "player";
+    const isEnemyCollecting = destroyer && destroyer.team === "enemy";
 
     // Pedido explícito (memoria de niebla): "si yo en algun momento vi un
     // arbol en una casilla y me alejo de el... pero si luego vuelvo y
@@ -520,8 +530,12 @@ const Resources = {
     // percepción real del jugador ahora mismo, no la hacemos desaparecer
     // todavía: se queda como "fantasma" (última versión vista, atenuada
     // igual que cualquier otro elemento recordado) hasta que el jugador
-    // vuelva a percibir esa casilla — ver resolveGhosts().
-    if (!shouldCollect && typeof Fog !== "undefined" && Fog.perceivedGrid && !Fog.isPerceived(node.row, node.col)) {
+    // vuelva a percibir esa casilla — ver resolveGhosts(). El rival sigue
+    // recolectando su recurso de verdad aunque el jugador no lo vea
+    // desaparecer todavía (su economía no depende de la niebla DEL
+    // JUGADOR).
+    if (isEnemyCollecting) this.enemyCounts[def.resourceId] = (this.enemyCounts[def.resourceId] || 0) + 1;
+    if (!isPlayerCollecting && typeof Fog !== "undefined" && Fog.perceivedGrid && !Fog.isPerceived(node.row, node.col)) {
       this._ghosts.push({ row: node.row, col: node.col, el: node.el });
       return;
     }
@@ -529,7 +543,7 @@ const Resources = {
     node.el.classList.add("resource-node--destroyed");
     if (typeof SFX !== "undefined") SFX.death();
 
-    if (shouldCollect) this._spawnPickupAt(node.row, node.col, def.resourceId);
+    if (isPlayerCollecting) this._spawnPickupAt(node.row, node.col, def.resourceId);
 
     await new Promise((resolve) => setTimeout(resolve, 320));
     node.el.remove();

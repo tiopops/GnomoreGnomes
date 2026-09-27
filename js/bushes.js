@@ -188,6 +188,13 @@ const Bushes = {
   checkStepInto(unit, row, col) {
     const bush = this.at(row, col);
     if (!bush) return false;
+    // TotemVision (js/totemvision.js) — pedido explícito: "se pueden
+    // ocultar dentro de un arbusto, pero si un personaje enemigo entra
+    // dentro del arbusto, el totem se rompe" — se comprueba aquí, en el
+    // mismo punto de entrada a CUALQUIER arbusto, antes de la emboscada de
+    // unidades de abajo: un rival que entra rompe el tótem siempre, aunque
+    // además el arbusto estuviera escondiendo a alguien.
+    if (typeof TotemVision !== "undefined") TotemVision.checkBushEntry(unit, row, col);
     if (bush.hiddenUnitId && bush.hiddenUnitId !== unit.id) {
       const hiddenUnit = typeof Units !== "undefined" ? Units.list.find((u) => u.id === bush.hiddenUnitId) : null;
       if (hiddenUnit && hiddenUnit.team !== unit.team) {
@@ -293,6 +300,19 @@ const Bushes = {
           return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom;
         });
         occluding = mouseOverBush || mouseOverBehind;
+      }
+      // Pedido explícito: "los arbustos deben tener el sistema de
+      // transparencia para cuando un personaje esta sobre ellos escondido"
+      // — lo de arriba solo cubre el solape isométrico con quien esté
+      // JUNTO al arbusto (mismo mecanismo que Villages/Obelisks); un
+      // personaje PROPIO escondido DENTRO de este mismo arbusto (misma
+      // loseta, unit--in-bush, ver Fog.applyVisibility) queda por detrás
+      // de su sprite (z-index -1, ver ese mismo comentario) y sin este
+      // añadido solo se vería atenuado al pasar el ratón justo encima, en
+      // vez de permanecer visible mientras siga escondido ahí.
+      if (!occluding && bush.hiddenUnitId && typeof Units !== "undefined") {
+        const hiddenUnit = Units.list.find((u) => u.id === bush.hiddenUnitId);
+        if (hiddenUnit && hiddenUnit.team === "player") occluding = true;
       }
       bush.el.classList.toggle("bush--occluding", occluding);
     });

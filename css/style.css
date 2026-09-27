@@ -1217,10 +1217,14 @@ h2 {
    deriva, 1.035→1.07 de escala, 0.6deg→1.2deg de giro) — sigue siendo el
    mismo derivado sutil de siempre, ni más caro por fotograma (misma
    duración/misma propiedad transform) ni brusco, solo un pelín más
-   notorio para compensar visualmente que hay menos nubes moviéndose.*/
+   notorio para compensar visualmente que hay menos nubes moviéndose.
+   Pedido explícito (tercera pasada, ver mapgen.js): bajado otra vez de 3
+   de cada 10 a 2 de cada 10 losetas — misma lógica de compensación, un
+   empujón más de amplitud (-44%→-42%, 1.07→1.09, 1.2deg→1.6deg) para que
+   el campo siga leyéndose igual de vivo con aún menos nubes en marcha. */
 @keyframes fog-idle-drift {
   0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-  50% { transform: translate(-50%, -44%) scale(1.07) rotate(1.2deg); }
+  50% { transform: translate(-50%, -42%) scale(1.09) rotate(1.6deg); }
 }
 
 /* Pedido explícito: "añade un checkbox para desactivar/activar la
@@ -1406,6 +1410,18 @@ body.gg-fog-anim-off .tile__fog--idle:not(.tile__fog--revealed) {
   cursor: var(--cursor-pointer);
   transition: left 0.22s cubic-bezier(0.34, 1.2, 0.64, 1), top 0.22s cubic-bezier(0.34, 1.2, 0.64, 1),
     opacity 0.4s ease, visibility 0s linear 0s, transform 0.15s ease, filter 0.15s ease;
+}
+
+/* Pedido explícito: "si un enemigo se pone detras de mi personaje, mi
+   personaje debe adquirir el sistema de transparencias, si no me es
+   imposible atacarle" — misma semitransparencia + clics atravesándolo que
+   .village--occluding/.obelisk--occluding/.bush--occluding/
+   .resource-node--occluding (ver Units.refreshUnitOcclusion, js/units.js),
+   aplicada ahora a una unidad propia en vez de a un elemento de escenario. */
+.unit--occluding {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
 }
 
 /* Indicador opcional de equipo (js/teammarkers.js) — pedido explícito:
@@ -3535,17 +3551,46 @@ body.ability-targeting--mind * {
 
 /* Círculos de destino de Lanzamiento — mismo range-marker de siempre
    (Movement.showFor), con un tinte dorado para que no se confundan con el
-   radio de movimiento normal (violeta) mientras se elige dónde lanzar. */
+   radio de movimiento normal (violeta) mientras se elige dónde lanzar.
+   CORRECCIÓN (pedido explícito: "las zonas de colores de lanzamiento se
+   cargan lento, se deben cargar a la misma velocidad que las de
+   movimiento"): antes se teñía con un filter:hue-rotate()+saturate() sobre
+   TODO el marcador — un filter obliga al navegador a promocionar cada
+   círculo a su propia capa de composición aparte (nunca gratis, y aquí se
+   nota especialmente porque pueden aparecer decenas a la vez, escalonados,
+   ver Units.staggerDelay), así que el conjunto entero se sentía más lento
+   apareciendo que el radio normal de movimiento (que no lleva filter
+   ninguno). Sustituido por el mismo mecanismo que ya usa
+   .range-marker--pass-easy/medium/hard un poco más arriba: color-mix()
+   directo sobre background/border-color/box-shadow — mismo resultado
+   visual, coste de composición idéntico al del círculo normal. */
 .ability-throw-marker {
-  filter: hue-rotate(140deg) saturate(1.4);
+  background: color-mix(in srgb, #d9a441 32%, transparent);
+  border-color: color-mix(in srgb, #d9a441 85%, white 15%);
+  box-shadow: 0 0 10px color-mix(in srgb, #d9a441 55%, transparent);
+}
+
+.ability-throw-marker.range-marker--visible:hover {
+  background: color-mix(in srgb, #d9a441 55%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, #d9a441 85%, transparent);
 }
 
 /* Círculos de destino de Hongo Trampa (TruenoEspora) — mismo range-marker,
-   con un tinte rojizo ("trampa") para no confundirse con el radio normal de
-   movimiento ni con el dorado de Resorte Goblin mientras se elige dónde
-   colocar la seta. */
+   mismo arreglo de rendimiento que Lanzamiento justo arriba (color-mix en
+   vez de filter). Pedido explícito (coherencia de colores en toda la
+   interfaz): "rojo ataques, amarillo acciones, azul habilidades de daño no
+   directo e información" — colocar una trampa es una ACCIÓN (no un ataque
+   directo ni una habilidad de info/daño indirecto), así que pasa de su
+   antiguo tinte rojizo a amarillo, igual que .range-marker--pass-easy. */
 .ability-mine-marker {
-  filter: hue-rotate(320deg) saturate(1.6);
+  background: color-mix(in srgb, #f4d03f 32%, transparent);
+  border-color: color-mix(in srgb, #f4d03f 85%, white 15%);
+  box-shadow: 0 0 10px color-mix(in srgb, #f4d03f 55%, transparent);
+}
+
+.ability-mine-marker.range-marker--visible:hover {
+  background: color-mix(in srgb, #f4d03f 55%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, #f4d03f 85%, transparent);
 }
 
 /* Vuelo por el aire de Lanzamiento (ver Abilities._throwUnitTo) — la
@@ -5143,6 +5188,17 @@ body.perf-mode .eye-cursor-fx {
   font-weight: 900;
 }
 
+/* Pedido explícito: "en la descripcion de los objetos debe aparecer
+   tambien el nombre de los mismos destacado en amarillo" — mismo amarillo
+   que .shop-desc__price-line justo arriba, un pelín más grande al ser el
+   titular de la descripción. */
+.shop-desc__name-line {
+  display: inline-block;
+  color: #ffcf3f;
+  font-weight: 900;
+  font-size: 1.05em;
+}
+
 /* Botón "COMPRAR" — pedido explícito: "pulsar un boton amarillo en la
    interfaz llamado COMPRAR". Mismo lenguaje visual plano que el resto del
    proyecto (.p5-banner/.p5-banner--action, ver arriba), solo que en
@@ -6195,6 +6251,26 @@ body.backpack-giving--katapum * {
 .board-item--atrapapinreles .board-item__sprite {
   animation: none;
   width: 66px;
+  /* Pedido explícito: "voltea horizontalmente el sprite del cepo para
+     todos los sitios en los que aparece en el juego" — el arte original
+     mira hacia el lado equivocado; único sitio donde este sprite se pinta
+     en el tablero (ver ITEM_TYPES.atrapapinreles.iconUrl en backpack.js,
+     reutilizado tal cual para el icono de inventario/tienda, que NO se
+     voltea: ahí es un icono plano de interfaz, no el objeto "físico"
+     colocado en el escenario). */
+  transform: scaleX(-1);
+}
+
+/* TotemVision (js/totemvision.js) — objeto de tienda con 1 punto de vida
+   plantado en el escenario, mismo lenguaje visual que un nodo de recurso
+   (barra de vida propia, se rompe con la misma animación
+   .resource-node--destroyed, ver Resources en style.css). */
+.board-item--totemvision .board-item__sprite {
+  width: 70px;
+}
+
+.totemvision__hpbar {
+  opacity: 1; /* siempre visible, a diferencia de la de una unidad normal: 1 solo punto de vida, conviene que se lea de un vistazo */
 }
 
 /* Cohete "KataPum!" en pleno vuelo (Backpack._animateKatapumThrow,
@@ -7141,13 +7217,48 @@ body.backpack-giving--katapum * {
   margin: 6px 0;
 }
 
+/* Pedido explícito: "si no pulso nada, en ningun sitio veo que nivel tengo
+   de cada cosa" — la cabecera pasa de un simple texto centrado a una fila
+   con el nombre a la izquierda y el nivel/bonus actual a la derecha
+   (rellenado en cada repintado por Armory._renderTrack, ver ese archivo),
+   siempre visible, sin necesitar seleccionar ningún nodo primero. */
 .armory-track__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.armory-track__label-text {
   color: rgba(244, 242, 248, 0.75);
   font-weight: 900;
   font-size: 0.78rem;
   letter-spacing: 0.08em;
-  text-align: center;
-  margin-bottom: 8px;
+}
+
+.armory-track__label-stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 800;
+  font-size: 0.74rem;
+}
+
+.armory-track__label-lvl {
+  color: rgba(244, 242, 248, 0.55);
+}
+
+.armory-track__label-stat .ph {
+  color: #ffcf3f;
+  font-size: 0.85rem;
+}
+
+/* Pedido explícito: "las estadisticas que aumenten...gracias a mejoras de
+   la armeria deben mostrarse de color amarillo" — mismo criterio aplicado
+   aquí al bonus ya comprado, resumido en la cabecera. */
+.armory-track__label-bonus {
+  color: #ffcf3f;
 }
 
 /* Pedido explícito: "los 3 [iconos] juntos a la linea que une a los nodos
@@ -7269,6 +7380,76 @@ body.backpack-giving--katapum * {
 
 .armory-node:disabled {
   cursor: var(--cursor-default);
+}
+
+/* Pedido explícito: "pon etiquetas como las del precio con Lvl. X en la
+   esquina de los recuadros como en la tienda goblin con los precios, se
+   original" — mismo rombo de doble capa (--gg-badge-clip/--gg-badge-tilt)
+   que .shop-slot__price (ver style.css), pero rectangular/ancho en vez de
+   cuadrado (necesita caber "Lvl. X", más texto que un simple precio) y en
+   la esquina INFERIOR-izquierda (la superior-derecha ya la ocupa, en el
+   nodo comprado, el check de .armory-node__owned-check justo abajo). */
+.armory-node__lvl {
+  position: absolute;
+  z-index: 2;
+  left: -10px;
+  bottom: -8px;
+  height: 26px;
+  padding: 0 4px;
+  min-width: 46px;
+  transform: rotate(calc(-1 * var(--gg-badge-tilt)));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+
+.armory-node__lvl::before,
+.armory-node__lvl::after {
+  content: "";
+  position: absolute;
+  clip-path: var(--gg-badge-clip);
+}
+
+.armory-node__lvl::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.armory-node__lvl::after {
+  inset: var(--gg-frame-outline-width);
+  background: rgba(244, 242, 248, 0.85);
+  z-index: 1;
+}
+
+.armory-node--owned .armory-node__lvl::after,
+.armory-node--selected .armory-node__lvl::after {
+  background: #ffcf3f;
+}
+
+.armory-node__lvl-num {
+  position: relative;
+  z-index: 2;
+  color: #241f28;
+  font-weight: 900;
+  font-size: 0.62rem;
+  white-space: nowrap;
+}
+
+/* Marca de "ya comprado" en la esquina opuesta — un vistazo rápido sin
+   tener que leer el color de relleno del propio nodo, mismo verde de
+   confirmación que el resto de la interfaz (p.ej. avisos de compra). */
+.armory-node__owned-check {
+  position: absolute;
+  z-index: 2;
+  top: -6px;
+  right: -6px;
+  font-size: 1.15rem;
+  color: #57c15c;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.6));
+  pointer-events: none;
 }
 
 /* Tramo entre dos nodos — amarillo si el nivel anterior ya está comprado,

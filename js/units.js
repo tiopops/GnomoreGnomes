@@ -254,6 +254,88 @@ const Units = {
     this.list = [];
     this.selectedId = null;
     this.markerEls = [];
+    this._initOcclusionTracking();
+  },
+
+  // ---------- Transparencia cuando un rival queda "detrás" de mi propio
+  // personaje ----------
+  // Pedido explícito: "si un enemigo se pone detras de mi personaje, mi
+  // personaje debe adquirir el sistema de transparencias, si no me es
+  // imposible atacarle". Mismo mecanismo EXACTO ya usado para
+  // Villages/Obelisks/Bushes/Resources (mismas 4 casillas "de detrás" en
+  // isométrico, mismo criterio de "pasar el ratón por encima para
+  // atravesarlo"), aplicado aquí a una unidad propia en vez de a un
+  // elemento de escenario — un personaje del jugador es igual de "más
+  // alto que su propia loseta" que un tótem o un arbusto, así que puede
+  // taparle el hueco de pantalla a un rival de pie justo detrás suyo.
+  // Solo tiene sentido para MIS unidades (nunca para una rival: el
+  // jugador no necesita "ver a través" del personaje de la IA) — usa las
+  // mismas 4 casillas que Obelisks._OCCLUSION_OFFSETS/Villages.
+  _UNIT_OCCLUSION_OFFSETS: [
+    [-1, -1],
+    [-1, 0],
+    [0, -1],
+    [-2, -2],
+  ],
+  _behindElsForUnit(unit) {
+    const els = [];
+    this.list.forEach((other) => {
+      if (other.id === unit.id || other.team === unit.team) return;
+      if (!other.el || other.el.classList.contains("unit--fog-hidden")) return;
+      if (this._UNIT_OCCLUSION_OFFSETS.some(([dr, dc]) => other.row === unit.row + dr && other.col === unit.col + dc)) {
+        els.push(other.el);
+      }
+    });
+    return els;
+  },
+
+  refreshUnitOcclusion(mouseX, mouseY) {
+    const mx = typeof mouseX === "number" ? mouseX : this._lastOccMouseX;
+    const my = typeof mouseY === "number" ? mouseY : this._lastOccMouseY;
+    this.list.forEach((unit) => {
+      if (unit.team !== "player" || !unit.el) return;
+      if (unit.el.classList.contains("unit--fog-hidden") || mx == null || my == null) {
+        unit.el.classList.remove("unit--occluding");
+        return;
+      }
+      const behindEls = this._behindElsForUnit(unit);
+      let occluding = false;
+      if (behindEls.length) {
+        const uRect = unit.el.getBoundingClientRect();
+        const mouseOverUnit = mx >= uRect.left && mx <= uRect.right && my >= uRect.top && my <= uRect.bottom;
+        const mouseOverBehind = behindEls.some((el) => {
+          const r = el.getBoundingClientRect();
+          return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom;
+        });
+        occluding = mouseOverUnit || mouseOverBehind;
+      }
+      unit.el.classList.toggle("unit--occluding", occluding);
+    });
+  },
+
+  _lastOccMouseX: null,
+  _lastOccMouseY: null,
+  _occTrackingReady: false,
+  _initOcclusionTracking() {
+    if (this._occTrackingReady) return;
+    this._occTrackingReady = true;
+    window.addEventListener("mousemove", (e) => {
+      this._lastOccMouseX = e.clientX;
+      this._lastOccMouseY = e.clientY;
+      this.refreshUnitOcclusion(e.clientX, e.clientY);
+    });
+    // Mismo arreglo que Villages/Obelisks/Bushes: "mousemove" no dispara en
+    // móvil, así que se alimenta también con las coordenadas reales del
+    // dedo.
+    const handleTouch = (e) => {
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      this._lastOccMouseX = t.clientX;
+      this._lastOccMouseY = t.clientY;
+      this.refreshUnitOcclusion(t.clientX, t.clientY);
+    };
+    window.addEventListener("touchstart", handleTouch, { passive: true });
+    window.addEventListener("touchmove", handleTouch, { passive: true });
   },
 
   // Cualquier mecánica que quiera mostrar marcadores/indicadores cuando el
@@ -907,6 +989,10 @@ const Units = {
     if (typeof Villages !== "undefined") Villages.refreshOcclusion();
     if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
     if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
+    // Pedido explícito: "si un enemigo se pone detras de mi personaje, mi
+    // personaje debe adquirir el sistema de transparencias" — mismo punto
+    // único de paso, ver refreshUnitOcclusion más arriba.
+    this.refreshUnitOcclusion();
     // Tienda Goblin (js/shops.js) — quien acaba de moverse puede haber
     // quedado junto a una tienda (o haberse alejado de una): este es el
     // ÚNICO punto de paso de cualquier desplazamiento del proyecto

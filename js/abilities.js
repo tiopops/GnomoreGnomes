@@ -776,6 +776,7 @@ const Abilities = {
     if (typeof Villages !== "undefined") Villages.refreshOcclusion();
     if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
     if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
+    if (typeof Units !== "undefined") Units.refreshUnitOcclusion();
     if (typeof Shops !== "undefined") Shops.refreshAll();
   },
 
@@ -1026,6 +1027,7 @@ const Abilities = {
     if (typeof Villages !== "undefined") Villages.refreshOcclusion();
     if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
     if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
+    if (typeof Units !== "undefined") Units.refreshUnitOcclusion();
     if (typeof Shops !== "undefined") Shops.refreshAll();
     Units.refreshRange(unit);
   },

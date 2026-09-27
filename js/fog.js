@@ -243,6 +243,11 @@ const Fog = {
         if (o.team === "player") markAround(o.row, o.col, FOG_OBELISK_PERCEPTION_RADIUS);
       });
     }
+    // TotemVision (js/totemvision.js) — pedido explícito: "otorga vision
+    // como si tuviera percepcion 3", mismo mecanismo fijo que un tótem/
+    // Obelisco propio justo arriba, mientras siga en pie (un tótem roto ya
+    // no está en TotemVision.list).
+    if (typeof TotemVision !== "undefined") TotemVision.markPerception(markAround);
     // Pedido explícito: "cuando la surcabosques usa vision lejana...la
     // zona se revela...durante 4 segundos" — fuentes de percepción
     // temporales (ver addTemporaryPerception), que expiran solas. Un
@@ -551,6 +556,10 @@ const Fog = {
         o.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(o.row, o.col));
       });
     }
+    // TotemVision (js/totemvision.js) — mismo criterio que un tótem/tienda:
+    // "NADA debe verse si tiene niebla encima" para el del rival, nunca
+    // para el propio (ver TotemVision.refreshFogVisibility).
+    if (typeof TotemVision !== "undefined") TotemVision.refreshFogVisibility();
     // Pedido explícito: "algunas unidades asoman por la niebla a veces...
     // asegurate de que se arregla eso" — lo de arriba oculta del todo a
     // quien esté DE PIE sobre su propia loseta sin revelar, pero un
@@ -620,6 +629,41 @@ const Fog = {
   // rectángulos no se nota.
   _OVERLAP_MIN_AREA_PX: 30, // ruido de subpíxel/redondeo, no una superposición real
 
+  // Pedido explícito (con capturas): "el obelisco y sus iconos y otros
+  // elementos...no se asoman por la niebla, esto deberia tenerse en cuenta
+  // para los objetos que estan a la vista o en niebla de guerra" — hasta
+  // ahora coverFrom media SOLO el rect del propio contenedor (.unit/
+  // .obelisk/...), pero varias "insignias" flotantes (la barra de vida,
+  // .unit__hpbar; el indicador de población del Obelisco,
+  // .obelisk__pop-badge...) son hijos con position:absolute y un top/right
+  // NEGATIVO que las saca del propio cuadro del contenedor — un hijo
+  // posicionado así NUNCA agranda el getBoundingClientRect() de su padre,
+  // así que esa insignia podía asomar por encima de una nube vecina sin
+  // que coverFrom se enterara. En vez de enumerar a mano cada insignia de
+  // cada tipo de objeto (frágil: el día de mañana se añade una nueva y hay
+  // que acordarse de venir aquí), se mide la UNIÓN del propio rect más el
+  // de TODOS sus descendientes con tamaño real — mismo "acierta siempre,
+  // sea cual sea la forma" que ya se investigó para el propio solape (ver
+  // la nota larga de _refreshFogCoverZ más abajo): cualquier sprite/icono
+  // nuevo que se añada a cualquier objeto queda cubierto solo, sin tocar
+  // este archivo otra vez.
+  _expandedRect(el) {
+    const base = el.getBoundingClientRect();
+    let left = base.left,
+      top = base.top,
+      right = base.right,
+      bottom = base.bottom;
+    el.querySelectorAll("*").forEach((child) => {
+      const r = child.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) return;
+      if (r.left < left) left = r.left;
+      if (r.top < top) top = r.top;
+      if (r.right > right) right = r.right;
+      if (r.bottom > bottom) bottom = r.bottom;
+    });
+    return { left, top, right, bottom, width: right - left, height: bottom - top };
+  },
+
   _refreshFogCoverZ() {
     if (!this.revealedGrid || !this._fogEls) return;
     // Rectángulos reales de TODAS las nubes que sigan sin revelar (a la vez
@@ -639,7 +683,7 @@ const Fog = {
 
     const coverFrom = (row, col, el) => {
       if (!el || el.classList.contains("unit--fog-hidden")) return;
-      const rect = el.getBoundingClientRect();
+      const rect = this._expandedRect(el);
       if (rect.width === 0 || rect.height === 0) return;
       const z = (row + col) * 10 + 5;
       unrevealed.forEach((tile) => {
@@ -700,6 +744,12 @@ const Fog = {
       Resources.list.forEach((r) => {
         if (!r.el) return;
         coverFrom(r.row, r.col, r.el);
+      });
+    }
+    if (typeof TotemVision !== "undefined") {
+      TotemVision.list.forEach((t) => {
+        if (!t.el) return;
+        coverFrom(t.row, t.col, t.el);
       });
     }
   },

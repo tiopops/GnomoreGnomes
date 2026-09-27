@@ -145,9 +145,22 @@ const Armory = {
       const track = document.createElement("div");
       track.className = "armory-track";
 
+      // Pedido explícito: "la interfaz de la armeria...es muy simple...si
+      // no pulso nada, en ningun sitio veo que nivel tengo de cada cosa" —
+      // cabecera de cada pista con el nivel actual y el bonus ya aplicado
+      // SIEMPRE visible, sin tener que seleccionar ningún nodo primero
+      // (ver _renderTrack, que la rellena de verdad en cada repintado).
       const label = document.createElement("div");
       label.className = "armory-track__label";
-      label.textContent = ARMORY_TRACK_LABELS[kind];
+      const labelText = document.createElement("span");
+      labelText.className = "armory-track__label-text";
+      labelText.textContent = ARMORY_TRACK_LABELS[kind];
+      label.appendChild(labelText);
+      const labelStat = document.createElement("span");
+      labelStat.className = "armory-track__label-stat";
+      label.appendChild(labelStat);
+      this._trackLabelStatEls = this._trackLabelStatEls || {};
+      this._trackLabelStatEls[kind] = labelStat;
       track.appendChild(label);
 
       const nodesEl = document.createElement("div");
@@ -198,6 +211,7 @@ const Armory = {
     this._warningEl = null;
     this._resourceRowEl = null;
     this._trackEls = { arma: null, armadura: null };
+    this._trackLabelStatEls = null;
     this._selected = null;
     el.classList.remove("backpack-overlay--visible");
     setTimeout(() => el.remove(), 220);
@@ -226,6 +240,20 @@ const Armory = {
     nodesEl.innerHTML = "";
     const owned = this._levelOf(team, kind);
 
+    // Cabecera "Nivel X/3 · Fuerza +N" siempre visible (ver el nodo
+    // labelStat creado en openPopup) — mismo bonus que ya aplica de verdad
+    // Armory.attackBonus/defenseBonus, así que nunca puede desincronizarse
+    // de las estadísticas reales de las unidades.
+    const statEl = this._trackLabelStatEls && this._trackLabelStatEls[kind];
+    if (statEl) {
+      const bonus = kind === "arma" ? this.attackBonus(team) : this.defenseBonus(team);
+      statEl.innerHTML =
+        `<span class="armory-track__label-lvl">Nivel ${owned}/${ARMORY_MAX_LEVEL}</span>` +
+        (bonus > 0
+          ? ` <i class="ph ${ARMORY_STAT_ICON[kind]}"></i> <span class="armory-track__label-bonus">+${bonus}</span>`
+          : "");
+    }
+
     for (let lvl = 1; lvl <= ARMORY_MAX_LEVEL; lvl++) {
       if (lvl > 1) {
         const link = document.createElement("div");
@@ -245,7 +273,14 @@ const Armory = {
         (isNext ? " armory-node--next" : "") +
         (!boughtAlready && !isNext ? " armory-node--locked" : "") +
         (this._selected === uid ? " armory-node--selected" : "");
-      nodeEl.innerHTML = `<img src="${ARMORY_ICONS[kind][lvl - 1]}" class="armory-node__icon" alt="">`;
+      // Pedido explícito: "pon etiquetas como las del precio con Lvl. X en
+      // la esquina de los recuadros como en la tienda goblin con los
+      // precios" — misma silueta de rombo (--gg-badge-clip/--gg-badge-tilt)
+      // que .shop-slot__price, ver style.css.
+      nodeEl.innerHTML =
+        `<img src="${ARMORY_ICONS[kind][lvl - 1]}" class="armory-node__icon" alt="">` +
+        `<span class="armory-node__lvl"><span class="armory-node__lvl-num">Lvl. ${lvl}</span></span>` +
+        (boughtAlready ? '<i class="ph-fill ph-check-circle armory-node__owned-check"></i>' : "");
       // Solo el propio nodo comprado o el siguiente disponible se pueden
       // seleccionar (ver descripción) — uno todavía bloqueado más allá del
       // siguiente no muestra nada nuevo, "bloqueadas entre sí".
@@ -373,6 +408,40 @@ const Armory = {
 
     this._selected = `${kind}-${lvl}`;
     this._renderTracks();
+  },
+
+  // Pedido explícito: "los enemigos tambien pueden recoger recursos e
+  // invertirlos en la armeria" — mismo cálculo de coste/aplicación que
+  // _tryUpgrade (arriba), pero SIN pasar por ningún popup abierto (la IA
+  // rival nunca abre la interfaz de verdad): compra directamente, con los
+  // recursos propios del equipo (Resources.enemyCounts para "enemy",
+  // Resources.counts para "player" — reutilizable para cualquier equipo
+  // el día de mañana). Prueba Arma y luego Armadura (en ese orden fijo,
+  // sin más criterio que "algo es mejor que nada"); devuelve true si
+  // compró algo, para que quien la llame (ver Turns._aiRunEconomyPhase)
+  // sepa si merece la pena reintentar con lo que le quede.
+  attemptAutoUpgrade(team) {
+    const counts = team === "player" ? Resources.counts : Resources.enemyCounts;
+    if (!counts) return false;
+    for (const kind of ["arma", "armadura"]) {
+      const owned = this._levelOf(team, kind);
+      if (owned >= ARMORY_MAX_LEVEL) continue;
+      const cost = ARMORY_LEVEL_COST[owned];
+      const affordable =
+        (counts.madera || 0) >= cost.madera && (counts.roca || 0) >= cost.roca && (counts.metal || 0) >= cost.metal;
+      if (!affordable) continue;
+      counts.madera -= cost.madera;
+      counts.roca -= cost.roca;
+      counts.metal -= cost.metal;
+      this.state[team][kind] = owned + 1;
+      if (kind === "armadura") this.applyDefenseBonusToTeam(team);
+      if (team === "player" && typeof Backpack !== "undefined" && Backpack.refreshResourceBadges) {
+        Backpack.refreshResourceBadges();
+      }
+      if (this._overlayEl && this._obelisk && this._obelisk.team === team) this._renderTracks();
+      return true;
+    }
+    return false;
   },
 
   // Sube hpSegmentEls (crea los huecos nuevos de barra que hagan falta) y

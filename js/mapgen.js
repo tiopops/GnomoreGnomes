@@ -763,7 +763,21 @@ function renderMap(map, container) {
     // coeficientes 7/3 en vez de simplemente row%10<3 (eso dejaría columnas
     // enteras iguales, un patrón de rayas verticales muy regular) para que
     // el reparto no se lea como una cuadrícula obvia.
-    fogImg.className = (t.row * 7 + t.col * 3) % 10 < 3 ? "tile__fog tile__fog--idle" : "tile__fog";
+    // Pedido explícito (tercera pasada): "la animacion de la niebla sigue
+    // siendo lo que mas fps se come...otro metodo que visualmente quede
+    // igual pero consuma muxhisimo menos?" — el tablero único de este
+    // juego es fijo a 25x25 = 625 losetas (OPPONENT_OPTIONS solo tiene la
+    // entrada "1", ver matchsetup.js), así que no hay forma de que esto
+    // varíe partida a partida: el 30% de capas GPU simultáneas de la
+    // pasada anterior (hasta ~187 losetas animando a la vez antes del
+    // recorte fuera-de-pantalla) seguía siendo el techo real en este
+    // tablero. Mismo criterio de siempre (nunca tocar la animación en sí,
+    // solo CUÁNTAS losetas la llevan) bajado otra vez, de 3 de cada 10 a 2
+    // de cada 10 — un tercio menos de capas GPU respecto a la versión
+    // anterior — y la propia deriva de las que SÍ animan sube un poco más
+    // (ver @keyframes fog-idle-drift) para que el campo de niebla se siga
+    // leyendo igual de "vivo" con menos nubes en movimiento.
+    fogImg.className = (t.row * 7 + t.col * 3) % 10 < 2 ? "tile__fog tile__fog--idle" : "tile__fog";
     // La niebla pasa por SpriteQuality.register igual que cualquier otro
     // sprite del tablero, pero NO sigue el zoom como el resto: pedido
     // explícito (pasada posterior) "la niebla puedes ponerla siempre en

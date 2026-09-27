@@ -45,7 +45,8 @@
    pedido explícito). */
 
 const SHOP_COUNT = 1; // "en un principio solo habra una"
-const SHOP_SLOT_COUNT = 4; // "a diferencia de la mochila solo tiene 4 casillas"
+// Pedido explícito: "la tienda goblin pasa a tener 8 objetos en vez de 4".
+const SHOP_SLOT_COUNT = 8;
 const SHOP_SPRITE = "assets/edificios/tienda_goblin.png";
 const SHOP_INTERACT_RANGE = 1; // cuerpo a cuerpo, igual que VILLAGE_ATTACK_RANGE/Combat.attackRange
 
@@ -54,6 +55,11 @@ const SHOP_INTERACT_RANGE = 1; // cuerpo a cuerpo, igual que VILLAGE_ATTACK_RANG
 // mañana con varias tiendas cada una podría cobrar distinto). "de momento
 // pondremos a la venta 2 setas": dos entradas independientes del mismo
 // itemId (cada una su propio hueco/uid), no una sola con "cantidad: 2".
+// Pedido explícito: "la tienda goblin pasa a tener 8 objetos en vez de 4"
+// — de 3 entradas a 8, repitiendo lo de antes y añadiendo KataPum (antes
+// solo en la reposición, ver SHOP_RESTOCK_POOL) y el TotemVision nuevo
+// (ver ITEM_TYPES.totemvision/js/totemvision.js) para que la partida
+// arranque ya con las 8 casillas llenas de variedad real.
 const SHOP_STOCK_TEMPLATE = [
   { itemId: "setarcoiris", price: 5 },
   { itemId: "setarcoiris", price: 5 },
@@ -61,12 +67,16 @@ const SHOP_STOCK_TEMPLATE = [
   // Cuesta 5 puntos de Gloria" (ver ITEM_TYPES.bevida/ITEM_DESCRIPTIONS.bevida
   // en js/backpack.js).
   { itemId: "bevida", price: 5 },
+  { itemId: "bevida", price: 5 },
   // Pedido explícito: "añadimos a la tienda goblin el cepo llamado
   // 'AtrapaPinreles'" (ver ITEM_TYPES.atrapapinreles en js/backpack.js) —
   // cuesta algo más que una Setarcoiris/BeVida al ser un objeto ofensivo de
   // un solo uso garantizado (turno perdido + gnomo caído + daño), no solo
   // utilidad.
   { itemId: "atrapapinreles", price: 6 },
+  { itemId: "atrapapinreles", price: 6 },
+  { itemId: "katapum", price: 8 },
+  { itemId: "totemvision", price: 7 },
 ];
 
 // Pedido explícito: "Las tiendas goblin reponen existencias cada 5 turnos,
@@ -85,6 +95,9 @@ const SHOP_RESTOCK_POOL = [
   // de todos: daño a distancia teledirigido, sin ni siquiera tener que
   // acercarse al objetivo.
   { itemId: "katapum", price: 8 },
+  // TotemVision (js/totemvision.js) — igual que el resto de objetos
+  // nuevos, también puede salir sorteado en cualquier reposición futura.
+  { itemId: "totemvision", price: 7 },
 ];
 const SHOP_RESTOCK_INTERVAL = 5; // turnos
 
@@ -439,8 +452,15 @@ const Shops = {
     // (nunca contenido del jugador), así que innerHTML aquí es seguro.
     if (entry) {
       const flavor = ITEM_DESCRIPTIONS[entry.itemId] || "";
+      // Pedido explícito: "en la descripcion de los objetos debe aparecer
+      // tambien el nombre de los mismos destacado en amarillo" — misma
+      // clase de énfasis (color amarillo) que la línea de precio justo
+      // abajo, en su propia línea al principio para que se lea de un
+      // vistazo qué objeto es antes de leer el sabor.
+      const def = ITEM_TYPES[entry.itemId];
+      const nameLine = def ? `<strong class="shop-desc__name-line">${def.name}</strong><br>` : "";
       this._descEl.innerHTML =
-        `${flavor}<br><br><strong class="shop-desc__price-line">Este objeto cuesta ${entry.price} puntos de gloria.</strong>`;
+        `${nameLine}${flavor}<br><br><strong class="shop-desc__price-line">Este objeto cuesta ${entry.price} puntos de gloria.</strong>`;
     } else {
       this._descEl.textContent = "";
     }
@@ -501,6 +521,37 @@ const Shops = {
     this._selectedUid = null;
     SFX.buy();
     this._renderSlots();
+  },
+
+  // Pedido explícito: "los enemigos tambien pueden usar sus puntos de
+  // gloria para comprar objetos en la tienda goblin" — mismo gasto que
+  // _buySelected (arriba), pero sin ningún popup abierto: la IA rival
+  // nunca abre la interfaz de verdad. El rival no tiene mochila en esta
+  // versión (ver la nota de Resources.enemyCounts, mismo criterio), así
+  // que el objeto comprado no va a ningún inventario — se cuenta en
+  // enemyPurchasedCount solo como rastro de actividad económica; comprar
+  // igualmente vacía el hueco de la tienda para todos, tal y como pediría
+  // una compra real. Devuelve true si compró algo.
+  enemyPurchasedCount: 0,
+  attemptAutoBuy(team) {
+    if (typeof Glory === "undefined") return false;
+    const points = Glory.points[team] || 0;
+    for (const shop of this.list) {
+      // El más barato primero — con pocos puntos de gloria, mejor comprar
+      // algo que quedarse sin poder pagar nada por apuntar siempre al más
+      // caro.
+      const affordable = shop.stock
+        .filter((entry) => entry.price <= points)
+        .sort((a, b) => a.price - b.price)[0];
+      if (!affordable) continue;
+      if (!Glory.spend(team, affordable.price)) continue;
+      shop.stock = shop.stock.filter((it) => it.uid !== affordable.uid);
+      if (team !== "player") this.enemyPurchasedCount++;
+      else if (typeof Backpack !== "undefined") Backpack.addItem(affordable.itemId);
+      if (this._activeShop === shop) this._renderSlots();
+      return true;
+    }
+    return false;
   },
 
   // ---------- Proveedor de rango (ver cabecera de units.js) ----------

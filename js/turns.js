@@ -454,6 +454,27 @@ const Turns = {
         await new Promise((resolve) => setTimeout(resolve, 260));
       }
     }
+    this._aiRunEconomyPhase();
+  },
+
+  // Pedido explícito: "los enemigos tambien pueden recoger recursos e
+  // invertirlos en la armeria" + "los enemigos tambien pueden usar sus
+  // puntos de gloria para comprar objetos en la tienda goblin" — al final
+  // de CADA turno rival (ya con lo que hayan recolectado atacando nodos de
+  // recurso este mismo turno, ver la rama nueva en _aiActOnce), gasta todo
+  // lo que le llegue en mejoras de Armería y compras de la Tienda Goblin,
+  // en ese orden y repitiendo mientras le siga alcanzando — nunca dentro
+  // de ningún popup real (la IA no "abre" ninguna interfaz), ver
+  // Armory.attemptAutoUpgrade/Shops.attemptAutoBuy.
+  _aiRunEconomyPhase() {
+    if (typeof Armory !== "undefined") {
+      let bought = true;
+      while (bought) bought = Armory.attemptAutoUpgrade("enemy");
+    }
+    if (typeof Shops !== "undefined") {
+      let bought = true;
+      while (bought) bought = Shops.attemptAutoBuy("enemy");
+    }
   },
 
   // Ejecuta UNA acción para `unit` según la prioridad de arriba. Devuelve
@@ -527,6 +548,25 @@ const Turns = {
       const looseGnome = Gnome.list.find((g) => !g.heldBy && g.findApproachTile(unit));
       if (looseGnome) {
         await looseGnome.catchBy(unit);
+        return true;
+      }
+    }
+
+    // Pedido explícito: "los enemigos tambien pueden recoger recursos e
+    // invertirlos en la armeria" — última prioridad antes de simplemente
+    // acercarse (nunca antepone la economía a un enemigo/gnomo/tótem ya al
+    // alcance, ver las ramas de arriba), pero mejor que no hacer nada:
+    // ataca el nodo de recurso alcanzable más cercano, mismo mecanismo que
+    // ya usa el jugador (Resources.findApproachTile/attack).
+    if (typeof Resources !== "undefined" && Resources.list.length > 0) {
+      const node = Resources.list
+        .filter((n) => Resources.findApproachTile(unit, n))
+        .reduce((best, n) => {
+          const d = Math.max(Math.abs(n.row - unit.row), Math.abs(n.col - unit.col));
+          return !best || d < best.d ? { node: n, d } : best;
+        }, null);
+      if (node) {
+        await Resources.approachAndAttack(unit, node.node);
         return true;
       }
     }

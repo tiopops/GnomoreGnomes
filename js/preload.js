@@ -83,7 +83,20 @@ const Preload = {
     const startedAt = Date.now();
     let loaded = 0;
     const total = this._HEAVY_ASSETS.length;
-    this._updateProgress(0, total);
+    // Pedido explícito: "la barra de loading carga de golpe...no se puede
+    // hacer mas gradual?" — las _HEAVY_ASSETS son pocas (una decena) y con
+    // conexión rápida/caché sus onload pueden llegar casi todos EN EL MISMO
+    // instante, así que el progreso "real" (_realPct, de abajo) saltaba de
+    // golpe de 0% a 100% en vez de avanzar poco a poco, aunque la barra
+    // siguiera visible varios segundos más por el suelo mínimo de abajo.
+    // _startTimeBasedFill anima un avance SIEMPRE gradual con
+    // requestAnimationFrame a lo largo de _MIN_SHOW_MS entero; el ancho
+    // final mostrado es el máximo entre ese avance "de reloj" y el
+    // progreso real (nunca miente hacia atrás si la carga real va más
+    // lenta que _MIN_SHOW_MS, solo suaviza el caso rápido/de golpe).
+    this._realPct = 0;
+    this._updateProgress();
+    const stopTimeBasedFill = this._startTimeBasedFill(startedAt);
     const loadAll = Promise.all(
       this._HEAVY_ASSETS.map(
         (url) =>
@@ -95,7 +108,8 @@ const Preload = {
             // deja nada a medias, solo no llegó a precargarse.
             img.onload = img.onerror = () => {
               loaded++;
-              this._updateProgress(loaded, total);
+              this._realPct = total ? Math.round((loaded / total) * 100) : 100;
+              this._updateProgress();
               resolve();
             };
             img.src = url;
@@ -109,7 +123,30 @@ const Preload = {
     // llegar a _MIN_SHOW_MS antes de ocultarse.
     const remaining = this._MIN_SHOW_MS - (Date.now() - startedAt);
     if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
+    stopTimeBasedFill();
+    this._realPct = 100;
+    this._updateProgress();
     this._hide();
+  },
+
+  // Avance "de reloj", independiente de cuándo termine de verdad cada
+  // asset — ver la nota larga en run(). Lineal de 0 a ~96% a lo largo de
+  // _MIN_SHOW_MS (se deja un pelín corto a propósito: el _updateProgress
+  // final tras el suelo mínimo, arriba, ya remata a 100% él solo, así este
+  // avance nunca "adelanta" a un cierre que aún no ha llegado). Devuelve
+  // una función para pararlo en cuanto el suelo mínimo se cumpla.
+  _startTimeBasedFill(startedAt) {
+    let rafId = null;
+    const step = () => {
+      const elapsed = Date.now() - startedAt;
+      this._timePct = Math.min(96, Math.round((elapsed / this._MIN_SHOW_MS) * 96));
+      this._updateProgress();
+      rafId = requestAnimationFrame(step);
+    };
+    rafId = requestAnimationFrame(step);
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   },
 
   _ensureOverlay() {
@@ -130,9 +167,13 @@ const Preload = {
     this._fillEl = overlay.querySelector(".match-loading-panel__fill");
   },
 
-  _updateProgress(loaded, total) {
+  _updateProgress() {
     if (!this._fillEl) return;
-    const pct = total ? Math.round((loaded / total) * 100) : 100;
+    // Máximo entre el avance real (por assets ya cargados) y el avance de
+    // reloj (ver _startTimeBasedFill) — nunca retrocede, solo evita que se
+    // quede parado en 0% mientras los onload reales no lleguen o salten
+    // todos de golpe.
+    const pct = Math.max(this._realPct || 0, this._timePct || 0);
     this._fillEl.style.width = `${pct}%`;
   },
 

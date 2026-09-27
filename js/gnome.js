@@ -452,6 +452,14 @@ function createGnomeInstance() {
       // niebla; esto evita además "cogerlo a ciegas" haciendo clic donde en
       // teoría no se ve nada.
       if (typeof Fog !== "undefined" && Fog.isFogged(this.row, this.col)) return;
+      // CORRECCIÓN (pedido explícito): "si estan dentro de la niebla de
+      // guerra no deberia poder cogerlos" — mismo hueco que el ataque (ver
+      // Combat.attackableEnemies): Fog.isFogged solo descarta una loseta
+      // NUNCA explorada; una ya explorada antes pero fuera del alcance de
+      // percepción actual también oculta al gnomo de verdad (unit--fog-
+      // hidden, ver Fog.applyVisibility) y sin embargo seguía dejando
+      // "cogerlo a ciegas" porque su loseta ya no contaba como fogged.
+      if (this.el && this.el.classList.contains("unit--fog-hidden")) return;
       const approach = this.findApproachTile(unit);
       if (!approach) return;
       Units.addMarker({

@@ -85,6 +85,16 @@ const Combat = {
       // (z-index por encima de todo, ver mapgen.js), esto evita además que
       // se pueda "atacar a ciegas" algo que no se ve.
       if (typeof Fog !== "undefined" && Fog.isFogged(other.row, other.col)) return;
+      // CORRECCIÓN (pedido explícito): "si un enemigo esta dentro de la
+      // niebla de guerra no deberia poder atacarlo" — el Fog.isFogged de
+      // arriba solo descarta una loseta que NUNCA se ha explorado; una
+      // loseta ya explorada mucho antes pero fuera del alcance de
+      // percepción ACTUAL de mis unidades también oculta al rival de pie
+      // ahí (se vuelve invisible de verdad, unit--fog-hidden, ver
+      // Fog.applyVisibility), pero seguía contando como "atacable" porque
+      // técnicamente su loseta ya no está fogged. Un rival así no debe
+      // poder atacarse a ciegas, igual que uno sobre niebla sin explorar.
+      if (other.el && other.el.classList.contains("unit--fog-hidden")) return;
       // Arbustos (js/bushes.js) — mismo criterio que la niebla: un rival
       // escondido dentro de un arbusto (a ojos de `unit`) tampoco se puede
       // atacar hasta que se revele (emboscada al pisarlo, o que se mueva por
@@ -397,6 +407,7 @@ const Combat = {
       if (typeof Villages !== "undefined") Villages.refreshOcclusion();
       if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
       if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
+      if (typeof Units !== "undefined") Units.refreshUnitOcclusion();
       if (typeof Shops !== "undefined") Shops.refreshAll();
     }
   },

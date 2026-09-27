@@ -397,6 +397,11 @@ function spawnTestUnits(size, raceId) {
     Resources.init();
     Resources.spawn(size);
   }
+  // TotemVision (js/totemvision.js) — nunca se "spawnea" al empezar la
+  // partida (solo aparece si alguien lo compra y lo coloca), pero sí hay
+  // que vaciar la lista de la partida anterior, igual que el resto de
+  // mecánicas de esta pantalla.
+  if (typeof TotemVision !== "undefined") TotemVision.resetAll();
 
   // Hierbajos (js/hierbajos.js) — vegetación decorativa suelta, pedido
   // explícito: "para colocar sobre las losetas de hierba y dar sensacion de
@@ -456,6 +461,9 @@ function spawnTestUnits(size, raceId) {
   // justo arriba: comprueba de entrada si algún personaje ha quedado
   // colocado justo detrás de uno.
   if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
+  // Unidades propias (js/units.js) — mismo motivo, ahora entre personajes:
+  // si un rival ha arrancado justo detrás de uno del jugador.
+  if (typeof Units !== "undefined") Units.refreshUnitOcclusion();
   // Tienda Goblin (js/shops.js) — por si algún personaje ha arrancado ya
   // pegado a una (mapa pequeño), su cursor de moneda debe estar activo
   // desde el primer fotograma, no solo tras el primer movimiento.
