@@ -255,7 +255,19 @@ const Abilities = {
     // Abilities._playExplosionFeedback (temblor de cámara + destello blanco
     // + mensaje grande), en vez de inventar un tercer sistema de feedback
     // épico por separado.
-    if (type.espinasUrl) unit.spriteEl.src = type.espinasUrl;
+    // Calidad de sprite dinámica (pedido explícito: "cada Sprite que entre
+    // nuevo tendrá que adaptarse...como la resolución dinámica") — esto NO
+    // es una pose momentánea (a diferencia de machaca/impacto en
+    // Villages._playEpicSmash, que sí se dejan sin registrar a propósito):
+    // el Golem se queda así hasta que caduque en onTurnStart, así que hace
+    // falta re-registrar (no solo asignar .src) para que la textura de
+    // reposo que recuerda SpriteQuality sea la de Espinas, no la vieja de
+    // GolemCorteza — si no, el próximo cruce de zoom la devolvería sola al
+    // sprite equivocado.
+    if (type.espinasUrl) {
+      if (typeof SpriteQuality !== "undefined") SpriteQuality.register(unit.spriteEl, type.espinasUrl);
+      else unit.spriteEl.src = type.espinasUrl;
+    }
     const viewportEl = document.getElementById("board-viewport");
     if (viewportEl) {
       viewportEl.classList.remove("board-viewport--shake");
@@ -996,7 +1008,13 @@ const Abilities = {
       unit.thorny = false;
       if (unit.el) unit.el.classList.remove("unit--thorny");
       const type = UNIT_TYPES[unit.typeId];
-      if (type && unit.spriteEl) unit.spriteEl.src = type.spriteUrl;
+      // Misma razón que en _activateThorns más arriba: re-registrar, no solo
+      // asignar .src, para que SpriteQuality recuerde de nuevo la textura
+      // normal de GolemCorteza como reposo.
+      if (type && unit.spriteEl) {
+        if (typeof SpriteQuality !== "undefined") SpriteQuality.register(unit.spriteEl, type.spriteUrl);
+        else unit.spriteEl.src = type.spriteUrl;
+      }
     });
   },
 
