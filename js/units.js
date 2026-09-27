@@ -294,7 +294,12 @@ const Units = {
     const spriteEl = document.createElement("img");
     spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     spriteEl.className = "unit__sprite";
-    spriteEl.src = type.spriteUrl;
+    // Calidad de sprite dinámica según el zoom de cámara (pedido explícito,
+    // ver js/spritequality.js) — en vez de asignar .src a mano, se
+    // registra para que se adapte solo, ahora y en cualquier cambio de
+    // zoom futuro.
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, type.spriteUrl);
+    else spriteEl.src = type.spriteUrl;
     spriteEl.draggable = false;
     spriteEl.alt = "";
     // El ancho base (120px) vive en CSS (.unit__sprite); los tipos que

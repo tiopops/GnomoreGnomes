@@ -110,7 +110,10 @@ const Bushes = {
     const spriteEl = document.createElement("img");
     spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     spriteEl.className = "bush__sprite";
-    spriteEl.src = "assets/iconos/arbusto.png";
+    // Calidad de sprite dinámica según el zoom (pedido explícito, ver
+    // js/spritequality.js).
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, "assets/iconos/arbusto.png");
+    else spriteEl.src = "assets/iconos/arbusto.png";
     spriteEl.alt = "";
     spriteEl.draggable = false;
     // Pedido explícito: "todo en el escenario se mueve al compas...pon

@@ -239,7 +239,15 @@ function createGnomeInstance() {
       const spriteEl = document.createElement("img");
       spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
       spriteEl.className = "unit__sprite gnome__sprite";
-      spriteEl.src = GNOME_ASSETS.idle;
+      // Calidad de sprite dinámica según el zoom (pedido explícito, ver
+      // js/spritequality.js). Los cambios puntuales de pose (grita, golpe,
+      // vuelta a reposo — más abajo en este mismo archivo) siguen
+      // asignando .src directamente a propósito: son fotogramas de acción
+      // momentáneos, no el estado "de reposo" de la entidad, y meterles un
+      // fundido de 180ms encima se notaría raro sobre una animación ya de
+      // por sí rápida.
+      if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, GNOME_ASSETS.idle);
+      else spriteEl.src = GNOME_ASSETS.idle;
       spriteEl.draggable = false;
       spriteEl.alt = "";
       spriteEl.style.width = `${GNOME_SIZES.ground}px`;

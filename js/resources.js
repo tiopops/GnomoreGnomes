@@ -192,7 +192,10 @@ const Resources = {
     const spriteEl = document.createElement("img");
     spriteEl.decoding = "async";
     spriteEl.className = "resource-node__sprite";
-    spriteEl.src = def.spriteUrl;
+    // Calidad de sprite dinámica según el zoom (pedido explícito, ver
+    // js/spritequality.js).
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, def.spriteUrl);
+    else spriteEl.src = def.spriteUrl;
     spriteEl.alt = "";
     spriteEl.draggable = false;
     // Pedido explícito: "todo en el escenario se mueve al compas...pon

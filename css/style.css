@@ -1259,6 +1259,52 @@ body.gg-fog-anim-off .tile__fog--idle:not(.tile__fog--revealed) {
   display: none;
 }
 
+/* Pedido explícito (mejora de rendimiento): mismo mecanismo que
+   .tile--culled/.tile__fog--culled de arriba, extendido ahora a unidades y
+   mobiliario del tablero (ver js/entitycull.js) — fuera del viewport +
+   margen, ni siquiera se pinta. */
+.gg-viewport-culled {
+  display: none;
+}
+
+/* Calidad de sprite dinámica (js/spritequality.js) — pedido explícito: "si
+   se cambia la calidad mediante un Fade en lugar de un pop". El propio
+   registro (SpriteQuality.register) añade esta clase a cualquier sprite
+   que se adapte al zoom: es la transición de opacidad que anima tanto al
+   sprite real (entrando) como al "fantasma" temporal (saliendo) durante el
+   cruce de calidad.
+   Pedido explícito (pasada posterior, tras ver el resultado): "al cambiar
+   de una calidad a otra...el objeto desaparece...deben solaparse en la
+   transición para dar efecto de continuidad" — el fundido secuencial
+   (opacity a 0, cambia el src, opacity de vuelta a 1) SÍ tenía un instante
+   real sin nada pintado. Ahora es un cruce de verdad: un "fantasma" clon
+   del sprite (con la textura VIEJA, ya renderizada, cero coste de
+   decodificado) se superpone exactamente encima mientras el sprite real ya
+   tiene la textura NUEVA puesta debajo, y los dos se funden EN PARALELO
+   (fantasma 1→0, sprite real 0→1) — nunca hay un fotograma con opacidad 0
+   en los dos a la vez. Ver SpriteQuality._crossfadeSwap. */
+.gg-adaptive-sprite {
+  transition: opacity 0.18s ease;
+}
+/* Corta la transición de golpe (sin animar) para el instante en que el
+   sprite real se deja en opacity:0 recién cambiado el src, antes de
+   arrancar el fundido de entrada de verdad — si no, la propia regla de
+   arriba animaría también ESE primer salto y el cruce no arrancaría desde
+   0 limpio. Mismo truco de "forzar reflow" que unit.js ya usa en otros
+   sitios para poder repetir una animación (quitar clase, forzar reflow,
+   añadir clase). */
+.gg-sprite-quality-no-transition {
+  transition: none !important;
+}
+/* El fantasma temporal del cruce (ver arriba) — no debe capturar clics ni
+   participar en el layout normal, solo pintarse encima del sprite real
+   mientras dura el fundido. */
+.gg-sprite-quality-ghost {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+}
+
 /* Al revelarse (Fog.revealForUnit) sustituye por completo la animación de
    reposo (misma propiedad "animation", gana por ir después en la hoja de
    estilos) — nunca las dos compitiendo por transform a la vez, mismo patrón

@@ -172,7 +172,10 @@ const Shops = {
     const spriteEl = document.createElement("img");
     spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     spriteEl.className = "shop__sprite";
-    spriteEl.src = SHOP_SPRITE;
+    // Calidad de sprite dinámica según el zoom (pedido explícito, ver
+    // js/spritequality.js).
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, SHOP_SPRITE);
+    else spriteEl.src = SHOP_SPRITE;
     spriteEl.alt = "";
     spriteEl.draggable = false;
     // Pedido explícito: "todo en el escenario se mueve al compas...pon

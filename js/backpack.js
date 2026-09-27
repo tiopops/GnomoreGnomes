@@ -688,7 +688,11 @@ const Backpack = {
     const img = document.createElement("img");
     img.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     img.className = "board-item__sprite";
-    img.src = ITEM_TYPES.setarcoiris.iconUrl;
+    // Calidad de sprite dinámica (pedido explícito: "cada Sprite que entre
+    // nuevo tendrá que adaptarse a estas mejoras...como la resolución
+    // dinámica"), ver js/spritequality.js.
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(img, ITEM_TYPES.setarcoiris.iconUrl);
+    else img.src = ITEM_TYPES.setarcoiris.iconUrl;
     img.draggable = false;
     img.alt = "";
     el.appendChild(img);
@@ -787,7 +791,9 @@ const Backpack = {
     const img = document.createElement("img");
     img.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     img.className = "board-item__sprite";
-    img.src = ITEM_TYPES.atrapapinreles.iconUrl;
+    // Calidad de sprite dinámica (ver nota junto a Setarcoiris más arriba).
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(img, ITEM_TYPES.atrapapinreles.iconUrl);
+    else img.src = ITEM_TYPES.atrapapinreles.iconUrl;
     img.draggable = false;
     img.alt = "";
     el.appendChild(img);

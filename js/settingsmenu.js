@@ -241,6 +241,34 @@ const SettingsMenu = {
     });
     colVisual.appendChild(vegetationBtn);
 
+    // Pedido explícito: "a esta opción la llamaremos resolución adaptativa.
+    // Se podrá activar/desactivar desde configuración y estará activada por
+    // defecto en el modo alto rendimiento" — mismo patrón exacto que
+    // Sombras/Animación de niebla/Vegetación de arriba, pero para
+    // SpriteQuality.enabled (js/spritequality.js), que a diferencia de esas
+    // tres empieza en TRUE por defecto (no es un compromiso visual, ver la
+    // cabecera de ese archivo).
+    const spriteQualityBtn = document.createElement("button");
+    spriteQualityBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
+    const spriteQualityChecked = typeof SpriteQuality !== "undefined" ? SpriteQuality.enabled : true;
+    spriteQualityBtn.innerHTML =
+      '<span class="settings-panel__option-main">' +
+      '<i class="ph ph-image settings-panel__option-icon"></i>' +
+      '<span class="p5-banner__label">Resolución adaptativa</span>' +
+      "</span>" +
+      `<span class="settings-toggle" data-checked="${spriteQualityChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
+    spriteQualityBtn.addEventListener("click", () => {
+      // Mientras el modo rendimiento esté activo la fuerza a activada (ver
+      // perfmode.js) — bloqueada en ese sentido igual que Sombras/Niebla/
+      // Vegetación lo están en el suyo (ver _syncPerfLock más abajo).
+      if (typeof PerfMode !== "undefined" && PerfMode.enabled) return;
+      SFX.click();
+      const next = typeof SpriteQuality !== "undefined" ? !SpriteQuality.enabled : true;
+      if (typeof SpriteQuality !== "undefined") SpriteQuality.setEnabled(next);
+      spriteQualityBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+    });
+    colVisual.appendChild(spriteQualityBtn);
+
     // Pedido explícito: "tampoco veo la opcion de la configuracion de la
     // resolucion dinamiga paara mejorar el rendimiento" — mismo patrón
     // exacto que Sombras/SFX/Mostrar equipos/Animación de niebla de arriba,
@@ -275,6 +303,10 @@ const SettingsMenu = {
         // directamente" (vegetación/hierbajos) — mismo refresco visual
         // inmediato que ya hacían Sombras/Niebla justo arriba.
         vegetationBtn.querySelector(".settings-toggle").dataset.checked = "false";
+        // Resolución adaptativa va al REVÉS que las tres de arriba: el modo
+        // rendimiento la ENCIENDE (ver perfmode.js), así que aquí se refresca
+        // a "true" en vez de a "false".
+        spriteQualityBtn.querySelector(".settings-toggle").dataset.checked = "true";
       }
       // Segundo pedido explícito, encima del anterior: "cuando el modo
       // rendimiento esta activado, las sombras y la animacion de niebla
@@ -287,6 +319,7 @@ const SettingsMenu = {
     this._shadowsBtn = shadowsBtn;
     this._fogAnimBtn = fogAnimBtn;
     this._vegetationBtn = vegetationBtn;
+    this._spriteQualityBtn = spriteQualityBtn;
     this._syncPerfLock();
 
     // Pedido explícito: "debajo del todo el boton salir de la partida
@@ -328,9 +361,13 @@ const SettingsMenu = {
   // opciones existen, solo que no se pueden tocar mientras el modo
   // rendimiento las esté forzando apagadas.
   _syncPerfLock() {
-    if (!this._shadowsBtn || !this._fogAnimBtn || !this._vegetationBtn) return;
+    if (!this._shadowsBtn || !this._fogAnimBtn || !this._vegetationBtn || !this._spriteQualityBtn) return;
     const locked = typeof PerfMode !== "undefined" && PerfMode.enabled;
-    [this._shadowsBtn, this._fogAnimBtn, this._vegetationBtn].forEach((btn) => {
+    // Resolución adaptativa se bloquea igual que las otras tres mientras el
+    // modo rendimiento esté activo (pintado como "deshabilitado", el jugador
+    // no puede tocarla) — solo que a ella el modo rendimiento la deja
+    // encendida en vez de apagada (ver perfmode.js/spriteQualityBtn).
+    [this._shadowsBtn, this._fogAnimBtn, this._vegetationBtn, this._spriteQualityBtn].forEach((btn) => {
       btn.classList.toggle("settings-panel__option--locked", locked);
       btn.setAttribute("aria-disabled", String(locked));
     });

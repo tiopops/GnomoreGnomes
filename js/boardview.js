@@ -234,6 +234,22 @@ const BoardView = {
     if (typeof TerrainMap !== "undefined" && TerrainMap.updateCulling) {
       TerrainMap.updateCulling(this.panX, this.panY, this.scale, this.viewportEl.clientWidth, this.viewportEl.clientHeight);
     }
+    // Pedido explícito: "qué harías para mejorar el rendimiento al doble?"
+    // — la virtualización de arriba solo cubría losetas/niebla; esto
+    // extiende el mismo mecanismo a unidades, tótems, Obeliscos, tienda,
+    // arbustos, recursos e hierbajos (ver js/entitycull.js para el porqué
+    // completo). SIEMPRE, mismo criterio que TerrainMap justo arriba (el
+    // coste que ahorra no depende de ninguna animación en concreto).
+    if (typeof EntityCulling !== "undefined" && EntityCulling.updateCulling) {
+      EntityCulling.updateCulling(this.panX, this.panY, this.scale, this.viewportEl.clientWidth, this.viewportEl.clientHeight);
+    }
+    // Pedido explícito: "contra más lejos se ve la cámara, cambiar sprites
+    // por los mismos como resolución más baja" — ver js/spritequality.js.
+    // Comprobación barata (dos comparaciones de número) en cada frame;
+    // solo hace trabajo de verdad al cruzar alguno de los dos umbrales.
+    if (typeof SpriteQuality !== "undefined" && SpriteQuality.updateForScale) {
+      SpriteQuality.updateForScale(this.scale);
+    }
   },
 
   // Aplica el ancla de zoom activa (this._zoomAnchor) a una escala concreta:

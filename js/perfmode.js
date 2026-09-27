@@ -64,6 +64,12 @@ const PerfMode = {
       // (refiriéndose a la vegetación/hierbajos) — mismo criterio que
       // Shadows/Fog justo arriba.
       if (typeof Hierbajos !== "undefined") Hierbajos.setEnabled(false);
+      // Pedido explícito (Resolución adaptativa, js/spritequality.js):
+      // "estará activada por defecto en el modo alto rendimiento" — al
+      // contrario que las tres de arriba (que el modo rendimiento APAGA
+      // porque son un compromiso visual), esta la ENCIENDE porque es pura
+      // ganancia de rendimiento sin coste gráfico real.
+      if (typeof SpriteQuality !== "undefined") SpriteQuality.setEnabled(true);
     }
     if (typeof applyPerfModeTileSprites === "function") applyPerfModeTileSprites(this.enabled);
   },

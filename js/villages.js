@@ -150,7 +150,12 @@ const Villages = {
     const spriteEl = document.createElement("img");
     spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     spriteEl.className = "village__sprite";
-    spriteEl.src = VILLAGE_SPRITES.neutral;
+    // Calidad de sprite dinámica según el zoom (pedido explícito, ver
+    // js/spritequality.js). El cambio de textura al conquistarlo
+    // (_capture, más abajo) reutiliza el mismo registro, no hace falta
+    // volver a registrar el elemento.
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, VILLAGE_SPRITES.neutral);
+    else spriteEl.src = VILLAGE_SPRITES.neutral;
     spriteEl.alt = "";
     spriteEl.draggable = false;
     // Pedido explícito: "todo en el escenario se mueve al compas...pon
@@ -780,7 +785,15 @@ const Villages = {
     village.hp = VILLAGE_MAX_HP; // un poblado recién conquistado vuelve a estar sano
     village.el.classList.remove("village--neutral");
     village.el.classList.add(`village--${team}`);
-    village.spriteEl.src = this.spriteFor(team);
+    // Registrar de nuevo (no solo asignar .src): así SpriteQuality (ver
+    // js/spritequality.js) actualiza qué imagen "normal" recordar para
+    // este tótem — si no, un cambio de calidad posterior por zoom lo haría
+    // volver a la textura NEUTRAL antigua en vez de a la del nuevo dueño.
+    // El cambio de textura de la conquista es instantáneo a propósito (sin
+    // fundido): es el propio contenido lo que cambia, no una cuestión de
+    // calidad, y el pop de conquista de aquí abajo ya es su feedback visual.
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(village.spriteEl, this.spriteFor(team));
+    else village.spriteEl.src = this.spriteFor(team);
     Units.updateHpBar(village);
     // Quita el temblor de "golpe recibido" (Units.playShake, ver attack()
     // más arriba) ANTES de añadir el pop de conquista: los dos animan la

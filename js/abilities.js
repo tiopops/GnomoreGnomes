@@ -466,7 +466,12 @@ const Abilities = {
     // Sprite real de la seta-trampa (pedido explícito, ya no hace falta el
     // tinte rojo provisional sobre Setarcoiris — ver css/style.css, donde se
     // ha quitado el filter de recolor).
-    img.src = "assets/iconos/seta_trampa.png";
+    // Calidad de sprite dinámica (pedido explícito: "cada Sprite que entre
+    // nuevo tendrá que adaptarse a estas mejoras...como la resolución
+    // dinámica") — mismo patrón que cualquier otra mecánica del tablero,
+    // ver js/spritequality.js.
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(img, "assets/iconos/seta_trampa.png");
+    else img.src = "assets/iconos/seta_trampa.png";
     img.alt = "";
     el.appendChild(img);
     Units.container.appendChild(el);

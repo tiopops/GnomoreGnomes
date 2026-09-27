@@ -125,7 +125,11 @@ const Hierbajos = {
     const spriteEl = document.createElement("img");
     spriteEl.decoding = "async";
     spriteEl.className = "hierbajo__sprite";
-    spriteEl.src = "assets/escenario/hierbajos.png";
+    // Calidad de sprite dinámica según el zoom (pedido explícito, ver
+    // js/spritequality.js) — los hierbajos son con diferencia el elemento
+    // más numeroso del tablero, así que son de los que más se benefician.
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, "assets/escenario/hierbajos.png");
+    else spriteEl.src = "assets/escenario/hierbajos.png";
     spriteEl.alt = "";
     spriteEl.draggable = false;
     // Variación aleatoria de tamaño/espejado — pedido explícito: "dar

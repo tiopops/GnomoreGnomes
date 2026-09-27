@@ -254,7 +254,12 @@ const Obelisks = {
     const spriteEl = document.createElement("img");
     spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     spriteEl.className = "obelisk__sprite";
-    spriteEl.src = this.spriteFor(raceId);
+    // Calidad de sprite dinámica según el zoom (pedido explícito, ver
+    // js/spritequality.js) — el Obelisco propio siempre está percibido
+    // (ver Fog._recomputePerception), así que esto solo importa cuando la
+    // cámara se aleja lo bastante como para verlo pequeño en pantalla.
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, this.spriteFor(raceId));
+    else spriteEl.src = this.spriteFor(raceId);
     spriteEl.alt = "";
     spriteEl.draggable = false;
     el.appendChild(spriteEl);
