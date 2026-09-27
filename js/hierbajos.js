@@ -179,7 +179,12 @@ const Hierbajos = {
   refreshFog() {
     if (typeof Fog === "undefined") return;
     this.list.forEach((h) => {
-      h.el.classList.toggle("unit--fog-hidden", Fog.isFogged(h.row, h.col));
+      const fogged = Fog.isFogged(h.row, h.col);
+      h.el.classList.toggle("unit--fog-hidden", fogged);
+      // Pedido explícito (memoria de niebla): decoración ya explorada pero
+      // fuera de percepción ahora mismo -> se queda "recordada" (atenuada +
+      // sin animar), como cualquier otro elemento de escenario.
+      h.el.classList.toggle("gg-remembered", !fogged && !Fog.isPerceived(h.row, h.col));
     });
   },
 };

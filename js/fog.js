@@ -39,9 +39,26 @@ const FOG_INITIAL_RADIUS = 2;
 const FOG_ANIM_STORAGE_KEY = "gnomoregnomes_fog_anim";
 const FOG_ANIM_MOBILE_BREAKPOINT = 480;
 
+// Pedido explícito: "ademas de disiparse la niebla, haz zonas que no podran
+// verse porque no estan dentro del alcance de percepcion de nuestras
+// unidades... las casillas dentro de la percepcion de las unidades de los
+// jugadores, 2 casillas alrededor de los totems capturados y 3 alreddor de
+// los obeliscos, son siempre visibles mientras esten bajo tu dominio" — dos
+// radios fijos, nada que ver con FOG_INITIAL_RADIUS (ese es el revelado
+// PERMANENTE de arranque; esto es percepción EN DIRECTO, recalculada en
+// cada pasada, ver _recomputePerception).
+const FOG_VILLAGE_PERCEPTION_RADIUS = 2;
+const FOG_OBELISK_PERCEPTION_RADIUS = 3;
+
 const Fog = {
   size: 0,
-  revealedGrid: null, // boolean[row][col], o null si todavía no se ha inicializado esta partida
+  revealedGrid: null, // boolean[row][col], o null si todavía no se ha inicializado esta partida — PERMANENTE, "¿ha llegado a verse alguna vez?"
+  // boolean[row][col] — EFÍMERO, recalculado en cada applyVisibility():
+  // "¿hay ahora mismo algo mío (unidad, tótem o Obelisco propios) que vea
+  // esta casilla EN DIRECTO?". Una casilla puede estar revelada (memoria)
+  // sin estar percibida ahora mismo — ese es justo el estado "recordado"
+  // que pidió el usuario (ver isPerceived/_recomputePerception más abajo).
+  perceivedGrid: null,
   _fogEls: null, // Map "row,col" -> elemento .tile__fog de esa loseta
   animEnabled: true,
 
@@ -135,6 +152,7 @@ const Fog = {
   init(size, container) {
     this.size = size;
     this.revealedGrid = Array.from({ length: size }, () => new Array(size).fill(false));
+    this.perceivedGrid = Array.from({ length: size }, () => new Array(size).fill(false));
     this._fogEls = new Map();
     // .tile__fog ya no vive DENTRO de su .tile (ver comentario de FOG_SRC en
     // mapgen.js) — es un elemento hermano con su propio data-row/data-col,
@@ -151,6 +169,66 @@ const Fog = {
     if (!this.revealedGrid) return false;
     if (row < 0 || col < 0 || row >= this.size || col >= this.size) return false;
     return !this.revealedGrid[row][col];
+  },
+
+  // true si esta loseta está viéndose EN DIRECTO ahora mismo (percepción de
+  // unidades propias, o dentro del radio fijo de un tótem/Obelisco
+  // propios) — false si nunca se ha visto (sigue tapada del todo por
+  // isFogged) o si ya se vio alguna vez pero ahora mismo queda fuera de
+  // percepción ("recordada", ver gg-remembered en style.css). Sin niebla
+  // activa (debug) se considera todo percibido, igual que hace isFogged
+  // devolviendo "no hay niebla" con false.
+  isPerceived(row, col) {
+    if (!this.perceivedGrid) return true;
+    if (row < 0 || col < 0 || row >= this.size || col >= this.size) return false;
+    return !!this.perceivedGrid[row][col];
+  },
+
+  // Recalcula perceivedGrid de cero cada vez que se llama (barato: como
+  // mucho unas pocas decenas de unidades/tótems/Obeliscos propios, nada que
+  // ver con recorrer las 289 losetas del tablero para cada una — el radio
+  // de cada fuente es pequeño). Se llama SIEMPRE al principio de
+  // applyVisibility (ver más abajo) para no tener que acordarse de tocar
+  // cada sitio que hoy dispara un revelado o un cambio de dueño por
+  // separado — el mismo punto único de paso de siempre en este archivo.
+  _recomputePerception() {
+    if (!this.revealedGrid) return;
+    const grid = Array.from({ length: this.size }, () => new Array(this.size).fill(false));
+    const markAround = (row, col, radius) => {
+      for (let r = Math.max(0, row - radius); r <= Math.min(this.size - 1, row + radius); r++) {
+        for (let c = Math.max(0, col - radius); c <= Math.min(this.size - 1, col + radius); c++) {
+          if (Math.max(Math.abs(r - row), Math.abs(c - col)) > radius) continue;
+          grid[r][c] = true;
+        }
+      }
+    };
+    // Percepción de cada unidad propia (misma estadística que ya usa
+    // revealForUnit para el revelado permanente, ver UNIT_TYPES[...].percepcion).
+    if (typeof Units !== "undefined") {
+      Units.list.forEach((u) => {
+        if (u.team !== "player") return;
+        const type = UNIT_TYPES[u.typeId];
+        markAround(u.row, u.col, type ? type.percepcion : 1);
+      });
+    }
+    // Pedido explícito: "2 casillas alrededor de los totems capturados...
+    // son siempre visibles mientras esten bajo tu dominio".
+    if (typeof Villages !== "undefined") {
+      Villages.list.forEach((v) => {
+        if (v.owner === "player") markAround(v.row, v.col, FOG_VILLAGE_PERCEPTION_RADIUS);
+      });
+    }
+    // Pedido explícito: "3 alreddor de los obeliscos" — un Obelisco nunca
+    // cambia de dueño en esta versión (confirmado: ningún sitio del
+    // proyecto reasigna o.team), así que esto es en la práctica un radio
+    // fijo permanente alrededor de la base de cada equipo desde el
+    // arranque de la partida.
+    if (typeof Obelisks !== "undefined") {
+      Obelisks.list.forEach((o) => {
+        if (o.team === "player") markAround(o.row, o.col, FOG_OBELISK_PERCEPTION_RADIUS);
+      });
+    }
+    this.perceivedGrid = grid;
   },
 
   // Revela todas las losetas dentro de `radius` (incluida la propia). No
@@ -254,6 +332,10 @@ const Fog = {
   // sin necesitar su propia comprobación.
   applyVisibility() {
     if (!this.revealedGrid) return;
+    // Punto único de paso (ver cabecera del archivo) — así ningún sitio que
+    // dispara applyVisibility (movimiento, aparición, muerte, captura de
+    // tótem...) necesita acordarse de recalcular esto por su cuenta.
+    this._recomputePerception();
     if (typeof Units !== "undefined") {
       Units.list.forEach((u) => {
         if (!u.el) return;
@@ -285,14 +367,31 @@ const Fog = {
         // ocultación, y NO depende de si la loseta ya está explorada: un
         // arbusto en zona ya revelada sigue ocultando a quien esté dentro
         // hasta que se le emboque (ver Bushes._springAmbush) o se mueva.
-        u.el.classList.toggle("unit--fog-hidden", this.isFogged(u.row, u.col) || inBush);
+        // Pedido explícito (memoria de niebla): "las casillas desactivadas
+        // visualmente por estar fuera del alcance de percepcion de mis
+        // unidades..." — a diferencia de un tótem/recurso/arbusto (que se
+        // quedan visibles pero atenuados, ver gg-remembered más abajo), la
+        // posición EN DIRECTO de una unidad (propia o rival) nunca debe
+        // "recordarse": fuera de percepción se oculta del todo, igual que
+        // bajo niebla sin descubrir, para no filtrar dónde está de verdad
+        // AHORA MISMO alguien que se mueve.
+        u.el.classList.toggle(
+          "unit--fog-hidden",
+          this.isFogged(u.row, u.col) || !this.isPerceived(u.row, u.col) || inBush
+        );
       });
       // Arbustos (js/bushes.js) — mismo criterio sin excepción que un
       // tótem/obelisco enemigo: "NADA debe verse si tiene niebla encima".
       if (typeof Bushes !== "undefined") {
         Bushes.list.forEach((b) => {
           if (!b.el) return;
-          b.el.classList.toggle("unit--fog-hidden", this.isFogged(b.row, b.col));
+          const fogged = this.isFogged(b.row, b.col);
+          b.el.classList.toggle("unit--fog-hidden", fogged);
+          // Pedido explícito: elemento estático de escenario ya explorado
+          // pero fuera de percepción ahora mismo -> se queda a la vista,
+          // "recordado" (atenuado + sin animar, ver .gg-remembered en
+          // style.css), no se oculta del todo como una unidad.
+          b.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(b.row, b.col));
         });
       }
       // Recursos de escenario (js/resources.js) — pedido explícito: "los
@@ -311,7 +410,11 @@ const Fog = {
     if (typeof Gnome !== "undefined") {
       Gnome.list.forEach((g) => {
         if (g.heldBy || !g.el) return;
-        g.el.classList.toggle("unit--fog-hidden", this.isFogged(g.row, g.col));
+        // Mismo criterio que una unidad: un gnomo suelto se mueve por su
+        // cuenta cada turno, así que fuera de percepción se oculta del todo
+        // en vez de "recordarse" en su última posición vista (eso filtraría
+        // dónde sigue estando ahora mismo).
+        g.el.classList.toggle("unit--fog-hidden", this.isFogged(g.row, g.col) || !this.isPerceived(g.row, g.col));
       });
     }
     // "los totems no deben verse a traves de la niebla, realmente NADA debe
@@ -324,7 +427,14 @@ const Fog = {
     if (typeof Villages !== "undefined") {
       Villages.list.forEach((v) => {
         if (!v.el) return;
-        v.el.classList.toggle("unit--fog-hidden", this.isFogged(v.row, v.col));
+        const fogged = this.isFogged(v.row, v.col);
+        v.el.classList.toggle("unit--fog-hidden", fogged);
+        // Pedido explícito: mientras el tótem sea del jugador, su radio fijo
+        // de percepción (FOG_VILLAGE_PERCEPTION_RADIUS) lo mantiene siempre
+        // percibido, así que esto solo entra en juego para un tótem neutral
+        // o enemigo ya explorado que quede fuera del alcance real de las
+        // unidades propias.
+        v.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(v.row, v.col));
       });
     }
     // Objetos colocados en el tablero (js/backpack.js, p.ej. la
@@ -334,7 +444,9 @@ const Fog = {
     if (typeof Backpack !== "undefined") {
       Backpack.placedItems.forEach((item) => {
         if (!item.el) return;
-        item.el.classList.toggle("unit--fog-hidden", this.isFogged(item.row, item.col));
+        const fogged = this.isFogged(item.row, item.col);
+        item.el.classList.toggle("unit--fog-hidden", fogged);
+        item.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(item.row, item.col));
       });
     }
     // Tienda Goblin (js/shops.js) — mismo criterio sin excepción que un
@@ -342,7 +454,9 @@ const Fog = {
     if (typeof Shops !== "undefined") {
       Shops.list.forEach((shop) => {
         if (!shop.el) return;
-        shop.el.classList.toggle("unit--fog-hidden", this.isFogged(shop.row, shop.col));
+        const fogged = this.isFogged(shop.row, shop.col);
+        shop.el.classList.toggle("unit--fog-hidden", fogged);
+        shop.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(shop.row, shop.col));
       });
     }
     // Obeliscos Ancestrales (js/obelisks.js) — pedido explícito: "los
@@ -351,10 +465,19 @@ const Fog = {
     // de quien sea), aquí SÍ hay excepción para "player" — mismo criterio
     // que las unidades de arriba: el jugador siempre sabe dónde está el
     // suyo propio, solo el del rival puede quedar sin descubrir todavía.
+    // El propio Obelisco del jugador nunca "se recuerda": su radio fijo
+    // (FOG_OBELISK_PERCEPTION_RADIUS) lo mantiene siempre percibido, ver
+    // _recomputePerception.
     if (typeof Obelisks !== "undefined") {
       Obelisks.list.forEach((o) => {
-        if (o.team === "player" || !o.el) return;
-        o.el.classList.toggle("unit--fog-hidden", this.isFogged(o.row, o.col));
+        if (!o.el) return;
+        if (o.team === "player") {
+          o.el.classList.remove("gg-remembered");
+          return;
+        }
+        const fogged = this.isFogged(o.row, o.col);
+        o.el.classList.toggle("unit--fog-hidden", fogged);
+        o.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(o.row, o.col));
       });
     }
     // Pedido explícito: "algunas unidades asoman por la niebla a veces...

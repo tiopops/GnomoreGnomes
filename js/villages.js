@@ -818,6 +818,15 @@ const Villages = {
     if (typeof Obelisks !== "undefined" && typeof Obelisks.refreshAllPopBadges === "function") {
       Obelisks.refreshAllPopBadges();
     }
+    // Pedido explícito (memoria de niebla): "las casillas dentro de la
+    // percepcion de las unidades de los jugadores, 2 casillas alrededor de
+    // los totems capturados... son siempre visibles mientras esten bajo tu
+    // dominio" — Fog._recomputePerception solo se recalcula al arrancar
+    // applyVisibility (ver fog.js), así que un cambio de dueño necesita
+    // pedir explícitamente ese recálculo aquí mismo para que el nuevo radio
+    // de percepción (o la pérdida del que tenía el dueño anterior) se note
+    // ya mismo, no en el próximo movimiento de una unidad cualquiera.
+    if (typeof Fog !== "undefined" && typeof Fog.applyVisibility === "function") Fog.applyVisibility();
   },
 };
 

@@ -91,6 +91,10 @@ const RESOURCE_VILLAGE_EXCLUSION_RADIUS = 1;
 const Resources = {
   list: [],
   _nextId: 1,
+  // Fuentes destruidas por un rival mientras la loseta estaba fuera de la
+  // percepción real del jugador — ver _destroy()/resolveGhosts(). Cada
+  // entrada: { row, col, el }.
+  _ghosts: [],
 
   // Recursos recolectados por el jugador esta partida — leído por
   // js/armory.js para saber qué se puede pagar, y por Backpack para pintar
@@ -105,6 +109,10 @@ const Resources = {
   resetAll() {
     this.list.forEach((n) => n.el.remove());
     this.list = [];
+    // Pedido explícito (memoria de niebla): una nueva partida no debe
+    // arrastrar fantasmas pendientes de la anterior.
+    this._ghosts.forEach((g) => g.el.remove());
+    this._ghosts = [];
     this.counts = { madera: 0, roca: 0, metal: 0 };
     if (typeof Backpack !== "undefined") Backpack.refreshResourceBadges && Backpack.refreshResourceBadges();
   },
@@ -248,7 +256,33 @@ const Resources = {
   refreshFog() {
     if (typeof Fog === "undefined") return;
     this.list.forEach((n) => {
-      n.el.classList.toggle("unit--fog-hidden", Fog.isFogged(n.row, n.col));
+      const fogged = Fog.isFogged(n.row, n.col);
+      n.el.classList.toggle("unit--fog-hidden", fogged);
+      // Pedido explícito (memoria de niebla): ya explorada pero fuera de la
+      // percepción real de las unidades/tótems/Obeliscos propios ahora
+      // mismo -> se queda a la vista "recordada" (atenuada + sin animar).
+      n.el.classList.toggle("gg-remembered", !fogged && !Fog.isPerceived(n.row, n.col));
+    });
+    this.resolveGhosts();
+  },
+
+  // Pedido explícito (memoria de niebla): "si luego vuelvo y resulta que un
+  // enemigo talo ese arbol, al estar dentro de la percepcion de mis
+  // unidades... debera actualizarse a su estado actual" — un "fantasma" es
+  // una fuente que un RIVAL destruyó mientras la loseta quedaba fuera de la
+  // percepción real del jugador (ver _destroy): su sprite se queda tal cual
+  // (la última versión vista, ya atenuada por refreshFog de arriba) hasta
+  // que el jugador vuelve a percibir esa casilla, momento en el que recién
+  // aquí se completa de verdad su desaparición. Se llama desde el mismo
+  // punto único de paso que refreshFog.
+  resolveGhosts() {
+    if (!this._ghosts.length || typeof Fog === "undefined") return;
+    this._ghosts = this._ghosts.filter((ghost) => {
+      if (!Fog.isPerceived(ghost.row, ghost.col)) return true; // sigue pendiente
+      ghost.el.classList.add("resource-node--destroyed");
+      if (typeof SFX !== "undefined") SFX.death();
+      setTimeout(() => ghost.el.remove(), 320);
+      return false;
     });
   },
 
@@ -469,13 +503,29 @@ const Resources = {
     this.list = this.list.filter((n) => n.id !== node.id);
     const def = RESOURCE_NODE_TYPES[node.kind];
 
-    node.el.classList.add("resource-node--destroyed");
-    if (typeof SFX !== "undefined") SFX.death();
-
     // Solo el jugador tiene mochila/Armería en esta versión — si es el
     // rival quien la destruye (o la IA la ataca), desaparece sin más, sin
     // animación de recolección (no hay a dónde volar).
     const shouldCollect = destroyer && destroyer.team === "player";
+
+    // Pedido explícito (memoria de niebla): "si yo en algun momento vi un
+    // arbol en una casilla y me alejo de el... pero si luego vuelvo y
+    // resulta que un enemigo talo ese arbol... debera actualizarse a su
+    // estado actual" — si es el RIVAL quien destruye la fuente (nunca el
+    // jugador: eso solo puede pasar con la loseta bajo su propia
+    // percepción, atacando en persona) y la loseta queda fuera de la
+    // percepción real del jugador ahora mismo, no la hacemos desaparecer
+    // todavía: se queda como "fantasma" (última versión vista, atenuada
+    // igual que cualquier otro elemento recordado) hasta que el jugador
+    // vuelva a percibir esa casilla — ver resolveGhosts().
+    if (!shouldCollect && typeof Fog !== "undefined" && Fog.perceivedGrid && !Fog.isPerceived(node.row, node.col)) {
+      this._ghosts.push({ row: node.row, col: node.col, el: node.el });
+      return;
+    }
+
+    node.el.classList.add("resource-node--destroyed");
+    if (typeof SFX !== "undefined") SFX.death();
+
     if (shouldCollect) this._spawnPickupAt(node.row, node.col, def.resourceId);
 
     await new Promise((resolve) => setTimeout(resolve, 320));

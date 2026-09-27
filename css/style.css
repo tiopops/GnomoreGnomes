@@ -178,7 +178,11 @@ body {
   /* Ruta relativa: OJO, dentro de css/style.css se resuelve relativa a la
      carpeta css/, no a la raíz del sitio (bug ya encontrado antes con la
      niebla de fondo del tablero) — de ahí el "../" delante. */
-  background: linear-gradient(180deg, rgba(15, 17, 23, 0.72), rgba(15, 17, 23, 0.85)),
+  /* Pedido explícito: "el fondo de pantalla del menu principal aparece
+     demasiado apagado...un poco menos" — degradado aclarado (0.72/0.85 ->
+     0.55/0.68) para que se note más la ilustración de debajo sin perder
+     legibilidad del texto blanco/botones que va encima. */
+  background: linear-gradient(180deg, rgba(15, 17, 23, 0.55), rgba(15, 17, 23, 0.68)),
     url("../assets/ui/fondo_menu.jpg") center/cover no-repeat;
   background-color: var(--bg);
   color: var(--ink);
@@ -1320,6 +1324,52 @@ body.gg-fog-anim-off .tile__fog--idle:not(.tile__fog--revealed) {
   }
 }
 
+/* Pedido explícito (memoria de niebla de guerra, ver Fog._recomputePerception
+   en js/fog.js): "las casillas que esten dentro mostraran todos los
+   elementos que las contienen en color desaturado a un 75% y algo mas
+   oscuros, y seran la ultima version que vieron" — una loseta ya explorada
+   (revealedGrid=true) pero que ahora mismo queda fuera de la percepción
+   real de unidades/tótems/Obeliscos propios (perceivedGrid=false) no se
+   oculta como bajo niebla sin descubrir: se queda a la vista tal y como se
+   vio por última vez, solo que atenuada. saturate(0.25) = "desaturado a un
+   75%" (75% MENOS de saturación, no al 75%); brightness(0.65) para el
+   "algo mas oscuros" que pidió encima. Se aplica solo a elementos de
+   escenario ESTÁTICOS (tótems, Obeliscos, tienda, arbustos, recursos,
+   hierbajos, objetos colocados) — las unidades/gnomos sueltos, que sí se
+   mueven en directo, se ocultan del todo en vez de "recordarse" (ver el
+   toggle de unit--fog-hidden en fog.js, extendido con !isPerceived) para no
+   filtrar dónde están de verdad ahora mismo.
+   animation-play-state:paused en vez de "animation:none" — pedido
+   explícito: "las casillas desactivadas visualmente...no tienen
+   animaciones sus elementos"; paused congela cada animación (idle-breathe,
+   vaivén de hierbajos...) en el fotograma exacto en el que estaba, sea cual
+   sea su @keyframes concreto, sin tener que enumerar aquí cada nombre de
+   animación del proyecto uno a uno ni duplicar reglas por tipo de sprite.
+   transition:filter, no @keyframes — pedido explícito: "intenta que l paso
+   de estar desactivado visualmente a verse con normalidad...no sea brusco,
+   un fade elegante" (mismo criterio de "transición, nunca keyframes, para
+   una aparición/cambio de estado" que ya sigue el resto del proyecto, ver
+   la nota junto a dmg-popup-rise). */
+.gg-remembered {
+  filter: saturate(0.25) brightness(0.65);
+  transition: filter 0.6s ease;
+}
+.gg-remembered,
+.gg-remembered * {
+  animation-play-state: paused !important;
+}
+/* La mayoría de estos elementos comparten la base .unit (ver
+   js/resources.js, villages.js, shops.js, obelisks.js, bushes ya vive
+   aparte, backpack.js), que ya define su propia lista de transiciones
+   (left/top/opacity/visibility/transform) — se repite aquí completa con
+   solo "filter" cambiado a 0.6s (en vez de sus 0.15s normales) porque, al
+   compartir la misma especificidad de una sola clase, .gg-remembered por sí
+   solo NO ganaría a la regla base de .unit y el fade largo no se aplicaría. */
+.unit.gg-remembered {
+  transition: left 0.22s cubic-bezier(0.34, 1.2, 0.64, 1), top 0.22s cubic-bezier(0.34, 1.2, 0.64, 1),
+    opacity 0.4s ease, visibility 0s linear 0s, transform 0.15s ease, filter 0.6s ease;
+}
+
 /* ---------- Unidades ---------- */
 
 .unit {
@@ -1806,13 +1856,19 @@ body.team-markers--visible .unit__team-marker {
    posiciona más abajo que el de calavera (-54px) para no competir con él si
    algún día coinciden, y bien por encima de la barra de vida (-14px, ver
    .unit__hpbar) para no taparla nunca. */
+/* Pedido explícito (segunda pasada): "el icono de escondido sobre la
+   cabeza de los personajes tras los arbustos debe ser el doble de
+   grande" — de 22px a 44px; top ajustado hacia arriba la mitad de ese
+   crecimiento (-40px a -51px) para que el icono siga centrado sobre el
+   mismo punto en vez de crecer solo hacia abajo y empezar a comerse la
+   cabeza del personaje. */
 .unit__bush-hide-icon {
   display: none;
   position: absolute;
   left: 50%;
-  top: -40px;
+  top: -51px;
   transform: translateX(-50%);
-  font-size: 22px;
+  font-size: 44px;
   color: #4fd8ff;
   filter: drop-shadow(0 0 6px rgba(79, 216, 255, 0.85)) drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.6));
   z-index: 30;
@@ -6857,12 +6913,19 @@ body.backpack-giving--katapum * {
   margin-bottom: 4px;
 }
 
+/* Pedido explícito: "la armeria contiene texboxes con los cantos
+   redondeados...deben ser cuadrados irregulares" — este badge solo vive ya
+   en la fila de existencias de la Armería (ver la nota de
+   Backpack.buildResourceBadges/refreshResourceBadges en js/backpack.js: la
+   mochila unificó sus recursos en huecos normales, esto es exclusivo de
+   Armory.openPopup), así que el border-radius:999px de antes pasa al mismo
+   recorte --gg-slot-clip del resto de la interfaz. */
 .resource-badge {
   display: flex;
   align-items: center;
   gap: 6px;
   background: rgba(0, 0, 0, 0.28);
-  border-radius: 999px;
+  clip-path: var(--gg-slot-clip);
   padding: 4px 12px 4px 6px;
 }
 
@@ -7084,12 +7147,16 @@ body.backpack-giving--katapum * {
 /* Mismo lenguaje visual que .resource-badge (icono+número en píldora) —
    aquí además se pone en rojo si al jugador le falta ese recurso concreto,
    para que salte a la vista de un vistazo qué le impide comprar. */
+/* Pedido explícito: "la armeria contiene texboxes con los cantos
+   redondeados...deben ser cuadrados irregulares" — mismo recorte
+   --gg-slot-clip que .resource-badge justo arriba, en vez del
+   border-radius:999px de antes. */
 .armory-desc__pill {
   display: flex;
   align-items: center;
   gap: 6px;
   background: rgba(0, 0, 0, 0.28);
-  border-radius: 999px;
+  clip-path: var(--gg-slot-clip);
   padding: 4px 10px 4px 5px;
 }
 

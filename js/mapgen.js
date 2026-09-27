@@ -152,10 +152,26 @@ const TerrainMap = {
   // js/fog.js llama a esto en el mismo momento en que empieza a disipar la
   // niebla de esa loseta (Fog._reveal), para que el cambio de textura quede
   // disimulado detrás de la propia nube en vez de dar un salto brusco.
+  // Pedido explícito (bug reportado): "debajo de las casillas de agua hay
+  // casillas de hierba? no deberia ser asi" — cierto: la hierba de base de
+  // CADA loseta (ver renderMap, se pinta siempre, agua incluida, para la
+  // ilusión de niebla de arriba) se queda montada en el DOM para siempre
+  // por debajo, aunque ya no sirva de nada una vez revelada la textura
+  // real. display:none aquí, justo al revelar (la nube de niebla sigue
+  // tapando la loseta durante toda su transición de 1.2s, así que ocultar
+  // la hierba de golpe en vez de esperar a que acabe el fundido de 0.9s de
+  // .tile__terrain-reveal no se nota) — deja de existir una loseta de
+  // hierba de verdad bajo el agua ya descubierta.
   revealTile(row, col) {
     if (!this._revealEls) return;
     const el = this._revealEls.get(`${row},${col}`);
-    if (el) el.classList.add("tile__terrain-reveal--visible");
+    if (!el) return; // loseta de hierba de verdad: no tiene overlay, nada que ocultar debajo
+    el.classList.add("tile__terrain-reveal--visible");
+    const tileEl = this._tileEls && this._tileEls.get(`${row},${col}`);
+    if (tileEl) {
+      const baseImg = tileEl.querySelector("img:not(.tile__terrain-reveal)");
+      if (baseImg) baseImg.style.display = "none";
+    }
   },
 
   // ---------- Virtualización del tablero (culling de losetas) ----------
