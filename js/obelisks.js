@@ -169,9 +169,16 @@ const Obelisks = {
   // siempre en las esquinas del mismo" — antes el jugador arrancaba cerca
   // del centro exacto y el rival simplemente "lo más lejos posible"
   // (podía caer en cualquier punto, no necesariamente una esquina). Ahora
-  // ambos arrancan siempre cerca de una esquina del mapa: se elige al azar
-  // uno de los 2 pares de esquinas EN DIAGONAL (la máxima separación
-  // posible entre las 4) y se reparte al azar cuál le toca a cada equipo.
+  // ambos arrancan siempre cerca de una esquina del mapa.
+  //
+  // CORRECCIÓN (pedido explícito, pasada posterior): "el rival puede
+  // aparecer en cualquiera de las otras 3 esquinas restantes a donde
+  // apareces en la partida, no siempre tiene porque ser en la opuesta" —
+  // antes SIEMPRE se elegía la pareja en diagonal (máxima separación
+  // posible), así que el rival caía siempre en la esquina opuesta al
+  // jugador. Ahora el jugador se lleva una esquina al azar de las 4 y el
+  // rival, por separado, una al azar de las 3 que quedan libres — la
+  // opuesta sigue siendo una posibilidad (1 entre 3), pero ya no la única.
   _cornerInset(size) {
     // Mismo cálculo que CORNER_INSET en generateMap (js/mapgen.js), que es
     // quien garantiza esa zona libre de agua — deben coincidir.
@@ -188,21 +195,22 @@ const Obelisks = {
     ];
   },
 
-  _pickOpposedCorners(size) {
-    const [topLeft, topRight, bottomLeft, bottomRight] = this._corners(size);
-    const diagonalPairs = [
-      [topLeft, bottomRight],
-      [topRight, bottomLeft],
-    ];
-    const pair = diagonalPairs[Math.floor(Math.random() * diagonalPairs.length)];
-    return Math.random() < 0.5 ? pair : [pair[1], pair[0]];
+  _pickCorners(size) {
+    const corners = this._corners(size);
+    const playerIndex = Math.floor(Math.random() * corners.length);
+    const playerCorner = corners[playerIndex];
+    // Cualquiera de las 3 restantes vale, con la misma probabilidad cada
+    // una (incluida la opuesta) — nunca la misma que el jugador.
+    const remaining = corners.filter((_, i) => i !== playerIndex);
+    const enemyCorner = remaining[Math.floor(Math.random() * remaining.length)];
+    return [playerCorner, enemyCorner];
   },
 
   // Coloca los DOS Obeliscos, cada uno cerca de una esquina distinta (la
   // loseta libre más próxima a esa esquina, buscando en espiral igual que
   // Gnome.spawnNear).
   spawn(size, playerRaceId, enemyRaceId) {
-    const [playerCorner, enemyCorner] = this._pickOpposedCorners(size);
+    const [playerCorner, enemyCorner] = this._pickCorners(size);
     const playerSpot = this._findFreeTileNear(playerCorner.row, playerCorner.col, size);
     if (playerSpot) this._create("player", playerSpot.row, playerSpot.col, playerRaceId);
 

@@ -217,6 +217,16 @@ const Backpack = {
     document.querySelectorAll(".resource-badge__count[data-resource-id]").forEach((el) => {
       el.textContent = counts[el.dataset.resourceId] || 0;
     });
+    // CORRECCIÓN (pedido explícito): "los recursos ocupan espacio en la
+    // mochila...deben ocupar espacio, por eso tenemos 8 huecos" — a
+    // diferencia de la fila de etiquetas de la Armería (solo números que
+    // actualizar), el POPUP PROPIO de la mochila ahora enseña los recursos
+    // como huecos reales dentro de la rejilla (ver _allSlotEntries más
+    // abajo), así que una cantidad que pasa de 0 a 1 (o de 1 a 0, gastado
+    // del todo en la Armería) hace aparecer/desaparecer un hueco entero, no
+    // solo cambiar un número — necesita repintar la rejilla completa, no
+    // basta con actualizar texto.
+    if (this._slotsEl) this._renderSlots();
   },
 
   // ---------- Icono circular ----------
@@ -354,16 +364,6 @@ const Backpack = {
     title.textContent = "MOCHILA";
     panelBg.appendChild(title);
 
-    // Pedido explícito: "EN la mochila se mostrara el recurso recogido.
-    // TODOS los recursos, son stackeables y se mostrara la cantidad de cada
-    // uno con una etiqueta igual que la que muestra los puntos de gloria
-    // que cuestan las unidades o los precios de la tienda goblin" (ver
-    // js/resources.js, Resources.counts).
-    const resourceRow = document.createElement("div");
-    resourceRow.className = "armory-resource-row";
-    this.buildResourceBadges(resourceRow);
-    panelBg.appendChild(resourceRow);
-
     const slots = document.createElement("div");
     slots.className = "backpack-slots";
     panelBg.appendChild(slots);
@@ -394,19 +394,58 @@ const Backpack = {
     setTimeout(() => el.remove(), 220);
   },
 
-  // Pinta los BACKPACK_SLOT_COUNT huecos — los primeros con un objeto real
-  // (en el orden del inventario), el resto vacíos ("huecos como un
-  // inventario triple A que se irán comprando en la tienda goblin").
+  // ---------- Recursos como huecos de mochila ----------
+  // Pedido explícito (pasada posterior): "los recursos ocupan espacio en la
+  // mochila. no los colores a parte, son como un objeto mas que se consume
+  // como moneda en la armeria, pero deben ocupar espacio, por eso tenemos 8
+  // huecos" — antes vivían en su propia fila aparte (ver el historial de
+  // buildResourceBadges), fuera de los BACKPACK_SLOT_COUNT huecos reales;
+  // ahora cada TIPO de recurso con cantidad > 0 ocupa uno de esos huecos,
+  // apilado con su cantidad (mismo rombo amarillo que ya usan los puntos de
+  // gloria/precios de tienda, ver .shop-slot__price en style.css — pedido
+  // original: "se mostrara la cantidad de cada uno con una etiqueta igual
+  // que la que muestra los puntos de gloria"), sin ocupar un hueco por cada
+  // UNIDAD recogida (son stackeables: 6 de madera siguen siendo un único
+  // hueco). buildResourceBadges/refreshResourceBadges (arriba) se quedan tal
+  // cual para la fila de existencias aparte que sigue usando el popup de la
+  // Armería (js/armory.js) — no es el mismo sitio ni el mismo criterio.
+  _resourceSlotEntries() {
+    if (typeof Resources === "undefined") return [];
+    const counts = Resources.counts;
+    return Object.keys(RESOURCE_TYPES)
+      .filter((id) => (counts[id] || 0) > 0)
+      .map((id) => ({ uid: `resource-${id}`, kind: "resource", resourceId: id, count: counts[id] }));
+  },
+
+  // Lista combinada de TODO lo que ocupa un hueco ahora mismo (recursos +
+  // objetos reales), en ese orden — usada tanto para pintar la rejilla como
+  // para saber cuántos huecos quedan libres (ver hasFreeSlot más abajo).
+  _allSlotEntries() {
+    return [...this._resourceSlotEntries(), ...this.inventory.map((it) => ({ ...it, kind: "item" }))];
+  },
+
+  // Pinta los BACKPACK_SLOT_COUNT huecos — los primeros con recursos/objetos
+  // reales (en ese orden, ver _allSlotEntries), el resto vacíos ("huecos
+  // como un inventario triple A que se irán comprando en la tienda goblin").
   _renderSlots() {
     if (!this._slotsEl) return;
     this._slotsEl.innerHTML = "";
+    const entries = this._allSlotEntries();
     for (let i = 0; i < BACKPACK_SLOT_COUNT; i++) {
-      const entry = this.inventory[i];
+      const entry = entries[i];
       const slotEl = document.createElement("button");
       slotEl.className = "backpack-slot" + (entry ? "" : " backpack-slot--empty");
       if (entry) {
-        const def = ITEM_TYPES[entry.itemId];
-        slotEl.innerHTML = `<img src="${def.iconUrl}" class="backpack-slot__icon" alt="${def.name}">`;
+        if (entry.kind === "resource") {
+          const def = RESOURCE_TYPES[entry.resourceId];
+          slotEl.className += " backpack-slot--resource";
+          slotEl.innerHTML =
+            `<img src="${def.iconUrl}" class="backpack-slot__icon" alt="${def.name}">` +
+            `<span class="shop-slot__price"><span class="shop-slot__price__num">${entry.count}</span></span>`;
+        } else {
+          const def = ITEM_TYPES[entry.itemId];
+          slotEl.innerHTML = `<img src="${def.iconUrl}" class="backpack-slot__icon" alt="${def.name}">`;
+        }
         slotEl.classList.toggle("backpack-slot--selected", entry.uid === this._selectedUid);
         slotEl.addEventListener("click", (e) => {
           e.stopPropagation();
@@ -434,15 +473,27 @@ const Backpack = {
 
   _updateDescText() {
     if (!this._descEl) return;
-    const entry = this.inventory.find((it) => it.uid === this._selectedUid);
-    this._descEl.textContent = entry ? ITEM_DESCRIPTIONS[entry.itemId] || "" : "";
+    const entry = this._allSlotEntries().find((it) => it.uid === this._selectedUid);
+    if (!entry) {
+      this._descEl.textContent = "";
+      return;
+    }
+    this._descEl.textContent =
+      entry.kind === "resource"
+        ? (typeof RESOURCE_DESCRIPTIONS !== "undefined" && RESOURCE_DESCRIPTIONS[entry.resourceId]) || ""
+        : ITEM_DESCRIPTIONS[entry.itemId] || "";
   },
 
   // Hueco libre en la mochila ahora mismo — lo consulta Shops (js/shops.js)
-  // antes de dejar comprar nada: "la Tienda Goblin...el objeto pasa a la
-  // mochila del jugador que lo compró" da por hecho que hay sitio.
+  // antes de dejar comprar nada ("la Tienda Goblin...el objeto pasa a la
+  // mochila del jugador que lo compró" da por hecho que hay sitio) y
+  // Resources (js/resources.js) antes de dejar recoger un TIPO de recurso
+  // nuevo (ver Resources._collect). CORRECCIÓN (pedido explícito): "los
+  // recursos ocupan espacio en la mochila...por eso tenemos 8 huecos" —
+  // cuenta también los huecos que ocupan los recursos, no solo
+  // this.inventory (ver _allSlotEntries).
   hasFreeSlot() {
-    return this.inventory.length < BACKPACK_SLOT_COUNT;
+    return this._allSlotEntries().length < BACKPACK_SLOT_COUNT;
   },
 
   // Añade un objeto directamente al inventario sin pasar por el tablero —

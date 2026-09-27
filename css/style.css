@@ -254,17 +254,25 @@ body {
    quedaba duplicado). Ancho limitado (no 100% del contenedor, que aquí
    llega a 420px: el logo es muy apaisado y se vería enorme) + sombra dura
    a juego con el resto del lenguaje visual del menú. */
+/* Envoltorio del logo (pedido explícito, ver su comentario en index.html):
+   position:relative para poder anclar .main-logo-hit encima en % sin
+   afectar al flujo normal del menú (el propio wrap ocupa exactamente lo
+   mismo que antes ocupaba la imagen sola, gracias a que ésta sigue siendo
+   display:block/width:100% dentro de él). */
+.main-logo-wrap {
+  position: relative;
+  max-width: min(840px, 92vw);
+  margin: 0 auto 22px;
+  /* Pedido explícito: "al poner el raton sobre el logo debe ser el puntero
+     del juego de color blanco" — reposo en TODO el logo salvo la zona
+     pulsable (.main-logo-hit, más abajo), que lo sube a amarillo. */
+  cursor: var(--cursor-default);
+}
+
 .main-logo {
   display: block;
   width: 100%;
-  /* Pedido explícito: "el logo tiene que ser el triple de grande" — 280px
-     x3 = 840px, acotado con min() al ancho de viewport (mismo patrón que
-     ya usan otros paneles del juego, ver p.ej. .backpack-overlay más
-     abajo) para que en pantallas pequeñas no se salga ni fuerce scroll
-     horizontal en vez de quedarse fijo en un tamaño enorme. */
-  max-width: min(840px, 92vw);
   height: auto;
-  margin: 0 auto 22px;
   filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.55));
   /* Pedido explícito: "puedes hacer que el logotipo flote arriba y abajo
      muy sutilmente? creo que le puede dar animismo a la pantalla de
@@ -276,9 +284,12 @@ body {
      (nada que ver con el coste de la niebla). */
   will-change: transform;
   animation: main-logo-float 4.5s ease-in-out infinite;
-  /* Easter egg (js/menu.js, .main-logo--punched más abajo): el logo entero
-     es clicable. */
-  cursor: pointer;
+  /* CORRECCIÓN (pedido explícito): "el clic solo tenga efecto sobre la zona
+     donde esta el gnomo...y no sobre todo el logo" — ya no es clicable la
+     imagen en sí (eso ahora lo hace .main-logo-hit, ver más abajo);
+     pointer-events:none para que ni siquiera capture el hover y deje pasar
+     el cursor de reposo del .main-logo-wrap que lo envuelve. */
+  pointer-events: none;
 }
 
 @keyframes main-logo-float {
@@ -286,29 +297,66 @@ body {
   50% { transform: translateY(-10px); }
 }
 
-/* Easter egg (js/menu.js): clic en el logotipo — pedido explícito: "me
+/* Easter egg (js/menu.js): clic en la zona del gnomo (.main-logo-hit, no
+   todo el logo, ver esa clase más abajo) — pedido explícito original: "me
    gustaria que si le hicieras clic al gnomo que aparece en el logotipo de
    gnomoregnomes del menu principal el logo reaccionase como si le estuvieras
-   pegando y un sonido de quejido de gnomo se reprodujera". El logo es una
-   única imagen plana (no hay un elemento de gnomo aparte que recortar), así
-   que el clic se escucha sobre TODO el logotipo. Se listan las DOS
+   pegando y un sonido de quejido de gnomo se reprodujera". Se listan las DOS
    animaciones juntas (float + punch) en vez de sustituir la de reposo: misma
    especificidad que .main-logo, pero al venir después en el archivo gana el
    shorthand completo, así que el logo sigue flotando encogido/sacudido
    mientras dura el golpe en vez de congelarse un instante. js/menu.js quita
    la clase a los 400ms (duración de main-logo-punch) para volver a dejar
    solo el float normal — mismo patrón "quitar/reflow/añadir" de un solo tiro
-   que el resto del proyecto (ver p.ej. Villages._playEpicSmash). */
+   que el resto del proyecto (ver p.ej. Villages._playEpicSmash).
+
+   CORRECCIÓN (pedido explícito, pasada posterior): "la deformacion al pulsar
+   esta bien, pero dentro de esos parametros puede ser aleatoria para que no
+   siempre sea igual?" — los 3 pasos intermedios (20/50/75%) ya no llevan
+   valores fijos, sino variables CSS (--punch-*) con el valor original de
+   siempre como fallback; js/menu.js las sobreescribe con un valor al azar
+   (misma forma de golpe, magnitud e izquierda/derecha aleatorias) ANTES de
+   añadir esta clase en cada clic, así que cada golpe se ve ligeramente
+   distinto sin dejar de ser reconociblemente "el mismo" golpe. */
 .main-logo--punched {
   animation: main-logo-float 4.5s ease-in-out infinite, main-logo-punch 0.4s ease;
 }
 
 @keyframes main-logo-punch {
   0% { transform: scale(1) rotate(0deg) translateX(0); }
-  20% { transform: scale(0.92, 1.08) rotate(-4deg) translateX(-10px); }
-  50% { transform: scale(1.06, 0.94) rotate(3deg) translateX(6px); }
-  75% { transform: scale(0.98, 1.02) rotate(-1deg) translateX(-2px); }
+  20% {
+    transform: scale(var(--punch-sx1, 0.92), var(--punch-sy1, 1.08)) rotate(var(--punch-rot1, -4deg))
+      translateX(var(--punch-tx1, -10px));
+  }
+  50% {
+    transform: scale(var(--punch-sx2, 1.06), var(--punch-sy2, 0.94)) rotate(var(--punch-rot2, 3deg))
+      translateX(var(--punch-tx2, 6px));
+  }
+  75% {
+    transform: scale(var(--punch-sx3, 0.98), var(--punch-sy3, 1.02)) rotate(var(--punch-rot3, -1deg))
+      translateX(var(--punch-tx3, -2px));
+  }
   100% { transform: scale(1) rotate(0deg) translateX(0); }
+}
+
+/* Pedido explícito: "puedes hacer que el clic solo tenga efecto sobre la
+   zona donde esta el gnomo en el logo y no sobre todo el logo?" — botón
+   invisible superpuesto SOLO sobre la zona del gnomo (cabeza a botas, mano a
+   mano — coordenadas en % medidas a mano sobre assets/ui/logo_principal.png,
+   1561x879), en vez de escuchar el clic en la imagen entera. Sin fondo ni
+   borde (es un <button> solo por accesibilidad/semántica de "esto es
+   pulsable"), con el cursor amarillo interactivo del juego mientras el resto
+   del logo se queda en el blanco de reposo (.main-logo-wrap, más arriba). */
+.main-logo-hit {
+  position: absolute;
+  left: 41%;
+  top: 20%;
+  width: 29%;
+  height: 37%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: var(--cursor-pointer);
 }
 
 /* Utilidad estándar "visualmente oculto, presente para lectores de
@@ -454,7 +502,13 @@ h2 {
   color: rgba(255, 255, 255, 0.4);
   text-shadow: none;
   filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.4));
-  cursor: not-allowed;
+  /* CORRECCIÓN (pedido explícito): "el puntero al pasar por encima del boton
+     multijugador que aun no esta disponible que sea phosphor tambien" — antes
+     era el cursor nativo del sistema operativo ("not-allowed"), rompiendo la
+     coherencia visual con el resto de la interfaz, que usa siempre el
+     puntero propio del juego (ver --cursor-default en :root). Blanco de
+     reposo, no amarillo interactivo: sigue sin poder pulsarse. */
+  cursor: var(--cursor-default);
 }
 
 .menu-btn:disabled::after {

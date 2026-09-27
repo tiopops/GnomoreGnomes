@@ -9,7 +9,7 @@
      existe para tomar el control del gesto. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Gnomore Gnomes</title>
-<link rel="stylesheet" href="css/style.css?v=20260927070710">
+<link rel="stylesheet" href="css/style.css?v=20260927082156">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
 <script>
   // Pedido explícito: "en la interfaz del smartphone, a veces tengo que
@@ -38,7 +38,19 @@
          hexágono) se retira también — mantenerlo habría repetido el mismo
          texto dos veces seguidas. game_title (i18n) se queda en STRINGS
          (js/i18n.js) sin usar aquí por si hiciera falta en otra pantalla. -->
-    <img class="main-logo" src="assets/ui/logo_principal.png?v=20260926142927" alt="Gnomore Gnomes" />
+    <!-- Pedido explícito (pasada posterior): "puedes hacer que el clic solo
+         tenga efecto sobre la zona donde esta el gnomo en el logo y no sobre
+         todo el logo?" — el logotipo es una única imagen plana (no hay un
+         recorte de gnomo aparte), así que la zona pulsable se simula con un
+         <button> invisible superpuesto, posicionado en % sobre la ilustración
+         (mismo criterio de "envoltorio position:relative + hijo absoluto en
+         %" que el resto del proyecto para que escale junto con el logo sea
+         cual sea su tamaño real en pantalla). Ver .main-logo-hit en
+         style.css para las coordenadas exactas y js/menu.js para el clic. -->
+    <div class="main-logo-wrap">
+      <img class="main-logo" src="assets/ui/logo_principal.png?v=20260926142927" alt="Gnomore Gnomes" />
+      <button type="button" class="main-logo-hit" aria-label="Gnomo"></button>
+    </div>
     <h1 class="sr-only"><span data-i18n="game_title">Gnomore Gnomes</span></h1>
 
     <nav class="menu-buttons">
@@ -115,20 +127,20 @@
   <script src="js/villages.js?v=20260927054224"></script>
   <script src="js/glory.js?v=20260926192744"></script>
   <script src="js/turns.js?v=20260926142927"></script>
-  <script src="js/obelisks.js?v=20260927054224"></script>
+  <script src="js/obelisks.js?v=20260927082156"></script>
   <script src="js/teammarkers.js?v=20260922221531"></script>
   <script src="js/perfmode.js?v=20260925054820"></script>
   <script src="js/settingsmenu.js?v=20260924230535"></script>
   <script src="js/gnomecalib.js?v=20260922221531"></script>
   <script src="js/unitinfo.js?v=20260927054224"></script>
-  <script src="js/backpack.js?v=20260927070710"></script>
+  <script src="js/backpack.js?v=20260927082156"></script>
   <script src="js/shops.js?v=20260927054224"></script>
-  <script src="js/resources.js?v=20260927070710"></script>
+  <script src="js/resources.js?v=20260927082156"></script>
   <script src="js/armory.js?v=20260927054224"></script>
   <script src="js/bushes.js?v=20260927053015"></script>
   <script src="js/hierbajos.js?v=20260927070710"></script>
   <script src="js/abilities.js?v=20260927054224"></script>
-  <script src="js/menu.js?v=20260927053015"></script>
+  <script src="js/menu.js?v=20260927082156"></script>
   <script src="js/newgame-flow.js?v=20260927070710"></script>
   <script src="js/touchfix.js?v=20260927053015"></script>
 </body>

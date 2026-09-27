@@ -68,6 +68,16 @@ const RESOURCE_TYPES = {
   metal: { name: "Metal", iconUrl: "assets/iconos/recurso_metal.png" },
 };
 
+// Pedido explícito: "los recursos ocupan espacio en la mochila...son como un
+// objeto mas que se consume como moneda en la armeria, pero deben ocupar
+// espacio" — descripción mostrada en el hueco de la mochila cuando un
+// recurso está resaltado, mismo patrón que ITEM_DESCRIPTIONS (backpack.js).
+const RESOURCE_DESCRIPTIONS = {
+  madera: "Madera recogida de los pinos. No se usa por sí sola: se gasta como moneda para mejorar arma y armadura en la Armería.",
+  roca: "Roca recogida de las canteras. No se usa por sí sola: se gasta como moneda para mejorar arma y armadura en la Armería.",
+  metal: "Mena de hierro, mucho más escasa que la madera o la roca. Solo hace falta para el nivel 3 de mejoras en la Armería.",
+};
+
 const RESOURCE_MIN_SEPARATION = 2; // entre dos fuentes, para que no se amontonen
 
 const Resources = {
@@ -514,6 +524,18 @@ const Resources = {
   },
 
   _collect(resourceId) {
+    // Pedido explícito: "los recursos ocupan espacio en la mochila...son
+    // como un objeto mas que se consume como moneda en la armeria, pero
+    // deben ocupar espacio, por eso tenemos 8 huecos" — un recurso del que
+    // aún no se tiene NINGUNA unidad reclama un hueco propio (stackeable a
+    // partir de ahí, igual que cualquier objeto comprado en la Tienda
+    // Goblin, ver Backpack.hasFreeSlot/Shops._buySelected); si ya se tiene
+    // alguno, sumar más no gasta hueco nuevo, ya tiene el suyo reclamado.
+    const isNewType = !this.counts[resourceId];
+    if (isNewType && typeof Backpack !== "undefined" && !Backpack.hasFreeSlot()) {
+      if (typeof SFX !== "undefined") SFX.dropFail();
+      return; // mochila llena: el recurso se pierde, igual que rechazar una compra sin sitio
+    }
     this.counts[resourceId] = (this.counts[resourceId] || 0) + 1;
     if (typeof SFX !== "undefined") SFX.itemEaten();
     // "que genera una animacion de pulsacion en el momento recibir el
