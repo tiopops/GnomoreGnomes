@@ -545,7 +545,15 @@ const Turns = {
     }
 
     if (typeof Gnome !== "undefined") {
-      const looseGnome = Gnome.list.find((g) => !g.heldBy && g.findApproachTile(unit));
+      // Señuelo Explosivo (js/backpack.js) — "el enemigo lo ve con el
+      // sprite normal del gnomo" así que la IA lo persigue exactamente
+      // igual que a un gnomo de verdad (misma búsqueda de siempre, sin
+      // tratarlo aparte), salvo su PROPIO señuelo: eso sería la IA cayendo
+      // en su propia trampa, así que se excluye igual que
+      // GnomeInstance._showCatchMarkerFor hace para el jugador.
+      const looseGnome = Gnome.list.find(
+        (g) => !g.heldBy && !(g.isDecoy && g.ownerTeam === unit.team) && g.findApproachTile(unit)
+      );
       if (looseGnome) {
         await looseGnome.catchBy(unit);
         return true;
@@ -587,9 +595,13 @@ const Turns = {
   // duplicar la comprobación de casillas ocupadas/con niebla.
   _aiPickMoveTile(unit) {
     let target = null;
-    if (typeof Gnome !== "undefined" && Gnome.list.some((g) => !g.heldBy)) {
-      target = Gnome.list
-        .filter((g) => !g.heldBy)
+    // Señuelo Explosivo (js/backpack.js) — mismo criterio que arriba: nunca
+    // se acerca a su propia trampa (sería un desperdicio de movimiento,
+    // aparte de raro de ver).
+    const looseGnomes =
+      typeof Gnome !== "undefined" ? Gnome.list.filter((g) => !g.heldBy && !(g.isDecoy && g.ownerTeam === unit.team)) : [];
+    if (looseGnomes.length > 0) {
+      target = looseGnomes
         .reduce((best, g) => {
           const d = Math.max(Math.abs(g.row - unit.row), Math.abs(g.col - unit.col));
           return !best || d < best.d ? { row: g.row, col: g.col, d } : best;

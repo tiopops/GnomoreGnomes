@@ -49,6 +49,22 @@ const GNOME_ASSETS = {
   grita: "assets/equipos/MushboomForest/gnomo_grita.png",
 };
 
+// Pedido explícito (Señuelo Explosivo, tienda goblin, js/backpack.js): "un
+// señuelo explosivo de madera con aspecto de gnomo...para el jugador que lo
+// coloca el diseño es el del sprite nuevo, pero el enemigo lo ve con el
+// sprite normal del gnomo" — un señuelo se crea con Gnome.spawnDecoy y vive
+// en Gnome.list como CUALQUIER otro gnomo suelto (mismo objeto, mismas
+// comprobaciones de niebla/aproximación/detección de la IA), así que hereda
+// gratis todo ese sistema; lo único distinto es qué textura enseña (ver
+// GnomeInstance.spawn más abajo: arte propio si el equipo QUE LO COLOCÓ es
+// el jugador —así se reconoce su propia trampa—, el gnomo normal de siempre
+// si lo colocó el rival —así engaña al jugador, que es quien de verdad
+// mira la pantalla—) y que, al intentar cogerlo, explota en vez de
+// engancharse (ver GnomeInstance.catchBy).
+const GNOME_DECOY_ASSETS = {
+  idle: "assets/iconos/senuelo_clavado.png",
+};
+
 // Pedido explícito: "la vision de los gnomos pasa a ser 3 casillas
 // alrededor asi que si no hay nadie en ese rango se quedan quietos y no
 // huyen" — radio (Chebyshev) dentro del cual un gnomo suelto "se entera" de
@@ -167,6 +183,14 @@ function createGnomeInstance() {
     busy: false, // true durante una animación propia (huida, vuelo...) para no solaparse
     passing: false, // true mientras están visibles las miras de destino de un pase
 
+    // Señuelo Explosivo (js/backpack.js) — false para un gnomo suelto de
+    // verdad. isDecoy=true convierte a este GnomeInstance en la trampa;
+    // ownerTeam guarda qué equipo lo colocó, tanto para decidir qué sprite
+    // enseña (ver spawn()) como para que ese mismo equipo no pueda "picar"
+    // en su propia trampa (ver _showCatchMarkerFor/Turns._aiActOnce).
+    isDecoy: false,
+    ownerTeam: null,
+
     attachEl: null,
     attachSpriteEl: null,
     _badgeEl: null,
@@ -246,8 +270,14 @@ function createGnomeInstance() {
       // momentáneos, no el estado "de reposo" de la entidad, y meterles un
       // fundido de 180ms encima se notaría raro sobre una animación ya de
       // por sí rápida.
-      if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, GNOME_ASSETS.idle);
-      else spriteEl.src = GNOME_ASSETS.idle;
+      // Señuelo Explosivo (ver GNOME_DECOY_ASSETS más arriba): arte propio
+      // solo cuando lo colocó el JUGADOR (así reconoce su propia trampa en
+      // pantalla); si lo colocó el rival se enseña el gnomo normal de
+      // siempre, para que el jugador —el único que de verdad mira la
+      // pantalla— lo confunda con uno de verdad.
+      const idleSrc = this.isDecoy && this.ownerTeam === "player" ? GNOME_DECOY_ASSETS.idle : GNOME_ASSETS.idle;
+      if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, idleSrc);
+      else spriteEl.src = idleSrc;
       spriteEl.draggable = false;
       spriteEl.alt = "";
       spriteEl.style.width = `${GNOME_SIZES.ground}px`;
@@ -460,6 +490,13 @@ function createGnomeInstance() {
       // hidden, ver Fog.applyVisibility) y sin embargo seguía dejando
       // "cogerlo a ciegas" porque su loseta ya no contaba como fogged.
       if (this.el && this.el.classList.contains("unit--fog-hidden")) return;
+      // Señuelo Explosivo (js/backpack.js) — "para el jugador que lo coloca
+      // el diseño es el del sprite nuevo" — quien lo colocó YA VE en
+      // pantalla que es su propia trampa (arte distinto, ver
+      // GnomeInstance.spawn), así que no tiene sentido ofrecerle la mira de
+      // "coger" sobre su propio señuelo; solo el equipo contrario, al que sí
+      // va destinado, puede intentar cogerlo.
+      if (this.isDecoy && this.ownerTeam === unit.team) return;
       const approach = this.findApproachTile(unit);
       if (!approach) return;
       Units.addMarker({
@@ -507,6 +544,18 @@ function createGnomeInstance() {
         if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
       }
       Units.faceTowardsTile(unit, this.row, this.col);
+
+      // Señuelo Explosivo (js/backpack.js) — "al cogerlo...PUM! explota y le
+      // quita 2 puntos de vida" — en vez del enganche normal (attachTo), este
+      // gnomo "de mentira" nunca llega a cogerse de verdad: explota en el
+      // sitio y desaparece, dejando gastada la acción de "coger" igual que si
+      // se hubiera enganchado de verdad.
+      if (this.isDecoy) {
+        if (typeof Turns !== "undefined") Turns.useAction(unit);
+        Gnome._explodeDecoy(this, unit);
+        return;
+      }
+
       this.attachTo(unit);
       SFX.catch();
       if (typeof Turns !== "undefined") Turns.useAction(unit);
@@ -1498,6 +1547,64 @@ const Gnome = {
     instance.spawnNear(row, col);
     this.list.push(instance);
     return instance;
+  },
+
+  // Señuelo Explosivo (js/backpack.js) — a diferencia de spawnNear (que
+  // busca la loseta libre más cercana en espiral, pensado para "aparece
+  // atraído por la Setarcoiris"), aquí la casilla YA se eligió a mano en el
+  // propio menú de colocación de la mochila (mismas comprobaciones de
+  // terreno/edificios/arbusto que cualquier otro objeto, ver
+  // Backpack._senueloPlacementTiles), así que se coloca directamente con
+  // spawn(row, col) en vez de spawnNear. isDecoy/ownerTeam se fijan ANTES de
+  // spawn() porque spawn() los consulta para decidir qué textura usar.
+  spawnDecoy(team, row, col) {
+    const instance = createGnomeInstance();
+    instance.isDecoy = true;
+    instance.ownerTeam = team;
+    instance.spawn(row, col);
+    this.list.push(instance);
+    return instance;
+  },
+
+  // Explosión del Señuelo — la llama GnomeInstance.catchBy en cuanto quien
+  // intenta "cogerlo" confirma que no es de su propio equipo (ver
+  // _showCatchMarkerFor/Turns._aiActOnce, ambos ya excluyen la trampa
+  // propia). Mismo lenguaje visual/sonoro que el impacto del cohete KataPum
+  // (Backpack._explodeKatapum) — un golpe "gordo" merece el mismo temblor de
+  // cámara grande + destello blanco + anillo de explosión, así que se
+  // reutilizan tal cual en vez de duplicarlos. Daño FIJO de 2 (a diferencia
+  // del cohete, que es 1-2 al azar: "le quita 2 puntos de vida", sin margen).
+  _explodeDecoy(decoy, unit) {
+    const damage = 2;
+    unit.hp = Math.max(0, unit.hp - damage);
+    Units.updateHpBar(unit);
+    Units.spawnFloatingText(unit, `-${damage}`, { className: "dmg-popup" });
+    Units.playShake(unit);
+    SFX.explosion();
+
+    const viewportEl = document.getElementById("board-viewport");
+    if (viewportEl) {
+      viewportEl.classList.remove("board-viewport--shake--big");
+      void viewportEl.offsetWidth;
+      viewportEl.classList.add("board-viewport--shake--big");
+      setTimeout(() => viewportEl.classList.remove("board-viewport--shake--big"), 420);
+    }
+    if (typeof Villages !== "undefined") Villages._flashScreen();
+    if (typeof Backpack !== "undefined" && Backpack._spawnKatapumBlast) {
+      Backpack._spawnKatapumBlast(decoy.row, decoy.col);
+    }
+
+    this.destroyInstance(decoy);
+
+    if (unit.hp <= 0) {
+      // Mismo criterio que cualquier otra baja (ver Combat.attack): el
+      // crédito de Gloria va para el equipo que puso la trampa, no para
+      // quien cayó en ella.
+      if (typeof Glory !== "undefined") Glory.queueKillBonus(decoy.ownerTeam);
+      Units.removeUnit(unit).then(() => {
+        if (typeof Gnome !== "undefined") Gnome.dropHeldBy(unit);
+      });
+    }
   },
 
   // true si (row, col) la ocupa CUALQUIER gnomo suelto que no sea `except`

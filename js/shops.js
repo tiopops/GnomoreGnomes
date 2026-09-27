@@ -74,7 +74,12 @@ const SHOP_STOCK_TEMPLATE = [
   // un solo uso garantizado (turno perdido + gnomo caído + daño), no solo
   // utilidad.
   { itemId: "atrapapinreles", price: 6 },
-  { itemId: "atrapapinreles", price: 6 },
+  // Pedido explícito: "añadimos nuevo item a la tienda goblin
+  // 'item_señuelo'" (ver ITEM_TYPES.senuelo en js/backpack.js) — sustituye
+  // al segundo AtrapaPinreles (mismo espíritu de trampa ofensiva, así que
+  // repetir los dos a la vez era más redundancia que variedad) para que la
+  // partida arranque ya con las 8 casillas mostrando 8 objetos distintos.
+  { itemId: "senuelo", price: 7 },
   { itemId: "katapum", price: 8 },
   { itemId: "totemvision", price: 7 },
 ];
@@ -98,6 +103,9 @@ const SHOP_RESTOCK_POOL = [
   // TotemVision (js/totemvision.js) — igual que el resto de objetos
   // nuevos, también puede salir sorteado en cualquier reposición futura.
   { itemId: "totemvision", price: 7 },
+  // Señuelo Explosivo (ver ITEM_TYPES.senuelo en js/backpack.js) — igual
+  // que el resto, también puede salir en cualquier reposición futura.
+  { itemId: "senuelo", price: 7 },
 ];
 const SHOP_RESTOCK_INTERVAL = 5; // turnos
 

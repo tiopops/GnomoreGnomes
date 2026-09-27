@@ -117,6 +117,23 @@ const ITEM_TYPES = {
     name: "TotemVision",
     iconUrl: "assets/iconos/totemvision.png",
   },
+  // Pedido explícito: "nuevo item al la tienda goblin item_señuelo, es un
+  // señuelo explosivo de madera con aspecto de gnomo. al usarlo se puede
+  // colocar sobre una loseta libre de terreno...no puede ser en un
+  // arbusto. para el jugador que lo coloca el diseño es el del sprite
+  // nuevo, pero el enemigo lo ve con el sprite normal del gnomo...al
+  // cogerlo...PUM! explota" — igual que TotemVision, la ficha de catálogo
+  // vive aquí (icono de mochila: SIEMPRE el arte real, es el jugador
+  // consultando su propio inventario) pero la mecánica de verdad —
+  // hacerse pasar por un gnomo suelto de verdad ante el rival, explotar
+  // al intentar cogerlo— reutiliza directamente el sistema de Gnome (ver
+  // Gnome.spawnDecoy en js/gnome.js): así hereda gratis toda su lógica ya
+  // existente de niebla, aproximación y detección de la IA rival, sin
+  // duplicarla.
+  senuelo: {
+    name: "Señuelo Explosivo",
+    iconUrl: "assets/iconos/senuelo_clavado.png",
+  },
 };
 
 // Editable desde debug/objetos-mochila.html (genera el bloque listo para
@@ -129,6 +146,7 @@ const ITEM_DESCRIPTIONS = {
   atrapapinreles: "Un cepo goblin oxidado. Colócalo junto a uno de tus personajes: el enemigo que caiga en su casilla o pase por encima pierde el turno, suelta cualquier gnomo que llevara encima y recibe 1 punto de daño.",
   katapum: "Un cohete goblin casero. Elige a un rival a la vista: el misil vuela teledirigido hasta él y le hace entre 1 y 2 puntos de daño en la explosión.",
   totemvision: "Un tótem tallado con un ojo tallado en su punta. Colócalo sobre una casilla libre: otorga visión permanente en un radio de 3 casillas. Tiene 1 punto de vida (cualquier golpe lo destruye) y, si se esconde dentro de un arbusto, se rompe en cuanto un rival entra en él.",
+  senuelo: "Un muñeco de madera con forma de gnomo, cargado de pólvora. Colócalo sobre una casilla libre de terreno (nunca en un arbusto): tú lo ves como lo que es, pero el rival lo confunde con un gnomo suelto de verdad. En cuanto intente cogerlo... ¡PUM! Explota y le quita 2 puntos de vida.",
 };
 
 const Backpack = {
@@ -540,6 +558,7 @@ const Backpack = {
     else if (entry.itemId === "atrapapinreles") this._startPlacingAtrapaPinreles(uid);
     else if (entry.itemId === "katapum") this._startTargetingKatapum(uid);
     else if (entry.itemId === "totemvision") this._startPlacingTotemVision(uid);
+    else if (entry.itemId === "senuelo") this._startPlacingSenuelo(uid);
   },
 
   // ---------- BeVida: dársela a un personaje aliado ----------
@@ -901,6 +920,63 @@ const Backpack = {
     const unit = Units.list.find((u) => u.id === Units.selectedId);
     const team = unit ? unit.team : "player";
     if (typeof TotemVision !== "undefined") TotemVision.place(team, row, col);
+    SFX.itemPlace();
+  },
+
+  // ---------- Señuelo Explosivo: colocarlo como un gnomo falso ----------
+  // Pedido explícito: "se puede colocar sobre una loseta libre de terreno...
+  // no puede ser en un arbusto" — reutiliza _adjacentToPlayerTiles (mismo
+  // criterio que cualquier otro objeto colocable: junto a un personaje o al
+  // propio Obelisco activos) pero descarta además cualquier casilla con
+  // arbusto encima (Bushes.at), algo que TotemVision sí permite pero el
+  // señuelo no.
+  _senueloPlacementTiles() {
+    return this._adjacentToPlayerTiles().filter((tile) => {
+      if (typeof Bushes !== "undefined" && Bushes.at(tile.row, tile.col)) return false;
+      // Un señuelo ES un GnomeInstance más (ver Gnome.spawnDecoy) — a
+      // diferencia del resto de objetos colocables, que nunca comprueban
+      // esto, aquí hace falta explícitamente: colocarlo encima de un gnomo
+      // suelto de verdad (o de otro señuelo ya puesto) los solaparía en la
+      // misma casilla.
+      if (typeof Gnome !== "undefined" && Gnome.isAt(tile.row, tile.col)) return false;
+      return true;
+    });
+  },
+
+  _startPlacingSenuelo(uid) {
+    this._placingUid = uid;
+    Units.clearRangeOverlays();
+    const tiles = this._senueloPlacementTiles();
+    tiles.forEach((tile, i) => {
+      Units.addMarker({
+        className: "range-marker range-marker--item-target",
+        row: tile.row,
+        col: tile.col,
+        delayIndex: i,
+        visibleClass: "range-marker--visible",
+        owner: "backpack",
+        onClick: () => this._placeSenueloAt(uid, tile.row, tile.col),
+      });
+    });
+  },
+
+  _placeSenueloAt(uid, row, col) {
+    this._placingUid = null;
+    Units.markerEls = Units.markerEls.filter((m) => {
+      if (m._owner !== "backpack") return true;
+      m.remove();
+      return false;
+    });
+    this.inventory = this.inventory.filter((it) => it.uid !== uid);
+    this._restoreNormalRange();
+
+    const unit = Units.list.find((u) => u.id === Units.selectedId);
+    const team = unit ? unit.team : "player";
+    // La mecánica de verdad (hacerse pasar por un gnomo suelto, explotar al
+    // intentar cogerlo) vive en Gnome.spawnDecoy — ver js/gnome.js, reutiliza
+    // TODO el sistema de gnomos sueltos (niebla, aproximación, detección de
+    // la IA rival) en vez de duplicarlo.
+    if (typeof Gnome !== "undefined") Gnome.spawnDecoy(team, row, col);
     SFX.itemPlace();
   },
 
