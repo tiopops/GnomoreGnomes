@@ -925,16 +925,47 @@ const Backpack = {
   // teledirigido no bota, va derecho al blanco), con la imagen rotada para
   // que la punta encare siempre la dirección real del trayecto — "asegurate
   // de que el sprite se encara bien en su viaje hasta el enemigo".
+  //
+  // Pedido explícito (pasada posterior): "el misil goblin cuando se
+  // dispara, ahora tiene el punto de origen desde el icono de la mochila.
+  // la mochila hara una pequeña animacion cuando salga de ella." — el icono
+  // de la mochila vive en la interfaz fija, no en una loseta del tablero,
+  // así que hace falta el mismo cambio de espacio de coordenadas que ya usa
+  // Resources._flyPickupToBackpack (pero al revés: aquí SALE de la mochila
+  // en vez de llegar a ella): todo el vuelo pasa a hacerse con
+  // position:fixed en coordenadas reales de pantalla (getBoundingClientRect)
+  // en vez de las coordenadas de tablero (getTileCenter) de antes.
   _animateKatapumThrow(launcher, target) {
     return new Promise((resolve) => {
-      if (typeof getTileCenter === "undefined" || typeof Units === "undefined") return resolve();
-      const start = getTileCenter(launcher.row, launcher.col, Units.boardSize);
-      const end = getTileCenter(target.row, target.col, Units.boardSize);
-      const dist = Math.max(Math.abs(target.row - launcher.row), Math.abs(target.col - launcher.col), 1);
-      const duration = Math.min(1100, 320 + dist * 70);
+      if (typeof Units === "undefined" || !target.el) return resolve();
+      const btnEl = typeof Backpack !== "undefined" ? Backpack._btnEl : null;
+      const startRect = btnEl ? btnEl.getBoundingClientRect() : launcher.el.getBoundingClientRect();
+      const endRect = target.el.getBoundingClientRect();
+      const start = { x: startRect.left + startRect.width / 2, y: startRect.top + startRect.height / 2 };
+      const end = { x: endRect.left + endRect.width / 2, y: endRect.top + endRect.height / 2 };
+
+      // "la mochila hara una pequeña animacion cuando salga de ella" —
+      // mismo mecanismo de "quitar clase, forzar reflow, volver a
+      // ponerla" que el resto del proyecto (ver Resources._collect /
+      // .backpack-btn--pulse, usado ahí para RECIBIR un recurso; aquí un
+      // "retroceso" propio, .backpack-btn--launch, para LANZAR algo).
+      if (btnEl) {
+        btnEl.classList.remove("backpack-btn--launch");
+        void btnEl.offsetWidth;
+        btnEl.classList.add("backpack-btn--launch");
+        setTimeout(() => btnEl.classList.remove("backpack-btn--launch"), 380);
+      }
+
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const distPx = Math.hypot(dx, dy);
+      // Mismo idioma que antes (320ms base + más lejos, más tarde, tope en
+      // 1100ms) pero ahora en píxeles de pantalla reales en vez de casillas
+      // de tablero, ya que el origen ya no es una loseta.
+      const duration = Math.min(1100, 320 + distPx * 0.7);
 
       const el = document.createElement("div");
-      el.className = "katapum-projectile";
+      el.className = "katapum-projectile katapum-projectile--flying";
       const img = document.createElement("img");
       img.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
       img.className = "katapum-projectile__sprite";
@@ -942,14 +973,8 @@ const Backpack = {
       img.draggable = false;
       img.alt = "";
       el.appendChild(img);
-      Units.container.appendChild(el);
-      // Siempre por delante de CUALQUIER cosa del tablero mientras vuela
-      // (personajes, niebla, tótems...) — un cohete en pleno vuelo nunca
-      // debería quedar tapado a media trayectoria.
-      el.style.zIndex = "99999";
+      document.body.appendChild(el);
 
-      const dx = end.x - start.x;
-      const dy = end.y - start.y;
       // La ilustración original ya apunta de fábrica hacia arriba-derecha
       // (45° sobre la horizontal, ver assets/iconos/katapum.png) — se suma
       // ese desfase de fábrica al ángulo real del trayecto (atan2 en
@@ -961,6 +986,20 @@ const Backpack = {
 
       SFX.gnomeFly(duration / 1000, 1.35); // "el mismo sonido de lanzamiento del gnomo algo mas agudo"
 
+      // Pedido explícito: "el misil puede dejar un trail que se desvanezca
+      // en su parte mas lejana al origen mientras vuela? estaria
+      // interesante ese efecto" — una franja con gradiente que crece desde
+      // el origen (mochila) hasta la posición actual del misil, opaca junto
+      // al misil y transparente hacia atrás (el efecto "cometa" habitual:
+      // se apaga según se aleja de la punta en vuelo), por encima del
+      // rastro de partículas cuadradas ya existente, no en vez de él.
+      const trailEl = document.createElement("div");
+      trailEl.className = "katapum-trail";
+      trailEl.style.left = `${start.x}px`;
+      trailEl.style.top = `${start.y}px`;
+      trailEl.style.transform = `rotate(${angle - 45}deg)`;
+      document.body.appendChild(trailEl);
+
       let lastParticleAt = 0;
       const PARTICLE_INTERVAL_MS = 45;
 
@@ -971,6 +1010,7 @@ const Backpack = {
         const y = start.y + dy * t;
         el.style.left = `${x}px`;
         el.style.top = `${y}px`;
+        trailEl.style.width = `${Math.hypot(x - start.x, y - start.y)}px`;
         // Rastro de partículas cuadradas (pedido explícito: "particulas
         // cuadradas de color amarillo y rojo pequeñas para simular el
         // rastro que deja el cohete") — se dejan quietas en el punto exacto
@@ -983,6 +1023,8 @@ const Backpack = {
           requestAnimationFrame(step);
         } else {
           el.remove();
+          trailEl.classList.add("katapum-trail--fadeout");
+          setTimeout(() => trailEl.remove(), 220);
           this._explodeKatapum(target);
           resolve();
         }
@@ -993,10 +1035,11 @@ const Backpack = {
 
   _spawnKatapumTrailParticle(x, y) {
     const el = document.createElement("div");
-    el.className = "katapum-particle" + (Math.random() < 0.5 ? " katapum-particle--red" : " katapum-particle--yellow");
+    el.className =
+      "katapum-particle katapum-particle--flying" + (Math.random() < 0.5 ? " katapum-particle--red" : " katapum-particle--yellow");
     el.style.left = `${x + (Math.random() * 16 - 8)}px`;
     el.style.top = `${y + (Math.random() * 16 - 8)}px`;
-    if (typeof Units !== "undefined") Units.container.appendChild(el);
+    document.body.appendChild(el);
     setTimeout(() => el.remove(), 420);
   },
 

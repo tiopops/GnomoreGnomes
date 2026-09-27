@@ -109,6 +109,11 @@ const Resources = {
         placed++;
       }
     });
+    // Estado inicial de las barras de vida (ver refreshHpVisibility) —
+    // normalmente basta con que Fog.applyVisibility la recalcule tras el
+    // primer movimiento, pero esto cubre el instante justo después de
+    // repartir el mapa, antes de que nadie se haya movido todavía.
+    this.refreshHpVisibility();
   },
 
   _tileFree(row, col, boardSize) {
@@ -195,6 +200,25 @@ const Resources = {
     if (typeof Fog === "undefined") return;
     this.list.forEach((n) => {
       n.el.classList.toggle("unit--fog-hidden", Fog.isFogged(n.row, n.col));
+    });
+  },
+
+  // Pedido explícito: "las barras de vida de los recursos solo deben
+  // mostrarse cuando un personaje esta en una casilla adyacente a ellos" —
+  // se llama desde el mismo punto único que refreshFog (Fog.applyVisibility,
+  // que ya se dispara tras CUALQUIER movimiento/aparición/muerte del
+  // proyecto, ver el comentario de walkPath en js/units.js), así que no
+  // hace falta añadir ganchos nuevos en cada mecánica de movimiento por
+  // separado. "Personaje" = Units.list (no cuenta Gnome, que no es un
+  // personaje jugable), de cualquier equipo (una fuente es neutral, la
+  // pueden golpear ambos bandos).
+  refreshHpVisibility() {
+    if (typeof Units === "undefined") return;
+    this.list.forEach((node) => {
+      const adjacent = Units.list.some(
+        (u) => Math.max(Math.abs(u.row - node.row), Math.abs(u.col - node.col)) <= 1
+      );
+      node.el.classList.toggle("resource-node--hp-visible", adjacent);
     });
   },
 

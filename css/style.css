@@ -5834,6 +5834,17 @@ body.backpack-giving--katapum * {
   pointer-events: none;
 }
 
+/* CORRECCIÓN (pedido explícito): "el misil goblin cuando se dispara, ahora
+   tiene el punto de origen desde el icono de la mochila" — el vuelo entero
+   pasa a hacerse en coordenadas reales de pantalla (position:fixed) porque
+   el origen ya no es una loseta del tablero sino un icono de la interfaz
+   fija; mismo patrón exacto que .resource-pickup--flying más abajo. */
+.katapum-projectile--flying {
+  position: fixed;
+  z-index: 99999;
+  will-change: left, top, transform;
+}
+
 .katapum-projectile__sprite {
   display: block;
   /* Pedido explícito: "el misil...cuando se lanza, debe verse mas grande,
@@ -5858,6 +5869,45 @@ body.backpack-giving--katapum * {
   height: 6px;
   pointer-events: none;
   animation: katapum-particle-fade 0.42s ease-out forwards;
+}
+
+/* Mismo motivo que .katapum-projectile--flying de arriba: el vuelo ahora es
+   en coordenadas reales de pantalla, así que las partículas del rastro
+   también tienen que serlo (antes vivían en el espacio de tablero de
+   Units.container). */
+.katapum-particle--flying {
+  position: fixed;
+  z-index: 99998;
+}
+
+/* Pedido explícito: "el misil puede dejar un trail que se desvanezca en su
+   parte mas lejana al origen mientras vuela" — franja con gradiente que
+   Backpack._animateKatapumThrow estira (solo su ancho, vía JS) desde el
+   origen (mochila) hasta la posición actual del misil en cada fotograma;
+   transparente junto al origen (0% del gradiente) y opaca junto al misil
+   en vuelo (100%), el efecto "cometa" habitual. transform-origin a la
+   izquierda porque left/top fijan su ESQUINA en el punto de origen, no su
+   centro (a diferencia del proyectil/las partículas). */
+.katapum-trail {
+  position: fixed;
+  height: 8px;
+  width: 0;
+  margin-top: -4px;
+  border-radius: 4px;
+  transform-origin: 0% 50%;
+  pointer-events: none;
+  z-index: 99997; /* justo detrás del proyectil (99999) y sus partículas (99998) */
+  background: linear-gradient(
+    to right,
+    rgba(255, 205, 110, 0) 0%,
+    rgba(255, 176, 64, 0.5) 55%,
+    rgba(255, 140, 40, 0.85) 100%
+  );
+  transition: opacity 0.2s ease;
+}
+
+.katapum-trail--fadeout {
+  opacity: 0;
 }
 
 .katapum-particle--yellow {
@@ -6493,7 +6543,11 @@ body.backpack-giving--katapum * {
    Units.list). */
 .resource-node {
   cursor: var(--cursor-pointer);
-  transform: translate(-50%, -92%) translateY(30px);
+  /* Variable para que .resource-node--pino pueda pedir su propio desplazamiento
+     (ver más abajo) sin tener que reescribir esta regla base ni la de
+     :hover/poof que la usan también — un solo número que cambiar. */
+  --resource-lift: 30px;
+  transform: translate(-50%, -92%) translateY(var(--resource-lift));
 }
 
 /* CORRECCIÓN (pedido explícito): "las rocas y menas no deben elebarse al
@@ -6504,7 +6558,7 @@ body.backpack-giving--katapum * {
    después para conservarlo, con el mismo escalado sutil que sí se quiere
    aquí (a diferencia de la tienda). */
 .resource-node:hover {
-  transform: translate(-50%, -92%) translateY(30px) scale(1.05);
+  transform: translate(-50%, -92%) translateY(var(--resource-lift)) scale(1.05);
   filter: brightness(1.12);
 }
 
@@ -6519,16 +6573,38 @@ body.backpack-giving--katapum * {
   animation: unit-idle-breathe 4s ease-in-out infinite;
 }
 
-.resource-node--pino .resource-node__sprite {
-  width: 118px;
+/* Pedido explícito: "los arboles tienen que ser mas grandes y tienes que
+   subirlos mas, como unos 20 px hacia arriba" — antes el pino era más
+   PEQUEÑO que el resto (118px contra 150px de roca/mena), ahora más grande
+   que ambas para que se lea como un árbol de verdad; y --resource-lift
+   pasa de 30px a 10px (20px menos hacia abajo = 20px más arriba), heredado
+   automáticamente por su :hover y por @keyframes resource-node-poof de más
+   abajo al estar los tres escritos con var(--resource-lift). */
+.resource-node--pino {
+  --resource-lift: 10px;
 }
 
-/* Barra de vida SIEMPRE visible (2 segmentos), mismo criterio que
-   .village .unit__hpbar: una fuente no se selecciona, así que no depende de
-   ningún estado para mostrarse. */
+.resource-node--pino .resource-node__sprite {
+  width: 176px;
+}
+
+/* CORRECCIÓN (pedido explícito): "las barras de vida de los recursos solo
+   deben mostrarse cuando un personaje esta en una casilla adyacente a
+   ellos" — antes estaba SIEMPRE visible (mismo criterio que
+   .village .unit__hpbar, una fuente no se selecciona). Ahora oculta por
+   defecto y solo se revela con la clase .resource-node--hp-visible, que
+   js/resources.js (Resources.refreshHpVisibility) activa cuando hay algún
+   personaje a 1 casilla de distancia — llamada desde Fog.applyVisibility,
+   el mismo punto único de paso que ya usan Villages/Obelisks/Bushes para
+   reaccionar a cualquier movimiento. */
 .resource-node .unit__hpbar {
-  opacity: 1;
+  opacity: 0;
   top: -14px;
+  transition: opacity 0.18s ease;
+}
+
+.resource-node--hp-visible .unit__hpbar {
+  opacity: 1;
 }
 
 /* Misma semitransparencia + clics atravesándolo que .village--occluding/
@@ -6549,8 +6625,8 @@ body.backpack-giving--katapum * {
 }
 
 @keyframes resource-node-poof {
-  0% { transform: translate(-50%, -92%) translateY(30px) scale(1); opacity: 1; }
-  100% { transform: translate(-50%, -92%) translateY(30px) scale(0.3); opacity: 0; }
+  0% { transform: translate(-50%, -92%) translateY(var(--resource-lift, 30px)) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -92%) translateY(var(--resource-lift, 30px)) scale(0.3); opacity: 0; }
 }
 
 /* Icono del recurso recién soltado — "el icono del recurso aparece donde
@@ -6596,6 +6672,22 @@ body.backpack-giving--katapum * {
   0% { transform: scale(1); }
   40% { transform: scale(1.22); }
   100% { transform: scale(1); }
+}
+
+/* Pedido explícito: "la mochila hara una pequeña animacion cuando salga de
+   ella" (al lanzar el cohete KataPum!) — a diferencia de .backpack-btn--pulse
+   de arriba (un "hinchazo" al RECIBIR algo), aquí es un pequeño retroceso/
+   sacudida al SOLTAR algo, con un ligero giro para que se lea como un
+   "empujón" en vez de un simple palpitar. */
+.backpack-btn--launch {
+  animation: backpack-btn-launch 0.38s cubic-bezier(0.34, 1.6, 0.64, 1);
+}
+
+@keyframes backpack-btn-launch {
+  0% { transform: scale(1) rotate(0deg); }
+  35% { transform: scale(0.82) rotate(-6deg); }
+  70% { transform: scale(1.12) rotate(3deg); }
+  100% { transform: scale(1) rotate(0deg); }
 }
 
 /* ---------- Etiquetas de recurso (mochila / Armería) ----------
@@ -6769,4 +6861,35 @@ body.backpack-giving--katapum * {
   font-weight: 900;
   margin-left: 4px;
   font-size: 0.78rem;
+}
+
+/* ---------- Hierbajos (js/hierbajos.js) — vegetación decorativa suelta ----------
+   Pedido explícito: "añadido sprite hierbajos, para que lo repartas por el
+   escenario, no es ni siquiera interactuable, solo es vegetacion para
+   colocar sobre las losetas de hierba y dar sensacion de varierad, es solo
+   decoracion puede estar delante o detras de los personajes dependiendo de
+   la posicion." Sin cursor especial, sin barra de vida, sin hover, sin
+   sistema de transparencia — no se selecciona ni interactúa con nada. */
+.hierbajo {
+  pointer-events: none;
+  /* Igual que .bush/.resource-node: translate(-50%,-92%) heredado de .unit
+     (pensado para un personaje de pie) más un ajuste propio para asentarlo
+     sobre su loseta en vez de flotar por encima. */
+  transform: translate(-50%, -92%) translateY(38px);
+}
+
+.hierbajo__sprite {
+  display: block;
+  width: 96px;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  /* Sin drop-shadow marcada a propósito: es hierba rasante, no un objeto
+     "de pie" como un personaje o un arbusto — una sombra fuerte se leería
+     como un bulto en vez de vegetación pegada al suelo. */
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
+  /* El propio escalado/espejado/rotación aleatorios de cada instancia los
+     pone JS inline (ver Hierbajos._create) — transform-origin centrado
+     abajo para que roten/escalen desde su base, no desde su centro. */
+  transform-origin: 50% 100%;
 }

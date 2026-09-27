@@ -387,6 +387,17 @@ function spawnTestUnits(size, raceId) {
     Resources.spawn(size);
   }
 
+  // Hierbajos (js/hierbajos.js) — vegetación decorativa suelta, pedido
+  // explícito: "para colocar sobre las losetas de hierba y dar sensacion de
+  // varierad". DESPUÉS de Villages/Shops/Obelisks/Bushes/Resources.spawn
+  // (evita superponerse con cualquiera de ellos, ver Hierbajos._tileFree) —
+  // no le afecta el orden respecto a Armería/Turnos de aquí abajo, es pura
+  // decoración sin ninguna mecánica de juego detrás.
+  if (typeof Hierbajos !== "undefined") {
+    Hierbajos.resetAll();
+    Hierbajos.spawn(size);
+  }
+
   // Armería (js/armory.js) — reinicia los niveles comprados de arma/armadura
   // de cada equipo al empezar una partida nueva.
   if (typeof Armory !== "undefined") {

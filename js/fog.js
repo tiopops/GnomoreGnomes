@@ -299,6 +299,14 @@ const Fog = {
       // arbustos deben ocultarse bajo la niebla si aun no han sido
       // descubiertos" aplicado igual a rocas/mena/pinos.
       if (typeof Resources !== "undefined") Resources.refreshFog();
+      // Pedido explícito: "las barras de vida de los recursos solo deben
+      // mostrarse cuando un personaje esta en una casilla adyacente a
+      // ellos" — mismo punto único de paso que refreshFog, ver su
+      // comentario en js/resources.js (Resources.refreshHpVisibility).
+      if (typeof Resources !== "undefined") Resources.refreshHpVisibility();
+      // Hierbajos (js/hierbajos.js) — vegetación decorativa, mismo criterio
+      // que arbustos/recursos: oculta bajo niebla sin descubrir todavía.
+      if (typeof Hierbajos !== "undefined") Hierbajos.refreshFog();
     }
     if (typeof Gnome !== "undefined") {
       Gnome.list.forEach((g) => {
