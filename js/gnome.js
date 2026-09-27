@@ -365,6 +365,14 @@ function createGnomeInstance() {
     },
 
     _startIdleFlipLoop() {
+      // Señuelo Explosivo — pedido explícito: "el enemigo ve al señuelo con
+      // el sprite del gnomo normal y la animacion de respirar, pero sin
+      // girarse en la casilla". Un gnomo suelto de verdad cambia de sentido
+      // solo de vez en cuando (ver más abajo); el señuelo se queda quieto
+      // clavado en el sitio — SOLO se desactiva el giro, la respiración/
+      // temblor (_applyNervousness, ver spawn() más arriba) sigue intacta,
+      // así que de un vistazo rápido sigue pareciendo un gnomo con vida.
+      if (this.isDecoy) return;
       const tick = () => {
         // Mismo factor que _applyNervousness (respiración/temblor) aplicado
         // ahora también al RITMO de girarse en la loseta — pedido explícito:
