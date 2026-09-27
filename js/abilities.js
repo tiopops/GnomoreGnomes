@@ -366,7 +366,17 @@ const Abilities = {
     const { x: contentX, y: contentY } = BoardView.clientToContent(cx, cy);
     const { row, col } = getTileFromPoint(contentX, contentY, Units.boardSize);
 
-    if (typeof Fog !== "undefined") Fog.revealAround(row, col, 3);
+    if (typeof Fog !== "undefined") {
+      Fog.revealAround(row, col, 3);
+      // Pedido explícito: "la zona se revela sin niebla de guerra durante
+      // 4 segundos, despues la niebla se apodera de la zona de nuevo" —
+      // el terreno de revealAround, justo arriba, se queda revelado para
+      // siempre (memoria, como el resto del proyecto); esto añade 4s de
+      // percepción EN DIRECTO sobre esa misma zona, así que cualquier
+      // rival que hubiera ahí se ve de verdad durante esa ventana, no solo
+      // el paisaje vacío (ver la nota larga en Fog.addTemporaryPerception).
+      Fog.addTemporaryPerception(row, col, 3, 4000);
+    }
     SFX.click();
     Units.spawnFloatingText(unit, "¡VISIÓN!", { className: "dmg-popup gnome-points-popup" });
     this._consume(unit);

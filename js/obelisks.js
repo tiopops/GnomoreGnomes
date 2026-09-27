@@ -346,6 +346,14 @@ const Obelisks = {
       e.stopPropagation();
       this.openRecruitPopup(obelisk);
     });
+    // Pedido explícito: "al pasar el raton por los iconos de RECLUTAR,
+    // HABILIDADES, ARMERIA los nombres saliesen arriba de cada icono" —
+    // mismo módulo/patrón ya usado en el resto del proyecto (ver el badge
+    // de población un poco más abajo, o el botón de habilidad especial en
+    // js/abilities.js): Tooltip.attach ya posiciona la etiqueta junto al
+    // cursor en escritorio y ARRIBA del dedo en móvil (mantener pulsado),
+    // así que basta con enchufar cada botón, sin reinventar nada.
+    if (typeof Tooltip !== "undefined") Tooltip.attach(recruitBtn, "Reclutar");
     menuEl.appendChild(recruitBtn);
 
     const abilitiesBtn = document.createElement("button");
@@ -356,6 +364,7 @@ const Obelisks = {
       e.stopPropagation();
       this.openAbilitiesPopup(obelisk);
     });
+    if (typeof Tooltip !== "undefined") Tooltip.attach(abilitiesBtn, "Habilidades");
     menuEl.appendChild(abilitiesBtn);
 
     const armoryBtn = document.createElement("button");
@@ -366,6 +375,7 @@ const Obelisks = {
       e.stopPropagation();
       if (typeof Armory !== "undefined") Armory.openPopup(obelisk);
     });
+    if (typeof Tooltip !== "undefined") Tooltip.attach(armoryBtn, "Armería");
     menuEl.appendChild(armoryBtn);
 
     el.appendChild(menuEl);
@@ -549,6 +559,7 @@ const Obelisks = {
     this._selectedId = obelisk.id;
     obelisk.el.classList.add("obelisk--selected");
     this._refreshPopBadge(obelisk);
+    this.keepMenuInViewport();
   },
 
   deselect() {
@@ -556,6 +567,43 @@ const Obelisks = {
     const prev = this.list.find((o) => o.id === this._selectedId);
     if (prev) prev.el.classList.remove("obelisk--selected");
     this._selectedId = null;
+  },
+
+  // Pedido explícito: "en el modo escritorio cuando el obelisco aparece en
+  // la esquina superior los iconos se quedan tan al limite que se cortan.
+  // podriamos tener unos margenes en todas las direcciones...30px?" — el
+  // menú (.obelisk__menu, CSS) se posiciona en espacio de TABLERO (bottom:
+  // 100% de .obelisk, que vive dentro de #board-camera con su propio pan/
+  // zoom), así que un margen fijo en CSS no basta: el Obelisco propio
+  // puede acabar en cualquier punto del mapa, incluida una esquina, sea
+  // cual sea el zoom/paneo actual — un margen CSS solo protegería un caso
+  // concreto de cámara, no todos. Se recalcula en JS cada vez que cambia
+  // la cámara (ver el hook en BoardView._apply) mientras el Obelisco esté
+  // seleccionado, y también justo al seleccionar (aquí arriba, para el
+  // caso típico de seleccionar sin tocar la cámara después).
+  _MENU_EDGE_MARGIN: 30,
+
+  keepMenuInViewport() {
+    if (!this._selectedId) return;
+    const obelisk = this.list.find((o) => o.id === this._selectedId);
+    if (!obelisk || !obelisk.menuEl || !obelisk.menuEl.isConnected) return;
+    const menuEl = obelisk.menuEl;
+    // Quita cualquier corrección del frame anterior ANTES de medir — si no,
+    // cada frame arrastraría/acumularía el desplazamiento del frame previo
+    // sobre sí mismo. El translateX(-50%) es el centrado normal de la CSS
+    // (respecto al Obelisco), nunca se toca.
+    menuEl.style.transform = "translateX(-50%)";
+    const r = menuEl.getBoundingClientRect();
+    const m = this._MENU_EDGE_MARGIN;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    let dx = 0;
+    let dy = 0;
+    if (r.left < m) dx = m - r.left;
+    else if (r.right > vw - m) dx = vw - m - r.right;
+    if (r.top < m) dy = m - r.top;
+    else if (r.bottom > vh - m) dy = vh - m - r.bottom;
+    if (dx || dy) menuEl.style.transform = `translateX(-50%) translate(${dx}px, ${dy}px)`;
   },
 
   // ---------- Población / pulso de "obelisco vacío" ----------

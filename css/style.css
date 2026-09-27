@@ -1208,9 +1208,19 @@ h2 {
   animation: fog-idle-drift 8s ease-in-out infinite;
 }
 
+/* Pedido explícito (pasada posterior): "si animar niebla fuese una
+   animacion un poquito mas exagerada y afectase a menos losetas...en vez
+   de un 50, un 30%" — ver el patrón fila/columna en mapgen.js/renderMap,
+   bajado de la mitad a 3 de cada 10 losetas. Para que el campo de niebla
+   se siga leyendo "vivo" con menos nubes animadas a la vez, el propio
+   vaivén de cada una que SÍ anima sube un poco de amplitud (-47%→-44% de
+   deriva, 1.035→1.07 de escala, 0.6deg→1.2deg de giro) — sigue siendo el
+   mismo derivado sutil de siempre, ni más caro por fotograma (misma
+   duración/misma propiedad transform) ni brusco, solo un pelín más
+   notorio para compensar visualmente que hay menos nubes moviéndose.*/
 @keyframes fog-idle-drift {
   0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-  50% { transform: translate(-50%, -47%) scale(1.035) rotate(0.6deg); }
+  50% { transform: translate(-50%, -44%) scale(1.07) rotate(1.2deg); }
 }
 
 /* Pedido explícito: "añade un checkbox para desactivar/activar la
@@ -1444,6 +1454,26 @@ body.team-markers--visible .unit__team-marker {
 .unit:hover {
   transform: translate(-50%, -92%) scale(1.05);
   filter: brightness(1.12);
+}
+
+/* Pedido explícito: "seleccionar o pasar el raton sobre un elemento
+   dentro de niebla de guerra no hace que pierda el color de estar en
+   niebla de guerra mientras este en niebla de guerra" — .unit:hover de
+   arriba fija su propio filter:brightness(1.12), con más especificidad
+   (una pseudo-clase pesa más que una sola clase) que el atenuado de
+   .gg-remembered (filter:saturate(0.25) brightness(0.65), ver más arriba
+   en el archivo) — así que cualquier tótem/Obelisco/tienda/recurso
+   "recordado" (revelado pero fuera de la percepción EN DIRECTO ahora
+   mismo, ver Fog.applyVisibility/isPerceived) recuperaba su brillo/color
+   normal en cuanto se pasaba el ratón por encima, como si se estuviera
+   viendo en directo cuando en realidad seguía siendo solo memoria.
+   Combinar ambas clases sube la especificidad por encima de las dos por
+   separado, así que el atenuado gana siempre que el elemento SIGA
+   recordado, con el ratón encima o no — en cuanto deja de estarlo
+   (vuelve a percepción real, gg-remembered se quita del todo), el brillo
+   de hover normal vuelve a mandar sin ningún cambio. */
+.unit:hover.gg-remembered {
+  filter: saturate(0.25) brightness(0.65);
 }
 
 /* CORRECCIÓN (pedido explícito): "cuando selecciono la tienda goblin, esta
@@ -3748,14 +3778,30 @@ body.ability-targeting--mind * {
     font-size: 0.62rem;
   }
 
-  .settings-gear-btn {
+  /* Pedido explícito (pasada posterior): "el menu ajustes no esta bien
+     adaptado al nuevo diseño...en la interfaz movil no lo se, compruebalo
+     tu...dejalo todo en vertical como estaba antes" — al comprobarlo se vio
+     que TODO este sub-bloque de ajustes (engranaje/panel/columnas/fila/
+     interruptor) llevaba tiempo sin aplicarse de verdad en móvil: las
+     reglas .settings-panel* "base" (sin @media, más abajo en el archivo,
+     ver .settings-gear-btn/.settings-panel/etc.) tienen la MISMA
+     especificidad que estas de aquí (una sola clase) pero aparecen
+     DESPUÉS en el archivo — en un empate de especificidad, en CSS gana la
+     que viene después en el documento, sin importar que esta esté dentro
+     de un @media que sí coincide. Resultado: en pantallas ≤480px se seguía
+     pintando el panel de ESCRITORIO entero (engranaje de 64px, dos
+     columnas, padding de fila de 30px...), de ahí el texto solapado/
+     cortado también en móvil. Se duplica cada selector (.clase.clase) para
+     doblar su especificidad y que gane siempre aquí, sin tener que mover
+     medio archivo de sitio ni tocar las reglas de escritorio. */
+  .settings-gear-btn.settings-gear-btn {
     top: 14px;
     right: 14px;
     width: 44px;
     height: 44px;
   }
 
-  .settings-panel {
+  .settings-panel.settings-panel {
     padding: 26px 24px;
     min-width: 0;
     width: calc(100vw - 48px);
@@ -3766,7 +3812,7 @@ body.ability-targeting--mind * {
      más abajo) dos columnas lado a lado no caben con etiquetas largas como
      "Animación de niebla" — una sola columna apilada, como antes de este
      pedido. */
-  .settings-panel__columns {
+  .settings-panel__columns.settings-panel__columns {
     grid-template-columns: 1fr;
   }
 
@@ -3783,12 +3829,12 @@ body.ability-targeting--mind * {
      mitad del arreglo. Menos padding/gap + fuente más pequeña le devuelve
      sitio de sobra a las tres columnas (icono/etiqueta/interruptor) sin
      tener que depender solo de que el texto rompa en dos líneas. */
-  .settings-panel__option {
+  .settings-panel__option.settings-panel__option {
     padding: 14px 16px;
     gap: 8px;
   }
 
-  .settings-panel__option-main {
+  .settings-panel__option-main.settings-panel__option-main {
     gap: 8px;
   }
 
@@ -3801,16 +3847,16 @@ body.ability-targeting--mind * {
     white-space: normal;
   }
 
-  .settings-panel__option-icon {
+  .settings-panel__option-icon.settings-panel__option-icon {
     font-size: 1.05rem;
   }
 
-  .settings-toggle {
+  .settings-toggle.settings-toggle {
     width: 28px;
     height: 21px;
   }
 
-  .settings-toggle__check {
+  .settings-toggle__check.settings-toggle__check {
     font-size: 0.8rem;
   }
 
@@ -4188,6 +4234,20 @@ body.ability-targeting--mind * {
 }
 
 .glory-popup-row--next {
+  /* Pedido explícito: "el textbox Proximo turno +X donde el cuadro
+     irregular esta como enmascarado dentro de algo". Causa: a diferencia
+     de las filas normales (dentro de .glory-popup-sources, que sí lleva
+     width:100%), esta fila vive suelta como hermana directa de
+     .glory-popup-card__content — y ese contenedor es un flex-column con
+     "align-items: center" (para centrar el título/total), así que
+     cualquier hijo sin su propio ancho se encoge al tamaño de su
+     contenido en vez de ocupar todo el panel. Con --gg-slot-clip (un
+     recorte diagonal en %) aplicado a una caja así de estrecha, el corte
+     se comía visualmente parte del texto/relleno — de ahí el "enmascarado
+     dentro de algo". align-self:stretch la vuelve a poner a todo el ancho
+     del panel, igual que sus filas hermanas de arriba, sin tocar el
+     centrado del resto del contenido. */
+  align-self: stretch;
   margin-top: 6px;
   background: rgba(255, 206, 74, 0.14);
   border: 1px solid rgba(255, 206, 74, 0.35);
@@ -4518,8 +4578,18 @@ body.perf-mode .eye-cursor-fx {
      min-width:300px) para que el panel tenga sitio de verdad para dos
      columnas de etiquetas largas ("Animación de niebla") en vez de
      depender solo del contenido, mismo criterio que .backpack-panel
-     (width: min(...)) justo arriba en el archivo. */
-  width: min(560px, 92vw);
+     (width: min(...)) justo arriba en el archivo.
+     Pedido explícito (pasada posterior): "en el modo escritorio no
+     aparece ni siquiera la opcion de resolucion adaptativa...haz mas
+     ancha la interfaz" — con 560px, dos columnas y el padding/gap de
+     abajo, cada columna se quedaba en ~224px: de sobra para un icono+
+     interruptor pero no para una etiqueta larga en mayúsculas
+     ("RESOLUCIÓN ADAPTATIVA"), así que el texto se solapaba con el
+     interruptor en vez de faltar de verdad. Se sube a 640px (sigue
+     cupiendo de sobra en cualquier pantalla de escritorio razonable, el
+     92vw ya cubre las más estrechas) y se reduce el padding de cada fila
+     más abajo (.settings-panel__option) para dejar aún más sitio. */
+  width: min(640px, 92vw);
   transform: rotate(-1.4deg) scale(0.88);
   transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
@@ -4581,7 +4651,27 @@ body.perf-mode .eye-cursor-fx {
    directamente a las capas ::before/::after que SÍ crea .p5-banner. */
 .settings-panel__option {
   gap: 14px;
-  padding: 14px 30px;
+  /* Pedido explícito (pasada posterior): mismo motivo que el ancho de
+     .settings-panel justo arriba — 30px de padding lateral por fila (60px
+     en total) le quitaban demasiado sitio a la etiqueta dentro de cada
+     columna de 2 en escritorio. 18px sigue dejando aire de sobra respecto
+     al borde diagonal de la fila sin comerse tanto ancho útil. */
+  padding: 14px 18px;
+}
+
+/* Pedido explícito (pasada posterior): mismo motivo — a diferencia de
+   móvil (ver @media max-width:480px más arriba), en escritorio la
+   etiqueta no tenía NINGÚN tope de tamaño de fuente propio, heredaba el
+   tamaño de cuerpo normal siempre, aunque la fila fuera de las estrechas
+   (dos columnas). Un pelín más pequeña que el texto normal, con
+   white-space:normal como red de seguridad para que la etiqueta más larga
+   ("Resolución adaptativa") rompa en dos líneas en vez de solaparse con
+   el interruptor si aun así no cupiera en una. Mismo valor que ya usaba
+   el bloque móvil, así que no cambia nada ahí (esta regla y esa quedan
+   en empate, dando el mismo resultado). */
+.settings-panel__option .p5-banner__label {
+  font-size: 0.86rem;
+  white-space: normal;
 }
 
 .settings-panel__option::before,

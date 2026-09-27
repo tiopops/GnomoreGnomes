@@ -154,6 +154,13 @@ const Fog = {
     this.revealedGrid = Array.from({ length: size }, () => new Array(size).fill(false));
     this.perceivedGrid = Array.from({ length: size }, () => new Array(size).fill(false));
     this._fogEls = new Map();
+    // Pedido explícito: "cuando la surcabosques usa vision lejana, la zona
+    // se revela sin niebla durante 4 segundos, despues la niebla se
+    // apodera de la zona de nuevo" — ver _tempPerceptionSources/
+    // addTemporaryPerception más abajo. Se reinicia en cada partida nueva
+    // (cualquier timeout pendiente de una partida anterior ya no debe
+    // tocar el revealedGrid/perceivedGrid recién creados de arriba).
+    this._tempPerceptionSources = [];
     // .tile__fog ya no vive DENTRO de su .tile (ver comentario de FOG_SRC en
     // mapgen.js) — es un elemento hermano con su propio data-row/data-col,
     // así que se busca directamente en vez de a través de la loseta.
@@ -228,7 +235,48 @@ const Fog = {
         if (o.team === "player") markAround(o.row, o.col, FOG_OBELISK_PERCEPTION_RADIUS);
       });
     }
+    // Pedido explícito: "cuando la surcabosques usa vision lejana...la
+    // zona se revela...durante 4 segundos" — fuentes de percepción
+    // temporales (ver addTemporaryPerception), que expiran solas. Un
+    // filtro por si acaso (el propio setTimeout de addTemporaryPerception
+    // ya las quita de la lista al expirar) para no depender ÚNICAMENTE de
+    // que ese timeout dispare a tiempo si esta función se llama justo en
+    // el instante límite.
+    const now = Date.now();
+    this._tempPerceptionSources.forEach((src) => {
+      if (src.expiresAt > now) markAround(src.row, src.col, src.radius);
+    });
     this.perceivedGrid = grid;
+  },
+
+  // Pedido explícito: "cuando la surcabosques usa vision lejana, la zona
+  // se revela sin niebla de guerra durante 4 segundos, despues la niebla
+  // se apodera de la zona de nuevo" — hasta ahora Visión Lejana solo
+  // llamaba a revealAround (arriba: revela el TERRENO para siempre, ver su
+  // comentario) pero nunca tocaba perceivedGrid, así que cualquier rival
+  // de pie en esa zona seguía invisible del todo (unit--fog-hidden, ver
+  // applyVisibility) incluso en el instante de usar la habilidad — la
+  // "exploración" solo enseñaba el paisaje, nunca a quién había en él, que
+  // es justo lo que se espera de una habilidad de reconocimiento. Esto
+  // añade una fuente de percepción EFÍMERA (igual que la de una unidad/
+  // tótem/Obelisco propios en _recomputePerception, pero con caducidad):
+  // durante `durationMs` cualquier rival dentro del radio se ve con
+  // normalidad, y al expirar vuelve a ocultarse — el terreno en sí (ver
+  // revealAround, llamado aparte por quien use esto) se queda revelado
+  // para siempre, solo la percepción EN DIRECTO es temporal.
+  addTemporaryPerception(row, col, radius, durationMs) {
+    if (!this.revealedGrid) return;
+    const source = { row, col, radius, expiresAt: Date.now() + durationMs };
+    this._tempPerceptionSources.push(source);
+    this.applyVisibility();
+    setTimeout(() => {
+      const idx = this._tempPerceptionSources.indexOf(source);
+      if (idx !== -1) this._tempPerceptionSources.splice(idx, 1);
+      // Puede que la partida ya haya terminado / se haya reiniciado
+      // (revealedGrid nuevo) para cuando este timeout dispare — nada que
+      // limpiar en ese caso, applyVisibility ya comprueba revealedGrid.
+      this.applyVisibility();
+    }, durationMs);
   },
 
   // Revela todas las losetas dentro de `radius` (incluida la propia). No

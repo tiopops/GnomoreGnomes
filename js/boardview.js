@@ -250,6 +250,16 @@ const BoardView = {
     if (typeof SpriteQuality !== "undefined" && SpriteQuality.updateForScale) {
       SpriteQuality.updateForScale(this.scale);
     }
+    // Pedido explícito: "en el modo escritorio cuando el obelisco aparece
+    // en la esquina superior los iconos se quedan tan al limite que se
+    // cortan...margenes en todas las direcciones" — el menú del Obelisco
+    // vive en espacio de tablero (ver la nota larga en
+    // Obelisks.keepMenuInViewport), así que necesita recalcularse en cada
+    // frame de cámara igual que el resto de esta función, no solo al
+    // seleccionar. No hace nada si no hay ningún Obelisco seleccionado.
+    if (typeof Obelisks !== "undefined" && Obelisks.keepMenuInViewport) {
+      Obelisks.keepMenuInViewport();
+    }
   },
 
   // Aplica el ancla de zoom activa (this._zoomAnchor) a una escala concreta:

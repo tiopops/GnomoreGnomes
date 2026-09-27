@@ -728,16 +728,25 @@ function renderMap(map, container) {
     // agravado por tableros más grandes. La animación en sí (un derivado
     // sutil, ver @keyframes) no es cara por fotograma; el coste real es
     // "cuántas capas GPU separadas hay que mantener a la vez". En vez de
-    // animar TODAS las nubes en reposo, solo la mitad (una de cada dos
-    // losetas, patrón determinista por fila+columna en vez de al azar para
-    // que quede repartido de forma pareja por todo el mapa) lleva la clase
-    // tile__fog--idle con la animación real; la otra mitad se queda
-    // completamente estática (misma nube, mismo aspecto, cero coste de
-    // capa) — el campo de niebla se sigue viendo vivo (ver el comentario
-    // del desfase aleatorio más abajo) pero con la mitad de capas GPU
-    // simultáneas como techo, manteniendo el efecto "lo mas fiel posible"
-    // al pedido explícito.
-    fogImg.className = (t.row + t.col) % 2 === 0 ? "tile__fog tile__fog--idle" : "tile__fog";
+    // animar TODAS las nubes en reposo, solo una fracción lleva la clase
+    // tile__fog--idle con la animación real; la otra se queda completamente
+    // estática (misma nube, mismo aspecto, cero coste de capa).
+    // Pedido explícito (pasada posterior): "si animar niebla fuese una
+    // animacion un poquito mas exagerada y afectase a menos losetas...en
+    // vez de un 50, un 30%, ganariamos rendimiento?" — bajado de la mitad
+    // (1 de cada 2) a 3 de cada 10 losetas, un 40% menos de capas GPU
+    // simultáneas como techo respecto a la versión anterior. Para
+    // compensar que se ve una nube animada menos a menudo al pasear la
+    // vista por el mapa, el propio movimiento de cada una que SÍ anima se
+    // sube un poco (ver @keyframes fog-idle-drift en style.css) — mismo
+    // criterio de "lo mas fiel posible" al aspecto de campo de niebla vivo
+    // que la vez anterior, con menos nubes pero cada una algo más notoria.
+    // Patrón determinista (fila/columna, no al azar) para que ese 30% siga
+    // repartido de forma pareja por todo el mapa, no en manchas —
+    // coeficientes 7/3 en vez de simplemente row%10<3 (eso dejaría columnas
+    // enteras iguales, un patrón de rayas verticales muy regular) para que
+    // el reparto no se lea como una cuadrícula obvia.
+    fogImg.className = (t.row * 7 + t.col * 3) % 10 < 3 ? "tile__fog tile__fog--idle" : "tile__fog";
     // Pedido explícito (bug reportado): "en el modo alto rendimiento la
     // niebla no tiene el efecto de disiparse, simplemente desaparece
     // bruscamente" — investigado a fondo: la animación fog-dissipate (ver
