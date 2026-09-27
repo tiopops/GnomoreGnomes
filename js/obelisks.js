@@ -559,7 +559,6 @@ const Obelisks = {
     this._selectedId = obelisk.id;
     obelisk.el.classList.add("obelisk--selected");
     this._refreshPopBadge(obelisk);
-    this.keepMenuInViewport();
   },
 
   deselect() {
@@ -569,42 +568,29 @@ const Obelisks = {
     this._selectedId = null;
   },
 
-  // Pedido explícito: "en el modo escritorio cuando el obelisco aparece en
-  // la esquina superior los iconos se quedan tan al limite que se cortan.
-  // podriamos tener unos margenes en todas las direcciones...30px?" — el
-  // menú (.obelisk__menu, CSS) se posiciona en espacio de TABLERO (bottom:
-  // 100% de .obelisk, que vive dentro de #board-camera con su propio pan/
-  // zoom), así que un margen fijo en CSS no basta: el Obelisco propio
-  // puede acabar en cualquier punto del mapa, incluida una esquina, sea
-  // cual sea el zoom/paneo actual — un margen CSS solo protegería un caso
-  // concreto de cámara, no todos. Se recalcula en JS cada vez que cambia
-  // la cámara (ver el hook en BoardView._apply) mientras el Obelisco esté
-  // seleccionado, y también justo al seleccionar (aquí arriba, para el
-  // caso típico de seleccionar sin tocar la cámara después).
-  _MENU_EDGE_MARGIN: 30,
-
-  keepMenuInViewport() {
-    if (!this._selectedId) return;
-    const obelisk = this.list.find((o) => o.id === this._selectedId);
-    if (!obelisk || !obelisk.menuEl || !obelisk.menuEl.isConnected) return;
-    const menuEl = obelisk.menuEl;
-    // Quita cualquier corrección del frame anterior ANTES de medir — si no,
-    // cada frame arrastraría/acumularía el desplazamiento del frame previo
-    // sobre sí mismo. El translateX(-50%) es el centrado normal de la CSS
-    // (respecto al Obelisco), nunca se toca.
-    menuEl.style.transform = "translateX(-50%)";
-    const r = menuEl.getBoundingClientRect();
-    const m = this._MENU_EDGE_MARGIN;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    let dx = 0;
-    let dy = 0;
-    if (r.left < m) dx = m - r.left;
-    else if (r.right > vw - m) dx = vw - m - r.right;
-    if (r.top < m) dy = m - r.top;
-    else if (r.bottom > vh - m) dy = vh - m - r.bottom;
-    if (dx || dy) menuEl.style.transform = `translateX(-50%) translate(${dx}px, ${dy}px)`;
-  },
+  // ---------- Menú del Obelisco (RECLUTAR/HABILIDADES/ARMERÍA) ----------
+  // Pedido explícito (primera pasada): "en el modo escritorio cuando el
+  // obelisco aparece en la esquina superior los iconos se quedan tan al
+  // limite que se cortan...margenes en todas las direcciones...30px?" — se
+  // probó reposicionando el menú en JS cada frame de cámara (dx/dy
+  // calculados contra los bordes de pantalla) para que nunca se saliera
+  // del viewport, sea cual sea el punto del mapa donde esté el Obelisco.
+  //
+  // Pedido explícito (pasada posterior, RETIRA lo anterior): "la solucion
+  // para los iconos de RECLUTAR, Habilidades y armeria no me ha gustado,
+  // se desplazan a lugares sin sentido los iconos, deberian tener una
+  // posicion fija, el juego deberia dejar moverse un poco mas hacia la
+  // periferia del escenario, de manera que ese problema se arreglase
+  // solo" — el reposicionamiento dinámico se sentía errático porque
+  // recalculaba dx/dy en cada frame según la posición de pantalla actual
+  // del Obelisco: al panear la cámara ese desplazamiento cambiaba de
+  // continuo, así que el menú "flotaba" en vez de quedarse pegado al
+  // Obelisco. Se retira por completo (el menú vuelve a su posición fija de
+  // siempre: bottom:100%, centrado, ver .obelisk__menu en style.css) y en
+  // su lugar el límite de paneo de la cámara se amplía (ver
+  // BoardView._PAN_EXTRA_MARGIN) para que SIEMPRE se pueda alejar
+  // cualquier Obelisco lo bastante del borde de pantalla como para que su
+  // menú, ya con posición fija, no llegue a cortarse en primer lugar.
 
   // ---------- Población / pulso de "obelisco vacío" ----------
   // Se llama tras cualquier cambio que pueda afectar a alguno de los dos: un

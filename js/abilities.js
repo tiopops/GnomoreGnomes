@@ -745,25 +745,38 @@ const Abilities = {
     }
     if (path.length === 0) return;
 
+    // Pedido explícito (con capturas): "algunas unidades se siguen
+    // asomando a traves de la niebla" — mismo empujón que
+    // Combat.pushBack, con el mismo problema de fondo (un setTimeout
+    // adivinando la duración real de la transición CSS de left/top, ver la
+    // nota larga junto a Units.awaitPositionSettle) y reutiliza el mismo
+    // arreglo.
+    const PUSH_MS = 140;
     target.el.classList.add("unit--moving");
     for (const step of path) {
-      await new Promise((resolve) => {
-        target.row = step.row;
-        target.col = step.col;
-        const { x, y } = getTileCenter(step.row, step.col, Units.boardSize);
-        target.el.style.left = `${x}px`;
-        target.el.style.top = `${y}px`;
-        target.el.style.zIndex = String((step.row + step.col) * 10 + 5);
-        target.spriteEl.classList.remove("unit__sprite--hop");
-        void target.spriteEl.offsetWidth;
-        target.spriteEl.classList.add("unit__sprite--hop");
-        SFX.hop();
-        setTimeout(resolve, 140);
-      });
+      const prevLeft = target.el.style.left;
+      const prevTop = target.el.style.top;
+      target.row = step.row;
+      target.col = step.col;
+      const { x, y } = getTileCenter(step.row, step.col, Units.boardSize);
+      target.el.style.left = `${x}px`;
+      target.el.style.top = `${y}px`;
+      target.el.style.zIndex = String((step.row + step.col) * 10 + 5);
+      target.spriteEl.classList.remove("unit__sprite--hop");
+      void target.spriteEl.offsetWidth;
+      target.spriteEl.classList.add("unit__sprite--hop");
+      SFX.hop();
+      await Units.awaitPositionSettle(target.el, prevLeft, prevTop, PUSH_MS);
     }
     target.el.classList.remove("unit--moving");
     target.spriteEl.classList.remove("unit__sprite--hop");
     if (typeof Fog !== "undefined") Fog.applyVisibility();
+    // Mismo refresco final que Units.walkPath/Combat.pushBack — ver la
+    // nota larga en Combat.pushBack.
+    if (typeof Villages !== "undefined") Villages.refreshOcclusion();
+    if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
+    if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
+    if (typeof Shops !== "undefined") Shops.refreshAll();
   },
 
   // ---------- LanzaGnomos: Lanzamiento ----------
@@ -992,13 +1005,27 @@ const Abilities = {
     // Trampa de TruenoEspora (ver checkTrigger arriba) — un lanzamiento
     // también puede hacer aterrizar a alguien justo encima de una mina.
     this.checkTrigger(unit);
+    // "puede lanzar un personaje adyacente amigo o enemigo" (ver
+    // _activateThrow más arriba) — Fog.revealForUnit SOLO revela terreno
+    // nuevo para el equipo del jugador (un rival no "explora" nada para
+    // nosotros), así que lanzar a un ALIADO seguía sin problema por esa
+    // rama, pero lanzar a un ENEMIGO no llamaba a NADA de niebla — ni
+    // siquiera el recálculo genérico de a quién tapa qué nube (ver
+    // Fog._refreshFogCoverZ), que no depende de ningún equipo en concreto.
+    // Bug real encontrado con capturas ("algunas unidades se siguen
+    // asomando a traves de la niebla"): un rival lanzado a una loseta
+    // nueva se quedaba con la cobertura de niebla de ANTES de volar por
+    // los aires, nunca recalculada. Fog.applyVisibility() (sin condición
+    // de equipo, mismo criterio que Units.walkPath) cubre los dos casos.
     if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
+    if (typeof Fog !== "undefined") Fog.applyVisibility();
     // Pedido explícito: "con habilidades como lanza el gnomo los totems y
     // el obelisco no se hacen transparentes si estan detras" — mismo
     // arreglo que Units.walkPath (js/units.js): faltaba Obelisks aquí,
     // solo se recalculaba la transparencia de los tótems normales.
     if (typeof Villages !== "undefined") Villages.refreshOcclusion();
     if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
+    if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
     if (typeof Shops !== "undefined") Shops.refreshAll();
     Units.refreshRange(unit);
   },

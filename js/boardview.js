@@ -186,16 +186,32 @@ const BoardView = {
   // ya se usa para lo no explorado, así que cualquier esquina fuera del
   // rombo se ve como "más niebla" (coherente con el propio juego: ahí no
   // hay nada que explorar) en vez de un hueco negro que lee como un fallo.
+  // Pedido explícito (pasada posterior, sustituye al reposicionamiento
+  // dinámico que tenía el menú del Obelisco — ver la nota larga en
+  // Obelisks, sección "menú del Obelisco"): "el juego deberia dejar
+  // moverse un poco mas hacia la periferia del escenario, de manera que
+  // ese problema se arreglase solo" — margen extra (en los 4 lados, a
+  // cualquier zoom) sobre el recorte normal de abajo, para que SIEMPRE
+  // quepa desplazar cualquier punto del mapa (incluida una esquina, donde
+  // vive un Obelisco) lo bastante lejos del borde de pantalla como para
+  // que su menú de posición fija (bottom:100% en CSS, nunca se mueve del
+  // Obelisco) quede con sitio de sobra por encima sin recortarse. El hueco
+  // que deja ese margen de más ya se pinta como "más niebla" por el lado
+  // visual (ver la nota larga más arriba sobre las esquinas fuera del
+  // rombo), así que no hace falta nada más para que se vea bien.
+  _PAN_EXTRA_MARGIN: 180,
+
   _clampPanFor(x, y, scale) {
     const vw = this.viewportEl.clientWidth;
     const vh = this.viewportEl.clientHeight;
     const scaledW = this.contentWidth * scale;
     const scaledH = this.contentHeight * scale;
+    const m = this._PAN_EXTRA_MARGIN;
 
-    const minX = Math.min(0, vw - scaledW);
-    const maxX = Math.max(0, vw - scaledW);
-    const minY = Math.min(0, vh - scaledH);
-    const maxY = Math.max(0, vh - scaledH);
+    const minX = Math.min(0, vw - scaledW) - m;
+    const maxX = Math.max(0, vw - scaledW) + m;
+    const minY = Math.min(0, vh - scaledH) - m;
+    const maxY = Math.max(0, vh - scaledH) + m;
 
     return { x: Math.min(maxX, Math.max(minX, x)), y: Math.min(maxY, Math.max(minY, y)) };
   },
@@ -250,16 +266,13 @@ const BoardView = {
     if (typeof SpriteQuality !== "undefined" && SpriteQuality.updateForScale) {
       SpriteQuality.updateForScale(this.scale);
     }
-    // Pedido explícito: "en el modo escritorio cuando el obelisco aparece
-    // en la esquina superior los iconos se quedan tan al limite que se
-    // cortan...margenes en todas las direcciones" — el menú del Obelisco
-    // vive en espacio de tablero (ver la nota larga en
-    // Obelisks.keepMenuInViewport), así que necesita recalcularse en cada
-    // frame de cámara igual que el resto de esta función, no solo al
-    // seleccionar. No hace nada si no hay ningún Obelisco seleccionado.
-    if (typeof Obelisks !== "undefined" && Obelisks.keepMenuInViewport) {
-      Obelisks.keepMenuInViewport();
-    }
+    // El menú del Obelisco (RECLUTAR/HABILIDADES/ARMERÍA) YA NO se
+    // reposiciona aquí a mano — ver la nota larga en obelisks.js, sección
+    // "menú del Obelisco", y _PAN_EXTRA_MARGIN más arriba en este mismo
+    // archivo: el reposicionamiento dinámico se retiró porque el jugador
+    // lo notaba como saltos a sitios sin sentido; en su lugar el menú
+    // vuelve a tener posición fija (CSS) y es el límite de paneo el que se
+    // ha ampliado para que nunca haga falta moverlo.
   },
 
   // Aplica el ancla de zoom activa (this._zoomAnchor) a una escala concreta:

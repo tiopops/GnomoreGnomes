@@ -974,33 +974,79 @@ const Units = {
     return wobbled;
   },
 
-  hopTo(unit, row, col) {
+  // Pedido explícito (con capturas): "algunas unidades se siguen asomando a
+  // traves de la niebla" — investigado a fondo, midiendo el rectángulo REAL
+  // en pantalla de una unidad en distintos instantes: tanto hopTo como el
+  // empujón de Combat.pushBack resolvían su promesa con un setTimeout
+  // adivinando la misma duración que la transición CSS de left/top de
+  // .unit (ver style.css), pero un setTimeout NO garantiza que esa
+  // transición ya haya terminado de verdad en ese instante — medido en
+  // vivo, el "transitionend" real llegaba bastante después de que ese
+  // setTimeout ya hubiera resuelto. Quien llama a esto encadena después
+  // Fog.applyVisibility() (y el resto de refreshOcclusion/refreshAll), así
+  // que calculaba contra una posición TODAVÍA a medio camino — eso es justo
+  // lo que dejaba trozos de unidad asomando por la niebla de forma
+  // intermitente (más fácil de notar bajo carga, con el juego
+  // "relentecido"). Compartido entre hopTo y pushBack para no duplicar esta
+  // lógica ni el riesgo de que uno de los dos sitios se quede desajustado
+  // del otro en el futuro.
+  awaitPositionSettle(el, prevLeft, prevTop, fallbackMs) {
     return new Promise((resolve) => {
-      this.faceTowardsTile(unit, row, col);
-
-      unit.row = row;
-      unit.col = col;
-      const { x, y } = getTileCenter(row, col, this.boardSize);
-      unit.el.style.left = `${x}px`;
-      unit.el.style.top = `${y}px`;
-      unit.el.style.zIndex = String((row + col) * 10 + 5);
-
-      // Trampa de TruenoEspora (js/abilities.js) — se comprueba en CADA
-      // paso, no solo al final del camino, para que explote en el instante
-      // exacto en que un enemigo pisa esa casilla (aunque solo sea de paso
-      // hacia otra).
-      if (typeof Abilities !== "undefined") Abilities.checkTrigger(unit);
-
-      // Reinicia la animación de salto en cada paso (aunque sea la misma clase).
-      unit.spriteEl.classList.remove("unit__sprite--hop");
-      void unit.spriteEl.offsetWidth; // fuerza reflow para poder repetir la animación
-      unit.spriteEl.classList.add("unit__sprite--hop");
-
-      SFX.hop();
-
-      const HOP_MS = 220;
-      setTimeout(resolve, HOP_MS);
+      if (el.style.left === prevLeft && el.style.top === prevTop) {
+        // No hay cambio real de posición (salto en el sitio) — nunca
+        // dispararía transitionend, así que no tiene sentido ni escucharlo.
+        setTimeout(resolve, fallbackMs);
+        return;
+      }
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        el.removeEventListener("transitionend", onTransitionEnd);
+        resolve();
+      };
+      const onTransitionEnd = (e) => {
+        if (e.target !== el || (e.propertyName !== "left" && e.propertyName !== "top")) return;
+        finish();
+      };
+      el.addEventListener("transitionend", onTransitionEnd);
+      // Tope de seguridad generoso, por si esas propiedades no llegaran a
+      // disparar transitionend de verdad (el navegador decide no animar,
+      // modo de movimiento reducido del sistema...) — en un caso normal
+      // transitionend llega antes y este setTimeout nunca se ejecuta de
+      // verdad (finish() ya puso settled=true).
+      setTimeout(finish, fallbackMs + 400);
     });
+  },
+
+  hopTo(unit, row, col) {
+    this.faceTowardsTile(unit, row, col);
+
+    const prevLeft = unit.el.style.left;
+    const prevTop = unit.el.style.top;
+
+    unit.row = row;
+    unit.col = col;
+    const { x, y } = getTileCenter(row, col, this.boardSize);
+    unit.el.style.left = `${x}px`;
+    unit.el.style.top = `${y}px`;
+    unit.el.style.zIndex = String((row + col) * 10 + 5);
+
+    // Trampa de TruenoEspora (js/abilities.js) — se comprueba en CADA
+    // paso, no solo al final del camino, para que explote en el instante
+    // exacto en que un enemigo pisa esa casilla (aunque solo sea de paso
+    // hacia otra).
+    if (typeof Abilities !== "undefined") Abilities.checkTrigger(unit);
+
+    // Reinicia la animación de salto en cada paso (aunque sea la misma clase).
+    unit.spriteEl.classList.remove("unit__sprite--hop");
+    void unit.spriteEl.offsetWidth; // fuerza reflow para poder repetir la animación
+    unit.spriteEl.classList.add("unit__sprite--hop");
+
+    SFX.hop();
+
+    const HOP_MS = 220;
+    return this.awaitPositionSettle(unit.el, prevLeft, prevTop, HOP_MS);
   },
 
   // ---------- Vida / feedback genérico: cualquier mecánica puede tocar la

@@ -27,8 +27,18 @@
    simple: un solo assignment de imgEl.src, sin fundido ni cruce (ver
    _swap más abajo).
 
-   Tres niveles (0 normal, 1 media, 2 baja) — ver TIER_SUFFIX más abajo
-   para la convención de nombre de archivo de cada uno.
+   Dos niveles (0 normal, 1 media) — ver TIER_SUFFIX más abajo para la
+   convención de nombre de archivo de cada uno.
+
+   Pedido explícito (pasada posterior, tras ver la demo con los tres
+   niveles en marcha): "creo que la resolucion baja es demasiado baja y
+   entorpece la experiencia visual, dejamos solo 2 resoluciones? alta para
+   cuando estas cerca y media para cuando estas lejos" — se retira el
+   nivel "baja" (2) de este mecanismo general por completo: ya solo existe
+   una frontera (_MID_DOWN/_MID_UP), no dos. La convención de archivo
+   "_lowres" (antes el nivel 2 de aquí) sigue viva igual — la sigue usando
+   lowResTileSrc (js/mapgen.js) y, aparte de este mecanismo, la propia
+   niebla la usa SIEMPRE ahora (ver _FOG_ALWAYS_LOWRES más abajo).
 
    Por qué esto (y no solo el culling de js/entitycull.js): el culling
    ahorra pintar lo que está fuera de cámara, pero lo que SÍ está en
@@ -94,9 +104,10 @@ const SpriteQuality = {
     if (!this.enabled) {
       // Desactivarla a mano devuelve TODO a la textura normal de golpe y
       // deja de reaccionar al zoom hasta que se vuelva a activar — ver el
-      // "return" temprano de updateForScale más abajo.
+      // "return" temprano de updateForScale más abajo. La niebla NO forma
+      // parte de este Set (ver register/_FOG_ALWAYS_LOWRES) así que sigue
+      // en baja resolución pase lo que pase con este interruptor.
       this._aboveMid = true;
-      this._aboveLow = true;
       if (this.tier !== 0) {
         this.tier = 0;
         this._sprites.forEach((imgEl) => {
@@ -114,40 +125,42 @@ const SpriteQuality = {
     // nivel que toque según el zoom actual.
   },
 
-  // Dos fronteras, cada una con SU PROPIA histéresis (2 umbrales, subir y
-  // bajar por separado) — 4 números en total, nunca uno solo, por la misma
-  // razón que con dos niveles: sin margen entre subir y bajar, la cámara
+  // Una única frontera, con SU PROPIA histéresis (2 umbrales, subir y
+  // bajar por separado) — sin margen entre subir y bajar, la cámara
   // oscilando justo en un punto de zoom dispararía el cambio una y otra
   // vez seguidas. Rango real de zoom del juego: 0.6 (más alejado) a 1.3
-  // (más cercano) — ver BoardView.minScale/maxScale. Frontera normal<->media
-  // más alta (cerca del zoom por defecto, 1) que la de media<->baja (cerca
-  // del extremo más alejado) para que "media" sea la que más tiempo se ve
-  // en un zoom intermedio normal, no un escalón que solo se cruza de paso.
+  // (más cercano) — ver BoardView.minScale/maxScale.
   _MID_DOWN: 0.9, // normal -> media al bajar de aquí
   _MID_UP: 0.98, // media -> normal al subir de aquí
-  _LOW_DOWN: 0.7, // media -> baja al bajar de aquí
-  _LOW_UP: 0.78, // baja -> media al subir de aquí
 
   // Convención de nombre de archivo de cada nivel (ver cabecera) — null en
   // el 0 porque "normal" es la ruta original tal cual, sin sufijo.
-  _TIER_SUFFIX: [null, "_midres", "_lowres"],
+  _TIER_SUFFIX: [null, "_midres"],
 
-  tier: 0, // 0 normal, 1 media, 2 baja — nivel EFECTIVO ahora mismo
-  // Histéresis de cada frontera por separado (ver arriba) — true = "todavía
-  // no ha cruzado hacia abajo del todo" / "ya ha vuelto a subir del todo".
-  // Independientes entre sí a propósito: así el nivel resultante (más
-  // abajo, updateForScale) se recalcula bien pase lo que pase, incluso si
-  // el zoom saltara de golpe más de una frontera en un mismo frame.
+  tier: 0, // 0 normal, 1 media — nivel EFECTIVO ahora mismo
+  // true = "todavía no ha cruzado hacia abajo del todo" / "ya ha vuelto a
+  // subir del todo".
   _aboveMid: true,
-  _aboveLow: true,
   _sprites: new Set(),
+
+  // Pedido explícito (pasada posterior): "la niebla puedes ponerla siempre
+  // en baja resolucion estemos a la distancia que estemos? (quiero probar,
+  // puede que me arrepienta asi que dejalo preparado por si quiero volver
+  // a como estaba)" — la niebla YA NO sigue el zoom como el resto de
+  // sprites (dos niveles arriba): se queda SIEMPRE en "_lowres",
+  // independientemente de lo cerca o lejos que esté la cámara. Para volver
+  // atrás (niebla siguiendo el zoom como cualquier otro sprite, con solo
+  // normal/media) basta con poner esto a false — no hace falta tocar nada
+  // más, register()/_swap() ya miran esta bandera antes que el tier normal.
+  _FOG_ALWAYS_LOWRES: true,
+
+  _isFogSprite(imgEl) {
+    return imgEl.classList.contains("tile__fog");
+  },
 
   _srcForTier(originalSrc, tier) {
     const suffix = this._TIER_SUFFIX[tier];
     if (!suffix) return originalSrc;
-    // Nivel "baja": delega en lowResTileSrc (js/mapgen.js) para no duplicar
-    // esa regla en dos sitios — ver cabecera.
-    if (tier === 2 && typeof lowResTileSrc === "function") return lowResTileSrc(originalSrc);
     return originalSrc.replace(/(\.[a-zA-Z0-9]+)$/, `${suffix}$1`);
   },
 
@@ -156,13 +169,21 @@ const SpriteQuality = {
   register(imgEl, originalSrc) {
     if (!imgEl || !originalSrc) return;
     imgEl.dataset.srcOrig = originalSrc;
+    if (this._FOG_ALWAYS_LOWRES && this._isFogSprite(imgEl) && typeof lowResTileSrc === "function") {
+      // La niebla no entra en el Set de sprites que siguen el zoom (ver
+      // _isFogSprite) — se fija una vez aquí y ya no vuelve a cambiar de
+      // textura nunca, ni al cruzar fronteras de zoom ni al activar/
+      // desactivar Resolución Adaptativa.
+      imgEl.src = lowResTileSrc(originalSrc);
+      return;
+    }
     imgEl.src = this._srcForTier(originalSrc, this.tier);
     this._sprites.add(imgEl);
   },
 
   // Se llama desde BoardView._apply en cada frame de cámara — barato (un
-  // puñado de comparaciones de número), solo actúa de verdad al cruzar
-  // alguna de las cuatro fronteras.
+  // puñado de comparaciones de número), solo actúa de verdad al cruzar la
+  // frontera.
   updateForScale(scale) {
     // Desactivada a mano (ver setEnabled) -- no reacciona al zoom hasta que
     // el jugador (o el modo rendimiento) la vuelva a activar.
@@ -170,10 +191,7 @@ const SpriteQuality = {
     if (this._aboveMid && scale < this._MID_DOWN) this._aboveMid = false;
     else if (!this._aboveMid && scale > this._MID_UP) this._aboveMid = true;
 
-    if (this._aboveLow && scale < this._LOW_DOWN) this._aboveLow = false;
-    else if (!this._aboveLow && scale > this._LOW_UP) this._aboveLow = true;
-
-    const target = this._aboveMid ? 0 : this._aboveLow ? 1 : 2;
+    const target = this._aboveMid ? 0 : 1;
     if (target !== this.tier) this._setTier(target);
   },
 
@@ -203,18 +221,13 @@ const SpriteQuality = {
   // esta es la versión definitiva: sin fantasma, sin fundido, un solo
   // assignment de src.
   _swap(imgEl, tier) {
-    // Guarda de la niebla: bug ya corregido antes ("en el modo alto
-    // rendimiento la niebla no tiene el efecto de disiparse, simplemente
-    // desaparece bruscamente") — la textura "_lowres" de la niebla es
-    // demasiado pequeña/pixelada para que la animación de disipación
-    // (fog-dissipate: scale(1.6) + blur(7px)) siga leyéndose como un
-    // desvanecimiento gradual; con esa textura simplemente "salta". Una
-    // niebla que ya está revelándose/disipándose (.tile__fog--revealed) no
-    // debe cambiar de textura a media animación por un cruce de zoom — sí
-    // puede hacerlo con toda normalidad mientras está quieta/oculta (la
-    // inmensa mayoría de su vida visible), que es cuando esta función se
-    // llama para ella en la práctica.
-    if (imgEl.classList.contains("tile__fog--revealed")) return;
+    // La niebla ya no pasa por aquí en absoluto (ver register/
+    // _FOG_ALWAYS_LOWRES: nunca entra en _sprites), así que esta función ya
+    // no necesita ningún caso especial para ella — el bug ya corregido
+    // antes ("en el modo alto rendimiento la niebla no tiene el efecto de
+    // disiparse") tampoco puede volver a darse aquí por la misma razón: una
+    // niebla que nunca cambia de textura no puede "saltar" a media
+    // animación de disipación.
     const orig = imgEl.dataset.srcOrig;
     if (!orig) return;
     imgEl.src = this._srcForTier(orig, tier);

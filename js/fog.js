@@ -563,21 +563,6 @@ const Fog = {
     this._refreshFogCoverZ();
   },
 
-  // Casillas vecinas "hacia arriba en pantalla" de una unidad que pueden
-  // llevarse por delante parte de su sprite si siguen sin revelar — misma
-  // geometría exacta que Villages.refreshOcclusion (ver ese archivo para la
-  // explicación de por qué (fila-1,col-1) es "justo arriba" en pantalla) y
-  // el mismo conjunto de casillas que pidió extender la petición de los
-  // tótems/obeliscos: justo arriba, arriba-derecha adyacente, arriba-
-  // izquierda adyacente y 2 casillas arriba del todo (para sprites más
-  // altos, como el GolemCorteza).
-  _UP_NEIGHBOR_OFFSETS: [
-    [-1, -1], // justo arriba
-    [-1, 0], // arriba-derecha (adyacente)
-    [0, -1], // arriba-izquierda (adyacente)
-    [-2, -2], // 2 casillas arriba
-  ],
-
   // z-index "de reposo" de una nube de niebla — mismo cálculo que pone
   // mapgen.js al crearla (ver ese archivo, comentario del bug de z-index ya
   // arreglado antes): (fila+columna)*10+6, +1 por encima de una unidad de
@@ -599,24 +584,71 @@ const Fog = {
   // en cuanto ya no haga falta (la unidad se aleja, o esa loseta se
   // revela), porque cada llamada empieza reseteando todo antes de volver a
   // subir lo que siga haciendo falta.
+  // Pedido explícito (pasada posterior, con capturas): "algunas unidades se
+  // siguen asomando a traves de la niebla" — investigado con un barrido
+  // real (comparando el rectángulo en pantalla de cada candidato contra el
+  // de cada nube de niebla vecina). Dos intentos previos, los dos
+  // descartados tras medir en vivo:
+  //   1) Lista fija de 4 vecinos ("justo arriba", las dos adyacentes y "2
+  //      casillas arriba" en diagonal): cubría de sobra una unidad normal
+  //      o el GolemCorteza, pero un Obelisco (mucho MÁS ANCHO que una sola
+  //      loseta) se salía por los LADOS — hasta 5 columnas más allá de su
+  //      propia loseta.
+  //   2) "Cuántas filas/columnas de loseta ocupa" (alto y ancho del sprite
+  //      entre alto y ancho de una loseta, redondeando hacia arriba):
+  //      parecía razonable pero seguía quedándose corto con el Obelisco
+  //      (el barrido en vivo lo confirmó). El motivo real: en isométrico,
+  //      "una fila más arriba en pantalla" no es un simple desplazamiento
+  //      vertical — es diagonal, cambia fila Y columna del tablero a la
+  //      vez (ver getTileCenter en mapgen.js) — así que convertir un alto
+  //      en píxeles a "N filas" con una simple división no encaja con la
+  //      geometría real del rombo; hacía falta mucho más margen del que
+  //      ese cálculo daba, distinto además según cada combinación de alto
+  //      Y ancho, no solo el alto.
+  //
+  // La única manera de acertar SIEMPRE, sea cual sea el tamaño y la forma
+  // del sprite (sin tener que volver a ajustar nada a mano el día que se
+  // añada uno nuevo, incluso mucho más grande — regla de oro de
+  // escalabilidad), es comprobar el solape en pantalla de verdad: el
+  // rectángulo real del candidato contra el rectángulo real de CADA nube
+  // todavía sin revelar, exactamente igual que hace un ojo humano mirando
+  // la pantalla. _refreshFogCoverZ mide cada nube sin revelar UNA sola vez
+  // (nunca más de una vez por nube, aunque haya varios candidatos) y
+  // reutiliza esos rectángulos para todos los candidatos — sigue sin
+  // ejecutarse en cada frame de cámara (solo cuando cambia la niebla, ver
+  // los sitios que llaman a applyVisibility), así que el coste de más
+  // rectángulos no se nota.
+  _OVERLAP_MIN_AREA_PX: 30, // ruido de subpíxel/redondeo, no una superposición real
+
   _refreshFogCoverZ() {
     if (!this.revealedGrid || !this._fogEls) return;
+    // Rectángulos reales de TODAS las nubes que sigan sin revelar (a la vez
+    // que se las resetea a su z-index de reposo) — una sola lectura por
+    // nube, reutilizada abajo para cualquier candidato. Una nube culleada
+    // (fuera de pantalla, ver Fog.updateCulling) mide 0x0 aquí y
+    // simplemente nunca solapará con nada — correcto: si no se pinta, no
+    // hay nada que tapar.
+    const unrevealed = [];
     this._fogEls.forEach((fogEl, key) => {
       const [r, c] = key.split(",").map(Number);
-      if (!this.revealedGrid[r][c]) fogEl.style.zIndex = String(this._fogRestZ(r, c));
+      if (this.revealedGrid[r][c]) return;
+      fogEl.style.zIndex = String(this._fogRestZ(r, c));
+      const rect = fogEl.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) unrevealed.push({ row: r, col: c, el: fogEl, rect });
     });
+
     const coverFrom = (row, col, el) => {
       if (!el || el.classList.contains("unit--fog-hidden")) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
       const z = (row + col) * 10 + 5;
-      this._UP_NEIGHBOR_OFFSETS.forEach(([dr, dc]) => {
-        const r = row + dr;
-        const c = col + dc;
-        if (r < 0 || c < 0 || r >= this.size || c >= this.size) return;
-        if (this.revealedGrid[r][c]) return;
-        const fogEl = this._fogEls.get(`${r},${c}`);
-        if (!fogEl) return;
-        const current = parseInt(fogEl.style.zIndex, 10) || 0;
-        fogEl.style.zIndex = String(Math.max(current, z + 1));
+      unrevealed.forEach((tile) => {
+        if (tile.row === row && tile.col === col) return; // la propia loseta no cuenta como "vecina"
+        const overlapX = Math.max(0, Math.min(rect.right, tile.rect.right) - Math.max(rect.left, tile.rect.left));
+        const overlapY = Math.max(0, Math.min(rect.bottom, tile.rect.bottom) - Math.max(rect.top, tile.rect.top));
+        if (overlapX * overlapY < this._OVERLAP_MIN_AREA_PX) return;
+        const current = parseInt(tile.el.style.zIndex, 10) || 0;
+        tile.el.style.zIndex = String(Math.max(current, z + 1));
       });
     };
     if (typeof Units !== "undefined") {

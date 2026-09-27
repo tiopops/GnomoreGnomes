@@ -357,24 +357,48 @@ const Combat = {
     // frente a quien le ha golpeado, solo que unas casillas más atrás. Más
     // rápido que un paso normal (140ms) para que se lea como un golpe seco,
     // no como una decisión pausada.
+    const PUSH_MS = 140;
     target.el.classList.add("unit--moving");
     for (const step of path) {
-      await new Promise((resolve) => {
-        target.row = step.row;
-        target.col = step.col;
-        const { x, y } = getTileCenter(step.row, step.col, Units.boardSize);
-        target.el.style.left = `${x}px`;
-        target.el.style.top = `${y}px`;
-        target.el.style.zIndex = String((step.row + step.col) * 10 + 5);
-        target.spriteEl.classList.remove("unit__sprite--hop");
-        void target.spriteEl.offsetWidth;
-        target.spriteEl.classList.add("unit__sprite--hop");
-        SFX.hop();
-        setTimeout(resolve, 140);
-      });
+      // Pedido explícito (con capturas): "algunas unidades se siguen
+      // asomando a traves de la niebla" — este bucle tenía su propio
+      // setTimeout adivinando cuándo terminaba la transición CSS de
+      // left/top (igual que tenía Units.hopTo antes de arreglarlo, ver la
+      // nota larga junto a Units.awaitPositionSettle), así que se reutiliza
+      // el mismo mecanismo en vez de duplicar el problema aquí.
+      const prevLeft = target.el.style.left;
+      const prevTop = target.el.style.top;
+      target.row = step.row;
+      target.col = step.col;
+      const { x, y } = getTileCenter(step.row, step.col, Units.boardSize);
+      target.el.style.left = `${x}px`;
+      target.el.style.top = `${y}px`;
+      target.el.style.zIndex = String((step.row + step.col) * 10 + 5);
+      target.spriteEl.classList.remove("unit__sprite--hop");
+      void target.spriteEl.offsetWidth;
+      target.spriteEl.classList.add("unit__sprite--hop");
+      SFX.hop();
+      await Units.awaitPositionSettle(target.el, prevLeft, prevTop, PUSH_MS);
     }
     target.el.classList.remove("unit--moving");
     target.spriteEl.classList.remove("unit__sprite--hop");
+    // Niebla de guerra y demás "oclusión detrás de..." (js/fog.js,
+    // js/villages.js, js/obelisks.js, js/bushes.js, js/shops.js) — pedido
+    // explícito (con capturas): "algunas unidades se siguen asomando a
+    // traves de la niebla". Este empujón puede terminar dejando a `target`
+    // en una loseta nueva (fogosa, detrás de un tótem/Obelisco, junto a un
+    // arbusto o la Tienda Goblin) igual que cualquier otro desplazamiento
+    // del proyecto, pero al no pasar por Units.walkPath (ver la nota de
+    // arriba: un empujón no gira al personaje, walkPath sí) se había
+    // quedado sin el mismo refresco final que ese sí hace siempre — mismo
+    // conjunto exacto de llamadas, mismo orden.
+    if (path.length > 0) {
+      if (typeof Fog !== "undefined") Fog.applyVisibility();
+      if (typeof Villages !== "undefined") Villages.refreshOcclusion();
+      if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
+      if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
+      if (typeof Shops !== "undefined") Shops.refreshAll();
+    }
   },
 };
 

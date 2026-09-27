@@ -764,17 +764,14 @@ function renderMap(map, container) {
     // enteras iguales, un patrón de rayas verticales muy regular) para que
     // el reparto no se lea como una cuadrícula obvia.
     fogImg.className = (t.row * 7 + t.col * 3) % 10 < 3 ? "tile__fog tile__fog--idle" : "tile__fog";
-    // La niebla ahora SÍ participa en la resolución dinámica por zoom
-    // (SpriteQuality), igual que hierba/agua — pedido explícito: "las
-    // losetas de terreno, todas...hierba, agua...tambien deben verse
-    // afectadas por resolucion dinamica, la de niebla tambien". El único
-    // cuidado que sigue haciendo falta es NO cambiar de textura a media
-    // animación de disipación (bug ya corregido antes: con la versión
-    // "_lowres" de por medio, el estirado+desenfoque de fog-dissipate deja
-    // de leerse como un desvanecimiento gradual y "salta" de golpe) —
-    // SpriteQuality._swap ya tiene ese guard mirando la clase
-    // tile__fog--revealed, así que aquí no hace falta ningún caso especial:
-    // se registra igual que cualquier otro sprite del tablero.
+    // La niebla pasa por SpriteQuality.register igual que cualquier otro
+    // sprite del tablero, pero NO sigue el zoom como el resto: pedido
+    // explícito (pasada posterior) "la niebla puedes ponerla siempre en
+    // baja resolucion estemos a la distancia que estemos?" — register()
+    // reconoce la clase "tile__fog" (fijada justo arriba) y la deja fija en
+    // "_lowres" para siempre, sin entrar en el Set que reacciona a cruces
+    // de zoom (ver _FOG_ALWAYS_LOWRES en spritequality.js, con instrucciones
+    // de cómo revertir esto si hiciera falta).
     if (typeof SpriteQuality !== "undefined") {
       SpriteQuality.register(fogImg, FOG_SRC);
     } else {

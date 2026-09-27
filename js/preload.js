@@ -31,7 +31,16 @@
    nada, solo mejora el caso favorable). Solo se ejecuta UNA VEZ por
    sesión de página (_done): una vez descargadas y decodificadas, el
    propio navegador ya las tiene en caché el resto de la sesión, así que
-   repetir la espera en la segunda partida no aportaría nada. */
+   repetir la espera en la segunda partida no aportaría nada.
+
+   Pedido explícito (pasada posterior): "la pantalla de loading puede durar
+   3 segundos como minimo? nos aseguramos asi que todo se guarda
+   correctamente y se carga como se debe" — _MIN_SHOW_MS añade un SUELO,
+   no solo el techo de arriba: si las imágenes cargan antes (conexión
+   rápida/caché), la barra igualmente se queda visible hasta cumplir ese
+   mínimo, en vez de desaparecer casi al instante. run() mide cuánto ha
+   pasado de verdad desde que se mostró la barra y espera lo que falte
+   antes de ocultarla. */
 
 const Preload = {
   _done: false,
@@ -39,6 +48,7 @@ const Preload = {
   _fillEl: null,
 
   _MAX_WAIT_MS: 3500,
+  _MIN_SHOW_MS: 3000,
 
   // Los más pesados y universales del proyecto (ver du -h assets/), nunca
   // dependen de la raza ni del modo elegido:
@@ -70,6 +80,7 @@ const Preload = {
     this._done = true; // una sola vez por sesión de página, pase lo que pase abajo
     this._ensureOverlay();
     this._show();
+    const startedAt = Date.now();
     let loaded = 0;
     const total = this._HEAVY_ASSETS.length;
     this._updateProgress(0, total);
@@ -92,6 +103,12 @@ const Preload = {
       )
     );
     await Promise.race([loadAll, new Promise((resolve) => setTimeout(resolve, this._MAX_WAIT_MS))]);
+    // Suelo mínimo de permanencia (ver cabecera) — si todo cargó de sobra
+    // rápido (conexión buena o ya en caché de una partida anterior en la
+    // misma sesión de página), la barra espera aquí lo que le falte para
+    // llegar a _MIN_SHOW_MS antes de ocultarse.
+    const remaining = this._MIN_SHOW_MS - (Date.now() - startedAt);
+    if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
     this._hide();
   },
 
