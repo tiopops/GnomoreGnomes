@@ -295,6 +295,10 @@ const Fog = {
           b.el.classList.toggle("unit--fog-hidden", this.isFogged(b.row, b.col));
         });
       }
+      // Recursos de escenario (js/resources.js) — pedido explícito: "los
+      // arbustos deben ocultarse bajo la niebla si aun no han sido
+      // descubiertos" aplicado igual a rocas/mena/pinos.
+      if (typeof Resources !== "undefined") Resources.refreshFog();
     }
     if (typeof Gnome !== "undefined") {
       Gnome.list.forEach((g) => {

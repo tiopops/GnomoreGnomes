@@ -180,16 +180,32 @@ const UnitInfo = {
   // Una fila de estadística como 5 "pips" (puntos) rellenos hasta `value` —
   // más legible de un vistazo que un número, y dejando claro que la escala
   // siempre es sobre 5 para las 4 estadísticas del juego.
-  statRow(icon, label, value) {
-    const pips = Array.from(
-      { length: 5 },
-      (_, i) => `<span class="unit-stat-pip${i < value ? " unit-stat-pip--filled" : ""}"></span>`
-    ).join("");
+  // `bonus` (Armería, js/armory.js) se suma a `value` antes de repartir los
+  // 5 huecos visuales — pedido explícito: "Si con alguna de estas mejoras,
+  // las estadisticas de un personaje superase el maximo visualmente
+  // permitido de los personajes, esto se indicara con un +x en la derecha
+  // de la barra correspondiente. Las estadisticas que aumenten los huecos
+  // de la barra...deben mostrarse de color amarillo." Los primeros `value`
+  // huecos se pintan normal (el bonus nunca "roba" el color de la base),
+  // los siguientes hasta 5 se pintan en amarillo (unit-stat-pip--bonus), y
+  // lo que sobre de los 5 huecos se indica aparte con un "+X" en vez de
+  // intentar dibujar más pips de los que caben.
+  statRow(icon, label, value, bonus = 0) {
+    const total = value + bonus;
+    const visible = Math.min(5, total);
+    const overflow = Math.max(0, total - 5);
+    const pips = Array.from({ length: 5 }, (_, i) => {
+      if (i >= visible) return '<span class="unit-stat-pip"></span>';
+      const isBonusPip = i >= value;
+      return `<span class="unit-stat-pip unit-stat-pip--filled${isBonusPip ? " unit-stat-pip--bonus" : ""}"></span>`;
+    }).join("");
+    const overflowLabel = overflow > 0 ? `<span class="unit-stat-overflow">+${overflow}</span>` : "";
     return `
       <div class="unit-stat-row">
         <i class="ph ${icon} unit-stat-icon"></i>
         <span class="unit-stat-label">${label}</span>
         <span class="unit-stat-pips">${pips}</span>
+        ${overflowLabel}
       </div>`;
   },
 
@@ -245,9 +261,9 @@ const UnitInfo = {
           <h2 class="unit-info-name">${type.name}</h2>
           <div class="unit-info-hp"><i class="ph ph-heart"></i> ${unit.hp} / ${unit.maxHp}</div>
           <div class="unit-info-stats">
-            ${this.statRow("ph-shield", "Aguante", type.aguante)}
+            ${this.statRow("ph-shield", "Aguante", type.aguante, typeof Armory !== "undefined" ? Armory.defenseBonus(unit.team) : 0)}
             ${this.statRow("ph-footprints", "Movimiento", type.movimiento)}
-            ${this.statRow("ph-boxing-glove", "Fuerza", type.fuerza)}
+            ${this.statRow("ph-boxing-glove", "Fuerza", type.fuerza, typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0)}
             ${this.statRow("ph-wind", "Agilidad", type.agilidad)}
             ${this.statRow("ph-eye", "Percepción", type.percepcion)}
           </div>

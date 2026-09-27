@@ -188,13 +188,16 @@ function createGnomeInstance() {
       const noShop = (r, c) => typeof Shops === "undefined" || !Shops.at(r, c);
       // Obelisco Ancestral (js/obelisks.js) — tampoco aparece encima de uno.
       const noObelisk = (r, c) => typeof Obelisks === "undefined" || !Obelisks.at(r, c);
+      // Recursos de escenario (js/resources.js) — tampoco aparece encima de una.
+      const noResource = (r, c) => typeof Resources === "undefined" || !Resources.at(r, c);
       if (
         !Units.unitAt(row, col) &&
         !Gnome._otherGnomeAt(this, row, col) &&
         walkable(row, col) &&
         noVillage(row, col) &&
         noShop(row, col) &&
-        noObelisk(row, col)
+        noObelisk(row, col) &&
+        noResource(row, col)
       ) {
         this.spawn(row, col);
         return;
@@ -217,6 +220,8 @@ function createGnomeInstance() {
             if (!noShop(r, c)) continue;
             // Obelisco Ancestral (js/obelisks.js) — tampoco aparece encima de uno.
             if (!noObelisk(r, c)) continue;
+            // Recursos de escenario (js/resources.js) — tampoco aparece encima de una.
+            if (!noResource(r, c)) continue;
             this.spawn(r, c);
             return;
           }
@@ -415,6 +420,7 @@ function createGnomeInstance() {
           if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
           if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
           if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+          if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
           if (moveDist > moveRange) continue;
@@ -585,7 +591,7 @@ function createGnomeInstance() {
       // es una de las 2 acciones del turno.
       if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
       if (typeof Turns !== "undefined") Turns.useAction(unit);
-      const dmg = UNIT_TYPES[unit.typeId].fuerza;
+      const dmg = UNIT_TYPES[unit.typeId].fuerza + (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0);
       this._addPoints(dmg);
       SFX.hit();
       // Retroalimentación de animación en AMBOS lados del golpe, no solo en
@@ -936,6 +942,7 @@ function createGnomeInstance() {
           if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
           if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
           if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+          if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const minDist = Units.list.reduce(
             (min, u) => Math.min(min, Math.max(Math.abs(u.row - row), Math.abs(u.col - col))),
@@ -1217,6 +1224,7 @@ function createGnomeInstance() {
           if (typeof Villages !== "undefined" && Villages.at(r, c)) continue; // poblado (js/villages.js)
           if (typeof Shops !== "undefined" && Shops.at(r, c)) continue; // Tienda Goblin (js/shops.js)
           if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
+          if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           const alignment = dr * dRow + dc * dCol;
           const openness = this._tileOpenness(r, c);
@@ -1248,6 +1256,7 @@ function createGnomeInstance() {
           if (typeof Villages !== "undefined" && Villages.at(r, c)) continue; // poblado (js/villages.js)
           if (typeof Shops !== "undefined" && Shops.at(r, c)) continue; // Tienda Goblin (js/shops.js)
           if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
+          if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           free++;
         }

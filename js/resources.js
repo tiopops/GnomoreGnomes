@@ -1,0 +1,510 @@
+/* Gnomore Gnomes — recursos de escenario (rocas, mena de hierro y pinos).
+   Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
+     - Repartir fuentes de recursos por el mapa (rocas y pinos, comunes;
+       mena de hierro, limitada) — mismo sistema de transparencia por solape
+       que tótems/Obeliscos/arbustos para poder seleccionar a quien quede
+       detrás.
+     - Dejar que CUALQUIER unidad las golpee (2 puntos de vida) igual que un
+       Obelisco/tótem, sin distinguir equipo (son neutrales) — al llegar a 0
+       desaparecen con una animación y sueltan su recurso.
+     - Transportar ese recurso hasta la mochila con su propia animación
+       (aparece en la fuente -> espera 1s -> vuela hasta el icono de la
+       mochila -> pulso al llegar) y llevar la cuenta de cuántos tiene el
+       jugador de cada tipo (madera/roca/metal), consultada después por
+       js/armory.js para pagar las mejoras.
+
+   Pedido explícito (verbatim): "añadimos elementos de escenario de rocas,
+   mena de hierro y pinos que ocupan algunas casillas. el sistema de
+   transparencias es el mismo que el de los totems para personajes y
+   enemigos que se colocan detras de ellos. ambos tienen 2 de vida, si se
+   les pega hasta eliminarlos el usuario recibira +1 de madera o +1 de roca
+   o +1 de metal (estos recursos se utilizaran mas tarde) en una nueva
+   opcion del obelisco llamada armeria, desde la que el usuario podra
+   actualizar su ataque y defensa base" + "Tambien he añadido 3 imagenes de
+   'recurso_X' para cada uno de los recursos al recogerlos de sus
+   respectivas fuentes, roca, mena de hierro, arboles. al quitar 2 puntos de
+   vida de sus fuentes, estas desaparecen con una animacion y el icono del
+   recurso aparece donde estaba la fuente. un segundo despues una animacion
+   transporta el recurso hasta nuestra mochila, que genera una animacion de
+   pulsacion en el momento recibir el recurso. EN la mochila se mostrara el
+   recurso recogido. TODOS los recursos, son stackeables y se mostrara la
+   cantidad de cada uno con una etiqueta igual que la que muestra los puntos
+   de gloria que cuestan las unidades o los precios de la tienda goblin." +
+   "Los fuentes de recursos de arbol y de roca seran bastante comunes y
+   estaran repartidos por el escenario, pero el de metal sera limitado, ya
+   que se usara para subir a nivel 3 en la armeria." */
+
+const RESOURCE_NODE_MAX_HP = 2;
+
+// Cuántas fuentes de cada tipo se reparten por partida — roca/pino comunes,
+// mena limitada a propósito (pedido explícito, ver cabecera).
+const RESOURCE_NODE_TYPES = {
+  roca: {
+    name: "Roca",
+    spriteUrl: "assets/iconos/recurso_roca_nodo.png",
+    resourceId: "roca",
+    count: 10,
+  },
+  pino: {
+    name: "Pino",
+    spriteUrl: "assets/iconos/recurso_pino_nodo.png",
+    resourceId: "madera",
+    count: 10,
+  },
+  mena: {
+    name: "Mena de Hierro",
+    spriteUrl: "assets/iconos/recurso_mena_nodo.png",
+    resourceId: "metal",
+    count: 4,
+  },
+};
+
+// Recursos ya recolectados (icono de la mochila + trofeo de la fuente) —
+// distinto catálogo de RESOURCE_NODE_TYPES porque uno es "lo que hay plantado
+// en el mapa" y el otro "lo que se lleva en la mochila", con su propio icono.
+const RESOURCE_TYPES = {
+  madera: { name: "Madera", iconUrl: "assets/iconos/recurso_madera.png" },
+  roca: { name: "Roca", iconUrl: "assets/iconos/recurso_roca.png" },
+  metal: { name: "Metal", iconUrl: "assets/iconos/recurso_metal.png" },
+};
+
+const RESOURCE_MIN_SEPARATION = 2; // entre dos fuentes, para que no se amontonen
+
+const Resources = {
+  list: [],
+  _nextId: 1,
+
+  // Recursos recolectados por el jugador esta partida — leído por
+  // js/armory.js para saber qué se puede pagar, y por Backpack para pintar
+  // las etiquetas. Solo existe para "player": el rival no tiene mochila ni
+  // Armería en esta versión.
+  counts: { madera: 0, roca: 0, metal: 0 },
+
+  init() {
+    this._initMouseTracking();
+  },
+
+  resetAll() {
+    this.list.forEach((n) => n.el.remove());
+    this.list = [];
+    this.counts = { madera: 0, roca: 0, metal: 0 };
+    if (typeof Backpack !== "undefined") Backpack.refreshResourceBadges && Backpack.refreshResourceBadges();
+  },
+
+  // Repartidas por todo el mapa (a diferencia de los arbustos, que buscan
+  // estar CERCA de un punto de interés, aquí no hace falta: "estaran
+  // repartidos por el escenario" a secas) — losetas al azar, con tolerancia
+  // de separación entre ellas para que no se amontonen todas juntas.
+  spawn(boardSize) {
+    Object.keys(RESOURCE_NODE_TYPES).forEach((kind) => {
+      const def = RESOURCE_NODE_TYPES[kind];
+      let placed = 0;
+      let attempts = 0;
+      while (placed < def.count && attempts < 3000) {
+        attempts++;
+        const row = Math.floor(Math.random() * boardSize);
+        const col = Math.floor(Math.random() * boardSize);
+        if (!this._tileFree(row, col, boardSize)) continue;
+        this._create(kind, row, col);
+        placed++;
+      }
+    });
+  },
+
+  _tileFree(row, col, boardSize) {
+    if (row < 0 || col < 0 || row >= boardSize || col >= boardSize) return false;
+    if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) return false;
+    if (typeof Units !== "undefined" && Units.unitAt(row, col)) return false;
+    if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) return false;
+    if (typeof Villages !== "undefined" && Villages.at(row, col)) return false;
+    if (typeof Shops !== "undefined" && Shops.at(row, col)) return false;
+    if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) return false;
+    if (typeof Bushes !== "undefined" && Bushes.at(row, col)) return false;
+    if (this.at(row, col)) return false;
+    const tooClose = this.list.some(
+      (n) => Math.max(Math.abs(n.row - row), Math.abs(n.col - col)) < RESOURCE_MIN_SEPARATION
+    );
+    if (tooClose) return false;
+    return true;
+  },
+
+  at(row, col) {
+    return this.list.find((n) => n.row === row && n.col === col) || null;
+  },
+
+  _create(kind, row, col) {
+    const def = RESOURCE_NODE_TYPES[kind];
+    const el = document.createElement("div");
+    el.className = `unit resource-node resource-node--${kind}`;
+
+    const spriteEl = document.createElement("img");
+    spriteEl.decoding = "async";
+    spriteEl.className = "resource-node__sprite";
+    spriteEl.src = def.spriteUrl;
+    spriteEl.alt = "";
+    spriteEl.draggable = false;
+    el.appendChild(spriteEl);
+    if (typeof Shadows !== "undefined") Shadows.attach(spriteEl);
+
+    // Barra de vida SIEMPRE visible (2 segmentos), mismo patrón que
+    // Villages (.village .unit__hpbar en style.css) — una fuente nunca se
+    // "selecciona", así que no tiene sentido ocultarla hasta apuntar.
+    const hpBarEl = document.createElement("div");
+    hpBarEl.className = "unit__hpbar resource-node__hpbar";
+    const hpSegmentEls = [];
+    for (let i = 0; i < RESOURCE_NODE_MAX_HP; i++) {
+      const seg = document.createElement("div");
+      seg.className = "unit__hpbar-segment";
+      hpBarEl.appendChild(seg);
+      hpSegmentEls.push(seg);
+    }
+    el.appendChild(hpBarEl);
+
+    if (typeof Units !== "undefined") Units.container.appendChild(el);
+
+    const node = {
+      id: `resource-${this._nextId++}`,
+      kind,
+      row,
+      col,
+      hp: RESOURCE_NODE_MAX_HP,
+      maxHp: RESOURCE_NODE_MAX_HP,
+      el,
+      spriteEl,
+      hpBarEl,
+      hpSegmentEls,
+    };
+    this._placeInstant(node);
+    if (typeof Units !== "undefined") Units.updateHpBar(node);
+    this.list.push(node);
+    return node;
+  },
+
+  _placeInstant(node) {
+    if (typeof getTileCenter === "undefined" || typeof Units === "undefined") return;
+    const { x, y } = getTileCenter(node.row, node.col, Units.boardSize);
+    node.el.style.left = `${x}px`;
+    node.el.style.top = `${y}px`;
+    node.el.style.zIndex = String((node.row + node.col) * 10 + 5);
+  },
+
+  // ---------- Niebla ----------
+  // Igual que Bushes: una fuente no descubierta se oculta bajo la niebla
+  // (llamado desde Fog.applyVisibility).
+  refreshFog() {
+    if (typeof Fog === "undefined") return;
+    this.list.forEach((n) => {
+      n.el.classList.toggle("unit--fog-hidden", Fog.isFogged(n.row, n.col));
+    });
+  },
+
+  // ---------- Transparencia por solape (igual que Villages/Obelisks/Bushes) ----------
+  _OCCLUSION_OFFSETS: [
+    [-1, -1],
+    [-1, 0],
+    [0, -1],
+    [-2, -2],
+  ],
+  _behindElsFor(node) {
+    const els = [];
+    if (typeof Units === "undefined") return els;
+    Units.list.forEach((unit) => {
+      if (!unit.el || unit.el.classList.contains("unit--fog-hidden")) return;
+      if (this._OCCLUSION_OFFSETS.some(([dr, dc]) => unit.row === node.row + dr && unit.col === node.col + dc)) {
+        els.push(unit.el);
+      }
+    });
+    Units.markerEls.forEach((m) => {
+      if (!m || !m.isConnected) return;
+      const r = Number(m.dataset.row);
+      const c = Number(m.dataset.col);
+      if (Number.isNaN(r) || Number.isNaN(c)) return;
+      if (this._OCCLUSION_OFFSETS.some(([dr, dc]) => r === node.row + dr && c === node.col + dc)) {
+        els.push(m);
+      }
+    });
+    return els;
+  },
+
+  refreshOcclusion(mouseX, mouseY) {
+    if (typeof Units === "undefined") return;
+    const mx = typeof mouseX === "number" ? mouseX : this._lastMouseX;
+    const my = typeof mouseY === "number" ? mouseY : this._lastMouseY;
+    this.list.forEach((node) => {
+      if (!node.spriteEl) return;
+      if (node.el.classList.contains("unit--fog-hidden") || mx === null || my === null) {
+        node.el.classList.remove("resource-node--occluding");
+        return;
+      }
+      const behindEls = this._behindElsFor(node);
+      let occluding = false;
+      if (behindEls.length) {
+        const nRect = node.spriteEl.getBoundingClientRect();
+        const mouseOverNode = mx >= nRect.left && mx <= nRect.right && my >= nRect.top && my <= nRect.bottom;
+        const mouseOverBehind = behindEls.some((el) => {
+          const r = el.getBoundingClientRect();
+          return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom;
+        });
+        occluding = mouseOverNode || mouseOverBehind;
+      }
+      node.el.classList.toggle("resource-node--occluding", occluding);
+    });
+  },
+
+  _lastMouseX: null,
+  _lastMouseY: null,
+  _mouseTrackingReady: false,
+  _initMouseTracking() {
+    if (this._mouseTrackingReady) return;
+    this._mouseTrackingReady = true;
+    window.addEventListener("mousemove", (e) => {
+      this._lastMouseX = e.clientX;
+      this._lastMouseY = e.clientY;
+      this.refreshOcclusion(e.clientX, e.clientY);
+    });
+    const handleTouch = (e) => {
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      this._lastMouseX = t.clientX;
+      this._lastMouseY = t.clientY;
+      this.refreshOcclusion(t.clientX, t.clientY);
+    };
+    window.addEventListener("touchstart", handleTouch, { passive: true });
+    window.addEventListener("touchmove", handleTouch, { passive: true });
+  },
+
+  // ---------- Proveedor de rango (mira de ataque) ----------
+  // Igual que Obelisks.showFor, pero sin distinguir equipo (son neutrales:
+  // cualquier unidad, propia o rival, puede golpearlas) y con daño simple
+  // (fuerza del atacante + bonus de Armería si ya se compró) en vez del
+  // "golpe con el gnomo" de un tótem.
+  showFor(unit) {
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+    this.list.forEach((node, i) => {
+      if (typeof Fog !== "undefined" && Fog.isFogged(node.row, node.col)) return;
+      const approach = this.findApproachTile(unit, node);
+      if (!approach) return;
+      const needsMove = approach.row !== unit.row || approach.col !== unit.col;
+      if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < 2) return;
+      Units.addMarker({
+        className: "attack-marker resource-node-attack-marker",
+        row: node.row,
+        col: node.col,
+        zOffset: 2,
+        delayIndex: i,
+        visibleClass: "attack-marker--visible",
+        owner: "resources",
+        alwaysOnTop: true,
+        onClick: () => this.approachAndAttack(unit, node),
+        buildContent: (marker) => {
+          const icon = document.createElement("i");
+          icon.className = "ph ph-crosshair-simple attack-marker__icon";
+          marker.appendChild(icon);
+        },
+      });
+    });
+  },
+
+  onClear() {},
+
+  findApproachTile(unit, node) {
+    const type = UNIT_TYPES[unit.typeId];
+    const moveRange = type.movimiento;
+    const attackRange = type.attackRange;
+
+    const distToNode = (row, col) => Math.max(Math.abs(row - node.row), Math.abs(col - node.col));
+
+    if (distToNode(unit.row, unit.col) <= attackRange) {
+      return { row: unit.row, col: unit.col };
+    }
+
+    let best = null;
+    let bestDist = Infinity;
+    for (let row = 0; row < Units.boardSize; row++) {
+      for (let col = 0; col < Units.boardSize; col++) {
+        if (row === unit.row && col === unit.col) continue;
+        if (distToNode(row, col) > attackRange) continue;
+        if (Units.unitAt(row, col)) continue;
+        if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
+        if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
+        if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
+        if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
+        if (this.at(row, col)) continue;
+        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
+        if (moveDist > moveRange) continue;
+        if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
+        if (moveDist < bestDist) {
+          bestDist = moveDist;
+          best = { row, col };
+        }
+      }
+    }
+    return best;
+  },
+
+  async approachAndAttack(unit, node) {
+    Units.clearRangeOverlays();
+    const approach = this.findApproachTile(unit, node);
+    if (!approach || !this.list.includes(node)) return;
+    if (approach.row !== unit.row || approach.col !== unit.col) {
+      if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+      const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
+      await Units.walkPath(unit, path);
+      if (typeof Turns !== "undefined") Turns.useAction(unit);
+      if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
+    }
+    const type = UNIT_TYPES[unit.typeId];
+    const distNow = Math.max(Math.abs(unit.row - node.row), Math.abs(unit.col - node.col));
+    if (distNow > type.attackRange) return;
+    await this.attack(unit, node);
+  },
+
+  async attack(unit, node) {
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+    if (!this.list.includes(node)) return;
+    Units.faceTowardsTile(unit, node.row, node.col);
+    if (typeof Turns !== "undefined") Turns.useAction(unit);
+
+    const bonus = typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0;
+    const damage = UNIT_TYPES[unit.typeId].fuerza + bonus;
+    node.hp = Math.max(0, node.hp - damage);
+    if (typeof Units !== "undefined") Units.updateHpBar(node);
+    Units.spawnFloatingText(node, `-${damage}`, { className: "dmg-popup" });
+    Units.playShake(node);
+    SFX.hit();
+
+    if (unit.el) {
+      unit.el.classList.remove("unit--punching");
+      void unit.spriteEl.offsetWidth;
+      unit.el.classList.add("unit--punching");
+      setTimeout(() => unit.el.classList.remove("unit--punching"), 320);
+    }
+
+    if (node.hp <= 0) {
+      await this._destroy(node, unit);
+    } else {
+      Units.refreshRange(unit);
+    }
+  },
+
+  // ---------- Destrucción + recolección ----------
+  // "estas desaparecen con una animacion y el icono del recurso aparece
+  // donde estaba la fuente. un segundo despues una animacion transporta el
+  // recurso hasta nuestra mochila" (pedido explícito, ver cabecera).
+  async _destroy(node, destroyer) {
+    this.list = this.list.filter((n) => n.id !== node.id);
+    const def = RESOURCE_NODE_TYPES[node.kind];
+
+    node.el.classList.add("resource-node--destroyed");
+    if (typeof SFX !== "undefined") SFX.death();
+
+    // Solo el jugador tiene mochila/Armería en esta versión — si es el
+    // rival quien la destruye (o la IA la ataca), desaparece sin más, sin
+    // animación de recolección (no hay a dónde volar).
+    const shouldCollect = destroyer && destroyer.team === "player";
+    if (shouldCollect) this._spawnPickupAt(node.row, node.col, def.resourceId);
+
+    await new Promise((resolve) => setTimeout(resolve, 320));
+    node.el.remove();
+  },
+
+  // Icono del recurso sobre la propia loseta (misma capa/transform que
+  // cualquier otro elemento del tablero, Units.container) — se queda ahí un
+  // segundo, tal y como se pidió, antes de echar a volar hacia la mochila.
+  _spawnPickupAt(row, col, resourceId) {
+    if (typeof getTileCenter === "undefined" || typeof Units === "undefined") return;
+    const def = RESOURCE_TYPES[resourceId];
+    const { x, y } = getTileCenter(row, col, Units.boardSize);
+
+    const el = document.createElement("div");
+    el.className = "resource-pickup";
+    const img = document.createElement("img");
+    img.decoding = "async";
+    img.className = "resource-pickup__sprite";
+    img.src = def.iconUrl;
+    img.draggable = false;
+    img.alt = "";
+    el.appendChild(img);
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.zIndex = String((row + col) * 10 + 7);
+    Units.container.appendChild(el);
+
+    setTimeout(() => this._flyPickupToBackpack(el, resourceId), 1000);
+  },
+
+  // Convierte el icono (hasta ahora en el espacio del tablero, sujeto al
+  // pan/zoom de la cámara) en un elemento "position:fixed" en coordenadas
+  // reales de pantalla, y lo anima en línea recta hasta el icono de la
+  // mochila — mismo espíritu que Backpack._animateKatapumThrow, pero de
+  // tablero A INTERFAZ FIJA en vez de tablero a tablero, así que hace falta
+  // el cambio de espacio de coordenadas primero (via getBoundingClientRect,
+  // que ya da la posición real en pantalla tenga la cámara el pan/zoom que
+  // tenga).
+  _flyPickupToBackpack(boardEl, resourceId) {
+    if (typeof Backpack === "undefined" || !Backpack._btnEl) {
+      boardEl.remove();
+      this._collect(resourceId);
+      return;
+    }
+    const startRect = boardEl.getBoundingClientRect();
+    boardEl.remove();
+
+    const endRect = Backpack._btnEl.getBoundingClientRect();
+    const startX = startRect.left + startRect.width / 2;
+    const startY = startRect.top + startRect.height / 2;
+    const endX = endRect.left + endRect.width / 2;
+    const endY = endRect.top + endRect.height / 2;
+
+    const def = RESOURCE_TYPES[resourceId];
+    const flyEl = document.createElement("div");
+    flyEl.className = "resource-pickup resource-pickup--flying";
+    const img = document.createElement("img");
+    img.className = "resource-pickup__sprite";
+    img.src = def.iconUrl;
+    img.draggable = false;
+    img.alt = "";
+    flyEl.appendChild(img);
+    document.body.appendChild(flyEl);
+
+    const duration = 550;
+    const t0 = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / duration);
+      // Suavizado tipo "ease-in" — arranca despacio y acelera hacia la
+      // mochila, se lee más como "aspirado" que un movimiento lineal frío.
+      const eased = t * t;
+      flyEl.style.left = `${startX + (endX - startX) * eased}px`;
+      flyEl.style.top = `${startY + (endY - startY) * eased}px`;
+      flyEl.style.transform = `translate(-50%, -50%) scale(${1 - 0.5 * eased})`;
+      flyEl.style.opacity = String(1 - 0.6 * eased);
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        flyEl.remove();
+        this._collect(resourceId);
+      }
+    };
+    requestAnimationFrame(step);
+  },
+
+  _collect(resourceId) {
+    this.counts[resourceId] = (this.counts[resourceId] || 0) + 1;
+    if (typeof SFX !== "undefined") SFX.itemEaten();
+    // "que genera una animacion de pulsacion en el momento recibir el
+    // recurso" (pedido explícito) — mismo mecanismo de "quitar clase, forzar
+    // reflow, volver a ponerla" que el resto del proyecto (ver
+    // main-logo--punched en menu.js).
+    if (typeof Backpack !== "undefined" && Backpack._btnEl) {
+      const btn = Backpack._btnEl;
+      btn.classList.remove("backpack-btn--pulse");
+      void btn.offsetWidth;
+      btn.classList.add("backpack-btn--pulse");
+      setTimeout(() => btn.classList.remove("backpack-btn--pulse"), 380);
+    }
+    if (typeof Backpack !== "undefined" && Backpack.refreshResourceBadges) Backpack.refreshResourceBadges();
+  },
+};
+
+Units.registerRangeProvider(Resources);

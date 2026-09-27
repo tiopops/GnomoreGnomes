@@ -353,10 +353,17 @@ const Units = {
     // elemento (permite iluminarse/apagarse con su propio pop elástico, ver
     // .unit__hpbar-segment en style.css) separados por un hueco real (gap),
     // no una simple división pintada con gradiente.
+    // Bonus de Armería (js/armory.js) — pedido explícito: "el jugador podra
+    // aumentar su ataque y aguante base de todas sus unidades", incluidas
+    // las que se recluten DESPUÉS de comprar la mejora (las que ya estaban
+    // en juego se actualizan aparte, ver Armory.applyToAllUnits).
+    const defenseBonus = typeof Armory !== "undefined" ? Armory.defenseBonus(team) : 0;
+    const startingHp = type.aguante + defenseBonus;
+
     const hpBarEl = document.createElement("div");
     hpBarEl.className = "unit__hpbar";
     const hpSegmentEls = [];
-    for (let i = 0; i < type.aguante; i++) {
+    for (let i = 0; i < startingHp; i++) {
       const seg = document.createElement("div");
       seg.className = "unit__hpbar-segment";
       hpBarEl.appendChild(seg);
@@ -373,8 +380,8 @@ const Units = {
       row,
       col,
       facing: type.defaultFacing,
-      hp: type.aguante,
-      maxHp: type.aguante,
+      hp: startingHp,
+      maxHp: startingHp,
       el,
       flipEl,
       spriteEl,
@@ -948,6 +955,7 @@ const Units = {
           if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
           if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
           if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
+          if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           neighbors.push({ row: r, col: c });
         }

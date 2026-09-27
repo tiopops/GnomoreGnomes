@@ -377,6 +377,22 @@ function spawnTestUnits(size, raceId) {
     Bushes.spawn(size);
   }
 
+  // Recursos de escenario (js/resources.js) — pedido explícito: "rocas,
+  // mena de hierro y pinos...repartidos por el escenario". DESPUÉS de
+  // Villages/Shops/Obelisks/Bushes.spawn (evita superponerse con cualquiera
+  // de ellos, ver Resources._tileFree).
+  if (typeof Resources !== "undefined") {
+    Resources.resetAll();
+    Resources.init();
+    Resources.spawn(size);
+  }
+
+  // Armería (js/armory.js) — reinicia los niveles comprados de arma/armadura
+  // de cada equipo al empezar una partida nueva.
+  if (typeof Armory !== "undefined") {
+    Armory.resetAll();
+  }
+
   // Turnos (js/turns.js) — se resetea AL FINAL, con el resto del tablero ya
   // colocado: siempre empieza el turno del jugador, y (re)aparece el botón
   // de PASAR TURNO. Puntos de Gloria (js/glory.js) — se inicializa ANTES de

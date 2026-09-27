@@ -67,6 +67,11 @@ const OBELISK_SPRITES = {
 const OBELISK_MENU_ICONS = {
   recruit: "assets/iconos/obelisco_reclutar.png",
   abilities: "assets/iconos/obelisco_habilidades.png",
+  // Pedido explícito: "Añadimos icono de la armeria...en el obelisco...en
+  // esta interfaz con el mismo estilo visual que la de la tienda
+  // goblin...el jugador puede aumentar su ataque y aguante base" — ver
+  // js/armory.js (Armory.openPopup), un archivo aparte por mecánica.
+  armory: "assets/iconos/armeria.png",
 };
 
 const Obelisks = {
@@ -339,6 +344,16 @@ const Obelisks = {
       this.openAbilitiesPopup(obelisk);
     });
     menuEl.appendChild(abilitiesBtn);
+
+    const armoryBtn = document.createElement("button");
+    armoryBtn.className = "obelisk__menu-btn obelisk__menu-btn--armory";
+    armoryBtn.setAttribute("aria-label", "Armería");
+    armoryBtn.innerHTML = `<img src="${OBELISK_MENU_ICONS.armory}" class="obelisk__menu-icon" alt="">`;
+    armoryBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (typeof Armory !== "undefined") Armory.openPopup(obelisk);
+    });
+    menuEl.appendChild(armoryBtn);
 
     el.appendChild(menuEl);
 
@@ -655,6 +670,7 @@ const Obelisks = {
         if (this.at(row, col)) continue;
         if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
+        if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange) continue;
@@ -711,7 +727,8 @@ const Obelisks = {
     Units.faceTowardsTile(unit, obelisk.row, obelisk.col);
 
     const carriedGnome = typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === unit.id) : null;
-    const damage = carriedGnome ? carriedGnome.points : UNIT_TYPES[unit.typeId].fuerza;
+    const attackBonus = typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0;
+    const damage = carriedGnome ? carriedGnome.points : UNIT_TYPES[unit.typeId].fuerza + attackBonus;
     const wasFullHp = obelisk.hp >= obelisk.maxHp;
     obelisk.hp = Math.max(0, obelisk.hp - damage);
     const oneHitKill = wasFullHp && obelisk.hp <= 0;

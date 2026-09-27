@@ -151,6 +151,7 @@ const Shops = {
       if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
       if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
       if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+      if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
       if (this.at(row, col)) continue;
       this._create(row, col);
     }

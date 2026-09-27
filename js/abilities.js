@@ -239,8 +239,9 @@ const Abilities = {
 
   _activateThorns(unit) {
     const type = UNIT_TYPES[unit.typeId];
-    unit.hp = type.aguante;
-    unit.maxHp = type.aguante;
+    const bonus = typeof Armory !== "undefined" ? Armory.defenseBonus(unit.team) : 0;
+    unit.hp = type.aguante + bonus;
+    unit.maxHp = type.aguante + bonus;
     Units.updateHpBar(unit);
     unit.thorny = true;
     unit.el.classList.add("unit--thorny");
@@ -418,6 +419,7 @@ const Abilities = {
       if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
       if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
       if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
+      if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
       if (this._mines.some((m) => m.row === r && m.col === c)) continue;
       if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
       tiles.push({ row: r, col: c });
@@ -705,6 +707,7 @@ const Abilities = {
       if (typeof Villages !== "undefined" && Villages.at(nextRow, nextCol)) break;
       if (typeof Shops !== "undefined" && Shops.at(nextRow, nextCol)) break;
       if (typeof Obelisks !== "undefined" && Obelisks.at(nextRow, nextCol)) break; // Obelisco Ancestral (js/obelisks.js)
+      if (typeof Resources !== "undefined" && Resources.at(nextRow, nextCol)) break; // Recursos de escenario (js/resources.js)
       if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(nextRow, nextCol)) break;
       path.push({ row: nextRow, col: nextCol });
       row = nextRow;
@@ -857,6 +860,7 @@ const Abilities = {
         if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
         if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+        if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
         if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;
         tiles.push({ row, col });

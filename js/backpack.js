@@ -188,6 +188,37 @@ const Backpack = {
     }
   },
 
+  // ---------- Recursos (js/resources.js) ----------
+  // Pinta una etiqueta por recurso (icono + número, mismo estilo que
+  // .shop-slot__price) dentro de `container` — usado tanto por el popup de
+  // la mochila como por el de la Armería (js/armory.js), cada uno con su
+  // propia fila. El número vive marcado con data-resource-id para que
+  // refreshResourceBadges pueda encontrar y actualizar TODAS las copias
+  // pintadas ahora mismo (puede haber más de una si, aunque no debería
+  // pasar en la práctica, hubiera dos popups a la vez) sin que cada archivo
+  // tenga que llevar su propia lista de referencias.
+  buildResourceBadges(container) {
+    container.innerHTML = "";
+    const counts = typeof Resources !== "undefined" ? Resources.counts : { madera: 0, roca: 0, metal: 0 };
+    Object.keys(RESOURCE_TYPES).forEach((resourceId) => {
+      const def = RESOURCE_TYPES[resourceId];
+      const badge = document.createElement("div");
+      badge.className = "resource-badge";
+      badge.innerHTML = `
+        <img src="${def.iconUrl}" class="resource-badge__icon" alt="${def.name}">
+        <span class="resource-badge__count" data-resource-id="${resourceId}">${counts[resourceId] || 0}</span>`;
+      if (typeof Tooltip !== "undefined") Tooltip.attach(badge, def.name);
+      container.appendChild(badge);
+    });
+  },
+
+  refreshResourceBadges() {
+    const counts = typeof Resources !== "undefined" ? Resources.counts : { madera: 0, roca: 0, metal: 0 };
+    document.querySelectorAll(".resource-badge__count[data-resource-id]").forEach((el) => {
+      el.textContent = counts[el.dataset.resourceId] || 0;
+    });
+  },
+
   // ---------- Icono circular ----------
   _ensureButton() {
     if (this._btnEl) return;
@@ -322,6 +353,16 @@ const Backpack = {
     title.className = "p5-banner__label backpack-panel__title";
     title.textContent = "MOCHILA";
     panelBg.appendChild(title);
+
+    // Pedido explícito: "EN la mochila se mostrara el recurso recogido.
+    // TODOS los recursos, son stackeables y se mostrara la cantidad de cada
+    // uno con una etiqueta igual que la que muestra los puntos de gloria
+    // que cuestan las unidades o los precios de la tienda goblin" (ver
+    // js/resources.js, Resources.counts).
+    const resourceRow = document.createElement("div");
+    resourceRow.className = "armory-resource-row";
+    this.buildResourceBadges(resourceRow);
+    panelBg.appendChild(resourceRow);
 
     const slots = document.createElement("div");
     slots.className = "backpack-slots";
@@ -475,8 +516,9 @@ const Backpack = {
   _giveBevidaTo(uid, target) {
     this.inventory = this.inventory.filter((it) => it.uid !== uid);
     const type = UNIT_TYPES[target.typeId];
-    target.hp = type.aguante;
-    target.maxHp = type.aguante;
+    const bonus = typeof Armory !== "undefined" ? Armory.defenseBonus(target.team) : 0;
+    target.hp = type.aguante + bonus;
+    target.maxHp = type.aguante + bonus;
     Units.updateHpBar(target);
     SFX.itemEaten();
     Units.spawnFloatingText(target, "¡BEVIDA!", { className: "dmg-popup gnome-points-popup" });
@@ -519,6 +561,7 @@ const Backpack = {
             // justo arriba.
             if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
             if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+            if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
             // Igual que cualquier otra mecánica del proyecto: no se ofrece
             // colocar nada sobre una loseta que ni siquiera se ha revelado.
             if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;

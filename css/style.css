@@ -6469,3 +6469,260 @@ body.backpack-giving--katapum * {
     margin-top: 3vh;
   }
 }
+
+/* ---------- Recursos de escenario (rocas, mena de hierro, pinos) ----------
+   js/resources.js — pedido explícito: "añadimos elementos de escenario de
+   rocas, mena de hierro y pinos que ocupan algunas casillas. el sistema de
+   transparencias es el mismo que el de los totems". Reutiliza ".unit" solo
+   por su posicionamiento base, igual que .bush/.village (nunca entran en
+   Units.list). */
+.resource-node {
+  cursor: var(--cursor-pointer);
+  transform: translate(-50%, -92%) translateY(30px);
+}
+
+.resource-node__sprite {
+  display: block;
+  width: 150px;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4));
+  transform-origin: 50% 100%;
+  animation: unit-idle-breathe 4s ease-in-out infinite;
+}
+
+.resource-node--pino .resource-node__sprite {
+  width: 118px;
+}
+
+/* Barra de vida SIEMPRE visible (2 segmentos), mismo criterio que
+   .village .unit__hpbar: una fuente no se selecciona, así que no depende de
+   ningún estado para mostrarse. */
+.resource-node .unit__hpbar {
+  opacity: 1;
+  top: -14px;
+}
+
+/* Misma semitransparencia + clics atravesándolo que .village--occluding/
+   .obelisk--occluding/.bush--occluding — pedido explícito: "el sistema de
+   transparencias es el mismo que el de los totems". */
+.resource-node--occluding {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+/* "estas desaparecen con una animacion" al llegar a 0 de vida — mismo
+   espíritu de "poof" que el resto del proyecto (encoge y se desvanece en
+   vez de cortar en seco). */
+.resource-node--destroyed {
+  animation: resource-node-poof 0.32s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes resource-node-poof {
+  0% { transform: translate(-50%, -92%) translateY(30px) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -92%) translateY(30px) scale(0.3); opacity: 0; }
+}
+
+/* Icono del recurso recién soltado — "el icono del recurso aparece donde
+   estaba la fuente" (se queda un segundo quieto en el tablero, ver
+   Resources._spawnPickupAt) y, ya convertido en .resource-pickup--flying,
+   vuela en línea recta con position:fixed hasta la mochila (ver
+   Resources._flyPickupToBackpack). */
+.resource-pickup {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: resource-pickup-pop 0.3s cubic-bezier(0.34, 1.6, 0.64, 1);
+}
+
+.resource-pickup--flying {
+  position: fixed;
+  z-index: 99999;
+  will-change: left, top, transform, opacity;
+}
+
+@keyframes resource-pickup-pop {
+  0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.resource-pickup__sprite {
+  display: block;
+  width: 52px;
+  height: auto;
+  filter: drop-shadow(2px 3px 4px rgba(0, 0, 0, 0.5));
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Pulso de la mochila al recibir un recurso (pedido explícito: "que genera
+   una animacion de pulsacion en el momento recibir el recurso") — mismo
+   patrón de animación corta de un solo disparo que .main-logo--punched. */
+.backpack-btn--pulse {
+  animation: backpack-btn-pulse 0.38s ease;
+}
+
+@keyframes backpack-btn-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- Etiquetas de recurso (mochila / Armería) ----------
+   Pedido explícito: "se mostrara la cantidad de cada uno con una etiqueta
+   igual que la que muestra los puntos de gloria que cuestan las unidades o
+   los precios de la tienda goblin" — fila de icono+número simple (a
+   diferencia del rombo de precio de .shop-slot__price, que va anclado a la
+   esquina de UNA casilla concreta, aquí son varias etiquetas sueltas en
+   fila propia). */
+.armory-resource-row {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 4px;
+}
+
+.resource-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 999px;
+  padding: 4px 12px 4px 6px;
+}
+
+.resource-badge__icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.5));
+}
+
+.resource-badge__count {
+  color: #ffcf3f;
+  font-weight: 900;
+  font-size: 0.95rem;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* ---------- Armería (js/armory.js) ----------
+   Pedido explícito: "En esta interfaz con el mismo estilo visual que la de
+   la tienda goblin...apareceran en horizontal los 3 niveles de cada cosa
+   ordenados de izquierda a derecha...los iconos aparecieran conectados por
+   una linea amarilla como en un arbol de nodos...Cuando no, esta de color
+   gris apagado." Reutiliza .backpack-panel/.backpack-overlay/.p5-banner
+   (ver Armory.openPopup) — solo lo propio de este popup vive aquí. */
+.armory-tracks {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin: 6px 0;
+}
+
+.armory-track__label {
+  color: rgba(244, 242, 248, 0.75);
+  font-weight: 900;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.armory-track__nodes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.armory-node {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(244, 242, 248, 0.25);
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: var(--cursor-pointer);
+  transition: transform 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
+  flex-shrink: 0;
+}
+
+.armory-node__icon {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Nodo ya comprado: aro dorado fijo. */
+.armory-node--owned {
+  border-color: #ffcf3f;
+  filter: drop-shadow(0 0 8px rgba(255, 207, 63, 0.55));
+}
+
+/* Siguiente nivel disponible: aro dorado que palpita suavemente, invita al
+   clic (misma idea que end-turn-btn--ready). */
+.armory-node--next {
+  border-color: #ffcf3f;
+  animation: armory-node-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes armory-node-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 207, 63, 0.5); }
+  50% { box-shadow: 0 0 16px rgba(255, 207, 63, 0.85); }
+}
+
+/* Bloqueado (pedido explícito: "de color gris apagado") — icono apagado, no
+   clicable. */
+.armory-node--locked {
+  filter: grayscale(1) brightness(0.55);
+  cursor: var(--cursor-default);
+}
+
+.armory-node--selected {
+  transform: scale(1.12);
+}
+
+.armory-node:disabled {
+  cursor: var(--cursor-default);
+}
+
+/* Tramo entre dos nodos — amarillo si el nivel anterior ya está comprado,
+   gris apagado si no (pedido explícito, ver cabecera del bloque). */
+.armory-link {
+  width: 34px;
+  height: 5px;
+  background: rgba(244, 242, 248, 0.2);
+  flex-shrink: 0;
+}
+
+.armory-link--unlocked {
+  background: #ffcf3f;
+  box-shadow: 0 0 6px rgba(255, 207, 63, 0.7);
+}
+
+/* ---------- "+X" de estadística potenciada por la Armería (unitinfo.js) ----------
+   Pedido explícito: "Si con alguna de estas mejoras, las estadisticas de un
+   personaje superase el maximo visualmente permitido de los personajes,
+   esto se indicara con un +x en la derecha de la barra correspondiente. Las
+   estadisticas que aumenten los huecos de la barra...deben mostrarse de
+   color amarillo." */
+.unit-stat-pip--bonus {
+  background: #ffcf3f;
+  box-shadow: 0 0 6px rgba(255, 207, 63, 0.75);
+}
+
+.unit-stat-overflow {
+  color: #ffcf3f;
+  font-weight: 900;
+  margin-left: 4px;
+  font-size: 0.78rem;
+}
