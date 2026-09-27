@@ -66,6 +66,103 @@ const SettingsMenu = {
     title.textContent = "AJUSTES";
     panel.appendChild(title);
 
+    // Pedido explícito (segunda pasada): "reorganiza los botones de
+    // confuguracion para que aparezcan en eset oden de aarriba a abajo:
+    // efectos de sonido, musica..., mostrar equipos, sombras, animacion de
+    // la niebla, vegeteacion, salir de la partida. si son demasiados para
+    // ponerlos en una unica columna puedes mirar de ajustarlo en dos, dando
+    // coherencia a las que agrupes en cada columna y debajo del todo el
+    // boton salir de la partida centrado" — dos columnas temáticas (audio/
+    // interfaz a la izquierda, visual/rendimiento a la derecha) en vez de
+    // una única lista vertical larga; Modo rendimiento no estaba en la
+    // lista de este pedido pero YA existía de un pedido anterior (ver
+    // perfmode.js) y afecta directamente a Sombras/Niebla/Vegetación, así
+    // que se queda agrupado junto a esas tres en vez de desaparecer.
+    const columnsEl = document.createElement("div");
+    columnsEl.className = "settings-panel__columns";
+    const colAudio = document.createElement("div");
+    colAudio.className = "settings-panel__column";
+    const colVisual = document.createElement("div");
+    colVisual.className = "settings-panel__column";
+    columnsEl.appendChild(colAudio);
+    columnsEl.appendChild(colVisual);
+    panel.appendChild(columnsEl);
+
+    // Pedido explícito: "añade a configuracion otro checkbox que desconecte
+    // los efectos de sonido (ojo! en un futuro habra musica, pero eso ira
+    // por un lado distinto a los efectos de sonido)" — mismo patrón exacto
+    // que el resto de interruptores, pero para SFX (js/sfx.js). Interruptor
+    // propio, independiente a propósito: el día que exista música de
+    // fondo, será OTRO checkbox aparte con su propia clave de localStorage,
+    // nunca compartido con este (ver el de Música, justo debajo).
+    const sfxBtn = document.createElement("button");
+    sfxBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
+    const sfxChecked = typeof SFX !== "undefined" ? SFX.enabled : true;
+    sfxBtn.innerHTML =
+      '<span class="settings-panel__option-main">' +
+      '<i class="ph ph-speaker-high settings-panel__option-icon"></i>' +
+      '<span class="p5-banner__label">Efectos de sonido</span>' +
+      "</span>" +
+      `<span class="settings-toggle" data-checked="${sfxChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
+    sfxBtn.addEventListener("click", () => {
+      const next = typeof SFX !== "undefined" ? !SFX.enabled : true;
+      // El propio clic del checkbox solo tiene que sonar si el sonido
+      // queda ACTIVADO tras este toque — por eso, a diferencia del resto
+      // de botones del panel, aquí el orden importa: activar primero (para
+      // que el gain maestro ya esté a 1 cuando suene el clic) y solo
+      // silenciar después de reproducirlo; al desactivar, ni se intenta.
+      if (next) {
+        if (typeof SFX !== "undefined") SFX.setEnabled(next);
+        SFX.click();
+      } else if (typeof SFX !== "undefined") {
+        SFX.setEnabled(next);
+      }
+      sfxBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+    });
+    colAudio.appendChild(sfxBtn);
+
+    // Pedido explícito: "musica(aun por implementar, de momento no hace
+    // ningun efecto)" — fila placeholder, visualmente igual que el resto
+    // pero SIEMPRE bloqueada (mismo estilo --locked que ya usan Sombras/
+    // Niebla cuando el modo rendimiento las fuerza apagadas) y sin ningún
+    // listener: existe para que el jugador vea que la opción está prevista,
+    // no hace absolutamente nada todavía (no hay música de fondo en el
+    // juego, ver la nota de sfxBtn arriba).
+    const musicBtn = document.createElement("button");
+    musicBtn.className =
+      "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle settings-panel__option--locked";
+    musicBtn.setAttribute("aria-disabled", "true");
+    musicBtn.innerHTML =
+      '<span class="settings-panel__option-main">' +
+      '<i class="ph ph-music-notes settings-panel__option-icon"></i>' +
+      '<span class="p5-banner__label">Música <span class="settings-panel__option-soon">(próximamente)</span></span>' +
+      "</span>" +
+      '<span class="settings-toggle" data-checked="false"><i class="ph ph-check settings-toggle__check"></i></span>';
+    colAudio.appendChild(musicBtn);
+
+    // Pedido explícito: "otra opcion en el menu de configuracion, otro
+    // chekbox, llamado mostrar equipos. esta opcion por defecto viene
+    // desabilitada, si se habilita muestra un circulo azul bajo los
+    // aliados y uno rojo bajo los enemigos en la casilla en la que estan"
+    // — mismo patrón exacto que el resto, pero para TeamMarkers
+    // (js/teammarkers.js), que por defecto empieza en false en vez de true.
+    const teamMarkersBtn = document.createElement("button");
+    teamMarkersBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
+    const teamMarkersChecked = typeof TeamMarkers !== "undefined" ? TeamMarkers.enabled : false;
+    teamMarkersBtn.innerHTML =
+      '<span class="settings-panel__option-main">' +
+      '<i class="ph ph-users-three settings-panel__option-icon"></i>' +
+      '<span class="p5-banner__label">Mostrar equipos</span>' +
+      "</span>" +
+      `<span class="settings-toggle" data-checked="${teamMarkersChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
+    teamMarkersBtn.addEventListener("click", () => {
+      SFX.click();
+      const next = typeof TeamMarkers !== "undefined" ? !TeamMarkers.enabled : false;
+      if (typeof TeamMarkers !== "undefined") TeamMarkers.setEnabled(next);
+      teamMarkersBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+    });
+    colAudio.appendChild(teamMarkersBtn);
+
     // Pedido explícito: "haz que se puedan activar/desactivar con un
     // checkbox del estilo que estamos haciendo" — interruptor de las
     // sombras proyectadas (js/shadows.js). Estado inicial leído de
@@ -92,64 +189,7 @@ const SettingsMenu = {
       if (typeof Shadows !== "undefined") Shadows.setEnabled(next);
       shadowsBtn.querySelector(".settings-toggle").dataset.checked = String(next);
     });
-    panel.appendChild(shadowsBtn);
-
-    // Pedido explícito: "añade a configuracion otro checkbox que desconecte
-    // los efectos de sonido (ojo! en un futuro habra musica, pero eso ira
-    // por un lado distinto a los efectos de sonido)" — mismo patrón exacto
-    // que el interruptor de Sombras de arriba, pero para SFX (js/sfx.js).
-    // Interruptor propio, independiente a propósito: el día que exista
-    // música de fondo, será OTRO checkbox aparte con su propia clave de
-    // localStorage, nunca compartido con este.
-    const sfxBtn = document.createElement("button");
-    sfxBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
-    const sfxChecked = typeof SFX !== "undefined" ? SFX.enabled : true;
-    sfxBtn.innerHTML =
-      '<span class="settings-panel__option-main">' +
-      '<i class="ph ph-speaker-high settings-panel__option-icon"></i>' +
-      '<span class="p5-banner__label">Efectos de sonido</span>' +
-      "</span>" +
-      `<span class="settings-toggle" data-checked="${sfxChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
-    sfxBtn.addEventListener("click", () => {
-      const next = typeof SFX !== "undefined" ? !SFX.enabled : true;
-      // El propio clic del checkbox solo tiene que sonar si el sonido
-      // queda ACTIVADO tras este toque — por eso, a diferencia del resto
-      // de botones del panel, aquí el orden importa: activar primero (para
-      // que el gain maestro ya esté a 1 cuando suene el clic) y solo
-      // silenciar después de reproducirlo; al desactivar, ni se intenta.
-      if (next) {
-        if (typeof SFX !== "undefined") SFX.setEnabled(next);
-        SFX.click();
-      } else if (typeof SFX !== "undefined") {
-        SFX.setEnabled(next);
-      }
-      sfxBtn.querySelector(".settings-toggle").dataset.checked = String(next);
-    });
-    panel.appendChild(sfxBtn);
-
-    // Pedido explícito: "otra opcion en el menu de configuracion, otro
-    // chekbox, llamado mostrar equipos. esta opcion por defecto viene
-    // desabilitada, si se habilita muestra un circulo azul bajo los
-    // aliados y uno rojo bajo los enemigos en la casilla en la que estan"
-    // — mismo patrón exacto que Sombras/SFX de arriba, pero para
-    // TeamMarkers (js/teammarkers.js), que por defecto empieza en false en
-    // vez de true.
-    const teamMarkersBtn = document.createElement("button");
-    teamMarkersBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
-    const teamMarkersChecked = typeof TeamMarkers !== "undefined" ? TeamMarkers.enabled : false;
-    teamMarkersBtn.innerHTML =
-      '<span class="settings-panel__option-main">' +
-      '<i class="ph ph-users-three settings-panel__option-icon"></i>' +
-      '<span class="p5-banner__label">Mostrar equipos</span>' +
-      "</span>" +
-      `<span class="settings-toggle" data-checked="${teamMarkersChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
-    teamMarkersBtn.addEventListener("click", () => {
-      SFX.click();
-      const next = typeof TeamMarkers !== "undefined" ? !TeamMarkers.enabled : false;
-      if (typeof TeamMarkers !== "undefined") TeamMarkers.setEnabled(next);
-      teamMarkersBtn.querySelector(".settings-toggle").dataset.checked = String(next);
-    });
-    panel.appendChild(teamMarkersBtn);
+    colVisual.appendChild(shadowsBtn);
 
     // Pedido explícito: "añade un checkbox para desactivar activar la
     // animacion de la niebla en configuracion. en la interfaz movil por
@@ -177,7 +217,29 @@ const SettingsMenu = {
       if (typeof Fog !== "undefined") Fog.setAnimEnabled(next);
       fogAnimBtn.querySelector(".settings-toggle").dataset.checked = String(next);
     });
-    panel.appendChild(fogAnimBtn);
+    colVisual.appendChild(fogAnimBtn);
+
+    // Pedido explícito: "vegeteacion" en la lista reordenada de opciones —
+    // interruptor de Hierbajos.enabled (js/hierbajos.js), mismo patrón
+    // exacto que el resto. Bloqueado mientras el modo rendimiento esté
+    // activo, igual que Sombras/Animación de niebla (ver _syncPerfLock).
+    const vegetationBtn = document.createElement("button");
+    vegetationBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
+    const vegetationChecked = typeof Hierbajos !== "undefined" ? Hierbajos.enabled : true;
+    vegetationBtn.innerHTML =
+      '<span class="settings-panel__option-main">' +
+      '<i class="ph ph-plant settings-panel__option-icon"></i>' +
+      '<span class="p5-banner__label">Vegetación</span>' +
+      "</span>" +
+      `<span class="settings-toggle" data-checked="${vegetationChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
+    vegetationBtn.addEventListener("click", () => {
+      if (typeof PerfMode !== "undefined" && PerfMode.enabled) return;
+      SFX.click();
+      const next = typeof Hierbajos !== "undefined" ? !Hierbajos.enabled : true;
+      if (typeof Hierbajos !== "undefined") Hierbajos.setEnabled(next);
+      vegetationBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+    });
+    colVisual.appendChild(vegetationBtn);
 
     // Pedido explícito: "tampoco veo la opcion de la configuracion de la
     // resolucion dinamiga paara mejorar el rendimiento" — mismo patrón
@@ -209,6 +271,10 @@ const SettingsMenu = {
       if (next) {
         shadowsBtn.querySelector(".settings-toggle").dataset.checked = "false";
         fogAnimBtn.querySelector(".settings-toggle").dataset.checked = "false";
+        // Pedido explícito: "el modo rendimiento los desactiva
+        // directamente" (vegetación/hierbajos) — mismo refresco visual
+        // inmediato que ya hacían Sombras/Niebla justo arriba.
+        vegetationBtn.querySelector(".settings-toggle").dataset.checked = "false";
       }
       // Segundo pedido explícito, encima del anterior: "cuando el modo
       // rendimiento esta activado, las sombras y la animacion de niebla
@@ -217,13 +283,19 @@ const SettingsMenu = {
       // modo rendimiento siga activo (ver _syncPerfLock).
       this._syncPerfLock();
     });
-    panel.appendChild(perfModeBtn);
+    colVisual.appendChild(perfModeBtn);
     this._shadowsBtn = shadowsBtn;
     this._fogAnimBtn = fogAnimBtn;
+    this._vegetationBtn = vegetationBtn;
     this._syncPerfLock();
 
+    // Pedido explícito: "debajo del todo el boton salir de la partida
+    // centrado" — fuera de las dos columnas, como fila propia del panel
+    // (que sigue siendo flex-column), con --centered para que no se
+    // estire a todo el ancho como el resto de filas (ver esa clase en
+    // style.css).
     const exitBtn = document.createElement("button");
-    exitBtn.className = "p5-banner p5-banner--action settings-panel__option";
+    exitBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--centered";
     exitBtn.innerHTML =
       '<i class="ph ph-door-open settings-panel__option-icon"></i>' +
       '<span class="p5-banner__label">Salir de la partida</span>';
@@ -256,9 +328,9 @@ const SettingsMenu = {
   // opciones existen, solo que no se pueden tocar mientras el modo
   // rendimiento las esté forzando apagadas.
   _syncPerfLock() {
-    if (!this._shadowsBtn || !this._fogAnimBtn) return;
+    if (!this._shadowsBtn || !this._fogAnimBtn || !this._vegetationBtn) return;
     const locked = typeof PerfMode !== "undefined" && PerfMode.enabled;
-    [this._shadowsBtn, this._fogAnimBtn].forEach((btn) => {
+    [this._shadowsBtn, this._fogAnimBtn, this._vegetationBtn].forEach((btn) => {
       btn.classList.toggle("settings-panel__option--locked", locked);
       btn.setAttribute("aria-disabled", String(locked));
     });

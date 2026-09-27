@@ -89,6 +89,7 @@ const Bushes = {
       if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
       if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
       if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
+      if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
       if (this.at(row, col)) continue;
       const tooClose = this.list.some(
         (b) => Math.max(Math.abs(b.row - row), Math.abs(b.col - col)) < BUSH_MIN_SEPARATION
@@ -112,6 +113,16 @@ const Bushes = {
     spriteEl.src = "assets/iconos/arbusto.png";
     spriteEl.alt = "";
     spriteEl.draggable = false;
+    // Pedido explícito: "todo en el escenario se mueve al compas...pon
+    // delays en las animaciones de los elementos del escenario para que no
+    // todos los arbustos se muevan igual" — .bush__sprite comparte el mismo
+    // @keyframes unit-idle-breathe (misma duración) para TODAS las
+    // instancias, así que sin esto laten perfectamente sincronizados. Un
+    // delay negativo aleatorio adelanta el reloj de cada instancia a un
+    // punto distinto del ciclo desde el primer fotograma (sin negativo se
+    // verían todos quietos un rato antes de arrancar, ver el mismo truco en
+    // Resources._create).
+    spriteEl.style.animationDelay = `-${(Math.random() * 3).toFixed(2)}s`;
     el.appendChild(spriteEl);
     if (typeof Shadows !== "undefined") Shadows.attach(spriteEl);
 

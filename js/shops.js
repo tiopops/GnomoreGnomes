@@ -175,6 +175,11 @@ const Shops = {
     spriteEl.src = SHOP_SPRITE;
     spriteEl.alt = "";
     spriteEl.draggable = false;
+    // Pedido explícito: "todo en el escenario se mueve al compas...pon
+    // delays en las animaciones" — mismo arreglo que Bushes/Resources._create
+    // (ver esas notas): sin esto, con varias tiendas en la misma partida,
+    // todas respiran (unit-idle-breathe) exactamente a la vez.
+    spriteEl.style.animationDelay = `-${(Math.random() * 2.6).toFixed(2)}s`;
     el.appendChild(spriteEl);
     // Sombra proyectada (js/shadows.js) — la tienda no se mueve/salta, así
     // que la sombra se queda estática, siempre en su tamaño normal.

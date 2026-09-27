@@ -60,6 +60,10 @@ const PerfMode = {
     if (this.enabled) {
       if (typeof Shadows !== "undefined") Shadows.setEnabled(false);
       if (typeof Fog !== "undefined" && typeof Fog.setAnimEnabled === "function") Fog.setAnimEnabled(false);
+      // Pedido explícito: "el modo rendimiento los desactiva directamente"
+      // (refiriéndose a la vegetación/hierbajos) — mismo criterio que
+      // Shadows/Fog justo arriba.
+      if (typeof Hierbajos !== "undefined") Hierbajos.setEnabled(false);
     }
     if (typeof applyPerfModeTileSprites === "function") applyPerfModeTileSprites(this.enabled);
   },

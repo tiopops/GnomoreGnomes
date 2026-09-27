@@ -19,7 +19,16 @@
    sensación de dispersión "natural" (en vez de puntos sueltos repartidos
    uniformemente, que se lee como una cuadrícula) se consigue agrupando en
    RACIMOS: unos pocos centros al azar, con varias unidades cada uno
-   esparcidas a su alrededor. */
+   esparcidas a su alrededor.
+
+   Pedido explícito (segunda pasada): "haz que la vegetacion, hierbajos y
+   elementos decorativos del escenario se puedan quitar o poner desde el
+   menu de configuracion. el modo rendimiento los desactiva directamente" —
+   mismo patrón exacto que Shadows.enabled/setEnabled (ver shadows.js):
+   preferencia en localStorage, UNA clase en <body> (nunca se dejan de
+   crear/repartir, muchísimo más barato ocultarlos con CSS que recorrer el
+   tablero destruyéndolos), y PerfMode.setEnabled(true) la apaga de paso
+   igual que ya hace con Shadows/Fog (ver perfmode.js). */
 
 const HIERBAJOS_CLUSTER_COUNT = 16;
 const HIERBAJOS_PER_CLUSTER_MIN = 2;
@@ -29,6 +38,25 @@ const HIERBAJOS_CLUSTER_RADIUS = 2;
 const Hierbajos = {
   list: [],
   _nextId: 1,
+
+  _STORAGE_KEY: "gnomoregnomes_hierbajos",
+  enabled: true,
+
+  initPref() {
+    const saved = localStorage.getItem(this._STORAGE_KEY);
+    this.enabled = saved === null ? true : saved === "1";
+    this._applyGlobalToggle();
+  },
+
+  setEnabled(enabled) {
+    this.enabled = !!enabled;
+    localStorage.setItem(this._STORAGE_KEY, this.enabled ? "1" : "0");
+    this._applyGlobalToggle();
+  },
+
+  _applyGlobalToggle() {
+    document.body.classList.toggle("gg-hierbajos-off", !this.enabled);
+  },
 
   resetAll() {
     this.list.forEach((h) => h.el.remove());
@@ -100,14 +128,23 @@ const Hierbajos = {
     spriteEl.src = "assets/escenario/hierbajos.png";
     spriteEl.alt = "";
     spriteEl.draggable = false;
-    // Variación aleatoria de tamaño/espejado/rotación — pedido explícito:
-    // "dar sensacion de variedad" / "debe ser la sensacion de que es
-    // natural la dispersion". Fijada UNA vez por instancia (no animada),
-    // igual que Shadows ya varía tamaño/opacidad por unidad.
+    // Variación aleatoria de tamaño/espejado — pedido explícito: "dar
+    // sensacion de variedad" / "debe ser la sensacion de que es natural la
+    // dispersion". Fijada UNA vez por instancia (no animada), igual que
+    // Shadows ya varía tamaño/opacidad por unidad.
+    // NOTA (bug encontrado, pedido explícito "los hierbajos se muestran
+    // borrosos, arreglalo"): el tilt (rotate()) que había aquí antes era la
+    // causa exacta del desenfoque — confirmado quitando cada parte del
+    // transform una a una con capturas: con rotate() presente (combinado
+    // con el scale no uniforme del espejado) Chromium rasteriza este sprite
+    // con un filtrado de menor calidad que con escalado/espejado puros (sin
+    // rotar), visible sobre todo a este tamaño tan pequeño (96px). Sin
+    // rotate() el sprite vuelve a verse tan nítido como cualquier otro
+    // elemento del escenario (rocas, árboles...). Se mantiene el
+    // escalado+espejado para conservar la variedad.
     const scale = 0.8 + Math.random() * 0.5; // 0.8 – 1.3
     const flip = Math.random() < 0.5 ? -1 : 1;
-    const tilt = (Math.random() * 10 - 5).toFixed(1); // -5deg a 5deg
-    spriteEl.style.transform = `scale(${(scale * flip).toFixed(2)}, ${scale.toFixed(2)}) rotate(${tilt}deg)`;
+    spriteEl.style.transform = `scale(${(scale * flip).toFixed(2)}, ${scale.toFixed(2)})`;
     el.appendChild(spriteEl);
 
     if (typeof Units !== "undefined") Units.container.appendChild(el);
@@ -146,3 +183,5 @@ const Hierbajos = {
     });
   },
 };
+
+document.addEventListener("DOMContentLoaded", () => Hierbajos.initPref());

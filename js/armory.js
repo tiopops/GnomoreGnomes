@@ -58,6 +58,12 @@ const ARMORY_ICONS = {
 
 const ARMORY_TRACK_LABELS = { arma: "ARMA", armadura: "ARMADURA" };
 
+// Mismos iconos que ya usa unitinfo.js para estas dos estadísticas (statRow
+// "ph-boxing-glove"/"ph-shield") — reutilizados aquí para que la recompensa
+// de la Armería se lea con el mismo lenguaje visual que la ficha de stats.
+const ARMORY_STAT_ICON = { arma: "ph-boxing-glove", armadura: "ph-shield" };
+const ARMORY_STAT_LABEL = { arma: "Fuerza", armadura: "Aguante" };
+
 const Armory = {
   state: { player: { arma: 0, armadura: 0 }, enemy: { arma: 0, armadura: 0 } },
 
@@ -153,10 +159,10 @@ const Armory = {
     });
 
     const desc = document.createElement("div");
-    desc.className = "backpack-desc";
-    desc.innerHTML = '<p class="backpack-desc__text"></p>';
+    desc.className = "backpack-desc armory-desc-wrap";
+    desc.innerHTML = '<div class="armory-desc"></div>';
     panelBg.appendChild(desc);
-    this._descEl = desc.querySelector(".backpack-desc__text");
+    this._descEl = desc.querySelector(".armory-desc");
 
     const upgradeBtn = document.createElement("button");
     upgradeBtn.className = "p5-banner p5-banner--action shop-buy-btn";
@@ -257,21 +263,52 @@ const Armory = {
     }
   },
 
-  _describeLevel(kind, lvl) {
+  // Pedido explícito: "los recursos necesarios para aumentar de nivel la
+  // mejora seleccionada deben mostrarse de manera clara y visible de un
+  // vistazo al igual que la recompensa obtenida...ahora es un texto plano
+  // poco trabajado" — de un párrafo de texto a dos filas: una de "pastillas"
+  // icono+cantidad (mismo lenguaje visual que .resource-badge/.shop-slot__
+  // price, en rojo si falta ese recurso) para el coste, y una línea grande
+  // en amarillo con el icono de la estadística (mismos iconos que
+  // unitinfo.js) para la recompensa.
+  _renderDesc(kind, lvl) {
+    if (!this._descEl) return;
     const cost = ARMORY_LEVEL_COST[lvl - 1];
-    const parts = [];
-    if (cost.madera) parts.push(`${cost.madera} de madera`);
-    if (cost.roca) parts.push(`${cost.roca} de roca`);
-    if (cost.metal) parts.push(`${cost.metal} de metal`);
-    const statLabel = kind === "arma" ? "Fuerza" : "Aguante";
-    return `Nivel ${lvl} de ${ARMORY_TRACK_LABELS[kind]}: +${lvl} ${statLabel} acumulado. Cuesta ${parts.join(", ")}.`;
+    const counts = typeof Resources !== "undefined" ? Resources.counts : { madera: 0, roca: 0, metal: 0 };
+
+    const pills = Object.keys(RESOURCE_TYPES)
+      .filter((id) => cost[id])
+      .map((id) => {
+        const need = cost[id];
+        const have = counts[id] || 0;
+        const short = have < need;
+        return (
+          `<span class="armory-desc__pill${short ? " armory-desc__pill--short" : ""}">` +
+          `<img src="${RESOURCE_TYPES[id].iconUrl}" class="armory-desc__pill-icon" alt="">` +
+          `<span class="armory-desc__pill-count">${need}</span>` +
+          `</span>`
+        );
+      })
+      .join("");
+
+    this._descEl.innerHTML =
+      `<div class="armory-desc__row">` +
+      `<span class="armory-desc__row-label">Nivel ${lvl} de ${ARMORY_TRACK_LABELS[kind]} — coste</span>` +
+      `<span class="armory-desc__pills">${pills}</span>` +
+      `</div>` +
+      `<div class="armory-desc__row armory-desc__row--reward">` +
+      `<span class="armory-desc__row-label">Recompensa</span>` +
+      `<span class="armory-desc__reward">` +
+      `<i class="ph-fill ${ARMORY_STAT_ICON[kind]}"></i>+${lvl} ${ARMORY_STAT_LABEL[kind]}` +
+      `</span>` +
+      `</div>`;
   },
 
   _updateDescAndButton() {
     if (this._warningEl) this._warningEl.classList.remove("shop-warning--visible");
     if (!this._descEl || !this._upgradeBtnEl) return;
     if (!this._selected) {
-      this._descEl.textContent = "";
+      this._descEl.innerHTML = "";
       this._upgradeBtnEl.disabled = true;
       this._upgradeBtnEl.classList.remove("shop-buy-btn--active");
       return;
@@ -280,11 +317,19 @@ const Armory = {
     const lvl = Number(lvlStr);
     const team = this._obelisk.team;
     const owned = this._levelOf(team, kind);
-    this._descEl.textContent = this._describeLevel(kind, lvl);
+    this._renderDesc(kind, lvl);
 
     // Solo el SIGUIENTE nivel por comprar activa el botón MEJORAR — mirar
-    // uno ya comprado es solo consulta.
-    const canBuy = lvl === owned + 1;
+    // uno ya comprado es solo consulta. Pedido explícito: "si no hay
+    // recursos suficientes o si no hay seleccionada ninguna mejora en la
+    // armeria, el boton mejorar debe estar desactivado" — antes solo se
+    // comprobaba que fuese el siguiente nivel disponible, ahora también
+    // hace falta poder pagarlo.
+    const cost = ARMORY_LEVEL_COST[lvl - 1];
+    const counts = typeof Resources !== "undefined" ? Resources.counts : { madera: 0, roca: 0, metal: 0 };
+    const affordable =
+      (counts.madera || 0) >= cost.madera && (counts.roca || 0) >= cost.roca && (counts.metal || 0) >= cost.metal;
+    const canBuy = lvl === owned + 1 && affordable;
     this._upgradeBtnEl.disabled = !canBuy;
     this._upgradeBtnEl.classList.toggle("shop-buy-btn--active", canBuy);
   },

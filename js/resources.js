@@ -80,6 +80,14 @@ const RESOURCE_DESCRIPTIONS = {
 
 const RESOURCE_MIN_SEPARATION = 2; // entre dos fuentes, para que no se amontonen
 
+// Pedido explícito: "en un radio de 2 casillas alrededor de los obeliscos
+// no puede haber recursos" / "en un radio de 1 casillas alrededor de los
+// totems no puede haber recursos, pero si arbustos" — distancia Chebyshev
+// (misma métrica que RESOURCE_MIN_SEPARATION, <= en vez de < porque aquí
+// "radio de N casillas" incluye la casilla justo a N de distancia).
+const RESOURCE_OBELISK_EXCLUSION_RADIUS = 2;
+const RESOURCE_VILLAGE_EXCLUSION_RADIUS = 1;
+
 const Resources = {
   list: [],
   _nextId: 1,
@@ -136,6 +144,27 @@ const Resources = {
     if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) return false;
     if (typeof Bushes !== "undefined" && Bushes.at(row, col)) return false;
     if (this.at(row, col)) return false;
+    // Pedido explícito: "en un radio de 2 casillas alrededor de los
+    // obeliscos no puede haber recursos" — despeja el entorno inmediato de
+    // la base de cada equipo (y de la Armería, que vive en el Obelisco)
+    // para que no aparezca un pino/roca pegado a la entrada.
+    if (typeof Obelisks !== "undefined") {
+      const tooCloseToObelisk = Obelisks.list.some(
+        (o) => Math.max(Math.abs(o.row - row), Math.abs(o.col - col)) <= RESOURCE_OBELISK_EXCLUSION_RADIUS
+      );
+      if (tooCloseToObelisk) return false;
+    }
+    // Pedido explícito: "en un radio de 1 casillas alrededor de los totems
+    // no puede haber recursos, pero si arbustos" — solo afecta a este
+    // archivo (Bushes.js sigue colocándose igual, sin ningún cambio, así
+    // que los arbustos siguen apareciendo junto a un tótem con total
+    // normalidad).
+    if (typeof Villages !== "undefined") {
+      const tooCloseToTotem = Villages.list.some(
+        (v) => Math.max(Math.abs(v.row - row), Math.abs(v.col - col)) <= RESOURCE_VILLAGE_EXCLUSION_RADIUS
+      );
+      if (tooCloseToTotem) return false;
+    }
     const tooClose = this.list.some(
       (n) => Math.max(Math.abs(n.row - row), Math.abs(n.col - col)) < RESOURCE_MIN_SEPARATION
     );
@@ -158,6 +187,16 @@ const Resources = {
     spriteEl.src = def.spriteUrl;
     spriteEl.alt = "";
     spriteEl.draggable = false;
+    // Pedido explícito: "todo en el escenario se mueve al compas...pon
+    // delays en las animaciones de los elementos del escenario para que no
+    // todos los arboles se muevan igual" — .resource-node__sprite comparte
+    // el mismo @keyframes unit-idle-breathe (misma duración, 4s) para
+    // TODAS las instancias (todos los pinos/rocas/menas), así que sin esto
+    // laten perfectamente sincronizados. Delay negativo aleatorio: adelanta
+    // el reloj de la animación de cada instancia a un punto distinto del
+    // ciclo desde el primer fotograma (con uno positivo se verían todos
+    // quietos un rato antes de arrancar, que no es lo que queremos).
+    spriteEl.style.animationDelay = `-${(Math.random() * 4).toFixed(2)}s`;
     el.appendChild(spriteEl);
     if (typeof Shadows !== "undefined") Shadows.attach(spriteEl);
 

@@ -2032,6 +2032,22 @@ body.team-markers--visible .unit__team-marker {
   text-shadow: 0 0 10px rgba(0, 0, 0, 0.75), 0 0 22px rgba(255, 224, 122, 1);
 }
 
+/* Mira de "ir y recolectar" de los recursos (js/resources.js, Resources.
+   showFor) — pedido explícito: "debajo de los recursos el icono phosphor
+   que muestra que se puede atacar debe ser amarillo". Recolectar un
+   recurso tampoco es una agresión (igual que abrir la Tienda Goblin, ver
+   .shop-open-marker justo arriba), así que reutiliza el mismo amarillo en
+   vez del rojo por defecto de .attack-marker__icon. */
+.resource-node-attack-marker .attack-marker__icon {
+  color: #ffcf3f;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 207, 63, 0.85);
+}
+
+.resource-node-attack-marker.attack-marker--visible:hover .attack-marker__icon {
+  color: #ffe07a;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.75), 0 0 22px rgba(255, 224, 122, 1);
+}
+
 /* Ya no hay un cursor de "diana" especial para .unit--targeted/
    .village--targeted (objetivo atacable al alcance) — pedido explícito
    tras probar el juego: "no me gusta el tarjet phosphor que pusimos".
@@ -3671,6 +3687,15 @@ body.ability-targeting--mind * {
     width: calc(100vw - 48px);
   }
 
+  /* Pedido explícito de la propia reorganización en dos columnas: en móvil
+     (mismo criterio que ya usaba este bloque para .settings-panel__option
+     más abajo) dos columnas lado a lado no caben con etiquetas largas como
+     "Animación de niebla" — una sola columna apilada, como antes de este
+     pedido. */
+  .settings-panel__columns {
+    grid-template-columns: 1fr;
+  }
+
   /* Pedido explícito: "el menú de configuración no se ajusta correctamente
      a la interfaz móvil" — cada fila (.settings-panel__option) tenía
      "padding: 14px 30px" y su etiqueta "font-size" heredado del body a
@@ -4016,6 +4041,15 @@ body.ability-targeting--mind * {
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
 }
 
+/* Pedido explícito: "la X para cerrar debe estar 20px desplazada a la
+   derecha" — solo en ESTE popup (reutiliza .backpack-close-btn tal cual,
+   ver js/glory.js openPopup), así que el ajuste vive aquí como excepción
+   en vez de tocar la posición compartida por defecto (-22px) que usan
+   mochila/armería/tienda/etc. right MÁS negativo = más hacia la derecha. */
+.glory-popup-card .backpack-close-btn {
+  right: -42px;
+}
+
 .glory-popup-subtitle {
   margin: 6px 0 12px;
   font-size: 0.82rem;
@@ -4030,13 +4064,21 @@ body.ability-targeting--mind * {
   width: 100%;
 }
 
+/* Pedido explícito: "la interfaz de puntos de gloria contiene cuadros
+   redondeados en su interior para mostrar textos...deben ser cuadros
+   irregulares" — mismo recorte --gg-slot-clip (esquinas sin redondear,
+   ligeramente ladeado) que ya usan .backpack-slot y compañía, en vez del
+   border-radius plano de antes. Sin necesidad del truco de doble capa
+   (::before/::after) de .backpack-slot: aquí no hay contorno de grosor
+   propio que distinguir del relleno, así que el clip-path directo sobre el
+   propio elemento (fondo + borde de --next incluidos) basta. */
 .glory-popup-row {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
+  clip-path: var(--gg-slot-clip);
 }
 
 .glory-popup-row__icon {
@@ -4397,7 +4439,13 @@ body.perf-mode .eye-cursor-fx {
   align-items: stretch;
   gap: 20px;
   padding: 36px 48px;
-  min-width: 300px;
+  /* Pedido explícito: "si son demasiados para ponerlos en una unica
+     columna puedes mirar de ajustarlo en dos" — width FIJO (ya no
+     min-width:300px) para que el panel tenga sitio de verdad para dos
+     columnas de etiquetas largas ("Animación de niebla") en vez de
+     depender solo del contenido, mismo criterio que .backpack-panel
+     (width: min(...)) justo arriba en el archivo. */
+  width: min(560px, 92vw);
   transform: rotate(-1.4deg) scale(0.88);
   transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
@@ -4411,6 +4459,46 @@ body.perf-mode .eye-cursor-fx {
   font-size: 1.4rem;
   padding-bottom: 12px;
   border-bottom: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Pedido explícito: "reorganiza los botones de confuguracion...si son
+   demasiados para ponerlos en una unica columna puedes mirar de ajustarlo
+   en dos, dando coherencia a las que agrupes en cada columna" — dos
+   columnas (audio/interfaz a la izquierda, visual/rendimiento a la
+   derecha, ver SettingsMenu._ensurePopup) en vez de una lista vertical
+   larga y homogénea. */
+.settings-panel__columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+  width: 100%;
+}
+
+.settings-panel__column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* Pedido explícito: "debajo del todo el boton salir de la partida
+   centrado" — fuera de las columnas, sin estirarse a todo el ancho del
+   panel como el resto de filas (.settings-panel__option de por sí ya
+   ocupa el 100% al ser hijo de un flex-column con align-items:stretch). */
+.settings-panel__option--centered {
+  align-self: center;
+  flex: none;
+}
+
+/* Etiqueta "(próximamente)" del checkbox de Música — pedido explícito:
+   "musica(aun por implementar, de momento no hace ningun efecto)". Mismo
+   tono apagado que el resto de texto secundario del panel, para que se
+   lea como una nota, no como parte del nombre de la opción. */
+.settings-panel__option-soon {
+  color: rgba(244, 242, 248, 0.55);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-style: italic;
 }
 
 /* Forma/color propios de esta variante — ya no se pueden fijar como
@@ -6821,53 +6909,97 @@ body.backpack-giving--katapum * {
   margin-bottom: 8px;
 }
 
+/* Pedido explícito: "los 3 [iconos] juntos a la linea que une a los nodos
+   deben ocupar el ancho de la interfaz" — antes width:100% pero
+   justify-content:center con nodos de ancho FIJO (64px) y tramos fijos
+   (34px), así que el árbol entero quedaba encogido en el centro del panel
+   en vez de estirarse. Ahora los nodos usan flex-basis en % (crecen con el
+   panel, con un tope en max-width para que no se vuelvan gigantes en
+   pantallas anchas) y los tramos son flex:1 1 auto — entre los 3 nodos y
+   los 2 tramos, la fila entera reparte TODO el ancho disponible. */
 .armory-track__nodes {
   display: flex;
   align-items: center;
-  justify-content: center;
+  width: 100%;
 }
 
+/* Pedido explícito: "puedes hacer que...sean cuadros irregulares como los
+   del inventario?" (mismo pedido ya aplicado a .backpack-slot) — mismo
+   recorte --gg-slot-clip de doble capa (::before contorno, ::after
+   relleno) en vez del círculo (border-radius:50%) de antes. El elemento en
+   sí ya NO lleva clip-path (solo sus pseudo-elementos), así que el icono
+   vive dentro sin que le recorten una esquina — mismo motivo exacto que
+   .backpack-slot. */
 .armory-node {
   position: relative;
-  width: 64px;
-  height: 64px;
+  flex: 0 1 27%;
+  max-width: 120px;
+  aspect-ratio: 1;
   padding: 0;
-  border-radius: 50%;
-  border: 3px solid rgba(244, 242, 248, 0.25);
-  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  background: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: var(--cursor-pointer);
-  transition: transform 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
+  transition: transform 0.15s ease, filter 0.15s ease;
   flex-shrink: 0;
 }
 
+.armory-node::before,
+.armory-node::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: var(--gg-slot-clip);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.armory-node::before {
+  background: rgba(244, 242, 248, 0.25);
+  z-index: 0;
+}
+
+.armory-node::after {
+  inset: var(--gg-frame-outline-width);
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 0;
+}
+
 .armory-node__icon {
-  width: 46px;
-  height: 46px;
+  position: relative;
+  z-index: 1;
+  width: 66%;
+  height: 66%;
   object-fit: contain;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
 }
 
-/* Nodo ya comprado: aro dorado fijo. */
-.armory-node--owned {
-  border-color: #ffcf3f;
-  filter: drop-shadow(0 0 8px rgba(255, 207, 63, 0.55));
+/* Nodo ya comprado: relleno un poco más claro, para diferenciarlo de un
+   nivel aún sin desbloquear sin recurrir al borde amarillo (pedido
+   explícito, ver .armory-node--selected más abajo: "solo debe verse con el
+   borde amarillo la mejora SELECCIONADA"). El progreso ya se lee también
+   en el tramo --unlocked de al lado. */
+.armory-node--owned::after {
+  background: rgba(244, 242, 248, 0.16);
 }
 
-/* Siguiente nivel disponible: aro dorado que palpita suavemente, invita al
-   clic (misma idea que end-turn-btn--ready). */
-.armory-node--next {
-  border-color: #ffcf3f;
+/* Siguiente nivel disponible: pulso blanco suave que invita al clic, sin
+   usar el amarillo (reservado para la selección). :not(--selected) porque
+   la propia animación anima box-shadow en cada fotograma — sin esto, un
+   nodo "siguiente" que además está seleccionado (el caso normal: el
+   siguiente nivel disponible suele ser justo el que el jugador tiene
+   pulsado) le pisaba el resplandor amarillo fijo de .armory-node--selected
+   con el pulso blanco de este keyframe. */
+.armory-node--next:not(.armory-node--selected) {
   animation: armory-node-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes armory-node-pulse {
-  0%, 100% { box-shadow: 0 0 0 rgba(255, 207, 63, 0.5); }
-  50% { box-shadow: 0 0 16px rgba(255, 207, 63, 0.85); }
+  0%, 100% { box-shadow: 0 0 0 rgba(244, 242, 248, 0); }
+  50% { box-shadow: 0 0 14px rgba(244, 242, 248, 0.65); }
 }
 
 /* Bloqueado (pedido explícito: "de color gris apagado") — icono apagado, no
@@ -6877,8 +7009,21 @@ body.backpack-giving--katapum * {
   cursor: var(--cursor-default);
 }
 
+/* Pedido explícito: "Solo debe verse con el borde amarillo la mejora
+   seleccionada, como ocurre al pulsar sobre un objeto del inventario" —
+   mismo tratamiento exacto que .backpack-slot--selected (relleno amarillo
+   en ::before, tinte amarillo en ::after, resplandor). */
 .armory-node--selected {
-  transform: scale(1.12);
+  transform: scale(1.1);
+  box-shadow: 0 0 14px rgba(255, 207, 63, 0.55);
+}
+
+.armory-node--selected::before {
+  background: #ffcf3f;
+}
+
+.armory-node--selected::after {
+  background: color-mix(in srgb, #ffcf3f 18%, rgba(0, 0, 0, 0.3));
 }
 
 .armory-node:disabled {
@@ -6886,17 +7031,98 @@ body.backpack-giving--katapum * {
 }
 
 /* Tramo entre dos nodos — amarillo si el nivel anterior ya está comprado,
-   gris apagado si no (pedido explícito, ver cabecera del bloque). */
+   gris apagado si no (pedido explícito, ver cabecera del bloque). flex:1
+   (en vez del ancho fijo de antes) es lo que reparte el resto del ancho
+   del panel entre los dos tramos, ver nota de .armory-track__nodes. */
 .armory-link {
-  width: 34px;
+  flex: 1 1 auto;
+  min-width: 16px;
   height: 5px;
   background: rgba(244, 242, 248, 0.2);
-  flex-shrink: 0;
 }
 
 .armory-link--unlocked {
   background: #ffcf3f;
   box-shadow: 0 0 6px rgba(255, 207, 63, 0.7);
+}
+
+/* ---------- Descripción de la mejora seleccionada (js/armory.js, _renderDesc) ----------
+   Pedido explícito: "los recursos necesarios para aumentar de nivel la
+   mejora seleccionada deben mostrarse de manera clara y visible de un
+   vistazo al igual que la recompensa obtenida...ahora es un texto plano
+   poco trabajado" — sustituye el párrafo de texto suelto que había antes
+   en .backpack-desc por dos filas explícitas (coste/recompensa). */
+.armory-desc-wrap {
+  align-items: stretch;
+}
+
+.armory-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.armory-desc__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.armory-desc__row-label {
+  font-size: 0.78rem;
+  color: rgba(244, 242, 248, 0.7);
+  font-weight: 700;
+}
+
+.armory-desc__pills {
+  display: flex;
+  gap: 10px;
+}
+
+/* Mismo lenguaje visual que .resource-badge (icono+número en píldora) —
+   aquí además se pone en rojo si al jugador le falta ese recurso concreto,
+   para que salte a la vista de un vistazo qué le impide comprar. */
+.armory-desc__pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 999px;
+  padding: 4px 10px 4px 5px;
+}
+
+.armory-desc__pill-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.5));
+}
+
+.armory-desc__pill-count {
+  color: #ffcf3f;
+  font-weight: 900;
+  font-size: 0.9rem;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.armory-desc__pill--short {
+  background: rgba(255, 60, 60, 0.28);
+}
+
+.armory-desc__pill--short .armory-desc__pill-count {
+  color: #ff8080;
+}
+
+.armory-desc__reward {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffcf3f;
+  font-weight: 900;
+  font-size: 1rem;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
 }
 
 /* ---------- "+X" de estadística potenciada por la Armería (unitinfo.js) ----------
@@ -6930,6 +7156,15 @@ body.backpack-giving--katapum * {
      (pensado para un personaje de pie) más un ajuste propio para asentarlo
      sobre su loseta en vez de flotar por encima. */
   transform: translate(-50%, -92%) translateY(38px);
+}
+
+/* Pedido explícito: "haz que la vegetacion, hierbajos...se puedan quitar o
+   poner desde el menu de configuracion" — mismo patrón exacto que
+   .gg-shadows-off (ver Shadows.setEnabled/js/shadows.js): nunca se dejan
+   de crear/repartir, solo se ocultan con CSS, mucho más barato que
+   recorrer el tablero destruyéndolos cada vez que se toca el checkbox. */
+.gg-hierbajos-off .hierbajo {
+  display: none;
 }
 
 .hierbajo__sprite {

@@ -153,6 +153,11 @@ const Villages = {
     spriteEl.src = VILLAGE_SPRITES.neutral;
     spriteEl.alt = "";
     spriteEl.draggable = false;
+    // Pedido explícito: "todo en el escenario se mueve al compas...pon
+    // delays en las animaciones" — mismo arreglo que Bushes/Resources._create
+    // (ver esas notas): sin esto, con varios tótems en la misma partida,
+    // todos respiran (unit-idle-breathe) exactamente a la vez.
+    spriteEl.style.animationDelay = `-${(Math.random() * 2.6).toFixed(2)}s`;
     el.appendChild(spriteEl);
     // Sombra proyectada (js/shadows.js) — se sincroniza sola si el sprite
     // cambia de raza propietaria (spriteFor, más abajo).
