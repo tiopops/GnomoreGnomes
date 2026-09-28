@@ -726,6 +726,11 @@ const Villages = {
     // impacto), desaparece justo en el instante del machacón contra el
     // suelo, no al principio del salto.
     if (gnome) Gnome.destroyInstance(gnome);
+    // Charco de sangre (js/bloodsplat.js) — pedido explícito: "se aplasta
+    // un gnomo" también deja charco, sobre la loseta del personaje que lo
+    // estampa (ahí es donde cae el golpe), mismo instante que el resto del
+    // feedback de impacto.
+    if (gnome && typeof BloodSplat !== "undefined") BloodSplat.spawnAt(unit.row, unit.col);
     // "un pequeño destello blanco puede iluminar la pantalla un instante"
     // (pedido explícito) — reservado para el golpe mortal, que es el
     // momento realmente "épico"; un golpe normal (ahora con salto pero sin

@@ -31,20 +31,20 @@
    sus 30 espacios, el altar desaparece...todo tiembla y aparece el
    GnomOgro."
 
-   Decisión de diseño (sin pedido explícito exacto sobre "cuánto rellena
-   cada gnomo"): cada gnomo estampado cuenta como UN espacio relleno, sin
-   importar los puntos que llevara encima — "30 espacios" se lee como 30
-   sacrificios, igual que las 30 casillas de vida de un Obelisco son 30
-   golpes, no 30 puntos de una fórmula aparte. Si el día de mañana se
-   prefiere que pese más un gnomo muy cargado de puntos, este es el único
-   sitio que hay que tocar (ver ALTAR_FILL_PER_SACRIFICE más abajo). */
+   Pedido explícito (pasada posterior, corrige la decisión de diseño
+   anterior): "debe llenarse con cada punto que tenga el gnomo al
+   estamparlo contra el" — cada sacrificio rellena la barra con los PUNTOS
+   que llevaba encima el gnomo en ese momento, no un espacio fijo. Mismo
+   criterio que Villages._playEpicSmash ya usa contra un tótem (`const
+   damage = gnome.points`, js/villages.js) — un gnomo muy cargado pesa más
+   también aquí. Se recorta al máximo de la barra (Math.min) por si el
+   último sacrificio se pasa de los espacios que quedan libres. */
 
 const ALTAR_MAX_FILL = 30;
 // "cuando pasa del 50% de su capacidad" — estrictamente MÁS de la mitad
 // (15 de 30 es exactamente el 50%, todavía no "pasado"), así que el sprite
 // cambia al entrar en el espacio 16.
 const ALTAR_HALF_THRESHOLD = ALTAR_MAX_FILL / 2;
-const ALTAR_FILL_PER_SACRIFICE = 1;
 const ALTAR_INTERACT_RANGE = 1; // cuerpo a cuerpo, igual que VILLAGE_ATTACK_RANGE/Combat.attackRange
 
 const ALTAR_SPRITES = {
@@ -315,8 +315,10 @@ const Altar = {
   // Mismo "machacón épico" que Villages._playEpicSmash (salto en parábola +
   // pose de impacto + Gnome.destroyInstance en el instante justo del golpe)
   // pero contra el Altar en vez de un tótem: aquí no hay vida que restar,
-  // lo que cambia es altar.fill (ver ALTAR_FILL_PER_SACRIFICE arriba). Si
-  // este sacrificio llena la barra del todo, el Altar desaparece y nace el
+  // lo que cambia es altar.fill, y por la misma cantidad de puntos que el
+  // gnomo llevara encima (ver la nota de cabecera, "debe llenarse con cada
+  // punto que tenga el gnomo") en vez de un espacio fijo. Si este
+  // sacrificio llena la barra del todo, el Altar desaparece y nace el
   // GnomOgro (ver _collapse más abajo) justo después del impacto, con el
   // mismo temblor de cámara que ya dispara cualquier golpe contra un tótem.
   async _playSacrificeSmash(unit, altar, gnome) {
@@ -349,9 +351,15 @@ const Altar = {
       unit.spriteEl.style.width = Math.round(120 * Units.impactScaleFor(typeId)) + "px";
     }
 
-    altar.fill = Math.min(ALTAR_MAX_FILL, altar.fill + ALTAR_FILL_PER_SACRIFICE);
+    // "debe llenarse con cada punto que tenga el gnomo al estamparlo contra
+    // el" — mismos puntos que Villages._playEpicSmash resta de la vida de un
+    // tótem (`const damage = gnome.points`), aquí sumados a la barra en vez
+    // de restados. gnome.points ya viene fijado más arriba (antes de que
+    // Gnome.destroyInstance lo borre del todo), así que se lee de una vez.
+    const fillAmount = gnome.points;
+    altar.fill = Math.min(ALTAR_MAX_FILL, altar.fill + fillAmount);
     this._refreshBar(altar);
-    Units.spawnFloatingText(altar, "+1", { className: "dmg-popup" });
+    Units.spawnFloatingText(altar, `+${fillAmount}`, { className: "dmg-popup" });
     Units.playShake(altar);
     if (typeof SFX !== "undefined") SFX.hit();
 
@@ -381,6 +389,10 @@ const Altar = {
     // del juego" — mismo criterio aquí: se consume SIEMPRE, llene o no del
     // todo la barra.
     if (gnome) Gnome.destroyInstance(gnome);
+    // Charco de sangre (js/bloodsplat.js) — pedido explícito: "se aplasta
+    // un gnomo" también deja charco, sobre la loseta de quien lo estampa
+    // contra el Altar (mismo criterio que Villages._playEpicSmash).
+    if (gnome && typeof BloodSplat !== "undefined") BloodSplat.spawnAt(unit.row, unit.col);
 
     if (altar.fill >= ALTAR_MAX_FILL) {
       await this._collapse(altar, unit.team);

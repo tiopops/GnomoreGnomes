@@ -7811,3 +7811,34 @@ body.backpack-giving--katapum * {
      abajo para que roten/escalen desde su base, no desde su centro. */
   transform-origin: 50% 100%;
 }
+
+/* ---------- Charcos de sangre (js/bloodsplat.js) ----------
+   Mismo patrón de posicionamiento que .hierbajo (decal plano pegado al
+   suelo): translate(-50%,-92%) heredado de .unit + un ajuste propio hacia
+   abajo para asentarlo sobre la loseta en vez de flotar como un personaje
+   de pie. Nace a plena opacidad ("de golpe", pedido explícito) y solo se
+   anima al desaparecer (.blood-splat--fading, disparada por JS a los 3s). */
+.blood-splat {
+  pointer-events: none;
+  transform: translate(-50%, -92%) translateY(38px);
+}
+
+.blood-splat__sprite {
+  display: block;
+  width: 150px;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  /* Sin drop-shadow: es una mancha rasante sobre el suelo, no un objeto de
+     pie — una sombra proyectada se leería como un bulto encima de la
+     loseta en vez de una mancha pintada sobre ella (mismo motivo que
+     .hierbajo__sprite). */
+  transform-origin: 50% 50%;
+}
+
+.blood-splat--fading {
+  /* 0.5s aquí debe coincidir con BLOOD_SPLAT_FADE_MS en bloodsplat.js (es
+     quien de verdad quita el elemento del DOM al terminar). */
+  transition: opacity 0.5s ease;
+  opacity: 0;
+}

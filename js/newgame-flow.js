@@ -432,6 +432,11 @@ function spawnTestUnits(size, raceId) {
     Hierbajos.spawn(size);
   }
 
+  // Charcos de sangre (js/bloodsplat.js) — nada que colocar al empezar
+  // (nacen sobre la marcha con cada muerte/gnomo aplastado), solo hay que
+  // limpiar los de la partida anterior si la había.
+  if (typeof BloodSplat !== "undefined") BloodSplat.resetAll();
+
   // Armería (js/armory.js) — reinicia los niveles comprados de arma/armadura
   // de cada equipo al empezar una partida nueva.
   if (typeof Armory !== "undefined") {

@@ -1178,7 +1178,7 @@ const Obelisks = {
     return tiles;
   },
 
-  _spawnRecruit(row, col) {
+  async _spawnRecruit(row, col) {
     const pending = this._pendingRecruit;
     if (!pending) return;
     const { obelisk, typeId, price } = pending;
@@ -1204,6 +1204,17 @@ const Obelisks = {
       Turns.actionsUsed[unit.id] = 1;
       Turns.refreshExhaustedClass(unit);
     }
+    // Pedido explícito: "al reclutar a un personaje debe revelarse la
+    // niebla alrededor de el teniendo en cuenta su percepcion" y "si hay un
+    // gnomo cerca de la base y recluto a un personaje, el gnomo tiene que
+    // huir de el...siempre y cuando este dentro de su percepcion" — mismo
+    // par de llamadas, mismo orden, que Movement.moveTo ya hace tras
+    // cualquier desplazamiento normal (ver ese archivo): un personaje
+    // reclutado "aparece" en el tablero igual que si acabara de llegar
+    // andando, así que revela y espanta a los gnomos sueltos exactamente
+    // igual, aunque nunca haya dado un paso.
+    if (typeof Fog !== "undefined") Fog.revealForUnit(unit);
+    if (typeof Gnome !== "undefined") await Gnome.reactToPlayerMove(unit);
     SFX.captureVillage();
     this._cancelPlacementMode();
     this.refreshAll();

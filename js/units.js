@@ -1228,6 +1228,12 @@ const Units = {
   async removeUnit(unit) {
     if (this.selectedId === unit.id) this.deselect();
     this.stopFearLoop(unit); // no dejar temblando/girando de miedo a una unidad que ya no existe
+    // Charco de sangre (js/bloodsplat.js) — pedido explícito: "en la
+    // casilla donde muere un personaje...aparecera un charquito de sangre
+    // de golpe". Aquí mismo, no tras la propia animación de muerte, para
+    // que aparezca "de golpe" junto con el resto del feedback del golpe
+    // final, no medio segundo más tarde.
+    if (typeof BloodSplat !== "undefined") BloodSplat.spawnAt(unit.row, unit.col);
     unit.el.classList.add("unit--dying");
     SFX.death();
     await new Promise((resolve) => setTimeout(resolve, 420));
