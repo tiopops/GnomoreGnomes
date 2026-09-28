@@ -321,6 +321,24 @@ function spawnTestUnits(size, raceId) {
     Obelisks.init(finalRaceId, finalEnemyRaceId);
     Obelisks.spawn(size, finalRaceId, finalEnemyRaceId);
   }
+
+  // Altar de Sacrificios y GnomOgro (js/altar.js, js/gnomogro.js) — pedido
+  // explícito: "el altar de sacrificios aparece centrado en el mapa,
+  // equidistante a todas las bases enemigas". Justo DESPUÉS de
+  // Obelisks.spawn (necesita conocer ya las bases para calcular ese punto
+  // equidistante) y ANTES de Gnome/Villages/Shops (para que ellos puedan
+  // evitar la casilla del altar al colocarse, ver los Altar.at(...) ya
+  // añadidos en cada uno de esos módulos). GnomOgro.resetAll() solo limpia
+  // el estado de la partida anterior (si la había) — el propio GnomOgro no
+  // se coloca aquí, nace más adelante cuando el Altar se llena del todo.
+  if (typeof Altar !== "undefined") {
+    Altar.resetAll();
+    Altar.spawn(size);
+  }
+  if (typeof GnomOgro !== "undefined") {
+    GnomOgro.resetAll();
+  }
+
   // Pedido explícito: "puedes hacer que se precargue la partida antes de
   // mostrarla?...la niebla ocupada por los jugadores desaparece de golpe"
   // — el revelado inicial (Fog.revealInitial) YA NO se dispara aquí, en el

@@ -262,6 +262,15 @@ const Fog = {
     // Obelisco propio justo arriba, mientras siga en pie (un tótem roto ya
     // no está en TotemVision.list).
     if (typeof TotemVision !== "undefined") TotemVision.markPerception(markAround);
+    // GnomOgro (js/gnomogro.js) — pedido explícito: "el gnomogro es visible
+    // con un radio alrededor de el de 1 para todos los jugadores de la
+    // partida". Sin distinguir equipo (a diferencia de Units/Villages/
+    // Obelisks de arriba, que solo cuentan si son "player"): sea cual sea
+    // su bando, sigue percibido para el jugador humano — es la única
+    // fuente de percepción de este archivo que no filtra por team.
+    if (typeof GnomOgro !== "undefined" && GnomOgro.current) {
+      markAround(GnomOgro.current.row, GnomOgro.current.col, GNOMOGRO_PERCEPTION_RADIUS);
+    }
     // Pedido explícito: "cuando la surcabosques usa vision lejana...la
     // zona se revela...durante 4 segundos" — fuentes de percepción
     // temporales (ver addTemporaryPerception), que expiran solas. Un
@@ -661,6 +670,25 @@ const Fog = {
   // la nota larga de _refreshFogCoverZ más abajo): cualquier sprite/icono
   // nuevo que se añada a cualquier objeto queda cubierto solo, sin tocar
   // este archivo otra vez.
+  // Pedido explícito (con captura): "a veces hay gnomos que se ven por
+  // encima de la niebla" — el margen de arriba ya cubría la forma EN
+  // REPOSO de cada sprite/insignia, pero _refreshFogCoverZ solo se llama en
+  // eventos puntuales (mover, empezar turno...), nunca en cada fotograma.
+  // El salto de idle de un gnomo suelto (unit__sprite--hop, reutilizado
+  // igual en el paso de un personaje normal, ver @keyframes unit-hop en
+  // style.css) sube el sprite hasta 18px con un transform CSS que dispara
+  // solo, sin avisar a JS — así que casi nunca coincide el instante exacto
+  // en que _refreshFogCoverZ mide con el pico del salto, y esa cresta se
+  // queda sin contar en el rect medido, asomando un instante por encima de
+  // la niebla vecina hasta el siguiente evento que sí recalcule. En vez de
+  // perseguir el salto con un segundo sistema (costoso: forzaría medir en
+  // cada fotograma), se añade un margen de seguridad fijo por ARRIBA a
+  // cualquier rect medido aquí, algo mayor que el pico real (18px) para
+  // tener colchón: nunca hace falta que sea exacto, un margen de más solo
+  // sube un pelín antes de la cuenta el z-index de la nube vecina (nunca al
+  // revés), así que siempre pasa por "de más" nunca por "de menos".
+  _HOP_SAFETY_MARGIN_PX: 22,
+
   _expandedRect(el) {
     const base = el.getBoundingClientRect();
     let left = base.left,
@@ -675,6 +703,7 @@ const Fog = {
       if (r.right > right) right = r.right;
       if (r.bottom > bottom) bottom = r.bottom;
     });
+    top -= this._HOP_SAFETY_MARGIN_PX;
     return { left, top, right, bottom, width: right - left, height: bottom - top };
   },
 
@@ -780,6 +809,21 @@ const Fog = {
         if (!t.el) return;
         coverFrom(t.row, t.col, t.el);
       });
+    }
+    // Altar de Sacrificios (js/altar.js) — mismo "objeto grande y fijo del
+    // tablero" que un tótem/tienda/Obelisco de arriba.
+    if (typeof Altar !== "undefined") {
+      Altar.list.forEach((a) => {
+        if (!a.el) return;
+        coverFrom(a.row, a.col, a.el);
+      });
+    }
+    // GnomOgro (js/gnomogro.js) — la única de estas fuentes que SE MUEVE
+    // (todas las demás son mobiliario fijo), pero geométricamente es el
+    // mismo problema: un sprite colosal más alto que su propia loseta que
+    // puede asomar dentro de una nube vecina todavía sin revelar.
+    if (typeof GnomOgro !== "undefined" && GnomOgro.current && GnomOgro.current.el) {
+      coverFrom(GnomOgro.current.row, GnomOgro.current.col, GnomOgro.current.el);
     }
   },
 };

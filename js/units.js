@@ -1046,6 +1046,7 @@ const Units = {
           if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
           if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
           if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
+          if (typeof Altar !== "undefined" && Altar.at(r, c)) continue; // Altar de Sacrificios (js/altar.js)
           if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           neighbors.push({ row: r, col: c });

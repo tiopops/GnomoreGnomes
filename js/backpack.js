@@ -664,6 +664,7 @@ const Backpack = {
         // justo arriba.
         if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
         if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
+        if (typeof Altar !== "undefined" && Altar.at(r, c)) continue; // Altar de Sacrificios (js/altar.js)
         if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
         if (typeof TotemVision !== "undefined" && TotemVision.at(r, c)) continue; // TotemVision (js/totemvision.js)
         // Igual que cualquier otra mecánica del proyecto: no se ofrece

@@ -488,6 +488,23 @@ const Turns = {
     if (typeof Gnome !== "undefined") {
       const held = Gnome.list.find((g) => g.heldBy === unit.id);
       if (held) {
+        // Altar de Sacrificios (js/altar.js) — pedido explícito de la
+        // mecánica: "el gnomogro es del bando de la persona que le dio el
+        // golpe de gracia al altar", así que la IA rival SÍ debe perseguir
+        // el altar con un gnomo cogido igual que el jugador. Va antes
+        // incluso que la caza de tótems de aquí abajo (spawnear una
+        // criatura de 50 de vida/30 de ataque que puede acabar la partida
+        // de un solo golpe pesa más que la gloria persistente de un
+        // tótem), pero solo si el Altar sigue en pie (Altar.current()
+        // devuelve null en cuanto se llena/desaparece).
+        if (typeof Altar !== "undefined" && Altar.current()) {
+          const altar = Altar.current();
+          const approach = Altar.findApproachTile(unit, altar);
+          if (approach) {
+            await Altar.approachAndSacrifice(unit, altar);
+            return true;
+          }
+        }
         // "ahora el equipo enemigo tambien intenta capturar los totems"
         // (pedido explícito) — con el gnomo ya en la mano, un tótem que no
         // sea suyo pesa MÁS que pasar/golpear al gnomo de siempre (dan

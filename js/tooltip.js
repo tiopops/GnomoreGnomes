@@ -33,8 +33,26 @@ const Tooltip = {
     if (this.el) return;
     const el = document.createElement("div");
     el.className = "gg-tooltip";
+    // Pedido explícito (con captura): "cantos redondeados e irregulares
+    // como todos los cuadrados de nuestras interfaces" — mismo lenguaje
+    // visual "banderín irregular" que el resto del proyecto (--gg-slot-clip
+    // + contorno de doble capa, ver la nota larga de --gg-frame-outline-
+    // width en :root): un border/border-radius normal no sigue el recorte
+    // diagonal, así que hacen falta DOS capas del mismo polígono
+    // (.gg-tooltip::before el contorno, .gg-tooltip__bg el relleno) más un
+    // tercer hijo (.gg-tooltip__text) para el texto, que queda por encima
+    // de las dos. this.el sigue siendo el elemento que se posiciona/anima
+    // (left/top/opacity, ver _position*/_onEnter/_onLeave más abajo); solo
+    // cambia qué hay DENTRO.
+    const bg = document.createElement("div");
+    bg.className = "gg-tooltip__bg";
+    const text = document.createElement("span");
+    text.className = "gg-tooltip__text";
+    el.appendChild(bg);
+    el.appendChild(text);
     document.body.appendChild(el);
     this.el = el;
+    this._textEl = text;
   },
 
   // `label` puede ser un string fijo o una función que se evalúa cada vez
@@ -83,7 +101,7 @@ const Tooltip = {
           const text = typeof label === "function" ? label() : label;
           if (!text) return;
           this._ensure();
-          this.el.textContent = text;
+          this._textEl.textContent = text;
           // Por encima del dedo y centrada (no al lado del cursor como en
           // escritorio, aquí no hay cursor): un dedo real taparía la pista
           // si se colocara debajo o al lado, como sí puede hacerse con el
@@ -146,7 +164,7 @@ const Tooltip = {
       const text = typeof label === "function" ? label() : label;
       if (!text) return;
       this._ensure();
-      this.el.textContent = text;
+      this._textEl.textContent = text;
       this._position(point.x, point.y);
       this.el.classList.add("gg-tooltip--visible");
     }, 450);
@@ -161,10 +179,22 @@ const Tooltip = {
     if (this.el) this.el.classList.remove("gg-tooltip--visible");
   },
 
+  // Pedido explícito (con captura): "el mouse over de las opciones del
+  // obelisco deberían aparecer arriba de los iconos" — antes se pegaba
+  // abajo-a-la-derecha del cursor (x+20/y+6), lo que la hacía taparse con
+  // la propia barra de vida/insignias que cuelgan justo debajo de los
+  // iconos del obelisco. Ahora sigue al cursor pero centrada y por ENCIMA,
+  // mismo criterio que _positionAbove (táctil) de aquí abajo — solo que
+  // ahí el offset es fijo (el dedo tapa la pantalla) y aquí se resta la
+  // altura real medida (offsetHeight) más un margen, así la pista siempre
+  // queda pegada justo encima del puntero sin importar su tamaño.
   _position(x, y) {
     if (!this.el) return;
-    this.el.style.left = `${x + 20}px`;
-    this.el.style.top = `${y + 6}px`;
+    const width = this.el.offsetWidth;
+    const height = this.el.offsetHeight;
+    const clampedX = Math.max(width / 2 + 8, Math.min(window.innerWidth - width / 2 - 8, x));
+    this.el.style.left = `${clampedX - width / 2}px`;
+    this.el.style.top = `${Math.max(8, y - height - 14)}px`;
   },
 
   // Ver _attachTouch: centrada horizontalmente sobre el punto de toque y

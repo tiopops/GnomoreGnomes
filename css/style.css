@@ -5411,20 +5411,20 @@ body.perf-mode .eye-cursor-fx {
 /* Tooltip de escritorio (js/tooltip.js, Tooltip) — pedido explícito: "debe
    aparecer al lado del puntero un texto con el nombre de esa habilidad".
    Pegado a coordenadas de ratón (left/top en px, ver Tooltip._position),
-   nunca a un elemento — así sigue al puntero también con mousemove. */
+   nunca a un elemento — así sigue al puntero también con mousemove.
+   CORRECCIÓN (con captura): "cantos redondeados e irregulares como todos
+   los cuadrados de nuestras interfaces" — el border-radius plano de antes
+   desentonaba con el resto del proyecto (lenguaje "banderín irregular",
+   ver --gg-slot-clip/--gg-frame-outline-width en :root). .gg-tooltip ya no
+   pinta nada por sí solo (ni fondo ni borde): solo posiciona/anima
+   (left/top/opacity), y dentro lleva dos capas del MISMO --gg-slot-clip
+   (.gg-tooltip__bg el contorno+relleno, mismo truco de doble borde que
+   .shop-slot__price) más .gg-tooltip__text por encima. */
 .gg-tooltip {
   position: fixed;
   left: 0;
   top: 0;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: rgba(20, 18, 24, 0.92);
-  border: 1px solid rgba(244, 242, 248, 0.25);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
-  color: var(--ink);
-  font-size: 0.8rem;
-  font-weight: 700;
-  white-space: nowrap;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
   opacity: 0;
   pointer-events: none;
   z-index: 8000;
@@ -5433,6 +5433,45 @@ body.perf-mode .eye-cursor-fx {
 
 .gg-tooltip--visible {
   opacity: 1;
+}
+
+/* Mismo truco de contorno de doble capa que .shop-slot__price (ver esa nota
+   larga): .gg-tooltip__bg en sí NO lleva clip-path/fondo propios (eso
+   volvería a tapar el contorno en las aristas diagonales, el mismo defecto
+   que un `border` normal) — son sus dos pseudo-elementos, cada uno con SU
+   PROPIO clip-path, los que pintan el aro (::before, más grande, el color
+   del contorno) y el relleno (::after, un poco más pequeño por el inset). */
+.gg-tooltip__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.gg-tooltip__bg::before,
+.gg-tooltip__bg::after {
+  content: "";
+  position: absolute;
+  clip-path: var(--gg-slot-clip);
+}
+
+.gg-tooltip__bg::before {
+  inset: 0;
+  background: rgba(244, 242, 248, 0.25);
+}
+
+.gg-tooltip__bg::after {
+  inset: var(--gg-frame-outline-width);
+  background: rgba(20, 18, 24, 0.92);
+}
+
+.gg-tooltip__text {
+  position: relative;
+  display: block;
+  padding: 6px 12px;
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 /* Halo de ataque pulsante (js/attackcursor.js, AttackCursorFx) — pedido
@@ -6550,6 +6589,144 @@ body.backpack-giving--katapum * {
   transition: opacity 0.42s ease, transform 0.42s ease;
   opacity: 0;
   transform: scale(0.7) translateY(20px);
+}
+
+/* ---------- Altar de Sacrificios (js/altar.js) ----------
+   Pedido explícito: "el altar de sacrificios aparece centrado en el mapa...
+   tiene una barra de vida especial...todas sus casillas son de color rojo y
+   tiene 30 espacios...en vez de vaciarse, se rellena". Reutiliza "unit"
+   solo por el posicionamiento base, igual que poblado/Obelisco/tienda —
+   nunca entra en Units.list. Es una estructura BAJA y ANCHA (a diferencia
+   del Obelisco, muy alto), así que su ancho es mayor que el de un tótem sin
+   necesitar tanta altura. */
+.altar__sprite {
+  display: block;
+  width: 240px;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.5));
+  transform-origin: 50% 100%;
+  animation: unit-idle-breathe 2.6s ease-in-out infinite;
+}
+
+/* Barra de 30 espacios — MISMO tamaño que la del Obelisco (30 casillas
+   también), pero SIEMPRE roja: --hp-fill decide el color del segmento
+   RELLENO (ver .unit__hpbar-segment--filled en :root de arriba) y el
+   segmento vacío se sobreescribe aparte aquí abajo, en vez de la mezcla
+   gris-neutro/verde de una barra de vida normal — pedido explícito: "todas
+   sus casillas son de color rojo". Siempre visible, igual que la de un
+   Obelisco/poblado/tienda (el Altar nunca se selecciona). */
+.altar__bar {
+  --hp-fill: #e6302f;
+  opacity: 1;
+  top: -26px;
+  width: 220px;
+  height: 10px;
+  gap: 0.6px;
+}
+
+.altar__bar .unit__hpbar-segment {
+  background: #3a0a0a; /* rojo muy oscuro en reposo, nunca el gris/negro neutro de una barra normal */
+}
+
+/* Pulso al rellenar un espacio (JS quita/vuelve a poner la clase para poder
+   repetirlo, mismo patrón que unit--hit) — un golpe seco de escala, no una
+   vibración continua: es un único sacrificio, no un temblor sostenido. */
+.altar.altar--pulse .altar__sprite {
+  animation: unit-idle-breathe 2.6s ease-in-out infinite, altar-pulse 0.32s ease-out;
+}
+
+@keyframes altar-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* "cuando pasa del 50% de su capacidad...cambia a mediolleno" — un resplandor
+   rojizo constante además del cambio de sprite (ya lo decide JS, ver
+   ALTAR_SPRITES.medio en altar.js), para que se note que el Altar está
+   "despierto" incluso en un vistazo rápido al minimapa/zoom alejado. */
+.altar--medio .altar__sprite {
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 16px rgba(230, 48, 47, 0.65));
+}
+
+/* Desaparición al llenarse del todo (Altar._collapse) — "todo tiembla y
+   aparece el GnomOgro": el temblor de pantalla ya lo pone JS
+   (board-viewport--shake--big, mismo mecanismo que Katapum/Señuelo), esto
+   es solo el propio Altar hundiéndose/desvaneciéndose in situ. */
+.altar--collapsing {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  opacity: 0;
+  transform: scale(0.6) translateY(30px);
+}
+
+/* ---------- GnomOgro (js/gnomogro.js) ----------
+   Pedido explícito: "una criatura colosal". Reutiliza "unit" por el
+   posicionamiento base (incluida su transition de left/top, ver .unit
+   arriba de todo del archivo — así un paso de movimiento ya se desliza
+   solo, sin animación propia) y .unit__flip por el giro hacia su objetivo
+   (Units.faceTowardsTile) — nunca entra en Units.list. */
+.gnomogro__sprite {
+  display: block;
+  width: 300px; /* más ancho que el Obelisco (260px): la criatura más grande del tablero */
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 14px 10px rgba(0, 0, 0, 0.55));
+  transform-origin: 50% 100%;
+  animation: unit-idle-breathe 2.2s ease-in-out infinite;
+}
+
+/* Barra de 50 segmentos — más ancha que la de 30 del Obelisco para que no
+   se apelmacen. Verde normal (a diferencia del Altar): de momento nada le
+   quita vida de verdad (ver la nota larga en gnomogro.js), así que
+   siempre se ve a plena vida. */
+.gnomogro__hpbar {
+  opacity: 1;
+  top: -30px;
+  width: 260px;
+  height: 10px;
+  gap: 0.5px;
+}
+
+/* Nacimiento (Altar._collapse -> GnomOgro.spawn) — mismo espíritu que
+   .obelisk--destroyed pero al revés (aparece en vez de desaparecer): un
+   pop de "aparición" corto en vez de simplemente estar ahí de golpe. La
+   clase se queda puesta (no hay temporizador que la quite) a propósito:
+   solo importa el keyframe de entrada, que ya termina solo; dejarla no
+   afecta a nada más.
+   */
+@keyframes gnomogro-spawn-pop {
+  0% { opacity: 0; transform: scale(0.4) translateY(40px); }
+  60% { opacity: 1; transform: scale(1.12) translateY(-6px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.gnomogro--spawn .gnomogro__sprite {
+  animation: unit-idle-breathe 2.2s ease-in-out infinite, gnomogro-spawn-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* "hace temblar el suelo cuando anda" — un golpe de escala corto en cada
+   paso (JS quita/pone la clase para poder repetirlo, mismo patrón que
+   unit--hit/altar--pulse); el temblor de CÁMARA de verdad lo pone JS aparte
+   sobre #board-viewport (board-viewport--shake, más discreto que el de un
+   ataque). */
+.gnomogro--stepping .gnomogro__sprite {
+  animation: unit-idle-breathe 2.2s ease-in-out infinite, gnomogro-step-thud 0.26s ease-out;
+}
+
+@keyframes gnomogro-step-thud {
+  0% { transform: scale(1, 1) translateY(0); }
+  40% { transform: scale(1.05, 0.94) translateY(4px); }
+  100% { transform: scale(1, 1) translateY(0); }
+}
+
+/* Por encima de cualquier otra unidad/marcador mientras dura el ataque —
+   mismo criterio que .unit--epic-smash, para que su propio golpe nunca
+   quede tapado por nada del tablero. */
+.gnomogro--attacking {
+  z-index: 6000 !important;
 }
 
 /* "Si alguien se esconde detras de un obelisco y no deja seleccionarlo"

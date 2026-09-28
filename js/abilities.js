@@ -444,6 +444,7 @@ const Abilities = {
       if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
       if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
       if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
+      if (typeof Altar !== "undefined" && Altar.at(r, c)) continue; // Altar de Sacrificios (js/altar.js)
       if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
       if (this._mines.some((m) => m.row === r && m.col === c)) continue;
       if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
@@ -737,6 +738,7 @@ const Abilities = {
       if (typeof Villages !== "undefined" && Villages.at(nextRow, nextCol)) break;
       if (typeof Shops !== "undefined" && Shops.at(nextRow, nextCol)) break;
       if (typeof Obelisks !== "undefined" && Obelisks.at(nextRow, nextCol)) break; // Obelisco Ancestral (js/obelisks.js)
+      if (typeof Altar !== "undefined" && Altar.at(nextRow, nextCol)) break; // Altar de Sacrificios (js/altar.js)
       if (typeof Resources !== "undefined" && Resources.at(nextRow, nextCol)) break; // Recursos de escenario (js/resources.js)
       if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(nextRow, nextCol)) break;
       path.push({ row: nextRow, col: nextCol });
@@ -904,6 +906,7 @@ const Abilities = {
         if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
         if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+        if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
         if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
         if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;

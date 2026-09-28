@@ -214,6 +214,8 @@ function createGnomeInstance() {
       const noObelisk = (r, c) => typeof Obelisks === "undefined" || !Obelisks.at(r, c);
       // Recursos de escenario (js/resources.js) — tampoco aparece encima de una.
       const noResource = (r, c) => typeof Resources === "undefined" || !Resources.at(r, c);
+      // Altar de Sacrificios (js/altar.js) — tampoco aparece encima de él.
+      const noAltar = (r, c) => typeof Altar === "undefined" || !Altar.at(r, c);
       if (
         !Units.unitAt(row, col) &&
         !Gnome._otherGnomeAt(this, row, col) &&
@@ -221,7 +223,8 @@ function createGnomeInstance() {
         noVillage(row, col) &&
         noShop(row, col) &&
         noObelisk(row, col) &&
-        noResource(row, col)
+        noResource(row, col) &&
+        noAltar(row, col)
       ) {
         this.spawn(row, col);
         return;
@@ -246,6 +249,8 @@ function createGnomeInstance() {
             if (!noObelisk(r, c)) continue;
             // Recursos de escenario (js/resources.js) — tampoco aparece encima de una.
             if (!noResource(r, c)) continue;
+            // Altar de Sacrificios (js/altar.js) — tampoco aparece encima de él.
+            if (!noAltar(r, c)) continue;
             this.spawn(r, c);
             return;
           }
@@ -466,6 +471,7 @@ function createGnomeInstance() {
           if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
           if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
           if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+          if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
           if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
@@ -1015,6 +1021,7 @@ function createGnomeInstance() {
           if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
           if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
           if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+          if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
           if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const minDist = Units.list.reduce(
@@ -1297,6 +1304,7 @@ function createGnomeInstance() {
           if (typeof Villages !== "undefined" && Villages.at(r, c)) continue; // poblado (js/villages.js)
           if (typeof Shops !== "undefined" && Shops.at(r, c)) continue; // Tienda Goblin (js/shops.js)
           if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
+          if (typeof Altar !== "undefined" && Altar.at(r, c)) continue; // Altar de Sacrificios (js/altar.js)
           if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           const alignment = dr * dRow + dc * dCol;
@@ -1329,6 +1337,7 @@ function createGnomeInstance() {
           if (typeof Villages !== "undefined" && Villages.at(r, c)) continue; // poblado (js/villages.js)
           if (typeof Shops !== "undefined" && Shops.at(r, c)) continue; // Tienda Goblin (js/shops.js)
           if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
+          if (typeof Altar !== "undefined" && Altar.at(r, c)) continue; // Altar de Sacrificios (js/altar.js)
           if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           free++;

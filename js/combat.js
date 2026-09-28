@@ -52,6 +52,7 @@ const Combat = {
         if (typeof Villages !== "undefined" && Villages.at(row, col)) continue; // poblado (js/villages.js)
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
         if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+        if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
         if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue; // agua (js/mapgen.js)
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
@@ -354,6 +355,7 @@ const Combat = {
       if (typeof Villages !== "undefined" && Villages.at(nextRow, nextCol)) break; // poblado (js/villages.js)
       if (typeof Shops !== "undefined" && Shops.at(nextRow, nextCol)) break; // Tienda Goblin (js/shops.js)
       if (typeof Obelisks !== "undefined" && Obelisks.at(nextRow, nextCol)) break; // Obelisco Ancestral (js/obelisks.js)
+      if (typeof Altar !== "undefined" && Altar.at(nextRow, nextCol)) break; // Altar de Sacrificios (js/altar.js)
       if (typeof Resources !== "undefined" && Resources.at(nextRow, nextCol)) break; // Recursos de escenario (js/resources.js)
       path.push({ row: nextRow, col: nextCol });
       row = nextRow;

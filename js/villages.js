@@ -99,6 +99,11 @@ const Villages = {
       if (typeof Units !== "undefined" && Units.unitAt(row, col)) continue;
       if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
       if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+      // Altar.isNear (no solo Altar.at) — el Altar da paso a un GnomOgro
+      // mucho más alto que un poblado normal, ver la nota larga en
+      // Altar.isNear (js/altar.js): sin este margen de 1 casilla un poblado
+      // recién colocado podría acabar tapándolo visualmente.
+      if (typeof Altar !== "undefined" && Altar.isNear(row, col)) continue; // Altar de Sacrificios (js/altar.js)
       if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
       if (this.at(row, col)) continue;
       const tooClose = this.list.some(
@@ -448,6 +453,7 @@ const Villages = {
         if (this.at(row, col)) continue; // poblado (el mismo u otro)
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
         if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+        if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
         if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));

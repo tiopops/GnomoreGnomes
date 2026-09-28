@@ -388,6 +388,92 @@ const SFX = {
       // Audio no disponible — se ignora, no debe romper la animación.
     }
   },
+
+  // ---------- GnomOgro (js/gnomogro.js) ----------
+  // Pedido explícito: "Añade sonidos para el gnomogro" — igual que
+  // explosion() de aquí arriba, ruido filtrado en vez de un tono puro (una
+  // criatura colosal no "pita", retumba). gnomogroStep() es su paso al
+  // moverse (un temblor de tierra corto y grave, más discreto que un
+  // ataque); gnomogroAttack() es el impacto de su golpe (el mismo cuerpo de
+  // explosion() pero más grave, más largo y con un gruñido descendente
+  // encima, para que se note claramente más pesado/aterrador que un
+  // KataPum!/Señuelo normal).
+  gnomogroStep() {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      const dur = 0.28;
+      const bufferSize = Math.round(ctx.sampleRate * dur);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2.2);
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.Q.value = 0.7;
+      filter.frequency.setValueAtTime(260, now);
+      filter.frequency.exponentialRampToValueAtTime(70, now + dur);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      noise.connect(filter).connect(gain).connect(this.master);
+      noise.start(now);
+      noise.stop(now + dur);
+    } catch (e) {
+      // Audio no disponible — se ignora, no debe romper la animación.
+    }
+  },
+
+  gnomogroAttack() {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      const dur = 0.7;
+
+      const bufferSize = Math.round(ctx.sampleRate * dur);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.4);
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = "lowpass";
+      noiseFilter.Q.value = 0.8;
+      noiseFilter.frequency.setValueAtTime(2200, now);
+      noiseFilter.frequency.exponentialRampToValueAtTime(110, now + dur);
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.55, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      noise.connect(noiseFilter).connect(noiseGain).connect(this.master);
+      noise.start(now);
+      noise.stop(now + dur);
+
+      // Gruñido descendente (mismo timbre que el "thump" de explosion(),
+      // más grave y más largo) por encima del ruido, para que se lea como
+      // una criatura viva golpeando, no solo un choque sordo.
+      const growl = ctx.createOscillator();
+      growl.type = "sawtooth";
+      growl.frequency.setValueAtTime(90, now);
+      growl.frequency.exponentialRampToValueAtTime(30, now + 0.5);
+      const growlGain = ctx.createGain();
+      growlGain.gain.setValueAtTime(0.3, now);
+      growlGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+      growl.connect(growlGain).connect(this.master);
+      growl.start(now);
+      growl.stop(now + 0.6);
+    } catch (e) {
+      // Audio no disponible — se ignora, no debe romper la animación.
+    }
+  },
 };
 
 document.addEventListener("DOMContentLoaded", () => SFX.init());

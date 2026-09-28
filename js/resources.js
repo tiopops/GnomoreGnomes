@@ -156,6 +156,7 @@ const Resources = {
     if (typeof Villages !== "undefined" && Villages.at(row, col)) return false;
     if (typeof Shops !== "undefined" && Shops.at(row, col)) return false;
     if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) return false;
+    if (typeof Altar !== "undefined" && Altar.at(row, col)) return false; // Altar de Sacrificios (js/altar.js)
     if (typeof Bushes !== "undefined" && Bushes.at(row, col)) return false;
     if (this.at(row, col)) return false;
     // Pedido explícito: "en un radio de 2 casillas alrededor de los
@@ -445,6 +446,7 @@ const Resources = {
         if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
         if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
+        if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
         if (this.at(row, col)) continue;
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));

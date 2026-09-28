@@ -174,6 +174,7 @@ const TotemVision = {
         if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
         if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
+        if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
         if (typeof Resources !== "undefined" && Resources.at(row, col)) continue;
         if (this.at(row, col)) continue;
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
