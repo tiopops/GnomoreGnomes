@@ -174,8 +174,13 @@ const GnomOgro = {
   // CADA turno (jugador y rival). Devuelve la promesa de la acción para que
   // Turns.endTurn espere a que termine antes de seguir (así el GnomOgro nunca
   // pisa la animación de la IA rival ni la del jugador).
-  onTurnStart() {
+  onTurnStart(team) {
     if (!this.current) return null;
+    // Una sola acción por RONDA (pedido explícito: "solo puede moverse 1
+    // casilla cada turno, le he visto moverse 2"): antes actuaba al empezar
+    // el turno de cada bando, es decir dos veces por ronda. Ahora solo al
+    // empezar el turno de su dueño.
+    if (team !== this.current.team) return null;
     if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return null;
     return this._act();
   },

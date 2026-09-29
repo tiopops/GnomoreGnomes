@@ -516,7 +516,11 @@ const Altar = {
     unit.el.classList.remove("unit--epic-smash", "unit--epic-smash--big");
     if (unit.spriteEl) {
       unit.spriteEl.src = idleSrc;
-      unit.spriteEl.style.width = "";
+      // Devuelve el tamaño de la pose iddle (SPRITE_SCALES) — vaciarlo dejaba
+      // a los personajes con escala distinta de 1 (p. ej. el GolemCorteza)
+      // más pequeños tras el sacrificio (mismo criterio que Villages._playEpicSmash).
+      const idleScale = (typeof SPRITE_SCALES !== "undefined" && (SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default)) || 1;
+      unit.spriteEl.style.width = Math.round(120 * idleScale) + "px";
     }
     if (gnome) gnome.setAttachPose(unit, "idle");
   },
