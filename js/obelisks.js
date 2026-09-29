@@ -555,6 +555,7 @@ const Obelisks = {
   select(obelisk) {
     this.deselect();
     if (typeof Units !== "undefined") Units.deselect();
+    if (typeof Villages !== "undefined") Villages.deselect();
     SFX.click();
     this._selectedId = obelisk.id;
     obelisk.el.classList.add("obelisk--selected");
@@ -648,7 +649,7 @@ const Obelisks = {
       // Pedido explícito: "eso son dos acciones" — mismo criterio que
       // Combat.attackableEnemies/Villages.showFor.
       const needsMove = approach.row !== unit.row || approach.col !== unit.col;
-      if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < 2) return;
+      if (needsMove && typeof Turns !== "undefined" && !(typeof Skills !== "undefined" ? Skills.canApproachAttack(unit) : Turns.remainingActions(unit) >= 2)) return;
       // Pedido explícito: "si un totem o el obelisco esta dentro del rango
       // de movimiento del personaje seleccionado se puede machacar el
       // gnomo contra el, siempre y cuando tenga 2 acciones" — el clic
@@ -742,7 +743,9 @@ const Obelisks = {
       if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
       await Units.walkPath(unit, path);
-      if (typeof Turns !== "undefined") Turns.useAction(unit);
+      // Embestir (js/skills.js): mover + golpear por una sola acción, 1 vez por turno.
+      if (typeof Skills !== "undefined") Skills.spendApproach(unit);
+      else if (typeof Turns !== "undefined") Turns.useAction(unit);
       if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
     }
     await this.attack(unit, obelisk);
@@ -775,7 +778,8 @@ const Obelisks = {
 
     const carriedGnome = typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === unit.id) : null;
     const attackBonus = typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0;
-    const damage = carriedGnome ? carriedGnome.points : UNIT_TYPES[unit.typeId].fuerza + attackBonus;
+    const skillBonus = typeof Skills !== "undefined" ? Skills.attackBonus(unit, obelisk) : 0;
+    const damage = carriedGnome ? carriedGnome.points : UNIT_TYPES[unit.typeId].fuerza + attackBonus + skillBonus;
     const wasFullHp = obelisk.hp >= obelisk.maxHp;
     obelisk.hp = Math.max(0, obelisk.hp - damage);
     const oneHitKill = wasFullHp && obelisk.hp <= 0;

@@ -81,6 +81,15 @@ const Turns = {
   // Devuelve una promesa que se resuelve cuando TODOS los oyentes que hayan
   // devuelto una promesa terminan (p.ej. GnomOgro.onTurnStart, que anima su
   // paso/golpe) — endTurn la espera para no solapar animaciones.
+  // Igual que _fireTurnStart pero al FINAL del turno de `team` (antes de
+  // pasar al otro equipo): los oyentes con onTurnEnd(team) pueden devolver
+  // una promesa (p.ej. las flechas de las Torretas, js/skills.js).
+  async _fireTurnEnd(team) {
+    for (const l of this._turnStartListeners) {
+      if (l.onTurnEnd) await l.onTurnEnd(team);
+    }
+  },
+
   _fireTurnStart(team) {
     const results = this._turnStartListeners.map((l) => (l.onTurnStart ? l.onTurnStart(team) : null));
     return Promise.all(results);
@@ -388,12 +397,20 @@ const Turns = {
     // turno más.
     if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return;
     Units.deselect();
+    if (typeof Villages !== "undefined") Villages.deselect();
     // Habilidad "Voluntad Quebrada" (UrgaMentes, js/abilities.js) —
     // "toma el control...durante el resto de este turno": el control
     // termina aquí, al pasar turno, tanto si se llegaron a gastar sus 2
     // acciones como si no (vuelve a su equipo, agotada, para que la IA
     // rival no la use este mismo round).
     if (typeof Abilities !== "undefined") Abilities.releaseMindControl();
+    // Fin del turno del jugador (Torretas, js/skills.js): tablero bloqueado
+    // mientras se animan las flechas.
+    this._aiRunning = true;
+    this._updateButtonState();
+    await this._fireTurnEnd("player");
+    this._aiRunning = false;
+    if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return;
     // Pedido explícito: "los gnomos que están sueltos... pierden 5 puntos
     // cada vez que alguien pulsa el botón PASAR TURNO" — CADA pulsación
     // cuenta, así que se llama aquí (la del jugador) Y otra vez más abajo,
@@ -417,6 +434,7 @@ const Turns = {
     }
 
     await this._runEnemyTurn();
+    await this._fireTurnEnd("enemy");
 
     if (typeof Gnome !== "undefined") Gnome.applyTurnPassDecay();
     this._aiRunning = false;

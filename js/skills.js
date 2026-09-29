@@ -37,6 +37,7 @@ const SKILL_BRANCHES = [
 // existan, la interfaz cae sola al glifo de Phosphor de `fallbackIcon`.
 const SKILL_ICON_DIR = "assets/iconos/habilidades/";
 const SKILL_SHIELD_ICON = "assets/iconos/escudo_activo.png";
+const SKILL_ARROW_SPRITE = "assets/iconos/flecha.png"; // flecha de las Torretas
 
 // level = fila del árbol (1-5), slot = columna dentro de esa fila (0/1).
 const SKILL_DEFS = [
@@ -117,6 +118,84 @@ const SKILL_DEFS = [
     describe: () =>
       "Tus personajes ganan un escudo que anula el próximo ataque que reciban y después desaparece. Si empiezas tu turno con un personaje sin escudo en una casilla adyacente a uno de tus tótems o a tu Obelisco, el escudo se rearma.",
   },
+  // ---------- Rama GUERRA ----------
+  {
+    id: "embestir",
+    branch: "guerra",
+    level: 1,
+    slot: 0,
+    name: "Embestir",
+    maxRank: 1,
+    fallbackIcon: "ph-lightning",
+    describe: () =>
+      "Una vez por turno, uno de tus personajes puede moverse y atacar a la vez gastando una única acción en lugar de dos. Se aplica solo al acercarse a un enemigo, a un tótem o a un Obelisco para golpearlo.",
+  },
+  {
+    id: "camaradas",
+    branch: "guerra",
+    level: 2,
+    slot: 0,
+    name: "Camaradas",
+    maxRank: 3,
+    fallbackIcon: "ph-handshake",
+    describe: (rank) =>
+      `Tus ataques hacen +${rank || 1} de daño por cada aliado tuyo situado en una casilla adyacente al enemigo que vas a golpear (+1 por nivel, hasta +3 por aliado). El propio atacante no cuenta.`,
+  },
+  {
+    id: "torretas",
+    branch: "guerra",
+    level: 2,
+    slot: 1,
+    name: "Torretas",
+    maxRank: 1,
+    fallbackIcon: "ph-crosshair",
+    describe: () =>
+      "Al final de tu turno, cada tótem bajo tu control dispara una flecha a los enemigos situados en casillas adyacentes a él y les hace 1 punto de daño.",
+  },
+  {
+    id: "sed_sangre",
+    branch: "guerra",
+    level: 3,
+    slot: 0,
+    name: "Sed de Sangre",
+    maxRank: 3,
+    fallbackIcon: "ph-drop",
+    describe: (rank) =>
+      `Cada vez que un personaje mata a un enemigo, gana +1 de ataque durante su próximo turno. Se acumula hasta ${rank || 1} ${(rank || 1) === 1 ? "vez" : "veces"} (+1 por nivel, hasta 3) y el personaje se va tiñendo de rojo. Un turno sin matar reinicia la sed de sangre.`,
+  },
+  {
+    id: "ultimo_aliento",
+    branch: "guerra",
+    level: 4,
+    slot: 0,
+    name: "Último Aliento",
+    maxRank: 1,
+    fallbackIcon: "ph-heartbeat",
+    describe: () =>
+      "Un personaje tuyo que se ha quedado con 1 punto de vida por haber recibido daño gana +1 de ataque. No se aplica a los personajes que tienen 1 de vida como vida máxima.",
+  },
+  {
+    id: "emboscada",
+    branch: "guerra",
+    level: 4,
+    slot: 1,
+    name: "Emboscada",
+    maxRank: 1,
+    fallbackIcon: "ph-eye-slash",
+    describe: () =>
+      "Un personaje tuyo que ataca desde dentro de un arbusto (se haya movido hasta él o no) gana +1 de ataque en ese golpe.",
+  },
+  {
+    id: "punto_estrategico",
+    branch: "guerra",
+    level: 5,
+    slot: 0,
+    name: "Punto Estratégico",
+    maxRank: 1,
+    fallbackIcon: "ph-flag-banner",
+    describe: () =>
+      "Los tótems bajo tu control te permiten reclutar aliados como si fueran el Obelisco Ancestral: pulsa un tótem tuyo y aparecerá el icono de reclutar; el nuevo aliado aparece en una casilla adyacente al tótem. La población máxima sigue siendo la que marca el Obelisco.",
+  },
 ];
 
 const Skills = {
@@ -125,6 +204,7 @@ const Skills = {
 
   resetAll() {
     this.ranks = { player: {}, enemy: {} };
+    this.chargeUsed = { player: false, enemy: false };
     if (typeof SkillsUI !== "undefined") SkillsUI.onReset();
   },
 
@@ -334,6 +414,159 @@ const Skills = {
 
   // Personaje recién creado (Units.spawnUnit): hereda lo que ya tenga
   // comprado su equipo.
+  // ---------- Rama GUERRA ----------
+
+  // Embestir: una vez por turno (por equipo) un personaje se mueve y ataca
+  // gastando UNA sola acción en total.
+  chargeUsed: { player: false, enemy: false },
+  chargeReady(unit) {
+    return this.has(unit.team, "embestir") && !this.chargeUsed[unit.team];
+  },
+  // ¿Puede `unit` acercarse a un objetivo y golpearlo este turno? Sin
+  // Embestir hacen falta 2 acciones (mover + golpear); con ella basta 1.
+  canApproachAttack(unit) {
+    if (typeof Turns === "undefined") return true;
+    const left = Turns.remainingActions(unit);
+    return left >= 2 || (left >= 1 && this.chargeReady(unit));
+  },
+  // Paga el desplazamiento previo al golpe: gratis si Embestir está
+  // disponible (y se marca como usado este turno), una acción si no.
+  spendApproach(unit) {
+    if (typeof Turns === "undefined") return;
+    if (this.chargeReady(unit)) {
+      this.chargeUsed[unit.team] = true;
+      if (typeof Units !== "undefined") Units.spawnFloatingText(unit, "¡Embestida!", { className: "dmg-popup" });
+      return;
+    }
+    Turns.useAction(unit);
+  },
+
+  // Ataque extra de `attacker` contra `target` (unidad, tótem u obelisco).
+  attackBonus(attacker, target) {
+    if (!attacker || typeof Units === "undefined") return 0;
+    const team = attacker.team;
+    let bonus = 0;
+    const camaradas = this.rank(team, "camaradas");
+    if (camaradas > 0 && target) {
+      const allies = Units.list.filter(
+        (u) =>
+          u.team === team &&
+          u.id !== attacker.id &&
+          Math.max(Math.abs(u.row - target.row), Math.abs(u.col - target.col)) <= 1
+      ).length;
+      bonus += camaradas * allies;
+    }
+    if (this.rank(team, "sed_sangre") > 0) bonus += attacker.bloodStacks || 0;
+    if (this.has(team, "ultimo_aliento") && attacker.hp === 1 && (attacker.maxHp || 1) > 1) bonus += 1;
+    if (this.has(team, "emboscada") && typeof Bushes !== "undefined" && Bushes.isHidingUnit(attacker)) bonus += 1;
+    return bonus;
+  },
+
+  // Sed de Sangre: se anota la baja; al empezar el siguiente turno de su
+  // equipo se convierte en un punto de ataque (o se reinicia si no hubo).
+  onKill(attacker) {
+    if (!attacker || !this.has(attacker.team, "sed_sangre")) return;
+    attacker.bloodPending = (attacker.bloodPending || 0) + 1;
+  },
+  _tickBloodlust(team) {
+    if (typeof Units === "undefined") return;
+    const max = this.rank(team, "sed_sangre");
+    Units.list
+      .filter((u) => u.team === team)
+      .forEach((u) => {
+        const before = u.bloodStacks || 0;
+        if (max > 0 && u.bloodPending) u.bloodStacks = Math.min(max, before + u.bloodPending);
+        else u.bloodStacks = 0;
+        u.bloodPending = 0;
+        this.refreshBloodTint(u);
+      });
+  },
+  refreshBloodTint(unit) {
+    if (!unit.el) return;
+    for (let i = 1; i <= 3; i++) unit.el.classList.toggle(`unit--bloodlust-${i}`, (unit.bloodStacks || 0) === i);
+  },
+
+  // Torretas: al terminar el turno de `team`, sus tótems disparan una
+  // flecha (1 de daño) a cada enemigo adyacente.
+  async onTurnEnd(team) {
+    if (!this.has(team, "torretas") || typeof Villages === "undefined" || typeof Units === "undefined") return;
+    const totems = Villages.list.filter((v) => v.owner === team);
+    for (const totem of totems) {
+      const targets = Units.list.filter(
+        (u) =>
+          u.team !== team &&
+          Math.max(Math.abs(u.row - totem.row), Math.abs(u.col - totem.col)) <= 1 &&
+          !(typeof Bushes !== "undefined" && Bushes.isHiddenFromTeam(u.row, u.col, team))
+      );
+      for (const target of targets) {
+        if (!Units.list.includes(target)) continue;
+        await this._fireArrow(team, totem, target);
+      }
+    }
+  },
+  async _fireArrow(team, totem, target) {
+    Units.faceTowardsTile(target, totem.row, totem.col);
+    // Retroceso sutil del tótem al disparar
+    if (totem.spriteEl && totem.spriteEl.animate) {
+      totem.spriteEl.animate(
+        [{ transform: "scale(1,1)" }, { transform: "scale(1.08,0.94)" }, { transform: "scale(1,1)" }],
+        { duration: 260, easing: "ease-out" }
+      );
+    }
+    await this._flyArrow(totem, target);
+    const outcome = this.resolveDamage(target, 1, { melee: false });
+    if (!outcome.prevented && target.hp <= 0) {
+      if (typeof Glory !== "undefined") Glory.queueKillBonus(team);
+      await Units.removeUnit(target);
+      if (typeof Gnome !== "undefined") await Gnome.dropHeldBy(target);
+    }
+    await new Promise((r) => setTimeout(r, 160));
+  },
+  _flyArrow(totem, target) {
+    return new Promise((resolve) => {
+      if (!totem.el || !target.el) return resolve();
+      const a = totem.spriteEl.getBoundingClientRect();
+      const b = target.el.getBoundingClientRect();
+      const start = { x: a.left + a.width / 2, y: a.top + a.height * 0.35 };
+      const end = { x: b.left + b.width / 2, y: b.top + b.height * 0.45 };
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const dist = Math.hypot(dx, dy);
+      const duration = Math.min(700, 260 + dist * 0.9);
+      const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+      const el = document.createElement("img");
+      el.src = SKILL_ARROW_SPRITE;
+      el.className = "torreta-arrow";
+      el.draggable = false;
+      el.alt = "";
+      document.body.appendChild(el);
+      if (typeof SFX !== "undefined") SFX.gnomeFly(duration / 1000, 1.9);
+      const arc = Math.min(40, dist * 0.18);
+      const t0 = performance.now();
+      let px = start.x;
+      let py = start.y;
+      let rot = angle;
+      const step = (now) => {
+        const t = Math.min(1, (now - t0) / duration);
+        const x = start.x + dx * t;
+        const y = start.y + dy * t - Math.sin(t * Math.PI) * arc;
+        // La flecha encara siempre su dirección real de vuelo (con la parábola)
+        if (Math.hypot(x - px, y - py) > 0.5) rot = (Math.atan2(y - py, x - px) * 180) / Math.PI;
+        px = x;
+        py = y;
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.style.transform = `translate(-50%, -50%) rotate(${rot}deg)`;
+        if (t < 1) requestAnimationFrame(step);
+        else {
+          el.remove();
+          resolve();
+        }
+      };
+      requestAnimationFrame(step);
+    });
+  },
+
   onUnitSpawn(unit) {
     if (this.has(unit.team, "escudos")) this.setShield(unit, true);
     this.refreshCohesion();
@@ -346,6 +579,8 @@ const Skills = {
   // Al empezar el turno de `team`: rearma el escudo de quien esté junto a
   // uno de sus tótems o su Obelisco.
   onTurnStart(team) {
+    this.chargeUsed[team] = false;
+    this._tickBloodlust(team);
     if (!this.has(team, "escudos") || typeof Units === "undefined") return;
     const anchors = [];
     if (typeof Obelisks !== "undefined") {

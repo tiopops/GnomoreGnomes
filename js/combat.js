@@ -112,7 +112,7 @@ const Combat = {
       // siempre — ver approachAndAttack/attack más abajo, que son quienes
       // de verdad gastan las acciones.
       const needsMove = approach.row !== unit.row || approach.col !== unit.col;
-      if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < 2) return;
+      if (needsMove && typeof Turns !== "undefined" && !(typeof Skills !== "undefined" ? Skills.canApproachAttack(unit) : Turns.remainingActions(unit) >= 2)) return;
       targets.push({ target: other, approach });
     });
     return targets;
@@ -174,7 +174,8 @@ const Combat = {
       // empiece a temblar de miedo y que se gire de un lado a otro como hace
       // el gnomo". target.hp <= damage -> este golpe (sin acumular ningún
       // otro) ya lo mataría del todo.
-      if (target.hp <= damage) {
+      const dmgHere = damage + (typeof Skills !== "undefined" ? Skills.attackBonus(unit, target) : 0);
+      if (target.hp <= dmgHere) {
         target.el.classList.add("unit--doomed");
         Units.startFearLoop(target);
         this.doomedIds.push(target.id);
@@ -215,7 +216,9 @@ const Combat = {
       if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
       await Units.walkPath(unit, path);
-      if (typeof Turns !== "undefined") Turns.useAction(unit);
+      // Embestir (js/skills.js): mover + golpear por una sola acción, 1 vez por turno.
+      if (typeof Skills !== "undefined") Skills.spendApproach(unit);
+      else if (typeof Turns !== "undefined") Turns.useAction(unit);
       // Mismo bug que en GnomeInstance.catchBy (js/gnome.js): acercarse
       // para atacar tampoco revelaba niebla nueva al detenerse, por la
       // misma razón (Units.walkPath no revela, solo reevalúa lo ya
@@ -253,8 +256,12 @@ const Combat = {
     // El daño depende de la FUERZA del atacante (una de sus 4 estadísticas,
     // ver UNIT_TYPES en units.js) en vez de ser siempre 1 — así cada tipo de
     // unidad pega de verdad distinto, no solo se mueve distinto.
+    // Rama GUERRA (js/skills.js): Camaradas, Sed de Sangre, Último Aliento y
+    // Emboscada suman ataque extra.
     const damage =
-      UNIT_TYPES[attacker.typeId].fuerza + (typeof Armory !== "undefined" ? Armory.attackBonus(attacker.team) : 0);
+      UNIT_TYPES[attacker.typeId].fuerza +
+      (typeof Armory !== "undefined" ? Armory.attackBonus(attacker.team) : 0) +
+      (typeof Skills !== "undefined" ? Skills.attackBonus(attacker, target) : 0);
     // Habilidades de PROTECCIÓN (js/skills.js): Evasión/Escudo/Piel de Roca
     // pueden anular el golpe; si no, hace el daño de siempre (barra, texto,
     // temblor y sonido los pone Skills.resolveDamage).
@@ -332,6 +339,7 @@ const Combat = {
       // no sumarlo a los puntos "de verdad" hasta el próximo inicio de
       // turno de ese equipo.
       if (typeof Glory !== "undefined") Glory.queueKillBonus(attacker.team);
+      if (typeof Skills !== "undefined") Skills.onKill(attacker);
       await Units.removeUnit(target);
       if (typeof Gnome !== "undefined") await Gnome.dropHeldBy(target);
     } else if (!attackerDiedFromThorns) {

@@ -200,12 +200,36 @@ const Villages = {
     // directamente en vez de no hacer nada (los poblados nunca se
     // seleccionan, así que no hay que desviar ningún otro comportamiento).
     el.addEventListener("click", (e) => {
-      if (!el.classList.contains("village--targeted")) return;
+      if (!el.classList.contains("village--targeted")) {
+        // Punto Estratégico (js/skills.js): un tótem propio se puede
+        // "abrir" como el Obelisco para reclutar desde él.
+        if (this.canRecruitFrom(village)) {
+          e.stopPropagation();
+          this.toggleSelect(village);
+        }
+        return;
+      }
       if (typeof Units === "undefined" || !Units.selectedId) return;
       e.stopPropagation();
       const attacker = Units.list.find((u) => u.id === Units.selectedId);
       if (attacker) this.attack(attacker, village);
     });
+
+    // Menú de reclutar (solo se muestra al seleccionar un tótem propio con
+    // Punto Estratégico) — reutiliza el estilo del menú del Obelisco.
+    const menuEl = document.createElement("div");
+    menuEl.className = "obelisk__menu";
+    const recruitBtn = document.createElement("button");
+    recruitBtn.className = "obelisk__menu-btn obelisk__menu-btn--recruit";
+    recruitBtn.setAttribute("aria-label", "Reclutar");
+    recruitBtn.innerHTML = '<img src="assets/iconos/obelisco_reclutar.png" class="obelisk__menu-icon" alt="">';
+    recruitBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.openRecruit(village);
+    });
+    if (typeof Tooltip !== "undefined") Tooltip.attach(recruitBtn, "Reclutar");
+    menuEl.appendChild(recruitBtn);
+    el.appendChild(menuEl);
 
     if (typeof Units !== "undefined") Units.container.appendChild(el);
 
@@ -221,6 +245,7 @@ const Villages = {
       spriteEl,
       hpBarEl,
       hpSegmentEls,
+      menuEl,
     };
     this._placeInstant(village);
     if (typeof Units !== "undefined") Units.updateHpBar(village);
@@ -468,6 +493,42 @@ const Villages = {
     return best;
   },
 
+  // ---------- Punto Estratégico: reclutar desde un tótem propio ----------
+  _selectedId: null,
+  canRecruitFrom(village) {
+    if (typeof Skills === "undefined" || !Skills.has("player", "punto_estrategico")) return false;
+    if (village.owner !== "player") return false;
+    if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return false;
+    if (typeof Turns !== "undefined" && (Turns.activeTeam !== "player" || Turns._aiRunning)) return false;
+    return true;
+  },
+  toggleSelect(village) {
+    if (this._selectedId === village.id) {
+      this.deselect();
+      return;
+    }
+    this.deselect();
+    if (typeof Units !== "undefined") Units.deselect();
+    if (typeof Obelisks !== "undefined") Obelisks.deselect();
+    SFX.click();
+    this._selectedId = village.id;
+    village.el.classList.add("village--selected");
+  },
+  deselect() {
+    if (!this._selectedId) return;
+    const prev = this.list.find((v) => v.id === this._selectedId);
+    if (prev) prev.el.classList.remove("village--selected");
+    this._selectedId = null;
+  },
+  openRecruit(village) {
+    if (!this.canRecruitFrom(village) || typeof Obelisks === "undefined") return;
+    const home = Obelisks.byTeam("player");
+    if (!home) return;
+    // "Ancla" con la misma forma que espera el popup del Obelisco.
+    Obelisks.openRecruitPopup({ team: "player", raceId: home.raceId, row: village.row, col: village.col });
+    this.deselect();
+  },
+
   // ---------- Proveedor de rango (ver cabecera de units.js) ----------
   // Pedido explícito: "puedes atacarlos solo si tienes un gnomo en la
   // mano" — a diferencia de Combat (que se apaga MIENTRAS se lleva un
@@ -492,7 +553,7 @@ const Villages = {
       // hace falta moverse primero y solo queda 1 acción, no llegaría para
       // las dos (mover + machacar), así que no se ofrece la mira.
       const needsMove = approach.row !== unit.row || approach.col !== unit.col;
-      if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < 2) return;
+      if (needsMove && typeof Turns !== "undefined" && !(typeof Skills !== "undefined" ? Skills.canApproachAttack(unit) : Turns.remainingActions(unit) >= 2)) return;
       // Pedido explícito: "si un totem o el obelisco esta dentro del rango
       // de movimiento del personaje seleccionado se puede machacar el
       // gnomo contra el" — mismo bug/arreglo que Obelisks.showFor: el clic
@@ -551,7 +612,9 @@ const Villages = {
       if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
       await Units.walkPath(unit, path);
-      if (typeof Turns !== "undefined") Turns.useAction(unit);
+      // Embestir (js/skills.js): mover + golpear por una sola acción, 1 vez por turno.
+      if (typeof Skills !== "undefined") Skills.spendApproach(unit);
+      else if (typeof Turns !== "undefined") Turns.useAction(unit);
       // Mismo bug ya corregido en GnomeInstance.catchBy/Combat.approachAndAttack:
       // acercarse a pie tiene que revelar niebla nueva al detenerse.
       if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
@@ -782,6 +845,7 @@ const Villages = {
   // para siempre — un poblado no "pierde" el bonus con el que se conquistó
   // hasta que alguien vuelva a conquistarlo.
   _capture(village, team, gloryBonus) {
+    this.deselect();
     // "cuando pierdes el control de un totem los puntos de gloria
     // persistentes que te otorgaban tambien se pierden" (pedido explícito)
     // — Villages.gloryBonusFor ya recalcula esto solo en cuanto cambia

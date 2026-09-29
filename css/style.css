@@ -8383,3 +8383,42 @@ body.backpack-giving--katapum * {
   opacity: 1;
   transform: scale(1);
 }
+
+/* ---------- Rama GUERRA (js/skills.js) ---------- */
+/* Flecha de las Torretas: coordenadas reales de pantalla (position:fixed),
+   igual que el vuelo del KataPum. */
+.torreta-arrow {
+  position: fixed;
+  width: 84px;
+  height: auto;
+  z-index: 9000;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.45));
+}
+
+/* Sed de Sangre: el personaje se tiñe de rojo con cada punto acumulado. */
+.unit--bloodlust-1 .unit__sprite {
+  filter: sepia(0.55) saturate(2.2) hue-rotate(-35deg) brightness(0.98);
+}
+.unit--bloodlust-2 .unit__sprite {
+  filter: sepia(0.8) saturate(3.4) hue-rotate(-42deg) brightness(0.92);
+}
+.unit--bloodlust-3 .unit__sprite {
+  filter: sepia(1) saturate(5) hue-rotate(-48deg) brightness(0.85) drop-shadow(0 0 6px rgba(230, 30, 30, 0.7));
+}
+
+/* Punto Estratégico: el menú de reclutar asoma también sobre un tótem
+   propio seleccionado (reutiliza .obelisk__menu / .obelisk__menu-btn). */
+.village--selected {
+  animation: unit-select-pulse 0.5s ease;
+  z-index: 5000 !important; /* el menú de reclutar por encima de cualquier personaje */
+}
+.village--selected .obelisk__menu {
+  opacity: 1;
+  pointer-events: auto;
+}
+.village--selected .obelisk__menu-btn {
+  transform: scale(1);
+  opacity: 1;
+}

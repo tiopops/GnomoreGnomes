@@ -670,6 +670,7 @@ const Units = {
     // sobre el tablero: seleccionar una unidad cierra el obelisco propio que
     // estuviera mostrando sus iconos de reclutar/habilidades.
     if (typeof Obelisks !== "undefined") Obelisks.deselect();
+    if (typeof Villages !== "undefined") Villages.deselect();
     this.selectedId = unit.id;
     unit.el.classList.add("unit--selected");
     SFX.click();
@@ -1279,5 +1280,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // deselecciona el obelisco propio que estuviera "abierto" (con sus
     // iconos de reclutar/habilidades asomando), igual que con una unidad.
     if (typeof Obelisks !== "undefined") Obelisks.deselect();
+    if (typeof Villages !== "undefined") Villages.deselect();
   });
 });
