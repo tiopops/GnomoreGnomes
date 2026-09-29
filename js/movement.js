@@ -68,6 +68,9 @@ const Movement = {
         // Units.pathIsWalkable) tampoco puede pisar agua en ningún punto
         // intermedio (ver ese helper para el detalle del bug que corrige).
         if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
+        // Habilidad "Raíces" (js/skills.js): pasos junto a los tótems/
+        // Obelisco rival con Raíces cuestan 1 punto de movimiento extra.
+        if (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > range) continue;
         tiles.push({ row, col });
       }
     }

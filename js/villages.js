@@ -457,7 +457,7 @@ const Villages = {
         if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
-        if (moveDist > moveRange) continue;
+        if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
         if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
         if (moveDist < bestDist) {
           bestDist = moveDist;
@@ -794,6 +794,12 @@ const Villages = {
     village.owner = team;
     village.gloryBonus = gloryBonus || 1;
     village.hp = VILLAGE_MAX_HP; // un poblado recién conquistado vuelve a estar sano
+    // Muralla (js/skills.js): su vida máxima depende del NUEVO dueño; un
+    // tótem recién conquistado empieza a plena vida.
+    if (typeof Skills !== "undefined") {
+      Skills.refreshWalls();
+      village.hp = village.maxHp;
+    }
     village.el.classList.remove("village--neutral");
     village.el.classList.add(`village--${team}`);
     // Registrar de nuevo (no solo asignar .src): así SpriteQuality (ver

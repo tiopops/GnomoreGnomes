@@ -56,7 +56,7 @@ const Combat = {
         if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue; // agua (js/mapgen.js)
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
-        if (moveDist > moveRange) continue;
+        if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
         // Pedido explícito: "bajo ningun concepto un personaje puede
         // moverse a traves de una casilla de agua" — ver Units.pathIsWalkable
         // (units.js): el destino ya se comprueba arriba, pero el camino recto
@@ -255,11 +255,20 @@ const Combat = {
     // unidad pega de verdad distinto, no solo se mueve distinto.
     const damage =
       UNIT_TYPES[attacker.typeId].fuerza + (typeof Armory !== "undefined" ? Armory.attackBonus(attacker.team) : 0);
-    target.hp = Math.max(0, target.hp - damage);
-    Units.updateHpBar(target);
-    Units.spawnFloatingText(target, `-${damage}`, { className: "dmg-popup" });
-    Units.playShake(target);
-    SFX.hit();
+    // Habilidades de PROTECCIÓN (js/skills.js): Evasión/Escudo/Piel de Roca
+    // pueden anular el golpe; si no, hace el daño de siempre (barra, texto,
+    // temblor y sonido los pone Skills.resolveDamage).
+    const outcome =
+      typeof Skills !== "undefined"
+        ? Skills.resolveDamage(target, damage, { melee: true })
+        : (() => {
+            target.hp = Math.max(0, target.hp - damage);
+            Units.updateHpBar(target);
+            Units.spawnFloatingText(target, `-${damage}`, { className: "dmg-popup" });
+            Units.playShake(target);
+            SFX.hit();
+            return { prevented: false };
+          })();
 
     // Retroalimentación en QUIEN GOLPEA, no solo en quien lo recibe (regla
     // de oro del proyecto: todo necesita sonido y/o animación coherente con
@@ -283,8 +292,15 @@ const Combat = {
     // removeUnit/dropHeldBy/Gloria de abajo, solo que el crédito va para el
     // equipo de `target`, no el de `attacker` — fue su espina la que lo
     // mató).
+    // Golpe anulado (esquiva/escudo/piel de roca): sin espinas ni empujón.
+    if (outcome.prevented) {
+      Units.refreshRange(attacker);
+      return;
+    }
     let attackerDiedFromThorns = false;
-    if (target.thorny && attacker.hp > 0) {
+    // "Armadura de Espinas" (js/skills.js) funciona igual que las espinas del
+    // GolemCorteza: 1 punto de daño al que golpea.
+    if ((target.thorny || (typeof Skills !== "undefined" && Skills.hasThorns(target))) && attacker.hp > 0) {
       attacker.hp = Math.max(0, attacker.hp - 1);
       Units.updateHpBar(attacker);
       Units.spawnFloatingText(attacker, "-1", { className: "dmg-popup" });
@@ -324,6 +340,7 @@ const Combat = {
       await this.pushBack(attacker, target);
     }
 
+    if (typeof Skills !== "undefined") Skills.refreshCohesion();
     if (!attackerDiedFromThorns) Units.refreshRange(attacker);
   },
 

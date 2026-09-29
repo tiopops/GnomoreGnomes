@@ -179,7 +179,7 @@ const TotemVision = {
         if (this.at(row, col)) continue;
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
-        if (moveDist > moveRange) continue;
+        if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
         if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
         if (moveDist < bestDist) {
           bestDist = moveDist;

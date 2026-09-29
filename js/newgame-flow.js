@@ -442,6 +442,7 @@ function spawnTestUnits(size, raceId) {
   // de cada equipo al empezar una partida nueva.
   if (typeof Armory !== "undefined") {
     Armory.resetAll();
+    if (typeof Skills !== "undefined") Skills.resetAll();
   }
 
   // Turnos (js/turns.js) — se resetea AL FINAL, con el resto del tablero ya

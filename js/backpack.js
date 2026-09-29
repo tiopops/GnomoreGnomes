@@ -613,8 +613,8 @@ const Backpack = {
     this.inventory = this.inventory.filter((it) => it.uid !== uid);
     const type = UNIT_TYPES[target.typeId];
     const bonus = typeof Armory !== "undefined" ? Armory.defenseBonus(target.team) : 0;
-    target.hp = type.aguante + bonus;
-    target.maxHp = type.aguante + bonus;
+    target.hp = type.aguante + bonus + (target.cohesionBonus || 0);
+    target.maxHp = type.aguante + bonus + (target.cohesionBonus || 0);
     Units.updateHpBar(target);
     SFX.itemEaten();
     Units.spawnFloatingText(target, "¡BEVIDA!", { className: "dmg-popup gnome-points-popup" });
@@ -1281,10 +1281,15 @@ const Backpack = {
 
   _explodeKatapum(target) {
     const damage = this._rollKatapumDamage();
-    target.hp = Math.max(0, target.hp - damage);
-    Units.updateHpBar(target);
-    Units.spawnFloatingText(target, `-${damage}`, { className: "dmg-popup" });
-    Units.playShake(target);
+    // Escudo/Piel de Roca (js/skills.js) también valen contra el misil; la
+    // Evasión no (es teledirigido, no es un golpe cuerpo a cuerpo).
+    if (typeof Skills !== "undefined") Skills.resolveDamage(target, damage, { melee: false });
+    else {
+      target.hp = Math.max(0, target.hp - damage);
+      Units.updateHpBar(target);
+      Units.spawnFloatingText(target, `-${damage}`, { className: "dmg-popup" });
+      Units.playShake(target);
+    }
     SFX.explosion();
 
     // "en el momento del impacto suena una explosion, la camara de la

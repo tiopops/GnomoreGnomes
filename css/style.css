@@ -7956,3 +7956,430 @@ body.backpack-giving--katapum * {
   0%, 100% { opacity: 0; }
   50% { opacity: 1; }
 }
+
+/* ---------- Habilidades del Obelisco (js/skillsui.js) ----------
+   Pedido explícito: "una interfaz como las que hemos hecho hasta ahora...
+   todos sus elementos seran cuadros distorsionados...3 pestañas: GUERRA
+   (rojos), PROTECCIÓN (azules), SUPERVIVENCIA (verdes)". Mismas piezas
+   irregulares de doble capa (::before contorno negro, ::after relleno) que
+   el resto del HUD (--gg-slot-clip/--gg-badge-clip); la X de cerrar es la
+   de .backpack-close-btn, ya desplazada fuera de la esquina. */
+.skills-panel {
+  width: min(660px, 94vw);
+  margin-top: 2vh;
+}
+
+.skills-panel .backpack-panel__bg {
+  gap: 10px;
+  padding: 40px 46px 28px;
+}
+
+.skills-panel .backpack-panel__title {
+  font-size: 1.7rem;
+  padding-bottom: 8px;
+}
+
+/* --- Pestañas --- */
+.skills-tabs {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.skills-tab {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 46px;
+  padding: 0 8px;
+  border: none;
+  background: none;
+  cursor: var(--cursor-pointer);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.45));
+}
+
+.skills-tab::before,
+.skills-tab::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.skills-tab::before {
+  background: #000;
+}
+
+.skills-tab::after {
+  inset: var(--gg-frame-outline-width);
+  background: color-mix(in srgb, var(--sk-accent) 32%, #1c1820);
+  transition: background-color 0.15s ease;
+}
+
+/* Cada pestaña con una inclinación distinta -> "cuadros distorsionados" */
+.skills-tab--v0::before,
+.skills-tab--v0::after { clip-path: polygon(3% 0, 100% 6%, 96% 100%, 0 94%); }
+.skills-tab--v1::before,
+.skills-tab--v1::after { clip-path: polygon(0 5%, 97% 0, 100% 95%, 4% 100%); }
+.skills-tab--v2::before,
+.skills-tab--v2::after { clip-path: polygon(4% 4%, 100% 0, 97% 96%, 0 100%); }
+
+.skills-tab__label {
+  position: relative;
+  z-index: 2;
+  font-weight: 900;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  color: rgba(244, 242, 248, 0.75);
+  white-space: nowrap;
+}
+
+.skills-tab:hover {
+  transform: translateY(-2px);
+}
+
+.skills-tab--active {
+  transform: translateY(-4px) scale(1.04);
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 12px var(--sk-accent));
+}
+
+.skills-tab--active::after {
+  background: var(--sk-accent);
+}
+
+.skills-tab--active .skills-tab__label {
+  color: #fff;
+}
+
+/* --- Puntos de Gloria disponibles --- */
+.skills-points {
+  position: relative;
+  z-index: 2;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffcf3f;
+  font-weight: 900;
+}
+
+.skills-points__icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.skills-points__num {
+  font-size: 1.5rem;
+}
+
+.skills-points__label {
+  font-size: 0.75rem;
+  color: rgba(244, 242, 248, 0.75);
+  font-weight: 800;
+}
+
+/* --- Árbol --- */
+.skills-tree {
+  --sk-node: clamp(40px, 6.6vh, 62px);
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 2.4vh, 22px);
+  padding: 4px 0;
+}
+
+.skills-links {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: visible;
+}
+
+.skills-link {
+  stroke: rgba(244, 242, 248, 0.2);
+  stroke-width: 5;
+  stroke-linecap: butt;
+}
+
+.skills-link--lit {
+  stroke: #ffcf3f;
+  filter: drop-shadow(0 0 5px rgba(255, 207, 63, 0.7));
+}
+
+.skills-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: clamp(60px, 22vw, 150px);
+}
+
+.skills-node {
+  position: relative;
+  width: var(--sk-node);
+  height: var(--sk-node);
+  padding: 0;
+  border: none;
+  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: var(--cursor-pointer);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.skills-node::before,
+.skills-node::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: var(--gg-slot-clip);
+  transition: background-color 0.15s ease;
+}
+
+.skills-node::before {
+  background: rgba(244, 242, 248, 0.25);
+}
+
+.skills-node::after {
+  inset: var(--gg-frame-outline-width);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+/* Los dos huecos de cada bifurcación con una inclinación distinta */
+.skills-row--fork .skills-node[data-slot="1"]::before,
+.skills-row--fork .skills-node[data-slot="1"]::after {
+  clip-path: polygon(0% 4%, 96% 0%, 100% 97%, 3% 100%);
+}
+
+.skills-node__icon {
+  position: relative;
+  z-index: 1;
+  width: 66%;
+  height: 66%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.skills-node__glyph {
+  position: relative;
+  z-index: 1;
+  font-size: calc(var(--sk-node) * 0.5);
+  color: #f4f2f8;
+  pointer-events: none;
+}
+
+.skills-node--available::before,
+.skills-node--partial::before {
+  background: var(--sk-accent);
+}
+
+.skills-node--available,
+.skills-node--partial {
+  animation: skills-node-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes skills-node-pulse {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 0 10px var(--sk-accent)); }
+}
+
+.skills-node--maxed::before {
+  background: #ffcf3f;
+}
+
+.skills-node--maxed::after {
+  background: color-mix(in srgb, var(--sk-accent) 45%, #1c1820);
+}
+
+.skills-node--locked,
+.skills-node--blocked {
+  filter: grayscale(1) brightness(0.55);
+}
+
+.skills-node--blocked {
+  opacity: 0.6;
+}
+
+.skills-node--empty {
+  opacity: 0.55;
+}
+
+.skills-node--empty::before {
+  background: rgba(244, 242, 248, 0.15);
+}
+
+.skills-node--selected {
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 10px rgba(255, 207, 63, 0.8));
+  animation: none;
+}
+
+.skills-node--selected::before {
+  background: #ffcf3f;
+}
+
+/* Rango "X/Y" — mismo rombo de doble capa que .armory-node__lvl */
+.skills-node__rank {
+  position: absolute;
+  z-index: 2;
+  left: -10px;
+  bottom: -8px;
+  height: 22px;
+  min-width: 38px;
+  padding: 0 4px;
+  transform: rotate(calc(-1 * var(--gg-badge-tilt)));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+
+.skills-node__rank::before,
+.skills-node__rank::after {
+  content: "";
+  position: absolute;
+  clip-path: var(--gg-badge-clip);
+}
+
+.skills-node__rank::before {
+  inset: 0;
+  background: #000;
+}
+
+.skills-node__rank::after {
+  inset: var(--gg-frame-outline-width);
+  background: rgba(244, 242, 248, 0.85);
+}
+
+.skills-node--maxed .skills-node__rank::after,
+.skills-node--selected .skills-node__rank::after {
+  background: #ffcf3f;
+}
+
+.skills-node__rank-num {
+  position: relative;
+  z-index: 2;
+  color: #241f28;
+  font-weight: 900;
+  font-size: 0.62rem;
+  white-space: nowrap;
+}
+
+.skills-node--empty .skills-node__rank {
+  display: none;
+}
+
+.skills-node__check,
+.skills-node__lock {
+  position: absolute;
+  z-index: 2;
+  top: -6px;
+  right: -6px;
+  font-size: 1.1rem;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.6));
+  pointer-events: none;
+}
+
+.skills-node__check { color: #57c15c; }
+.skills-node__lock { color: #d8d4de; }
+
+/* --- Descripción --- */
+.skills-desc {
+  min-height: 88px;
+  padding: 12px 22px;
+}
+
+.skills-desc__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.skills-desc__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.skills-desc__name {
+  font-weight: 900;
+  font-size: 1.15rem;
+  color: var(--sk-accent);
+  filter: brightness(1.15);
+}
+
+.skills-desc__rank {
+  font-weight: 800;
+  font-size: 0.78rem;
+  color: #ffcf3f;
+}
+
+.skills-desc__cost {
+  margin-left: auto;
+  font-weight: 900;
+  font-size: 0.9rem;
+  color: #ffcf3f;
+}
+
+.skills-desc__cost small {
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.skills-desc__cost--done {
+  color: #6fdc7a;
+}
+
+.skills-desc .backpack-desc__text {
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.skills-desc__lock {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ff8f8f;
+}
+
+.skills-desc__hint {
+  opacity: 0.7;
+}
+
+/* Icono del escudo activo sobre el personaje (Skills.setShield) */
+.unit__shield-icon {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  left: calc(50% - 74px);
+  top: -30px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6));
+  z-index: 8;
+}
+
+.unit__shield-icon--on {
+  opacity: 1;
+  transform: scale(1);
+}

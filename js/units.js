@@ -496,6 +496,8 @@ const Units = {
 
     this._placeInstant(unit);
     this.updateHpBar(unit);
+    // Habilidades de PROTECCIÓN (js/skills.js): escudo inicial y Codo con Codo.
+    if (typeof Skills !== "undefined") Skills.onUnitSpawn(unit);
 
     el.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1001,6 +1003,8 @@ const Units = {
     // huida del gnomo...), así que basta con recalcularlo aquí una vez en
     // vez de repetir la llamada en cada mecánica que use walkPath.
     if (typeof Shops !== "undefined") Shops.refreshAll();
+    // Codo con Codo (js/skills.js): la formación cambió al moverse.
+    if (typeof Skills !== "undefined") Skills.refreshCohesion();
   },
 
   // "el jugador indica a donde quiere moverse, pero el segundo y tercer
@@ -1240,6 +1244,7 @@ const Units = {
     await new Promise((resolve) => setTimeout(resolve, 420));
     unit.el.remove();
     this.list = this.list.filter((u) => u.id !== unit.id);
+    if (typeof Skills !== "undefined") Skills.onUnitRemoved();
     // Tienda Goblin (js/shops.js) — si el personaje que acaba de morir era
     // el único que mantenía una tienda accesible, deja de estarlo (y su
     // popup, si estaba abierto, se cierra solo — ver Shops.refreshAll).

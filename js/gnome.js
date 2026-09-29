@@ -475,7 +475,7 @@ function createGnomeInstance() {
           if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
-          if (moveDist > moveRange) continue;
+          if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
           // Pedido explícito: "bajo ningun concepto un personaje puede
           // moverse a traves de una casilla de agua" — ver Units.pathIsWalkable.
           if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
@@ -1593,10 +1593,13 @@ const Gnome = {
   // del cohete, que es 1-2 al azar: "le quita 2 puntos de vida", sin margen).
   _explodeDecoy(decoy, unit) {
     const damage = 2;
-    unit.hp = Math.max(0, unit.hp - damage);
-    Units.updateHpBar(unit);
-    Units.spawnFloatingText(unit, `-${damage}`, { className: "dmg-popup" });
-    Units.playShake(unit);
+    if (typeof Skills !== "undefined") Skills.resolveDamage(unit, damage, { melee: false });
+    else {
+      unit.hp = Math.max(0, unit.hp - damage);
+      Units.updateHpBar(unit);
+      Units.spawnFloatingText(unit, `-${damage}`, { className: "dmg-popup" });
+      Units.playShake(unit);
+    }
     SFX.explosion();
 
     const viewportEl = document.getElementById("board-viewport");

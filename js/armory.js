@@ -459,7 +459,7 @@ const Armory = {
       .filter((u) => u.team === team)
       .forEach((unit) => {
         const type = UNIT_TYPES[unit.typeId];
-        const newMax = type.aguante + bonus;
+        const newMax = type.aguante + bonus + (unit.cohesionBonus || 0);
         const delta = newMax - unit.maxHp;
         if (delta <= 0) return;
         for (let i = 0; i < delta; i++) {

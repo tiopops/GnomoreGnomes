@@ -720,7 +720,7 @@ const Obelisks = {
         if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
-        if (moveDist > moveRange) continue;
+        if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
         if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
         if (moveDist < bestDist) {
           bestDist = moveDist;
@@ -876,7 +876,7 @@ const Obelisks = {
   // jugador siempre ve el mismo resumen sea cual sea el motivo.
   _statsRowsHtml() {
     const rows = [
-      ["Vida del Obelisco", (t) => `${Math.max(0, this.byTeam(t)?.hp ?? 0)} / ${OBELISK_MAX_HP}`],
+      ["Vida del Obelisco", (t) => `${Math.max(0, this.byTeam(t)?.hp ?? 0)} / ${this.byTeam(t)?.maxHp ?? OBELISK_MAX_HP}`],
       ["Totems capturados", (t) => (typeof Villages !== "undefined" ? Villages.ownedCount(t) : 0)],
       ["Unidades reclutadas", (t) => this.recruitedCountFor(t)],
       ["Pases de gnomo logrados", (t) => this._passes[t] || 0],
@@ -1229,6 +1229,17 @@ const Obelisks = {
     if (typeof Turns !== "undefined" && Turns.activeTeam !== obelisk.team) return;
     SFX.click();
 
+    // Árbol de habilidades (js/skillsui.js) — sustituye al aviso de
+    // "Próximamente" de antes.
+    if (typeof SkillsUI !== "undefined") {
+      const skillsOverlay = SkillsUI.build(obelisk, () => this.closeAbilitiesPopup());
+      document.body.appendChild(skillsOverlay);
+      this._abilitiesOverlayEl = skillsOverlay;
+      requestAnimationFrame(() => skillsOverlay.classList.add("backpack-overlay--visible"));
+      SkillsUI.afterMount();
+      return;
+    }
+
     const overlay = document.createElement("div");
     overlay.className = "backpack-overlay";
     overlay.addEventListener("click", () => this.closeAbilitiesPopup());
@@ -1271,6 +1282,7 @@ const Obelisks = {
     if (!this._abilitiesOverlayEl) return;
     const el = this._abilitiesOverlayEl;
     this._abilitiesOverlayEl = null;
+    if (typeof SkillsUI !== "undefined") SkillsUI.onClose();
     el.classList.remove("backpack-overlay--visible");
     setTimeout(() => el.remove(), 220);
   },

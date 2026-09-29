@@ -240,8 +240,8 @@ const Abilities = {
   _activateThorns(unit) {
     const type = UNIT_TYPES[unit.typeId];
     const bonus = typeof Armory !== "undefined" ? Armory.defenseBonus(unit.team) : 0;
-    unit.hp = type.aguante + bonus;
-    unit.maxHp = type.aguante + bonus;
+    unit.hp = type.aguante + bonus + (unit.cohesionBonus || 0);
+    unit.maxHp = type.aguante + bonus + (unit.cohesionBonus || 0);
     Units.updateHpBar(unit);
     unit.thorny = true;
     unit.el.classList.add("unit--thorny");
@@ -781,6 +781,7 @@ const Abilities = {
     if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
     if (typeof Units !== "undefined") Units.refreshUnitOcclusion();
     if (typeof Shops !== "undefined") Shops.refreshAll();
+    if (typeof Skills !== "undefined") Skills.refreshCohesion();
   },
 
   // ---------- LanzaGnomos: Lanzamiento ----------
@@ -1010,6 +1011,7 @@ const Abilities = {
     // Trampa de TruenoEspora (ver checkTrigger arriba) — un lanzamiento
     // también puede hacer aterrizar a alguien justo encima de una mina.
     this.checkTrigger(unit);
+    if (typeof Skills !== "undefined") Skills.refreshCohesion(); // Codo con Codo
     // "puede lanzar un personaje adyacente amigo o enemigo" (ver
     // _activateThrow más arriba) — Fog.revealForUnit SOLO revela terreno
     // nuevo para el equipo del jugador (un rival no "explora" nada para
