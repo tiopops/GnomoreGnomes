@@ -21,7 +21,7 @@
    unidad adyacente enemiga a el, si no hay nadie anda (el gnomogro es del
    bando de la persona que le dio el golpe de gracia al altar para que
    saliera el gnomo, pero no se puede controlar por nigun jugador, va por su
-   cuenta). el gnomogro tiene 50 puntos de vida y 30 puntos de ataque. por
+   cuenta). el gnomogro tiene 30 puntos de vida y 10 puntos de ataque (pedido posterior). por
    lo que cuando llegue a la base enemiga la destruira de un golpe y acabara
    la partida. cuando el gnomogro ataca despues de una leve animacion de
    sprite pasa a 'gnomo_ogro_ataque' y un instante despues a
@@ -68,8 +68,8 @@
      avanzando en línea recta hacia una base entera, no un personaje más
      sujeto a las reglas normales de movimiento. */
 
-const GNOMOGRO_MAX_HP = 50;
-const GNOMOGRO_ATTACK = 15; // daño real de su golpe (unidades y Obelisco)
+const GNOMOGRO_MAX_HP = 30;
+const GNOMOGRO_ATTACK = 10; // daño real de su golpe (unidades y Obelisco)
 const GNOMOGRO_PERCEPTION_RADIUS = 1;
 const GNOMOGRO_ATTACK_RANGE = 1;
 
