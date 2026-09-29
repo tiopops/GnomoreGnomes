@@ -46,7 +46,9 @@ const TILE_TYPES = {
   // relación de aspecto real en vez de estirarla/aplastarla con la de
   // hierba.
   water: {
-    variants: ["assets/losetas/agua_01.png"],
+    // agua_01 repetida a propósito: pesa el doble que agua_02 (con
+    // nenúfares), así los nenúfares salen en ~1 de cada 3 losetas de agua.
+    variants: ["assets/losetas/agua_01.png", "assets/losetas/agua_01.png", "assets/losetas/agua_02.png"],
     walkable: false,
     nativeWidth: 1024,
     nativeHeight: 854,
@@ -417,7 +419,11 @@ function pickVariant(typeInfo, row, col) {
   const variants = typeInfo.variants;
   if (variants.length === 1) return variants[0];
   // Selección determinista (misma partida = mismo mapa) en vez de aleatoria pura.
-  const idx = (row * 31 + col * 17) % variants.length;
+  // Hash entero simple (no lineal en fila/columna) para que no salgan
+  // diagonales o tablero de ajedrez cuando hay varias variantes.
+  let h = (row * 73856093) ^ (col * 19349663);
+  h = (h ^ (h >>> 13)) * 1274126177;
+  const idx = ((h ^ (h >>> 16)) >>> 0) % variants.length;
   return variants[idx];
 }
 

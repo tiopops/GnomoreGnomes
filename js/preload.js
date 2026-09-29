@@ -86,6 +86,7 @@ const Preload = {
     // tiene listo, sin ningún parón visible.
     "assets/losetas/hierba_01_midres.png",
     "assets/losetas/agua_01_midres.png",
+    "assets/losetas/agua_02_midres.png",
   ],
 
   // Se llama justo ANTES de construir una partida nueva o reanudada (ver
