@@ -112,6 +112,7 @@ const Hierbajos = {
     if (typeof Shops !== "undefined" && Shops.at(row, col)) return false;
     if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) return false;
     if (typeof Altar !== "undefined" && Altar.at(row, col)) return false; // Altar de Sacrificios (js/altar.js)
+    if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) return false; // GnomOgro (js/gnomogro.js): casilla ocupada
     if (typeof Bushes !== "undefined" && Bushes.at(row, col)) return false;
     if (typeof Resources !== "undefined" && Resources.at(row, col)) return false;
     if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) return false;

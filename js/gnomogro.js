@@ -85,6 +85,15 @@ const GnomOgro = {
   // pueda hacer falta un segundo).
   current: null,
 
+  // true si el GnomOgro vivo ocupa la casilla (row,col) — pedido explícito:
+  // "no se puede ocupar la misma casilla que un gnomogro, al igual que
+  // ocurre entre personajes y enemigos". Consultado junto a Altar.at en
+  // todos los sitios que comprueban casillas libres.
+  at(row, col) {
+    const g = this.current;
+    return !!g && g.row === row && g.col === col;
+  },
+
   resetAll() {
     if (this.current && this.current.el) this.current.el.remove();
     this.current = null;
@@ -244,8 +253,27 @@ const GnomOgro = {
     const dr = Math.sign(targetObelisk.row - g.row);
     const dc = Math.sign(targetObelisk.col - g.col);
     if (dr === 0 && dc === 0) return;
-    const nextRow = Math.max(0, Math.min(Units.boardSize - 1, g.row + dr));
-    const nextCol = Math.max(0, Math.min(Units.boardSize - 1, g.col + dc));
+    // Pedido explícito: "no se puede ocupar la misma casilla que un
+    // gnomogro, al igual que ocurre entre personajes y enemigos" — vale
+    // también al revés: el GnomOgro no pisa una casilla con un personaje
+    // (ni propio ni rival). Se prueba el paso ideal y, si está ocupado,
+    // los dos pasos "laterales" que también acercan al objetivo.
+    const clamp = (v) => Math.max(0, Math.min(Units.boardSize - 1, v));
+    const candidates = [[dr, dc]];
+    if (dr !== 0 && dc !== 0) candidates.push([dr, 0], [0, dc]);
+    else if (dr !== 0) candidates.push([dr, 1], [dr, -1]);
+    else candidates.push([1, dc], [-1, dc]);
+    let nextRow = g.row;
+    let nextCol = g.col;
+    for (const [sr, sc] of candidates) {
+      const r = clamp(g.row + sr);
+      const c = clamp(g.col + sc);
+      if (r === g.row && c === g.col) continue;
+      if (typeof Units !== "undefined" && Units.unitAt(r, c)) continue;
+      nextRow = r;
+      nextCol = c;
+      break;
+    }
     if (nextRow === g.row && nextCol === g.col) return;
 
     g.el.classList.add("gnomogro--stepping");
@@ -392,6 +420,7 @@ const GnomOgro = {
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
         if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
         if (typeof Altar !== "undefined" && Altar.at(row, col)) continue;
+        if (this.at(row, col)) continue;
         if (typeof Resources !== "undefined" && Resources.at(row, col)) continue;
         if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));

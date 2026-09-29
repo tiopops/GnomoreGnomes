@@ -175,6 +175,7 @@ const TotemVision = {
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
         if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
         if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
+        if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
         if (typeof Resources !== "undefined" && Resources.at(row, col)) continue;
         if (this.at(row, col)) continue;
         if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;

@@ -65,7 +65,14 @@ const GNOME_ASSETS = {
 // mira la pantalla—) y que, al intentar cogerlo, explota en vez de
 // engancharse (ver GnomeInstance.catchBy).
 const GNOME_DECOY_ASSETS = {
-  idle: "assets/iconos/senuelo_clavado.png",
+  // Pedido explícito: sprite propio para cuando el señuelo ya está
+  // colocado sobre el terreno ("item_señuelo_clavadoentierra"); el
+  // senuelo_clavado.png de siempre queda solo como icono de mochila/tienda.
+  idle: "assets/iconos/senuelo_clavadoentierra.png",
+  // "aparece demasiado pequeño en el escenario" — ancho (px) del señuelo
+  // del jugador en el suelo, más grande que el gnomo normal (69) porque su
+  // dibujo (con estaca y tierra) ocupa menos lienzo útil por píxel.
+  groundWidth: 112,
 };
 
 // Pedido explícito: "la vision de los gnomos pasa a ser 3 casillas
@@ -218,7 +225,7 @@ function createGnomeInstance() {
       // Recursos de escenario (js/resources.js) — tampoco aparece encima de una.
       const noResource = (r, c) => typeof Resources === "undefined" || !Resources.at(r, c);
       // Altar de Sacrificios (js/altar.js) — tampoco aparece encima de él.
-      const noAltar = (r, c) => typeof Altar === "undefined" || !Altar.at(r, c);
+      const noAltar = (r, c) => (typeof Altar === "undefined" || !Altar.at(r, c)) && !(typeof GnomOgro !== "undefined" && GnomOgro.at(r, c));
       if (
         !Units.unitAt(row, col) &&
         !Gnome._otherGnomeAt(this, row, col) &&
@@ -288,7 +295,7 @@ function createGnomeInstance() {
       else spriteEl.src = idleSrc;
       spriteEl.draggable = false;
       spriteEl.alt = "";
-      spriteEl.style.width = `${GNOME_SIZES.ground}px`;
+      spriteEl.style.width = `${this._groundWidth()}px`;
 
       flipEl.appendChild(spriteEl);
       // Sombra proyectada (js/shadows.js) — se sincroniza sola con los
@@ -325,6 +332,12 @@ function createGnomeInstance() {
 
       Units._placeInstant(this);
       this._startIdleFlipLoop();
+    },
+
+    // Ancho en el suelo: el señuelo del jugador (arte propio) es más grande
+    // que un gnomo normal; el del rival se ve como un gnomo de verdad.
+    _groundWidth() {
+      return this.isDecoy && this.ownerTeam === "player" ? GNOME_DECOY_ASSETS.groundWidth : GNOME_SIZES.ground;
     },
 
     // Detiene los temporizadores propios de este gnomo — lo llama el
@@ -475,6 +488,7 @@ function createGnomeInstance() {
           if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
           if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
+          if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
           if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;
           const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
@@ -799,6 +813,7 @@ function createGnomeInstance() {
           if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
           if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
           if (typeof Altar !== "undefined" && Altar.at(row, col)) continue;
+          if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
           if (typeof Resources !== "undefined" && Resources.at(row, col)) continue;
           if (typeof TotemVision !== "undefined" && TotemVision.at(row, col)) continue;
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
@@ -1050,6 +1065,7 @@ function createGnomeInstance() {
           if (typeof Shops !== "undefined" && Shops.at(row, col)) continue; // Tienda Goblin (js/shops.js)
           if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
+          if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
           if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const minDist = Units.list.reduce(
@@ -1092,7 +1108,7 @@ function createGnomeInstance() {
       this.el.classList.remove("gnome--landing");
 
       this.spriteEl.src = GNOME_ASSETS.idle;
-      this.spriteEl.style.width = `${GNOME_SIZES.ground}px`;
+      this.spriteEl.style.width = `${this._groundWidth()}px`;
     },
 
     // Arco de lanzamiento: la posición la controla JS fotograma a fotograma
@@ -1227,7 +1243,7 @@ function createGnomeInstance() {
       this.el.style.display = "";
       Units._placeInstant(this);
       this.spriteEl.src = GNOME_ASSETS.idle;
-      this.spriteEl.style.width = `${GNOME_SIZES.ground}px`;
+      this.spriteEl.style.width = `${this._groundWidth()}px`;
       SFX.dropFail();
 
       // Pedido explícito (bug reportado): "el jugador muere, el gnomo
@@ -1286,7 +1302,7 @@ function createGnomeInstance() {
       this.el.style.display = "";
       Units._placeInstant(this);
       this.spriteEl.src = GNOME_ASSETS.idle;
-      this.spriteEl.style.width = `${GNOME_SIZES.ground}px`;
+      this.spriteEl.style.width = `${this._groundWidth()}px`;
       SFX.dropFail();
 
       // Mismo respiro de 2 requestAnimationFrame + pausa que
@@ -1334,6 +1350,7 @@ function createGnomeInstance() {
           if (typeof Shops !== "undefined" && Shops.at(r, c)) continue; // Tienda Goblin (js/shops.js)
           if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof Altar !== "undefined" && Altar.at(r, c)) continue; // Altar de Sacrificios (js/altar.js)
+          if (typeof GnomOgro !== "undefined" && GnomOgro.at(r, c)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
           if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           const alignment = dr * dRow + dc * dCol;
@@ -1367,6 +1384,7 @@ function createGnomeInstance() {
           if (typeof Shops !== "undefined" && Shops.at(r, c)) continue; // Tienda Goblin (js/shops.js)
           if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof Altar !== "undefined" && Altar.at(r, c)) continue; // Altar de Sacrificios (js/altar.js)
+          if (typeof GnomOgro !== "undefined" && GnomOgro.at(r, c)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
           if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           free++;
