@@ -452,7 +452,7 @@ const Shops = {
         // .settings-gear-btn, ver .shop-slot__price en style.css.
         slotEl.innerHTML =
           `<img src="${def.iconUrl}" class="backpack-slot__icon" alt="${def.name}">` +
-          `<span class="shop-slot__price"><span class="shop-slot__price__num">${entry.price}</span></span>`;
+          `<span class="shop-slot__price"><span class="shop-slot__price__num">${this.priceFor("player", entry)}</span></span>`;
         slotEl.classList.toggle("backpack-slot--selected", entry.uid === this._selectedUid);
         slotEl.addEventListener("click", (e) => {
           e.stopPropagation();
@@ -477,6 +477,11 @@ const Shops = {
     this._renderSlots();
   },
 
+  // Regateo (js/skills.js): mitad de precio, redondeando por abajo (mínimo 1).
+  priceFor(team, entry) {
+    return typeof Skills !== "undefined" ? Skills.shopPrice(team, entry.price) : entry.price;
+  },
+
   _updateDescAndPrice() {
     if (!this._descEl || !this._activeShop) return;
     const shop = this._activeShop;
@@ -498,14 +503,14 @@ const Shops = {
       const def = ITEM_TYPES[entry.itemId];
       const nameLine = def ? `<strong class="shop-desc__name-line">${def.name}</strong><br>` : "";
       this._descEl.innerHTML =
-        `${nameLine}${flavor}<br><br><strong class="shop-desc__price-line">Este objeto cuesta ${entry.price} puntos de gloria.</strong>`;
+        `${nameLine}${flavor}<br><br><strong class="shop-desc__price-line">Este objeto cuesta ${this.priceFor("player", entry)} puntos de gloria.</strong>`;
     } else {
       this._descEl.textContent = "";
     }
 
     if (this._buyBtnEl) {
       const playerPoints = typeof Glory !== "undefined" ? Glory.points.player : 0;
-      const canAfford = !!entry && playerPoints >= entry.price;
+      const canAfford = !!entry && playerPoints >= this.priceFor("player", entry);
       const hasRoom = typeof Backpack === "undefined" || Backpack.hasFreeSlot();
       // Pedido explícito: "si intentas comprar un objeto y tienes
       // insuficientes puntos, debe avisarte con un mensaje en rojo en la
@@ -530,7 +535,7 @@ const Shops = {
     if (!entry) return;
     if (typeof Backpack === "undefined" || !Backpack.hasFreeSlot()) return;
     const playerPoints = typeof Glory !== "undefined" ? Glory.points.player : 0;
-    if (playerPoints < entry.price) {
+    if (playerPoints < this.priceFor("player", entry)) {
       // Pedido explícito: aviso en rojo DENTRO de la interfaz, no solo un
       // title nativo — reutiliza el mismo golpe de "shake" que ya usa el
       // resto del proyecto para feedback de rechazo (ver
@@ -548,7 +553,7 @@ const Shops = {
       SFX.dropFail();
       return;
     }
-    if (typeof Glory === "undefined" || !Glory.spend("player", entry.price)) return;
+    if (typeof Glory === "undefined" || !Glory.spend("player", this.priceFor("player", entry))) return;
 
     // "el objeto pasa a la mochila del jugador que lo compro"
     Backpack.addItem(entry.itemId);
@@ -627,10 +632,10 @@ const Shops = {
         if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
         if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
         if (this.at(row, col)) continue; // la tienda (la misma u otra)
-        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
-        if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
+        if (!Units.pathIsWalkable(unit.row, unit.col, row, col, unit.team)) continue;
         if (moveDist < bestDist) {
           bestDist = moveDist;
           best = { row, col };

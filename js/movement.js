@@ -61,13 +61,13 @@ const Movement = {
         // jugadores no pueden pasar de momento por ahi, salvo que alguna
         // raza si pueda nadar o se use un barco" (aún no implementado, así
         // que de momento es intransitable para todos por igual).
-        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;
         // Pedido explícito: "bajo ningun concepto un personaje puede
         // moverse a traves de una casilla de agua" — no basta con que el
         // DESTINO sea transitable, el camino recto hasta él (ver
         // Units.pathIsWalkable) tampoco puede pisar agua en ningún punto
         // intermedio (ver ese helper para el detalle del bug que corrige).
-        if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
+        if (!Units.pathIsWalkable(unit.row, unit.col, row, col, unit.team)) continue;
         // Habilidad "Raíces" (js/skills.js): pasos junto a los tótems/
         // Obelisco rival con Raíces cuestan 1 punto de movimiento extra.
         if (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > range) continue;

@@ -154,7 +154,7 @@ const Obelisks = {
   // perder un tótem: si baja, simplemente deja de sumar, ver cabecera).
   populationFor(team) {
     const owned = typeof Villages !== "undefined" ? Villages.ownedCount(team) : 0;
-    return OBELISK_BASE_POPULATION + owned;
+    return OBELISK_BASE_POPULATION + owned + (typeof Skills !== "undefined" ? Skills.rank(team, "refuerzos") : 0);
   },
 
   // Población EN USO ahora mismo — con el roster inicial vacío (pedido
@@ -719,10 +719,10 @@ const Obelisks = {
         if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
         if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
-        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
-        if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
+        if (!Units.pathIsWalkable(unit.row, unit.col, row, col, unit.team)) continue;
         if (moveDist < bestDist) {
           bestDist = moveDist;
           best = { row, col };

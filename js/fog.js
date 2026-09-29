@@ -233,18 +233,20 @@ const Fog = {
     };
     // Percepción de cada unidad propia (misma estadística que ya usa
     // revealForUnit para el revelado permanente, ver UNIT_TYPES[...].percepcion).
+    // Centinela (js/skills.js): +1 de percepción a unidades, tótems y Obelisco.
+    const sentinel = typeof Skills !== "undefined" ? Skills.perceptionBonus("player") : 0;
     if (typeof Units !== "undefined") {
       Units.list.forEach((u) => {
         if (u.team !== "player") return;
         const type = UNIT_TYPES[u.typeId];
-        markAround(u.row, u.col, type ? type.percepcion : 1);
+        markAround(u.row, u.col, (type ? type.percepcion : 1) + sentinel);
       });
     }
     // Pedido explícito: "2 casillas alrededor de los totems capturados...
     // son siempre visibles mientras esten bajo tu dominio".
     if (typeof Villages !== "undefined") {
       Villages.list.forEach((v) => {
-        if (v.owner === "player") markAround(v.row, v.col, FOG_VILLAGE_PERCEPTION_RADIUS);
+        if (v.owner === "player") markAround(v.row, v.col, FOG_VILLAGE_PERCEPTION_RADIUS + sentinel);
       });
     }
     // Pedido explícito: "3 alreddor de los obeliscos" — un Obelisco nunca
@@ -254,7 +256,7 @@ const Fog = {
     // arranque de la partida.
     if (typeof Obelisks !== "undefined") {
       Obelisks.list.forEach((o) => {
-        if (o.team === "player") markAround(o.row, o.col, FOG_OBELISK_PERCEPTION_RADIUS);
+        if (o.team === "player") markAround(o.row, o.col, FOG_OBELISK_PERCEPTION_RADIUS + sentinel);
       });
     }
     // TotemVision (js/totemvision.js) — pedido explícito: "otorga vision
@@ -390,7 +392,7 @@ const Fog = {
   // paso, antes de que el gnomo reaccione).
   revealForUnit(unit) {
     const type = UNIT_TYPES[unit.typeId];
-    this.revealAround(unit.row, unit.col, type.percepcion);
+    this.revealAround(unit.row, unit.col, type.percepcion + (typeof Skills !== "undefined" && unit.team === "player" ? Skills.perceptionBonus("player") : 0));
   },
 
   // Pedido explícito: "los elementos de debajo de la niebla no deben

@@ -448,10 +448,10 @@ const Resources = {
         if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
         if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
         if (this.at(row, col)) continue;
-        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
-        if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
+        if (!Units.pathIsWalkable(unit.row, unit.col, row, col, unit.team)) continue;
         if (moveDist < bestDist) {
           bestDist = moveDist;
           best = { row, col };
@@ -536,7 +536,7 @@ const Resources = {
     // recolectando su recurso de verdad aunque el jugador no lo vea
     // desaparecer todavía (su economía no depende de la niebla DEL
     // JUGADOR).
-    if (isEnemyCollecting) this.enemyCounts[def.resourceId] = (this.enemyCounts[def.resourceId] || 0) + 1;
+    if (isEnemyCollecting) this.enemyCounts[def.resourceId] = (this.enemyCounts[def.resourceId] || 0) + 1 + (typeof Skills !== "undefined" ? Skills.rank("enemy", "recolector") : 0);
     if (!isPlayerCollecting && typeof Fog !== "undefined" && Fog.perceivedGrid && !Fog.isPerceived(node.row, node.col)) {
       this._ghosts.push({ row: node.row, col: node.col, el: node.el });
       return;
@@ -644,7 +644,7 @@ const Resources = {
       if (typeof SFX !== "undefined") SFX.dropFail();
       return; // mochila llena: el recurso se pierde, igual que rechazar una compra sin sitio
     }
-    this.counts[resourceId] = (this.counts[resourceId] || 0) + 1;
+    this.counts[resourceId] = (this.counts[resourceId] || 0) + 1 + (typeof Skills !== "undefined" ? Skills.rank("player", "recolector") : 0);
     if (typeof SFX !== "undefined") SFX.itemEaten();
     // "que genera una animacion de pulsacion en el momento recibir el
     // recurso" (pedido explícito) — mismo mecanismo de "quitar clase, forzar

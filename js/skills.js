@@ -196,6 +196,84 @@ const SKILL_DEFS = [
     describe: () =>
       "Los tótems bajo tu control te permiten reclutar aliados como si fueran el Obelisco Ancestral: pulsa un tótem tuyo y aparecerá el icono de reclutar; el nuevo aliado aparece en una casilla adyacente al tótem. La población máxima sigue siendo la que marca el Obelisco.",
   },
+  // ---------- Rama SUPERVIVENCIA ----------
+  {
+    id: "centinela",
+    branch: "supervivencia",
+    level: 1,
+    slot: 0,
+    name: "Centinela",
+    maxRank: 1,
+    fallbackIcon: "ph-eye",
+    describe: () =>
+      "Todas tus unidades, tus tótems y tu Obelisco Ancestral aumentan en 1 su percepción: ven una casilla más lejos y revelan más mapa.",
+  },
+  {
+    id: "refuerzos",
+    branch: "supervivencia",
+    level: 2,
+    slot: 0,
+    name: "Refuerzos",
+    maxRank: 3,
+    fallbackIcon: "ph-users-four",
+    describe: (rank) =>
+      `Aumenta en +${rank || 1} la población máxima de tu ejército, es decir, cuántos personajes puedes tener a la vez (+1 por nivel, hasta +3).`,
+  },
+  {
+    id: "anfibio",
+    branch: "supervivencia",
+    level: 2,
+    slot: 1,
+    name: "Anfibio",
+    maxRank: 1,
+    fallbackIcon: "ph-waves",
+    describe: () =>
+      "Tus personajes pueden caminar sobre las casillas de agua como si fueran de tierra: podrán moverse por ellas y atravesarlas.",
+  },
+  {
+    id: "abundancia",
+    branch: "supervivencia",
+    level: 3,
+    slot: 0,
+    name: "Abundancia",
+    maxRank: 3,
+    fallbackIcon: "ph-coins",
+    describe: (rank) =>
+      `Cada tótem bajo tu control te da +${rank || 1} punto${(rank || 1) === 1 ? "" : "s"} de gloria extra al empezar tu turno (+1 por nivel, hasta +3 por tótem).`,
+  },
+  {
+    id: "regateo",
+    branch: "supervivencia",
+    level: 4,
+    slot: 0,
+    name: "Regateo",
+    maxRank: 1,
+    fallbackIcon: "ph-tag",
+    describe: () =>
+      "Todos los productos de la Tienda Goblin cuestan la mitad, redondeando hacia abajo (nunca menos de 1 punto de gloria).",
+  },
+  {
+    id: "recolector",
+    branch: "supervivencia",
+    level: 4,
+    slot: 1,
+    name: "Recolector",
+    maxRank: 3,
+    fallbackIcon: "ph-basket",
+    describe: (rank) =>
+      `Todas las fuentes de recursos te dan +${rank || 1} unidad${(rank || 1) === 1 ? "" : "es"} extra al recogerlas (+1 por nivel, hasta +3).`,
+  },
+  {
+    id: "uno_con_la_tierra",
+    branch: "supervivencia",
+    level: 5,
+    slot: 0,
+    name: "Uno con la Tierra",
+    maxRank: 1,
+    fallbackIcon: "ph-plant",
+    describe: () =>
+      "Al comienzo de cada uno de tus turnos, todas tus unidades se curan 1 punto de vida por cada tótem bajo tu control (sin superar su vida máxima).",
+  },
 ];
 
 const Skills = {
@@ -293,6 +371,8 @@ const Skills = {
   },
 
   _applyPurchase(team, id) {
+    if (id === "centinela") this._refreshPerception(team);
+    if (id === "refuerzos" && typeof Obelisks !== "undefined") Obelisks.refreshAll();
     if (id === "codo_con_codo") this.refreshCohesion();
     if (id === "muralla") this.refreshWalls();
     if (id === "escudos") {
@@ -567,6 +647,53 @@ const Skills = {
     });
   },
 
+  // ---------- Rama SUPERVIVENCIA ----------
+
+  // Centinela: +1 de percepción (unidades, tótems y Obelisco).
+  perceptionBonus(team) {
+    return this.has(team, "centinela") ? 1 : 0;
+  },
+  // Al comprarlo se revela ya el terreno extra alrededor de todo lo propio.
+  _refreshPerception(team) {
+    if (team !== "player" || typeof Fog === "undefined") return;
+    if (typeof Units !== "undefined") Units.list.filter((u) => u.team === team).forEach((u) => Fog.revealForUnit(u));
+    if (typeof Villages !== "undefined") {
+      Villages.list.filter((v) => v.owner === team).forEach((v) => Fog.revealAround(v.row, v.col, FOG_VILLAGE_PERCEPTION_RADIUS + 1));
+    }
+    if (typeof Obelisks !== "undefined") {
+      const o = Obelisks.byTeam(team);
+      if (o) Fog.revealAround(o.row, o.col, FOG_OBELISK_PERCEPTION_RADIUS + 1);
+    }
+    Fog.applyVisibility();
+  },
+
+  // Anfibio: el agua cuenta como suelo transitable para ese equipo.
+  walkableFor(team, row, col) {
+    if (typeof TerrainMap === "undefined") return true;
+    return TerrainMap.isWalkable(row, col) || this.has(team, "anfibio");
+  },
+
+  // Regateo: mitad de precio redondeando por abajo (mínimo 1).
+  shopPrice(team, price) {
+    return this.has(team, "regateo") ? Math.max(1, Math.floor(price / 2)) : price;
+  },
+
+  // Uno con la Tierra: al empezar el turno, cada unidad se cura 1 punto por
+  // cada tótem propio.
+  _healFromTotems(team) {
+    if (!this.has(team, "uno_con_la_tierra") || typeof Units === "undefined" || typeof Villages === "undefined") return;
+    const n = Villages.ownedCount(team);
+    if (n <= 0) return;
+    Units.list
+      .filter((u) => u.team === team && u.hp < (u.maxHp || u.hp))
+      .forEach((u) => {
+        const gained = Math.min(n, u.maxHp - u.hp);
+        u.hp += gained;
+        Units.updateHpBar(u);
+        Units.spawnFloatingText(u, `+${gained}`, { className: "dmg-popup gnome-points-popup" });
+      });
+  },
+
   onUnitSpawn(unit) {
     if (this.has(unit.team, "escudos")) this.setShield(unit, true);
     this.refreshCohesion();
@@ -581,6 +708,7 @@ const Skills = {
   onTurnStart(team) {
     this.chargeUsed[team] = false;
     this._tickBloodlust(team);
+    this._healFromTotems(team);
     if (!this.has(team, "escudos") || typeof Units === "undefined") return;
     const anchors = [];
     if (typeof Obelisks !== "undefined") {

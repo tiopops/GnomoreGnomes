@@ -919,10 +919,12 @@ const Units = {
   // "algo definido por él rompa esa regla" (nadar, un barco...) este es el
   // único sitio que hay que tocar: añadir esa excepción aquí, no en cada
   // mecánica por separado.
-  pathIsWalkable(fromRow, fromCol, toRow, toCol) {
+  // `team` (opcional): con la habilidad Anfibio (js/skills.js) el agua es
+  // transitable para ese equipo.
+  pathIsWalkable(fromRow, fromCol, toRow, toCol, team) {
     if (typeof TerrainMap === "undefined") return true;
     return this.stepPath(fromRow, fromCol, toRow, toCol).every((step) =>
-      TerrainMap.isWalkable(step.row, step.col)
+      typeof Skills !== "undefined" && team ? Skills.walkableFor(team, step.row, step.col) : TerrainMap.isWalkable(step.row, step.col)
     );
   },
 

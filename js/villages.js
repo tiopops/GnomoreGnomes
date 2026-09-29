@@ -132,9 +132,11 @@ const Villages = {
   // los turnos en vez de +1" (ver _capture, gloryBonus se fija ahí al
   // conquistarlo y no cambia después, así que sumarlos basta).
   gloryBonusFor(team) {
+    // Abundancia (js/skills.js): +X de gloria extra por cada tótem propio.
+    const extra = typeof Skills !== "undefined" ? Skills.rank(team, "abundancia") : 0;
     return this.list
       .filter((v) => v.owner === team)
-      .reduce((sum, v) => sum + (v.gloryBonus || 1), 0);
+      .reduce((sum, v) => sum + (v.gloryBonus || 1) + extra, 0);
   },
 
   spriteFor(owner) {
@@ -480,10 +482,10 @@ const Villages = {
         if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
         if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
         if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
-        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
-        if (!Units.pathIsWalkable(unit.row, unit.col, row, col)) continue;
+        if (!Units.pathIsWalkable(unit.row, unit.col, row, col, unit.team)) continue;
         if (moveDist < bestDist) {
           bestDist = moveDist;
           best = { row, col };
