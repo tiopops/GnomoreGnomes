@@ -343,17 +343,33 @@ const Altar = {
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
     const held = typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === unit.id) : null;
     if (!held) return;
+    if (typeof Fog !== "undefined" && Fog.isFogged(altar.row, altar.col)) return;
     const approach = this.findApproachTile(unit, altar);
     if (!approach) return;
-    altar.el.classList.add("altar--targeted");
+    // Igual que Villages/Obelisks.showFor: moverse + machacar son 2 acciones.
+    const needsMove = approach.row !== unit.row || approach.col !== unit.col;
+    if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < 2) return;
+    // Mira de ataque SOBRE el propio altar (antes se ponía en la loseta de
+    // aproximación, a menudo oculta bajo la propia unidad) y por encima de
+    // todo (alwaysOnTop) para que el sprite grande no se coma el clic — mismo
+    // patrón que los tótems y el obelisco.
     Units.addMarker({
-      className: "range-marker range-marker--item-target",
-      row: approach.row,
-      col: approach.col,
-      visibleClass: "range-marker--visible",
+      className: "attack-marker altar-attack-marker",
+      row: altar.row,
+      col: altar.col,
+      zOffset: 2,
+      visibleClass: "attack-marker--visible",
       owner: "altar",
+      alwaysOnTop: true,
       onClick: () => this.approachAndSacrifice(unit, altar),
+      buildContent: (marker) => {
+        const icon = document.createElement("i");
+        icon.className = "ph ph-crosshair-simple attack-marker__icon";
+        marker.appendChild(icon);
+      },
     });
+    const dist = Math.max(Math.abs(altar.row - unit.row), Math.abs(altar.col - unit.col));
+    if (dist <= ALTAR_INTERACT_RANGE) altar.el.classList.add("altar--targeted");
   },
 
   onClear() {
