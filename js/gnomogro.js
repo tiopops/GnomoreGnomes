@@ -69,12 +69,12 @@
      sujeto a las reglas normales de movimiento. */
 
 const GNOMOGRO_MAX_HP = 50;
-const GNOMOGRO_ATTACK = 30;
+const GNOMOGRO_ATTACK = 15; // daño real de su golpe (unidades y Obelisco)
 const GNOMOGRO_PERCEPTION_RADIUS = 1;
 const GNOMOGRO_ATTACK_RANGE = 1;
 
 const GNOMOGRO_SPRITES = {
-  idle: "assets/gnomogro/gnomogro_idle.png",
+  idle: "assets/gnomogro/gnomo_ogro.png", // sprite base (las poses de ataque solo se usan al atacar)
   cargaAtaque: "assets/gnomogro/gnomogro_ataque_carga.png",
   impacto: "assets/gnomogro/gnomogro_ataque_impacto.png",
 };
@@ -129,6 +129,16 @@ const GnomOgro = {
       hpSegmentEls.push(seg);
     }
     el.appendChild(hpBarEl);
+
+    // Clic directo sobre la criatura cuando está marcada como objetivo (ver
+    // showFor): mismo patrón que Obelisks/Villages.
+    el.addEventListener("click", (e) => {
+      if (!el.classList.contains("gnomogro--targeted")) return;
+      if (typeof Units === "undefined" || !Units.selectedId) return;
+      e.stopPropagation();
+      const attacker = Units.list.find((u) => u.id === Units.selectedId);
+      if (attacker && this.current) this.approachAndAttack(attacker, this.current);
+    });
 
     if (typeof Units !== "undefined") Units.container.appendChild(el);
 
@@ -298,17 +308,18 @@ const GnomOgro = {
     // "usara su accion por turno para matarlo de un golpe" — muerte
     // instantánea sea cual sea la vida que le quedara (GNOMOGRO_ATTACK queda
     // como cifra de referencia de la criatura).
-    const dealt = target.hp;
-    target.hp = 0;
+    const dealt = Math.min(target.hp, GNOMOGRO_ATTACK);
+    target.hp = Math.max(0, target.hp - GNOMOGRO_ATTACK);
     Units.updateHpBar(target);
     Units.spawnFloatingText(target, `-${dealt}`, { className: "dmg-popup" });
     Units.playShake(target);
+    if (target.hp > 0) return; // sobrevivió (más de 15 de vida)
     if (typeof Glory !== "undefined") Glory.queueKillBonus(g.team);
     await Units.removeUnit(target);
     if (typeof Gnome !== "undefined") Gnome.dropHeldBy(target);
   },
 
-  // "cuando llegue a la base enemiga la destruira de un golpe y acabara la
+  // "cuando llegue a la base enemiga la destruira (ahora con 15 de daño por golpe) y acabara la
   // partida" — reutiliza Obelisks._destroy tal cual (mismo "apagón" visual
   // que un Obelisco destruido por combate normal, que ya comprueba solo
   // queda un equipo en pie y muestra la pantalla de fin de partida).
@@ -316,6 +327,156 @@ const GnomOgro = {
     const g = this.current;
     Units.faceTowardsTile(g, obelisk.row, obelisk.col);
     await this._playAttackAnim();
-    if (typeof Obelisks !== "undefined") await Obelisks._destroy(obelisk);
+    // Ataque 15: resta 15 de vida al Obelisco y solo lo destruye si llega a 0.
+    obelisk.hp = Math.max(0, obelisk.hp - GNOMOGRO_ATTACK);
+    Units.updateHpBar(obelisk);
+    Units.spawnFloatingText(obelisk, `-${GNOMOGRO_ATTACK}`, { className: "dmg-popup" });
+    Units.playShake(obelisk);
+    if (obelisk.hp <= 0 && typeof Obelisks !== "undefined") await Obelisks._destroy(obelisk);
+  },
+
+  // ---------- Se le puede hacer daño ----------
+  // Pedido explícito: "al gnomogro se le puede bajar la vida con ataques
+  // normales o machacandole gnomos sobre el si el portador de un gnomo lo
+  // hace". Proveedor de rango (Units.registerRangeProvider): igual que
+  // Obelisks.showFor — mira de ataque sobre la criatura para los personajes
+  // del bando contrario a quien la invocó. Con un gnomo cogido el golpe es
+  // un machacón (daño = puntos del gnomo); sin él, un ataque normal.
+  showFor(unit) {
+    const g = this.current;
+    if (!g || g.team === unit.team) return;
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+    if (typeof Fog !== "undefined" && Fog.isFogged(g.row, g.col)) return;
+    const approach = this.findApproachTile(unit, g);
+    if (!approach) return;
+    const needsMove = approach.row !== unit.row || approach.col !== unit.col;
+    if (needsMove && typeof Turns !== "undefined" && !(typeof Skills !== "undefined" ? Skills.canApproachAttack(unit) : Turns.remainingActions(unit) >= 2)) return;
+    Units.addMarker({
+      className: "attack-marker gnomogro-attack-marker",
+      row: g.row,
+      col: g.col,
+      zOffset: 2,
+      visibleClass: "attack-marker--visible",
+      owner: "gnomogro",
+      alwaysOnTop: true,
+      onClick: () => this.approachAndAttack(unit, g),
+      buildContent: (marker) => {
+        const icon = document.createElement("i");
+        icon.className = "ph ph-crosshair-simple attack-marker__icon";
+        marker.appendChild(icon);
+      },
+    });
+    if (Math.max(Math.abs(g.row - unit.row), Math.abs(g.col - unit.col)) <= GNOMOGRO_ATTACK_RANGE) {
+      g.el.classList.add("gnomogro--targeted");
+    }
+  },
+
+  onClear() {
+    if (this.current && this.current.el) this.current.el.classList.remove("gnomogro--targeted");
+  },
+
+  findApproachTile(unit, g) {
+    const moveRange = UNIT_TYPES[unit.typeId].movimiento;
+    const distToG = (row, col) => Math.max(Math.abs(row - g.row), Math.abs(col - g.col));
+    if (distToG(unit.row, unit.col) <= GNOMOGRO_ATTACK_RANGE) return { row: unit.row, col: unit.col };
+    let best = null;
+    let bestDist = Infinity;
+    for (let row = 0; row < Units.boardSize; row++) {
+      for (let col = 0; col < Units.boardSize; col++) {
+        if (row === unit.row && col === unit.col) continue;
+        if (row === g.row && col === g.col) continue;
+        if (distToG(row, col) > GNOMOGRO_ATTACK_RANGE) continue;
+        if (Units.unitAt(row, col)) continue;
+        if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
+        if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
+        if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
+        if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
+        if (typeof Altar !== "undefined" && Altar.at(row, col)) continue;
+        if (typeof Resources !== "undefined" && Resources.at(row, col)) continue;
+        if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;
+        const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
+        if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
+        if (!Units.pathIsWalkable(unit.row, unit.col, row, col, unit.team)) continue;
+        if (moveDist < bestDist) {
+          bestDist = moveDist;
+          best = { row, col };
+        }
+      }
+    }
+    return best;
+  },
+
+  async approachAndAttack(unit, g) {
+    Units.clearRangeOverlays();
+    if (!this.current || this.current !== g) return;
+    const approach = this.findApproachTile(unit, g);
+    if (!approach) return;
+    if (approach.row !== unit.row || approach.col !== unit.col) {
+      if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+      const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
+      await Units.walkPath(unit, path);
+      if (typeof Skills !== "undefined") Skills.spendApproach(unit);
+      else if (typeof Turns !== "undefined") Turns.useAction(unit);
+      if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
+    }
+    await this.attackedBy(unit, g);
+  },
+
+  // Golpe contra la criatura: machacón si `unit` lleva un gnomo, ataque
+  // normal si no. Sin empujón ni contraataque (la criatura solo actúa en su
+  // propio turno).
+  async attackedBy(unit, g) {
+    if (!this.current || this.current !== g || g.team === unit.team) return;
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+    const gnome = typeof Gnome !== "undefined" ? Gnome.list.find((x) => x.heldBy === unit.id) : null;
+    Units.clearRangeOverlays();
+    Units.faceTowardsTile(unit, g.row, g.col);
+
+    if (gnome) {
+      const damage = gnome.points;
+      g.hp = Math.max(0, g.hp - damage);
+      if (typeof Turns !== "undefined") Turns.useAction(unit);
+      await Villages._playEpicSmash(unit, g, damage, false);
+    } else {
+      const damage =
+        UNIT_TYPES[unit.typeId].fuerza +
+        (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0) +
+        (typeof Skills !== "undefined" ? Skills.attackBonus(unit, g) : 0);
+      if (typeof Turns !== "undefined") Turns.useAction(unit);
+      g.hp = Math.max(0, g.hp - damage);
+      Units.updateHpBar(g);
+      Units.spawnFloatingText(g, `-${damage}`, { className: "dmg-popup" });
+      Units.playShake(g);
+      if (typeof SFX !== "undefined") SFX.hit();
+      if (unit.el) {
+        unit.el.classList.remove("unit--punching");
+        void unit.spriteEl.offsetWidth;
+        unit.el.classList.add("unit--punching");
+        setTimeout(() => unit.el.classList.remove("unit--punching"), 320);
+      }
+    }
+
+    if (g.hp <= 0) await this._die(unit.team);
+    Units.refreshRange(unit);
+  },
+
+  async _die(killerTeam) {
+    const g = this.current;
+    if (!g) return;
+    this.current = null;
+    if (typeof Glory !== "undefined") Glory.queueKillBonus(killerTeam);
+    if (typeof SFX !== "undefined") {
+      SFX.explosion();
+      SFX.death();
+    }
+    this._shakeViewport(true);
+    g.el.classList.remove("gnomogro--targeted");
+    g.el.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+    g.el.style.opacity = "0";
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    g.el.remove();
+    if (typeof Fog !== "undefined") Fog.applyVisibility();
   },
 };
+
+if (typeof Units !== "undefined" && Units.registerRangeProvider) Units.registerRangeProvider(GnomOgro);

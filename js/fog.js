@@ -560,6 +560,18 @@ const Fog = {
         shop.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(shop.row, shop.col));
       });
     }
+    // Altar de Sacrificios (js/altar.js) — pedido explícito: "el altar
+    // tambien debe oscurecerse en la niebla de guerra". Mismo criterio que
+    // una Tienda Goblin: oculto si su loseta sigue sin explorar y atenuado
+    // ("recordado") si ya se vio pero ahora queda fuera de percepción.
+    if (typeof Altar !== "undefined") {
+      Altar.list.forEach((a) => {
+        if (!a.el) return;
+        const fogged = this.isFogged(a.row, a.col);
+        a.el.classList.toggle("unit--fog-hidden", fogged);
+        a.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(a.row, a.col));
+      });
+    }
     // Obeliscos Ancestrales (js/obelisks.js) — pedido explícito: "los
     // obeliscos enemigos deben estar ocultos en la niebla hasta que se
     // descubran". A diferencia de un tótem (siempre oculto bajo niebla, sea
