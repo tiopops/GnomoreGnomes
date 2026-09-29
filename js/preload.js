@@ -140,8 +140,29 @@ const Preload = {
     // llegar a _MIN_SHOW_MS antes de ocultarse.
     const remaining = this._MIN_SHOW_MS - (Date.now() - startedAt);
     if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
-    stopTimeBasedFill();
-    this._realPct = 100;
+    // Pedido explícito: "la barra de loading deberia rellenarse de manera que
+    // coincida el terminar de rellenarse con empezar el nivel" — la barra NO
+    // se completa ni se oculta aquí: se queda al ~96% (avance de reloj, ver
+    // _startTimeBasedFill) mientras startMatch/resumeMatch construyen el
+    // tablero, y Preload.finish() (llamado justo cuando la partida ya está
+    // lista, ver js/newgame-flow.js) la remata a 100% y la oculta.
+    this._stopFill = stopTimeBasedFill;
+    // Llega a 100% justo al cumplirse el tiempo mínimo y se deja pintar un
+    // par de fotogramas antes de que la construcción (síncrona) del tablero
+    // congele la pantalla: así el 100% se ve y coincide con empezar el nivel.
+    this._timePct = 100;
+    this._updateProgress();
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  },
+
+  // Remate: se llama cuando el nivel ya está construido (o si falló el
+  // arranque). No hace nada si la barra no se mostró (partidas posteriores
+  // de la misma sesión de página, ver _done en run()).
+  finish() {
+    if (!this._overlayEl || !this._overlayEl.classList.contains("match-loading-overlay--visible")) return;
+    if (this._stopFill) this._stopFill();
+    this._stopFill = null;
+    this._timePct = 100;
     this._updateProgress();
     this._hide();
   },
@@ -156,7 +177,7 @@ const Preload = {
     let rafId = null;
     const step = () => {
       const elapsed = Date.now() - startedAt;
-      this._timePct = Math.min(96, Math.round((elapsed / this._MIN_SHOW_MS) * 96));
+      this._timePct = Math.min(100, Math.round((elapsed / this._MIN_SHOW_MS) * 100));
       this._updateProgress();
       rafId = requestAnimationFrame(step);
     };
@@ -173,7 +194,7 @@ const Preload = {
     overlay.innerHTML = `
       <div class="p5-banner match-loading-panel">
         <div class="match-loading-panel__content">
-          <div class="match-loading-panel__title">Preparando el escenario…</div>
+          <div class="match-loading-panel__title">Los gnomos se están escondiendo…</div>
           <div class="match-loading-panel__track">
             <div class="match-loading-panel__fill"></div>
           </div>
@@ -190,7 +211,9 @@ const Preload = {
     // reloj (ver _startTimeBasedFill) — nunca retrocede, solo evita que se
     // quede parado en 0% mientras los onload reales no lleguen o salten
     // todos de golpe.
-    const pct = Math.max(this._realPct || 0, this._timePct || 0);
+    // Solo el avance de reloj (lineal): el progreso real de las descargas
+    // saltaba a 100% de golpe y la barra se llenaba antes de empezar el nivel.
+    const pct = this._timePct || 0;
     this._fillEl.style.width = `${pct}%`;
   },
 

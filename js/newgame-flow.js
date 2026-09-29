@@ -202,6 +202,7 @@ async function startMatch({ modeId, raceId, opponents }) {
 
     const resumeBtn = document.getElementById("btn-resume-game");
     if (resumeBtn) resumeBtn.disabled = false;
+    if (typeof Preload !== "undefined") Preload.finish();
   } catch (err) {
     _recoverFromFailedMatchStart();
     _showStartMatchError(err);
@@ -224,6 +225,7 @@ async function resumeMatch() {
     screenHistory.push("main-menu", "screen-board");
     syncBoardCamera(playerSpawnSpots[0]);
     _playInitialFogReveal(playerSpawnSpots);
+    if (typeof Preload !== "undefined") Preload.finish();
   } catch (err) {
     _recoverFromFailedMatchStart();
     _showStartMatchError(err);
@@ -238,6 +240,7 @@ async function resumeMatch() {
 // queda flotando sobre el menú, como pasaba antes de esta red de
 // seguridad.
 function _recoverFromFailedMatchStart() {
+  if (typeof Preload !== "undefined") Preload.finish();
   if (typeof Glory !== "undefined") Glory.hideHud();
   if (typeof Turns !== "undefined") Turns.hideButton();
   if (typeof SettingsMenu !== "undefined") SettingsMenu.hideButton();
