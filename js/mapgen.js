@@ -36,7 +36,7 @@ const TILE_TYPES = {
   // que tocar cada mecánica por separado — ver TerrainMap.isWalkable más
   // abajo, que es lo único que consultan.
   //
-  // nativeWidth/nativeHeight: por si algún día agua_01.png deja de
+  // nativeWidth/nativeHeight: por si algún día agua_03.png deja de
   // compartir la proporción exacta de hierba_01.png — de momento SÍ la
   // comparte (mismo recorte 1024x854, arte de sustitución provisional
   // pedido explícito: "vamos a sustituir las losetas hasta que las
@@ -46,9 +46,8 @@ const TILE_TYPES = {
   // relación de aspecto real en vez de estirarla/aplastarla con la de
   // hierba.
   water: {
-    // agua_01 repetida a propósito: pesa el doble que agua_02 (con
-    // nenúfares), así los nenúfares salen en ~1 de cada 3 losetas de agua.
-    variants: ["assets/losetas/agua_01.png", "assets/losetas/agua_01.png", "assets/losetas/agua_02.png"],
+    // Pedido explícito: solo estas dos (lisa y con nenúfares), 50/50.
+    variants: ["assets/losetas/agua_03.png", "assets/losetas/agua_02.png"],
     walkable: false,
     nativeWidth: 1024,
     nativeHeight: 854,

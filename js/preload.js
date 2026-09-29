@@ -72,7 +72,7 @@ const Preload = {
     "assets/iconos/totemvision.png",
     // Pedido explícito: "acercar alejar la camara hace que flickeen las
     // losetas cuando resolucion adaptativa esta activado" — causa real:
-    // hierba_01.png/agua_01.png (la textura normal) SÍ estaban aquí desde
+    // hierba_01.png/agua_03.png (la textura normal) SÍ estaban aquí desde
     // el principio, pero su pareja "_midres" (ver SpriteQuality._TIER_SUFFIX
     // en js/spritequality.js) nunca se pedía hasta el primer cruce del
     // umbral de zoom — en ESE momento, hasta las 625 losetas del tablero
@@ -85,7 +85,7 @@ const Preload = {
     // zoom solo tiene que reasignar el "src" a algo que el navegador ya
     // tiene listo, sin ningún parón visible.
     "assets/losetas/hierba_01_midres.png",
-    "assets/losetas/agua_01_midres.png",
+    "assets/losetas/agua_03_midres.png",
     "assets/losetas/agua_02_midres.png",
   ],
 
