@@ -7970,8 +7970,8 @@ body.backpack-giving--katapum * {
 }
 
 .skills-panel .backpack-panel__bg {
-  gap: 10px;
-  padding: 40px 46px 28px;
+  gap: 6px;
+  padding: 34px 46px 20px;
 }
 
 .skills-panel .backpack-panel__title {
@@ -8086,14 +8086,14 @@ body.backpack-giving--katapum * {
 
 /* --- Árbol --- */
 .skills-tree {
-  --sk-node: clamp(40px, 6.6vh, 62px);
+  --sk-node: clamp(48px, 7.8vh, 74px);
   position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(10px, 2.4vh, 22px);
-  padding: 4px 0;
+  gap: clamp(6px, 1.5vh, 14px);
+  padding: 2px 0;
 }
 
 .skills-links {
