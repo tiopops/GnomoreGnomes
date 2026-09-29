@@ -44,6 +44,9 @@
    ese — exactamente la misma lógica de antes, solo que ahora ese gnomo
    concreto se busca en vez de asumir que solo existe uno. */
 
+// Alcance máximo al lanzar el gnomo a una casilla (y de caída si falla).
+const GNOME_THROW_MAX_RANGE = 4;
+
 const GNOME_ASSETS = {
   idle: "assets/equipos/MushboomForest/gnomo_idle.png",
   grita: "assets/equipos/MushboomForest/gnomo_grita.png",
@@ -755,38 +758,63 @@ function createGnomeInstance() {
       // (--pass-target en style.css usa color-mix con var(--accent-hover),
       // la misma variable que .pass-marker__icon, así que si ese color
       // cambia algún día los círculos lo siguen automáticamente).
-      if (typeof Movement !== "undefined") {
-        // Pedido explícito: "podemos tintar los circulos que marcan donde
-        // lanzar el gnomo de colores segun la dificultad del pase...
-        // amarillo...naranja...rojo". OJO: estas casillas son siempre
-        // DENTRO del propio alcance de movimiento de quien lanza (por eso
-        // salen de Movement.reachableTiles), así que computePassSuccess da
-        // ahí SIEMPRE overreach=0 (>=90% con cualquier agilidad) — usar esa
-        // probabilidad tal cual pintaría todos los círculos en amarillo,
-        // sin ningún degradado. La "dificultad" que se pide teñir es la
-        // sensación relativa DENTRO de ese alcance: adyacente (distancia 1)
-        // siempre amarillo, y a partir de ahí un tercio más cerca del
-        // alcance máximo alcanzable ESTE turno = naranja, el tercio final
-        // (el borde mismo del alcance) = rojo.
-        const reachable = Movement.reachableTiles(unit);
-        const maxReachDist = reachable.reduce(
-          (max, t) => Math.max(max, Math.max(Math.abs(t.row - unit.row), Math.abs(t.col - unit.col))),
-          1
-        );
-        reachable.forEach((tile, i) => {
-          const distance = Math.max(Math.abs(tile.row - unit.row), Math.abs(tile.col - unit.col));
-          const difficultyClass = this._passDifficultyClass(distance, maxReachDist);
-          Units.addMarker({
-            className: `range-marker range-marker--pass-target ${difficultyClass}`,
-            row: tile.row,
-            col: tile.col,
-            delayIndex: i,
-            visibleClass: "range-marker--visible",
-            owner: "gnome",
-            onClick: () => this.executeThrowToTile(unit, tile.row, tile.col),
-          });
+      // Pedido explícito: "la habilidad lanzar tambien debe permitir lanzar el
+      // gnomo a una casilla a tu eleccion. Existe un limite de lanzamiento por
+      // si falla el mismo de 4 casillas de distancia" — cualquier loseta
+      // libre a GNOME_THROW_MAX_RANGE o menos de quien lanza, dentro o FUERA
+      // de su alcance de movimiento (Movement.reachableTiles ya no limita la
+      // elección). Más allá del propio movimiento el lanzamiento puede
+      // fallar (computePassSuccess, "overreach"); un fallo cae siempre
+      // dentro del mismo límite de 4 casillas (ver findDropTile).
+      const movimiento = UNIT_TYPES[unit.typeId].movimiento;
+      const tiles = this._throwableTiles(unit);
+      tiles.forEach((tile, i) => {
+        const distance = Math.max(Math.abs(tile.row - unit.row), Math.abs(tile.col - unit.col));
+        const difficultyClass = this._throwDifficultyClass(unit, distance, movimiento);
+        Units.addMarker({
+          className: `range-marker range-marker--pass-target ${difficultyClass}`,
+          row: tile.row,
+          col: tile.col,
+          delayIndex: i,
+          visibleClass: "range-marker--visible",
+          owner: "gnome",
+          onClick: () => this.executeThrowToTile(unit, tile.row, tile.col),
         });
+      });
+    },
+
+    // Losetas libres donde se puede lanzar el gnomo: a GNOME_THROW_MAX_RANGE
+    // o menos de `unit`, sin niebla, sin unidad/gnomo/edificio/recurso.
+    _throwableTiles(unit) {
+      const tiles = [];
+      for (let row = 0; row < Units.boardSize; row++) {
+        for (let col = 0; col < Units.boardSize; col++) {
+          if (row === unit.row && col === unit.col) continue;
+          const dist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
+          if (dist > GNOME_THROW_MAX_RANGE) continue;
+          if (Units.unitAt(row, col)) continue;
+          if (Gnome.isAt(row, col)) continue;
+          if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;
+          if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
+          if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
+          if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
+          if (typeof Altar !== "undefined" && Altar.at(row, col)) continue;
+          if (typeof Resources !== "undefined" && Resources.at(row, col)) continue;
+          if (typeof TotemVision !== "undefined" && TotemVision.at(row, col)) continue;
+          if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+          tiles.push({ row, col });
+        }
       }
+      return tiles;
+    },
+
+    // Color del círculo: dentro del movimiento, amarillo/naranja/rojo según la
+    // distancia relativa a su alcance; fuera de él, naranja o rojo según la
+    // probabilidad real de acertar (computePassSuccess).
+    _throwDifficultyClass(unit, distance, movimiento) {
+      if (distance <= movimiento) return this._passDifficultyClass(distance, movimiento);
+      const p = this.computePassSuccess(UNIT_TYPES[unit.typeId].agilidad, distance, movimiento);
+      return p >= 0.5 ? "range-marker--pass-medium" : "range-marker--pass-hard";
     },
 
     // amarillo (fácil) / naranja (intermedio) / rojo (arriesgado) según la
@@ -976,7 +1004,7 @@ function createGnomeInstance() {
       this.detachFrom();
       this.spriteEl.src = GNOME_ASSETS.grita;
 
-      const end = success ? { row: destRow, col: destCol } : this.findDropTile(holder);
+      const end = success ? { row: destRow, col: destCol } : this.findDropTile(holder, GNOME_THROW_MAX_RANGE);
       await this.animateThrowTo(holder.row, holder.col, end.row, end.col);
 
       if (success) {
@@ -1011,7 +1039,7 @@ function createGnomeInstance() {
     // (para no caer encima de otro y solaparse), buscando quedar lo más
     // cerca posible de 5 casillas de distancia de cada uno sin salirse del
     // tablero ni caer sobre una unidad u otro gnomo.
-    findDropTile(fromUnit) {
+    findDropTile(fromUnit, maxDist) {
       let best = null;
       let bestScore = -Infinity;
       for (let row = 0; row < Units.boardSize; row++) {
@@ -1029,6 +1057,7 @@ function createGnomeInstance() {
             Infinity
           );
           const distFromThrower = Math.max(Math.abs(fromUnit.row - row), Math.abs(fromUnit.col - col));
+          if (maxDist && distFromThrower > maxDist) continue; // límite de lanzamiento (4 casillas)
           const score = Math.min(minDist, 5) * 100 - Math.abs(distFromThrower - 5);
           if (score > bestScore) {
             bestScore = score;
