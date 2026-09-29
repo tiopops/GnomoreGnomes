@@ -398,6 +398,32 @@ const SFX = {
   // explosion() pero más grave, más largo y con un gruñido descendente
   // encima, para que se note claramente más pesado/aterrador que un
   // KataPum!/Señuelo normal).
+  // Sirena de alarma para la Plaga Gnoma (js/plague.js): dos pitidos
+  // alternos agudos, cortos (~1.4 s en total).
+  alarm() {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      for (let i = 0; i < 4; i++) {
+        const t = now + i * 0.34;
+        const osc = ctx.createOscillator();
+        osc.type = "square";
+        osc.frequency.setValueAtTime(i % 2 === 0 ? 880 : 660, t);
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.16, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+        osc.connect(gain).connect(this.master);
+        osc.start(t);
+        osc.stop(t + 0.32);
+      }
+    } catch (e) {
+      // Audio no disponible — se ignora.
+    }
+  },
+
   gnomogroStep() {
     const ctx = this.ensureCtx();
     if (!ctx) return;

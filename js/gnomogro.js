@@ -2,10 +2,11 @@
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
      - Nacer donde estaba el Altar de Sacrificios (js/altar.js, Altar._collapse
        lo llama) cuando su barra de 30 espacios se llena del todo.
-     - Moverse él solo, sin que ningún jugador lo controle, una casilla cada
-       DOS turnos (rondas completas, ver GNOMOGRO_MOVE_EVERY_N_ROUNDS) hacia
-       el Obelisco del equipo CONTRARIO al suyo.
-     - Atacar en vez de moverse si tiene a un enemigo adyacente, y destruir
+     - Moverse él solo, sin que ningún jugador lo controle, UNA casilla al
+       principio de CADA turno (el de un bando y el del otro, ver onTurnStart)
+       hacia el Obelisco de un rival elegido al azar.
+     - Matar de un solo golpe a un personaje enemigo adyacente EN VEZ de
+       moverse (su única acción por turno), y destruir
        de un solo golpe el Obelisco rival en cuanto llega a su lado —
        reutiliza Obelisks._destroy tal cual (mismo "fin de partida" que ya
        dispara cualquier Obelisco al llegar a 0 de vida por combate normal,
@@ -28,7 +29,22 @@
    para el gnomogro. El Gnomogro es visible con un radio alrededor de el de
    1 para todos los jugadores de la partida."
 
-   Decisiones de diseño (sin pedido explícito exacto):
+   Pedido explícito (pasada posterior, SUSTITUYE al "un turno sí y otro
+   no" de arriba): "al principio de cada turno amigo/enemigo avanza una
+   casilla en direccion a la de un enemigo (cualquier jugador que no lo
+   invoco, elige uno al azar y se centra en ese). se mueve de una casilla
+   en una casilla. su mision es avanzar una casilla por turno en direccion
+   al obelisco enemigo, para destruirlo. el gnomogro gasta su unica accion
+   por turno para moverse, al menos que tenga un personaje enemigo en una
+   casilla adyacente, en cuyo caso usara su accion por turno para matarlo
+   de un golpe." — así que: (1) actúa al inicio de CADA turno individual
+   (Turns.registerTurnStartListener, dos veces por ronda), no una de cada
+   dos rondas; (2) elige UN rival al azar al nacer y se queda con él
+   (g.targetTeam) hasta que ese Obelisco cae; (3) el golpe a un personaje
+   es de muerte instantánea, no "30 de daño".
+
+   Decisiones de diseño (sin pedido explícito exacto; las de "una casilla
+   cada dos turnos" de más abajo quedan sustituidas por lo de arriba):
    - "una base enemiga al azar": con el motor actual estrictamente a 2
      bandos (ver cabecera de turns.js) solo existe UN posible objetivo — el
      Obelisco del equipo contrario al suyo — así que "al azar" no tiene
@@ -54,7 +70,6 @@
 
 const GNOMOGRO_MAX_HP = 50;
 const GNOMOGRO_ATTACK = 30;
-const GNOMOGRO_MOVE_EVERY_N_ROUNDS = 2; // "un turno si y un turno no"
 const GNOMOGRO_PERCEPTION_RADIUS = 1;
 const GNOMOGRO_ATTACK_RANGE = 1;
 
@@ -69,12 +84,10 @@ const GnomOgro = {
   // único Altar, y si destruye un Obelisco la partida termina antes de que
   // pueda hacer falta un segundo).
   current: null,
-  _roundTicks: 0,
 
   resetAll() {
     if (this.current && this.current.el) this.current.el.remove();
     this.current = null;
-    this._roundTicks = 0;
   },
 
   // Llamado desde Altar._collapse justo cuando su barra llega a 30/30.
@@ -127,6 +140,7 @@ const GnomOgro = {
       facing: "right",
       hp: GNOMOGRO_MAX_HP,
       maxHp: GNOMOGRO_MAX_HP,
+      targetTeam: null,
       el,
       flipEl,
       spriteEl,
@@ -143,7 +157,7 @@ const GnomOgro = {
     el.classList.add("gnomogro--spawn");
 
     if (typeof Turns !== "undefined" && !this._registered) {
-      Turns.registerTurnEndListener(this);
+      Turns.registerTurnStartListener(this);
       this._registered = true;
     }
   },
@@ -156,30 +170,43 @@ const GnomOgro = {
     g.el.style.zIndex = String((g.row + g.col) * 10 + 6);
   },
 
-  // Oyente de Turns (ver registerTurnEndListener) — se llama UNA vez por
-  // ronda completa (jugador + rival), justo cuando vuelve a ser el turno
-  // del jugador. "un turno sí y un turno no": actúa en una de cada dos.
-  onRoundEnd() {
-    if (!this.current) return;
-    this._roundTicks++;
-    if (this._roundTicks % GNOMOGRO_MOVE_EVERY_N_ROUNDS !== 0) return;
-    this._act();
+  // Oyente de Turns (ver registerTurnStartListener) — se llama al inicio de
+  // CADA turno (jugador y rival). Devuelve la promesa de la acción para que
+  // Turns.endTurn espere a que termine antes de seguir (así el GnomOgro nunca
+  // pisa la animación de la IA rival ni la del jugador).
+  onTurnStart() {
+    if (!this.current) return null;
+    if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return null;
+    return this._act();
+  },
+
+  // "cualquier jugador que no lo invoco, elige uno al azar y se centra en
+  // ese" — se sortea una sola vez y se recuerda en g.targetTeam; si ese
+  // Obelisco ya no existe, se sortea otro rival entre los que quedan.
+  _pickTarget(g) {
+    if (typeof Obelisks === "undefined") return null;
+    let obelisk = g.targetTeam ? Obelisks.byTeam(g.targetTeam) : null;
+    if (obelisk) return obelisk;
+    const rivals = Obelisks.list.filter((o) => o.team !== g.team);
+    if (rivals.length === 0) return null;
+    obelisk = rivals[Math.floor(Math.random() * rivals.length)];
+    g.targetTeam = obelisk.team;
+    return obelisk;
   },
 
   async _act() {
     const g = this.current;
     if (!g) return;
-    const targetObelisk = typeof Obelisks !== "undefined" ? Obelisks.byTeam(g.otherTeam) : null;
-    if (!targetObelisk) return; // ya no queda base rival en pie (partida terminando/terminada por otra vía)
+    const targetObelisk = this._pickTarget(g);
+    if (!targetObelisk) return; // ya no queda base rival en pie
 
-    // "en vez de moverse intenta atacar a una unidad adyacente enemiga a
-    // el, si no hay nadie anda" — prioridad: un enemigo adyacente primero,
-    // el Obelisco rival adyacente después (golpe final), mover si no hay
-    // nada al alcance.
+    // Una sola acción por turno: si tiene el Obelisco objetivo al lado lo
+    // destruye (golpe final); si no, mata a un personaje enemigo adyacente
+    // si lo hay; si no, avanza una casilla.
     const distTo = (row, col) => Math.max(Math.abs(row - g.row), Math.abs(col - g.col));
     const adjacentEnemy =
       typeof Units !== "undefined"
-        ? Units.list.find((u) => u.team === g.otherTeam && u.el && distTo(u.row, u.col) <= GNOMOGRO_ATTACK_RANGE)
+        ? Units.list.find((u) => u.team !== g.team && u.el && distTo(u.row, u.col) <= GNOMOGRO_ATTACK_RANGE)
         : null;
 
     if (distTo(targetObelisk.row, targetObelisk.col) <= GNOMOGRO_ATTACK_RANGE) {
@@ -263,15 +290,17 @@ const GnomOgro = {
     const g = this.current;
     Units.faceTowardsTile(g, target.row, target.col);
     await this._playAttackAnim();
-    target.hp = Math.max(0, target.hp - GNOMOGRO_ATTACK);
+    // "usara su accion por turno para matarlo de un golpe" — muerte
+    // instantánea sea cual sea la vida que le quedara (GNOMOGRO_ATTACK queda
+    // como cifra de referencia de la criatura).
+    const dealt = target.hp;
+    target.hp = 0;
     Units.updateHpBar(target);
-    Units.spawnFloatingText(target, `-${GNOMOGRO_ATTACK}`, { className: "dmg-popup" });
+    Units.spawnFloatingText(target, `-${dealt}`, { className: "dmg-popup" });
     Units.playShake(target);
-    if (target.hp <= 0) {
-      if (typeof Glory !== "undefined") Glory.queueKillBonus(g.team);
-      await Units.removeUnit(target);
-      if (typeof Gnome !== "undefined") Gnome.dropHeldBy(target);
-    }
+    if (typeof Glory !== "undefined") Glory.queueKillBonus(g.team);
+    await Units.removeUnit(target);
+    if (typeof Gnome !== "undefined") Gnome.dropHeldBy(target);
   },
 
   // "cuando llegue a la base enemiga la destruira de un golpe y acabara la

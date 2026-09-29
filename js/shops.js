@@ -82,10 +82,11 @@ const SHOP_INTERACT_RANGE = 1; // cuerpo a cuerpo, igual que VILLAGE_ATTACK_RANG
 //       Señuelo Explosivo (trampa que además ENGAÑA a la IA rival para que
 //       vaya a por ella sola, así que dispara con más fiabilidad que
 //       AtrapaPinreles).
-//   5 — KataPum! (el único daño a distancia garantizado sin tener que
+//   6 — KataPum! (el único daño a distancia garantizado sin tener que
 //       acercarse ni depender de que el rival "caiga" en nada — sigue
-//       siendo el más caro, pero ya no cuesta lo mismo que reclutar un
-//       pelotón entero).
+//       siendo el más caro. Era 5 con daño 1-2 (esperado ~1.25); al pasar a
+//       1-3 con reparto 60/28/12 (esperado ~1.52, +22% y con techo de 3)
+//       sube 1 punto, la subida mínima posible con precios enteros).
 const SHOP_STOCK_TEMPLATE = [
   { itemId: "setarcoiris", price: 3 },
   { itemId: "setarcoiris", price: 3 },
@@ -104,7 +105,7 @@ const SHOP_STOCK_TEMPLATE = [
   // repetir los dos a la vez era más redundancia que variedad) para que la
   // partida arranque ya con las 8 casillas mostrando 8 objetos distintos.
   { itemId: "senuelo", price: 4 },
-  { itemId: "katapum", price: 5 },
+  { itemId: "katapum", price: 6 },
   { itemId: "totemvision", price: 3 },
 ];
 
@@ -124,7 +125,7 @@ const SHOP_RESTOCK_POOL = [
   // 'KataPum!'" (ver ITEM_TYPES.katapum en js/backpack.js) — el más caro
   // de todos: daño a distancia teledirigido, sin ni siquiera tener que
   // acercarse al objetivo.
-  { itemId: "katapum", price: 5 },
+  { itemId: "katapum", price: 6 },
   // TotemVision (js/totemvision.js) — igual que el resto de objetos
   // nuevos, también puede salir sorteado en cualquier reposición futura.
   { itemId: "totemvision", price: 3 },

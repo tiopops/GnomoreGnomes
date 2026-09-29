@@ -144,7 +144,7 @@ const ITEM_DESCRIPTIONS = {
   setarcoiris: "La comida favorita de los gnomos. Colócala junto a uno de tus personajes: en dos turnos atraerá a un gnomo hambriento.",
   bevida: "Un brebaje revitalizante. Dáselo a un personaje aliado (pulsa sobre él en el tablero) para restaurar toda su vida hasta su máximo de base.",
   atrapapinreles: "Un cepo goblin oxidado. Colócalo junto a uno de tus personajes: el enemigo que caiga en su casilla o pase por encima pierde el turno, suelta cualquier gnomo que llevara encima y recibe 1 punto de daño.",
-  katapum: "Un cohete goblin casero. Elige a un rival a la vista: el misil vuela teledirigido hasta él y le hace entre 1 y 2 puntos de daño en la explosión.",
+  katapum: "Un cohete goblin casero. Elige a un rival a la vista: el misil vuela teledirigido hasta él y le hace entre 1 y 3 puntos de daño en la explosión (1 es lo más común, 2 es menos común y 3 lo menos común).",
   totemvision: "Un tótem tallado con un ojo tallado en su punta. Colócalo sobre una casilla libre: otorga visión permanente en un radio de 3 casillas. Tiene 1 punto de vida (cualquier golpe lo destruye) y, si se esconde dentro de un arbusto, se rompe en cuanto un rival entra en él.",
   senuelo: "Un muñeco de madera con forma de gnomo, cargado de pólvora. Colócalo sobre una casilla libre de terreno (nunca en un arbusto): tú lo ves como lo que es, pero el rival lo confunde con un gnomo suelto de verdad. En cuanto intente cogerlo... ¡PUM! Explota y le quita 2 puntos de vida.",
 };
@@ -1266,11 +1266,21 @@ const Backpack = {
     setTimeout(() => el.remove(), 420);
   },
 
-  // "causandole de 1 a 2 puntos de daño (aleatorio, siendo 2 menos
-  // probable)" — 75%/25% (2 no es imposible, pero claramente menos
-  // frecuente que 1, sin llegar a ser una rareza de una entre mil).
+  // Pedido explícito (pasada posterior, sustituye al 1-2 original): "el misil
+  // katapum goblin ahora hace de 1 a 3 de daño, siendo 1 lo mas comun
+  // seguido por un resultado menos comun de 2 y menos comun aun de 3" —
+  // 60% / 28% / 12% (daño esperado ~1.52, frente a ~1.25 del reparto
+  // 75/25 anterior: de ahí la subida de precio, ver SHOP_STOCK_TEMPLATE en
+  // js/shops.js).
+  _rollKatapumDamage() {
+    const r = Math.random();
+    if (r < 0.6) return 1;
+    if (r < 0.88) return 2;
+    return 3;
+  },
+
   _explodeKatapum(target) {
-    const damage = Math.random() < 0.75 ? 1 : 2;
+    const damage = this._rollKatapumDamage();
     target.hp = Math.max(0, target.hp - damage);
     Units.updateHpBar(target);
     Units.spawnFloatingText(target, `-${damage}`, { className: "dmg-popup" });

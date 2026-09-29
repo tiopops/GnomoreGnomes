@@ -408,6 +408,7 @@ const Combat = {
       if (typeof Fog !== "undefined") Fog.applyVisibility();
       if (typeof Villages !== "undefined") Villages.refreshOcclusion();
       if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
+    if (typeof Altar !== "undefined") Altar.refreshOcclusion();
       if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
       if (typeof Units !== "undefined") Units.refreshUnitOcclusion();
       if (typeof Shops !== "undefined") Shops.refreshAll();

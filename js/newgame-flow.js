@@ -337,6 +337,7 @@ function spawnTestUnits(size, raceId) {
   }
   if (typeof GnomOgro !== "undefined") {
     GnomOgro.resetAll();
+  if (typeof Plague !== "undefined") Plague.resetAll();
   }
 
   // Pedido explícito: "puedes hacer que se precargue la partida antes de
@@ -484,6 +485,7 @@ function spawnTestUnits(size, raceId) {
   // justo arriba: comprueba de entrada si algún personaje ha quedado
   // colocado justo detrás de uno.
   if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
+    if (typeof Altar !== "undefined") Altar.refreshOcclusion();
   // Unidades propias (js/units.js) — mismo motivo, ahora entre personajes:
   // si un rival ha arrancado justo detrás de uno del jugador.
   if (typeof Units !== "undefined") Units.refreshUnitOcclusion();

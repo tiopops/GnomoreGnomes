@@ -78,8 +78,12 @@ const Turns = {
   registerTurnStartListener(listener) {
     this._turnStartListeners.push(listener);
   },
+  // Devuelve una promesa que se resuelve cuando TODOS los oyentes que hayan
+  // devuelto una promesa terminan (p.ej. GnomOgro.onTurnStart, que anima su
+  // paso/golpe) — endTurn la espera para no solapar animaciones.
   _fireTurnStart(team) {
-    this._turnStartListeners.forEach((l) => l.onTurnStart && l.onTurnStart(team));
+    const results = this._turnStartListeners.map((l) => (l.onTurnStart ? l.onTurnStart(team) : null));
+    return Promise.all(results);
   },
 
   // Se llama al empezar cada partida nueva (spawnTestUnits, ver
@@ -405,7 +409,12 @@ const Turns = {
     // cabecera de glory.js), pero el rival igualmente acumula los suyos por
     // dentro para cuando su IA los pueda gastar más adelante.
     if (typeof Glory !== "undefined") Glory.grantTurnStart("enemy");
-    this._fireTurnStart("enemy");
+    await this._fireTurnStart("enemy");
+    // El GnomOgro pudo destruir un Obelisco justo al empezar este turno.
+    if (typeof Obelisks !== "undefined" && Obelisks.gameOver) {
+      this._aiRunning = false;
+      return;
+    }
 
     await this._runEnemyTurn();
 
@@ -420,13 +429,60 @@ const Turns = {
     this.roundNumber++;
     this._updateButtonState();
     if (typeof Glory !== "undefined") Glory.grantTurnStart("player");
-    this._fireTurnStart("player");
+    // Se espera a los oyentes de inicio de turno (GnomOgro, plaga...) con el
+    // tablero bloqueado, para que sus animaciones no se pisen con el jugador.
+    this._aiRunning = true;
+    this._updateButtonState();
+    await this._fireTurnStart("player");
+    this._aiRunning = false;
+    this._updateButtonState();
     // "una vez por ronda completa" (ver registerTurnEndListener arriba) —
     // aquí, justo al terminar, no en ningún punto intermedio de la IA.
     this._turnEndListeners.forEach((l) => l.onRoundEnd && l.onRoundEnd());
     if (typeof Obelisks !== "undefined" && typeof Obelisks.checkTurnLimit === "function") {
       Obelisks.checkTurnLimit(this.roundNumber);
     }
+  },
+
+  // ---------- "Quién va perdiendo" ----------
+  // Criterio compartido (Plaga Gnoma, js/plague.js, y la decisión de la IA de
+  // invocar al GnomOgro): mismo orden que Obelisks.checkTurnLimit (vida del
+  // Obelisco, luego tótems poseídos) más, como desempate, nº de personajes
+  // vivos. Devuelve "player" | "enemy" (el que va peor) o null si van igual.
+  standingOf(team) {
+    const o = typeof Obelisks !== "undefined" ? Obelisks.byTeam(team) : null;
+    const totems = typeof Villages !== "undefined" ? Villages.ownedCount(team) : 0;
+    const units = Units.list.filter((u) => u.team === team).length;
+    return [o ? o.hp : 0, totems, units];
+  },
+
+  losingTeam() {
+    const a = this.standingOf("player");
+    const b = this.standingOf("enemy");
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] < b[i]) return "player";
+      if (a[i] > b[i]) return "enemy";
+    }
+    return null;
+  },
+
+  // Pedido explícito: "los enemigos pueden tomar la decision de invocar al
+  // gnomogro si ven que la partida asi lo requiere o estan perdiendo".
+  // Con un gnomo cargado en la mano y el Altar en pie, la IA lo estampa si:
+  //   - su gnomo (por sí solo) llena lo que falta: el GnomOgro sería suyo; o
+  //   - va perdiendo: alimenta el altar sin más; o
+  //   - la partida se alarga (ronda >= 20, "la partida lo requiere"): lo
+  //     alimenta solo mientras no lo deje en "lleno" (70%), para no
+  //     regalarle al jugador un remate fácil.
+  // Un gnomo sin puntos no cuenta (no rellena nada): se sigue cargando.
+  _aiShouldSacrificeAtAltar(unit, held) {
+    if (typeof Altar === "undefined") return false;
+    const altar = Altar.current();
+    if (!altar || held.points <= 0) return false;
+    if (held.points >= ALTAR_MAX_FILL - altar.fill) return true;
+    if (this.losingTeam() === unit.team) return true;
+    if (this.roundNumber >= 20) return altar.fill + held.points < ALTAR_LLENO_THRESHOLD;
+    return false;
   },
 
   // ---------- IA del bando rival ----------
@@ -497,7 +553,7 @@ const Turns = {
         // de un solo golpe pesa más que la gloria persistente de un
         // tótem), pero solo si el Altar sigue en pie (Altar.current()
         // devuelve null en cuanto se llena/desaparece).
-        if (typeof Altar !== "undefined" && Altar.current()) {
+        if (this._aiShouldSacrificeAtAltar(unit, held)) {
           const altar = Altar.current();
           const approach = Altar.findApproachTile(unit, altar);
           if (approach) {

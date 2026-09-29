@@ -32,7 +32,11 @@
        explosión) se dejan fuera a propósito: ninguno de los dos es
        "aplastar un gnomo contra algo", así que no encajan en el pedido. */
 
-const BLOOD_SPLAT_SPRITES = ["assets/decals/sangre_01.png"];
+const BLOOD_SPLAT_SPRITES = [
+  "assets/decals/efecto_sangre_01.png",
+  "assets/decals/efecto_sangre_02.png",
+  "assets/decals/efecto_sangre_03.png",
+];
 const BLOOD_SPLAT_LIFETIME_MS = 3000; // "desaparecera...a los 3 segundos"
 const BLOOD_SPLAT_FADE_MS = 500;
 

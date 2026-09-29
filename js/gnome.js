@@ -1745,7 +1745,7 @@ const Gnome = {
     // especial" — mismo patrón que .ability-btn__icon-img (js/abilities.js):
     // la imagen ocupa el 100% del botón circular en vez del glifo Phosphor
     // pequeño de antes (ver .gnome-action-btn__icon-img en style.css).
-    hitBtn.innerHTML = '<img class="gnome-action-btn__icon-img" src="assets/iconos/pegar_gnomo.png" alt="">';
+    hitBtn.innerHTML = '<img class="gnome-action-btn__icon-img" src="assets/iconos/pegar_gnomo.png?v=20260929212539" alt="">';
     hitBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       if (this._currentHeldGnome && this._currentHolderUnit) {
@@ -1766,7 +1766,7 @@ const Gnome = {
     // habra que sustiruirla por el icono phospor correspondiente,
     // respetarmos el tamaño y medidas del icono de habilidad especial" —
     // mismo patrón que hitBtn de arriba.
-    passBtn.innerHTML = '<img class="gnome-action-btn__icon-img" src="assets/iconos/lanzar_gnomo.png" alt="">';
+    passBtn.innerHTML = '<img class="gnome-action-btn__icon-img" src="assets/iconos/lanzar_gnomo.png?v=20260929212539" alt="">';
     passBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       if (!this._currentHeldGnome || !this._currentHolderUnit) return;

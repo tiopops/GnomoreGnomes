@@ -7,7 +7,7 @@
        equidistante posible de los dos, igual que Shops.spawn ya resuelve
        "alejado de la zona de inicio" buscando el punto más lejano dentro
        del mapa).
-     - Pintarlo (dos sprites: vacío/medio lleno, ver ALTAR_SPRITES) y
+     - Pintarlo (tres sprites: vacío/medio lleno/lleno, ver ALTAR_SPRITES) y
        bloquear su casilla para cualquier unidad, gnomo u objeto — igual que
        un poblado/Obelisco/Tienda Goblin.
      - Llevar su barra especial de 30 espacios, que en vez de vaciarse se
@@ -41,15 +41,18 @@
    último sacrificio se pasa de los espacios que quedan libres. */
 
 const ALTAR_MAX_FILL = 30;
-// "cuando pasa del 50% de su capacidad" — estrictamente MÁS de la mitad
-// (15 de 30 es exactamente el 50%, todavía no "pasado"), así que el sprite
-// cambia al entrar en el espacio 16.
-const ALTAR_HALF_THRESHOLD = ALTAR_MAX_FILL / 2;
+// Pedido explícito (pasada posterior, sustituye al "50%" original): "el
+// sprite inicial sera vacio, cambiara a mediolleno cuando su barra alcance
+// un 30% y cambiara a lleno cuando llegue a 70%" — "alcanzar" = >= (9 de 30
+// ya es el 30%, 21 de 30 ya es el 70%).
+const ALTAR_MEDIO_THRESHOLD = ALTAR_MAX_FILL * 0.3;
+const ALTAR_LLENO_THRESHOLD = ALTAR_MAX_FILL * 0.7;
 const ALTAR_INTERACT_RANGE = 1; // cuerpo a cuerpo, igual que VILLAGE_ATTACK_RANGE/Combat.attackRange
 
 const ALTAR_SPRITES = {
   vacio: "assets/edificios/altar_sacrificios_vacio.png",
   medio: "assets/edificios/altar_sacrificios_medio.png",
+  lleno: "assets/edificios/altar_sacrificios_lleno.png",
 };
 
 const Altar = {
@@ -83,7 +86,7 @@ const Altar = {
     // Un tile extra de margen con cualquier otro "mobiliario" del tablero
     // (no solo la propia casilla) — decisión de diseño sin pedido explícito
     // exacto: el Altar/GnomOgro son mucho más grandes que un tótem/Obelisco
-    // normal (300px de sprite, ver .gnomogro__sprite en style.css) y, al
+    // normal (200px de sprite, ver .gnomogro__sprite en style.css) y, al
     // ser tan alto, si naciera pegado a un vecino cuya loseta cae "delante"
     // en la profundidad isométrica (misma fórmula z-index=(fila+columna)*10
     // que usa el resto del tablero), ese vecino le taparía buena parte del
@@ -208,9 +211,11 @@ const Altar = {
       barEl,
       segmentEls,
     };
+    altar.state = "vacio";
     this._placeInstant(altar);
     this._refreshBar(altar);
     this.list.push(altar);
+    this._initMouseTracking();
     return altar;
   },
 
@@ -225,6 +230,103 @@ const Altar = {
   _refreshBar(altar) {
     altar.segmentEls.forEach((seg, i) => {
       seg.classList.toggle("unit__hpbar-segment--filled", i < altar.fill);
+    });
+  },
+
+  // Sprite según el llenado (ver ALTAR_MEDIO_THRESHOLD/ALTAR_LLENO_THRESHOLD):
+  // vacío -> medio (30%) -> lleno (70%). Solo toca el DOM cuando cambia de
+  // estado, no en cada sacrificio.
+  _stateFor(fill) {
+    if (fill >= ALTAR_LLENO_THRESHOLD) return "lleno";
+    if (fill >= ALTAR_MEDIO_THRESHOLD) return "medio";
+    return "vacio";
+  },
+
+  _refreshSprite(altar) {
+    const state = this._stateFor(altar.fill);
+    if (altar.state === state) return;
+    altar.state = state;
+    altar.el.classList.toggle("altar--medio", state === "medio");
+    altar.el.classList.toggle("altar--lleno", state === "lleno");
+    const src = ALTAR_SPRITES[state];
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(altar.spriteEl, src);
+    else altar.spriteEl.src = src;
+  },
+
+  // ---------- Transparencia cuando alguien queda detrás (mismo sistema que
+  // Obelisks.refreshOcclusion, js/obelisks.js — pedido explícito: "el altar
+  // tambien tiene el sistema de transparencias para cuando un jugador o
+  // enemigo esta detras de el"). Cualquier unidad ya visible o marcador de
+  // zona seleccionable en las 4 losetas de detrás cuenta, sea del equipo
+  // que sea; con el ratón/dedo sobre el altar o sobre quien está detrás, el
+  // altar se vuelve semitransparente y deja pasar los clics. ----------
+  _OCCLUSION_OFFSETS: [
+    [-1, -1],
+    [-1, 0],
+    [0, -1],
+    [-2, -2],
+  ],
+  _lastMouseX: null,
+  _lastMouseY: null,
+  _mouseTrackingReady: false,
+  _initMouseTracking() {
+    if (this._mouseTrackingReady) return;
+    this._mouseTrackingReady = true;
+    window.addEventListener("mousemove", (e) => {
+      this._lastMouseX = e.clientX;
+      this._lastMouseY = e.clientY;
+      this.refreshOcclusion(e.clientX, e.clientY);
+    });
+    const handleTouch = (e) => {
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      this._lastMouseX = t.clientX;
+      this._lastMouseY = t.clientY;
+      this.refreshOcclusion(t.clientX, t.clientY);
+    };
+    window.addEventListener("touchstart", handleTouch, { passive: true });
+    window.addEventListener("touchmove", handleTouch, { passive: true });
+  },
+
+  _behindElsFor(altar) {
+    const els = [];
+    const behind = (r, c) => this._OCCLUSION_OFFSETS.some(([dr, dc]) => r === altar.row + dr && c === altar.col + dc);
+    Units.list.forEach((unit) => {
+      if (!unit.el || unit.el.classList.contains("unit--fog-hidden")) return;
+      if (behind(unit.row, unit.col)) els.push(unit.el);
+    });
+    (Units.markerEls || []).forEach((m) => {
+      if (!m || !m.isConnected) return;
+      const r = Number(m.dataset.row);
+      const c = Number(m.dataset.col);
+      if (Number.isNaN(r) || Number.isNaN(c)) return;
+      if (behind(r, c)) els.push(m);
+    });
+    return els;
+  },
+
+  refreshOcclusion(mouseX, mouseY) {
+    if (typeof Units === "undefined") return;
+    const mx = typeof mouseX === "number" ? mouseX : this._lastMouseX;
+    const my = typeof mouseY === "number" ? mouseY : this._lastMouseY;
+    this.list.forEach((altar) => {
+      if (!altar.spriteEl) return;
+      if (altar.el.classList.contains("unit--fog-hidden") || mx === null || my === null) {
+        altar.el.classList.remove("altar--occluding");
+        return;
+      }
+      const behindEls = this._behindElsFor(altar);
+      let occluding = false;
+      if (behindEls.length) {
+        const aRect = altar.spriteEl.getBoundingClientRect();
+        const overAltar = mx >= aRect.left && mx <= aRect.right && my >= aRect.top && my <= aRect.bottom;
+        const overBehind = behindEls.some((el) => {
+          const r = el.getBoundingClientRect();
+          return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom;
+        });
+        occluding = overAltar || overBehind;
+      }
+      altar.el.classList.toggle("altar--occluding", occluding);
     });
   },
 
@@ -371,11 +473,7 @@ const Altar = {
     altar.el.classList.remove("altar--pulse");
     void altar.el.offsetWidth;
     altar.el.classList.add("altar--pulse");
-    if (altar.fill > ALTAR_HALF_THRESHOLD && !altar.el.classList.contains("altar--medio")) {
-      altar.el.classList.add("altar--medio");
-      if (typeof SpriteQuality !== "undefined") SpriteQuality.register(altar.spriteEl, ALTAR_SPRITES.medio);
-      else altar.spriteEl.src = ALTAR_SPRITES.medio;
-    }
+    this._refreshSprite(altar);
 
     const viewportEl = document.getElementById("board-viewport");
     if (viewportEl) {

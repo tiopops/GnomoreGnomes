@@ -988,6 +988,7 @@ const Units = {
     // solo la de un tótem normal.
     if (typeof Villages !== "undefined") Villages.refreshOcclusion();
     if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
+    if (typeof Altar !== "undefined") Altar.refreshOcclusion();
     if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
     // Pedido explícito: "si un enemigo se pone detras de mi personaje, mi
     // personaje debe adquirir el sistema de transparencias" — mismo punto

@@ -6630,6 +6630,15 @@ body.backpack-giving--katapum * {
   background: #3a0a0a; /* rojo muy oscuro en reposo, nunca el gris/negro neutro de una barra normal */
 }
 
+/* BUG corregido: la regla de arriba (2 clases) tenía más especificidad que
+   .unit__hpbar-segment--filled (1 clase) y pisaba su color, así que los
+   espacios rellenos se quedaban del mismo rojo oscuro que los vacíos y la
+   barra "no subía" aunque altar.fill sí cambiara. Misma especificidad y
+   declarada después = gana el relleno. */
+.altar__bar .unit__hpbar-segment--filled {
+  background: var(--hp-fill);
+}
+
 /* Pulso al rellenar un espacio (JS quita/vuelve a poner la clase para poder
    repetirlo, mismo patrón que unit--hit) — un golpe seco de escala, no una
    vibración continua: es un único sacrificio, no un temblor sostenido. */
@@ -6651,6 +6660,21 @@ body.backpack-giving--katapum * {
   filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 16px rgba(230, 48, 47, 0.65));
 }
 
+/* Estado "lleno" (70% o más, ver ALTAR_LLENO_THRESHOLD en altar.js): el
+   resplandor sube un escalón respecto a "medio". */
+.altar--lleno .altar__sprite {
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 24px rgba(255, 40, 40, 0.9));
+}
+
+/* Transparencia cuando alguien queda detrás (Altar.refreshOcclusion,
+   js/altar.js) — mismo comportamiento que .obelisk--occluding: los clics
+   atraviesan hasta quien esté debajo. */
+.altar--occluding {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
 /* Desaparición al llenarse del todo (Altar._collapse) — "todo tiembla y
    aparece el GnomOgro": el temblor de pantalla ya lo pone JS
    (board-viewport--shake--big, mismo mecanismo que Katapum/Señuelo), esto
@@ -6669,7 +6693,7 @@ body.backpack-giving--katapum * {
    (Units.faceTowardsTile) — nunca entra en Units.list. */
 .gnomogro__sprite {
   display: block;
-  width: 300px; /* más ancho que el Obelisco (260px): la criatura más grande del tablero */
+  width: 200px; /* solo un poquito más que el golem corteza (hombre_arbol: 120px*1.5 = 180px) — pedido explícito */
   height: auto;
   user-select: none;
   -webkit-user-drag: none;
@@ -6684,10 +6708,10 @@ body.backpack-giving--katapum * {
    siempre se ve a plena vida. */
 .gnomogro__hpbar {
   opacity: 1;
-  top: -30px;
-  width: 260px;
-  height: 10px;
-  gap: 0.5px;
+  top: -22px;
+  width: 200px;
+  height: 8px;
+  gap: 0.4px;
 }
 
 /* Nacimiento (Altar._collapse -> GnomOgro.spawn) — mismo espíritu que
@@ -7841,4 +7865,94 @@ body.backpack-giving--katapum * {
      quien de verdad quita el elemento del DOM al terminar). */
   transition: opacity 0.5s ease;
   opacity: 0;
+}
+
+
+/* ---------- Plaga Gnoma (js/plague.js) ----------
+   Pedido explícito: "un mensaje en pantalla como de alarma...(efecto de
+   alerta por un instante)". Mismo doble-capa recortado en diagonal que
+   .shop-restock-msg pero en rojo, más grande, con parpadeo, y un
+   destello rojo en los bordes de la pantalla. */
+.plague-alert {
+  position: fixed;
+  top: 110px;
+  left: 50%;
+  transform: translate(-50%, -30px) scale(0.85);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 34px;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #ffe1e1;
+  letter-spacing: 0.02em;
+  filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 0 22px rgba(255, 40, 40, 0.75));
+  opacity: 0;
+  pointer-events: none;
+  z-index: 6500;
+}
+
+.plague-alert::before,
+.plague-alert::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0% 100%);
+}
+
+.plague-alert::before {
+  inset: 0;
+  background: #000;
+  z-index: 0;
+}
+
+.plague-alert::after {
+  inset: var(--gg-frame-outline-width);
+  background: #7a0c0c;
+  z-index: 1;
+}
+
+.plague-alert__icon {
+  position: relative;
+  z-index: 2;
+  font-size: 1.9rem;
+  color: #ffd23f;
+}
+
+.plague-alert .p5-banner__label {
+  position: relative;
+  z-index: 2;
+}
+
+.plague-alert--visible {
+  animation: plague-alert-pop 2.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes plague-alert-pop {
+  0% { opacity: 0; transform: translate(-50%, -30px) scale(0.8); }
+  10% { opacity: 1; transform: translate(-50%, 0) scale(1.1); }
+  16% { transform: translate(-50%, 0) scale(1); }
+  24% { transform: translate(calc(-50% - 6px), 0) scale(1); }
+  32% { transform: translate(calc(-50% + 6px), 0) scale(1); }
+  40% { transform: translate(calc(-50% - 4px), 0) scale(1); }
+  48% { transform: translate(-50%, 0) scale(1); }
+  88% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -14px) scale(0.92); }
+}
+
+.plague-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 6400;
+  box-shadow: inset 0 0 120px 40px rgba(255, 30, 30, 0.85);
+}
+
+.plague-flash--visible {
+  animation: plague-flash-blink 0.5s ease-in-out 4;
+}
+
+@keyframes plague-flash-blink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }

@@ -777,6 +777,7 @@ const Abilities = {
     // nota larga en Combat.pushBack.
     if (typeof Villages !== "undefined") Villages.refreshOcclusion();
     if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
+    if (typeof Altar !== "undefined") Altar.refreshOcclusion();
     if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
     if (typeof Units !== "undefined") Units.refreshUnitOcclusion();
     if (typeof Shops !== "undefined") Shops.refreshAll();
@@ -1029,6 +1030,7 @@ const Abilities = {
     // solo se recalculaba la transparencia de los tótems normales.
     if (typeof Villages !== "undefined") Villages.refreshOcclusion();
     if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
+    if (typeof Altar !== "undefined") Altar.refreshOcclusion();
     if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
     if (typeof Units !== "undefined") Units.refreshUnitOcclusion();
     if (typeof Shops !== "undefined") Shops.refreshAll();
