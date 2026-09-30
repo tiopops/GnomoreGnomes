@@ -49,6 +49,9 @@ const TILE_TYPES = {
     // Pedido explícito: solo estas dos (lisa y con nenúfares), 50/50.
     variants: ["assets/losetas/agua_03.png", "assets/losetas/agua_02.png"],
     walkable: false,
+    // Calibrado con debug/calibrar-losetas.html: escala 1, desplazamiento 1/3 px.
+    offsetX: 1,
+    offsetY: 3,
     nativeWidth: 1024,
     nativeHeight: 854,
     // Sin offsetX/offsetY/scale propios: al compartir exactamente el mismo
@@ -350,8 +353,8 @@ const TILE_NATIVE_HEIGHT = 854;
 // herramienta de calibración (agrandar un poco cada loseta desde su centro y/o
 // difuminar su borde); de momento a 0 porque el encaje quedó perfecto sin ellos,
 // pero se dejan aquí listos por si una futura loseta los necesita.
-const TILE_WIDTH = 178;
-const TILE_TOP_HEIGHT = 115;
+const TILE_WIDTH = 188;
+const TILE_TOP_HEIGHT = 117;
 const TILE_OVERLAP = 0; // % — 0 = desactivado
 const TILE_FEATHER = 0; // px — 0 = desactivado
 const TILE_RENDER_HEIGHT = Math.round((TILE_WIDTH * TILE_NATIVE_HEIGHT) / TILE_NATIVE_WIDTH);
