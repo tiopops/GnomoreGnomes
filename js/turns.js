@@ -559,6 +559,33 @@ const Turns = {
   async _aiActOnce(unit) {
     if (!unit.el) return false; // pudo morir a mitad del propio turno rival
 
+    // GnomOgro (js/gnomogro.js) — pedido explícito: "cuando el gnomogro
+    // entra en juego los enemigos deben ir a intentar matarlo por todos los
+    // medios, si no irá a su base y la romperá". Prioridad máxima para la
+    // IA del bando CONTRARIO a la criatura: se acerca y la golpea (ataque
+    // normal, o machacón si lleva un gnomo cargado de puntos) turno tras
+    // turno hasta acabar con ella.
+    if (typeof GnomOgro !== "undefined" && GnomOgro.current && GnomOgro.current.team !== unit.team) {
+      const ogro = GnomOgro.current;
+      const heldGnome = typeof Gnome !== "undefined" ? Gnome.list.find((x) => x.heldBy === unit.id) : null;
+      // Un gnomo cogido a 0 puntos haría un machacón de 0 de daño: primero
+      // se le golpea para cargarlo (igual que la rama de tótems de abajo).
+      if (heldGnome && heldGnome.points <= 0) {
+        heldGnome.hit(unit);
+        return true;
+      }
+      if (GnomOgro.findApproachTile(unit, ogro)) {
+        await GnomOgro.approachAndAttack(unit, ogro);
+        return true;
+      }
+      // Aún no llega este turno: se acerca lo máximo posible.
+      const dest = this._aiPickMoveTileToward(unit, { row: ogro.row, col: ogro.col });
+      if (dest) {
+        await Movement.moveTo(unit, dest.row, dest.col);
+        return true;
+      }
+    }
+
     if (typeof Gnome !== "undefined") {
       const held = Gnome.list.find((g) => g.heldBy === unit.id);
       if (held) {
