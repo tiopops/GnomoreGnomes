@@ -8495,3 +8495,29 @@ body.backpack-giving--katapum * {
   .skills-panel .backpack-panel__bg > .shop-warning { grid-column: 2; grid-row: 6; }
   .skills-row { gap: clamp(28px, 7vw, 70px); }
 }
+
+/* Habilidades en escritorio: pedido explícito "los iconos de las habilidades
+   podrían verse más grandes" — panel más ancho en 2 columnas (árbol a la
+   izquierda con nodos grandes, descripción + botón a la derecha), igual que
+   la versión horizontal de móvil, para que los nodos crezcan sin que el
+   panel se salga de la pantalla. */
+@media (min-width: 901px) and (min-height: 560px) {
+  .skills-panel { width: min(1040px, 94vw); }
+  .skills-panel .backpack-panel__bg {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr auto auto;
+    column-gap: 30px;
+    padding: 30px 46px 22px;
+  }
+  .skills-panel .backpack-panel__bg > .backpack-panel__title { grid-column: 1 / -1; grid-row: 1; text-align: center; justify-self: center; }
+  .skills-panel .backpack-panel__bg > .skills-tabs { grid-column: 1 / -1; grid-row: 2; }
+  .skills-panel .backpack-panel__bg > .skills-tree { grid-column: 1; grid-row: 3 / span 4; --sk-node: clamp(72px, 12.4vh, 112px); gap: clamp(4px, 1vh, 10px); }
+  .skills-panel .backpack-panel__bg > .skills-points { grid-column: 2; grid-row: 3; }
+  .skills-panel .backpack-panel__bg > .skills-desc { grid-column: 2; grid-row: 4; align-self: start; }
+  .skills-panel .backpack-panel__bg > .shop-buy-btn { grid-column: 2; grid-row: 5; }
+  .skills-panel .backpack-panel__bg > .shop-warning { grid-column: 2; grid-row: 6; }
+  .skills-row { gap: clamp(70px, 9vw, 150px); }
+  .skills-desc .backpack-desc__text { font-size: 1.02rem; }
+  .skills-desc__name { font-size: 1.3rem; }
+}

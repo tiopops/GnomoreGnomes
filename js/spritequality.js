@@ -177,7 +177,23 @@ const SpriteQuality = {
       imgEl.src = lowResTileSrc(originalSrc);
       return;
     }
-    imgEl.src = this._srcForTier(originalSrc, this.tier);
+    // Un sprite que nace con la cámara alejada (p.ej. una loseta que vuelve
+    // a montarse al desplazarse) NO debe pedir de golpe una versión reducida
+    // que aún no se ha cargado: se queda en blanco hasta que llega. Si esa
+    // calidad aún no está lista arranca con la original y se mejora (cambia)
+    // en cuanto esté cargada y decodificada.
+    const wanted = this._srcForTier(originalSrc, this.tier);
+    if (this.tier !== 0 && !this._loaded.has(wanted)) {
+      imgEl.src = originalSrc;
+      this._swap(imgEl, this.tier);
+    } else {
+      imgEl.src = wanted;
+    }
+    // Si la versión reducida no existe en disco, vuelve a la original en
+    // vez de dejar el sprite roto/invisible.
+    imgEl.addEventListener("error", () => {
+      if (imgEl.dataset.srcOrig && !imgEl.src.endsWith(imgEl.dataset.srcOrig)) imgEl.src = imgEl.dataset.srcOrig;
+    });
     this._sprites.add(imgEl);
   },
 
@@ -221,16 +237,50 @@ const SpriteQuality = {
   // esta es la versión definitiva: sin fantasma, sin fundido, un solo
   // assignment de src.
   _swap(imgEl, tier) {
-    // La niebla ya no pasa por aquí en absoluto (ver register/
-    // _FOG_ALWAYS_LOWRES: nunca entra en _sprites), así que esta función ya
-    // no necesita ningún caso especial para ella — el bug ya corregido
-    // antes ("en el modo alto rendimiento la niebla no tiene el efecto de
-    // disiparse") tampoco puede volver a darse aquí por la misma razón: una
-    // niebla que nunca cambia de textura no puede "saltar" a media
-    // animación de disipación.
     const orig = imgEl.dataset.srcOrig;
     if (!orig) return;
-    imgEl.src = this._srcForTier(orig, tier);
+    const url = this._srcForTier(orig, tier);
+    // Pedido explícito: "cuando está activo el modo resolución dinámica hay
+    // errores gráficos...al alejar y acercar la cámara a veces las losetas y
+    // otros elementos desaparecen". Causa: asignar de golpe un src que el
+    // navegador aún no ha descargado/decodificado deja el <img> en blanco
+    // hasta que termina (y, si esa versión reducida NO existe en disco, se
+    // queda en blanco para siempre). Ahora la nueva textura se carga y
+    // decodifica APARTE y solo se asigna cuando ya está lista; si falla,
+    // el sprite conserva la que tenía.
+    if (imgEl.getAttribute("src") === url || imgEl.src.endsWith(url)) return;
+    this._ready(url).then((ok) => {
+      if (!ok) return; // esa calidad no existe: se queda como está
+      // Por si mientras cargaba se cambió otra vez de nivel o de textura.
+      if (this.tier !== tier) return;
+      if (imgEl.dataset.srcOrig !== orig) return;
+      imgEl.src = url;
+    });
+  },
+
+  // url -> Promise<boolean>: carga + decodifica una vez y recuerda el
+  // resultado (las 625 losetas comparten pocas URL, se piden una sola vez).
+  _readyCache: new Map(),
+  _loaded: new Set(),
+  _ready(url) {
+    let p = this._readyCache.get(url);
+    if (p) return p;
+    p = new Promise((resolve) => {
+      const im = new Image();
+      im.decoding = "async";
+      im.onload = () => {
+        const done = () => {
+          this._loaded.add(url);
+          resolve(true);
+        };
+        if (im.decode) im.decode().then(done, done);
+        else done();
+      };
+      im.onerror = () => resolve(false);
+      im.src = url;
+    });
+    this._readyCache.set(url, p);
+    return p;
   },
 };
 
