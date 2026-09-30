@@ -913,8 +913,8 @@ const Obelisks = {
     let msg;
     if (reason === "turnLimit") {
       msg = draw
-        ? "Se acabaron los 30 turnos y todo sigue exactamente igualado."
-        : "Se acabaron los 30 turnos — gana quien más resistió.";
+        ? `Se acabaron los ${TURNS_MAX_ROUNDS} turnos y todo sigue exactamente igualado.`
+        : `Se acabaron los ${TURNS_MAX_ROUNDS} turnos — gana quien más resistió.`;
     } else {
       msg = won ? "Has destruido el Obelisco Ancestral rival." : "Tu Obelisco Ancestral ha sido destruido.";
     }

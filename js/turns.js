@@ -31,7 +31,7 @@ const TURNS_MAX_ACTIONS = 2;
 // botón PASAR TURNO) — mismo criterio que ya usa registerTurnEndListener/
 // onRoundEnd (ver su comentario más abajo), así el contador que se muestra
 // sobre el botón cuenta lo mismo que ya cuentan los oyentes existentes.
-const TURNS_MAX_ROUNDS = 30;
+const TURNS_MAX_ROUNDS = 60;
 
 // Pedido explícito (original, en pruebas): "de momento para hacer pruebas,
 // que los enemigos no ataquen estamos en modo sandbox" — la IA rival
