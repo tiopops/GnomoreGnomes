@@ -8086,13 +8086,13 @@ body.backpack-giving--katapum * {
 
 /* --- Árbol --- */
 .skills-tree {
-  --sk-node: clamp(48px, 7.8vh, 74px);
+  --sk-node: clamp(52px, 7.8vh, 80px);
   position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(6px, 1.5vh, 14px);
+  gap: clamp(4px, 1vh, 10px);
   padding: 2px 0;
 }
 
@@ -8121,7 +8121,7 @@ body.backpack-giving--katapum * {
   z-index: 1;
   display: flex;
   justify-content: center;
-  gap: clamp(60px, 22vw, 150px);
+  gap: clamp(44px, 16vw, 110px);
 }
 
 .skills-node {
@@ -8165,8 +8165,8 @@ body.backpack-giving--katapum * {
 .skills-node__icon {
   position: relative;
   z-index: 1;
-  width: 66%;
-  height: 66%;
+  width: 94%;
+  height: 94%;
   object-fit: contain;
   pointer-events: none;
   user-select: none;
@@ -8421,4 +8421,77 @@ body.backpack-giving--katapum * {
 .village--selected .obelisk__menu-btn {
   transform: scale(1);
   opacity: 1;
+}
+
+/* ---------- Habilidades: adaptación a móvil ----------
+   Pedido explícito: "mejores la interfaz de habilidades para dispositivos
+   móviles... hay textos que se salen de sus límites y tengo que hacer
+   scroll para ver las descripciones o pulsar botones".
+   - Vertical (≤600px de ancho): márgenes laterales mínimos, pestañas con
+     texto más pequeño que no se pisa, árbol algo más compacto y
+     descripción/botón pegados debajo para que quepa en una pantalla normal.
+   - Horizontal (poca altura): rejilla de 2 columnas — árbol a la izquierda,
+     puntos + descripción + botón a la derecha — en vez de una sola columna
+     que obligaba a hacer scroll. */
+@media (max-width: 600px), (max-height: 520px) {
+  .backpack-overlay:has(.skills-panel) {
+    padding: 10px 0;
+  }
+  .skills-panel {
+    width: min(660px, 96vw);
+    margin-top: 0;
+  }
+  .skills-panel .backpack-panel__bg {
+    gap: 4px;
+    padding: 20px 14px 12px;
+  }
+  .skills-panel .backpack-panel__title {
+    font-size: 1.25rem;
+    padding-bottom: 4px;
+  }
+  .skills-tabs { gap: 5px; }
+  .skills-tab { height: 34px; padding: 0 4px; }
+  .skills-tab__label {
+    font-size: 0.66rem;
+    letter-spacing: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+  }
+  .skills-points__num { font-size: 1.3rem; }
+  .skills-points__label { font-size: 0.7rem; }
+  .skills-tree {
+    --sk-node: clamp(46px, 8vh, 70px);
+    gap: clamp(2px, 0.6vh, 5px);
+  }
+  .skills-row { gap: clamp(30px, 12vw, 90px); }
+  .skills-node__icon { width: 94%; height: 94%; }
+  .skills-node__rank-num { font-size: 0.68rem; }
+  .skills-desc { min-height: 0; padding: 8px 12px; }
+  .skills-desc__name { font-size: 1rem; }
+  .skills-desc__rank { font-size: 0.7rem; }
+  .skills-desc__cost { font-size: 0.78rem; }
+  .skills-desc .backpack-desc__text { font-size: 0.78rem; line-height: 1.28; }
+  .skills-desc__lock { font-size: 0.74rem; }
+  .skills-panel .shop-buy-btn { min-height: 38px; }
+  .skills-panel .shop-warning { font-size: 0.72rem; }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .skills-panel { width: min(760px, 96vw); }
+  .skills-panel .backpack-panel__bg {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr auto auto;
+    column-gap: 14px;
+    padding: 16px 18px 10px;
+  }
+  .skills-panel .backpack-panel__bg > .backpack-panel__title { grid-column: 1 / -1; grid-row: 1; text-align: center; justify-self: center; }
+  .skills-panel .backpack-panel__bg > .skills-tabs { grid-column: 1 / -1; grid-row: 2; }
+  .skills-panel .backpack-panel__bg > .skills-tree { grid-column: 1; grid-row: 3 / span 4; --sk-node: clamp(42px, 11.5vh, 52px); gap: 2px; }
+  .skills-panel .backpack-panel__bg > .skills-points { grid-column: 2; grid-row: 3; }
+  .skills-panel .backpack-panel__bg > .skills-desc { grid-column: 2; grid-row: 4; align-self: start; }
+  .skills-panel .backpack-panel__bg > .shop-buy-btn { grid-column: 2; grid-row: 5; }
+  .skills-panel .backpack-panel__bg > .shop-warning { grid-column: 2; grid-row: 6; }
+  .skills-row { gap: clamp(28px, 7vw, 70px); }
 }
