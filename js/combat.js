@@ -407,6 +407,7 @@ const Combat = {
       // el mismo mecanismo en vez de duplicar el problema aquí.
       const prevLeft = target.el.style.left;
       const prevTop = target.el.style.top;
+      if (typeof Bushes !== "undefined") Bushes.clearHiddenUnit(target.id); // empujado fuera del arbusto
       target.row = step.row;
       target.col = step.col;
       const { x, y } = getTileCenter(step.row, step.col, Units.boardSize);

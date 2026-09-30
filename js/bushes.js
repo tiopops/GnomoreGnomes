@@ -161,13 +161,29 @@ const Bushes = {
       bush.hiddenUnitId = null; // la unidad ya no existe (murió/se quitó) — limpia la referencia sola
       return false;
     }
+    if (hiddenUnit.row !== bush.row || hiddenUnit.col !== bush.col) {
+      bush.hiddenUnitId = null; // ya no está dentro (lo sacaron sin caminar)
+      return false;
+    }
     return hiddenUnit.team !== viewerTeam;
   },
 
   // true si `unit` está ahora mismo escondida dentro de cualquier arbusto —
   // usado por Fog.applyVisibility para ocultarla visualmente al rival.
   isHidingUnit(unit) {
-    return this.list.some((b) => b.hiddenUnitId === unit.id);
+    // Pedido explícito: "la elfa aparece como que está oculta sin estar en
+    // un arbusto" — si un personaje escondido sale del arbusto SIN pasar
+    // por Units.walkPath (empujón de un golpe o habilidad, salto/embestida
+    // de una habilidad...) el arbusto seguía marcándolo como escondido
+    // aunque ya estuviera en otra casilla. Solo cuenta como escondido si
+    // SIGUE en la casilla del arbusto; si no, se libera aquí mismo.
+    const bush = this.list.find((b) => b.hiddenUnitId === unit.id);
+    if (!bush) return false;
+    if (bush.row !== unit.row || bush.col !== unit.col) {
+      bush.hiddenUnitId = null;
+      return false;
+    }
+    return true;
   },
 
   // Se llama al ARRANCAR cualquier desplazamiento (ver Units.walkPath) —

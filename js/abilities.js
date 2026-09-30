@@ -760,6 +760,7 @@ const Abilities = {
     for (const step of path) {
       const prevLeft = target.el.style.left;
       const prevTop = target.el.style.top;
+      if (typeof Bushes !== "undefined") Bushes.clearHiddenUnit(target.id); // empujado fuera del arbusto
       target.row = step.row;
       target.col = step.col;
       const { x, y } = getTileCenter(step.row, step.col, Units.boardSize);
@@ -1001,6 +1002,7 @@ const Abilities = {
     });
 
     if (spriteEl) spriteEl.style.transform = "";
+    if (typeof Bushes !== "undefined") Bushes.clearHiddenUnit(unit.id); // ya no está en el arbusto
     unit.row = destRow;
     unit.col = destCol;
     const { x, y } = getTileCenter(destRow, destCol, Units.boardSize);
