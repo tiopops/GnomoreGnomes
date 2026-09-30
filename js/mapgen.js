@@ -49,9 +49,8 @@ const TILE_TYPES = {
     // Pedido explícito: solo estas dos (lisa y con nenúfares), 50/50.
     variants: ["assets/losetas/agua_03.png", "assets/losetas/agua_02.png"],
     walkable: false,
-    // Calibrado con debug/calibrar-losetas.html: escala 1, desplazamiento 1/3 px.
-    offsetX: 1,
-    offsetY: 3,
+    // Calibrado con debug/calibrar-losetas.html: escala 1, desplazamiento 0/0
+    // (encaja igual que la hierba, sin ajuste propio).
     nativeWidth: 1024,
     nativeHeight: 854,
     // Sin offsetX/offsetY/scale propios: al compartir exactamente el mismo
