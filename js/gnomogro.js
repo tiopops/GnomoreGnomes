@@ -392,38 +392,61 @@ const GnomOgro = {
     g.el.classList.remove("gnomogro--attacking");
   },
 
+  // Ataque de ÁREA (pedido explícito): "cuando pega ataca a todo lo que está
+  // en una casilla adyacente a él al mismo tiempo" — el golpe alcanza a
+  // TODAS las unidades de las 8 casillas que lo rodean (sean del bando que
+  // sean) y al Obelisco rival si está pegado. Un único porrazo/animación,
+  // daño simultáneo. Reutilizado por _attackUnit y _attackObelisk (el
+  // objetivo elegido solo decide hacia dónde mira).
+  async _areaStrike() {
+    const g = this.current;
+    const adj = (r, c) => Math.max(Math.abs(r - g.row), Math.abs(c - g.col)) <= GNOMOGRO_ATTACK_RANGE;
+    const units = Units.list.filter((u) => u.el && adj(u.row, u.col));
+    const obelisks =
+      typeof Obelisks !== "undefined" ? Obelisks.list.filter((o) => o.team !== g.team && o.el && adj(o.row, o.col)) : [];
+    const dead = [];
+    units.forEach((target) => {
+      const dealt = Math.min(target.hp, GNOMOGRO_ATTACK);
+      target.hp = Math.max(0, target.hp - GNOMOGRO_ATTACK);
+      Units.updateHpBar(target);
+      Units.spawnFloatingText(target, `-${dealt}`, { className: "dmg-popup" });
+      Units.playShake(target);
+      if (target.hp <= 0) dead.push(target);
+    });
+    const hitObelisks = [];
+    obelisks.forEach((o) => {
+      o.hp = Math.max(0, o.hp - GNOMOGRO_ATTACK);
+      Units.updateHpBar(o);
+      Units.spawnFloatingText(o, `-${GNOMOGRO_ATTACK}`, { className: "dmg-popup" });
+      Units.playShake(o);
+      if (o.hp <= 0) hitObelisks.push(o);
+    });
+    await Promise.all(
+      dead.map(async (target) => {
+        if (target.team !== g.team && typeof Glory !== "undefined") Glory.queueKillBonus(g.team);
+        await Units.removeUnit(target);
+        if (typeof Gnome !== "undefined") Gnome.dropHeldBy(target);
+      })
+    );
+    for (const o of hitObelisks) {
+      if (typeof Obelisks !== "undefined") await Obelisks._destroy(o);
+    }
+  },
+
   async _attackUnit(target) {
     const g = this.current;
     Units.faceTowardsTile(g, target.row, target.col);
     await this._playAttackAnim();
-    // "usara su accion por turno para matarlo de un golpe" — muerte
-    // instantánea sea cual sea la vida que le quedara (GNOMOGRO_ATTACK queda
-    // como cifra de referencia de la criatura).
-    const dealt = Math.min(target.hp, GNOMOGRO_ATTACK);
-    target.hp = Math.max(0, target.hp - GNOMOGRO_ATTACK);
-    Units.updateHpBar(target);
-    Units.spawnFloatingText(target, `-${dealt}`, { className: "dmg-popup" });
-    Units.playShake(target);
-    if (target.hp > 0) return; // sobrevivió (más de 15 de vida)
-    if (typeof Glory !== "undefined") Glory.queueKillBonus(g.team);
-    await Units.removeUnit(target);
-    if (typeof Gnome !== "undefined") Gnome.dropHeldBy(target);
+    await this._areaStrike();
   },
 
-  // "cuando llegue a la base enemiga la destruira (ahora con 15 de daño por golpe) y acabara la
-  // partida" — reutiliza Obelisks._destroy tal cual (mismo "apagón" visual
-  // que un Obelisco destruido por combate normal, que ya comprueba solo
-  // queda un equipo en pie y muestra la pantalla de fin de partida).
+  // "cuando llegue a la base enemiga la destruira ..." — reutiliza
+  // Obelisks._destroy tal cual (ver _areaStrike).
   async _attackObelisk(obelisk) {
     const g = this.current;
     Units.faceTowardsTile(g, obelisk.row, obelisk.col);
     await this._playAttackAnim();
-    // Ataque 15: resta 15 de vida al Obelisco y solo lo destruye si llega a 0.
-    obelisk.hp = Math.max(0, obelisk.hp - GNOMOGRO_ATTACK);
-    Units.updateHpBar(obelisk);
-    Units.spawnFloatingText(obelisk, `-${GNOMOGRO_ATTACK}`, { className: "dmg-popup" });
-    Units.playShake(obelisk);
-    if (obelisk.hp <= 0 && typeof Obelisks !== "undefined") await Obelisks._destroy(obelisk);
+    await this._areaStrike();
   },
 
   // ---------- Se le puede hacer daño ----------
