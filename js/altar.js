@@ -47,6 +47,7 @@ const ALTAR_MAX_FILL = 30;
 // ya es el 30%, 21 de 30 ya es el 70%).
 const ALTAR_MEDIO_THRESHOLD = ALTAR_MAX_FILL * 0.3;
 const ALTAR_LLENO_THRESHOLD = ALTAR_MAX_FILL * 0.7;
+const MUSHROOM_ALTAR_POINTS = 10; // puntos de la barra que da una seta explosiva ofrecida
 const ALTAR_INTERACT_RANGE = 1; // cuerpo a cuerpo, igual que VILLAGE_ATTACK_RANGE/Combat.attackRange
 
 const ALTAR_SPRITES = {
@@ -187,6 +188,19 @@ const Altar = {
       segmentEls.push(seg);
     }
     el.appendChild(barEl);
+    // Segunda barra independiente (el rival): cada jugador tiene SU propia
+    // barra de ofrendas (pedido explícito) — la del jugador va abajo (roja),
+    // la del rival justo encima (violeta).
+    const barEnemyEl = document.createElement("div");
+    barEnemyEl.className = "unit__hpbar altar__bar altar__bar--enemy";
+    const segmentEnemyEls = [];
+    for (let i = 0; i < ALTAR_MAX_FILL; i++) {
+      const seg = document.createElement("div");
+      seg.className = "unit__hpbar-segment";
+      barEnemyEl.appendChild(seg);
+      segmentEnemyEls.push(seg);
+    }
+    el.appendChild(barEnemyEl);
 
     // Clic directo sobre el propio altar cuando está "marcado" (ver showFor
     // más abajo) — mismo patrón que Villages/Resources: no hace falta
@@ -205,11 +219,13 @@ const Altar = {
     const altar = {
       row,
       col,
-      fill: 0,
+      fills: { player: 0, enemy: 0 },
       el,
       spriteEl,
       barEl,
       segmentEls,
+      barEnemyEl,
+      segmentEnemyEls,
     };
     altar.state = "vacio";
     this._placeInstant(altar);
@@ -229,8 +245,17 @@ const Altar = {
 
   _refreshBar(altar) {
     altar.segmentEls.forEach((seg, i) => {
-      seg.classList.toggle("unit__hpbar-segment--filled", i < altar.fill);
+      seg.classList.toggle("unit__hpbar-segment--filled", i < altar.fills.player);
     });
+    altar.segmentEnemyEls.forEach((seg, i) => {
+      seg.classList.toggle("unit__hpbar-segment--filled", i < altar.fills.enemy);
+    });
+  },
+
+  // Llenado del equipo con la barra MÁS llena (el sprite del altar y la IA
+  // miran el "peor caso").
+  maxFill(altar) {
+    return Math.max(altar.fills.player, altar.fills.enemy);
   },
 
   // Sprite según el llenado (ver ALTAR_MEDIO_THRESHOLD/ALTAR_LLENO_THRESHOLD):
@@ -243,7 +268,7 @@ const Altar = {
   },
 
   _refreshSprite(altar) {
-    const state = this._stateFor(altar.fill);
+    const state = this._stateFor(this.maxFill(altar));
     if (altar.state === state) return;
     altar.state = state;
     altar.el.classList.toggle("altar--medio", state === "medio");
@@ -341,7 +366,9 @@ const Altar = {
     const altar = this.current();
     if (!altar) return;
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
-    const held = typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === unit.id) : null;
+    const held =
+      (typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === unit.id) : null) ||
+      (typeof Mushrooms !== "undefined" ? Mushrooms.carriedBy(unit) : null);
     if (!held) return;
     if (typeof Fog !== "undefined" && Fog.isFogged(altar.row, altar.col)) return;
     const approach = this.findApproachTile(unit, altar);
@@ -422,11 +449,13 @@ const Altar = {
   async sacrifice(unit, altar) {
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
     const gnome = typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === unit.id) : null;
-    if (!gnome) return; // se lo quitaron/lo soltó justo antes del clic
+    // Seta explosiva (js/mushrooms.js): también vale como ofrenda (10 puntos).
+    const mush = !gnome && typeof Mushrooms !== "undefined" ? Mushrooms.carriedBy(unit) : null;
+    if (!gnome && !mush) return; // se lo quitaron/lo soltó justo antes del clic
     Units.clearRangeOverlays();
     Units.faceTowardsTile(unit, altar.row, altar.col);
     if (typeof Turns !== "undefined") Turns.useAction(unit);
-    await this._playSacrificeSmash(unit, altar, gnome);
+    await this._playSacrificeSmash(unit, altar, gnome, mush);
     Units.refreshRange(unit);
   },
 
@@ -439,7 +468,7 @@ const Altar = {
   // sacrificio llena la barra del todo, el Altar desaparece y nace el
   // GnomOgro (ver _collapse más abajo) justo después del impacto, con el
   // mismo temblor de cámara que ya dispara cualquier golpe contra un tótem.
-  async _playSacrificeSmash(unit, altar, gnome) {
+  async _playSacrificeSmash(unit, altar, gnome, mush) {
     const typeId = unit.typeId;
     const idleSrc = (typeof UNIT_TYPES !== "undefined" && UNIT_TYPES[typeId] && UNIT_TYPES[typeId].spriteUrl) || "";
     const machacaSrc = typeof Units !== "undefined" ? Units.machacaSpriteFor(typeId) : idleSrc;
@@ -474,8 +503,9 @@ const Altar = {
     // tótem (`const damage = gnome.points`), aquí sumados a la barra en vez
     // de restados. gnome.points ya viene fijado más arriba (antes de que
     // Gnome.destroyInstance lo borre del todo), así que se lee de una vez.
-    const fillAmount = gnome.points;
-    altar.fill = Math.min(ALTAR_MAX_FILL, altar.fill + fillAmount);
+    const fillAmount = gnome ? gnome.points : MUSHROOM_ALTAR_POINTS;
+    const team = unit.team === "enemy" ? "enemy" : "player";
+    altar.fills[team] = Math.min(ALTAR_MAX_FILL, altar.fills[team] + fillAmount);
     this._refreshBar(altar);
     Units.spawnFloatingText(altar, `+${fillAmount}`, { className: "dmg-popup" });
     Units.playShake(altar);
@@ -503,12 +533,13 @@ const Altar = {
     // del juego" — mismo criterio aquí: se consume SIEMPRE, llene o no del
     // todo la barra.
     if (gnome) Gnome.destroyInstance(gnome);
+    if (mush) Mushrooms.consume(mush);
     // Charco de sangre (js/bloodsplat.js) — pedido explícito: "se aplasta
     // un gnomo" también deja charco, sobre la loseta de quien lo estampa
     // contra el Altar (mismo criterio que Villages._playEpicSmash).
     if (gnome && typeof BloodSplat !== "undefined") BloodSplat.spawnAt(unit.row, unit.col);
 
-    if (altar.fill >= ALTAR_MAX_FILL) {
+    if (altar.fills[team] >= ALTAR_MAX_FILL) {
       await this._collapse(altar, unit.team);
     }
 

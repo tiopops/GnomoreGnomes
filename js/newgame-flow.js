@@ -520,6 +520,14 @@ function spawnTestUnits(size, raceId) {
   // turno.
   if (typeof Backpack !== "undefined") Backpack.resetAll();
 
+  // Setas explosivas (js/mushrooms.js) — Bosque MushBoom. DESPUÉS de todo el
+  // mobiliario (necesita saber qué casillas están libres) y ANTES de
+  // Turns.reset (que ya avisa a los oyentes de inicio de turno).
+  if (typeof Mushrooms !== "undefined") {
+    Mushrooms.resetAll();
+    Mushrooms.spawnInitial(size);
+  }
+
   if (typeof Turns !== "undefined") Turns.reset();
   // Icono de ajustes (js/settingsmenu.js) — sustituye al back-btn flotante
   // que tapaba el marcador de Puntos de Gloria (ver ese archivo) — visible

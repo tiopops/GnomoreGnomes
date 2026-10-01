@@ -497,9 +497,10 @@ const Turns = {
     if (typeof Altar === "undefined") return false;
     const altar = Altar.current();
     if (!altar || held.points <= 0) return false;
-    if (held.points >= ALTAR_MAX_FILL - altar.fill) return true;
+    const mine = altar.fills[unit.team === "enemy" ? "enemy" : "player"];
+    if (held.points >= ALTAR_MAX_FILL - mine) return true;
     if (this.losingTeam() === unit.team) return true;
-    if (this.roundNumber >= 20) return altar.fill + held.points < ALTAR_LLENO_THRESHOLD;
+    if (this.roundNumber >= 20) return mine + held.points < ALTAR_LLENO_THRESHOLD;
     return false;
   },
 
@@ -659,6 +660,36 @@ const Turns = {
       if (targets.length > 0) {
         await Combat.approachAndAttack(unit, targets[0].target);
         return true;
+      }
+    }
+
+    // Setas explosivas (js/mushrooms.js) — la IA la lleva al Altar si puede
+    // llegar a tiempo; si no, la coge solo cuando el altar está cerca.
+    if (typeof Mushrooms !== "undefined" && typeof Altar !== "undefined") {
+      const carried = Mushrooms.carriedBy(unit);
+      const altar = Altar.current();
+      if (carried && altar) {
+        if (Altar.findApproachTile(unit, altar)) {
+          await Altar.approachAndSacrifice(unit, altar);
+          return true;
+        }
+        const dest = this._aiPickMoveTileToward(unit, { row: altar.row, col: altar.col });
+        if (dest) {
+          await Movement.moveTo(unit, dest.row, dest.col);
+          return true;
+        }
+      } else if (!carried && altar && !(typeof Gnome !== "undefined" && Gnome.isHeldBy(unit.id))) {
+        const reach = UNIT_TYPES[unit.typeId].movimiento * 2 + 1;
+        const m = Mushrooms.list.find(
+          (x) =>
+            !x.heldBy &&
+            Math.max(Math.abs(x.row - altar.row), Math.abs(x.col - altar.col)) <= reach + 1 &&
+            Mushrooms.canCatch(unit, x)
+        );
+        if (m) {
+          await Mushrooms.catchBy(unit, m);
+          return true;
+        }
       }
     }
 

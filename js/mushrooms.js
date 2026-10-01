@@ -1,0 +1,332 @@
+/* Gnomore Gnomes — Setas explosivas del Bosque MushBoom.
+   Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
+     - Hacer aparecer setas sueltas por el mapa de vez en cuando (máx.
+       MUSHROOM_MAX a la vez, una nueva cada MUSHROOM_SPAWN_EVERY rondas, en
+       una casilla libre lejos de las bases) — solo en el nivel
+       "mushboom_forest".
+     - Dejar que un personaje la coja con el mismo sistema que un gnomo
+       (marca de mano -> se acerca -> la lleva), mostrándola como un
+       marcador arriba a la derecha del personaje, visible para todos, con
+       el nº de turnos que le quedan en un recuadro irregular.
+     - La cuenta atrás: -1 al FINALIZAR el turno del equipo de quien la
+       porta. A 0 explota: 5 de daño al portador y a las losetas
+       adyacentes (quien muere deja charco), sonido de explosión, temblor de
+       cámara y destello blanco. Cuanto menos le queda, más rápido pulsa y
+       más roja se pone.
+     - Ofrecerla en el Altar de Sacrificios (la lógica de la barra es de
+       js/altar.js, que llama a Mushrooms.carriedBy/consume). */
+
+const MUSHROOM_MAX = 4;
+const MUSHROOM_SPAWN_EVERY = 3;
+const MUSHROOM_INITIAL = 2;
+const MUSHROOM_FUSE = 3;
+const MUSHROOM_DAMAGE = 5;
+const MUSHROOM_MIN_BASE_DIST = 6;
+const MUSHROOM_SPRITE = "assets/iconos/seta_trampa.png";
+const MUSHROOM_GROUND_SIZE = 90;
+
+const Mushrooms = {
+  list: [], // { id, row, col, el, heldBy, fuse, markerEl, badgeEl }
+  active: false,
+  _nextId: 1,
+
+  resetAll() {
+    this.list.forEach((m) => {
+      if (m.el) m.el.remove();
+      if (m.markerEl) m.markerEl.remove();
+    });
+    this.list = [];
+    this.active = false;
+  },
+
+  // ---------- Aparición ----------
+  spawnInitial(size) {
+    let levelId = "mushboom_forest";
+    try {
+      const saved = typeof SaveGame !== "undefined" ? SaveGame.load() : null;
+      if (saved && saved.levelId) levelId = saved.levelId;
+    } catch (e) {}
+    this.active = levelId === "mushboom_forest";
+    if (!this.active) return;
+    for (let i = 0; i < MUSHROOM_INITIAL; i++) this._spawnOne(size);
+  },
+
+  _tileFree(row, col) {
+    if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) return false;
+    if (Units.unitAt(row, col)) return false;
+    if (this.looseAt(row, col)) return false;
+    if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) return false;
+    if (typeof Villages !== "undefined" && Villages.at(row, col)) return false;
+    if (typeof Shops !== "undefined" && Shops.at(row, col)) return false;
+    if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) return false;
+    if (typeof Altar !== "undefined" && Altar.at(row, col)) return false;
+    if (typeof Bushes !== "undefined" && Bushes.at(row, col)) return false;
+    if (typeof Resources !== "undefined" && Resources.at(row, col)) return false;
+    if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) return false;
+    return true;
+  },
+
+  _spawnOne(size) {
+    size = size || Units.boardSize;
+    const bases = typeof Obelisks !== "undefined" ? Obelisks.list : [];
+    const cands = [];
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (!this._tileFree(r, c)) continue;
+        const near = bases.some((o) => Math.max(Math.abs(o.row - r), Math.abs(o.col - c)) < MUSHROOM_MIN_BASE_DIST);
+        if (near) continue;
+        cands.push({ row: r, col: c });
+      }
+    }
+    if (cands.length === 0) return null;
+    const spot = cands[Math.floor(Math.random() * cands.length)];
+    return this._create(spot.row, spot.col);
+  },
+
+  _create(row, col) {
+    const el = document.createElement("div");
+    el.className = "mushroom-loose";
+    const img = document.createElement("img");
+    img.decoding = "async";
+    img.className = "mushroom-loose__sprite";
+    img.alt = "";
+    img.draggable = false;
+    img.style.width = `${MUSHROOM_GROUND_SIZE}px`;
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(img, MUSHROOM_SPRITE);
+    else img.src = MUSHROOM_SPRITE;
+    el.appendChild(img);
+    Units.container.appendChild(el);
+    const m = { id: this._nextId++, row, col, el, spriteEl: img, heldBy: null, fuse: MUSHROOM_FUSE, markerEl: null, badgeEl: null };
+    const { x, y } = getTileCenter(row, col, Units.boardSize);
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.zIndex = String((row + col) * 10 + 6);
+    this.list.push(m);
+    this.refreshFog();
+    return m;
+  },
+
+  looseAt(row, col) {
+    return this.list.find((m) => !m.heldBy && m.row === row && m.col === col) || null;
+  },
+
+  carriedBy(unit) {
+    return this.list.find((m) => m.heldBy === unit.id) || null;
+  },
+
+  isHeldBy(unitId) {
+    return this.list.some((m) => m.heldBy === unitId);
+  },
+
+  refreshFog() {
+    this.list.forEach((m) => {
+      if (!m.el || m.heldBy) return;
+      const fogged = typeof Fog !== "undefined" && Fog.isFogged(m.row, m.col);
+      m.el.classList.toggle("unit--fog-hidden", !!fogged);
+      const remembered = typeof Fog !== "undefined" && !fogged && !Fog.isPerceived(m.row, m.col);
+      m.el.classList.toggle("gg-remembered", !!remembered);
+    });
+  },
+
+  // ---------- Coger ----------
+  _dist(a, b) {
+    return Math.max(Math.abs(a.row - b.row), Math.abs(a.col - b.col));
+  },
+
+  findApproachTile(unit, m) {
+    if (!m.el || m.heldBy) return null;
+    if (this._dist(unit, m) <= 1) return { row: unit.row, col: unit.col };
+    const moveRange = UNIT_TYPES[unit.typeId].movimiento;
+    let best = null;
+    let bestDist = Infinity;
+    for (let row = 0; row < Units.boardSize; row++) {
+      for (let col = 0; col < Units.boardSize; col++) {
+        if (row === unit.row && col === unit.col) continue;
+        if (row === m.row && col === m.col) continue;
+        if (this._dist({ row, col }, m) > 1) continue;
+        if (Units.unitAt(row, col)) continue;
+        if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
+        if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
+        if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
+        if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
+        if (typeof Altar !== "undefined" && Altar.at(row, col)) continue;
+        if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue;
+        if (typeof Resources !== "undefined" && Resources.at(row, col)) continue;
+        if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;
+        const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
+        if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
+        if (!Units.pathIsWalkable(unit.row, unit.col, row, col, unit.team)) continue;
+        if (moveDist < bestDist) {
+          bestDist = moveDist;
+          best = { row, col };
+        }
+      }
+    }
+    return best;
+  },
+
+  canCatch(unit, m) {
+    if (this.isHeldBy(unit.id)) return false;
+    if (typeof Gnome !== "undefined" && Gnome.isHeldBy(unit.id)) return false;
+    if (m.el.classList.contains("unit--fog-hidden")) return false;
+    return !!this.findApproachTile(unit, m);
+  },
+
+  // Proveedor de rango (mismo patrón que Gnome.showFor).
+  showFor(unit) {
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+    if (this.isHeldBy(unit.id)) return; // el altar lo ofrece Altar.showFor
+    if (typeof Gnome !== "undefined" && Gnome.isHeldBy(unit.id)) return;
+    this.list.forEach((m) => {
+      if (m.heldBy || !this.canCatch(unit, m)) return;
+      Units.addMarker({
+        className: "catch-marker",
+        row: m.row,
+        col: m.col,
+        zOffset: 7,
+        visibleClass: "catch-marker--visible",
+        owner: "mushroom",
+        buildContent: (marker) => {
+          const icon = document.createElement("i");
+          icon.className = "ph ph-hand-grabbing catch-marker__icon";
+          marker.appendChild(icon);
+        },
+        onClick: () => this.catchBy(unit, m),
+      });
+    });
+  },
+  onClear() {},
+
+  async catchBy(unit, m) {
+    if (m.heldBy || !m.el) return;
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+    Units.clearRangeOverlays();
+    const approach = this.findApproachTile(unit, m);
+    if (!approach) return;
+    if (approach.row !== unit.row || approach.col !== unit.col) {
+      const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
+      await Units.walkPath(unit, path);
+      if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
+    }
+    Units.faceTowardsTile(unit, m.row, m.col);
+    this._attachTo(unit, m);
+    if (typeof SFX !== "undefined") SFX.catch();
+    if (typeof Turns !== "undefined") Turns.useAction(unit);
+    Units.refreshRange(unit);
+  },
+
+  _attachTo(unit, m) {
+    m.heldBy = unit.id;
+    m.fuse = MUSHROOM_FUSE;
+    m.el.style.display = "none";
+    const marker = document.createElement("div");
+    marker.className = "mushroom-marker";
+    const img = document.createElement("img");
+    img.className = "mushroom-marker__sprite";
+    img.alt = "";
+    img.draggable = false;
+    img.src = MUSHROOM_SPRITE;
+    marker.appendChild(img);
+    const badge = document.createElement("b");
+    badge.className = "mushroom-marker__badge";
+    marker.appendChild(badge);
+    unit.el.appendChild(marker);
+    m.markerEl = marker;
+    m.badgeEl = badge;
+    this._refreshMarker(m);
+    requestAnimationFrame(() => marker.classList.add("mushroom-marker--visible"));
+  },
+
+  _refreshMarker(m) {
+    if (!m.markerEl) return;
+    m.badgeEl.textContent = String(m.fuse);
+    m.markerEl.dataset.fuse = String(Math.max(1, Math.min(3, m.fuse)));
+  },
+
+  // El altar (u otra mecánica) se la queda: desaparece sin explotar.
+  consume(m) {
+    if (m.markerEl) m.markerEl.remove();
+    if (m.el) m.el.remove();
+    this.list = this.list.filter((x) => x !== m);
+  },
+
+  // ---------- Cuenta atrás / explosión ----------
+  async onTurnEnd(team) {
+    const due = this.list.filter((m) => {
+      if (!m.heldBy) return false;
+      const u = Units.list.find((x) => x.id === m.heldBy);
+      return u && u.team === team;
+    });
+    for (const m of due) {
+      m.fuse--;
+      this._refreshMarker(m);
+    }
+    for (const m of due) {
+      if (m.fuse <= 0) await this._explode(m);
+    }
+  },
+
+  onTurnStart(team) {
+    if (team !== "player" || !this.active) return;
+    const round = typeof Turns !== "undefined" ? Turns.roundNumber : 0;
+    if (round > 1 && round % MUSHROOM_SPAWN_EVERY === 0 && this.list.length < MUSHROOM_MAX) {
+      this._spawnOne();
+    }
+  },
+
+  // Lo llama Units.removeUnit: si el portador muere por otra causa, la seta
+  // estalla igualmente en su casilla (juego kamikaze).
+  onUnitDying(unit) {
+    const m = this.carriedBy(unit);
+    if (!m) return;
+    m.fuse = 0;
+    this._explode(m, unit);
+  },
+
+  async _explode(m, dyingUnit) {
+    const carrier = dyingUnit || Units.list.find((x) => x.id === m.heldBy);
+    if (!carrier) {
+      this.consume(m);
+      return;
+    }
+    const row = carrier.row;
+    const col = carrier.col;
+    if (m.markerEl) m.markerEl.remove();
+    if (m.el) m.el.remove();
+    this.list = this.list.filter((x) => x !== m);
+
+    if (typeof SFX !== "undefined") SFX.explosion();
+    const viewportEl = document.getElementById("board-viewport");
+    if (viewportEl) {
+      viewportEl.classList.remove("board-viewport--shake--big");
+      void viewportEl.offsetWidth;
+      viewportEl.classList.add("board-viewport--shake--big");
+      setTimeout(() => viewportEl.classList.remove("board-viewport--shake--big"), 420);
+    }
+    if (typeof Villages !== "undefined" && Villages._flashScreen) Villages._flashScreen();
+    if (typeof Backpack !== "undefined" && Backpack._spawnKatapumBlast) Backpack._spawnKatapumBlast(row, col);
+
+    const victims = Units.list.filter(
+      (u) => u.id !== (dyingUnit && dyingUnit.id) && Math.max(Math.abs(u.row - row), Math.abs(u.col - col)) <= 1
+    );
+    const toRemove = [];
+    for (const u of victims) {
+      if (typeof Skills !== "undefined") Skills.resolveDamage(u, MUSHROOM_DAMAGE, { melee: false });
+      else {
+        u.hp = Math.max(0, u.hp - MUSHROOM_DAMAGE);
+        Units.updateHpBar(u);
+        Units.spawnFloatingText(u, `-${MUSHROOM_DAMAGE}`, { className: "dmg-popup" });
+        Units.playShake(u);
+      }
+      if (u.hp <= 0) toRemove.push(u);
+    }
+    for (const u of toRemove) {
+      await Units.removeUnit(u);
+      if (typeof Gnome !== "undefined") Gnome.dropHeldBy(u);
+    }
+    if (typeof Obelisks !== "undefined" && Obelisks.refreshAll) Obelisks.refreshAll();
+  },
+};
+
+if (typeof Units !== "undefined") Units.registerRangeProvider(Mushrooms);
+if (typeof Turns !== "undefined") Turns.registerTurnStartListener(Mushrooms);

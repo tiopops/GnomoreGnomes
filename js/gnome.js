@@ -1737,6 +1737,8 @@ const Gnome = {
       return;
     }
     this._hideHoldingActions();
+    // Seta explosiva (js/mushrooms.js): con una en la mano no se coge un gnomo.
+    if (typeof Mushrooms !== "undefined" && Mushrooms.isHeldBy(unit.id)) return;
     // Ningún gnomo lo lleva esta unidad: se ofrece la mira de "coger" de
     // CADA gnomo suelto que esté a su alcance (puede haber más de uno).
     this.list.forEach((g) => {

@@ -6626,6 +6626,15 @@ body.backpack-giving--katapum * {
   gap: 0.6px;
 }
 
+.altar__bar--enemy {
+  --hp-fill: #8a4cf0;
+  top: -40px;
+}
+
+.altar__bar--enemy .unit__hpbar-segment {
+  background: #1d0b3a;
+}
+
 .altar__bar .unit__hpbar-segment {
   background: #3a0a0a; /* rojo muy oscuro en reposo, nunca el gris/negro neutro de una barra normal */
 }
@@ -8612,4 +8621,52 @@ body.backpack-giving--katapum * {
 }
 .level-card--locked .level-card__island {
   opacity: 0.6;
+}
+
+
+/* Setas explosivas (js/mushrooms.js) */
+.mushroom-loose {
+  position: absolute;
+  transform: translate(-50%, -85%);
+  pointer-events: none;
+}
+.mushroom-loose__sprite {
+  display: block;
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.45));
+  animation: ability-mine-pulse 1.8s ease-in-out infinite;
+}
+.mushroom-marker {
+  position: absolute;
+  right: -30px;
+  top: -4%;
+  width: 44px;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: 50% 100%;
+  --mm-dur: 1.1s; --mm-scale: 1.1; --mm-sat: 1; --mm-bri: 1; --mm-glow: 0px; --mm-a: 0;
+}
+.mushroom-marker--visible { opacity: 1; animation: mushroom-pulse var(--mm-dur) ease-in-out infinite; }
+.mushroom-marker[data-fuse="2"] { --mm-dur: .7s; --mm-scale: 1.2; --mm-sat: 1.8; --mm-bri: .95; --mm-glow: 6px; --mm-a: .6; }
+.mushroom-marker[data-fuse="1"] { --mm-dur: .35s; --mm-scale: 1.32; --mm-sat: 2.8; --mm-bri: .85; --mm-glow: 12px; --mm-a: 1; }
+.mushroom-marker__sprite {
+  display: block;
+  width: 100%;
+  filter: saturate(var(--mm-sat)) brightness(var(--mm-bri)) drop-shadow(0 0 var(--mm-glow) rgba(255, 40, 20, var(--mm-a))) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
+}
+.mushroom-marker__badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  min-width: 24px;
+  height: 22px;
+  background: #ffd23a;
+  color: #1a1a1a;
+  font: 800 15px/22px var(--font-display, sans-serif);
+  text-align: center;
+  clip-path: polygon(10% 0, 100% 8%, 92% 100%, 0 88%);
+}
+@keyframes mushroom-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(var(--mm-scale)); }
 }

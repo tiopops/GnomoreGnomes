@@ -1243,6 +1243,8 @@ const Units = {
     // que aparezca "de golpe" junto con el resto del feedback del golpe
     // final, no medio segundo más tarde.
     if (typeof BloodSplat !== "undefined") BloodSplat.spawnAt(unit.row, unit.col);
+    // Seta explosiva (js/mushrooms.js): si moría llevando una, estalla.
+    if (typeof Mushrooms !== "undefined") Mushrooms.onUnitDying(unit);
     unit.el.classList.add("unit--dying");
     SFX.death();
     await new Promise((resolve) => setTimeout(resolve, 420));

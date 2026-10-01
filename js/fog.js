@@ -564,6 +564,7 @@ const Fog = {
     // tambien debe oscurecerse en la niebla de guerra". Mismo criterio que
     // una Tienda Goblin: oculto si su loseta sigue sin explorar y atenuado
     // ("recordado") si ya se vio pero ahora queda fuera de percepción.
+    if (typeof Mushrooms !== "undefined") Mushrooms.refreshFog();
     if (typeof Altar !== "undefined") {
       Altar.list.forEach((a) => {
         if (!a.el) return;
