@@ -192,6 +192,12 @@ const Villages = {
       hpSegmentEls.push(seg);
     }
     el.appendChild(hpBarEl);
+    // Franja inferior siempre clicable (igual que .obelisk__base-hit): con el
+    // tótem semitransparente (village--occluding, pointer-events:none) su
+    // base sigue pudiéndose pulsar para seleccionarlo/atacarlo.
+    const baseHitEl = document.createElement("div");
+    baseHitEl.className = "village__base-hit";
+    el.appendChild(baseHitEl);
 
     // "cuando el totem este dentro del alcance de ataque de un personaje se
     // debe poder atacar simplemente con pulsar sobre el, no solo sobre el

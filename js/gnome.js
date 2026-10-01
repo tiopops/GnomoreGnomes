@@ -1236,12 +1236,28 @@ function createGnomeInstance() {
     // Units.list (ver combat.js) — por eso deadUnit sigue haciendo falta
     // como parámetro (su row/col), en vez de leerlo de Units.list, que para
     // cuando esto corre ya no lo contiene.
+    // Al soltarse (muerte/aturdimiento de quien lo llevaba) el gnomo conserva
+    // las clases de niebla/recorte que tenía ANTES de cogerlo (mientras iba
+    // cogido ni Fog ni EntityCulling lo evalúan) — p.ej. si lo cogió un
+    // enemigo en plena niebla seguía "oculto" aunque ya cayera a la vista, y
+    // solo reaparecía al dar su primer paso de huida: se veía huir sin
+    // haberlo visto caer. Se reevalúa ya, antes de la pausa.
+    _refreshVisibilityAfterDrop() {
+      if (!this.el) return;
+      this.el.classList.remove("unit--fog-hidden", "gg-viewport-culled", "gg-remembered");
+      if (typeof Fog !== "undefined") Fog.applyVisibility();
+      if (typeof EntityCulling !== "undefined" && typeof BoardView !== "undefined" && BoardView.viewportEl) {
+        EntityCulling.updateCulling(BoardView.panX, BoardView.panY, BoardView.scale, BoardView.viewportEl.clientWidth, BoardView.viewportEl.clientHeight);
+      }
+    },
+
     async dropFromDyingUnit(deadUnit) {
       this.detachFrom();
       this.row = deadUnit.row;
       this.col = deadUnit.col;
       this.el.style.display = "";
       Units._placeInstant(this);
+      this._refreshVisibilityAfterDrop();
       this.spriteEl.src = GNOME_ASSETS.idle;
       this.spriteEl.style.width = `${this._groundWidth()}px`;
       SFX.dropFail();
@@ -1301,6 +1317,7 @@ function createGnomeInstance() {
       this.col = unit.col;
       this.el.style.display = "";
       Units._placeInstant(this);
+      this._refreshVisibilityAfterDrop();
       this.spriteEl.src = GNOME_ASSETS.idle;
       this.spriteEl.style.width = `${this._groundWidth()}px`;
       SFX.dropFail();

@@ -8722,3 +8722,15 @@ body.backpack-giving--katapum * {
   45% { transform: translate(calc(var(--dx) * 0.6), -55px); opacity: 1; }
   100% { transform: translate(var(--dx), 6px); opacity: 0; }
 }
+
+
+/* Base del tótem siempre clicable aunque esté semitransparente (ver Villages._create). */
+.village__base-hit {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: 0;
+  height: 30%;
+  z-index: 3;
+  pointer-events: auto;
+}

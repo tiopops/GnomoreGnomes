@@ -1200,6 +1200,10 @@ const Obelisks = {
 
     if (typeof Glory !== "undefined") Glory.spend(obelisk.team, price);
     const unit = Units.spawnUnit({ typeId, row, col, team: obelisk.team });
+    // Los marcadores de casilla (alwaysOnTop) se quitan YA, no tras esperar a
+    // que los gnomos terminen de huir (más abajo): mientras seguían ahí
+    // tapaban a la unidad recién reclutada y no dejaban seleccionarla.
+    this._cancelPlacementMode();
     // "solo tiene 1 accion en su primer turno en juego" — se deja ya
     // gastada 1 de las TURNS_MAX_ACTIONS (2) de este turno; Turns
     // ._resetTeamActions la devolverá a las 2 normales en su PRÓXIMO turno,
@@ -1220,7 +1224,6 @@ const Obelisks = {
     if (typeof Fog !== "undefined") Fog.revealForUnit(unit);
     if (typeof Gnome !== "undefined") await Gnome.reactToPlayerMove(unit);
     SFX.captureVillage();
-    this._cancelPlacementMode();
     this.refreshAll();
   },
 
