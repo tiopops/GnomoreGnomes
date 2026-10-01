@@ -370,6 +370,7 @@ const Combat = {
     if (dRow === 0 && dCol === 0) return;
 
     const path = [];
+    let drowns = false;
     let row = target.row;
     let col = target.col;
     for (let i = 0; i < push; i++) {
@@ -387,6 +388,11 @@ const Combat = {
       path.push({ row: nextRow, col: nextCol });
       row = nextRow;
       col = nextCol;
+      // Cae al agua: sin Anfibio no puede seguir, se ahoga ahí (ver _drown).
+      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(nextRow, nextCol)) {
+        if (!(typeof Skills !== "undefined" && Skills.has(target.team, "anfibio"))) drowns = true;
+        break;
+      }
     }
     if (path.length === 0) return;
 
@@ -441,6 +447,71 @@ const Combat = {
       if (typeof Units !== "undefined") Units.refreshUnitOcclusion();
       if (typeof Shops !== "undefined") Shops.refreshAll();
     }
+    if (drowns) await this._drown(attacker, target);
+  },
+
+  // Pedido explícito: empujado al agua sin la habilidad Anfibio -> chapuzón y
+  // muere ahogado (sin charco de sangre). Si llevaba un gnomo, este cae a la
+  // casilla seca libre más cercana y hace su huida de siempre.
+  async _drown(attacker, target) {
+    const row = target.row;
+    const col = target.col;
+    if (typeof SFX !== "undefined" && SFX.splash) SFX.splash();
+    this._spawnSplash(row, col);
+    if (typeof Glory !== "undefined") Glory.queueKillBonus(attacker.team);
+    if (typeof Skills !== "undefined") Skills.onKill(attacker);
+    await Units.removeUnit(target, { drowned: true });
+    if (typeof Gnome !== "undefined" && Gnome.isHeldBy && Gnome.isHeldBy(target.id)) {
+      const land = this._findDryTileNear(row, col);
+      await Gnome.dropHeldBy(land ? { id: target.id, row: land.row, col: land.col } : target);
+    }
+  },
+
+  _findDryTileNear(row, col) {
+    let best = null;
+    let bestD = Infinity;
+    for (let r = 0; r < Units.boardSize; r++) {
+      for (let c = 0; c < Units.boardSize; c++) {
+        const d = Math.max(Math.abs(r - row), Math.abs(c - col));
+        if (d === 0 || d >= bestD || d > 4) continue;
+        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
+        if (Units.unitAt(r, c)) continue;
+        if (typeof Gnome !== "undefined" && Gnome.isAt(r, c)) continue;
+        if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
+        if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
+        if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue;
+        if (typeof Altar !== "undefined" && Altar.at(r, c)) continue;
+        if (typeof GnomOgro !== "undefined" && GnomOgro.at(r, c)) continue;
+        if (typeof Resources !== "undefined" && Resources.at(r, c)) continue;
+        bestD = d;
+        best = { row: r, col: c };
+      }
+    }
+    return best;
+  },
+
+  _spawnSplash(row, col) {
+    const el = document.createElement("div");
+    el.className = "water-splash";
+    for (let i = 0; i < 2; i++) {
+      const ring = document.createElement("span");
+      ring.className = "water-splash__ring";
+      ring.style.animationDelay = `${i * 0.18}s`;
+      el.appendChild(ring);
+    }
+    for (let i = 0; i < 7; i++) {
+      const drop = document.createElement("i");
+      drop.className = "water-splash__drop";
+      drop.style.setProperty("--dx", `${(i - 3) * 11}px`);
+      drop.style.animationDelay = `${(i % 3) * 0.04}s`;
+      el.appendChild(drop);
+    }
+    Units.container.appendChild(el);
+    const { x, y } = getTileCenter(row, col, Units.boardSize);
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.zIndex = String((row + col) * 10 + 8);
+    setTimeout(() => el.remove(), 1200);
   },
 };
 

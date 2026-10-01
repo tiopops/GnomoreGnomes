@@ -337,6 +337,45 @@ const SFX = {
   // filtro paso-bajo que se cierra rápido (el "crunch" grave del estallido
   // apagándose) sumado a un golpe grave corto (el "thud" del impacto, mismo
   // timbre que death-thud) para darle cuerpo por debajo del ruido.
+  // Chapuzón (js/combat.js, Combat._drown): ruido filtrado que cae de agudo a
+  // grave (salpicadura) + un "bloop" grave de burbuja.
+  splash() {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      const dur = 0.55;
+      const n = Math.round(ctx.sampleRate * dur);
+      const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 1.8);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass";
+      f.Q.value = 0.8;
+      f.frequency.setValueAtTime(2600, now);
+      f.frequency.exponentialRampToValueAtTime(500, now + dur);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.45, now);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      src.connect(f).connect(g).connect(this.master);
+      src.start(now);
+      const o = ctx.createOscillator();
+      o.type = "sine";
+      o.frequency.setValueAtTime(320, now + 0.05);
+      o.frequency.exponentialRampToValueAtTime(90, now + 0.35);
+      const og = ctx.createGain();
+      og.gain.setValueAtTime(0.0001, now);
+      og.gain.linearRampToValueAtTime(0.35, now + 0.06);
+      og.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+      o.connect(og).connect(this.master);
+      o.start(now + 0.05);
+      o.stop(now + 0.45);
+    } catch (e) {}
+  },
+
   explosion() {
     const ctx = this.ensureCtx();
     if (!ctx) return;

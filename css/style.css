@@ -8680,3 +8680,43 @@ body.backpack-giving--katapum * {
   0% { opacity: 0; transform: scale(0.4) translateY(20px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
+
+
+/* Ahogado (js/combat.js, Combat._drown): se hunde en el agua y desaparece. */
+.unit--drowning {
+  animation: unit-drown 0.9s ease-in forwards;
+  pointer-events: none;
+}
+@keyframes unit-drown {
+  0% { transform: translate(-50%, -92%) scale(1); opacity: 1; clip-path: inset(0 0 0 0); }
+  60% { transform: translate(-50%, -78%) scale(0.95) rotate(-6deg); opacity: 0.9; clip-path: inset(0 0 40% 0); }
+  100% { transform: translate(-50%, -62%) scale(0.9) rotate(-10deg); opacity: 0; clip-path: inset(0 0 100% 0); }
+}
+.water-splash { position: absolute; width: 0; height: 0; pointer-events: none; }
+.water-splash__ring {
+  position: absolute;
+  left: -40px; top: -14px;
+  width: 80px; height: 28px;
+  border: 3px solid rgba(220, 245, 255, 0.9);
+  border-radius: 50%;
+  opacity: 0;
+  animation: splash-ring 0.8s ease-out forwards;
+}
+@keyframes splash-ring {
+  0% { transform: scale(0.2); opacity: 0.95; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.water-splash__drop {
+  position: absolute;
+  left: -4px; top: -10px;
+  width: 8px; height: 11px;
+  background: rgba(225, 248, 255, 0.95);
+  border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+  opacity: 0;
+  animation: splash-drop 0.75s ease-out forwards;
+}
+@keyframes splash-drop {
+  0% { transform: translate(0, 0); opacity: 1; }
+  45% { transform: translate(calc(var(--dx) * 0.6), -55px); opacity: 1; }
+  100% { transform: translate(var(--dx), 6px); opacity: 0; }
+}

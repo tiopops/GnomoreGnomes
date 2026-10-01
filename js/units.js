@@ -1236,7 +1236,8 @@ const Units = {
 
   // Elimina una unidad del juego (0 de vida, o cualquier otra razón futura)
   // con su propia animación antes de quitarla del DOM y de la lista.
-  async removeUnit(unit) {
+  async removeUnit(unit, opts = {}) {
+    const drowned = !!opts.drowned; // ahogado: sin charco de sangre ni sonido de muerte (ver Combat._drown)
     if (this.selectedId === unit.id) this.deselect();
     this.stopFearLoop(unit); // no dejar temblando/girando de miedo a una unidad que ya no existe
     // Charco de sangre (js/bloodsplat.js) — pedido explícito: "en la
@@ -1244,12 +1245,12 @@ const Units = {
     // de golpe". Aquí mismo, no tras la propia animación de muerte, para
     // que aparezca "de golpe" junto con el resto del feedback del golpe
     // final, no medio segundo más tarde.
-    if (typeof BloodSplat !== "undefined") BloodSplat.spawnAt(unit.row, unit.col);
+    if (!drowned && typeof BloodSplat !== "undefined") BloodSplat.spawnAt(unit.row, unit.col);
     // Seta explosiva (js/mushrooms.js): si moría llevando una, estalla.
     if (typeof Mushrooms !== "undefined") Mushrooms.onUnitDying(unit);
-    unit.el.classList.add("unit--dying");
-    SFX.death();
-    await new Promise((resolve) => setTimeout(resolve, 420));
+    unit.el.classList.add(drowned ? "unit--drowning" : "unit--dying");
+    if (!drowned) SFX.death();
+    await new Promise((resolve) => setTimeout(resolve, drowned ? 900 : 420));
     unit.el.remove();
     this.list = this.list.filter((u) => u.id !== unit.id);
     if (typeof Skills !== "undefined") Skills.onUnitRemoved();
