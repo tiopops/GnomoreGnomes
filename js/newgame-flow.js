@@ -133,7 +133,10 @@ function renderLevelCard(level) {
   const card = document.createElement("button");
   card.className = "race-card level-card" + (level.available ? "" : " level-card--locked");
   card.style.setProperty("--card-accent", level.color);
-  card.style.setProperty("--float-delay", `-${(Math.random() * 4.2).toFixed(2)}s`);
+  // Isla y rótulo flotan cada uno por su cuenta (ritmos y desfases distintos).
+  card.style.setProperty("--float-delay", `-${(Math.random() * 5).toFixed(2)}s`);
+  card.style.setProperty("--logo-delay", `-${(Math.random() * 3.4).toFixed(2)}s`);
+  const name = I18N.t(level.nameKey);
   const feats = (level.featureKeys || [])
     .map(
       (k, i) => `
@@ -143,13 +146,14 @@ function renderLevelCard(level) {
       </span>`
     )
     .join("");
+  card.setAttribute("aria-label", name);
   card.innerHTML = `
-    <span class="race-card__art-wrap">
-      <img src="${level.artImg}" alt="" class="race-card__art level-card__art" />
+    <span class="level-card__stage">
+      <img src="${level.islandImg}" alt="" class="level-card__island" />
       ${level.available ? "" : '<i class="ph-fill ph-lock level-card__lock"></i>'}
+      <span class="level-card__name">${name}</span>
     </span>
-    <span class="race-card__title">${I18N.t(level.nameKey)}</span>
-    <span class="race-card__body">
+    <span class="race-card__body level-card__body">
       <span class="race-card__flavor">${I18N.t(level.flavorKey)}</span>
       ${feats}
       ${level.available ? "" : `<span class="level-card__soon">${I18N.t("level_coming_soon")}</span>`}

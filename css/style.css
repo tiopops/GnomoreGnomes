@@ -8524,19 +8524,71 @@ body.backpack-giving--katapum * {
 }
 
 /* ---------- Selección de nivel (js/levels.js, renderLevelCard en newgame-flow.js) ----------
-   Mismas cartas que las razas (.race-card); el nivel aún no disponible se
-   muestra bloqueado: gris, sin flotar, sin hover y con candado. */
-.level-card__art {
-  max-width: 190px;
-  width: 70%;
+   Misma carta que las razas (.race-card). La isla flota sobre la descripción
+   y el rótulo del nivel (sin nombre en texto) flota por encima, en la parte
+   baja de la isla, con un ritmo propio distinto al de la isla. */
+#level-list { max-width: 900px; }
+.level-card {
+  width: 410px;
+}
+.level-card .race-card__stat,
+.level-card .race-card__flavor { font-size: 0.8rem; line-height: 1.3; }
+.level-card__stage {
+  position: relative;
+  display: block;
+  margin: -30px 0 0;
+  padding: 0 10px;
+  height: 218px;
+  pointer-events: none;
+}
+.level-card__island {
+  display: block;
+  width: 62%;
+  margin: 0 auto;
+  filter: drop-shadow(3px 6px 0 rgba(0, 0, 0, 0.4));
+  will-change: transform;
+  animation: race-card-float 4.6s ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.level-card__name {
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 96%;
+  translate: -50% 0;
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+  color: var(--card-accent, #fff);
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.8), -1px -1px 0 rgba(0, 0, 0, 0.6), 1px -1px 0 rgba(0, 0, 0, 0.6), -1px 1px 0 rgba(0, 0, 0, 0.6);
+  will-change: transform;
+  animation: level-logo-float 3.3s ease-in-out infinite;
+  animation-delay: var(--logo-delay, 0s);
+  user-select: none;
+}
+@keyframes level-logo-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-7px) rotate(1deg); }
+}
+.level-card__body {
+  padding: 22px 18px 18px;
+  gap: 8px;
 }
 .level-card__lock {
   position: absolute;
-  font-size: 2.6rem;
+  left: 50%;
+  top: 38%;
+  translate: -50% -50%;
+  font-size: 2.8rem;
   color: #f4f2f8;
-  filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.7));
 }
-.race-card__art-wrap { position: relative; }
 .level-card__soon {
   align-self: center;
   margin-top: 2px;
@@ -8558,7 +8610,6 @@ body.backpack-giving--katapum * {
 .level-card--locked:active {
   transform: rotate(var(--tilt));
 }
-.level-card--locked .race-card__art {
-  animation: none;
-  opacity: 0.55;
+.level-card--locked .level-card__island {
+  opacity: 0.6;
 }
