@@ -8102,7 +8102,9 @@ body.backpack-giving--katapum * {
   flex-direction: column;
   align-items: center;
   gap: clamp(4px, 1vh, 10px);
-  padding: 2px 0;
+  /* Margen inferior: el rango "X/Y" del último nodo cuelga ~8px por debajo
+     de su casilla y la descripción de debajo lo recortaba. */
+  padding: 2px 0 14px;
 }
 
 .skills-links {
@@ -8525,7 +8527,7 @@ body.backpack-giving--katapum * {
   .skills-panel { width: min(680px, 94vw); }
   .skills-panel { margin-top: 0; }
   .skills-panel .backpack-panel__bg { padding: 22px 50px 14px; gap: 4px; }
-  .skills-tree { --sk-node: clamp(58px, calc((100vh - 400px) / 4.5), 108px); gap: 2px; }
+  .skills-tree { --sk-node: clamp(58px, calc((100vh - 400px) / 4.5), 108px); gap: 2px; padding-bottom: 14px; }
   .skills-desc { min-height: 64px; padding: 8px 20px; }
   .skills-row { gap: clamp(90px, 13vw, 170px); }
   .skills-desc .backpack-desc__text { font-size: 0.98rem; }
