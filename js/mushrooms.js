@@ -19,6 +19,7 @@
 const MUSHROOM_MAX = 4;
 const MUSHROOM_SPAWN_EVERY = 3;
 const MUSHROOM_INITIAL = 2;
+const MUSHROOM_RELOCATE_EVERY = 4; // rondas que una seta suelta permanece en su sitio antes de desaparecer y reaparecer en otro
 const MUSHROOM_FUSE = 3;
 const MUSHROOM_DAMAGE = 5;
 const MUSHROOM_MIN_BASE_DIST = 6;
@@ -83,6 +84,42 @@ const Mushrooms = {
     return this._create(spot.row, spot.col);
   },
 
+  _pickSpot(size) {
+    size = size || Units.boardSize;
+    const bases = typeof Obelisks !== "undefined" ? Obelisks.list : [];
+    const cands = [];
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (!this._tileFree(r, c)) continue;
+        if (bases.some((o) => Math.max(Math.abs(o.row - r), Math.abs(o.col - c)) < MUSHROOM_MIN_BASE_DIST)) continue;
+        cands.push({ row: r, col: c });
+      }
+    }
+    return cands.length ? cands[Math.floor(Math.random() * cands.length)] : null;
+  },
+
+  // Desaparece (fundido) y reaparece en otra casilla libre.
+  _relocate(m) {
+    const spot = this._pickSpot();
+    m.age = 0;
+    if (!spot || !m.el) return;
+    const el = m.el;
+    el.style.transition = "opacity 0.35s ease";
+    el.style.opacity = "0";
+    setTimeout(() => {
+      if (m.heldBy || !m.el) return; // la cogieron justo entonces
+      m.row = spot.row;
+      m.col = spot.col;
+      const { x, y } = getTileCenter(spot.row, spot.col, Units.boardSize);
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      el.style.zIndex = String((spot.row + spot.col) * 10 + 6);
+      this.refreshFog();
+      el.style.opacity = "1";
+      setTimeout(() => { if (m.el) el.style.transition = ""; }, 400);
+    }, 380);
+  },
+
   _create(row, col) {
     const el = document.createElement("div");
     el.className = "mushroom-loose";
@@ -96,7 +133,7 @@ const Mushrooms = {
     else img.src = MUSHROOM_SPRITE;
     el.appendChild(img);
     Units.container.appendChild(el);
-    const m = { id: this._nextId++, row, col, el, spriteEl: img, heldBy: null, fuse: MUSHROOM_FUSE, markerEl: null, badgeEl: null };
+    const m = { id: this._nextId++, row, col, el, spriteEl: img, heldBy: null, age: 0, fuse: MUSHROOM_FUSE, markerEl: null, badgeEl: null };
     const { x, y } = getTileCenter(row, col, Units.boardSize);
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
@@ -285,6 +322,12 @@ const Mushrooms = {
   onTurnStart(team) {
     if (team !== "player" || !this.active) return;
     const round = typeof Turns !== "undefined" ? Turns.roundNumber : 0;
+    // Las setas sueltas van desapareciendo y reapareciendo en otro sitio
+    // cada MUSHROOM_RELOCATE_EVERY rondas (pedido explícito).
+    this.list.filter((m) => !m.heldBy).forEach((m) => {
+      m.age = (m.age || 0) + 1;
+      if (m.age >= MUSHROOM_RELOCATE_EVERY) this._relocate(m);
+    });
     if (round > 1 && round % MUSHROOM_SPAWN_EVERY === 0 && this.list.length < MUSHROOM_MAX) {
       this._spawnOne();
     }
