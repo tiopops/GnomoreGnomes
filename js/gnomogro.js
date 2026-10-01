@@ -590,6 +590,18 @@ const GnomOgro = {
     g.el.style.opacity = "0";
     await new Promise((resolve) => setTimeout(resolve, 650));
     g.el.remove();
+    // Pedido explícito: "cuando el gnomogro muere, el altar vuelve a aparecer,
+    // reiniciado" — barras de ambos jugadores a 0 y sprite vacío (Altar.spawn
+    // crea uno nuevo en el centro), listo para otra invocación.
+    if (typeof Altar !== "undefined" && !Altar.current() && typeof Units !== "undefined") {
+      Altar.spawn(Units.boardSize);
+      const a = Altar.current();
+      if (a) {
+        a.el.classList.add("altar--respawn");
+        setTimeout(() => a.el.classList.remove("altar--respawn"), 800);
+        if (typeof SFX !== "undefined" && SFX.itemPlace) SFX.itemPlace();
+      }
+    }
     if (typeof Fog !== "undefined") Fog.applyVisibility();
   },
 };
