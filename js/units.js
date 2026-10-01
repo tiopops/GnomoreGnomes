@@ -1008,6 +1008,8 @@ const Units = {
     if (typeof Shops !== "undefined") Shops.refreshAll();
     // Codo con Codo (js/skills.js): la formación cambió al moverse.
     if (typeof Skills !== "undefined") Skills.refreshCohesion();
+    // Seta explosiva (js/mushrooms.js): al quedar junto al Altar, se ofrece sola.
+    if (typeof Mushrooms !== "undefined" && unit.el) await Mushrooms.autoOffer(unit);
   },
 
   // "el jugador indica a donde quiere moverse, pero el segundo y tercer

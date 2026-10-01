@@ -203,15 +203,19 @@ const Mushrooms = {
     Units.clearRangeOverlays();
     const approach = this.findApproachTile(unit, m);
     if (!approach) return;
+    // Coger NO gasta acción (pedido explícito): solo cuesta la acción del
+    // desplazamiento si hace falta acercarse primero (mover + coger).
     if (approach.row !== unit.row || approach.col !== unit.col) {
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
       await Units.walkPath(unit, path);
+      if (typeof Turns !== "undefined") Turns.useAction(unit);
       if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
     }
+    if (m.heldBy || !m.el) return;
     Units.faceTowardsTile(unit, m.row, m.col);
     this._attachTo(unit, m);
     if (typeof SFX !== "undefined") SFX.catch();
-    if (typeof Turns !== "undefined") Turns.useAction(unit);
+    await this.autoOffer(unit);
     Units.refreshRange(unit);
   },
 
@@ -241,6 +245,18 @@ const Mushrooms = {
     if (!m.markerEl) return;
     m.badgeEl.textContent = String(m.fuse);
     m.markerEl.dataset.fuse = String(Math.max(1, Math.min(3, m.fuse)));
+  },
+
+  // Basta con quedar en una casilla adyacente al Altar para ofrecerla (sin
+  // acción ni machacón, ver Altar.offerMushroom). Lo llama Units.walkPath al
+  // terminar cualquier desplazamiento y catchBy al cogerla.
+  async autoOffer(unit) {
+    const m = this.carriedBy(unit);
+    if (!m || typeof Altar === "undefined") return;
+    const altar = Altar.current();
+    if (!altar || !unit.el) return;
+    if (Math.max(Math.abs(altar.row - unit.row), Math.abs(altar.col - unit.col)) > 1) return;
+    await Altar.offerMushroom(unit, altar, m);
   },
 
   // El altar (u otra mecánica) se la queda: desaparece sin explotar.

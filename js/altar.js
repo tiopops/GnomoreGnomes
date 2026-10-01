@@ -375,7 +375,7 @@ const Altar = {
     if (!approach) return;
     // Igual que Villages/Obelisks.showFor: moverse + machacar son 2 acciones.
     const needsMove = approach.row !== unit.row || approach.col !== unit.col;
-    if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < 2) return;
+    if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < (typeof Gnome !== "undefined" && Gnome.isHeldBy(unit.id) ? 2 : 1)) return;
     // Mira de ataque SOBRE el propio altar (antes se ponía en la loseta de
     // aproximación, a menudo oculta bajo la propia unidad) y por encima de
     // todo (alwaysOnTop) para que el sprite grande no se coma el clic — mismo
@@ -430,6 +430,64 @@ const Altar = {
     return best;
   },
 
+  // Ofrenda de una seta explosiva: SIN machacón y SIN gastar acción (solo
+  // estar en una casilla adyacente al altar), pero siempre con feedback: la
+  // seta vuela del marcador al altar, suena, el altar pulsa, "+10" y un
+  // pequeño temblor. Si llena la barra de su equipo, el altar se derrumba.
+  async offerMushroom(unit, altar, mush) {
+    if (!mush || mush.offering) return;
+    mush.offering = true;
+    Units.clearRangeOverlays();
+    Units.faceTowardsTile(unit, altar.row, altar.col);
+    const from = mush.markerEl ? mush.markerEl.getBoundingClientRect() : unit.el.getBoundingClientRect();
+    const to = altar.spriteEl.getBoundingClientRect();
+    const fly = document.createElement("img");
+    fly.src = "assets/iconos/seta_trampa.png";
+    fly.draggable = false;
+    const size = 56;
+    fly.style.cssText = `position:fixed;left:0;top:0;width:${size}px;z-index:99998;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))`;
+    document.body.appendChild(fly);
+    if (mush.markerEl) mush.markerEl.style.visibility = "hidden";
+    const x0 = from.left + from.width / 2 - size / 2;
+    const y0 = from.top + from.height / 2 - size / 2;
+    const x1 = to.left + to.width / 2 - size / 2;
+    const y1 = to.top + to.height * 0.45 - size / 2;
+    if (typeof SFX !== "undefined") SFX.catch();
+    const anim = fly.animate(
+      [
+        { transform: `translate(${x0}px, ${y0}px) scale(1)`, offset: 0 },
+        { transform: `translate(${(x0 + x1) / 2}px, ${Math.min(y0, y1) - 70}px) scale(1.25) rotate(180deg)`, offset: 0.5 },
+        { transform: `translate(${x1}px, ${y1}px) scale(0.6) rotate(360deg)`, offset: 1 },
+      ],
+      { duration: 620, easing: "ease-in", fill: "forwards" }
+    );
+    await anim.finished.catch(() => {});
+    fly.remove();
+
+    const team = unit.team === "enemy" ? "enemy" : "player";
+    altar.fills[team] = Math.min(ALTAR_MAX_FILL, altar.fills[team] + MUSHROOM_ALTAR_POINTS);
+    this._refreshBar(altar);
+    Units.spawnFloatingText(altar, `+${MUSHROOM_ALTAR_POINTS}`, { className: "dmg-popup" });
+    Units.playShake(altar);
+    if (typeof SFX !== "undefined") {
+      SFX.hit();
+      if (SFX.passSuccess) setTimeout(() => SFX.passSuccess(), 90);
+    }
+    altar.el.classList.remove("altar--pulse");
+    void altar.el.offsetWidth;
+    altar.el.classList.add("altar--pulse");
+    this._refreshSprite(altar);
+    const viewportEl = document.getElementById("board-viewport");
+    if (viewportEl) {
+      viewportEl.classList.remove("board-viewport--shake");
+      void viewportEl.offsetWidth;
+      viewportEl.classList.add("board-viewport--shake");
+      setTimeout(() => viewportEl.classList.remove("board-viewport--shake"), 420);
+    }
+    Mushrooms.consume(mush);
+    if (altar.fills[team] >= ALTAR_MAX_FILL) await this._collapse(altar, team);
+  },
+
   async approachAndSacrifice(unit, altar) {
     Units.clearRangeOverlays();
     const target = altar || this.current();
@@ -452,6 +510,13 @@ const Altar = {
     // Seta explosiva (js/mushrooms.js): también vale como ofrenda (10 puntos).
     const mush = !gnome && typeof Mushrooms !== "undefined" ? Mushrooms.carriedBy(unit) : null;
     if (!gnome && !mush) return; // se lo quitaron/lo soltó justo antes del clic
+    // Seta explosiva: basta con estar junto al altar, sin machacón y sin
+    // gastar acción (ver offerMushroom).
+    if (mush) {
+      await this.offerMushroom(unit, altar, mush);
+      Units.refreshRange(unit);
+      return;
+    }
     Units.clearRangeOverlays();
     Units.faceTowardsTile(unit, altar.row, altar.col);
     if (typeof Turns !== "undefined") Turns.useAction(unit);
