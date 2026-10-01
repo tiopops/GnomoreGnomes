@@ -75,8 +75,12 @@ const GNOMOGRO_ATTACK_RANGE = 1;
 
 const GNOMOGRO_SPRITES = {
   idle: "assets/gnomogro/gnomo_ogro.png", // sprite base (las poses de ataque solo se usan al atacar)
-  cargaAtaque: "assets/gnomogro/gnomogro_ataque_carga.png",
-  impacto: "assets/gnomogro/gnomogro_ataque_impacto.png",
+  // Poses de ataque (pedido explícito): levanta los brazos con
+  // "gnomo_ogro_preparaataque" y efectúa el golpe con "gnomo_ogro_ataque".
+  // Se usan en su versión _midres (momentáneas, se asignan por .src directo):
+  // el sprite completo mide 1306 px y solo se pinta a 200 px de ancho.
+  preparaAtaque: "assets/gnomogro/gnomo_ogro_preparaataque_midres.png",
+  ataque: "assets/gnomogro/gnomo_ogro_ataque_midres.png",
 };
 
 const GnomOgro = {
@@ -307,25 +311,84 @@ const GnomOgro = {
   // una sola, mismo espíritu que el salto/machacón de Villages._playEpicSmash
   // pero con arte propio de la criatura en vez de reutilizar la pose de un
   // personaje normal.
+  // Precarga y decodifica las dos poses de ataque (solo la primera vez) para
+  // que el cambio de sprite sea instantáneo y no haya un fotograma en blanco.
+  async _preloadAttackFrames() {
+    if (!this._attackFrames) {
+      this._attackFrames = [GNOMOGRO_SPRITES.preparaAtaque, GNOMOGRO_SPRITES.ataque].map((src) => {
+        const img = new Image();
+        img.src = src;
+        return img;
+      });
+    }
+    await Promise.all(this._attackFrames.map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve())));
+  },
+
+  // Ataque en 3 tiempos con deformación del sprite (squash & stretch, pivote
+  // en los pies): 1) se agacha (anticipación) 2) se estira levantando los
+  // brazos (preparaataque) y tiembla de rabia 3) golpe: cae aplastándose
+  // (ataque) -> sonido + temblor de cámara -> rebote -> vuelve a reposo.
   async _playAttackAnim() {
     const g = this.current;
+    const el = g.spriteEl;
     g.el.classList.add("gnomogro--attacking");
-    // Fotogramas de acción momentáneos (carga/impacto) -> .src directo, NUNCA
-    // vía SpriteQuality.register (mismo criterio que Units.machacaSpriteFor/
-    // impactSpriteFor en Villages._playEpicSmash: un fundido de calidad
-    // encima de una pose de golpe ya de por sí rápida se vería raro). Solo
-    // la pose "de reposo" (idle, al final) vuelve a registrarse para que
-    // siga respondiendo al zoom con normalidad el resto del tiempo.
-    g.spriteEl.src = GNOMOGRO_SPRITES.cargaAtaque;
-    await new Promise((resolve) => setTimeout(resolve, 320));
+    await this._preloadAttackFrames();
+    const anims = [];
+    const play = (frames, ms, easing = "ease-out") => {
+      if (!el.animate) return new Promise((resolve) => setTimeout(resolve, ms));
+      const a = el.animate(frames, { duration: ms, easing, fill: "forwards" });
+      anims.push(a);
+      return a.finished.catch(() => {});
+    };
+    // Fotogramas de acción momentáneos -> .src directo, NUNCA vía
+    // SpriteQuality.register (un fundido de calidad encima de una pose tan
+    // rápida se vería raro); solo el reposo final se vuelve a registrar.
+    await play([{ transform: "scale(1,1)" }, { transform: "scale(1.1,0.88)" }], 150, "ease-in");
 
-    g.spriteEl.src = GNOMOGRO_SPRITES.impacto;
+    el.src = GNOMOGRO_SPRITES.preparaAtaque;
+    await play(
+      [{ transform: "scale(1.1,0.88)" }, { transform: "scale(0.94,1.13)" }],
+      190,
+      "cubic-bezier(0.2, 1.5, 0.4, 1)"
+    );
+    await play(
+      [
+        { transform: "scale(0.94,1.13) translateX(0)" },
+        { transform: "scale(0.95,1.14) translateX(-4px)" },
+        { transform: "scale(0.94,1.13) translateX(4px)" },
+        { transform: "scale(0.95,1.14) translateX(-3px)" },
+        { transform: "scale(0.94,1.13) translateX(0)" },
+      ],
+      220,
+      "linear"
+    );
+
+    el.src = GNOMOGRO_SPRITES.ataque;
+    await play(
+      [
+        { transform: "scale(0.94,1.13) translateY(-22px)" },
+        { transform: "scale(1.16,0.82) translateY(3px)" },
+      ],
+      95,
+      "cubic-bezier(0.6, 0, 1, 1)"
+    );
     if (typeof SFX !== "undefined") SFX.gnomogroAttack();
     this._shakeViewport(true);
-    await new Promise((resolve) => setTimeout(resolve, 380));
+    await play(
+      [
+        { transform: "scale(1.16,0.82)" },
+        { transform: "scale(0.97,1.06)", offset: 0.55 },
+        { transform: "scale(1.02,0.98)", offset: 0.8 },
+        { transform: "scale(1,1)" },
+      ],
+      320,
+      "ease-out"
+    );
+    await new Promise((resolve) => setTimeout(resolve, 260));
 
-    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(g.spriteEl, GNOMOGRO_SPRITES.idle);
-    else g.spriteEl.src = GNOMOGRO_SPRITES.idle;
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(el, GNOMOGRO_SPRITES.idle);
+    else el.src = GNOMOGRO_SPRITES.idle;
+    anims.forEach((a) => a.cancel());
     g.el.classList.remove("gnomogro--attacking");
   },
 

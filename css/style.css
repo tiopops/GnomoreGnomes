@@ -8522,3 +8522,43 @@ body.backpack-giving--katapum * {
   .skills-desc .backpack-desc__text { font-size: 0.98rem; }
   .skills-desc__name { font-size: 1.2rem; }
 }
+
+/* ---------- Selección de nivel (js/levels.js, renderLevelCard en newgame-flow.js) ----------
+   Mismas cartas que las razas (.race-card); el nivel aún no disponible se
+   muestra bloqueado: gris, sin flotar, sin hover y con candado. */
+.level-card__art {
+  max-width: 190px;
+  width: 70%;
+}
+.level-card__lock {
+  position: absolute;
+  font-size: 2.6rem;
+  color: #f4f2f8;
+  filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.6));
+}
+.race-card__art-wrap { position: relative; }
+.level-card__soon {
+  align-self: center;
+  margin-top: 2px;
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ffcf3f;
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(255, 207, 63, 0.5);
+  transform: skewX(-8deg);
+}
+.level-card--locked {
+  cursor: not-allowed;
+  filter: grayscale(0.85) brightness(0.8) drop-shadow(6px 6px 0 rgba(0, 0, 0, 0.5));
+}
+.level-card--locked:hover,
+.level-card--locked:active {
+  transform: rotate(var(--tilt));
+}
+.level-card--locked .race-card__art {
+  animation: none;
+  opacity: 0.55;
+}

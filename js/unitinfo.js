@@ -69,7 +69,7 @@ const UNIT_DESCRIPTIONS = {
   hombre_arbol: "Un golem de corteza y musgo que nunca ha tenido prisa por llegar a ningún sitio, pero tampoco por caer.",
   surcabosques: "Se desliza entre los árboles más rápido de lo que nadie puede seguirle la pista.",
   seta_artificiero: "Experimenta con esporas explosivas y, milagrosamente, casi nunca se hace daño a sí mismo.",
-  goblin_lanzador: "El mejor brazo de las Colinas Rock'n Troll — nadie lanza un gnomo más lejos ni más certero.",
+  goblin_lanzador: "El mejor brazo del Equipo TruenaRocas — nadie lanza un gnomo más lejos ni más certero.",
   urgamentes: "Piensa cada jugada tres veces antes de moverse, lo cual explica por qué siempre llega tarde.",
   punoroca: "Sus puños son más duros que la piedra de la que sacó el nombre.",
 };

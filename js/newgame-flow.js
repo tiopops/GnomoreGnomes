@@ -20,7 +20,9 @@ function goBack() {
   showScreen(screenHistory[screenHistory.length - 1]);
 }
 
-const matchDraft = { modeId: null, raceId: null, opponents: null };
+const SKIP_MODE_SELECT = true;
+
+const matchDraft = { modeId: null, raceId: null, levelId: null, opponents: null };
 
 function renderOptionCard({ icon, iconImg, title, desc, onClick, color }) {
   const card = document.createElement("button");
@@ -116,12 +118,60 @@ function populateRaceSelect() {
         color: race.color,
         onClick: () => {
           matchDraft.raceId = race.id;
-          populateOpponentSelect();
-          goToScreen("screen-opponent-select");
+          populateLevelSelect();
+          goToScreen("screen-level-select");
         },
       })
     );
   });
+}
+
+// Selección de nivel (fase) — después de la raza. Mismo diseño de carta que
+// las razas (renderRaceCard); un nivel no disponible se pinta bloqueado
+// ("Próximamente") y no se puede elegir.
+function renderLevelCard(level) {
+  const card = document.createElement("button");
+  card.className = "race-card level-card" + (level.available ? "" : " level-card--locked");
+  card.style.setProperty("--card-accent", level.color);
+  card.style.setProperty("--float-delay", `-${(Math.random() * 4.2).toFixed(2)}s`);
+  const feats = (level.featureKeys || [])
+    .map(
+      (k, i) => `
+      <span class="race-card__stat race-card__stat--virtue">
+        <i class="ph ${level.featureIcons[i] || "ph-check-circle"} race-card__stat-icon"></i>
+        <span>${I18N.t(k)}</span>
+      </span>`
+    )
+    .join("");
+  card.innerHTML = `
+    <span class="race-card__art-wrap">
+      <img src="${level.artImg}" alt="" class="race-card__art level-card__art" />
+      ${level.available ? "" : '<i class="ph-fill ph-lock level-card__lock"></i>'}
+    </span>
+    <span class="race-card__title">${I18N.t(level.nameKey)}</span>
+    <span class="race-card__body">
+      <span class="race-card__flavor">${I18N.t(level.flavorKey)}</span>
+      ${feats}
+      ${level.available ? "" : `<span class="level-card__soon">${I18N.t("level_coming_soon")}</span>`}
+    </span>
+  `;
+  if (level.available) {
+    card.addEventListener("click", () => {
+      matchDraft.levelId = level.id;
+      populateOpponentSelect();
+      goToScreen("screen-opponent-select");
+    });
+  } else {
+    card.setAttribute("aria-disabled", "true");
+    card.tabIndex = -1;
+  }
+  return card;
+}
+
+function populateLevelSelect() {
+  const list = document.getElementById("level-list");
+  list.innerHTML = "";
+  LEVELS.forEach((level) => list.appendChild(renderLevelCard(level)));
 }
 
 function populateOpponentSelect() {
@@ -148,7 +198,7 @@ function populateOpponentSelect() {
   });
 }
 
-async function startMatch({ modeId, raceId, opponents }) {
+async function startMatch({ modeId, raceId, levelId, opponents }) {
   // Bug reportado: "el juego no se abre....se queda asi" — al pulsar "1
   // rival" el marcador de Puntos de Gloria (Glory.init, dentro de
   // spawnTestUnits) llegaba a pintarse, pero la pantalla se quedaba
@@ -180,6 +230,7 @@ async function startMatch({ modeId, raceId, opponents }) {
     SaveGame.save({
       modeId,
       raceId,
+      levelId: levelId || "mushboom_forest",
       opponents,
       size,
       tiles: map.tiles,
@@ -547,8 +598,20 @@ function syncBoardCamera(focusSpot) {
 
 function initNewGameFlow() {
   document.getElementById("btn-new-game").addEventListener("click", () => {
-    populateModeSelect();
-    goToScreen("screen-mode-select");
+    // El paso de elegir MODO está desactivado de momento (pedido explícito:
+    // "cada nivel tendrá sus reglas"): se salta directo a la raza con el
+    // primer modo disponible (GnomeSmash). populateModeSelect y la pantalla
+    // #screen-mode-select se conservan por si vuelve a hacer falta — para
+    // reactivarlo basta con cambiar SKIP_MODE_SELECT a false.
+    if (SKIP_MODE_SELECT) {
+      const defaultMode = GAME_MODES.find((m) => m.available) || GAME_MODES[0];
+      matchDraft.modeId = defaultMode.id;
+      populateRaceSelect();
+      goToScreen("screen-race-select");
+    } else {
+      populateModeSelect();
+      goToScreen("screen-mode-select");
+    }
   });
 
   document.getElementById("btn-resume-game").addEventListener("click", resumeMatch);
