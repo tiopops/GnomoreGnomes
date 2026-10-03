@@ -245,7 +245,7 @@ const Tutorial = {
   // ---------- Pasos ----------
   // Estado de ánimo de Nizak en el diálogo de cada paso (la réplica al
   // completar la misión siempre es "aplaude", con desinterés).
-  _MOODS: ["grunon", "normal", "normal", "normal", "grunon", "normal", "normal", "grunon", "normal", "grunon", "normal", "grunon", "grunon", "normal", "normal", "normal", "grunon", "normal", "normal", "grunon", "aplaude"],
+  _MOODS: ["grunon", "normal", "normal", "normal", "grunon", "normal", "normal", "grunon", "normal", "grunon", "normal", "grunon", "grunon", "normal", "normal", "normal", "normal", "grunon", "normal", "normal", "grunon", "aplaude"],
 
   _setMood(m) {
     const P = this._els.portrait;
@@ -561,6 +561,30 @@ const Tutorial = {
         ok: "¡Madera conseguida! Ya puedes fabricarme un ataúd... o una mejora de armadura, que queda más elegante. En la armería de tu obelisco tienes las mejoras de equipo.",
       },
       {
+        say: `Y hablando de botines: ¿ves ese cofre escondido en un rincón? En las partidas de verdad hay uno por jugador (y uno más, por si acaso) tirados en los lugares más apartados del mapa, y nadie los vigila porque nadie tiene valor. Se abren como un recurso: selecciona a tu personaje libre y púlsalo. Dentro hay una reliquia al azar, de las que dan ventajas serias… mientras duren. Cada vez que muere una unidad tuya pierden 1 punto de durabilidad, y al llegar a 0 se rompen. Como mi paciencia con vosotros.`,
+        mission: "Abre el cofre de reliquias",
+        onStart: () => {
+          T._refill();
+          const f = T._my().find((u) => !Gnome.isHeldBy(u.id)) || T._my()[0];
+          T._ctx.cutterId = f && f.id;
+          const spot = T._findSpot(f, { minD: 2, maxD: 3, side: "center", minOb: 3 });
+          if (spot && typeof Resources !== "undefined") {
+            T._ctx.chest = Resources._create("cofre", spot.row, spot.col);
+            if (typeof Fog !== "undefined") Fog.applyVisibility();
+          }
+        },
+        target: () => {
+          const f = Units.list.find((u) => u.id === T._ctx.cutterId);
+          const c = T._ctx.chest;
+          if (!f) return null;
+          if (!c || !Resources.list.includes(c)) return T._unitEl(f);
+          return T._unitThen(f, () => T._marker("resource-node-attack-marker", c.row, c.col)) || T._unitEl(c);
+        },
+        refillFor: () => T._ctx.cutterId,
+        done: () => typeof Relics !== "undefined" && Relics.list("player").length > 0,
+        ok: "¡Reliquia en la mochila! Son las Botas TrotaMontes: +1 de Movimiento para todos tus personajes. Fíjate en su marcador, ese 5/5 que tiene al lado: es lo que le queda de vida. Cuida de tus unidades o las botas se gastarán antes de tiempo. Y no, no pienso dejar que me uses de escudo para ahorrarlas.",
+      },
+      {
         say: `No hay nada mejor que conquistar un tótem con un gnomo cargado de puntos. Tu personaje lo estampa contra él y le resta tanta vida como puntos lleve. Si se queda sin puntos, el tótem es tuyo y te da Puntos de Gloria cada turno. Acércate con quien lleva el gnomo y pulsa la diana. Lo que la gente del gremio conoce como “estampada”.`,
         mission: "Haz una “estampada” con el gnomo contra el tótem",
         onStart: () => {
@@ -632,7 +656,7 @@ const Tutorial = {
         ok: "Y el rival... no hizo nada. Era de esperar, esto es un tutorial.",
       },
       {
-        say: `Lo has conseguido. Ya sabes reclutar, mover, esconderte, coger gnomos, lanzarlos, estamparlos, atacar, talar, mejorar y conquistar. ¡Enhorabuena! Oficialmente ya eres todo un asesino de gnomos... aunque me parta lo poco que me queda de corazón o de lomo, según transcurra la partida. Y recuerda: si algún gnomo te mira raro, es que ya conoce tus intenciones.`,
+        say: `Lo has conseguido. Ya sabes reclutar, mover, esconderte, coger gnomos, lanzarlos, estamparlos, atacar, talar, abrir cofres de reliquias, mejorar y conquistar. ¡Enhorabuena! Oficialmente ya eres todo un asesino de gnomos... aunque me parta lo poco que me queda de corazón o de lomo, según transcurra la partida. Y recuerda: si algún gnomo te mira raro, es que ya conoce tus intenciones.`,
         button: "TERMINAR TUTORIAL",
         final: true,
       },

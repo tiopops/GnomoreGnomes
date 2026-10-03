@@ -58,9 +58,9 @@ const Account = {
     if (this._overlay) return;
     const overlay = document.createElement("div");
     overlay.className = "settings-overlay account-overlay";
-    // Crear cuenta: solo se cierra con la X (así no se pierde lo escrito por un clic fuera).
+    // Entrar, crear cuenta y recuperar: solo se cierran con la X (así no se pierde lo escrito por un clic fuera).
     overlay.addEventListener("click", () => {
-      if (this._mode === "register" && !this._user) return;
+      if (!this._user) return; // sin sesión (entrar / crear cuenta / recuperar): solo se cierra con la X
       this.close();
     });
     const panel = document.createElement("div");

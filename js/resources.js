@@ -597,7 +597,8 @@ const Resources = {
   // aparece sobre él y, si la abre el jugador, viaja hasta la mochila.
   async _openChest(node, unit) {
     node.opened = true;
-    const relicId = Relics.randomId();
+    // En el tutorial siempre toca la misma reliquia (Botas TrotaMontes), para poder explicarla.
+    const relicId = typeof Tutorial !== "undefined" && Tutorial.active ? "trotamontes" : Relics.randomId();
     const relicDef = RELIC_TYPES[relicId];
     if (typeof SpriteQuality !== "undefined") SpriteQuality.register(node.spriteEl, CHEST_SPRITE_OPEN);
     else node.spriteEl.src = CHEST_SPRITE_OPEN;
