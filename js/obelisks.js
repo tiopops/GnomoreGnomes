@@ -954,14 +954,20 @@ const Obelisks = {
     const raceOf = (team) => (typeof RACES !== "undefined" ? RACES.find((r) => r.id === this._raceIds[team]) : null);
     const winRace = draw ? null : raceOf(winnerTeam);
     const winName = winRace ? I18N.t(winRace.nameKey).toUpperCase() : "";
-    const title = draw ? "EMPATE" : winName ? `¡GANA EL ${winName}!` : won ? "¡VICTORIA!" : "DERROTA";
+    const teamName = winName.replace(/^EQUIPO\s+/, "");
+    const titleHtml = draw
+      ? "EMPATE"
+      : winName
+        ? `<small>GANA EL EQUIPO</small><span class="gameover-team">${teamName}</span>`
+        : won ? "¡VICTORIA!" : "DERROTA";
+    const tone = winRace ? winRace.titleColor || winRace.color : "";
     let msg;
     if (reason === "turnLimit") {
       msg = draw
         ? `Se acabaron los ${TURNS_MAX_ROUNDS} turnos y todo sigue exactamente igualado.`
         : `Se acabaron los ${TURNS_MAX_ROUNDS} turnos — gana quien más resistió.`;
     } else {
-      msg = (won ? "¡VICTORIA! " : "DERROTA. ") + (won ? (Teams.rivalCount > 1 ? "Has destruido todos los Obeliscos rivales." : "Has destruido el Obelisco Ancestral rival.") : "Tu Obelisco Ancestral ha sido destruido.");
+      msg = (won ? (Teams.rivalCount > 1 ? "Has destruido todos los Obeliscos rivales." : "Has destruido el Obelisco Ancestral rival.") : "Tu Obelisco Ancestral ha sido destruido.");
     }
 
     // Logo del equipo ganador (el de ambos en un empate) y jingle del resultado.
@@ -985,7 +991,8 @@ const Obelisks = {
       <div class="p5-banner obelisk-gameover-panel ${variantClass}">
         <div class="obelisk-gameover-panel__logos">${logos}</div>
         <i class="ph ${icon} obelisk-gameover-panel__icon"></i>
-        <div class="p5-banner__label obelisk-gameover-panel__title">${title}</div>
+        ${draw ? "" : `<div class="obelisk-gameover-kicker">${won ? "¡VICTORIA!" : "DERROTA"}</div>`}
+        <div class="p5-banner__label obelisk-gameover-panel__title">${titleHtml}</div>
         <div class="obelisk-gameover-panel__msg">${msg}</div>
         <div class="obelisk-gameover-stats">
           <div class="obelisk-gameover-stats__row obelisk-gameover-stats__row--header obelisk-gameover-stats__row--n" style="grid-template-columns: 62px 1fr repeat(${Teams.rivalCount}, 62px)">
@@ -1011,6 +1018,7 @@ const Obelisks = {
         screenHistory.push("main-menu");
       }
     });
+    if (tone) overlay.querySelector(".obelisk-gameover-panel").style.setProperty("--go-tone", tone);
     document.body.appendChild(overlay);
     this._gameOverEl = overlay;
     requestAnimationFrame(() => overlay.classList.add("obelisk-gameover-overlay--visible"));
