@@ -29,7 +29,7 @@ const RELIC_TYPES = {
     iconUrl: "assets/iconos/reliquia_ferognomas.png",
     durability: 5,
     description:
-      "Perfume hecho a base de feromonas de barba gnoma. Mientras lo lleves en la mochila, los gnomos no huyen al verte, y los que estén a 3 casillas o menos de una unidad tuya se acercarán a ella antes de empezar tu turno. Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.",
+      "Perfume hecho a base de feromonas de barba gnoma. Mientras lo lleves en la mochila, los gnomos no huyen al verte, y los que estén a 3 casillas o menos de una unidad tuya se acercarán a ella antes de empezar tu turno. Cada perfume extra multiplica el radio (2 perfumes = 6 casillas, 3 = 9...). Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.",
   },
 };
 
@@ -68,8 +68,15 @@ const Relics = {
   },
 
   // FeroGnomas: los gnomos no huyen y se acercan a las unidades del equipo.
+  feroCount(team) {
+    return this.list(team).filter((r) => r.relicId === "ferognomas" && r.durability > 0).length;
+  },
   hasFeroGnomas(team) {
-    return this.list(team).some((r) => r.relicId === "ferognomas" && r.durability > 0);
+    return this.feroCount(team) > 0;
+  },
+  // Radio de olfato: 3 casillas por cada perfume (2 perfumes = 6, 3 = 9...).
+  feroRadius(team) {
+    return 3 * this.feroCount(team);
   },
 
   // AcariciaGnomos: +3 al daño (puntos) de cada golpe a un gnomo.

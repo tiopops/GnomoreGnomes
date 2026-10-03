@@ -1199,11 +1199,11 @@ function createGnomeInstance() {
     },
 
     // FeroGnomas: camina hacia `unit` hasta quedar a su lado (máx. 3 pasos).
-    async _approachUnit(unit) {
+    async _approachUnit(unit, maxSteps = 3) {
       const path = [];
       let r = this.row;
       let c = this.col;
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < maxSteps; i++) {
         if (Math.max(Math.abs(unit.row - r), Math.abs(unit.col - c)) <= 1) break;
         const step = this._bestFleeStep(r, c, Math.sign(unit.row - r), Math.sign(unit.col - c));
         if (!step) break;
@@ -1955,6 +1955,7 @@ const Gnome = {
   // suelto a 3 casillas o menos de una unidad suya se acerca a ella.
   async _attractToTeam(team) {
     if (typeof Relics === "undefined" || !team || !Relics.hasFeroGnomas(team)) return;
+    const radius = Relics.feroRadius(team);
     const moves = [];
     this.list
       .filter((g) => !g.heldBy && !g.busy && g.el && !g.isDecoy)
@@ -1964,10 +1965,10 @@ const Gnome = {
         Units.list.forEach((u) => {
           if (u.team !== team) return;
           const d = Math.max(Math.abs(u.row - g.row), Math.abs(u.col - g.col));
-          if (d <= 3 && d < bestD) { best = u; bestD = d; }
+          if (d <= radius && d < bestD) { best = u; bestD = d; }
         });
         if (!best || bestD <= 1) return;
-        moves.push(g._approachUnit(best));
+        moves.push(g._approachUnit(best, radius));
       });
     await Promise.all(moves);
   },
