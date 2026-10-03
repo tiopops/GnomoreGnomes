@@ -562,6 +562,10 @@ const Turns = {
       let bought = true;
       while (bought) bought = Shops.attemptAutoBuy(team);
     }
+    if (typeof Skills !== "undefined") {
+      let bought = true;
+      while (bought) bought = Skills.attemptAutoBuy(team);
+    }
   },
 
   // Ejecuta UNA acción para `unit` según la prioridad de arriba. Devuelve

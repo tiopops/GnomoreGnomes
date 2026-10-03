@@ -370,6 +370,20 @@ const Skills = {
     return true;
   },
 
+  // La IA invierte la gloria sobrante en habilidades (se llama al final de su
+  // turno, después de reclutar y comprar en la tienda). Prefiere terminar la
+  // que ya tiene empezada; si no, la de menor nivel. Devuelve true si compró.
+  attemptAutoBuy(team) {
+    const options = SKILL_DEFS.filter((d) => this.canBuy(team, d).ok);
+    if (options.length === 0) return false;
+    const partial = options.filter((d) => this.rank(team, d.id) > 0);
+    const pool = partial.length ? partial : options;
+    const minLevel = Math.min(...pool.map((d) => d.level));
+    const best = pool.filter((d) => d.level === minLevel);
+    const pick = best[Math.floor(Math.random() * best.length)];
+    return this.buy(team, pick.id);
+  },
+
   _applyPurchase(team, id) {
     if (id === "centinela") this._refreshPerception(team);
     if (id === "refuerzos" && typeof Obelisks !== "undefined") Obelisks.refreshAll();
