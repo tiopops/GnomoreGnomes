@@ -345,7 +345,7 @@ const Tutorial = {
         },
       },
       {
-        say: `Para dar instrucciones a una unidad hay que seleccionarlo: pulsa sobre uno de tus aliados. Con cariño, no vayas a clavarle esa flecha puntiaguda voladora en el ojo.`,
+        say: `Para dar instrucciones a una unidad hay que seleccionarla: pulsa sobre uno de tus aliados. Con cariño, no vayas a clavarle esa flecha puntiaguda voladora en el ojo.`,
         mission: "Selecciona una unidad",
         target: () => T._unitEl(T._my()[0]),
         allow: () => T._my().map((u) => T._unitEl(u)),
@@ -854,6 +854,7 @@ const Tutorial = {
   },
 
   _typeText(text) {
+    if (typeof I18N !== "undefined" && I18N.tr) text = I18N.tr(text);
     clearTimeout(this._typeTimer);
     const el = this._els.text;
     let n = 0;
