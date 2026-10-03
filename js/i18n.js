@@ -8,7 +8,7 @@ const STRINGS = {
     menu_new_game: "Nueva Partida",
     menu_tutorial: "Tutorial",
     menu_resume_game: "Reanudar Partida",
-    menu_multiplayer: "Multijugador (próximamente)",
+    menu_multiplayer: "Multijugador",
     menu_footer: "Prototipo en construcción",
 
     back: "Volver",
@@ -131,7 +131,7 @@ const STRINGS = {
     menu_new_game: "New Game",
     menu_tutorial: "Tutorial",
     menu_resume_game: "Resume Game",
-    menu_multiplayer: "Multiplayer (coming soon)",
+    menu_multiplayer: "Multiplayer",
     menu_footer: "Prototype under construction",
 
     back: "Back",

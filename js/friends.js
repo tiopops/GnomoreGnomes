@@ -36,6 +36,14 @@ const Friends = {
   init() {
     this._ensureButton();
     this._ensurePopup();
+    // Botón MULTIJUGADOR del menú principal: abre los amigos (o la cuenta si no hay sesión).
+    const mp = document.getElementById("btn-multiplayer");
+    if (mp)
+      mp.addEventListener("click", () => {
+        if (typeof SFX !== "undefined") SFX.click();
+        if (this._uid) this.open();
+        else Account.open();
+      });
     document.addEventListener("gg:authchange", (e) => this._onAuth(e.detail && e.detail.user, e.detail && e.detail.profile));
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) this._heartbeat();
