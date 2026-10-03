@@ -70,7 +70,7 @@ const Tutorial = {
       if (typeof Preload !== "undefined") Preload.finish();
       this._buildUI();
       // Pequeña pausa para que acabe el fundido y el revelado de niebla.
-      setTimeout(() => this._goto(0), 1700);
+      setTimeout(() => this._goto(0), 900);
     } catch (err) {
       this.active = false;
       console.error("[Tutorial]", err);
@@ -165,12 +165,11 @@ const Tutorial = {
     }
     if (typeof Glory !== "undefined") Glory.points.player = 60;
     if (typeof Glory !== "undefined" && Glory.refresh) Glory.refresh();
-    // Revela toda la zona de práctica.
+    // Revela toda la zona de práctica YA (durante la pantalla de carga, sin
+    // animación): así al abrirse el tutorial no hay un "ZAS" de niebla.
     if (typeof Fog !== "undefined" && Fog.revealAround) {
-      setTimeout(() => {
-        Fog.revealAround(o.row, o.col, 8);
-        Fog.applyVisibility();
-      }, 2200);
+      Fog.revealAround(o.row, o.col, 8, true);
+      Fog.applyVisibility();
     }
     this._ctx.villageId = v && v.id;
   },

@@ -322,12 +322,14 @@ const Fog = {
   // hace nada con las que ya estaban reveladas — idempotente, se puede
   // llamar tantas veces como haga falta sin animación repetida ni coste
   // extra en las que no cambian.
-  revealAround(row, col, radius) {
+  // `instant`: sin animación de disipado (la niebla desaparece ya, sin 'ZAS' visible;
+  // lo usa el tutorial para dejar su escenario despejado DURANTE la pantalla de carga).
+  revealAround(row, col, radius, instant) {
     if (!this.revealedGrid) return;
     for (let r = Math.max(0, row - radius); r <= Math.min(this.size - 1, row + radius); r++) {
       for (let c = Math.max(0, col - radius); c <= Math.min(this.size - 1, col + radius); c++) {
         if (Math.max(Math.abs(r - row), Math.abs(c - col)) > radius) continue;
-        this._reveal(r, c);
+        this._reveal(r, c, instant);
       }
     }
     // Puede que este revelado acabe de dejar a la vista a algún rival o
@@ -336,12 +338,18 @@ const Fog = {
     this.applyVisibility();
   },
 
-  _reveal(row, col) {
+  _reveal(row, col, instant) {
     if (this.revealedGrid[row][col]) return;
     this.revealedGrid[row][col] = true;
     this._revealedPositions.push({ row, col });
     const fogEl = this._fogEls.get(`${row},${col}`);
     if (!fogEl) return;
+    if (instant) {
+      fogEl.classList.add("tile__fog--revealed");
+      fogEl.style.display = "none";
+      if (typeof TerrainMap !== "undefined") TerrainMap.revealTile(row, col);
+      return;
+    }
     // BUG encontrado y corregido: mapgen.js pone a cada niebla un
     // animation-delay NEGATIVO aleatorio inline (0 a -9s) para desincronizar
     // la respiración de reposo (fog-idle-drift, 8s de ciclo) entre losetas.
