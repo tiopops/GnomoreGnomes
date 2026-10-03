@@ -13,10 +13,12 @@
    (Tutorial.active) en turns.js (rival pasivo) y gnome.js (el gnomo del
    tutorial no huye / los pases no fallan). */
 
-// Retrato del gnomo guía. De momento reutiliza el sprite de gnomo del juego;
-// cuando exista el dibujo propio basta con soltarlo en esta ruta.
-const TUTORIAL_GUIDE_IMG = "assets/tutorial/gnomo_guia.png";
-const TUTORIAL_GUIDE_FALLBACK = "assets/equipos/MushboomForest/gnomo_grita.png";
+// Retratos de Nizak: mismo lienzo y escala los tres, se cambian según el diálogo.
+const TUTORIAL_GUIDE_IMGS = {
+  normal: "assets/tutorial/nizak_normal.png",
+  grunon: "assets/tutorial/nizak_grunon.png",
+  aplaude: "assets/tutorial/nizak_aplaude.png",
+};
 const TUTORIAL_GUIDE_NAME = "Nizak";
 
 const Tutorial = {
@@ -64,7 +66,12 @@ const Tutorial = {
     this.stepIndex = -1;
     clearInterval(this._timer);
     clearTimeout(this._typeTimer);
+    clearTimeout(this._okTimer);
+    clearTimeout(this._talkTimer);
     cancelAnimationFrame(this._raf);
+    cancelAnimationFrame(this._holdRaf);
+    this._hold = null;
+    this._removeGuard();
     Object.values(this._els).forEach((e) => e && e.remove());
     this._els = {};
     if (typeof refreshResumeButton === "function") refreshResumeButton();
@@ -167,29 +174,9 @@ const Tutorial = {
   _anyMarker(cls) {
     return document.querySelector(`.board-marker.${cls}`);
   },
-  // Zona clicable del Obelisco (su base, siempre seleccionable): se elige
-  // el lado que no tape ninguna unidad que esté delante.
+  // El Obelisco: el sprite entero (la señal se centra en él).
   _obTop() {
-    const T = this;
-    const ob = T._ob().el;
-    return {
-      get isConnected() {
-        return ob.isConnected;
-      },
-      getBoundingClientRect() {
-        const hit = ob.querySelector(".obelisk__base-hit") || ob.querySelector(".obelisk__sprite") || ob;
-        const r = hit.getBoundingClientRect();
-        const q = r.width / 4;
-        const cands = [
-          { left: r.left, right: r.left + q },
-          { left: r.right - q, right: r.right },
-          { left: r.left + q, right: r.right - q },
-        ];
-        const units = Units.list.map((u) => (u.spriteEl || u.el).getBoundingClientRect());
-        const free = cands.find((c) => !units.some((u) => u.left < c.right && u.right > c.left && u.bottom > r.top && u.top < r.bottom)) || cands[2];
-        return { left: free.left, right: free.right, width: free.right - free.left, top: r.top, bottom: r.bottom, height: r.height, x: free.left, y: r.top };
-      },
-    };
+    return this._ob().el.querySelector(".obelisk__sprite") || this._ob().el;
   },
   // Hueco de TruenoEspora en el popup de reclutar.
   _trueno() {
@@ -229,6 +216,23 @@ const Tutorial = {
   },
 
   // ---------- Pasos ----------
+  // Estado de ánimo de Nizak en el diálogo de cada paso (la réplica al
+  // completar la misión siempre es "aplaude", con desinterés).
+  _MOODS: ["grunon", "normal", "normal", "normal", "grunon", "normal", "normal", "grunon", "normal", "grunon", "normal", "grunon", "grunon", "normal", "normal", "normal", "grunon", "normal", "normal", "grunon", "aplaude"],
+
+  _setMood(m) {
+    const P = this._els.portrait;
+    if (!P) return;
+    P.querySelectorAll(".tut-portrait__img").forEach((img) => {
+      const on = img.dataset.mood === m;
+      if (on && !img.classList.contains("tut-portrait__img--on")) {
+        img.classList.remove("tut-portrait__img--on");
+        void img.offsetWidth;
+      }
+      img.classList.toggle("tut-portrait__img--on", on);
+    });
+  },
+
   _steps() {
     const T = this;
     return [
@@ -267,14 +271,15 @@ const Tutorial = {
       {
         say: `Las casillas destacadas te indican los sitios disponibles donde colocarlo junto al Obelisco. Elige una y tu unidad aparecerá ahí, como un champiñón, pero con peor carácter.`,
         mission: "Elige una casilla para colocarlo",
-        target: () => T._anyMarker("obelisk-placement-marker"),
+        target: () => T._placeMarker(),
         done: () => T._my().length >= 1,
         ok: "¡Ya tienes un compañero leal! A ver si la lealtad le dura mucho cuando empiece a salpicar la sangre.",
         onStart: () => T._refill(),
       },
       {
         say: `Antes de seguir, un truco útil: mantén pulsada la cara de tu personaje, abajo a la izquierda, y verás todas sus estadísticas. Con las unidades enemigas funciona igual: selecciónalas y mira de qué pasta están hechas… antes de que te hagan pasta a ti.`,
-        mission: "Mantén pulsada su cara",
+        mission: "Mantén pulsada su cara (3 s)",
+        hold: true,
         onStart: () => {
           T._ctx.infoSeen = false;
         },
@@ -284,23 +289,14 @@ const Tutorial = {
           if (Units.selectedId !== u.id) return T._unitEl(u);
           return document.getElementById("unit-info-btn") || T._unitEl(u);
         },
-        done: () => {
-          // Cuenta cuando la ficha lleva abierta (mantenida) medio segundo.
-          if (typeof UnitInfo !== "undefined" && UnitInfo.overlayEl) {
-            T._ctx.infoOpenAt = T._ctx.infoOpenAt || performance.now();
-            if (performance.now() - T._ctx.infoOpenAt > 500) T._ctx.infoSeen = true;
-          } else {
-            T._ctx.infoOpenAt = 0;
-          }
-          return !!T._ctx.infoSeen;
-        },
+        done: () => !!T._ctx.infoSeen,
         ok: "Ahora sabes cuánto aguanta, cuánto pega y cuánto le queda. Información de oro, y gratis.",
       },
       {
         say: `Uno solo se aburre, y yo me aburro con él. Recluta otro igual: Obelisco, Reclutar, personaje, RECLUTAR y casilla. Necesitarás a alguien a quien lanzar cosas (sí, cosas: yo soy una de ellas).`,
         mission: "Recluta un segundo personaje",
         target: () => {
-          if (Obelisks._pendingRecruit) return T._anyMarker("obelisk-placement-marker");
+          if (Obelisks._pendingRecruit) return T._placeMarker();
           if (Obelisks._overlayEl) {
             if (Obelisks._selectedTypeId) return Obelisks._recruitBtnEl;
             return T._trueno();
@@ -310,12 +306,17 @@ const Tutorial = {
         },
         done: () => T._my().length >= 2,
         ok: "Dos pardillos mejor que uno. Así la culpa y los remordimientos se repartirán.",
-        onStart: () => T._refill(),
+        onStart: () => {
+          T._refill();
+          // Sin unidad seleccionada para que sus círculos no tapen el Obelisco.
+          if (Units.selectedId) Units.deselect();
+        },
       },
       {
         say: `Para dar instrucciones a un personaje hay que seleccionarlo: pulsa sobre uno de tus aliados. Con cariño, no vayas a clavarle esa flecha puntiaguda voladora en el ojo.`,
         mission: "Selecciona un personaje",
         target: () => T._unitEl(T._my()[0]),
+        allow: () => T._my().map((u) => T._unitEl(u)),
         done: () => !!Units.selectedId,
         ok: "¡Eso es! Qué sensación de poder, ¿verdad? Pues no te acostumbres.",
         onStart: () => T._refill(),
@@ -345,6 +346,10 @@ const Tutorial = {
           );
           return ms[0];
         },
+        allow: () => [
+          T._unitEl(Units.list.find((x) => x.id === T._ctx.moverId)),
+          ...document.querySelectorAll(".board-marker.range-marker:not(.obelisk-placement-marker)"),
+        ],
         done: () => {
           const u = Units.list.find((x) => x.id === T._ctx.moverId);
           return u && (u.row !== T._ctx.moverFrom.row || u.col !== T._ctx.moverFrom.col);
@@ -451,7 +456,7 @@ const Tutorial = {
             T._refill();
             const free = T._my().find((u) => !Gnome.isHeldBy(u.id)) || T._my()[0];
             T._ctx.fighterId = free && free.id;
-            const spot = T._spotAtNear(free, 1);
+            const spot = T._findSpot(free, { minD: 2, maxD: 3, side: "center" });
             const enemyType = Object.keys(UNIT_TYPES).find((k) => UNIT_TYPES[k].raceId !== "mushboom_forest");
             if (spot && enemyType) {
               const d = Units.spawnUnit({ typeId: enemyType, row: spot.row, col: spot.col, team: "enemy" });
@@ -470,8 +475,8 @@ const Tutorial = {
           if (!f) return null;
           if (!d) return T._unitEl(f);
           // Si el luchador se desplazó, el rival de práctica se recoloca a su lado.
-          if (!f.moving && Math.max(Math.abs(f.row - d.row), Math.abs(f.col - d.col)) > 1) {
-            const spot = T._spotAtNear(f, 1);
+          if (!f.moving && Math.max(Math.abs(f.row - d.row), Math.abs(f.col - d.col)) > 3) {
+            const spot = T._findSpot(f, { minD: 2, maxD: 3, side: "center" });
             if (spot) {
               d.row = spot.row;
               d.col = spot.col;
@@ -481,6 +486,7 @@ const Tutorial = {
           }
           return T._unitThen(f, () => T._marker("attack-marker", d.row, d.col)) || T._unitEl(d);
         },
+        refillFor: () => T._ctx.fighterId,
         done: () => {
           const d = Units.list.find((u) => u.id === T._ctx.dummyId);
           return !d || d.hp < T._ctx.dummyHp;
@@ -494,7 +500,7 @@ const Tutorial = {
           T._refill();
           const f = T._my().find((u) => !Gnome.isHeldBy(u.id)) || T._my()[0];
           T._ctx.cutterId = f && f.id;
-          const spot = T._spotAtNear(f, 1);
+          const spot = T._findSpot(f, { minD: 2, maxD: 3, side: "center", minOb: 3 });
           if (spot && typeof Resources !== "undefined") {
             T._ctx.pine = Resources._create("pino", spot.row, spot.col);
             if (typeof Fog !== "undefined") Fog.applyVisibility();
@@ -507,6 +513,7 @@ const Tutorial = {
           if (!p || !Resources.list.includes(p)) return T._unitEl(f);
           return T._unitThen(f, () => T._marker("resource-node-attack-marker", p.row, p.col)) || T._unitEl(p);
         },
+        refillFor: () => T._ctx.cutterId,
         done: () => (Resources.counts.madera || 0) > 0,
         ok: "¡Madera conseguida! Ya puedes fabricarme un ataúd... o una mejora de armadura, que queda más elegante. En la armería de tu obelisco tienes las mejoras de equipo.",
       },
@@ -519,7 +526,7 @@ const Tutorial = {
           T._ctx.captorId = h && h.id;
           // El tótem se acerca al portador para que baste un clic de estampada.
           const v = T._village();
-          const spot = h && v && T._spotAtNear(h, 1);
+          const spot = h && v && T._findSpot(h, { minD: 2, maxD: 3, side: "center", minOb: 3 });
           if (v && spot) {
             v.row = spot.row;
             v.col = spot.col;
@@ -546,6 +553,7 @@ const Tutorial = {
           }
           return v.el.querySelector(".village__sprite") || v.el;
         },
+        refillFor: () => T._ctx.captorId,
         done: () => {
           const v = T._village();
           return v && v.owner === "player";
@@ -557,16 +565,6 @@ const Tutorial = {
         mission: "Abre Habilidades y ciérrala",
         onStart: () => {
           T._ctx.skOpened = false;
-          // El tótem conquistado se aparta del Obelisco para que nada tape el clic.
-          const v = T._village();
-          const o = T._ob();
-          const free = [5, 6, 4, 7].map((d) => T._spotAt(d)).find((s) => s && Math.max(Math.abs(s.row - o.row), Math.abs(s.col - o.col)) >= 3);
-          if (v && free) {
-            v.row = free.row;
-            v.col = free.col;
-            Villages._placeInstant(v);
-            if (typeof Fog !== "undefined") Fog.applyVisibility();
-          }
         },
         ...T._openClose("skOpened", () => Obelisks._abilitiesOverlayEl, ".obelisk__menu-btn--abilities"),
         ok: "Demasiado árbol de habilidades para tan poco bosque.",
@@ -596,6 +594,76 @@ const Tutorial = {
         final: true,
       },
     ];
+  },
+
+  // ¿Hay algo (unidad, tótem, arbusto, recurso, gnomo, Obelisco...) a menos de `rad` casillas?
+  _entityNear(r, c, rad) {
+    const near = (e) => e && Math.max(Math.abs(e.row - r), Math.abs(e.col - c)) <= rad;
+    const lists = [
+      Units.list,
+      typeof Villages !== "undefined" ? Villages.list : [],
+      typeof Bushes !== "undefined" ? Bushes.list : [],
+      typeof Resources !== "undefined" ? Resources.list : [],
+      typeof Gnome !== "undefined" ? Gnome.list : [],
+      typeof Obelisks !== "undefined" ? Obelisks.list : [],
+      typeof Shops !== "undefined" ? Shops.list : [],
+    ];
+    return lists.some((l) => (l || []).some(near));
+  },
+
+  // Loseta libre a `minD`..`maxD` casillas de `origin`, hacia la derecha (o
+  // abajo) en pantalla y con aire alrededor: nada de apelotonar.
+  _findSpot(origin, { minD = 2, maxD = 3, side = "right", minOb = 2 } = {}) {
+    if (!origin) return null;
+    const ob = this._ob();
+    const cheb = (a, b, c, d) => Math.max(Math.abs(a - c), Math.abs(b - d));
+    let best = null;
+    for (const rad of [1, 0]) {
+      for (let r = 0; r < Units.boardSize; r++) {
+        for (let c = 0; c < Units.boardSize; c++) {
+          const d = cheb(r, c, origin.row, origin.col);
+          if (d < minD || d > maxD) continue;
+          if (ob && cheb(r, c, ob.row, ob.col) < minOb) continue;
+          if (!this._tileOk(r, c)) continue;
+          if (this._entityNear(r, c, rad) && rad > 0) continue;
+          if (rad === 0 && this._entityNear(r, c, 0)) continue;
+          const p = getTileCenter(r, c, Units.boardSize);
+          // "center": hacia el centro del mapa (el Obelisco puede estar en cualquier lado).
+          const mid = getTileCenter(Math.floor(Units.boardSize / 2), Math.floor(Units.boardSize / 2), Units.boardSize);
+          const score = (side === "below" ? p.y : side === "right" ? p.x : -Math.hypot(p.x - mid.x, p.y - mid.y)) - d * 4;
+          if (!best || score > best.score) best = { row: r, col: c, score };
+        }
+      }
+      if (best) return best;
+    }
+    return null;
+  },
+
+  // Casilla de colocación destacada, siempre bien visible (el Obelisco puede
+  // estar en cualquier parte del mapa): nunca detrás del Obelisco, en el lado
+  // con más sitio; la 2.ª, la de más abajo (por delante del Obelisco).
+  _placeMarker() {
+    const ms = [...document.querySelectorAll(".board-marker.obelisk-placement-marker")];
+    if (!ms.length) return null;
+    const rc = (m) => {
+      const r = m.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    };
+    const sp = (this._ob().el.querySelector(".obelisk__sprite") || this._ob().el).getBoundingClientRect();
+    const ox = sp.left + sp.width / 2;
+    // Tapada = dentro del recuadro del sprite y por encima de su base.
+    const covered = (m) => {
+      const c = rc(m);
+      return c.x > sp.left + 30 && c.x < sp.right - 30 && c.y < sp.bottom - 40;
+    };
+    const free = ms.filter((m) => !covered(m));
+    const pool = free.length ? free : ms;
+    if (this._my().length === 0) {
+      // Lado con más espacio hacia el centro de la pantalla.
+      const dir = ox < window.innerWidth / 2 ? 1 : -1;
+      return pool.sort((a, b) => (rc(b).x - rc(a).x) * dir)[0];
+    }
+    return pool.sort((a, b) => rc(b).y - rc(a).y)[0];
   },
 
   _spotAtNear(unit, maxD = 2) {
@@ -628,6 +696,13 @@ const Tutorial = {
         try {
           ok = s.done();
         } catch (e) {}
+        // Pasos que gastan varios turnos de acciones: se recargan solas.
+        if (!ok && s.refillFor) {
+          try {
+            const u = Units.list.find((x) => x.id === s.refillFor());
+            if (u && Turns.remainingActions(u) <= 0 && !u.moving && !(typeof Gnome !== "undefined" && Gnome.list.some((g) => g.busy))) this._refill();
+          } catch (e) {}
+        }
         if (ok) {
           clearInterval(this._timer);
           this._onDone(s, i);
@@ -637,16 +712,25 @@ const Tutorial = {
   },
 
   _onDone(s, i) {
+    clearTimeout(this._okTimer);
     this._ctx.pointerTarget = null;
     if (typeof SFX !== "undefined") SFX.passSuccess && SFX.passSuccess();
     const m = this._els.mission;
     if (m) m.classList.add("tut-mission--done");
-    if (s.ok) this._typeText(s.ok);
-    setTimeout(() => this._goto(i + 1), s.ok ? 1500 : 400);
+    if (s.ok) {
+      this._setMood("aplaude");
+      this._typeText(s.ok);
+    }
+    // Tiempo para leer la réplica: la escritura + ~65 ms por carácter, mínimo 3,2 s.
+    const wait = s.ok ? Math.max(3200, 900 + s.ok.length * 65) : 400;
+    this._okTimer = setTimeout(() => {
+      if (this.active) this._goto(i + 1);
+    }, wait);
   },
 
   _renderStep(s, i, total) {
     const E = this._els;
+    this._setMood(this._MOODS[i] || "normal");
     this._typeText(s.say);
     E.mission.classList.remove("tut-mission--done");
     E.mission.style.display = s.mission ? "" : "none";
@@ -686,11 +770,147 @@ const Tutorial = {
     const tick = () => {
       n += 2;
       el.textContent = text.slice(0, n);
-      if (n < text.length) this._typeTimer = setTimeout(tick, 22);
+      // Murmullo suave y agradable mientras habla (una nota cada pocas letras).
+      if (typeof SFX !== "undefined" && SFX.talk && (n / 2) % 2 === 1 && text[n - 1] !== " ") SFX.talk();
+      if (n < text.length) this._typeTimer = setTimeout(tick, 24);
     };
     tick();
     this._els.portrait.classList.add("tut-portrait--talk");
-    setTimeout(() => this._els.portrait && this._els.portrait.classList.remove("tut-portrait--talk"), Math.min(2500, text.length * 11));
+    clearTimeout(this._talkTimer);
+    this._talkTimer = setTimeout(() => this._els.portrait && this._els.portrait.classList.remove("tut-portrait--talk"), Math.min(2800, text.length * 12));
+  },
+
+  // Texto puntual de Nizak fuera del guion (p. ej. "inténtalo otra vez").
+  _say(text, mood) {
+    this._setMood(mood || "grunon");
+    this._typeText(text);
+  },
+
+  // ---------- Bloqueo: solo se puede hacer lo que pide la misión ----------
+  _allowedEls() {
+    const s = this._ctx.step;
+    let list = [];
+    try {
+      if (s && s.allow) list = s.allow();
+      else if (this._ctx.pointerTarget) list = [this._ctx.pointerTarget()];
+    } catch (e) {}
+    return (Array.isArray(list) ? list : [list]).filter(Boolean);
+  },
+
+  _installGuard() {
+    if (this._guard) return;
+    const handler = (e) => {
+      if (!this.active || this._bypass) return;
+      const t = e.target;
+      if (!t || !t.closest) return;
+      // Interfaz propia del tutorial y ajustes: siempre disponibles.
+      if (t.closest(".tut-panel, .tut-skip, .tut-hold, [class*='settings']")) return;
+      const x = e.clientX;
+      const y = e.clientY;
+      const obEl = this._ob() && this._ob().el;
+      const obSprite = obEl && obEl.querySelector(".obelisk__sprite");
+      for (const a of this._allowedEls()) {
+        try {
+          if (a.contains && a.contains(t)) return;
+          const u = a.closest && a.closest(".unit");
+          if (u && u.contains(t)) return;
+          const r = a.getBoundingClientRect();
+          if (r.width && x >= r.left - 4 && x <= r.right + 4 && y >= r.top - 4 && y <= r.bottom + 4) {
+            // Clic sobre el Obelisco señalado aunque una unidad (o el suelo) quede
+            // justo encima: se redirige al Obelisco para que nunca falle.
+            if (e.type === "click" && a === obSprite && !obEl.contains(t)) {
+              e.stopPropagation();
+              e.preventDefault();
+              this._bypass = true;
+              try {
+                obEl.click();
+              } finally {
+                this._bypass = false;
+              }
+              return;
+            }
+            return;
+          }
+        } catch (err) {}
+      }
+      // Arrastrar el mapa (pulsar sobre el suelo) sigue permitido.
+      if (e.type !== "click" && e.type !== "dblclick" && !t.closest("button, .board-marker, .unit, .backpack-overlay, .obelisk")) return;
+      e.stopPropagation();
+      e.preventDefault();
+    };
+    const types = ["click", "dblclick", "pointerdown", "mousedown"];
+    types.forEach((ty) => document.addEventListener(ty, handler, true));
+    this._guard = { handler, types };
+  },
+
+  _removeGuard() {
+    if (!this._guard) return;
+    this._guard.types.forEach((ty) => document.removeEventListener(ty, this._guard.handler, true));
+    this._guard = null;
+  },
+
+  // ---------- Contador: mantener pulsada la cara (3 s) ----------
+  _installHold() {
+    if (this._holdInstalled) return;
+    this._holdInstalled = true;
+    document.addEventListener(
+      "pointerdown",
+      (e) => {
+        const s = this._ctx && this._ctx.step;
+        if (!this.active || !s || !s.hold || this._ctx.infoSeen) return;
+        if (e.target && e.target.closest && e.target.closest("#unit-info-btn")) this._holdStart();
+      },
+      true
+    );
+    const end = () => this._holdEnd();
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+  },
+
+  _holdStart() {
+    const H = this._els.hold;
+    if (!H || this._hold) return;
+    this._hold = { t0: performance.now() };
+    H.classList.remove("tut-hold--fail");
+    H.classList.add("tut-hold--on");
+    this._els.holdLabel.textContent = "Sigue pulsando";
+    const loop = () => {
+      if (!this._hold || !this.active) return;
+      const el = performance.now() - this._hold.t0;
+      const left = Math.max(0, 3000 - el);
+      this._els.holdNum.textContent = String(Math.ceil(left / 1000) || 0);
+      this._els.holdFill.style.width = `${Math.min(100, (el / 3000) * 100)}%`;
+      if (el >= 3000) {
+        this._hold.ok = true;
+        this._els.holdNum.textContent = "✔";
+        this._els.holdLabel.textContent = "¡Listo!";
+        this._ctx.infoSeen = true;
+        if (typeof SFX !== "undefined") SFX.passSuccess && SFX.passSuccess();
+        setTimeout(() => this._els.hold && this._els.hold.classList.remove("tut-hold--on"), 900);
+        return;
+      }
+      this._holdRaf = requestAnimationFrame(loop);
+    };
+    this._holdRaf = requestAnimationFrame(loop);
+  },
+
+  _holdEnd() {
+    const h = this._hold;
+    if (!h) return;
+    cancelAnimationFrame(this._holdRaf);
+    this._hold = null;
+    if (h.ok) return;
+    const H = this._els.hold;
+    if (H) {
+      H.classList.add("tut-hold--fail");
+      this._els.holdLabel.textContent = "Demasiado pronto";
+      setTimeout(() => H.classList.remove("tut-hold--on", "tut-hold--fail"), 700);
+    }
+    if (typeof SFX !== "undefined") SFX.dropFail && SFX.dropFail();
+    this._say(
+      "¡Eso no ha sido ni un segundo! Mantén pulsada la cara hasta que el contador llegue a cero, sin soltar. Tranquilo, yo no tengo prisa: es lo único que me sobra.",
+      "grunon"
+    );
   },
 
   // ---------- Interfaz ----------
@@ -699,7 +919,7 @@ const Tutorial = {
     const panel = document.createElement("div");
     panel.className = "tut-panel";
     panel.innerHTML = `
-      <div class="tut-portrait"><img class="tut-portrait__img" alt="${TUTORIAL_GUIDE_NAME}"></div>
+      <div class="tut-portrait">${Object.keys(TUTORIAL_GUIDE_IMGS).map((k) => `<img class="tut-portrait__img" data-mood="${k}" src="${TUTORIAL_GUIDE_IMGS[k]}" alt="${TUTORIAL_GUIDE_NAME}">`).join("")}</div>
       <div class="tut-main">
         <div class="tut-bubble">
           <div class="tut-name">${TUTORIAL_GUIDE_NAME}</div>
@@ -715,12 +935,16 @@ const Tutorial = {
       </div>
       <button type="button" class="tut-skip">Saltar tutorial</button>`;
     document.body.appendChild(panel);
-    const img = panel.querySelector(".tut-portrait__img");
-    img.src = TUTORIAL_GUIDE_IMG;
-    img.onerror = () => {
-      img.onerror = null;
-      img.src = TUTORIAL_GUIDE_FALLBACK;
-    };
+    const hold = document.createElement("div");
+    hold.className = "tut-hold";
+    hold.innerHTML = '<span class="tut-hold__num">3</span><span class="tut-hold__label">Sigue pulsando</span><div class="tut-hold__bar"><div class="tut-hold__fill"></div></div>';
+    document.body.appendChild(hold);
+    E.hold = hold;
+    E.holdNum = hold.querySelector(".tut-hold__num");
+    E.holdLabel = hold.querySelector(".tut-hold__label");
+    E.holdFill = hold.querySelector(".tut-hold__fill");
+    this._installGuard();
+    this._installHold();
     E.panel = panel;
     E.portrait = panel.querySelector(".tut-portrait");
     E.text = panel.querySelector(".tut-text");

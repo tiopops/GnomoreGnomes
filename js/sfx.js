@@ -106,6 +106,19 @@ const SFX = {
     this.lastHoverTime = now;
     this._pluck("hover", 620, "sine", 0.09, 0.16);
   },
+  // Murmullo del guía del tutorial: notas cortas, suaves y agradables, con una
+  // ligera variación de tono para que suene a "hablar".
+  talk() {
+    const notes = [392, 440, 494, 523, 587, 494, 440];
+    const f = notes[Math.floor(Math.random() * notes.length)] * (0.97 + Math.random() * 0.06);
+    const v = this._getVoice("tut-talk", f, "sine");
+    if (v && this.ctx) {
+      try {
+        v.osc.frequency.setValueAtTime(f, this.ctx.currentTime);
+      } catch (e) {}
+    }
+    this._pluck("tut-talk", f, "sine", 0.08, 0.07);
+  },
   click() { this._pluck("click", 880, "triangle", 0.12, 0.28); },
   back() { this._pluck("back", 320, "sine", 0.1, 0.22); },
   hop() { this._pluck("hop", 520, "sine", 0.07, 0.2); },

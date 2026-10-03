@@ -199,7 +199,7 @@ const SkillsUI = {
       ` skills-node--${st}` +
       (this._selectedId === def.id ? " skills-node--selected" : "");
     btn.innerHTML =
-      `<img src="${SKILL_ICON_DIR}${def.id}.png" class="skills-node__icon" alt="">` +
+      `<img src="${SKILL_ICON_DIR}${def.id}.png?v=20261003060247" class="skills-node__icon" alt="">` +
       `<span class="skills-node__rank"><span class="skills-node__rank-num">${rank}/${def.maxRank}</span></span>` +
       (st === "maxed" ? '<i class="ph-fill ph-check-circle skills-node__check"></i>' : "") +
       (st === "blocked" ? '<i class="ph-fill ph-lock-simple skills-node__lock"></i>' : "") +
