@@ -345,8 +345,8 @@ const Tutorial = {
         },
       },
       {
-        say: `Para dar instrucciones a un personaje hay que seleccionarlo: pulsa sobre uno de tus aliados. Con cariño, no vayas a clavarle esa flecha puntiaguda voladora en el ojo.`,
-        mission: "Selecciona un personaje",
+        say: `Para dar instrucciones a una unidad hay que seleccionarlo: pulsa sobre uno de tus aliados. Con cariño, no vayas a clavarle esa flecha puntiaguda voladora en el ojo.`,
+        mission: "Selecciona una unidad",
         target: () => T._unitEl(T._my()[0]),
         allow: () => T._my().map((u) => T._unitEl(u)),
         done: () => !!Units.selectedId,
