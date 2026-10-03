@@ -556,7 +556,7 @@ const GnomOgro = {
       const damage =
         UNIT_TYPES[unit.typeId].fuerza +
         (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0) +
-        (typeof Skills !== "undefined" ? Skills.attackBonus(unit, g) : 0);
+        (typeof Skills !== "undefined" ? Skills.attackBonus(unit, g, { announce: true }) : 0);
       if (typeof Turns !== "undefined") Turns.useAction(unit);
       g.hp = Math.max(0, g.hp - damage);
       Units.updateHpBar(g);

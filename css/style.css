@@ -9344,3 +9344,13 @@ body.tut-on .settings-gear-btn--account { display: none; }
   flex-shrink: 0;
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 190, 60, 0.4));
 }
+
+/* Camaradas: +N rojo sobre el aliado que aporta daño; Codo con Codo: +1 azul sobre el que aporta aguante */
+.skill-popup--camaradas {
+  color: #ff3b3b;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7), 0 0 10px rgba(255, 59, 59, 0.55);
+}
+.skill-popup--codo {
+  color: #4aa8ff;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7), 0 0 10px rgba(74, 168, 255, 0.55);
+}

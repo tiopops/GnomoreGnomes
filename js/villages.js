@@ -100,6 +100,7 @@ const Villages = {
       if (typeof Units !== "undefined" && Units.unitAt(row, col)) continue;
       if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
       if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+      if (typeof Obelisks !== "undefined" && Obelisks.isAdjacent(row, col)) continue; // el anillo del Obelisco debe quedar libre para reclutar
       // Altar.isNear (no solo Altar.at) — el Altar da paso a un GnomOgro
       // mucho más alto que un poblado normal, ver la nota larga en
       // Altar.isNear (js/altar.js): sin este margen de 1 casilla un poblado
@@ -129,6 +130,7 @@ const Villages = {
       if (typeof Units !== "undefined" && Units.unitAt(row, col)) return false;
       if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) return false;
       if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) return false;
+      if (typeof Obelisks !== "undefined" && Obelisks.isAdjacent(row, col)) return false; // el anillo del Obelisco debe quedar libre para reclutar
       if (typeof Altar !== "undefined" && Altar.isNear(row, col)) return false;
       if (typeof Resources !== "undefined" && Resources.at(row, col)) return false;
       if (this.at(row, col)) return false;

@@ -89,6 +89,7 @@ const Bushes = {
       if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
       if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
       if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
+      if (typeof Obelisks !== "undefined" && Obelisks.isAdjacent(row, col)) continue; // el anillo del Obelisco debe quedar libre para reclutar
       if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
       if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
       if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
@@ -307,6 +308,12 @@ const Bushes = {
     [-1, 0],
     [0, -1],
     [-2, -2],
+    [-2, -1],
+    [-1, -2],
+    [-2, 0],
+    [0, -2],
+    [-1, 1],
+    [1, -1],
   ],
   _behindElsFor(bush) {
     const els = [];

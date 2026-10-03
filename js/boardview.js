@@ -646,6 +646,47 @@ const BoardView = {
     // fotograma llama a _panBy con la distancia de ESE fotograma (velocidad
     // constante en px/segundo, no en px/fotograma, para no depender de la
     // frecuencia de refresco de cada pantalla).
+    // ---- Desplazamiento al acercar el ratón al borde (estilo Warcraft 3) ----
+    // Solo con ratón de verdad (no táctil). Usa _panBy como WASD, así comparte
+    // exactamente su suavizado; la velocidad crece al acercarse al borde.
+    const EDGE = 28; // px de zona activa
+    let edgeX = -1, edgeY = -1, edgeOverUI = false, edgeLoopId = null, edgeLast = 0;
+    const edgeVec = () => {
+      if (edgeX < 0 || edgeOverUI) return null;
+      const vw = window.innerWidth, vh = window.innerHeight;
+      let dx = 0, dy = 0;
+      if (edgeX < EDGE) dx = (EDGE - edgeX) / EDGE; // cursor a la izquierda -> el contenido va a la derecha
+      else if (edgeX > vw - EDGE) dx = -(edgeX - (vw - EDGE)) / EDGE;
+      if (edgeY < EDGE) dy = (EDGE - edgeY) / EDGE;
+      else if (edgeY > vh - EDGE) dy = -(edgeY - (vh - EDGE)) / EDGE;
+      if (!dx && !dy) return null;
+      return [Math.max(-1, Math.min(1, dx)), Math.max(-1, Math.min(1, dy))];
+    };
+    const edgeStep = (now) => {
+      const v = edgeVec();
+      const board = document.getElementById("board-viewport");
+      if (!v || !board || board.offsetParent === null || document.querySelector('[class*="overlay--visible"]')) {
+        edgeLoopId = null;
+        return;
+      }
+      const dt = Math.min(now - edgeLast, 100) / 1000;
+      edgeLast = now;
+      this._panBy(v[0] * this.KEY_PAN_SPEED * dt, v[1] * this.KEY_PAN_SPEED * dt);
+      edgeLoopId = requestAnimationFrame(edgeStep);
+    };
+    window.addEventListener("pointermove", (e) => {
+      if (e.pointerType !== "mouse") return;
+      edgeX = e.clientX;
+      edgeY = e.clientY;
+      edgeOverUI = !!(e.target && e.target.closest && e.target.closest("button, .glory-hud, [role=button], .settings-panel"));
+      if (!edgeLoopId && edgeVec()) {
+        edgeLast = performance.now();
+        edgeLoopId = requestAnimationFrame(edgeStep);
+      }
+    });
+    document.addEventListener("mouseleave", () => { edgeX = -1; });
+    window.addEventListener("blur", () => { edgeX = -1; });
+
     this._startKeyboardLoop = () => {
       if (this._keyLoopId) return;
       this._lastKeyFrameTime = performance.now();

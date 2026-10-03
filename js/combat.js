@@ -262,7 +262,7 @@ const Combat = {
     const damage =
       UNIT_TYPES[attacker.typeId].fuerza +
       (typeof Armory !== "undefined" ? Armory.attackBonus(attacker.team) : 0) +
-      (typeof Skills !== "undefined" ? Skills.attackBonus(attacker, target) : 0);
+      (typeof Skills !== "undefined" ? Skills.attackBonus(attacker, target, { announce: true }) : 0);
     // Habilidades de PROTECCIÓN (js/skills.js): Evasión/Escudo/Piel de Roca
     // pueden anular el golpe; si no, hace el daño de siempre (barra, texto,
     // temblor y sonido los pone Skills.resolveDamage).

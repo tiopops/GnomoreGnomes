@@ -470,6 +470,15 @@ const Skills = {
       }
       const prev = unit.cohesionBonus || 0;
       if (bonus === prev) return;
+      // "+1" AZUL sobre cada aliado adyacente que aporta el aguante extra.
+      if (bonus > prev && this._cohesionAnnounce !== false) {
+        Units.list
+          .filter((o) => o.id !== unit.id && o.team === unit.team &&
+            Math.max(Math.abs(o.row - unit.row), Math.abs(o.col - unit.col)) <= 1)
+          .slice(0, bonus - prev)
+          .filter((o) => !o.el.classList.contains("unit--fog-hidden"))
+          .forEach((o) => Units.spawnFloatingText(o, "+1", { className: "dmg-popup skill-popup--codo" }));
+      }
       unit.cohesionBonus = bonus;
       this.setMaxHp(unit, unit.maxHp + (bonus - prev), { minHp: 1 });
     });
@@ -561,19 +570,22 @@ const Skills = {
   },
 
   // Ataque extra de `attacker` contra `target` (unidad, tótem u obelisco).
-  attackBonus(attacker, target) {
+  attackBonus(attacker, target, { announce = false } = {}) {
     if (!attacker || typeof Units === "undefined") return 0;
     const team = attacker.team;
     let bonus = 0;
     const camaradas = this.rank(team, "camaradas");
     if (camaradas > 0 && target) {
-      const allies = Units.list.filter(
+      const allyUnits = Units.list.filter(
         (u) =>
           u.team === team &&
           u.id !== attacker.id &&
           Math.max(Math.abs(u.row - target.row), Math.abs(u.col - target.col)) <= 1
-      ).length;
+      );
+      const allies = allyUnits.length;
       bonus += camaradas * allies;
+      // "+N" ROJO sobre cada aliado que aporta el daño extra (solo al golpear de verdad).
+      if (announce) allyUnits.filter((u) => !u.el.classList.contains("unit--fog-hidden")).forEach((u) => Units.spawnFloatingText(u, `+${camaradas}`, { className: "dmg-popup skill-popup--camaradas" }));
     }
     if (this.rank(team, "sed_sangre") > 0) bonus += attacker.bloodStacks || 0;
     if (this.has(team, "ultimo_aliento") && attacker.hp === 1 && (attacker.maxHp || 1) > 1) bonus += 1;

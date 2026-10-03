@@ -228,15 +228,40 @@ const Obelisks = {
 
   // Espiral saliente desde (row, col) hasta encontrar la primera loseta
   // libre — mismo patrón que GnomeInstance.spawnNear (gnome.js).
+  // Pedido explícito: "tiene que ser una zona donde todas las casillas
+  // adyacentes estén disponibles para poder reclutar" — primero se busca una
+  // loseta con sus 8 vecinas libres y dentro del mapa; si no existe ninguna,
+  // se cae al comportamiento de antes.
+  isAdjacent(row, col) {
+    return this.list.some((o) => Math.max(Math.abs(o.row - row), Math.abs(o.col - col)) <= 1);
+  },
+
+  _hasFreeRing(row, col, size) {
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (!dr && !dc) continue;
+        const r = row + dr, c = col + dc;
+        if (r < 0 || c < 0 || r >= size || c >= size) return false;
+        if (!this._tileFree(r, c)) return false;
+      }
+    }
+    return true;
+  },
+
   _findFreeTileNear(row, col, size) {
-    if (this._tileFree(row, col)) return { row, col };
+    return this._findFreeTileNearImpl(row, col, size, true) || this._findFreeTileNearImpl(row, col, size, false);
+  },
+
+  _findFreeTileNearImpl(row, col, size, ring) {
+    const ok = (r, c) => this._tileFree(r, c) && (!ring || this._hasFreeRing(r, c, size));
+    if (ok(row, col)) return { row, col };
     for (let radius = 1; radius <= size; radius++) {
       for (let dr = -radius; dr <= radius; dr++) {
         for (let dc = -radius; dc <= radius; dc++) {
           const r = row + dr;
           const c = col + dc;
           if (r < 0 || c < 0 || r >= size || c >= size) continue;
-          if (this._tileFree(r, c)) return { row: r, col: c };
+          if (ok(r, c)) return { row: r, col: c };
         }
       }
     }
@@ -779,7 +804,7 @@ const Obelisks = {
     const carriedGnome = typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === unit.id) : null;
     if (!carriedGnome) return; // sin gnomo no hay daño a estructuras
     const attackBonus = typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0;
-    const skillBonus = typeof Skills !== "undefined" ? Skills.attackBonus(unit, obelisk) : 0;
+    const skillBonus = typeof Skills !== "undefined" ? Skills.attackBonus(unit, obelisk, { announce: true }) : 0;
     const damage = carriedGnome.points;
     const wasFullHp = obelisk.hp >= obelisk.maxHp;
     obelisk.hp = Math.max(0, obelisk.hp - damage);

@@ -187,6 +187,7 @@ const Shops = {
       if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
       if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
       if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
+      if (typeof Obelisks !== "undefined" && Obelisks.isAdjacent(row, col)) continue; // el anillo del Obelisco debe quedar libre para reclutar
       // Altar.isNear (no solo Altar.at) — mismo motivo que en Villages.spawn
       // (ver la nota larga en Altar.isNear, js/altar.js): el GnomOgro que
       // sale del Altar es mucho más alto que una Tienda Goblin normal.

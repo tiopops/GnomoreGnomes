@@ -167,22 +167,55 @@ const Resources = {
   // (lejos de las bases y entre sí; si no cabe, se van relajando las distancias).
   _spawnChests(boardSize) {
     const count = (typeof Teams !== "undefined" ? Teams.all.length : 2) + 1; // jugadores + 1
+    // Distancia ANDANDO desde el Obelisco más cercano (BFS por casillas
+    // caminables): un cofre "escondido" es el que cuesta llegar, no el que
+    // simplemente queda lejos en línea recta (p.ej. al otro lado de un río).
+    const dist = Array.from({ length: boardSize }, () => new Array(boardSize).fill(-1));
+    const queue = [];
+    if (typeof Obelisks !== "undefined") {
+      Obelisks.list.forEach((o) => { dist[o.row][o.col] = 0; queue.push([o.row, o.col]); });
+    }
+    for (let h = 0; h < queue.length; h++) {
+      const [r, c] = queue[h];
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+        const nr = r + dr, nc = c + dc;
+        if ((!dr && !dc) || nr < 0 || nc < 0 || nr >= boardSize || nc >= boardSize) continue;
+        if (dist[nr][nc] !== -1) continue;
+        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(nr, nc)) continue;
+        dist[nr][nc] = dist[r][c] + 1;
+        queue.push([nr, nc]);
+      }
+    }
+    const openNeighbours = (row, col) => {
+      let n = 0;
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+        if (!dr && !dc) continue;
+        const r = row + dr, c = col + dc;
+        if (r >= 0 && c >= 0 && r < boardSize && c < boardSize &&
+            (typeof TerrainMap === "undefined" || TerrainMap.isWalkable(r, c))) n++;
+      }
+      return n; // 8 = campo abierto; pocos = rincón, orilla o borde del mapa
+    };
+    const minPath = Math.max(CHEST_MIN_OBELISK_DIST, Math.round(boardSize * 0.45));
     for (let i = 0; i < count; i++) {
-      let placed = false;
-      for (let relax = 0; relax <= 4 && !placed; relax++) {
-        const minOb = Math.max(2, CHEST_MIN_OBELISK_DIST - relax);
-        const minCh = Math.max(2, CHEST_MIN_CHEST_DIST - relax * 2);
-        for (let attempts = 0; attempts < 600 && !placed; attempts++) {
+      let best = null;
+      for (let relax = 0; relax <= 4 && !best; relax++) {
+        const needPath = Math.max(4, minPath - relax * 2);
+        const minCh = Math.max(3, CHEST_MIN_CHEST_DIST - relax * 2);
+        for (let attempts = 0; attempts < 500; attempts++) {
           const row = Math.floor(Math.random() * boardSize);
           const col = Math.floor(Math.random() * boardSize);
           if (!this._tileFree(row, col, boardSize)) continue;
-          const dist = (o) => Math.max(Math.abs(o.row - row), Math.abs(o.col - col));
-          if (typeof Obelisks !== "undefined" && Obelisks.list.some((o) => dist(o) < minOb)) continue;
-          if (this.list.some((n) => n.kind === "cofre" && dist(n) < minCh)) continue;
-          this._create("cofre", row, col);
-          placed = true;
+          const d = dist[row][col];
+          if (d < needPath) continue; // -1 (inalcanzable) también se descarta
+          const cd = (o) => Math.max(Math.abs(o.row - row), Math.abs(o.col - col));
+          if (this.list.some((n) => n.kind === "cofre" && cd(n) < minCh)) continue;
+          // Más puntos = más escondido: lejos de las bases, en rincones/orillas.
+          const score = d + (8 - openNeighbours(row, col)) * 1.5 + Math.random() * 3;
+          if (!best || score > best.score) best = { row, col, score };
         }
       }
+      if (best) this._create("cofre", best.row, best.col);
     }
   },
 
