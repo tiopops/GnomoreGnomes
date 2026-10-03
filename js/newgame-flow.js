@@ -634,3 +634,12 @@ function initNewGameFlow() {
 }
 
 document.addEventListener("DOMContentLoaded", initNewGameFlow);
+// Al cambiar de idioma se repintan las listas ya construidas (raza, nivel...).
+document.addEventListener("gg:langchange", () => {
+  ["populateModeSelect", "populateRaceSelect", "populateLevelSelect", "populateOpponentSelect"].forEach((fn) => {
+    try {
+      const el = { populateModeSelect: "mode-list", populateRaceSelect: "race-list", populateLevelSelect: "level-list", populateOpponentSelect: "opponent-list" }[fn];
+      if (document.getElementById(el) && document.getElementById(el).children.length && typeof window[fn] === "function") window[fn]();
+    } catch (e) {}
+  });
+});

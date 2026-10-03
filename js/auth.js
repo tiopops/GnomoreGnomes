@@ -43,7 +43,7 @@ const Account = {
     if (this._btn) return;
     const btn = document.createElement("button");
     btn.className = "settings-gear-btn settings-gear-btn--account settings-gear-btn--visible";
-    btn.setAttribute("aria-label", "Cuenta");
+    btn.setAttribute("aria-label", I18N.t("acc_aria"));
     btn.innerHTML = '<i class="ph-fill ph-user settings-gear-btn__icon"></i><span class="account-dot"></span>';
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -102,21 +102,21 @@ const Account = {
     if (!B) return;
     const note = msg ? `<div class="account-msg account-msg--${kind || "error"}">${this._esc(msg)}</div>` : "";
     if (this._user) {
-      const nick = (this._profile && this._profile.username) || this._user.displayName || "Jugador";
+      const nick = (this._profile && this._profile.username) || this._user.displayName || I18N.t("acc_player");
       const verified = this._user.emailVerified;
       B.innerHTML = `
-        <div class="p5-banner__label settings-panel__title">MI CUENTA</div>
+        <div class="p5-banner__label settings-panel__title">${I18N.t("acc_my")}</div>
         <div class="account-card">
           <i class="ph-fill ph-user account-card__icon"></i>
           <div class="account-card__nick">${this._esc(nick)}</div>
           <div class="account-card__mail">${this._esc(this._user.email || "")}</div>
           <div class="account-card__state account-card__state--${verified ? "ok" : "pending"}">
-            ${verified ? "Correo verificado" : "Correo sin verificar · revisa tu bandeja"}
+            ${verified ? I18N.t("acc_verified") : I18N.t("acc_unverified")}
           </div>
         </div>
         ${note}
         <button type="button" class="p5-banner p5-banner--action account-submit" data-act="logout" style="--p5-tone:#5a1d1d">
-          <span class="p5-banner__label">CERRAR SESIÓN</span>
+          <span class="p5-banner__label">${I18N.t("acc_logout")}</span>
         </button>`;
       B.querySelector("[data-act=logout]").addEventListener("click", () => this.logout());
       return;
@@ -128,34 +128,34 @@ const Account = {
         <input id="acc-${id}" type="${type}" placeholder="${ph}" autocomplete="${extra}" spellcheck="false" autocapitalize="none">
       </label>`;
     let fields = "";
-    let title = "ENTRAR";
-    let submit = "ENTRAR";
+    let title = I18N.t("acc_login");
+    let submit = I18N.t("acc_login");
     if (m === "login") {
-      fields = field("email", "Correo o nombre de usuario", "text", "tu@correo.com o tu nombre", "username") + field("pass", "Contraseña", "password", "••••••", "current-password");
+      fields = field("email", I18N.t("acc_f_email_or_name"), "text", I18N.t("acc_ph_email_or_name"), "username") + field("pass", I18N.t("acc_f_pass"), "password", "••••••", "current-password");
     } else if (m === "register") {
-      title = "CREAR CUENTA";
-      submit = "REGISTRARME";
+      title = I18N.t("acc_create_title");
+      submit = I18N.t("acc_register_btn");
       fields =
-        field("email", "Correo", "email", "tu@correo.com", "email") +
-        field("nick", "Nombre de usuario", "text", "3-16 letras, números o _", "username") +
-        field("pass", "Contraseña", "password", "mínimo 6 caracteres", "new-password") +
-        field("pass2", "Repite la contraseña", "password", "••••••", "new-password");
+        field("email", I18N.t("acc_f_email"), "email", "tu@correo.com", "email") +
+        field("nick", I18N.t("acc_f_nick"), "text", I18N.t("acc_ph_nick"), "username") +
+        field("pass", I18N.t("acc_f_pass"), "password", I18N.t("acc_ph_pass"), "new-password") +
+        field("pass2", I18N.t("acc_f_pass2"), "password", "••••••", "new-password");
     } else {
-      title = "RECUPERAR";
-      submit = "ENVIAR CORREO";
-      fields = field("email", "Correo de tu cuenta", "email", "tu@correo.com", "email");
+      title = I18N.t("acc_recover_title");
+      submit = I18N.t("acc_send_mail");
+      fields = field("email", I18N.t("acc_f_email_account"), "email", "tu@correo.com", "email");
     }
     B.innerHTML = `
       <div class="p5-banner__label settings-panel__title">${title}</div>
       <div class="account-tabs">
-        <button type="button" class="p5-banner p5-banner--action account-tab${m === "login" ? " account-tab--active" : ""}" data-mode="login"><span class="p5-banner__label">ENTRAR</span></button>
-        <button type="button" class="p5-banner p5-banner--action account-tab${m === "register" ? " account-tab--active" : ""}" data-mode="register"><span class="p5-banner__label">REGISTRARSE</span></button>
+        <button type="button" class="p5-banner p5-banner--action account-tab${m === "login" ? " account-tab--active" : ""}" data-mode="login"><span class="p5-banner__label">${I18N.t("acc_login")}</span></button>
+        <button type="button" class="p5-banner p5-banner--action account-tab${m === "register" ? " account-tab--active" : ""}" data-mode="register"><span class="p5-banner__label">${I18N.t("acc_register")}</span></button>
       </div>
       <form class="account-form" novalidate>${fields}</form>
       ${note}
       <button type="button" class="p5-banner p5-banner--action account-submit" data-act="submit"><span class="p5-banner__label">${submit}</span></button>
-      ${m === "login" ? '<button type="button" class="account-link" data-mode="reset">¿Has olvidado la contraseña?</button>' : ""}
-      ${m === "reset" ? '<button type="button" class="account-link" data-mode="login">Volver</button>' : ""}`;
+      ${m === "login" ? '<button type="button" class="account-link" data-mode="reset">${I18N.t("acc_forgot")}</button>' : ""}
+      ${m === "reset" ? '<button type="button" class="account-link" data-mode="login">${I18N.t("acc_back")}</button>' : ""}`;
     B.querySelectorAll("[data-mode]").forEach((b) =>
       b.addEventListener("click", () => {
         this._mode = b.dataset.mode;
@@ -241,18 +241,18 @@ const Account = {
   _errText(e) {
     const c = (e && e.code) || (e && e.message) || "";
     const map = {
-      "not-configured": "El servicio de cuentas aún no está configurado.",
-      "auth/email-already-in-use": "Ese correo ya está registrado.",
-      "auth/invalid-email": "El correo no es válido.",
-      "auth/weak-password": "La contraseña es demasiado débil (mínimo 6 caracteres).",
-      "auth/invalid-credential": "Usuario, correo o contraseña incorrectos.",
-      "auth/wrong-password": "Usuario, correo o contraseña incorrectos.",
-      "auth/user-not-found": "Usuario, correo o contraseña incorrectos.",
-      "auth/too-many-requests": "Demasiados intentos. Espera un momento.",
-      "auth/network-request-failed": "Sin conexión. Inténtalo de nuevo.",
-      "name-taken": "Ese nombre de usuario ya está en uso.",
+      "not-configured": "acc_x_notcfg",
+      "auth/email-already-in-use": "acc_x_emailused",
+      "auth/invalid-email": "acc_x_bademail",
+      "auth/weak-password": "acc_x_weak",
+      "auth/invalid-credential": "acc_x_cred",
+      "auth/wrong-password": "acc_x_cred",
+      "auth/user-not-found": "acc_x_cred",
+      "auth/too-many-requests": "acc_x_many",
+      "auth/network-request-failed": "acc_x_net",
+      "name-taken": "acc_x_nametaken",
     };
-    return map[c] || "Ha ocurrido un error. Inténtalo de nuevo.";
+    return I18N.t(map[c] || "acc_x_generic");
   },
 
   _setBusy(b) {
@@ -269,14 +269,14 @@ const Account = {
     const pass = (document.getElementById("acc-pass") || {}).value || "";
     try {
       if (m === "login") {
-        if (!email) return this._note("Escribe tu correo o nombre de usuario.");
-      } else if (!email || !/^\S+@\S+\.\S+$/.test(email)) return this._note("Escribe un correo válido.");
-      if (m !== "reset" && !pass) return this._note("Escribe tu contraseña.");
+        if (!email) return this._note(I18N.t("acc_e_idf"));
+      } else if (!email || !/^\S+@\S+\.\S+$/.test(email)) return this._note(I18N.t("acc_e_email"));
+      if (m !== "reset" && !pass) return this._note(I18N.t("acc_e_pass"));
       if (m === "register") {
         const nick = this._val("nick");
-        if (!ACCOUNT_NAME_RE.test(nick)) return this._note("El nombre debe tener 3-16 letras, números o _ (sin espacios).");
-        if (pass.length < 6) return this._note("La contraseña debe tener al menos 6 caracteres.");
-        if (pass !== ((document.getElementById("acc-pass2") || {}).value || "")) return this._note("Las contraseñas no coinciden.");
+        if (!ACCOUNT_NAME_RE.test(nick)) return this._note(I18N.t("acc_e_nick"));
+        if (pass.length < 6) return this._note(I18N.t("acc_e_pass_len"));
+        if (pass !== ((document.getElementById("acc-pass2") || {}).value || "")) return this._note(I18N.t("acc_e_pass_match"));
       }
       this._setBusy(true);
       await this._ensureFirebase();
@@ -288,12 +288,12 @@ const Account = {
       } else if (m === "register") {
         await this._register(email, this._val("nick"), pass);
         this._setBusy(false);
-        this._render("¡Cuenta creada! Te hemos enviado un correo para verificarla.", "ok");
+        this._render(I18N.t("acc_ok_created"), "ok");
       } else {
         await this._auth.sendPasswordResetEmail(email);
         this._setBusy(false);
         this._mode = "login";
-        this._render("Si el correo existe, recibirás un enlace para cambiar la contraseña.", "ok");
+        this._render(I18N.t("acc_ok_reset"), "ok");
       }
     } catch (e) {
       this._setBusy(false);
@@ -351,3 +351,7 @@ const Account = {
 };
 
 document.addEventListener("DOMContentLoaded", () => Account.init());
+document.addEventListener("gg:langchange", () => {
+  if (Account._btn) Account._btn.setAttribute("aria-label", I18N.t("acc_aria"));
+  if (Account._overlay && Account._overlay.classList.contains("settings-overlay--visible")) Account._render();
+});

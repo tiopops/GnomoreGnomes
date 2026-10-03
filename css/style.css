@@ -9100,3 +9100,21 @@ body.tut-on .settings-gear-btn--account { display: none; }
 .account-card__state { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-top: 4px; }
 .account-card__state--ok { color: #7ee08d; }
 .account-card__state--pending { color: #ffcf3d; }
+
+/* ---------- Selector de idioma (Ajustes) ---------- */
+.settings-lang { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.settings-lang__label { font-size: 0.95rem; }
+.settings-lang__btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.settings-lang__btn { padding: 9px 22px; gap: 10px; --p5-tone: #2b2733; }
+.settings-lang__btn--active { --p5-tone: #ffcf3d; }
+.settings-lang__btn--active .p5-banner__label { color: #111; text-shadow: none; }
+.settings-lang__flag {
+  position: relative;
+  z-index: 2;
+  width: 30px;
+  height: 20px;
+  object-fit: cover;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
+  transform: rotate(-4deg);
+}

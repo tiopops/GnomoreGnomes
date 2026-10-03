@@ -63,7 +63,7 @@ const SettingsMenu = {
 
     const title = document.createElement("div");
     title.className = "p5-banner__label settings-panel__title";
-    title.textContent = "AJUSTES";
+    title.textContent = I18N.t("settings_title");
     panel.appendChild(title);
 
     // Pedido explícito (segunda pasada): "reorganiza los botones de
@@ -101,7 +101,7 @@ const SettingsMenu = {
     sfxBtn.innerHTML =
       '<span class="settings-panel__option-main">' +
       '<i class="ph ph-speaker-high settings-panel__option-icon"></i>' +
-      '<span class="p5-banner__label">Efectos de sonido</span>' +
+      '<span class="p5-banner__label">' + I18N.t("settings_sfx") + '</span>' +
       "</span>" +
       `<span class="settings-toggle" data-checked="${sfxChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
     sfxBtn.addEventListener("click", () => {
@@ -135,7 +135,7 @@ const SettingsMenu = {
     musicBtn.innerHTML =
       '<span class="settings-panel__option-main">' +
       '<i class="ph ph-music-notes settings-panel__option-icon"></i>' +
-      '<span class="p5-banner__label">Música <span class="settings-panel__option-soon">(próximamente)</span></span>' +
+      '<span class="p5-banner__label">' + I18N.t("settings_music") + ' <span class="settings-panel__option-soon">' + I18N.t("settings_music_soon") + '</span></span>' +
       "</span>" +
       '<span class="settings-toggle" data-checked="false"><i class="ph ph-check settings-toggle__check"></i></span>';
     colAudio.appendChild(musicBtn);
@@ -152,7 +152,7 @@ const SettingsMenu = {
     teamMarkersBtn.innerHTML =
       '<span class="settings-panel__option-main">' +
       '<i class="ph ph-users-three settings-panel__option-icon"></i>' +
-      '<span class="p5-banner__label">Mostrar equipos</span>' +
+      '<span class="p5-banner__label">' + I18N.t("settings_teams") + '</span>' +
       "</span>" +
       `<span class="settings-toggle" data-checked="${teamMarkersChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
     teamMarkersBtn.addEventListener("click", () => {
@@ -175,7 +175,7 @@ const SettingsMenu = {
     shadowsBtn.innerHTML =
       '<span class="settings-panel__option-main">' +
       '<i class="ph ph-sun settings-panel__option-icon"></i>' +
-      '<span class="p5-banner__label">Sombras</span>' +
+      '<span class="p5-banner__label">' + I18N.t("settings_shadows") + '</span>' +
       "</span>" +
       `<span class="settings-toggle" data-checked="${shadowsChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
     shadowsBtn.addEventListener("click", () => {
@@ -205,7 +205,7 @@ const SettingsMenu = {
     fogAnimBtn.innerHTML =
       '<span class="settings-panel__option-main">' +
       '<i class="ph ph-cloud-fog settings-panel__option-icon"></i>' +
-      '<span class="p5-banner__label">Animación de niebla</span>' +
+      '<span class="p5-banner__label">' + I18N.t("settings_fog") + '</span>' +
       "</span>" +
       `<span class="settings-toggle" data-checked="${fogAnimChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
     fogAnimBtn.addEventListener("click", () => {
@@ -229,7 +229,7 @@ const SettingsMenu = {
     vegetationBtn.innerHTML =
       '<span class="settings-panel__option-main">' +
       '<i class="ph ph-plant settings-panel__option-icon"></i>' +
-      '<span class="p5-banner__label">Vegetación</span>' +
+      '<span class="p5-banner__label">' + I18N.t("settings_vegetation") + '</span>' +
       "</span>" +
       `<span class="settings-toggle" data-checked="${vegetationChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
     vegetationBtn.addEventListener("click", () => {
@@ -254,7 +254,7 @@ const SettingsMenu = {
     spriteQualityBtn.innerHTML =
       '<span class="settings-panel__option-main">' +
       '<i class="ph ph-image settings-panel__option-icon"></i>' +
-      '<span class="p5-banner__label">Resolución adaptativa</span>' +
+      '<span class="p5-banner__label">' + I18N.t("settings_adaptive") + '</span>' +
       "</span>" +
       `<span class="settings-toggle" data-checked="${spriteQualityChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
     spriteQualityBtn.addEventListener("click", () => {
@@ -281,7 +281,7 @@ const SettingsMenu = {
     perfModeBtn.innerHTML =
       '<span class="settings-panel__option-main">' +
       '<i class="ph ph-gauge settings-panel__option-icon"></i>' +
-      '<span class="p5-banner__label">Modo rendimiento</span>' +
+      '<span class="p5-banner__label">' + I18N.t("settings_perf") + '</span>' +
       "</span>" +
       `<span class="settings-toggle" data-checked="${perfModeChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
     perfModeBtn.addEventListener("click", () => {
@@ -330,6 +330,9 @@ const SettingsMenu = {
     this._spriteQualityBtn = spriteQualityBtn;
     this._syncPerfLock();
 
+    // Selector de idioma (ES por defecto / EN), con su bandera.
+    panel.appendChild(this._buildLanguageRow());
+
     // Pedido explícito: "debajo del todo el boton salir de la partida
     // centrado" — fuera de las dos columnas, como fila propia del panel
     // (que sigue siendo flex-column), con --centered para que no se
@@ -339,13 +342,14 @@ const SettingsMenu = {
     exitBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--centered";
     exitBtn.innerHTML =
       '<i class="ph ph-door-open settings-panel__option-icon"></i>' +
-      '<span class="p5-banner__label">Salir de la partida</span>';
+      '<span class="p5-banner__label">' + I18N.t("settings_exit") + '</span>';
     exitBtn.addEventListener("click", () => {
       SFX.click();
       this.close();
       this._exitMatch();
     });
     panel.appendChild(exitBtn);
+    this._exitBtn = exitBtn;
 
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
@@ -353,8 +357,46 @@ const SettingsMenu = {
     this._panel = panel;
   },
 
+  // Banderas en SVG (los emoji de bandera no se ven en Windows).
+  _FLAGS: {
+    es: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 6 4"><rect width="6" height="4" fill="#c60b1e"/><rect y="1" width="6" height="2" fill="#ffc400"/></svg>'),
+    en: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40"><rect width="60" height="40" fill="#012169"/><path d="M0,0 60,40M60,0 0,40" stroke="#fff" stroke-width="8"/><path d="M0,0 60,40M60,0 0,40" stroke="#c8102e" stroke-width="3"/><path d="M30,0V40M0,20H60" stroke="#fff" stroke-width="13"/><path d="M30,0V40M0,20H60" stroke="#c8102e" stroke-width="8"/></svg>'),
+  },
+
+  _buildLanguageRow() {
+    const row = document.createElement("div");
+    row.className = "settings-lang";
+    const label = document.createElement("div");
+    label.className = "p5-banner__label settings-lang__label";
+    label.textContent = I18N.t("settings_language");
+    row.appendChild(label);
+    const btns = document.createElement("div");
+    btns.className = "settings-lang__btns";
+    ["es", "en"].forEach((code) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "p5-banner p5-banner--action settings-lang__btn" + (I18N.currentLang === code ? " settings-lang__btn--active" : "");
+      b.innerHTML = `<img class="settings-lang__flag" src="${this._FLAGS[code]}" alt="" draggable="false"><span class="p5-banner__label">${I18N.t("lang_" + code)}</span>`;
+      b.addEventListener("click", () => {
+        if (I18N.currentLang === code) return;
+        if (typeof SFX !== "undefined") SFX.click();
+        I18N.setLanguage(code);
+      });
+      btns.appendChild(b);
+    });
+    row.appendChild(btns);
+    return row;
+  },
+
+  // El engranaje también vive en el menú: ahí no hay partida que abandonar.
+  _inMatch() {
+    const sb = document.getElementById("screen-board");
+    return !!sb && sb.classList.contains("screen--active");
+  },
+
   open() {
     this._ensurePopup();
+    if (this._exitBtn) this._exitBtn.style.display = this._inMatch() ? "" : "none";
     this._syncPerfLock();
     SFX.click();
     this._overlay.classList.add("settings-overlay--visible");
@@ -395,9 +437,8 @@ const SettingsMenu = {
     this._btn.classList.add("settings-gear-btn--visible");
   },
 
-  hideButton() {
-    if (this._btn) this._btn.classList.remove("settings-gear-btn--visible");
-  },
+  // El engranaje se queda también en el menú (para cambiar el idioma).
+  hideButton() {},
 
   // Pedido explícito: "que regresa al menu principal teminando la partida
   // actual" — mismo destino que tenía el back-btn flotante de antes (ver
@@ -421,4 +462,17 @@ const SettingsMenu = {
   },
 };
 
-document.addEventListener("DOMContentLoaded", () => SettingsMenu.init());
+document.addEventListener("DOMContentLoaded", () => {
+  SettingsMenu.init();
+  SettingsMenu.showButton();
+});
+// Al cambiar de idioma se reconstruye el panel con los textos nuevos.
+document.addEventListener("gg:langchange", () => {
+  const wasOpen = SettingsMenu._overlay && SettingsMenu._overlay.classList.contains("settings-overlay--visible");
+  if (SettingsMenu._overlay) SettingsMenu._overlay.remove();
+  SettingsMenu._overlay = null;
+  SettingsMenu._panel = null;
+  SettingsMenu._ensurePopup();
+  if (SettingsMenu._exitBtn) SettingsMenu._exitBtn.style.display = SettingsMenu._inMatch() ? "" : "none";
+  if (wasOpen) SettingsMenu._overlay.classList.add("settings-overlay--visible");
+});
