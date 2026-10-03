@@ -9277,3 +9277,14 @@ body.tut-on .settings-gear-btn--account { display: none; }
   0%, 100% { transform: scale(0.94); opacity: 0.85; }
   50% { transform: scale(1.05); opacity: 1; }
 }
+
+/* Con el menú abierto (Obelisco / tótem propio seleccionado) el edificio no se
+   amplía ni se ilumina al pasar el ratón por sus iconos: solo reaccionan los
+   iconos (.obelisk__menu-btn). */
+.obelisk--selected:hover,
+.obelisk--selected:active,
+.village--selected:hover,
+.village--selected:active {
+  transform: translate(-50%, -92%);
+  filter: none;
+}
