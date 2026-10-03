@@ -131,7 +131,7 @@ const Account = {
     let title = "ENTRAR";
     let submit = "ENTRAR";
     if (m === "login") {
-      fields = field("email", "Correo", "email", "tu@correo.com", "email") + field("pass", "Contraseña", "password", "••••••", "current-password");
+      fields = field("email", "Correo o nombre de usuario", "text", "tu@correo.com o tu nombre", "username") + field("pass", "Contraseña", "password", "••••••", "current-password");
     } else if (m === "register") {
       title = "CREAR CUENTA";
       submit = "REGISTRARME";
@@ -245,9 +245,9 @@ const Account = {
       "auth/email-already-in-use": "Ese correo ya está registrado.",
       "auth/invalid-email": "El correo no es válido.",
       "auth/weak-password": "La contraseña es demasiado débil (mínimo 6 caracteres).",
-      "auth/invalid-credential": "Correo o contraseña incorrectos.",
-      "auth/wrong-password": "Correo o contraseña incorrectos.",
-      "auth/user-not-found": "Correo o contraseña incorrectos.",
+      "auth/invalid-credential": "Usuario, correo o contraseña incorrectos.",
+      "auth/wrong-password": "Usuario, correo o contraseña incorrectos.",
+      "auth/user-not-found": "Usuario, correo o contraseña incorrectos.",
       "auth/too-many-requests": "Demasiados intentos. Espera un momento.",
       "auth/network-request-failed": "Sin conexión. Inténtalo de nuevo.",
       "name-taken": "Ese nombre de usuario ya está en uso.",
@@ -268,7 +268,9 @@ const Account = {
     const email = this._val("email");
     const pass = (document.getElementById("acc-pass") || {}).value || "";
     try {
-      if (!email || !/^\S+@\S+\.\S+$/.test(email)) return this._note("Escribe un correo válido.");
+      if (m === "login") {
+        if (!email) return this._note("Escribe tu correo o nombre de usuario.");
+      } else if (!email || !/^\S+@\S+\.\S+$/.test(email)) return this._note("Escribe un correo válido.");
       if (m !== "reset" && !pass) return this._note("Escribe tu contraseña.");
       if (m === "register") {
         const nick = this._val("nick");
@@ -279,7 +281,8 @@ const Account = {
       this._setBusy(true);
       await this._ensureFirebase();
       if (m === "login") {
-        await this._auth.signInWithEmailAndPassword(email, pass);
+        const loginEmail = await this._resolveLoginEmail(email);
+        await this._auth.signInWithEmailAndPassword(loginEmail, pass);
         this._setBusy(false);
         this._render();
       } else if (m === "register") {
@@ -298,6 +301,15 @@ const Account = {
     }
   },
 
+  // Correo o nombre de usuario indistintamente: si no lleva "@" se busca el
+  // correo asociado en loginIndex/{nombre} (solo consultable por nombre exacto).
+  async _resolveLoginEmail(idf) {
+    if (idf.includes("@")) return idf;
+    const snap = await this._db.collection("loginIndex").doc(idf.toLowerCase()).get();
+    if (!snap.exists || !snap.data().email) throw { code: "auth/invalid-credential" };
+    return snap.data().email;
+  },
+
   async _register(email, nick, pass) {
     const lower = nick.toLowerCase();
     const nameRef = this._db.collection("usernames").doc(lower);
@@ -313,6 +325,7 @@ const Account = {
       const batch = this._db.batch();
       batch.set(nameRef, { uid: user.uid, username: nick, usernameLower: lower, createdAt: ts });
       batch.set(this._db.collection("users").doc(user.uid), { username: nick, usernameLower: lower, email, createdAt: ts });
+      batch.set(this._db.collection("loginIndex").doc(lower), { uid: user.uid, email: user.email, createdAt: ts });
       await batch.commit();
     } catch (e) {
       // Pierde la carrera por el nombre: se deshace la cuenta recién creada.

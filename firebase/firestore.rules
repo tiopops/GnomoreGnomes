@@ -6,12 +6,28 @@ service cloud.firestore {
     // "create" solo funciona si el documento NO existe → dos personas nunca
     // pueden quedarse el mismo nombre. No se pueden editar ni borrar.
     match /usernames/{name} {
-      allow read: if true;   // solo contiene uid y nombre: sirve para comprobar si está libre
+      allow get: if true;    // solo contiene uid y nombre: sirve para comprobar si está libre
+      allow list: if false;  // nadie puede listar todos los nombres
       allow create: if request.auth != null
         && name.matches('^[a-z0-9_]{3,16}$')
         && request.resource.data.usernameLower == name
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.keys().hasOnly(['uid', 'username', 'usernameLower', 'createdAt']);
+      allow update, delete: if false;
+    }
+
+    // Para entrar con el NOMBRE de usuario: nombre → correo. Solo se puede leer
+    // conociendo el nombre exacto (no se puede listar) y solo se puede crear
+    // con el correo de la propia cuenta autenticada.
+    match /loginIndex/{name} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if request.auth != null
+        && name.matches('^[a-z0-9_]{3,16}$')
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'createdAt'])
+        && getAfter(/databases/$(database)/documents/usernames/$(name)).data.uid == request.auth.uid;
       allow update, delete: if false;
     }
 
