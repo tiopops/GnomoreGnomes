@@ -9247,8 +9247,8 @@ body.tut-on .settings-gear-btn--account { display: none; }
 .unit__roots {
   position: absolute;
   left: 50%;
-  bottom: -22px;
-  width: 230px;
+  bottom: -36px;
+  width: 170px;
   height: auto;
   z-index: 0;
   translate: -50% 0;

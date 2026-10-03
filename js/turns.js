@@ -515,6 +515,115 @@ const Turns = {
     return false;
   },
 
+  // ---------- Estrategia de la IA ----------
+  // Al empezar su turno cada IA valora tres caminos hacia la victoria y elige
+  // el que mejor puntúa: "assault" (destruir el Obelisco del rival más débil),
+  // "totems" (capturar tótems) u "ogro" (llenar el Altar e invocar al
+  // GnomOgro, si hay Altar en el nivel).
+  _aiPlan: {},
+  _aiPlanTurn(team) {
+    const rivals = Teams.all.filter((t) => t !== team && typeof Obelisks !== "undefined" && Obelisks.byTeam(t));
+    const myObelisk = Obelisks.byTeam(team);
+    if (rivals.length === 0 || !myObelisk) {
+      this._aiPlan[team] = { mode: "totems", target: null };
+      return;
+    }
+    const power = (t) =>
+      Units.list.filter((u) => u.team === t).reduce((sum, u) => sum + u.hp + UNIT_TYPES[u.typeId].fuerza * 2, 0);
+    const strength = (t) => Obelisks.byTeam(t).hp + power(t) * 0.5;
+    const target = rivals.reduce((best, t) => (!best || strength(t) < strength(best) ? t : best), null);
+    const tObelisk = Obelisks.byTeam(target);
+    const mine = power(team);
+    const theirs = power(target);
+    const myUnits = Units.list.filter((u) => u.team === team).length;
+    const hpFrac = tObelisk.hp / tObelisk.maxHp;
+    const lateness = Math.min(1, this.roundNumber / (typeof TURNS_MAX_ROUNDS !== "undefined" ? TURNS_MAX_ROUNDS : 60));
+
+    const assault =
+      0.6 * Math.min(3, mine / (theirs + 1)) + 1.5 * (1 - hpFrac) + 1.5 * lateness + (myUnits >= 3 ? 0.3 : -0.6);
+
+    const myTotems = Villages.ownedCount(team);
+    const unowned = Villages.list.filter((v) => v.owner !== team).length;
+    const rivalTotems = Math.max(0, ...rivals.map((t) => Villages.ownedCount(t)));
+    const totems = 0.45 * Math.min(4, unowned) + (myTotems <= rivalTotems ? 0.5 : 0) - 0.2 * myTotems;
+
+    let ogro = -9;
+    if (typeof Altar !== "undefined" && Altar.current()) {
+      const altar = Altar.current();
+      const room = (typeof ALTAR_MAX_FILL !== "undefined" ? ALTAR_MAX_FILL : 20) - (altar.fills[team] || 0);
+      ogro = 0.7 + (this.losingTeam() === team ? 0.5 : 0) + (room > 0 ? 0.2 : -1);
+    }
+
+    const jitter = () => (Math.random() - 0.5) * 0.4;
+    const scored = [
+      ["assault", assault + jitter()],
+      ["totems", totems + jitter()],
+      ["ogro", ogro + jitter()],
+    ].sort((a, b) => b[1] - a[1]);
+    this._aiPlan[team] = { mode: scored[0][0], target: tObelisk };
+  },
+
+  // Mapa de distancias reales (BFS sobre casillas transitables) hasta el
+  // objetivo: la distancia en línea recta no sirve con ríos de por medio.
+  _aiDistMap(target) {
+    const n = Units.boardSize;
+    const key = `${target.row},${target.col},${n}`;
+    if (this._aiDistCache && this._aiDistCache.key === key) return this._aiDistCache.map;
+    const map = Array.from({ length: n }, () => new Array(n).fill(Infinity));
+    const blocked = (r, c) =>
+      !TerrainMap.isWalkable(r, c) ||
+      (Obelisks.at(r, c) && !(r === target.row && c === target.col)) ||
+      Villages.at(r, c) ||
+      (typeof Shops !== "undefined" && Shops.at(r, c)) ||
+      (typeof Resources !== "undefined" && Resources.at(r, c));
+    const queue = [[target.row, target.col]];
+    map[target.row][target.col] = 0;
+    for (let i = 0; i < queue.length; i++) {
+      const [r, c] = queue[i];
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const nr = r + dr;
+          const nc = c + dc;
+          if ((!dr && !dc) || nr < 0 || nc < 0 || nr >= n || nc >= n) continue;
+          if (map[nr][nc] !== Infinity || blocked(nr, nc)) continue;
+          map[nr][nc] = map[r][c] + 1;
+          queue.push([nr, nc]);
+        }
+      }
+    }
+    this._aiDistCache = { key, map };
+    return map;
+  },
+
+  _aiPickMoveTileByPath(unit, target) {
+    const tiles = Movement.reachableTiles(unit);
+    if (!tiles.length) return null;
+    const map = this._aiDistMap(target);
+    const cur = map[unit.row][unit.col];
+    let best = null;
+    let bestD = cur;
+    tiles.forEach((t) => {
+      const d = map[t.row][t.col];
+      if (d < bestD) {
+        bestD = d;
+        best = t;
+      }
+    });
+    return best;
+  },
+
+  _aiCanReach(unit, obelisk) {
+    const approach = Obelisks.findApproachTile(unit, obelisk);
+    if (!approach) return false;
+    const needsMove = approach.row !== unit.row || approach.col !== unit.col;
+    if (!needsMove) return true;
+    return typeof Skills !== "undefined" ? Skills.canApproachAttack(unit) : this.remainingActions(unit) >= 2;
+  },
+
+  _aiOtherRivalObelisks(unit) {
+    return Obelisks.list.filter((o) => o.team !== unit.team);
+  },
+
   // ---------- IA del bando rival ----------
   // Deliberadamente simple (pedido explícito: "con el tiempo definiremos una
   // IA más compleja") — recorre a cada rival y, mientras le queden acciones,
@@ -530,6 +639,7 @@ const Turns = {
   async _runEnemyTurn(team = "enemy") {
     if (typeof Tutorial !== "undefined" && Tutorial.active) return; // tutorial: rival pasivo
     const enemies = Units.list.filter((u) => u.team === team);
+    this._aiPlanTurn(team);
     for (const unit of enemies) {
       for (let i = 0; i < TURNS_MAX_ACTIONS; i++) {
         if (!this.canAct(unit)) break;
@@ -623,6 +733,19 @@ const Turns = {
             return true;
           }
         }
+        // Estrategia "assault": con el gnomo cargado, machacar el Obelisco.
+        const plan0 = this._aiPlan[unit.team];
+        if (plan0 && plan0.mode === "assault" && plan0.target && held.points > 0) {
+          if (this._aiCanReach(unit, plan0.target)) {
+            await Obelisks.approachAndAttack(unit, plan0.target);
+            return true;
+          }
+          const dest0 = this._aiPickMoveTileByPath(unit, plan0.target) || this._aiPickMoveTileToward(unit, plan0.target);
+          if (dest0) {
+            await Movement.moveTo(unit, dest0.row, dest0.col);
+            return true;
+          }
+        }
         // "ahora el equipo enemigo tambien intenta capturar los totems"
         // (pedido explícito) — con el gnomo ya en la mano, un tótem que no
         // sea suyo pesa MÁS que pasar/golpear al gnomo de siempre (dan
@@ -671,6 +794,17 @@ const Turns = {
       }
     }
 
+    const plan = this._aiPlan[unit.team] || { mode: "totems", target: null };
+    // Con estrategia de tótems/GnomOgro (y también en asalto, pues el
+    // Obelisco solo cae a golpe de gnomo) se priorizan los gnomos sueltos.
+    if (typeof Gnome !== "undefined") {
+      const g = Gnome.list.find((x) => !x.heldBy && !(x.isDecoy && x.ownerTeam === unit.team) && x.findApproachTile(unit));
+      if (g) {
+        await g.catchBy(unit);
+        return true;
+      }
+    }
+
     if (!TURNS_SANDBOX_NO_ENEMY_ATTACK && typeof Combat !== "undefined") {
       const targets = Combat.attackableEnemies(unit);
       if (targets.length > 0) {
@@ -706,6 +840,16 @@ const Turns = {
           await Mushrooms.catchBy(unit, m);
           return true;
         }
+      }
+    }
+
+    // Asalto: avanzar hacia el Obelisco objetivo (una de cada tres unidades
+    // sigue a lo suyo —gnomos, recursos— para no abandonar la economía).
+    if (plan.mode === "assault" && plan.target && Number(String(unit.id).replace(/\D/g, "")) % 3 !== 0) {
+      const destA = this._aiPickMoveTileByPath(unit, plan.target) || this._aiPickMoveTileToward(unit, plan.target);
+      if (destA) {
+        await Movement.moveTo(unit, destA.row, destA.col);
+        return true;
       }
     }
 

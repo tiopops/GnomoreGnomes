@@ -12,7 +12,7 @@ const BOARD_SIZE_BY_OPPONENTS = {
   // cruzan el mapa de lado a lado (ver generateRiver en mapgen.js) y 5
   // tótems neutrales (ver VILLAGE_COUNT en villages.js) que necesitan sitio
   // de sobra para repartirse sin quedar todos pegados entre sí.
-  1: 25,
+  1: 23,
   2: 29,
   3: 33,
 };

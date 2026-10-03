@@ -639,6 +639,9 @@ const Obelisks = {
   // cualquier unidad puede atacar un Obelisco rival con un golpe normal.
   showFor(unit) {
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
+    // Un Obelisco SOLO pierde vida por estampadas de gnomo, el GnomOgro o
+    // explosiones de seta: sin gnomo cogido no hay mira de ataque.
+    if (!(typeof Gnome !== "undefined" && Gnome.list.some((g) => g.heldBy === unit.id))) return;
     this.list.forEach((obelisk, i) => {
       if (obelisk.team === unit.team) return;
       if (typeof Fog !== "undefined" && Fog.isFogged(obelisk.row, obelisk.col)) return;
@@ -775,9 +778,10 @@ const Obelisks = {
     Units.faceTowardsTile(unit, obelisk.row, obelisk.col);
 
     const carriedGnome = typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === unit.id) : null;
+    if (!carriedGnome) return; // sin gnomo no hay daño a estructuras
     const attackBonus = typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0;
     const skillBonus = typeof Skills !== "undefined" ? Skills.attackBonus(unit, obelisk) : 0;
-    const damage = carriedGnome ? carriedGnome.points : UNIT_TYPES[unit.typeId].fuerza + attackBonus + skillBonus;
+    const damage = carriedGnome.points;
     const wasFullHp = obelisk.hp >= obelisk.maxHp;
     obelisk.hp = Math.max(0, obelisk.hp - damage);
     const oneHitKill = wasFullHp && obelisk.hp <= 0;
