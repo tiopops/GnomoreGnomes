@@ -858,6 +858,13 @@ const Fog = {
         coverFrom(s.row, s.col, s.el);
       });
     }
+    // Setas explosivas (js/mushrooms.js): faltaban aquí y asomaban por la niebla vecina.
+    if (typeof Mushrooms !== "undefined") {
+      Mushrooms.list.forEach((m) => {
+        if (!m.el || m.heldBy) return;
+        coverFrom(m.row, m.col, m.el);
+      });
+    }
     if (typeof Bushes !== "undefined") {
       Bushes.list.forEach((b) => {
         if (!b.el) return;

@@ -458,8 +458,11 @@ const Combat = {
     const col = target.col;
     if (typeof SFX !== "undefined" && SFX.splash) SFX.splash();
     this._spawnSplash(row, col);
-    if (typeof Glory !== "undefined") Glory.queueKillBonus(attacker.team);
-    if (typeof Skills !== "undefined") Skills.onKill(attacker);
+    // Lanzar a un ALIADO al agua no cuenta como baja enemiga (sin bonus).
+    if (attacker.team !== target.team) {
+      if (typeof Glory !== "undefined") Glory.queueKillBonus(attacker.team);
+      if (typeof Skills !== "undefined") Skills.onKill(attacker);
+    }
     await Units.removeUnit(target, { drowned: true });
     if (typeof Gnome !== "undefined" && Gnome.isHeldBy && Gnome.isHeldBy(target.id)) {
       const land = this._findDryTileNear(row, col);

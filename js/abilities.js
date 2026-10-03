@@ -66,7 +66,7 @@ const ABILITIES = {
     icon: "ph-hand-grabbing",
     iconImg: "assets/iconos/resorte_goblin.png",
     description:
-      "Agarra a un personaje adyacente (amigo o enemigo, incluso si lleva el gnomo cogido) y lo lanza a cualquier casilla libre dentro de su propia área de movimiento. Gasta 1 acción. Un solo uso por partida.",
+      "Agarra a un personaje adyacente (amigo o enemigo, incluso si lleva el gnomo cogido) y lo lanza a cualquier casilla libre dentro de su propia área de movimiento, también al agua (quien no sea anfibio se ahoga). Gasta 1 acción. Un solo uso por partida.",
   },
 };
 
@@ -914,7 +914,8 @@ const Abilities = {
         if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
         if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
         if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
-        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        // Resorte Goblin también puede lanzar al AGUA (si está dentro del rango):
+        // sin Anfibio, quien cae se ahoga (ver _resolveThrow).
         if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) continue;
         tiles.push({ row, col });
       }
@@ -943,6 +944,11 @@ const Abilities = {
     Units.clearRangeOverlays();
     this._consume(goblin);
     await this._throwUnitTo(thrown, destRow, destCol);
+    // Aterriza en agua: sin Anfibio se ahoga (mismo chapuzón que un empujón).
+    if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(destRow, destCol) && thrown.el) {
+      const amphibious = typeof Skills !== "undefined" && Skills.has(thrown.team, "anfibio");
+      if (!amphibious && typeof Combat !== "undefined") await Combat._drown(goblin, thrown);
+    }
   },
 
   // Vuelo en parábola (nivel Triple A: un lanzamiento no debería sentirse

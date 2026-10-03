@@ -961,6 +961,9 @@ const Units = {
     unit.el.classList.add("unit--moving");
     for (const step of path) {
       await this.hopTo(unit, step.row, step.col);
+      // Niebla: un rival que anda por el borde de la niebla debe taparse/ocultarse
+      // en CADA paso, no solo al final del camino (si no, asoma mientras camina).
+      if (unit.team !== "player" && typeof Fog !== "undefined") Fog.applyVisibility();
       // Cepo "AtrapaPinreles" (Backpack, js/backpack.js) — pedido
       // explícito: "si un enemigo cae en la misma casilla o pasa sobre
       // ella, pierde automaticamente el turno". Se comprueba en CADA

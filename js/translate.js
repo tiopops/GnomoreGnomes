@@ -24,7 +24,7 @@ const EN_DICT = {
 "Nudillos Rocosos": "Rocky Knuckles",
 "Golpea y empuja 4 casillas en línea recta a un enemigo adyacente (se detiene en el primer obstáculo); el golpeado queda agotado el siguiente turno. Gasta 1 acción. Un solo uso por partida. PuñoRroca es tan bruto que, si no tiene un aliado (cualquiera) justo al lado nada más empezar a andar, da tumbos al azar en vez de ir donde se le indica.": "Hits an adjacent enemy and shoves it 4 tiles in a straight line (stops at the first obstacle); the victim is exhausted next turn. Costs 1 action. One use per match. PuñoRroca is so brutish that, if he has no ally (any ally) right next to him when he starts walking, he stumbles around at random instead of going where you tell him.",
 "Resorte Goblin": "Goblin Spring",
-"Agarra a un personaje adyacente (amigo o enemigo, incluso si lleva el gnomo cogido) y lo lanza a cualquier casilla libre dentro de su propia área de movimiento. Gasta 1 acción. Un solo uso por partida.": "Grabs an adjacent unit (friend or foe, even if it's carrying the gnome) and hurls it to any free tile within its own movement range. Costs 1 action. One use per match.",
+"Agarra a un personaje adyacente (amigo o enemigo, incluso si lleva el gnomo cogido) y lo lanza a cualquier casilla libre dentro de su propia área de movimiento, también al agua (quien no sea anfibio se ahoga). Gasta 1 acción. Un solo uso por partida.": "Grabs an adjacent unit (friend or foe, even if it's carrying the gnome) and hurls it to any free tile within its own movement range, including water (anyone not amphibious drowns). Costs 1 action. One use per match.",
 "¡ESPINAS!": "THORNS!",
 "Elige un punto del mapa para revelarlo": "Pick a point on the map to reveal it",
 "¡VISIÓN!": "VISION!",
