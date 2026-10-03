@@ -522,8 +522,18 @@ const Fog = {
       if (typeof Hierbajos !== "undefined") Hierbajos.refreshFog();
     }
     if (typeof Gnome !== "undefined") {
+      const veo = Gnome.veoGnomes("player"); // GnomeVeo: gnomos siempre visibles
       Gnome.list.forEach((g) => {
+        if (g.el) {
+          const was = g.el.classList.contains("gnome--veo");
+          g.el.classList.toggle("gnome--veo", veo.has(g));
+          // Por encima de TODA la niebla ("como si andase sobre ella"); al perder el
+          // efecto se restaura el z-index normal de su loseta.
+          if (veo.has(g)) g.el.style.zIndex = "3000";
+          else if (was) g.el.style.zIndex = String((g.row + g.col) * 10 + 5);
+        }
         if (g.heldBy || !g.el) return;
+        if (veo.has(g)) { g.el.classList.remove("unit--fog-hidden"); return; }
         // Mismo criterio que una unidad: un gnomo suelto se mueve por su
         // cuenta cada turno, así que fuera de percepción se oculta del todo
         // en vez de "recordarse" en su última posición vista (eso filtraría

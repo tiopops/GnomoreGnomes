@@ -31,6 +31,13 @@ const RELIC_TYPES = {
     description:
       "Perfume hecho a base de feromonas de barba gnoma. Mientras lo lleves en la mochila, los gnomos no huyen al verte, y los que estén a 3 casillas o menos de una unidad tuya se acercarán a ella antes de empezar tu turno. Cada perfume extra multiplica el radio (2 perfumes = 6 casillas, 3 = 9...). Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.",
   },
+  gnomeveo: {
+    name: "GnomeVeo",
+    iconUrl: "assets/iconos/reliquia_gnomeveo.png",
+    durability: 5,
+    description:
+      "Unas gafas con nariz y bigote. Si miras directamente al sol te queman la sombra. Revelan en el mapa un gnomo libre, aunque esté bajo la niebla, hasta que lo capturas; entonces te muestran otro distinto. Cada par extra muestra un gnomo más (2 gafas = 2 gnomos, 3 = 3...). Pierden 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruyen y dejan de tener efecto.",
+  },
 };
 
 const Relics = {
@@ -77,6 +84,11 @@ const Relics = {
   // Radio de olfato: 3 casillas por cada perfume (2 perfumes = 6, 3 = 9...).
   feroRadius(team) {
     return 3 * this.feroCount(team);
+  },
+
+  // GnomeVeo: nº de gnomos sueltos que se muestran siempre (1 por gafas).
+  gnomeVeoCount(team) {
+    return this.list(team).filter((r) => r.relicId === "gnomeveo" && r.durability > 0).length;
   },
 
   // AcariciaGnomos: +3 al daño (puntos) de cada golpe a un gnomo.

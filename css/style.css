@@ -9458,3 +9458,6 @@ body.tut-on .settings-gear-btn--account { display: none; }
   -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 0 5px 0 rgba(0,0,0,.55), 0 0 24px var(--go-tone);
   white-space: nowrap;
 }
+
+/* GnomeVeo: aura dorada pulsante sobre el gnomo revelado */
+.gnome--veo { filter: drop-shadow(0 0 6px #ffcf3f) drop-shadow(0 0 14px rgba(255,207,63,.75)); }

@@ -1951,6 +1951,22 @@ const Gnome = {
     return this._attractToTeam(team);
   },
 
+  // GnomeVeo (js/relics.js): gnomos sueltos que `team` ve siempre, incluso bajo
+  // niebla. Mantiene los elegidos mientras sigan sueltos; cuando uno es
+  // capturado (o muere) elige otro distinto al azar. Devuelve un Set de gnomos.
+  _veoSet: new Set(),
+  veoGnomes(team) {
+    const n = typeof Relics !== "undefined" ? Relics.gnomeVeoCount(team) : 0;
+    const valid = (g) => g.el && !g.heldBy && !g.isDecoy && this.list.includes(g);
+    const keep = [...this._veoSet].filter(valid).slice(0, n);
+    if (keep.length < n) {
+      const pool = this.list.filter((g) => valid(g) && !keep.includes(g));
+      while (keep.length < n && pool.length) keep.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+    }
+    this._veoSet = new Set(keep);
+    return this._veoSet;
+  },
+
   // FeroGnomas (js/relics.js): antes de empezar el turno de `team`, cada gnomo
   // suelto a 3 casillas o menos de una unidad suya se acerca a ella.
   async _attractToTeam(team) {
