@@ -72,13 +72,94 @@ const Altar = {
   // sí no elige bando, solo posición).
   spawn(size) {
     const center = { row: Math.floor(size / 2), col: Math.floor(size / 2) };
-    const spot = this._findFreeTileNear(center.row, center.col, size);
-    if (spot) this._create(spot.row, spot.col);
+    // Al reaparecer, una unidad que ocupe la casilla no la descarta: se la
+    // desplaza (ver _clearTileFor).
+    const spot = this._findFreeTileNear(center.row, center.col, size, true);
+    if (spot) {
+      this._create(spot.row, spot.col);
+      this._clearTileFor(spot.row, spot.col);
+    }
   },
 
-  _tileFree(row, col) {
+  _unitTileFree(r, c, evicted) {
+    if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) return false;
+    if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(evicted.team, r, c) : TerrainMap.isWalkable(r, c))) return false;
+    const other = Units.unitAt(r, c);
+    if (other && other.id !== evicted.id) return false;
+    if (typeof Gnome !== "undefined" && Gnome.isAt(r, c)) return false;
+    if (typeof Villages !== "undefined" && Villages.at(r, c)) return false;
+    if (typeof Shops !== "undefined" && Shops.at(r, c)) return false;
+    if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) return false;
+    if (this.at(r, c)) return false;
+    if (typeof Resources !== "undefined" && Resources.at(r, c)) return false;
+    if (typeof GnomOgro !== "undefined" && GnomOgro.at(r, c)) return false;
+    return true;
+  },
+
+  // Deja libre la casilla del Altar recién reaparecido (pedido explícito):
+  // la unidad que estuviera encima va a una casilla libre al azar de al
+  // lado; si no hay, empuja hacia fuera (con el Altar de epicentro) a las
+  // unidades vecinas para hacerle hueco; si lo que lo impide es el agua, cae
+  // a ella y se ahoga.
+  async _clearTileFor(row, col) {
+    const unit = Units.unitAt(row, col);
+    if (!unit) return;
+    const ring = [];
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (dr || dc) ring.push({ row: row + dr, col: col + dc });
+    const shuffle = (a) => a.sort(() => Math.random() - 0.5);
+    const move = async (u, r, c) => {
+      if (typeof Bushes !== "undefined") Bushes.clearHiddenUnit(u.id);
+      await Units.hopTo(u, r, c);
+    };
+
+    let free = shuffle(ring.filter((t) => this._unitTileFree(t.row, t.col, unit)));
+    if (free.length === 0) {
+      // Empujar hacia fuera a un vecino ocupado para hacer hueco.
+      const dist = (t) => Math.max(Math.abs(t.row - row), Math.abs(t.col - col));
+      const neighbours = shuffle(ring.filter((t) => Units.unitAt(t.row, t.col) && Units.unitAt(t.row, t.col).id !== unit.id));
+      for (const n of neighbours) {
+        const other = Units.unitAt(n.row, n.col);
+        const outward = [];
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+          if (!dr && !dc) continue;
+          const t = { row: n.row + dr, col: n.col + dc };
+          if (dist(t) > dist(n) && this._unitTileFree(t.row, t.col, other)) outward.push(t);
+        }
+        if (outward.length) {
+          const t = shuffle(outward)[0];
+          await move(other, t.row, t.col);
+          free = [{ row: n.row, col: n.col }];
+          break;
+        }
+      }
+    }
+    if (free.length > 0) {
+      await move(unit, free[0].row, free[0].col);
+    } else {
+      // Sin hueco posible: si hay agua alrededor, cae a ella.
+      const water = shuffle(ring.filter((t) => t.row >= 0 && t.col >= 0 && t.row < Units.boardSize && t.col < Units.boardSize && typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(t.row, t.col)));
+      if (water.length > 0) {
+        await Units.hopTo(unit, water[0].row, water[0].col);
+        if (!(typeof Skills !== "undefined" && Skills.has(unit.team, "anfibio"))) {
+          if (typeof SFX !== "undefined" && SFX.splash) SFX.splash();
+          if (typeof Combat !== "undefined" && Combat._spawnSplash) Combat._spawnSplash(unit.row, unit.col);
+          const heldRow = unit.row;
+          const heldCol = unit.col;
+          await Units.removeUnit(unit, { drowned: true });
+          if (typeof Gnome !== "undefined" && Gnome.isHeldBy && Gnome.isHeldBy(unit.id)) {
+            const land = typeof Combat !== "undefined" && Combat._findDryTileNear ? Combat._findDryTileNear(heldRow, heldCol) : null;
+            await Gnome.dropHeldBy(land ? { id: unit.id, row: land.row, col: land.col } : unit);
+          }
+        }
+      }
+    }
+    if (typeof Fog !== "undefined") Fog.applyVisibility();
+    if (typeof Units.refreshUnitOcclusion === "function") Units.refreshUnitOcclusion();
+  },
+
+  _tileFree(row, col, ignoreUnits = false) {
     if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) return false;
-    if (typeof Units !== "undefined" && Units.unitAt(row, col)) return false;
+    if (!ignoreUnits && typeof Units !== "undefined" && Units.unitAt(row, col)) return false;
     if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) return false;
     if (typeof Villages !== "undefined" && Villages.at(row, col)) return false;
     if (typeof Shops !== "undefined" && Shops.at(row, col)) return false;
@@ -111,15 +192,15 @@ const Altar = {
 
   // Espiral saliente desde (row, col) — mismo patrón que
   // Obelisks._findFreeTileNear/GnomeInstance.spawnNear.
-  _findFreeTileNear(row, col, size) {
-    if (this._tileFree(row, col)) return { row, col };
+  _findFreeTileNear(row, col, size, ignoreUnits = false) {
+    if (this._tileFree(row, col, ignoreUnits)) return { row, col };
     for (let radius = 1; radius <= size; radius++) {
       for (let dr = -radius; dr <= radius; dr++) {
         for (let dc = -radius; dc <= radius; dc++) {
           const r = row + dr;
           const c = col + dc;
           if (r < 0 || c < 0 || r >= size || c >= size) continue;
-          if (this._tileFree(r, c)) return { row: r, col: c };
+          if (this._tileFree(r, c, ignoreUnits)) return { row: r, col: c };
         }
       }
     }
