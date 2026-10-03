@@ -40,6 +40,7 @@ const RACES = [
     icon: "ph-mountains",
     iconImg: "assets/iconos/equipo_rockntroll.png",
     color: "#8a8f99",
+    titleColor: "#e0262a",
     available: true,
     gloryIcon: "assets/iconos/gloria_colinas_rockntroll.png",
   },

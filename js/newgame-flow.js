@@ -55,7 +55,7 @@ function renderOptionCard({ icon, iconImg, title, desc, onClick, color }) {
 // bloques (ambientación/virtudes/desventajas, ver flavorKey/virtuesKey/
 // weaknessesKey en js/races.js) en vez de una sola frase corrida — mismo
 // lenguaje visual .p5-banner/doble-capa que el resto del juego.
-function renderRaceCard({ iconImg, title, flavor, virtues, weaknesses, onClick, color }) {
+function renderRaceCard({ iconImg, title, flavor, virtues, weaknesses, onClick, color, titleColor }) {
   const card = document.createElement("button");
   card.className = "race-card";
   if (color) card.style.setProperty("--card-accent", color);
@@ -68,7 +68,7 @@ function renderRaceCard({ iconImg, title, flavor, virtues, weaknesses, onClick, 
     <span class="race-card__art-wrap">
       <img src="${iconImg}" alt="" class="race-card__art" />
     </span>
-    <span class="race-card__title">${title}</span>
+    <span class="race-card__title"${titleColor ? ` style="color:${titleColor}"` : ""}>${title}</span>
     <span class="race-card__body">
       ${flavor ? `<span class="race-card__flavor">${flavor}</span>` : ""}
       <span class="race-card__stat race-card__stat--virtue">
@@ -116,6 +116,7 @@ function populateRaceSelect() {
         virtues: I18N.t(race.virtuesKey),
         weaknesses: I18N.t(race.weaknessesKey),
         color: race.color,
+        titleColor: race.titleColor,
         onClick: () => {
           matchDraft.raceId = race.id;
           populateLevelSelect();
