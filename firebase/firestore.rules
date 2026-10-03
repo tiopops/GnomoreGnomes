@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Nombres de usuario: UN documento por nombre (en minúsculas).
+    // "create" solo funciona si el documento NO existe → dos personas nunca
+    // pueden quedarse el mismo nombre. No se pueden editar ni borrar.
+    match /usernames/{name} {
+      allow read: if true;   // solo contiene uid y nombre: sirve para comprobar si está libre
+      allow create: if request.auth != null
+        && name.matches('^[a-z0-9_]{3,16}$')
+        && request.resource.data.usernameLower == name
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'username', 'usernameLower', 'createdAt']);
+      allow update, delete: if false;
+    }
+
+    // Perfil de cada usuario: solo lo ve y lo crea su dueño, y únicamente si
+    // reservó ese mismo nombre en la misma operación.
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameLower)).data.uid == uid;
+      allow update, delete: if false;
+    }
+  }
+}

@@ -9028,3 +9028,75 @@ body.backpack-giving--katapum * {
   .tut-portrait { height: clamp(110px, 20vh, 150px); }
   .tut-hold { bottom: 330px; }
 }
+
+/* ---------- Cuenta de usuario (js/auth.js) ---------- */
+/* El engranaje se desplaza a la izquierda para dejar sitio al botón de cuenta. */
+.settings-gear-btn:not(.settings-gear-btn--account) { right: 96px; }
+.settings-gear-btn--account { right: 20px; }
+@media (max-width: 480px) {
+  .settings-gear-btn.settings-gear-btn:not(.settings-gear-btn--account) { right: 66px; }
+  .settings-gear-btn--account.settings-gear-btn--account { right: 14px; }
+}
+body.tut-on .settings-gear-btn--account { display: none; }
+.account-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  width: 13px;
+  height: 13px;
+  background: #53d86a;
+  border: 2.5px solid #000;
+  border-radius: 50%;
+  display: none;
+}
+.settings-gear-btn--logged .account-dot { display: block; }
+.account-overlay { z-index: 950; }
+.account-panel { width: min(430px, 92vw); padding: 34px 40px 40px; }
+.account-body { display: flex; flex-direction: column; align-items: stretch; gap: 16px; position: relative; z-index: 2; }
+.account-tabs { display: flex; gap: 10px; justify-content: center; }
+.account-tab { padding: 8px 20px; --p5-tone: #2b2733; }
+.account-tab--active { --p5-tone: #ffcf3d; }
+.account-tab--active .p5-banner__label { color: #111; text-shadow: none; }
+.account-form { display: flex; flex-direction: column; gap: 12px; }
+.account-field { position: relative; isolation: isolate; display: block; }
+.account-field__label {
+  display: block;
+  margin: 0 0 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(244, 242, 248, 0.8);
+}
+.account-field::before,
+.account-field::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 42px; clip-path: polygon(2% 0, 100% 0, 98% 100%, 0 100%); z-index: -1; }
+.account-field::before { background: #000; }
+.account-field::after { inset: auto 2.5px 2.5px 2.5px; height: 37px; background: #1a1722; }
+.account-field:focus-within::after { background: #2e2741; }
+.account-field input {
+  width: 100%;
+  height: 42px;
+  box-sizing: border-box;
+  padding: 0 16px;
+  background: none;
+  border: none;
+  outline: none;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+}
+.account-field input::placeholder { color: rgba(244, 242, 248, 0.35); font-weight: 600; }
+.account-submit { align-self: center; padding: 11px 34px; margin-top: 4px; }
+.account-link { align-self: center; background: none; border: none; color: #ffcf3d; font-weight: 800; font-size: 0.8rem; cursor: var(--cursor-pointer); text-decoration: underline; }
+.account-link:hover { color: #fff; }
+.account-msg { text-align: center; font-weight: 800; font-size: 0.85rem; padding: 2px 6px; }
+.account-msg--error { color: #ff8a7a; }
+.account-msg--ok { color: #7ee08d; }
+.account-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; }
+.account-card__icon { font-size: 3rem; color: #ffcf3d; }
+.account-card__nick { font-size: 1.5rem; font-weight: 900; color: #fff; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.account-card__mail { font-size: 0.85rem; color: rgba(244, 242, 248, 0.75); }
+.account-card__state { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-top: 4px; }
+.account-card__state--ok { color: #7ee08d; }
+.account-card__state--pending { color: #ffcf3d; }
