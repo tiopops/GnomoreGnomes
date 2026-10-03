@@ -561,7 +561,7 @@ const Tutorial = {
         ok: "¡Madera conseguida! Ya puedes fabricarme un ataúd... o una mejora de armadura, que queda más elegante. En la armería de tu obelisco tienes las mejoras de equipo.",
       },
       {
-        say: `Y hablando de botines: ¿ves ese cofre escondido en un rincón? En las partidas de verdad hay uno por jugador (y uno más, por si acaso) tirados en los lugares más apartados del mapa, y nadie los vigila porque nadie tiene valor. Se abren como un recurso: selecciona a tu personaje libre y púlsalo. Dentro hay una reliquia al azar, de las que dan ventajas serias… mientras duren. Cada vez que muere una unidad tuya pierden 1 punto de durabilidad, y al llegar a 0 se rompen. Como mi paciencia con vosotros.`,
+        say: `Por si no te parecía suficientemente satisfactorio reventar gnomos... ¿ves ese cofre escondido en un rincón? En las partidas de verdad hay un buen puñado repartidos por el mapa. Se abren haciendo clic sobre ellos y esconden reliquias, de las que dan ventajas de las buenas… Cuando las consigas, cada vez que muera una unidad tuya, perderán 1 punto de durabilidad, y cuando lleguen a 0 se rompen. Como la clavícula de mi tío Klink.`,
         mission: "Abre el cofre de reliquias",
         onStart: () => {
           T._refill();
@@ -582,7 +582,7 @@ const Tutorial = {
         },
         refillFor: () => T._ctx.cutterId,
         done: () => typeof Relics !== "undefined" && Relics.list("player").length > 0,
-        ok: "¡Reliquia en la mochila! Son las Botas TrotaMontes: +1 de Movimiento para todos tus personajes. Fíjate en su marcador, ese 5/5 que tiene al lado: es lo que le queda de vida. Cuida de tus unidades o las botas se gastarán antes de tiempo. Y no, no pienso dejar que me uses de escudo para ahorrarlas.",
+        ok: "¡Reliquia en la mochila! Son las Botas TrotaMontes: +1 de Movimiento para todas tus unidades. Fíjate en su marcador, ese 5/5 que tiene al lado: esa es su durabilidad. Cuida de tus unidades o las botas se gastarán antes de tiempo. Y no, no guardo el ticket de compra, así que olvídate de la garantía.",
       },
       {
         say: `No hay nada mejor que conquistar un tótem con un gnomo cargado de puntos. Tu personaje lo estampa contra él y le resta tanta vida como puntos lleve. Si se queda sin puntos, el tótem es tuyo y te da Puntos de Gloria cada turno. Acércate con quien lleva el gnomo y pulsa la diana. Lo que la gente del gremio conoce como “estampada”.`,
