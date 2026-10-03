@@ -2296,9 +2296,6 @@ body.team-markers--visible .unit__team-marker {
   100% { opacity: 0; transform: translate(-50%, -58px) scale(1); }
 }
 
-.tile:hover img {
-  filter: brightness(1.15);
-}
 
 /* ---------- Panel de información del personaje (js/unitinfo.js) ---------- */
 
@@ -2959,9 +2956,6 @@ body.team-markers--visible .unit__team-marker {
   background: var(--accent-hover);
 }
 
-.tile:hover img {
-  filter: brightness(1.15);
-}
 
 /* ---------- El gnomo (js/gnome.js) ----------
    Personaje neutral que hace de "pelota": reutiliza a propósito las mismas
@@ -9158,3 +9152,26 @@ body.tut-on .settings-gear-btn--account { display: none; }
 .friends-trash { background: none; border: none; color: #ff8a7a; font-size: 1.35rem; cursor: var(--cursor-pointer); padding: 4px; }
 .friends-trash:hover { color: #fff; }
 .friends-empty { text-align: center; font-weight: 700; font-size: 0.85rem; color: rgba(244,242,248,0.7); padding: 8px 4px; }
+
+/* Resaltado de la loseta bajo el ratón. ANTES era "filter: brightness" sobre la
+   imagen de cada loseta: un filtro por loseta obliga al navegador a crear una
+   superficie de pintado propia cada vez que el ratón pasa por una (y se
+   regenera al hacer zoom), lo que provocaba parpadeos negros en el escenario.
+   Ahora es un rombo semitransparente sobre la cara superior, sin filtros. */
+.tile::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 188px;
+  height: 117px;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: rgba(255, 255, 255, 0.16);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+}
+.tile:hover::after { opacity: 1; }
+/* Las losetas "recordadas" cambian de golpe (sin transición de filtro): animar
+   decenas de filtros a la vez era otro coste innecesario de pintado. */
+.tile.gg-remembered { transition: none; }
