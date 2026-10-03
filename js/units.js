@@ -302,12 +302,16 @@ const Units = {
       let occluding = false;
       if (behindEls.length) {
         const uRect = unit.el.getBoundingClientRect();
-        const mouseOverUnit = mx >= uRect.left && mx <= uRect.right && my >= uRect.top && my <= uRect.bottom;
+        // La mitad inferior del personaje (sus pies) SIEMPRE es clicable para
+        // poder seleccionarlo; solo se vuelve transparente cuando el ratón
+        // está sobre el rival de detrás y por encima de esa zona.
+        const mouseInFoot =
+          mx >= uRect.left && mx <= uRect.right && my >= uRect.top + uRect.height * 0.5 && my <= uRect.bottom;
         const mouseOverBehind = behindEls.some((el) => {
           const r = el.getBoundingClientRect();
           return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom;
         });
-        occluding = mouseOverUnit || mouseOverBehind;
+        occluding = mouseOverBehind && !mouseInFoot;
       }
       unit.el.classList.toggle("unit--occluding", occluding);
     });
