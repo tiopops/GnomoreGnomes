@@ -253,7 +253,11 @@ const Account = {
       "auth/network-request-failed": "acc_x_net",
       "name-taken": "acc_x_nametaken",
     };
-    return I18N.t(map[c] || "acc_x_generic");
+    if (map[c]) return I18N.t(map[c]);
+    // Error no previsto: se muestra su código para poder diagnosticarlo.
+    console.warn("[Account]", e);
+    const code = String(c).replace(/^(auth|firestore)\//, "").slice(0, 60);
+    return I18N.t("acc_x_generic") + (code ? ` (${code})` : "");
   },
 
   _setBusy(b) {
