@@ -591,6 +591,7 @@ function createGnomeInstance() {
       SFX.catch();
       if (typeof Turns !== "undefined") Turns.useAction(unit);
       Units.refreshRange(unit);
+      setTimeout(() => Gnome.ensureLooseGnome(), 400); // siempre al menos 2 sueltos
     },
 
     attachTo(unit) {
@@ -1931,27 +1932,25 @@ const Gnome = {
   // busca la loseta libre más cercana en espiral, evitando otros gnomos/
   // poblados/tiendas/obeliscos) para el colocado final, así este método solo
   // tiene que decidir DÓNDE apuntar esa búsqueda.
+  // Pedido explícito: "siempre deben haber al menos 2 gnomos sin coger; si no
+  // es posible se generan en una casilla aleatoria para cumplir esta regla".
+  MIN_LOOSE: 2,
   ensureLooseGnome() {
     if (typeof Units === "undefined" || !Units.boardSize) return;
-    if (this.list.some((g) => !g.heldBy)) return; // ya hay uno suelto, nada que hacer
     const size = Units.boardSize;
-    let best = null;
-    let bestMinDist = -1;
-    for (let attempts = 0; attempts < 60; attempts++) {
-      const row = Math.floor(Math.random() * size);
-      const col = Math.floor(Math.random() * size);
-      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
-      const minDist = Units.list.reduce((min, u) => {
-        const d = Math.max(Math.abs(u.row - row), Math.abs(u.col - col));
-        return Math.min(min, d);
-      }, Infinity);
-      if (minDist > bestMinDist) {
-        bestMinDist = minDist;
-        best = { row, col };
+    let guard = 0;
+    while (this.list.filter((g) => !g.heldBy && !g.isDecoy).length < this.MIN_LOOSE && guard++ < 6) {
+      let spot = null;
+      for (let attempts = 0; attempts < 200 && !spot; attempts++) {
+        const row = Math.floor(Math.random() * size);
+        const col = Math.floor(Math.random() * size);
+        if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+        if (Units.unitAt(row, col) || this.isAt(row, col)) continue;
+        spot = { row, col };
       }
-      if (minDist >= Math.floor(size / 2)) break; // ya lo bastante lejos, no hace falta seguir
+      if (!spot) break;
+      this.spawnNear(spot.row, spot.col); // spawnNear ya esquiva tótems/tiendas/obeliscos/recursos
     }
-    if (best) this.spawnNear(best.row, best.col);
   },
 };
 

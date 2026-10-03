@@ -180,10 +180,10 @@ const SKILL_DEFS = [
     level: 4,
     slot: 1,
     name: "Emboscada",
-    maxRank: 1,
+    maxRank: 3,
     fallbackIcon: "ph-eye-slash",
-    describe: () =>
-      "Un personaje tuyo que ataca desde dentro de un arbusto (se haya movido hasta él o no) gana +1 de ataque en ese golpe.",
+    describe: (rank) =>
+      `Un personaje tuyo que ataca desde dentro de un arbusto (se haya movido hasta él o no) gana +${rank || 1} de ataque en ese golpe (+1 por nivel, hasta +3).`,
   },
   {
     id: "punto_estrategico",
@@ -589,7 +589,7 @@ const Skills = {
     }
     if (this.rank(team, "sed_sangre") > 0) bonus += attacker.bloodStacks || 0;
     if (this.has(team, "ultimo_aliento") && attacker.hp === 1 && (attacker.maxHp || 1) > 1) bonus += 1;
-    if (this.has(team, "emboscada") && typeof Bushes !== "undefined" && Bushes.isHidingUnit(attacker)) bonus += 1;
+    if (this.has(team, "emboscada") && typeof Bushes !== "undefined" && Bushes.isHidingUnit(attacker)) bonus += this.rank(team, "emboscada");
     return bonus;
   },
 
