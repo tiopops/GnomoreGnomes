@@ -144,7 +144,7 @@ const ITEM_DESCRIPTIONS = {
   setarcoiris: "La comida favorita de los gnomos. Colócala junto a uno de tus personajes: en dos turnos atraerá a un gnomo hambriento.",
   bevida: "Un brebaje revitalizante. Dáselo a un personaje aliado (pulsa sobre él en el tablero) para restaurar toda su vida hasta su máximo de base, o úsalo sobre uno de tus tótems para repararlo por completo. No sirve con el Obelisco.",
   atrapapinreles: "Un cepo goblin oxidado. Colócalo junto a uno de tus personajes: el enemigo que caiga en su casilla o pase por encima pierde el turno, suelta cualquier gnomo que llevara encima y recibe 1 punto de daño.",
-  katapum: "Un cohete goblin casero. Elige a un rival a la vista: el misil vuela teledirigido hasta él y le hace entre 1 y 3 puntos de daño en la explosión (1 es lo más común, 2 es menos común y 3 lo menos común).",
+  katapum: "Un cohete goblin casero. Elige a un rival a la vista: el misil vuela teledirigido hasta él y tira un dado de 6 al explotar: con 1-3 le hace 1 punto de daño, con 4-5 le hace 2 y con 6 le hace 3.",
   totemvision: "Un tótem tallado con un ojo tallado en su punta. Colócalo sobre una casilla libre: otorga visión permanente en un radio de 3 casillas. Tiene 1 punto de vida (cualquier golpe lo destruye) y, si se esconde dentro de un arbusto, se rompe en cuanto un rival entra en él.",
   senuelo: "Un muñeco de madera con forma de gnomo, cargado de pólvora. Colócalo sobre una casilla libre de terreno (nunca en un arbusto): tú lo ves como lo que es, pero el rival lo confunde con un gnomo suelto de verdad. En cuanto intente cogerlo... ¡PUM! Explota y le quita 2 puntos de vida.",
 };
@@ -1306,15 +1306,18 @@ const Backpack = {
   // 60% / 28% / 12% (daño esperado ~1.52, frente a ~1.25 del reparto
   // 75/25 anterior: de ahí la subida de precio, ver SHOP_STOCK_TEMPLATE en
   // js/shops.js).
+  // Pedido explícito: "el misil katapum su daño debería funcionar como un
+  // dado de 6: tirada de 1-3 = 1 punto de daño, 4-5 = 2 puntos, 6 = 3 puntos".
   _rollKatapumDamage() {
-    const r = Math.random();
-    if (r < 0.6) return 1;
-    if (r < 0.88) return 2;
-    return 3;
+    const roll = 1 + Math.floor(Math.random() * 6);
+    this._lastKatapumRoll = roll;
+    return roll <= 3 ? 1 : roll <= 5 ? 2 : 3;
   },
 
   _explodeKatapum(target) {
     const damage = this._rollKatapumDamage();
+    // Se enseña la tirada del dado sobre el objetivo.
+    Units.spawnFloatingText(target, `Dado: ${this._lastKatapumRoll}`, { className: "dmg-popup gnome-points-popup" });
     // Escudo/Piel de Roca (js/skills.js) también valen contra el misil; la
     // Evasión no (es teledirigido, no es un golpe cuerpo a cuerpo).
     if (typeof Skills !== "undefined") Skills.resolveDamage(target, damage, { melee: false });
