@@ -9193,3 +9193,12 @@ body.tut-on .settings-gear-btn--account { display: none; }
   visibility: hidden;
   transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.25s;
 }
+
+/* Sliders de volumen (ajustes) */
+.settings-slider{position:relative;z-index:2;display:flex;align-items:center;gap:10px;padding:0 8px 4px 8px;}
+.settings-slider__label{flex:0 0 auto;font-size:.8rem;opacity:.85;min-width:0;max-width:42%;}
+.settings-slider__value{flex:0 0 3em;text-align:right;font-size:.8rem;font-variant-numeric:tabular-nums;}
+.settings-slider__input{-webkit-appearance:none;appearance:none;flex:1 1 70px;width:70px;min-width:50px;height:6px;border-radius:3px;outline:none;cursor:pointer;
+  background:linear-gradient(to right,#e8b43a var(--pct,50%),rgba(255,255,255,.2) var(--pct,50%));}
+.settings-slider__input::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #e8b43a;}
+.settings-slider__input::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid #e8b43a;}

@@ -33,17 +33,27 @@ const SFX = {
   // más que este bloque.
   _STORAGE_KEY: "gnomoregnomes_sfx",
   enabled: true,
+  volume: 1,
+  _VOL_KEY: "gnomoregnomes_sfx_vol",
 
   init() {
     const saved = localStorage.getItem(this._STORAGE_KEY);
     this.enabled = saved === null ? true : saved === "1";
-    if (this.master) this.master.gain.value = this.enabled ? 1 : 0;
+    const v = parseFloat(localStorage.getItem(this._VOL_KEY));
+    this.volume = isNaN(v) ? 1 : Math.min(1, Math.max(0, v));
+    if (this.master) this.master.gain.value = this.enabled ? this.volume : 0;
   },
 
   setEnabled(enabled) {
     this.enabled = !!enabled;
     localStorage.setItem(this._STORAGE_KEY, this.enabled ? "1" : "0");
-    if (this.master) this.master.gain.value = this.enabled ? 1 : 0;
+    if (this.master) this.master.gain.value = this.enabled ? this.volume : 0;
+  },
+
+  setVolume(v) {
+    this.volume = Math.min(1, Math.max(0, v));
+    try { localStorage.setItem(this._VOL_KEY, String(this.volume)); } catch (e) {}
+    if (this.master) this.master.gain.value = this.enabled ? this.volume : 0;
   },
 
   ensureCtx() {
@@ -58,7 +68,7 @@ const SFX = {
     // setEnabled arriba) — el contexto de audio se crea de forma perezosa
     // en el primer sonido, así que "enabled" puede llevar rato fijado
     // antes de que master exista de verdad.
-    this.master.gain.value = this.enabled ? 1 : 0;
+    this.master.gain.value = this.enabled ? this.volume : 0;
     const compressor = this.ctx.createDynamicsCompressor();
     this.master.connect(compressor).connect(this.ctx.destination);
     return this.ctx;

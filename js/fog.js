@@ -111,6 +111,7 @@ const Fog = {
     // BoardView deja de llamar a updateCulling con animEnabled=false); al
     // activarla, calcular el culling YA MISMO en vez de esperar al
     // siguiente movimiento de cámara.
+    this._refreshIdle();
     if (!this.animEnabled) {
       this.clearCulling();
     } else if (typeof BoardView !== "undefined" && BoardView.viewportEl) {
@@ -617,6 +618,34 @@ const Fog = {
     // la niebla, ver mapgen.js). Se arregla aparte (_refreshFogCoverZ) en
     // vez de aquí mismo.
     this._refreshFogCoverZ();
+    this._refreshIdle();
+  },
+
+  // Animación de reposo SOLO en la frontera de la niebla: la nube interior
+  // es una masa uniforme que nadie ve moverse, y cada nube animada cuesta una
+  // capa GPU (causa de las losetas que desaparecen). Frontera = sin revelar
+  // con una revelada a <=2 casillas; una de cada dos, tope 28.
+  _refreshIdle() {
+    if (!this._fogEls || !this.revealedGrid) return;
+    const n = this.size;
+    let count = 0;
+    this._fogEls.forEach((el, key) => {
+      const i = key.indexOf(",");
+      const r = +key.slice(0, i), c = +key.slice(i + 1);
+      let on = false;
+      if (this.animEnabled && count < 28 && !this.revealedGrid[r][c] && (r + c) % 2 === 0) {
+        outer: for (let dr = -2; dr <= 2; dr++) {
+          const rr = r + dr;
+          if (rr < 0 || rr >= n) continue;
+          for (let dc = -2; dc <= 2; dc++) {
+            const cc = c + dc;
+            if (cc >= 0 && cc < n && this.revealedGrid[rr][cc]) { on = true; break outer; }
+          }
+        }
+      }
+      if (on) count++;
+      el.classList.toggle("tile__fog--idle", on);
+    });
   },
 
   // z-index "de reposo" de una nube de niebla — mismo cálculo que pone

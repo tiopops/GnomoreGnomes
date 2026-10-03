@@ -784,7 +784,7 @@ function renderMap(map, container) {
     // anterior — y la propia deriva de las que SÍ animan sube un poco más
     // (ver @keyframes fog-idle-drift) para que el campo de niebla se siga
     // leyendo igual de "vivo" con menos nubes en movimiento.
-    fogImg.className = (t.row * 7 + t.col * 3) % 10 < 2 ? "tile__fog tile__fog--idle" : "tile__fog";
+    fogImg.className = "tile__fog"; // la animación de reposo la asigna Fog._refreshIdle solo en la frontera
     // La niebla pasa por SpriteQuality.register igual que cualquier otro
     // sprite del tablero, pero NO sigue el zoom como el resto: pedido
     // explícito (pasada posterior) "la niebla puedes ponerla siempre en

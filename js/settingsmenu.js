@@ -120,6 +120,9 @@ const SettingsMenu = {
       sfxBtn.querySelector(".settings-toggle").dataset.checked = String(next);
     });
     colAudio.appendChild(sfxBtn);
+    colAudio.appendChild(this._buildSlider(I18N.t("settings_sfx_vol"), typeof SFX !== "undefined" ? SFX.volume : 1, (v) => {
+      if (typeof SFX !== "undefined") SFX.setVolume(v);
+    }, () => { if (typeof SFX !== "undefined" && SFX.enabled) SFX.click(); }));
 
     // Pedido explícito: "musica(aun por implementar, de momento no hace
     // ningun efecto)" — fila placeholder, visualmente igual que el resto
@@ -129,16 +132,24 @@ const SettingsMenu = {
     // no hace absolutamente nada todavía (no hay música de fondo en el
     // juego, ver la nota de sfxBtn arriba).
     const musicBtn = document.createElement("button");
-    musicBtn.className =
-      "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle settings-panel__option--locked";
-    musicBtn.setAttribute("aria-disabled", "true");
+    musicBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
+    const musicChecked = typeof Music !== "undefined" ? Music.enabled : true;
     musicBtn.innerHTML =
       '<span class="settings-panel__option-main">' +
       '<i class="ph ph-music-notes settings-panel__option-icon"></i>' +
-      '<span class="p5-banner__label">' + I18N.t("settings_music") + ' <span class="settings-panel__option-soon">' + I18N.t("settings_music_soon") + '</span></span>' +
+      '<span class="p5-banner__label">' + I18N.t("settings_music") + '</span>' +
       "</span>" +
-      '<span class="settings-toggle" data-checked="false"><i class="ph ph-check settings-toggle__check"></i></span>';
+      `<span class="settings-toggle" data-checked="${musicChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
+    musicBtn.addEventListener("click", () => {
+      SFX.click();
+      const next = typeof Music !== "undefined" ? !Music.enabled : true;
+      if (typeof Music !== "undefined") Music.setEnabled(next);
+      musicBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+    });
     colAudio.appendChild(musicBtn);
+    colAudio.appendChild(this._buildSlider(I18N.t("settings_music_vol"), typeof Music !== "undefined" ? Music.volume : 0.5, (v) => {
+      if (typeof Music !== "undefined") Music.setVolume(v);
+    }));
 
     // Pedido explícito: "otra opcion en el menu de configuracion, otro
     // chekbox, llamado mostrar equipos. esta opcion por defecto viene
@@ -361,6 +372,26 @@ const SettingsMenu = {
   _FLAGS: {
     es: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 6 4"><rect width="6" height="4" fill="#c60b1e"/><rect y="1" width="6" height="2" fill="#ffc400"/></svg>'),
     en: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40"><rect width="60" height="40" fill="#012169"/><path d="M0,0 60,40M60,0 0,40" stroke="#fff" stroke-width="8"/><path d="M0,0 60,40M60,0 0,40" stroke="#c8102e" stroke-width="3"/><path d="M30,0V40M0,20H60" stroke="#fff" stroke-width="13"/><path d="M30,0V40M0,20H60" stroke="#c8102e" stroke-width="8"/></svg>'),
+  },
+
+  _buildSlider(label, value, onInput, onChange) {
+    const row = document.createElement("div");
+    row.className = "settings-slider";
+    row.innerHTML =
+      '<span class="settings-slider__label">' + label + '</span>' +
+      '<input type="range" class="settings-slider__input" min="0" max="100" step="1">' +
+      '<span class="settings-slider__value"></span>';
+    const input = row.querySelector("input");
+    const out = row.querySelector(".settings-slider__value");
+    const paint = () => {
+      out.textContent = input.value + "%";
+      input.style.setProperty("--pct", input.value + "%");
+    };
+    input.value = Math.round(value * 100);
+    paint();
+    input.addEventListener("input", () => { paint(); onInput(input.value / 100); });
+    if (onChange) input.addEventListener("change", onChange);
+    return row;
   },
 
   _buildLanguageRow() {

@@ -212,8 +212,29 @@ const SpriteQuality = {
     if (this._aboveMid && scale < this._MID_DOWN) this._aboveMid = false;
     else if (!this._aboveMid && scale > this._MID_UP) this._aboveMid = true;
 
+    // Nunca se cambian texturas MIENTRAS la cámara se mueve (eso provocaba
+    // el parpadeo de sprites al acercar/alejar): se espera a que el zoom
+    // lleve ~350ms quieto y entonces se reparte el cambio en lotes por frame.
     const target = this._aboveMid ? 0 : 1;
-    if (target !== this.tier) this._setTier(target);
+    clearTimeout(this._debounce);
+    if (target === this.tier) return;
+    this._debounce = setTimeout(() => this._setTierBatched(target), 350);
+  },
+
+  _setTierBatched(tier) {
+    if (this.tier === tier || !this.enabled) return;
+    this.tier = tier;
+    const list = Array.from(this._sprites);
+    const run = () => {
+      if (this.tier !== tier) return; // llegó otro cambio: ese lo reemplaza
+      const chunk = list.splice(0, 40);
+      for (const imgEl of chunk) {
+        if (!imgEl.isConnected) { this._sprites.delete(imgEl); continue; }
+        this._swap(imgEl, tier);
+      }
+      if (list.length) requestAnimationFrame(run);
+    };
+    run();
   },
 
   _setTier(tier) {
