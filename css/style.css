@@ -9124,3 +9124,5 @@ body.tut-on .settings-gear-btn--account { display: none; }
 @media (max-width: 480px) {
   .armory-tracks { padding-left: 26px; padding-right: 26px; }
 }
+
+.obelisk-gameover-panel__logo--draw { width: min(340px, 78vw); }

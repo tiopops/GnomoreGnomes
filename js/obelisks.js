@@ -924,7 +924,9 @@ const Obelisks = {
       const lv = typeof getLevel === "function" ? getLevel(this._raceIds[team]) : null;
       return lv && lv.logoImg ? `<img class="obelisk-gameover-panel__logo" src="${lv.logoImg}" alt="" draggable="false">` : "";
     };
-    const logos = draw ? logoOf("player") + logoOf("enemy") : logoOf(winnerTeam);
+    const logos = draw
+      ? `<img class="obelisk-gameover-panel__logo obelisk-gameover-panel__logo--draw" src="assets/niveles/logo_empate.png" alt="" draggable="false">`
+      : logoOf(winnerTeam);
     if (typeof SFX !== "undefined") {
       if (draw) SFX.draw && SFX.draw();
       else if (won) SFX.victory && SFX.victory();
@@ -935,7 +937,7 @@ const Obelisks = {
     overlay.className = "obelisk-gameover-overlay";
     overlay.innerHTML = `
       <div class="p5-banner obelisk-gameover-panel ${variantClass}">
-        <div class="obelisk-gameover-panel__logos${draw ? " obelisk-gameover-panel__logos--duo" : ""}">${logos}</div>
+        <div class="obelisk-gameover-panel__logos">${logos}</div>
         <i class="ph ${icon} obelisk-gameover-panel__icon"></i>
         <div class="p5-banner__label obelisk-gameover-panel__title">${title}</div>
         <div class="obelisk-gameover-panel__msg">${msg}</div>

@@ -2,6 +2,7 @@
    lo necesario para que la partida arranque sin tirones (lo demás carga a demanda). */
 const PRELOAD_ASSETS = [
  "assets/niveles/logo_mushboom_forest.png",
+  "assets/niveles/logo_empate.png",
  "assets/niveles/logo_colinas_rockntroll.png",
  "assets/decals/efecto_sangre_01.png",
  "assets/decals/efecto_sangre_01_midres.png",
