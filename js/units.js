@@ -1124,6 +1124,11 @@ const Units = {
     });
   },
 
+  // Rango de movimiento real: base del tipo + Reliquias del equipo.
+  moveRangeOf(unit) {
+    return UNIT_TYPES[unit.typeId].movimiento + (typeof Relics !== "undefined" ? Relics.moveBonus(unit.team) : 0);
+  },
+
   hopTo(unit, row, col) {
     this.faceTowardsTile(unit, row, col);
 
@@ -1261,6 +1266,7 @@ const Units = {
     unit.el.remove();
     this.list = this.list.filter((u) => u.id !== unit.id);
     if (typeof Skills !== "undefined") Skills.onUnitRemoved();
+    if (typeof Relics !== "undefined") Relics.onUnitDied(unit);
     // Tienda Goblin (js/shops.js) — si el personaje que acaba de morir era
     // el único que mantenía una tienda accesible, deja de estarlo (y su
     // popup, si estaba abierto, se cierra solo — ver Shops.refreshAll).

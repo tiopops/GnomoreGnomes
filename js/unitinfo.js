@@ -262,7 +262,7 @@ const UnitInfo = {
           <div class="unit-info-hp"><i class="ph ph-heart"></i> ${unit.hp} / ${unit.maxHp}</div>
           <div class="unit-info-stats">
             ${this.statRow("ph-shield", "Aguante", type.aguante, typeof Armory !== "undefined" ? Armory.defenseBonus(unit.team) : 0)}
-            ${this.statRow("ph-footprints", "Movimiento", type.movimiento)}
+            ${this.statRow("ph-footprints", "Movimiento", type.movimiento, typeof Relics !== "undefined" ? Relics.moveBonus(unit.team) : 0)}
             ${this.statRow("ph-boxing-glove", "Fuerza", type.fuerza, typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0)}
             ${this.statRow("ph-wind", "Agilidad", type.agilidad)}
             ${this.statRow("ph-eye", "Percepción", type.percepcion)}

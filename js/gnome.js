@@ -468,7 +468,7 @@ function createGnomeInstance() {
     // esté — sin pisar ninguna unidad NI ningún otro gnomo suelto.
     findApproachTile(unit) {
       if (!this.el || this.heldBy) return null;
-      const moveRange = UNIT_TYPES[unit.typeId].movimiento;
+      const moveRange = Units.moveRangeOf(unit);
       const distToGnome = (row, col) => Math.max(Math.abs(row - this.row), Math.abs(col - this.col));
 
       if (distToGnome(unit.row, unit.col) <= 1) {
@@ -780,7 +780,7 @@ function createGnomeInstance() {
       // elección). Más allá del propio movimiento el lanzamiento puede
       // fallar (computePassSuccess, "overreach"); un fallo cae siempre
       // dentro del mismo límite de 4 casillas (ver findDropTile).
-      const movimiento = UNIT_TYPES[unit.typeId].movimiento;
+      const movimiento = Units.moveRangeOf(unit);
       const tiles = this._throwableTiles(unit);
       tiles.forEach((tile, i) => {
         const distance = Math.max(Math.abs(tile.row - unit.row), Math.abs(tile.col - unit.col));

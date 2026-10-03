@@ -155,7 +155,7 @@ const TotemVision = {
   // de alcance más cercana dentro de su propio movimiento.
   findApproachTile(unit, totem) {
     const type = UNIT_TYPES[unit.typeId];
-    const moveRange = type.movimiento;
+    const moveRange = Units.moveRangeOf(unit);
     const attackRange = type.attackRange;
     const distToTotem = (row, col) => Math.max(Math.abs(row - totem.row), Math.abs(col - totem.col));
 

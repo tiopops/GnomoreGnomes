@@ -173,7 +173,7 @@ const Mushrooms = {
   findApproachTile(unit, m) {
     if (!m.el || m.heldBy) return null;
     if (this._dist(unit, m) <= 1) return { row: unit.row, col: unit.col };
-    const moveRange = UNIT_TYPES[unit.typeId].movimiento;
+    const moveRange = Units.moveRangeOf(unit);
     let best = null;
     let bestDist = Infinity;
     for (let row = 0; row < Units.boardSize; row++) {

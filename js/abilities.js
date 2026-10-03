@@ -899,7 +899,7 @@ const Abilities = {
   // de su area de movimiento".
   _startThrowDestination(goblin, thrown) {
     Units.clearRangeOverlays();
-    const range = UNIT_TYPES[goblin.typeId].movimiento;
+    const range = Units.moveRangeOf(goblin);
     const tiles = [];
     for (let row = 0; row < Units.boardSize; row++) {
       for (let col = 0; col < Units.boardSize; col++) {

@@ -503,7 +503,7 @@ const Villages = {
   // movimiento de la unidad nunca ofrecía la mira de ataque.
   findApproachTile(unit, village) {
     const type = UNIT_TYPES[unit.typeId];
-    const moveRange = type.movimiento;
+    const moveRange = Units.moveRangeOf(unit);
 
     const distToVillage = (row, col) =>
       Math.max(Math.abs(row - village.row), Math.abs(col - village.col));

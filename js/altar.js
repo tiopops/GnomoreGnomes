@@ -495,7 +495,7 @@ const Altar = {
   findApproachTile(unit, altar) {
     const dist = (row, col) => Math.max(Math.abs(row - altar.row), Math.abs(col - altar.col));
     if (dist(unit.row, unit.col) <= ALTAR_INTERACT_RANGE) return { row: unit.row, col: unit.col };
-    const range = UNIT_TYPES[unit.typeId].movimiento;
+    const range = Units.moveRangeOf(unit);
     let best = null;
     let bestDist = Infinity;
     for (let row = 0; row < Units.boardSize; row++) {

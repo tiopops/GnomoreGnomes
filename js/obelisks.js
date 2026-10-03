@@ -699,7 +699,7 @@ const Obelisks = {
   // Igual que Villages.findApproachTile/Shops.findApproachTile.
   findApproachTile(unit, obelisk) {
     const type = UNIT_TYPES[unit.typeId];
-    const moveRange = type.movimiento;
+    const moveRange = Units.moveRangeOf(unit);
 
     const distToObelisk = (row, col) =>
       Math.max(Math.abs(row - obelisk.row), Math.abs(col - obelisk.col));

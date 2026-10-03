@@ -59,6 +59,14 @@ const RESOURCE_NODE_TYPES = {
   },
 };
 
+// Cofre de Reliquias (js/relics.js): se interactúa como un recurso, pero un
+// solo toque lo abre y suelta una reliquia. Hay 1 por jugador, en lugares
+// apartados. No va en RESOURCE_NODE_TYPES (que se reparte por cantidad fija).
+const CHEST_SPRITE_CLOSED = "assets/iconos/cofre_cerrado.png";
+const CHEST_SPRITE_OPEN = "assets/iconos/cofre_abierto.png";
+const CHEST_MIN_OBELISK_DIST = 6; // lejos de las bases
+const CHEST_MIN_CHEST_DIST = 7; // y lejos entre sí
+
 // Recursos ya recolectados (icono de la mochila + trofeo de la fuente) —
 // distinto catálogo de RESOURCE_NODE_TYPES porque uno es "lo que hay plantado
 // en el mapa" y el otro "lo que se lleva en la mochila", con su propio icono.
@@ -147,11 +155,35 @@ const Resources = {
         placed++;
       }
     });
+    this._spawnChests(boardSize);
     // Estado inicial de las barras de vida (ver refreshHpVisibility) —
     // normalmente basta con que Fog.applyVisibility la recalcule tras el
     // primer movimiento, pero esto cubre el instante justo después de
     // repartir el mapa, antes de que nadie se haya movido todavía.
     this.refreshHpVisibility();
+  },
+
+  // Cofres de Reliquias: 1 por jugador, en sitios apartados e impredecibles
+  // (lejos de las bases y entre sí; si no cabe, se van relajando las distancias).
+  _spawnChests(boardSize) {
+    const count = typeof Teams !== "undefined" ? Teams.all.length : 2;
+    for (let i = 0; i < count; i++) {
+      let placed = false;
+      for (let relax = 0; relax <= 4 && !placed; relax++) {
+        const minOb = Math.max(2, CHEST_MIN_OBELISK_DIST - relax);
+        const minCh = Math.max(2, CHEST_MIN_CHEST_DIST - relax * 2);
+        for (let attempts = 0; attempts < 600 && !placed; attempts++) {
+          const row = Math.floor(Math.random() * boardSize);
+          const col = Math.floor(Math.random() * boardSize);
+          if (!this._tileFree(row, col, boardSize)) continue;
+          const dist = (o) => Math.max(Math.abs(o.row - row), Math.abs(o.col - col));
+          if (typeof Obelisks !== "undefined" && Obelisks.list.some((o) => dist(o) < minOb)) continue;
+          if (this.list.some((n) => n.kind === "cofre" && dist(n) < minCh)) continue;
+          this._create("cofre", row, col);
+          placed = true;
+        }
+      }
+    }
   },
 
   _tileFree(row, col, boardSize) {
@@ -199,7 +231,7 @@ const Resources = {
   },
 
   _create(kind, row, col) {
-    const def = RESOURCE_NODE_TYPES[kind];
+    const def = kind === "cofre" ? { spriteUrl: CHEST_SPRITE_CLOSED } : RESOURCE_NODE_TYPES[kind];
     const el = document.createElement("div");
     el.className = `unit resource-node resource-node--${kind}`;
 
@@ -246,8 +278,8 @@ const Resources = {
       kind,
       row,
       col,
-      hp: RESOURCE_NODE_MAX_HP,
-      maxHp: RESOURCE_NODE_MAX_HP,
+      hp: kind === "cofre" ? 1 : RESOURCE_NODE_MAX_HP,
+      maxHp: kind === "cofre" ? 1 : RESOURCE_NODE_MAX_HP,
       el,
       spriteEl,
       hpBarEl,
@@ -405,6 +437,7 @@ const Resources = {
   showFor(unit) {
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
     this.list.forEach((node, i) => {
+      if (node.opened) return; // cofre ya abierto
       if (typeof Fog !== "undefined" && Fog.isFogged(node.row, node.col)) return;
       const approach = this.findApproachTile(unit, node);
       if (!approach) return;
@@ -433,7 +466,7 @@ const Resources = {
 
   findApproachTile(unit, node) {
     const type = UNIT_TYPES[unit.typeId];
-    const moveRange = type.movimiento;
+    const moveRange = Units.moveRangeOf(unit);
     const attackRange = type.attackRange;
 
     const distToNode = (row, col) => Math.max(Math.abs(row - node.row), Math.abs(col - node.col));
@@ -487,7 +520,20 @@ const Resources = {
 
   async attack(unit, node) {
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
-    if (!this.list.includes(node)) return;
+    if (!this.list.includes(node) || node.opened) return;
+    if (node.kind === "cofre") {
+      // La reliquia del jugador necesita sitio en la mochila.
+      if (unit.team === "player" && typeof Backpack !== "undefined" && !Backpack.hasFreeSlot()) {
+        if (typeof SFX !== "undefined") SFX.dropFail();
+        Units.spawnFloatingText(unit, "¡MOCHILA LLENA!", { className: "dmg-popup" });
+        return;
+      }
+      Units.faceTowardsTile(unit, node.row, node.col);
+      if (typeof Turns !== "undefined") Turns.useAction(unit);
+      await this._openChest(node, unit);
+      Units.refreshRange(unit);
+      return;
+    }
     Units.faceTowardsTile(unit, node.row, node.col);
     if (typeof Turns !== "undefined") Turns.useAction(unit);
 
@@ -511,6 +557,47 @@ const Resources = {
     } else {
       Units.refreshRange(unit);
     }
+  },
+
+  // ---------- Cofre de Reliquias ----------
+  // El cofre cambia (con animación y sonido) a su sprite abierto, la reliquia
+  // aparece sobre él y, si la abre el jugador, viaja hasta la mochila.
+  async _openChest(node, unit) {
+    node.opened = true;
+    const relicId = Relics.randomId();
+    const relicDef = RELIC_TYPES[relicId];
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(node.spriteEl, CHEST_SPRITE_OPEN);
+    else node.spriteEl.src = CHEST_SPRITE_OPEN;
+    node.el.classList.remove("resource-node--chest-open");
+    void node.el.offsetWidth;
+    node.el.classList.add("resource-node--chest-open");
+    if (typeof SFX !== "undefined") {
+      SFX.glory();
+      setTimeout(() => SFX.captureVillage && SFX.captureVillage(), 160);
+    }
+    const team = unit.team;
+    if (team === "player") {
+      setTimeout(() => {
+        this._spawnPickupAt(node.row, node.col, null, {
+          iconUrl: relicDef.iconUrl,
+          big: true,
+          onArrive: () => {
+            Relics.grant("player", relicId);
+            if (typeof SFX !== "undefined") SFX.itemEaten();
+            if (typeof Backpack !== "undefined" && Backpack._btnEl) {
+              const btn = Backpack._btnEl;
+              btn.classList.remove("backpack-btn--pulse");
+              void btn.offsetWidth;
+              btn.classList.add("backpack-btn--pulse");
+              setTimeout(() => btn.classList.remove("backpack-btn--pulse"), 380);
+            }
+          },
+        });
+      }, 450);
+    } else {
+      Relics.grant(team, relicId); // el rival la recoge en silencio
+    }
+    await new Promise((resolve) => setTimeout(resolve, 350));
   },
 
   // ---------- Destrucción + recolección ----------
@@ -561,13 +648,13 @@ const Resources = {
   // Icono del recurso sobre la propia loseta (misma capa/transform que
   // cualquier otro elemento del tablero, Units.container) — se queda ahí un
   // segundo, tal y como se pidió, antes de echar a volar hacia la mochila.
-  _spawnPickupAt(row, col, resourceId) {
+  _spawnPickupAt(row, col, resourceId, custom = null) {
     if (typeof getTileCenter === "undefined" || typeof Units === "undefined") return;
-    const def = RESOURCE_TYPES[resourceId];
+    const def = custom ? { iconUrl: custom.iconUrl } : RESOURCE_TYPES[resourceId];
     const { x, y } = getTileCenter(row, col, Units.boardSize);
 
     const el = document.createElement("div");
-    el.className = "resource-pickup";
+    el.className = "resource-pickup" + (custom && custom.big ? " resource-pickup--big" : "");
     const img = document.createElement("img");
     img.decoding = "async";
     img.className = "resource-pickup__sprite";
@@ -580,7 +667,7 @@ const Resources = {
     el.style.zIndex = String((row + col) * 10 + 7);
     Units.container.appendChild(el);
 
-    setTimeout(() => this._flyPickupToBackpack(el, resourceId), 1000);
+    setTimeout(() => this._flyPickupToBackpack(el, resourceId, custom), custom ? 900 : 1000);
   },
 
   // Convierte el icono (hasta ahora en el espacio del tablero, sujeto al
@@ -591,10 +678,11 @@ const Resources = {
   // el cambio de espacio de coordenadas primero (via getBoundingClientRect,
   // que ya da la posición real en pantalla tenga la cámara el pan/zoom que
   // tenga).
-  _flyPickupToBackpack(boardEl, resourceId) {
+  _flyPickupToBackpack(boardEl, resourceId, custom = null) {
+    const arrive = () => (custom ? custom.onArrive() : this._collect(resourceId));
     if (typeof Backpack === "undefined" || !Backpack._btnEl) {
       boardEl.remove();
-      this._collect(resourceId);
+      arrive();
       return;
     }
     const startRect = boardEl.getBoundingClientRect();
@@ -606,9 +694,9 @@ const Resources = {
     const endX = endRect.left + endRect.width / 2;
     const endY = endRect.top + endRect.height / 2;
 
-    const def = RESOURCE_TYPES[resourceId];
+    const def = custom ? { iconUrl: custom.iconUrl } : RESOURCE_TYPES[resourceId];
     const flyEl = document.createElement("div");
-    flyEl.className = "resource-pickup resource-pickup--flying";
+    flyEl.className = "resource-pickup resource-pickup--flying" + (custom && custom.big ? " resource-pickup--big" : "");
     const img = document.createElement("img");
     img.className = "resource-pickup__sprite";
     img.src = def.iconUrl;
@@ -632,7 +720,7 @@ const Resources = {
         requestAnimationFrame(step);
       } else {
         flyEl.remove();
-        this._collect(resourceId);
+        arrive();
       }
     };
     requestAnimationFrame(step);

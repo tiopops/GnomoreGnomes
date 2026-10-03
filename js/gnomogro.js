@@ -490,7 +490,7 @@ const GnomOgro = {
   },
 
   findApproachTile(unit, g) {
-    const moveRange = UNIT_TYPES[unit.typeId].movimiento;
+    const moveRange = Units.moveRangeOf(unit);
     const distToG = (row, col) => Math.max(Math.abs(row - g.row), Math.abs(col - g.col));
     if (distToG(unit.row, unit.col) <= GNOMOGRO_ATTACK_RANGE) return { row: unit.row, col: unit.col };
     let best = null;

@@ -783,7 +783,7 @@ const Turns = {
             u.team === unit.team &&
             u.id !== unit.id &&
             Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <=
-              UNIT_TYPES[unit.typeId].movimiento + 2
+              Units.moveRangeOf(unit) + 2
         );
         if (ally && Math.random() < 0.5) {
           await held.executePass(unit, ally);
@@ -829,7 +829,7 @@ const Turns = {
           return true;
         }
       } else if (!carried && altar && !(typeof Gnome !== "undefined" && Gnome.isHeldBy(unit.id))) {
-        const reach = UNIT_TYPES[unit.typeId].movimiento * 2 + 1;
+        const reach = Units.moveRangeOf(unit) * 2 + 1;
         const m = Mushrooms.list.find(
           (x) =>
             !x.heldBy &&
@@ -875,9 +875,34 @@ const Turns = {
     // alcance, ver las ramas de arriba), pero mejor que no hacer nada:
     // ataca el nodo de recurso alcanzable más cercano, mismo mecanismo que
     // ya usa el jugador (Resources.findApproachTile/attack).
+    // Cofres de Reliquias: la IA abre el que alcance y manda a por ellos a
+    // parte de sus unidades.
+    if (typeof Resources !== "undefined" && typeof Relics !== "undefined") {
+      const chests = Resources.list
+        .filter((n) => n.kind === "cofre" && !n.opened)
+        .sort(
+          (a, b) =>
+            Math.max(Math.abs(a.row - unit.row), Math.abs(a.col - unit.col)) -
+            Math.max(Math.abs(b.row - unit.row), Math.abs(b.col - unit.col))
+        );
+      const chest = chests[0];
+      if (chest) {
+        if (Resources.findApproachTile(unit, chest)) {
+          await Resources.approachAndAttack(unit, chest);
+          return true;
+        }
+        if (Number(String(unit.id).replace(/\D/g, "")) % 2 === 0) {
+          const destC = this._aiPickMoveTileByPath(unit, chest);
+          if (destC) {
+            await Movement.moveTo(unit, destC.row, destC.col);
+            return true;
+          }
+        }
+      }
+    }
     if (typeof Resources !== "undefined" && Resources.list.length > 0) {
       const node = Resources.list
-        .filter((n) => Resources.findApproachTile(unit, n))
+        .filter((n) => !n.opened && Resources.findApproachTile(unit, n))
         .reduce((best, n) => {
           const d = Math.max(Math.abs(n.row - unit.row), Math.abs(n.col - unit.col));
           return !best || d < best.d ? { node: n, d } : best;

@@ -603,7 +603,7 @@ const Shops = {
   // comprar).
   findApproachTile(unit, shop) {
     const type = UNIT_TYPES[unit.typeId];
-    const moveRange = type.movimiento;
+    const moveRange = Units.moveRangeOf(unit);
 
     const distToShop = (row, col) => Math.max(Math.abs(row - shop.row), Math.abs(col - shop.col));
 

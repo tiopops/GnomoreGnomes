@@ -31,7 +31,7 @@ const Combat = {
   // quedándose quieta ni movi��ndose puede llegar a pegarle.
   findApproachTile(unit, target) {
     const type = UNIT_TYPES[unit.typeId];
-    const moveRange = type.movimiento;
+    const moveRange = Units.moveRangeOf(unit);
     const attackRange = type.attackRange;
 
     const distToTarget = (row, col) =>

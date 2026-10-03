@@ -464,7 +464,10 @@ const Backpack = {
   // objetos reales), en ese orden — usada tanto para pintar la rejilla como
   // para saber cuántos huecos quedan libres (ver hasFreeSlot más abajo).
   _allSlotEntries() {
-    return [...this._resourceSlotEntries(), ...this.inventory.map((it) => ({ ...it, kind: "item" }))];
+    const relics = typeof Relics !== "undefined"
+      ? Relics.list("player").map((r) => ({ uid: `relic-${r.uid}`, kind: "relic", relic: r }))
+      : [];
+    return [...relics, ...this._resourceSlotEntries(), ...this.inventory.map((it) => ({ ...it, kind: "item" }))];
   },
 
   // Pinta los BACKPACK_SLOT_COUNT huecos — los primeros con recursos/objetos
@@ -485,6 +488,12 @@ const Backpack = {
           slotEl.innerHTML =
             `<img src="${def.iconUrl}" class="backpack-slot__icon" alt="${def.name}">` +
             `<span class="shop-slot__price"><span class="shop-slot__price__num">${entry.count}</span></span>`;
+        } else if (entry.kind === "relic") {
+          const def = RELIC_TYPES[entry.relic.relicId];
+          slotEl.className += " backpack-slot--relic";
+          slotEl.innerHTML =
+            `<img src="${def.iconUrl}" class="backpack-slot__icon" alt="${def.name}">` +
+            `<span class="skills-node__rank"><span class="skills-node__rank-num">${entry.relic.durability}/${entry.relic.max}</span></span>`;
         } else {
           const def = ITEM_TYPES[entry.itemId];
           slotEl.innerHTML = `<img src="${def.iconUrl}" class="backpack-slot__icon" alt="${def.name}">`;
@@ -503,6 +512,7 @@ const Backpack = {
   },
 
   _onSlotClick(uid) {
+    if (this._selectedUid === uid && String(uid).startsWith("relic-")) return; // las reliquias son pasivas
     if (this._selectedUid === uid) {
       // "si se pulsa otra vez sobre un icono resaltado, se cerrará el
       // popup y se usará dicho objeto"
@@ -519,6 +529,11 @@ const Backpack = {
     const entry = this._allSlotEntries().find((it) => it.uid === this._selectedUid);
     if (!entry) {
       this._descEl.textContent = "";
+      return;
+    }
+    if (entry.kind === "relic") {
+      const def = RELIC_TYPES[entry.relic.relicId];
+      this._descEl.textContent = `${def.name} (${entry.relic.durability}/${entry.relic.max}). ${def.description}`;
       return;
     }
     this._descEl.textContent =

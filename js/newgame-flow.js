@@ -496,6 +496,7 @@ function spawnTestUnits(size, raceId, opponents) {
   // Villages/Shops/Obelisks/Bushes.spawn (evita superponerse con cualquiera
   // de ellos, ver Resources._tileFree).
   if (typeof Resources !== "undefined") {
+    if (typeof Relics !== "undefined") Relics.resetAll();
     Resources.resetAll();
     Resources.init();
     Resources.spawn(size);
