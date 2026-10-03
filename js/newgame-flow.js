@@ -258,6 +258,7 @@ async function startMatch({ modeId, raceId, levelId, opponents }) {
     const resumeBtn = document.getElementById("btn-resume-game");
     if (resumeBtn) resumeBtn.disabled = false;
     if (typeof Preload !== "undefined") Preload.finish();
+    setTimeout(() => { if (typeof Turns !== "undefined") Turns.showTurnBanner(); }, 900);
   } catch (err) {
     _recoverFromFailedMatchStart();
     _showStartMatchError(err);

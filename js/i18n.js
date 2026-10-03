@@ -5,7 +5,7 @@
 const STRINGS = {
   es: {
     game_title: "Gnomore Gnomes",
-    menu_new_game: "Nueva Partida",
+    menu_new_game: "Partida Rápida",
     menu_tutorial: "Tutorial",
     menu_resume_game: "Reanudar Partida",
     menu_multiplayer: "Multijugador",
@@ -46,6 +46,9 @@ const STRINGS = {
     settings_title: "AJUSTES",
     settings_sfx: "Efectos de sonido",
     settings_music: "Música",
+    your_turn: "¡ES TU TURNO!",
+    settings_tab_game: "JUEGO",
+    settings_tab_gfx: "GRÁFICOS",
     settings_sfx_vol: "Volumen de efectos",
     settings_music_vol: "Volumen de música",
     settings_teams: "Mostrar equipos",
@@ -129,7 +132,7 @@ const STRINGS = {
   },
   en: {
     game_title: "Gnomore Gnomes",
-    menu_new_game: "New Game",
+    menu_new_game: "Quick Game",
     menu_tutorial: "Tutorial",
     menu_resume_game: "Resume Game",
     menu_multiplayer: "Multiplayer",
@@ -170,6 +173,9 @@ const STRINGS = {
     settings_title: "SETTINGS",
     settings_sfx: "Sound effects",
     settings_music: "Music",
+    your_turn: "IT'S YOUR TURN!",
+    settings_tab_game: "GAME",
+    settings_tab_gfx: "GRAPHICS",
     settings_sfx_vol: "Effects volume",
     settings_music_vol: "Music volume",
     settings_teams: "Show teams",

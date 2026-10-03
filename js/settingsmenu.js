@@ -86,7 +86,35 @@ const SettingsMenu = {
     colVisual.className = "settings-panel__column";
     columnsEl.appendChild(colAudio);
     columnsEl.appendChild(colVisual);
+    columnsEl.classList.add("settings-panel__columns--tabbed");
+    colAudio.classList.add("settings-pane");
+    colVisual.classList.add("settings-pane");
+    const tabsEl = document.createElement("div");
+    tabsEl.className = "skills-tabs settings-tabs";
+    const TABS = [
+      { id: "game", icon: "ph-fill ph-game-controller", label: I18N.t("settings_tab_game"), accent: "#e8b43a", pane: colAudio },
+      { id: "gfx", icon: "ph-fill ph-monitor", label: I18N.t("settings_tab_gfx"), accent: "#4aa8d8", pane: colVisual },
+    ];
+    const tabBtns = {};
+    const showTab = (id) => {
+      this._tab = id;
+      TABS.forEach((t) => {
+        t.pane.style.display = t.id === id ? "" : "none";
+        tabBtns[t.id].classList.toggle("skills-tab--active", t.id === id);
+      });
+    };
+    TABS.forEach((t, i) => {
+      const b = document.createElement("button");
+      b.className = "skills-tab skills-tab--v" + i;
+      b.style.setProperty("--sk-accent", t.accent);
+      b.innerHTML = '<span class="skills-tab__label"><i class="' + t.icon + ' settings-tab__icon"></i> ' + t.label + "</span>";
+      b.addEventListener("click", () => { if (this._tab !== t.id) { SFX.click(); showTab(t.id); } });
+      tabsEl.appendChild(b);
+      tabBtns[t.id] = b;
+    });
+    panel.appendChild(tabsEl);
     panel.appendChild(columnsEl);
+    showTab(this._tab || "game");
 
     // Pedido explícito: "añade a configuracion otro checkbox que desconecte
     // los efectos de sonido (ojo! en un futuro habra musica, pero eso ira
@@ -334,7 +362,7 @@ const SettingsMenu = {
     // su lógica (bloqueo de Sombras/Niebla/Vegetación/Resolución
     // adaptativa mientras esté activo) sigue intacta, esos otros botones
     // siguen en colVisual.
-    colAudio.appendChild(perfModeBtn);
+    colVisual.appendChild(perfModeBtn);
     this._shadowsBtn = shadowsBtn;
     this._fogAnimBtn = fogAnimBtn;
     this._vegetationBtn = vegetationBtn;

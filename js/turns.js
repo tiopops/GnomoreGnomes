@@ -390,6 +390,20 @@ const Turns = {
 
   // ---------- Cambio de turno ----------
 
+  // Cartel "¡ES TU TURNO!" (un jugador y multijugador).
+  showTurnBanner() {
+    if (typeof Tutorial !== "undefined" && Tutorial.active) return;
+    if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return;
+    const old = document.querySelector(".turn-banner");
+    if (old) old.remove();
+    const el = document.createElement("div");
+    el.className = "turn-banner";
+    el.innerHTML = '<span class="turn-banner__text">' + I18N.t("your_turn") + "</span>";
+    document.body.appendChild(el);
+    if (typeof SFX !== "undefined" && SFX.enabled) { try { SFX.captureVillage(); } catch (e) {} }
+    setTimeout(() => el.remove(), 2100);
+  },
+
   async endTurn() {
     if (this._aiRunning || this.activeTeam !== "player") return;
     // Fin de partida por límite de turnos (ver Obelisks.checkTurnLimit,
@@ -454,6 +468,7 @@ const Turns = {
     await this._fireTurnStart("player");
     this._aiRunning = false;
     this._updateButtonState();
+    this.showTurnBanner();
     // "una vez por ronda completa" (ver registerTurnEndListener arriba) —
     // aquí, justo al terminar, no en ningún punto intermedio de la IA.
     this._turnEndListeners.forEach((l) => l.onRoundEnd && l.onRoundEnd());

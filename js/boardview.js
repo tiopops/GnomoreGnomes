@@ -223,7 +223,31 @@ const BoardView = {
     this.targetPanY = y;
   },
 
+  // Zooms repetidos acaban acumulando texturas de la capa GPU enorme de la
+  // cámara (errores gráficos). Tras ~8 cambios de escala y 600ms de calma se
+  // suelta la capa (will-change:auto) y se vuelve a pedir en el siguiente
+  // frame, lo que obliga al navegador a liberar y re-rasterizar limpio.
+  _zoomChanges: 0,
+  _lastScaleSeen: null,
+  _flushTimer: null,
+  _trackZoomForFlush() {
+    if (this._lastScaleSeen !== null && Math.abs(this.scale - this._lastScaleSeen) > 0.002) {
+      this._zoomChanges++;
+      clearTimeout(this._flushTimer);
+      this._flushTimer = setTimeout(() => {
+        if (this._zoomChanges < 8) { this._zoomChanges = 0; return; }
+        this._zoomChanges = 0;
+        const el = this.cameraEl;
+        el.style.willChange = "auto";
+        void el.offsetWidth;
+        requestAnimationFrame(() => { el.style.willChange = ""; });
+      }, 600);
+    }
+    this._lastScaleSeen = this.scale;
+  },
+
   _apply() {
+    this._trackZoomForFlush();
     this.cameraEl.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.scale})`;
     // Pedido explícito: "¿se podrían desactivar las losetas de niebla que
     // no aparecen en pantalla?" — recalcula qué losetas de niebla caen

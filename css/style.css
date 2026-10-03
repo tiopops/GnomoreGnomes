@@ -9202,3 +9202,16 @@ body.tut-on .settings-gear-btn--account { display: none; }
   background:linear-gradient(to right,#e8b43a var(--pct,50%),rgba(255,255,255,.2) var(--pct,50%));}
 .settings-slider__input::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #e8b43a;}
 .settings-slider__input::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid #e8b43a;}
+
+/* Cartel de turno */
+.turn-banner{position:fixed;left:0;right:0;top:34%;z-index:9000;display:flex;justify-content:center;pointer-events:none;animation:turn-banner-in 2.1s ease both;}
+.turn-banner__text{font-size:clamp(2rem,6vw,4rem);font-weight:900;letter-spacing:.05em;color:#ffd24a;padding:.25em 1.2em;
+  background:linear-gradient(90deg,transparent,rgba(30,22,40,.88) 18%,rgba(30,22,40,.88) 82%,transparent);
+  text-shadow:0 3px 0 #7a4a00,0 0 18px rgba(255,200,60,.6);transform:skewX(-6deg);}
+@keyframes turn-banner-in{0%{opacity:0;transform:translateX(-80px) scale(.9)}15%{opacity:1;transform:none}80%{opacity:1;transform:none}100%{opacity:0;transform:translateX(80px) scale(1.05)}}
+
+/* Ajustes con pestañas JUEGO / GRÁFICOS */
+.settings-tabs{margin:4px auto 14px;max-width:420px;width:100%;}
+.settings-tab__icon{font-size:1.05em;vertical-align:-2px;}
+.settings-panel__columns--tabbed{grid-template-columns:1fr;max-width:420px;margin:0 auto;}
+.settings-tabs .skills-tab__label{font-size:.95rem;}
