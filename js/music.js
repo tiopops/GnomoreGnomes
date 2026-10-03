@@ -12,7 +12,7 @@ const Music = {
     match: "assets/musica/MushBoomForestMainTheme.mp3",
   },
   enabled: true,
-  volume: 0.3,
+  volume: 0.2,
   _els: {},
   _gain: { menu: 0, match: 0 },
   _target: null,
@@ -25,7 +25,7 @@ const Music = {
       const on = localStorage.getItem(this._KEY_ON);
       this.enabled = on === null ? true : on === "1";
       const v = parseFloat(localStorage.getItem(this._KEY_VOL));
-      this.volume = isNaN(v) ? 0.3 : Math.min(1, Math.max(0, v));
+      this.volume = isNaN(v) ? 0.2 : Math.min(1, Math.max(0, v));
     } catch (e) {}
     for (const k of Object.keys(this.TRACKS)) {
       const a = new Audio();

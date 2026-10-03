@@ -175,7 +175,7 @@ const SettingsMenu = {
       musicBtn.querySelector(".settings-toggle").dataset.checked = String(next);
     });
     colAudio.appendChild(musicBtn);
-    colAudio.appendChild(this._buildSlider(I18N.t("settings_music_vol"), typeof Music !== "undefined" ? Music.volume : 0.3, (v) => {
+    colAudio.appendChild(this._buildSlider(I18N.t("settings_music_vol"), typeof Music !== "undefined" ? Music.volume : 0.2, (v) => {
       if (typeof Music !== "undefined") Music.setVolume(v);
     }));
 
