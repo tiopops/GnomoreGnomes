@@ -587,6 +587,7 @@ const Resources = {
 
     if (node.hp <= 0) {
       await this._destroy(node, unit);
+      Units.refreshRange(unit); // sigue seleccionada con sus marcadores si le quedan acciones
     } else {
       Units.refreshRange(unit);
     }
@@ -598,7 +599,7 @@ const Resources = {
   async _openChest(node, unit) {
     node.opened = true;
     // En el tutorial siempre toca la misma reliquia (Botas TrotaMontes), para poder explicarla.
-    const relicId = typeof Tutorial !== "undefined" && Tutorial.active ? "trotamontes" : Relics.randomId();
+    const relicId = typeof Tutorial !== "undefined" && Tutorial.active && Tutorial._ctx && Tutorial._ctx.chest === node ? "trotamontes" : Relics.randomId();
     const relicDef = RELIC_TYPES[relicId];
     if (typeof SpriteQuality !== "undefined") SpriteQuality.register(node.spriteEl, CHEST_SPRITE_OPEN);
     else node.spriteEl.src = CHEST_SPRITE_OPEN;

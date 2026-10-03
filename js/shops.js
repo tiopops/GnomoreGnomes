@@ -509,7 +509,7 @@ const Shops = {
       // _buySelected y muestre el aviso en rojo); solo se deshabilita de
       // verdad cuando no hay nada seleccionado o no hay sitio en la
       // mochila, casos donde comprar no tiene ningún sentido posible.
-      this._buyBtnEl.disabled = !entry || !hasRoom;
+      this._buyBtnEl.disabled = !entry;
       if (!entry) this._buyBtnEl.title = "";
       else if (!hasRoom) this._buyBtnEl.title = "La mochila está llena";
       else if (!canAfford) this._buyBtnEl.title = "No tienes suficientes Puntos de Gloria";
@@ -523,14 +523,19 @@ const Shops = {
     if (!shop || this._selectedUid === null) return;
     const entry = shop.stock.find((it) => it.uid === this._selectedUid);
     if (!entry) return;
-    if (typeof Backpack === "undefined" || !Backpack.hasFreeSlot()) return;
+    const noSpace = typeof Backpack === "undefined" || !Backpack.hasFreeSlot();
     const playerPoints = typeof Glory !== "undefined" ? Glory.points.player : 0;
-    if (playerPoints < this.priceFor("player", entry)) {
+    const noPoints = playerPoints < this.priceFor("player", entry);
+    if (noSpace || noPoints) {
       // Pedido explícito: aviso en rojo DENTRO de la interfaz, no solo un
       // title nativo — reutiliza el mismo golpe de "shake" que ya usa el
       // resto del proyecto para feedback de rechazo (ver
       // .shop-warning--visible en style.css).
       if (this._warningEl) {
+        // Prioridad: sin espacio en la mochila; si no, faltan puntos.
+        this._warningEl.textContent = noSpace
+          ? "No tienes espacio en la mochila"
+          : "No tienes suficientes Puntos de Gloria";
         this._warningEl.classList.remove("shop-warning--visible");
         // Fuerza un reflow para poder reiniciar la animación de shake si
         // el aviso ya estaba visible (dos intentos seguidos).

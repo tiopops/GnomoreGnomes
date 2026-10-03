@@ -601,7 +601,7 @@ const SFX_TARGETS =
   // usaba .option-card, que sí estaba aquí desde el principio).
   ".menu-btn:not(:disabled), .option-card, .race-card, .back-btn, .range-marker, .attack-marker, .unit, .unit-info-btn, " +
   ".catch-marker, .pass-marker, .gnome-action-btn, .settings-gear-btn, .settings-panel__option, " +
-  ".backpack-btn, .backpack-slot:not(:disabled), .backpack-close-btn, " +
+  ".backpack-btn, .obelisk__menu-btn, .backpack-slot:not(:disabled), .backpack-close-btn, " +
   // Tienda Goblin (js/shops.js) — reutiliza el popup de la mochila tal
   // cual (mismas clases .backpack-slot/.backpack-close-btn de arriba, ya
   // cubiertas), solo el botón COMPRAR es propio de este popup.

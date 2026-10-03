@@ -2281,18 +2281,22 @@ body.team-markers--visible .unit__team-marker {
 .dmg-popup {
   position: absolute;
   transform: translate(-50%, 0);
-  font-weight: 800;
-  font-size: 1.4rem;
-  color: #ff5c5c;
-  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.65);
+  font-weight: 900;
+  font-size: 2.3rem;
+  color: #ff4040;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.85);
   pointer-events: none;
-  animation: dmg-popup-rise 0.9s ease-out forwards;
+  animation: dmg-popup-rise 1.8s ease-out forwards;
 }
 
 @keyframes dmg-popup-rise {
-  0% { opacity: 0; transform: translate(-50%, 0) scale(0.7); }
-  15% { opacity: 1; transform: translate(-50%, -10px) scale(1.15); }
-  100% { opacity: 0; transform: translate(-50%, -58px) scale(1); }
+  0% { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+  10% { opacity: 1; transform: translate(-50%, -10px) scale(1.35); }
+  25% { opacity: 1; transform: translate(-50%, -18px) scale(1); }
+  70% { opacity: 1; transform: translate(-50%, -40px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -64px) scale(1); }
 }
 
 
@@ -9404,3 +9408,19 @@ body.tut-on .settings-gear-btn--account { display: none; }
 .account-submit { transition: transform 0.15s ease, filter 0.15s ease; }
 .account-submit--ready { --p5-tone: #ffcf3d; }
 .account-submit--ready .p5-banner__label { color: #111; text-shadow: none; }
+
+/* Flecha amarilla de "unidad sin usar" (js/idlehint.js) */
+.idle-arrow {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, 0);
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.55));
+}
+.idle-arrow svg { display: block; animation: idle-arrow-bounce 0.85s ease-in-out infinite; }
+@keyframes idle-arrow-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(12px); }
+}
+.recruit-name { color: #ffcf3d; }
+/* Selección de casillas: drop-shadow sigue el clip-path (box-shadow se recortaba como con máscara) */
+.backpack-slot--selected, .armory-node--selected { box-shadow: none !important; filter: drop-shadow(0 0 7px rgba(255,207,63,.8)); }

@@ -1165,7 +1165,7 @@ const Obelisks = {
       const flavor = typeof UNIT_DESCRIPTIONS !== "undefined" ? UNIT_DESCRIPTIONS[typeId] : null;
       const ability = typeof ABILITIES !== "undefined" ? ABILITIES[typeId] : null;
       this._descEl.innerHTML =
-        `<strong>${def.name}</strong><br>` +
+        `<strong class="recruit-name">${def.name}</strong><br>` +
         (flavor ? `${flavor}<br>` : "") +
         (ability ? `<em class="recruit-desc__ability">Habilidad especial: ${ability.name}</em><br>` : "") +
         `<div class="unit-info-stats recruit-desc__stats">` +
