@@ -218,6 +218,8 @@ const Account = {
       await Promise.all([this._loadScript(base + "firebase-auth-compat.js"), this._loadScript(base + "firebase-firestore-compat.js")]);
       if (!firebase.apps.length) firebase.initializeApp(GG_FIREBASE_CONFIG);
       this._auth = firebase.auth();
+      // Los correos de Firebase (verificar / recuperar contraseña) salen en el idioma del juego.
+      this._auth.languageCode = I18N.currentLang;
       this._db = firebase.firestore();
       this._auth.onAuthStateChanged(async (user) => {
         this._user = user;
@@ -357,6 +359,7 @@ const Account = {
 
 document.addEventListener("DOMContentLoaded", () => Account.init());
 document.addEventListener("gg:langchange", () => {
+  if (Account._auth) Account._auth.languageCode = I18N.currentLang;
   if (Account._btn) Account._btn.setAttribute("aria-label", I18N.t("acc_aria"));
   if (Account._overlay && Account._overlay.classList.contains("settings-overlay--visible")) Account._render();
 });
