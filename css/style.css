@@ -8768,8 +8768,11 @@ body.backpack-giving--katapum * {
   transform-origin: 50% 100%;
   animation: unit-idle-breathe 2.6s ease-in-out infinite;
 }
-.tut-portrait--talk { animation: tut-talk 0.28s ease-in-out infinite alternate; }
-@keyframes tut-talk { 0% { transform: translateY(0) rotate(-2deg); } 100% { transform: translateY(-5px) rotate(2deg); } }
+.tut-portrait--talk { animation: tut-talk 0.34s ease-in-out infinite; }
+@keyframes tut-talk {
+  0%, 100% { transform: scale(0.985, 1.015); }
+  50% { transform: scale(1.035, 0.97); }
+}
 .tut-portrait__img { display: none; height: 100%; width: auto; user-select: none; -webkit-user-drag: none; }
 .tut-portrait__img--on { display: block; animation: tut-mood-in 0.3s cubic-bezier(0.34, 1.6, 0.64, 1); }
 @keyframes tut-mood-in { 0% { transform: scale(0.88) rotate(-3deg); } 100% { transform: scale(1) rotate(0); } }
@@ -8875,9 +8878,11 @@ body.backpack-giving--katapum * {
   .tut-panel--top { bottom: auto; top: 76px; }
 }
 .tut-panel--compact { bottom: auto; top: 10px; align-items: flex-start; }
-.tut-panel--compact .tut-bubble,
 .tut-panel--compact .tut-progress { display: none; }
-.tut-panel--compact .tut-portrait { height: 72px; margin-right: 0; }
+.tut-panel--compact .tut-portrait { height: 84px; margin-right: -8px; }
+.tut-panel--compact .tut-text { font-size: 0.8rem; min-height: 0; }
+.tut-panel--compact .tut-btn { pointer-events: auto; }
+
 .tut-panel--compact .tut-mission { margin-top: 12px; }
 .tut-panel--compact .tut-skip { top: 4px; }
 .tut-progress { height: 5px; margin: 14px 12px 0 0; background: rgba(0, 0, 0, 0.45); }
@@ -8897,6 +8902,10 @@ body.backpack-giving--katapum * {
   transform: rotate(1.5deg);
   cursor: var(--cursor-pointer);
 }
+.tut-skip { transition: transform 0.12s, color 0.12s; }
+.tut-skip:hover { transform: rotate(-1deg) scale(1.1); color: #fff; }
+.tut-skip:hover::before { background: #b83a3a; }
+.tut-skip::before { transition: background 0.12s; }
 .tut-skip::before { content: ""; position: absolute; inset: 0; z-index: -1; background: rgba(20, 18, 28, 0.85); clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%); }
 .tut-pointer {
   position: fixed;
