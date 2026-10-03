@@ -1144,8 +1144,14 @@ const Obelisks = {
         `<strong>${def.name}</strong><br>` +
         (flavor ? `${flavor}<br>` : "") +
         (ability ? `<em class="recruit-desc__ability">Habilidad especial: ${ability.name}</em><br>` : "") +
-        `<span class="recruit-desc__stats">Aguante ${def.aguante} · Movimiento ${def.movimiento} · Fuerza ${def.fuerza} · Agilidad ${def.agilidad} · Percepción ${def.percepcion}</span>` +
-        `<br><strong class="shop-desc__price-line">Reclutar cuesta ${price} puntos de gloria.</strong>`;
+        `<div class="unit-info-stats recruit-desc__stats">` +
+        `${UnitInfo.statRow("ph-shield", "Aguante", def.aguante)}` +
+        `${UnitInfo.statRow("ph-footprints", "Movimiento", def.movimiento)}` +
+        `${UnitInfo.statRow("ph-boxing-glove", "Fuerza", def.fuerza)}` +
+        `${UnitInfo.statRow("ph-wind", "Agilidad", def.agilidad)}` +
+        `${UnitInfo.statRow("ph-eye", "Percepción", def.percepcion)}` +
+        `</div>` +
+        `<strong class="shop-desc__price-line">Reclutar cuesta ${price} puntos de gloria.</strong>`;
     } else {
       this._descEl.textContent = "";
     }

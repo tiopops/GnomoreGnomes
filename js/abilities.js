@@ -968,6 +968,7 @@ const Abilities = {
     const start = getTileCenter(unit.row, unit.col, Units.boardSize);
     const end = getTileCenter(destRow, destCol, Units.boardSize);
     unit.el.classList.add("unit--thrown");
+    if (Units.faceTowardsTile) Units.faceTowardsTile(unit, destRow, destCol);
     const spriteEl = unit.spriteEl;
     // Sentido del giro: hacia donde viaja horizontalmente (una vuelta "hacia
     // adelante" se lee mejor que una dirección aleatoria/siempre igual).
@@ -987,13 +988,13 @@ const Abilities = {
         // Tumba proporcional a la altura (máx. ~140°, nunca una vuelta
         // entera) — el personaje "vuela" en el aire sin dar volteretas
         // imposibles para su tamaño.
-        const rotateDeg = spinSign * heightFactor * 140;
+        const rotateDeg = 0; // sin giro: el personaje vuela encarado hacia donde va
         // Squash&stretch: comprimido justo al despegar/aterrizar (impacto),
         // ligeramente estirado en el punto más alto (vuelo libre).
         const edgeCompress = t < 0.12 ? 1 - t / 0.12 : t > 0.88 ? (t - 0.88) / 0.12 : 0;
         const scaleY = 1 + heightFactor * 0.12 - edgeCompress * 0.22;
         const scaleX = 1 + edgeCompress * 0.16 - heightFactor * 0.05;
-        if (spriteEl) spriteEl.style.transform = `rotate(${rotateDeg}deg) scale(${scaleX}, ${scaleY})`;
+        if (spriteEl) spriteEl.style.transform = `scale(${scaleX}, ${scaleY})`;
 
         if (t < 1) requestAnimationFrame(step);
         else resolve();
