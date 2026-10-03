@@ -392,24 +392,15 @@ const Turns = {
 
   // Cartel "¡ES TU TURNO!" (un jugador y multijugador).
   showBanner(text) {
-    const el = document.createElement("div");
-    el.className = "turn-banner";
-    el.innerHTML = '<span class="turn-banner__text">' + text + "</span>";
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 2100);
+    return Banners.text(text, 1);
   },
 
+  // Cartel "¡ES TU TURNO!" (un jugador y multijugador): siempre el primero de la cola.
   showTurnBanner() {
     if (typeof Tutorial !== "undefined" && Tutorial.active) return;
     if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return;
-    const old = document.querySelector(".turn-banner");
-    if (old) old.remove();
-    const el = document.createElement("div");
-    el.className = "turn-banner";
-    el.innerHTML = '<span class="turn-banner__text">' + I18N.t("your_turn") + "</span>";
-    document.body.appendChild(el);
     if (typeof SFX !== "undefined" && SFX.enabled) { try { SFX.captureVillage(); } catch (e) {} }
-    setTimeout(() => el.remove(), 2100);
+    return Banners.text(I18N.t("your_turn"), 0);
   },
 
   async endTurn() {
@@ -471,6 +462,9 @@ const Turns = {
     this.roundNumber++;
     this._updateButtonState();
     if (typeof Glory !== "undefined") Glory.grantTurnStart("player");
+    // El cartel va PRIMERO en la cola; los avisos de los oyentes (reposición,
+    // plaga...) se encolan detrás.
+    this.showTurnBanner();
     // Se espera a los oyentes de inicio de turno (GnomOgro, plaga...) con el
     // tablero bloqueado, para que sus animaciones no se pisen con el jugador.
     this._aiRunning = true;
@@ -478,7 +472,6 @@ const Turns = {
     await this._fireTurnStart("player");
     this._aiRunning = false;
     this._updateButtonState();
-    this.showTurnBanner();
     // "una vez por ronda completa" (ver registerTurnEndListener arriba) —
     // aquí, justo al terminar, no en ningún punto intermedio de la IA.
     this._turnEndListeners.forEach((l) => l.onRoundEnd && l.onRoundEnd());

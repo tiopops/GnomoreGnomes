@@ -48,7 +48,9 @@ const Plague = {
   },
 
   async _trigger() {
-    this._showAlert();
+    // El aviso espera su turno en la cola de carteles (tras ¡ES TU TURNO!).
+    const b = Banners.enqueue({ priority: 1, duration: 2600, show: () => this._showAlert() });
+    await b.started;
     if (typeof SFX !== "undefined" && SFX.alarm) SFX.alarm();
     await new Promise((resolve) => setTimeout(resolve, 1300));
     await this._spawnGnomes();

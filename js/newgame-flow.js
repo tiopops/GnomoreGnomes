@@ -242,6 +242,7 @@ async function startMatch({ modeId, raceId, levelId, opponents }) {
   // click en un botón no espera a que la función async termine.
   try {
     if (typeof Preload !== "undefined") await Preload.run();
+    if (typeof Banners !== "undefined") Banners.clear();
     const size = getBoardSize(opponents);
     // Ríos (pedido explícito) — de momento solo el modo 1v1 los pide, así
     // que se activan solo para "opponents === 1" en vez de para

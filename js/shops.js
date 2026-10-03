@@ -800,18 +800,24 @@ const Shops = {
   // Villages._flashScreen/#epic-smash-flash) — pedido explícito: "se
   // avisara con un mensaje en pantalla al empezar el turno".
   _showRestockMessage() {
-    if (!this._restockMsgEl) {
-      const el = document.createElement("div");
-      el.className = "shop-restock-msg";
-      el.innerHTML =
-        '<i class="ph ph-storefront shop-restock-msg__icon"></i>' +
-        '<span class="p5-banner__label">¡La Tienda Goblin ha repuesto existencias!</span>';
-      document.body.appendChild(el);
-      this._restockMsgEl = el;
-    }
-    this._restockMsgEl.classList.remove("shop-restock-msg--visible");
-    void this._restockMsgEl.offsetWidth;
-    this._restockMsgEl.classList.add("shop-restock-msg--visible");
+    Banners.enqueue({
+      priority: 1,
+      duration: 2600,
+      show: () => {
+        if (!this._restockMsgEl) {
+          const el = document.createElement("div");
+          el.className = "shop-restock-msg";
+          el.innerHTML =
+            '<i class="ph ph-storefront shop-restock-msg__icon"></i>' +
+            '<span class="p5-banner__label">¡La Tienda Goblin ha repuesto existencias!</span>';
+          document.body.appendChild(el);
+          this._restockMsgEl = el;
+        }
+        this._restockMsgEl.classList.remove("shop-restock-msg--visible");
+        void this._restockMsgEl.offsetWidth;
+        this._restockMsgEl.classList.add("shop-restock-msg--visible");
+      },
+    });
   },
 };
 
