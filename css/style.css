@@ -7055,8 +7055,13 @@ body.backpack-giving--katapum * {
   width: min(340px, 78vw);
   height: auto;
   filter: drop-shadow(3px 4px 0 rgba(0, 0, 0, 0.55));
-  animation: gameover-logo-in 0.6s cubic-bezier(0.34, 1.5, 0.64, 1) both;
+  animation: gameover-logo-in 0.6s cubic-bezier(0.34, 1.5, 0.64, 1) both, gameover-logo-float 3.2s ease-in-out 0.6s infinite;
   user-select: none;
+}
+.obelisk-gameover-panel__logo:nth-child(2) { animation-delay: 0s, 1.4s; }
+@keyframes gameover-logo-float {
+  0%, 100% { translate: 0 0; rotate: -1.2deg; }
+  50% { translate: 0 -9px; rotate: 1.2deg; }
 }
 .obelisk-gameover-panel__logos--duo .obelisk-gameover-panel__logo { width: min(200px, 44vw); }
 @keyframes gameover-logo-in { 0% { transform: scale(0.4) rotate(-6deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
