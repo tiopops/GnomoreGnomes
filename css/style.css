@@ -6908,7 +6908,7 @@ body.backpack-giving--katapum * {
    (obelisk--selected, ver Obelisks.select), así que basta con colgar la
    animación de esa misma clase — solo se reproduce una vez, al añadirse. */
 .obelisk--selected {
-  animation: unit-select-pulse 0.5s ease;
+  /* sin pulso de ampliación: al tocar un icono del menú solo crece ese icono */
 }
 
 .obelisk--selected .obelisk__menu {
@@ -6942,9 +6942,10 @@ body.backpack-giving--katapum * {
   opacity: 1;
 }
 
-.obelisk__menu-btn:hover {
+.obelisk__menu-btn:hover,
+.obelisk__menu-btn:active {
   filter: drop-shadow(0 0 10px rgba(255, 207, 63, 0.85));
-  transform: scale(1.08);
+  transform: scale(1.2);
 }
 
 /* Pedido explícito (segunda pasada): "ademas son demasiado pequeños" — en
@@ -8457,7 +8458,6 @@ body.backpack-giving--katapum * {
 /* Punto Estratégico: el menú de reclutar asoma también sobre un tótem
    propio seleccionado (reutiliza .obelisk__menu / .obelisk__menu-btn). */
 .village--selected {
-  animation: unit-select-pulse 0.5s ease;
   z-index: 5000 !important; /* el menú de reclutar por encima de cualquier personaje */
 }
 .village--selected .obelisk__menu {
@@ -8467,6 +8467,10 @@ body.backpack-giving--katapum * {
 .village--selected .obelisk__menu-btn {
   transform: scale(1);
   opacity: 1;
+}
+.village--selected .obelisk__menu-btn:hover,
+.village--selected .obelisk__menu-btn:active {
+  transform: scale(1.2);
 }
 
 /* ---------- Habilidades: adaptación a móvil ----------

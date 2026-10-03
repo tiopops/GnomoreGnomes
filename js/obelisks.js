@@ -650,7 +650,7 @@ const Obelisks = {
       // Pedido explícito: "eso son dos acciones" — mismo criterio que
       // Combat.attackableEnemies/Villages.showFor.
       const needsMove = approach.row !== unit.row || approach.col !== unit.col;
-      if (needsMove && typeof Turns !== "undefined" && !(typeof Skills !== "undefined" ? Skills.canApproachAttack(unit) : Turns.remainingActions(unit) >= 2)) return;
+      if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return; // mover + estampar = 1 sola acción
       // Pedido explícito: "si un totem o el obelisco esta dentro del rango
       // de movimiento del personaje seleccionado se puede machacar el
       // gnomo contra el, siempre y cuando tenga 2 acciones" — el clic
@@ -745,8 +745,7 @@ const Obelisks = {
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
       await Units.walkPath(unit, path);
       // Embestir (js/skills.js): mover + golpear por una sola acción, 1 vez por turno.
-      if (typeof Skills !== "undefined") Skills.spendApproach(unit);
-      else if (typeof Turns !== "undefined") Turns.useAction(unit);
+      // acercarse no gasta acción: la gasta la estampada
       if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
     }
     await this.attack(unit, obelisk);

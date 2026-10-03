@@ -617,7 +617,7 @@ const Turns = {
     if (!approach) return false;
     const needsMove = approach.row !== unit.row || approach.col !== unit.col;
     if (!needsMove) return true;
-    return typeof Skills !== "undefined" ? Skills.canApproachAttack(unit) : this.remainingActions(unit) >= 2;
+    return this.canAct(unit);
   },
 
   _aiOtherRivalObelisks(unit) {

@@ -75,7 +75,7 @@ const ITEM_TYPES = {
   // directamente sobre un PERSONAJE aliado (ver _startGivingBevida más
   // abajo), así que no tiene hatchRounds ni nada relacionado con el tablero.
   bevida: {
-    name: "BeVida",
+    name: "BebeVida",
     iconUrl: "assets/iconos/bevida.png",
   },
   // Pedido explícito: "añadimos a la tienda goblin el cepo llamado
@@ -142,7 +142,7 @@ const ITEM_TYPES = {
 // ningún texto bajo el hueco resaltado.
 const ITEM_DESCRIPTIONS = {
   setarcoiris: "La comida favorita de los gnomos. Colócala junto a uno de tus personajes: en dos turnos atraerá a un gnomo hambriento.",
-  bevida: "Un brebaje revitalizante. Dáselo a un personaje aliado (pulsa sobre él en el tablero) para restaurar toda su vida hasta su máximo de base.",
+  bevida: "Un brebaje revitalizante. Dáselo a un personaje aliado (pulsa sobre él en el tablero) para restaurar toda su vida hasta su máximo de base, o úsalo sobre uno de tus tótems para repararlo por completo. No sirve con el Obelisco.",
   atrapapinreles: "Un cepo goblin oxidado. Colócalo junto a uno de tus personajes: el enemigo que caiga en su casilla o pase por encima pierde el turno, suelta cualquier gnomo que llevara encima y recibe 1 punto de daño.",
   katapum: "Un cohete goblin casero. Elige a un rival a la vista: el misil vuela teledirigido hasta él y le hace entre 1 y 3 puntos de daño en la explosión (1 es lo más común, 2 es menos común y 3 lo menos común).",
   totemvision: "Un tótem tallado con un ojo tallado en su punta. Colócalo sobre una casilla libre: otorga visión permanente en un radio de 3 casillas. Tiene 1 punto de vida (cualquier golpe lo destruye) y, si se esconde dentro de un arbusto, se rompe en cuanto un rival entra en él.",
@@ -577,6 +577,10 @@ const Backpack = {
     Units.list
       .filter((u) => u.team === "player")
       .forEach((u) => u.el.classList.add("unit--giveable-target"));
+    // También tus tótems (reparables); el Obelisco no.
+    if (typeof Villages !== "undefined") {
+      Villages.list.filter((v) => v.owner === "player").forEach((v) => v.el.classList.add("unit--giveable-target"));
+    }
     this._bevidaGiveHandler = (e) => this._onBevidaGiveClick(e);
     window.addEventListener("click", this._bevidaGiveHandler, { capture: true });
   },
@@ -586,6 +590,7 @@ const Backpack = {
     this._givingUid = null;
     document.body.classList.remove("backpack-giving--bevida");
     Units.list.forEach((u) => u.el.classList.remove("unit--giveable-target"));
+    if (typeof Villages !== "undefined") Villages.list.forEach((v) => v.el.classList.remove("unit--giveable-target"));
     if (this._bevidaGiveHandler) {
       window.removeEventListener("click", this._bevidaGiveHandler, { capture: true });
       this._bevidaGiveHandler = null;
@@ -598,15 +603,28 @@ const Backpack = {
       ".unit-info-btn, .ability-btn, .gnome-action-btn, .end-turn-btn, .settings-gear-btn, .backpack-btn, .backpack-close-btn, .glory-hud, .glory-popup-overlay, .unit-info-overlay, .settings-panel"
     );
     const unitEl = e.target.closest(".unit");
+    const totem = typeof Villages !== "undefined" ? Villages.list.find((v) => v.el.contains(e.target)) : null;
     e.preventDefault();
     e.stopPropagation();
     const uid = this._givingUid;
     this._cancelGivingBevida();
     if (isFixedUi || !unitEl) return; // cancela sin gastar, se puede reintentar
+    if (totem) {
+      if (totem.owner === "player") this._repairTotemWith(uid, totem);
+      return;
+    }
 
     const target = Units.list.find((u) => u.id === unitEl.dataset.unitId);
     if (!target || target.team !== "player") return;
     this._giveBevidaTo(uid, target);
+  },
+
+  _repairTotemWith(uid, totem) {
+    this.inventory = this.inventory.filter((it) => it.uid !== uid);
+    totem.hp = totem.maxHp;
+    Units.updateHpBar(totem);
+    SFX.itemEaten();
+    Units.spawnFloatingText(totem, "¡REPARADO!", { className: "dmg-popup gnome-points-popup" });
   },
 
   _giveBevidaTo(uid, target) {
@@ -617,7 +635,7 @@ const Backpack = {
     target.maxHp = type.aguante + bonus + (target.cohesionBonus || 0);
     Units.updateHpBar(target);
     SFX.itemEaten();
-    Units.spawnFloatingText(target, "¡BEVIDA!", { className: "dmg-popup gnome-points-popup" });
+    Units.spawnFloatingText(target, "¡BEBEVIDA!", { className: "dmg-popup gnome-points-popup" });
   },
 
   // ---------- Colocación sobre el tablero ----------

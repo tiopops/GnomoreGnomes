@@ -245,7 +245,7 @@ const Mushrooms = {
     if (approach.row !== unit.row || approach.col !== unit.col) {
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
       await Units.walkPath(unit, path);
-      if (typeof Turns !== "undefined") Turns.useAction(unit);
+      if (typeof Turns !== "undefined") Turns.useAction(unit); // mover + coger = 1 acción (coger no gasta)
       if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
     }
     if (m.heldBy || !m.el) return;

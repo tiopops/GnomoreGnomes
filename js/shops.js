@@ -77,7 +77,7 @@ const SHOP_INTERACT_RANGE = 1; // cuerpo a cuerpo, igual que VILLAGE_ATTACK_RANG
 //       pero dentro de 2 turnos, nada inmediato), AtrapaPinreles (trampa
 //       situacional: solo hace algo si el rival pasa por encima) y
 //       TotemVision (solo visión, 1 punto de vida, no hace daño ni cura).
-//   4 — BeVida (cura completa instantánea: puede salvar una unidad ya
+//   4 — BebeVida (cura completa instantánea: puede salvar una unidad ya
 //       invertida en la Armería, mucho más valor que un simple recluta) y
 //       Señuelo Explosivo (trampa que además ENGAÑA a la IA rival para que
 //       vaya a por ella sola, así que dispara con más fiabilidad que
@@ -89,24 +89,13 @@ const SHOP_INTERACT_RANGE = 1; // cuerpo a cuerpo, igual que VILLAGE_ATTACK_RANG
 //       sube 1 punto, la subida mínima posible con precios enteros).
 const SHOP_STOCK_TEMPLATE = [
   { itemId: "setarcoiris", price: 3 },
-  { itemId: "setarcoiris", price: 3 },
-  // Pedido explícito: "añadimos un nuevo objeto a la tienda 'BeVida'..."
-  // (ver ITEM_TYPES.bevida/ITEM_DESCRIPTIONS.bevida en js/backpack.js) —
-  // precio ver reequilibrado arriba.
   { itemId: "bevida", price: 4 },
-  { itemId: "bevida", price: 4 },
-  // Pedido explícito: "añadimos a la tienda goblin el cepo llamado
-  // 'AtrapaPinreles'" (ver ITEM_TYPES.atrapapinreles en js/backpack.js) —
-  // precio ver reequilibrado arriba.
   { itemId: "atrapapinreles", price: 3 },
-  // Pedido explícito: "añadimos nuevo item a la tienda goblin
-  // 'item_señuelo'" (ver ITEM_TYPES.senuelo en js/backpack.js) — sustituye
-  // al segundo AtrapaPinreles (mismo espíritu de trampa ofensiva, así que
-  // repetir los dos a la vez era más redundancia que variedad) para que la
-  // partida arranque ya con las 8 casillas mostrando 8 objetos distintos.
   { itemId: "senuelo", price: 4 },
   { itemId: "katapum", price: 6 },
   { itemId: "totemvision", price: 3 },
+  { itemId: "atrapapinreles", price: 3 },
+  { itemId: "senuelo", price: 4 },
 ];
 
 // Pedido explícito: "Las tiendas goblin reponen existencias cada 5 turnos,
@@ -780,8 +769,20 @@ const Shops = {
     if (this.list.length === 0) return; // nada que reponer sin tiendas en el mapa
     this.list.forEach((shop) => {
       shop.stock = [];
-      for (let i = 0; i < SHOP_SLOT_COUNT; i++) {
-        const pick = SHOP_RESTOCK_POOL[Math.floor(Math.random() * SHOP_RESTOCK_POOL.length)];
+      // Variedad: se reparte de la baraja rebarajada (sin repetir hasta
+      // agotarla), con un máximo de 2 por objeto y 3 pociones en total.
+      const count = {};
+      let potions = 0;
+      const POTIONS = ["setarcoiris", "bevida"];
+      let bag = [];
+      let guard = 0;
+      while (shop.stock.length < SHOP_SLOT_COUNT && guard++ < 200) {
+        if (bag.length === 0) bag = this._shuffled(SHOP_RESTOCK_POOL);
+        const pick = bag.shift();
+        if ((count[pick.itemId] || 0) >= 2) continue;
+        if (POTIONS.includes(pick.itemId) && potions >= 3) continue;
+        count[pick.itemId] = (count[pick.itemId] || 0) + 1;
+        if (POTIONS.includes(pick.itemId)) potions++;
         shop.stock.push({ uid: this._nextStockUid++, itemId: pick.itemId, price: pick.price });
       }
     });

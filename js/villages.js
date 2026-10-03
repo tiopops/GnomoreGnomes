@@ -599,7 +599,7 @@ const Villages = {
       // hace falta moverse primero y solo queda 1 acción, no llegaría para
       // las dos (mover + machacar), así que no se ofrece la mira.
       const needsMove = approach.row !== unit.row || approach.col !== unit.col;
-      if (needsMove && typeof Turns !== "undefined" && !(typeof Skills !== "undefined" ? Skills.canApproachAttack(unit) : Turns.remainingActions(unit) >= 2)) return;
+      if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return; // mover + estampar = 1 sola acción
       // Pedido explícito: "si un totem o el obelisco esta dentro del rango
       // de movimiento del personaje seleccionado se puede machacar el
       // gnomo contra el" — mismo bug/arreglo que Obelisks.showFor: el clic
@@ -659,8 +659,7 @@ const Villages = {
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
       await Units.walkPath(unit, path);
       // Embestir (js/skills.js): mover + golpear por una sola acción, 1 vez por turno.
-      if (typeof Skills !== "undefined") Skills.spendApproach(unit);
-      else if (typeof Turns !== "undefined") Turns.useAction(unit);
+      // acercarse no gasta acción: la gasta la estampada
       // Mismo bug ya corregido en GnomeInstance.catchBy/Combat.approachAndAttack:
       // acercarse a pie tiene que revelar niebla nueva al detenerse.
       if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);

@@ -380,7 +380,7 @@ const Altar = {
     if (!approach) return;
     // Igual que Villages/Obelisks.showFor: moverse + machacar son 2 acciones.
     const needsMove = approach.row !== unit.row || approach.col !== unit.col;
-    if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < (typeof Gnome !== "undefined" && Gnome.isHeldBy(unit.id) ? 2 : 1)) return;
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return; // mover + estampar = 1 sola acción
     // Mira de ataque SOBRE el propio altar (antes se ponía en la loseta de
     // aproximación, a menudo oculta bajo la propia unidad) y por encima de
     // todo (alwaysOnTop) para que el sprite grande no se coma el clic — mismo
@@ -502,8 +502,7 @@ const Altar = {
     if (approach.row !== unit.row || approach.col !== unit.col) {
       if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
-      await Units.walkPath(unit, path);
-      if (typeof Turns !== "undefined") Turns.useAction(unit);
+      await Units.walkPath(unit, path); // acercarse no gasta acción: la gasta la ofrenda
       if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
     }
     await this.sacrifice(unit, target);

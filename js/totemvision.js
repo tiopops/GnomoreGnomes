@@ -128,7 +128,7 @@ const TotemVision = {
       const approach = this.findApproachTile(unit, totem);
       if (!approach) return;
       const needsMove = approach.row !== unit.row || approach.col !== unit.col;
-      if (needsMove && typeof Turns !== "undefined" && Turns.remainingActions(unit) < 2) return;
+      if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return; // mover + golpear = 1 sola acción
       Units.addMarker({
         className: "attack-marker totemvision-attack-marker",
         row: totem.row,
@@ -198,8 +198,7 @@ const TotemVision = {
     if (approach.row !== unit.row || approach.col !== unit.col) {
       if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
       const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
-      await Units.walkPath(unit, path);
-      if (typeof Turns !== "undefined") Turns.useAction(unit);
+      await Units.walkPath(unit, path); // acercarse no gasta acción
       if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
     }
     const type = UNIT_TYPES[unit.typeId];
