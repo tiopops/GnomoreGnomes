@@ -527,7 +527,10 @@ const Turns = {
   // Una acción de "carga" del gnomo: golpe o pase, el de mayor valor esperado.
   async _aiBuildGnome(unit, held) {
     const type = UNIT_TYPES[unit.typeId];
-    const hitValue = type.fuerza + (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0);
+    const hitValue =
+      type.fuerza +
+      (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0) +
+      (typeof Relics !== "undefined" ? Relics.gnomeHitBonus(unit.team) : 0);
     const mov = Units.moveRangeOf(unit);
     let bestAlly = null;
     let bestValue = 0;

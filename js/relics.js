@@ -17,6 +17,13 @@ const RELIC_TYPES = {
     description:
       "Unas botas hechas para recorrer montañas. Todas tus unidades ganan +1 de Movimiento. Pierden 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruyen y dejan de tener efecto.",
   },
+  acariciagnomos: {
+    name: "AcariciaGnomos",
+    iconUrl: "assets/iconos/reliquia_acariciagnomos.png",
+    durability: 5,
+    description:
+      "Un puño americano con pinchos dorados. Cada vez que pegas a un gnomo, le haces +3 de daño. Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.",
+  },
 };
 
 const Relics = {
@@ -51,6 +58,11 @@ const Relics = {
   // +1 de movimiento por cada par de Botas TrotaMontes activo.
   moveBonus(team) {
     return this.list(team).filter((r) => r.relicId === "trotamontes" && r.durability > 0).length;
+  },
+
+  // AcariciaGnomos: +3 al daño (puntos) de cada golpe a un gnomo.
+  gnomeHitBonus(team) {
+    return 3 * this.list(team).filter((r) => r.relicId === "acariciagnomos" && r.durability > 0).length;
   },
 
   // Una unidad de `unit.team` ha muerto: cada reliquia del equipo pierde 1.

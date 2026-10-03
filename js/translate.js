@@ -47,6 +47,8 @@ const EN_DICT = {
 "¡REPARADO!": "REPAIRED!",
 "¡MOCHILA LLENA!": "BACKPACK FULL!",
 "Botas TrotaMontes": "TrotaMontes Boots",
+"AcariciaGnomos": "GnomeCaresser",
+"Un puño americano con pinchos dorados. Cada vez que pegas a un gnomo, le haces +3 de daño. Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.": "Golden-spiked brass knuckles. Every time you hit a gnome, it takes +3 damage. Loses 1 durability each time one of your units dies; at 0 it breaks and stops working.",
 "Unas botas hechas para recorrer montañas. Todas tus unidades ganan +1 de Movimiento. Pierden 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruyen y dejan de tener efecto.": "Boots made for crossing mountains. All your units gain +1 Movement. They lose 1 durability each time one of your units dies; at 0 they are destroyed and stop working.",
 "¡ATRAPADO!": "TRAPPED!",
 "el mismo sonido de lanzamiento del gnomo algo mas agudo": "the same gnome-throw sound, a bit higher-pitched",

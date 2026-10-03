@@ -688,7 +688,10 @@ function createGnomeInstance() {
       // es una de las 2 acciones del turno.
       if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
       if (typeof Turns !== "undefined") Turns.useAction(unit);
-      const dmg = UNIT_TYPES[unit.typeId].fuerza + (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0);
+      const dmg =
+        UNIT_TYPES[unit.typeId].fuerza +
+        (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0) +
+        (typeof Relics !== "undefined" ? Relics.gnomeHitBonus(unit.team) : 0);
       this._addPoints(dmg);
       SFX.hit();
       // Retroalimentación de animación en AMBOS lados del golpe, no solo en
