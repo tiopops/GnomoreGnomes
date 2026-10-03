@@ -950,19 +950,24 @@ const Obelisks = {
     const draw = winnerTeam == null;
     const variantClass = draw ? "obelisk-gameover-panel--draw" : won ? "obelisk-gameover-panel--win" : "obelisk-gameover-panel--lose";
     const icon = draw ? "ph-scales" : won ? "ph-trophy" : "ph-skull";
-    const title = draw ? "EMPATE" : won ? "¡VICTORIA!" : "DERROTA";
+    // Nombre del equipo ganador (p. ej. "Equipo GuardaBosques") para el título.
+    const raceOf = (team) => (typeof RACES !== "undefined" ? RACES.find((r) => r.id === this._raceIds[team]) : null);
+    const winRace = draw ? null : raceOf(winnerTeam);
+    const winName = winRace ? I18N.t(winRace.nameKey).toUpperCase() : "";
+    const title = draw ? "EMPATE" : winName ? `¡GANA EL ${winName}!` : won ? "¡VICTORIA!" : "DERROTA";
     let msg;
     if (reason === "turnLimit") {
       msg = draw
         ? `Se acabaron los ${TURNS_MAX_ROUNDS} turnos y todo sigue exactamente igualado.`
         : `Se acabaron los ${TURNS_MAX_ROUNDS} turnos — gana quien más resistió.`;
     } else {
-      msg = won ? (Teams.rivalCount > 1 ? "Has destruido todos los Obeliscos rivales." : "Has destruido el Obelisco Ancestral rival.") : "Tu Obelisco Ancestral ha sido destruido.";
+      msg = (won ? "¡VICTORIA! " : "DERROTA. ") + (won ? (Teams.rivalCount > 1 ? "Has destruido todos los Obeliscos rivales." : "Has destruido el Obelisco Ancestral rival.") : "Tu Obelisco Ancestral ha sido destruido.");
     }
 
     // Logo del equipo ganador (el de ambos en un empate) y jingle del resultado.
     const logoOf = (team) => {
-      const lv = typeof getLevel === "function" ? getLevel(this._raceIds[team]) : null;
+      const rc = raceOf(team);
+      const lv = rc ? { logoImg: rc.iconImg } : null;
       return lv && lv.logoImg ? `<img class="obelisk-gameover-panel__logo" src="${lv.logoImg}" alt="" draggable="false">` : "";
     };
     const logos = draw

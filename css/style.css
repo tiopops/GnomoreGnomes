@@ -9424,3 +9424,9 @@ body.tut-on .settings-gear-btn--account { display: none; }
 .recruit-name { color: #ffcf3d; }
 /* Selección de casillas: drop-shadow sigue el clip-path (box-shadow se recortaba como con máscara) */
 .backpack-slot--selected, .armory-node--selected { box-shadow: none !important; filter: drop-shadow(0 0 7px rgba(255,207,63,.8)); }
+
+/* Final de partida: logo cuadrado del equipo ganador, sobresale por arriba sin tapar el título */
+.obelisk-gameover-panel__logos { top: -120px; }
+.obelisk-gameover-panel__logo { width: min(190px, 60vw); }
+.obelisk-gameover-panel__logo--draw { width: min(340px, 78vw); }
+.obelisk-gameover-panel { padding-top: 90px; }
