@@ -774,7 +774,7 @@ const Backpack = {
     // +6 (por encima de una unidad normal, que usa +5, ver Units._placeInstant)
     // para que se muestre "por delante del jugador que ocupe su misma
     // casilla" (pedido explícito) sin tocar el z-index de las unidades.
-    el.style.zIndex = String((row + col) * 10 + 6);
+    el.style.zIndex = String(typeof Bushes !== "undefined" ? Bushes.trapZ(row, col) : (row + col) * 10 + 6);
 
     if (typeof Fog !== "undefined") el.classList.toggle("unit--fog-hidden", Fog.isFogged(row, col));
 
@@ -875,7 +875,7 @@ const Backpack = {
     // Mismo criterio de z-index que la Setarcoiris (+6, por encima de una
     // unidad normal que use la misma casilla) — un cepo tirado en el suelo
     // debe verse, no quedar tapado por quien pise encima.
-    el.style.zIndex = String((row + col) * 10 + 6);
+    el.style.zIndex = String(typeof Bushes !== "undefined" ? Bushes.trapZ(row, col) : (row + col) * 10 + 6);
 
     if (typeof Fog !== "undefined") el.classList.toggle("unit--fog-hidden", Fog.isFogged(row, col));
 

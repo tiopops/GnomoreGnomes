@@ -153,6 +153,13 @@ const Bushes = {
   // (para dejar que se pueda intentar entrar de todos modos, disparando la
   // emboscada) y por Combat/Abilities (para que no se pueda seleccionar como
   // objetivo hasta que se revele).
+  // z-index de una trampa/objeto en (row, col): +6 normalmente (por encima de
+  // quien lo pise), pero +4 si hay un arbusto encima — queda oculta DETRÁS del
+  // arbusto (z +5) y solo se ve cuando el arbusto se vuelve transparente.
+  trapZ(row, col) {
+    return (row + col) * 10 + (this.at(row, col) ? 4 : 6);
+  },
+
   isHiddenFromTeam(row, col, viewerTeam) {
     const bush = this.at(row, col);
     if (!bush || !bush.hiddenUnitId) return false;

@@ -511,7 +511,7 @@ const Abilities = {
     // en la misma loseta, ver Units.spawnUnit/hopTo); ahora +6, mismo valor
     // que ya usan el cepo AtrapaPinreles/Setarcoiris (ver backpack.js) para
     // que el objeto se vea siempre por encima de quien lo pise.
-    el.style.zIndex = String((row + col) * 10 + 6);
+    el.style.zIndex = String(typeof Bushes !== "undefined" ? Bushes.trapZ(row, col) : (row + col) * 10 + 6);
     this._mines.push({ row, col, ownerTeam: unit.team, el });
     SFX.click();
   },
