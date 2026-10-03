@@ -9118,3 +9118,9 @@ body.tut-on .settings-gear-btn--account { display: none; }
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
   transform: rotate(-4deg);
 }
+
+/* Armería: aire entre los nodos y el borde del panel (sobre todo en móvil). */
+.armory-tracks { padding-left: 18px; padding-right: 18px; box-sizing: border-box; }
+@media (max-width: 480px) {
+  .armory-tracks { padding-left: 26px; padding-right: 26px; }
+}
