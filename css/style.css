@@ -9126,3 +9126,39 @@ body.tut-on .settings-gear-btn--account { display: none; }
 }
 
 .obelisk-gameover-panel__logo--draw { width: min(340px, 78vw); }
+
+/* ---------- Amigos (js/friends.js) ---------- */
+.settings-gear-btn.settings-gear-btn--friends.settings-gear-btn--friends { right: 172px; }
+@media (max-width: 480px) {
+  .settings-gear-btn.settings-gear-btn.settings-gear-btn--friends.settings-gear-btn--friends { right: 118px; }
+}
+body.tut-on .settings-gear-btn--friends { display: none !important; }
+.friends-badge {
+  position: absolute; top: -6px; right: -6px; z-index: 3; min-width: 22px; height: 22px; padding: 0 5px;
+  background: #e8453c; color: #fff; border: 2.5px solid #000; border-radius: 12px;
+  font-weight: 900; font-size: 0.75rem; align-items: center; justify-content: center; display: none;
+}
+.friends-panel { width: min(470px, 94vw); max-height: 88vh; overflow-y: auto; }
+.friends-body { gap: 14px; }
+.friends-add { display: flex; flex-direction: column; gap: 10px; }
+.friends-send { align-self: center; padding: 9px 26px; }
+.friends-section { display: flex; flex-direction: column; gap: 8px; }
+.friends-section__title { font-weight: 900; font-size: 0.8rem; letter-spacing: 0.08em; color: #ffcf3d; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.friends-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  background: #1a1722; border: 2.5px solid #000; box-shadow: 3px 3px 0 rgba(0,0,0,0.6);
+  clip-path: polygon(1.5% 0, 100% 0, 98.5% 100%, 0 100%);
+}
+.friends-row--confirm { flex-wrap: wrap; justify-content: center; text-align: center; background: #3a1a1a; }
+.friends-row__txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.friends-row__name { font-weight: 900; color: #fff; font-size: 1.05rem; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); overflow: hidden; text-overflow: ellipsis; }
+.friends-row__sub { font-size: 0.7rem; font-weight: 800; color: rgba(244,242,248,0.6); text-transform: uppercase; }
+.friends-row__act { display: flex; gap: 8px; align-items: center; }
+.friends-btn { padding: 6px 12px; }
+.friends-btn .p5-banner__label { font-size: 0.75rem; }
+.friends-dot { width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid #000; flex: none; }
+.friends-dot--on { background: #53d86a; box-shadow: 0 0 8px #53d86a; }
+.friends-dot--off { background: #5b5668; }
+.friends-trash { background: none; border: none; color: #ff8a7a; font-size: 1.35rem; cursor: var(--cursor-pointer); padding: 4px; }
+.friends-trash:hover { color: #fff; }
+.friends-empty { text-align: center; font-weight: 700; font-size: 0.85rem; color: rgba(244,242,248,0.7); padding: 8px 4px; }

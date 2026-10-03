@@ -39,5 +39,45 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameLower)).data.uid == uid;
       allow update, delete: if false;
     }
+    // Amigos: UN documento por pareja, con id fijo = los dos uid ordenados
+    // ("uidMenor_uidMayor"), así es imposible duplicar una amistad.
+    //   from -> quien envía la solicitud, to -> quien la recibe.
+    // Solo participan los dos usuarios: el receptor acepta, cualquiera de los
+    // dos puede borrar (rechazar / cancelar / eliminar amigo).
+    match /friends/{pairId} {
+      // get: permite comprobar si ya existe la pareja (si no existe, resource es null).
+      allow get: if request.auth != null && (resource == null || request.auth.uid in resource.data.users);
+      allow list: if request.auth != null && request.auth.uid in resource.data.users;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['users', 'from', 'to', 'fromName', 'toName', 'status', 'createdAt'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.from != request.resource.data.to
+        && request.resource.data.status == 'pending'
+        && request.resource.data.users.size() == 2
+        && request.resource.data.users[0] == request.resource.data.from
+        && request.resource.data.users[1] == request.resource.data.to
+        && pairId == (request.resource.data.from < request.resource.data.to
+            ? request.resource.data.from + '_' + request.resource.data.to
+            : request.resource.data.to + '_' + request.resource.data.from)
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == request.resource.data.fromName
+        && get(/databases/$(database)/documents/usernames/$(request.resource.data.toName.lower())).data.uid == request.resource.data.to;
+      allow update: if request.auth != null
+        && resource.data.to == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.status == 'accepted'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow delete: if request.auth != null && request.auth.uid in resource.data.users;
+    }
+
+    // Presencia ("en línea"): cada usuario escribe solo la suya; cualquiera con
+    // sesión puede consultar la de un uid concreto (no se puede listar).
+    match /presence/{uid} {
+      allow get: if request.auth != null;
+      allow list: if false;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['lastSeen'])
+        && request.resource.data.lastSeen is number;
+      allow delete: if false;
+    }
   }
 }

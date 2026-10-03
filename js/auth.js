@@ -229,6 +229,7 @@ const Account = {
           } catch (e) {}
         }
         this._btn.classList.toggle("settings-gear-btn--logged", !!user);
+        document.dispatchEvent(new CustomEvent("gg:authchange", { detail: { user, profile: this._profile } }));
         if (this._overlay.classList.contains("settings-overlay--visible") && !this._busy) this._render();
       });
     })().catch((e) => {
