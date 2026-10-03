@@ -47,8 +47,10 @@ const Preload = {
   _overlayEl: null,
   _fillEl: null,
 
-  _MAX_WAIT_MS: 3500,
-  _MIN_SHOW_MS: 3000,
+  _MAX_WAIT_MS: 15000,
+  _MIN_SHOW_MS: 1200,
+  _CONCURRENCY: 8,
+  extra: [],
 
   // Los más pesados y universales del proyecto (ver du -h assets/), nunca
   // dependen de la raza ni del modo elegido:
@@ -99,8 +101,6 @@ const Preload = {
     this._ensureOverlay();
     this._show();
     const startedAt = Date.now();
-    let loaded = 0;
-    const total = this._HEAVY_ASSETS.length;
     // Pedido explícito: "la barra de loading carga de golpe...no se puede
     // hacer mas gradual?" — las _HEAVY_ASSETS son pocas (una decena) y con
     // conexión rápida/caché sus onload pueden llegar casi todos EN EL MISMO
@@ -113,44 +113,36 @@ const Preload = {
     // progreso real (nunca miente hacia atrás si la carga real va más
     // lenta que _MIN_SHOW_MS, solo suaviza el caso rápido/de golpe).
     this._realPct = 0;
+    this._timePct = 0;
     this._updateProgress();
-    const stopTimeBasedFill = this._startTimeBasedFill(startedAt);
-    const loadAll = Promise.all(
-      this._HEAVY_ASSETS.map(
-        (url) =>
-          new Promise((resolve) => {
-            const img = new Image();
-            img.decoding = "async";
-            // onerror también resuelve (nunca bloquea la partida por un
-            // asset que falle en cargar) — el mismo <img> descartado no
-            // deja nada a medias, solo no llegó a precargarse.
-            img.onload = img.onerror = () => {
-              loaded++;
-              this._realPct = total ? Math.round((loaded / total) * 100) : 100;
-              this._updateProgress();
-              resolve();
-            };
-            img.src = url;
-          })
-      )
-    );
+    // Progreso REAL: cada imagen se descarga y se DECODIFICA (img.decode)
+    // para que al construir la partida el navegador ya la tenga lista en
+    // memoria y no haya tirones. Se cargan en tandas de _CONCURRENCY.
+    const urls = [...new Set([...this._HEAVY_ASSETS, ...(typeof PRELOAD_ASSETS !== "undefined" ? PRELOAD_ASSETS : []), ...(this.extra || [])])];
+    const total = urls.length;
+    let loaded = 0;
+    let next = 0;
+    const worker = async () => {
+      while (next < total) {
+        const url = urls[next++];
+        await new Promise((resolve) => {
+          const img = new Image();
+          img.decoding = "async";
+          const fin = () => resolve();
+          img.onerror = fin;
+          img.onload = () => (img.decode ? img.decode().then(fin, fin) : fin());
+          img.src = url;
+        });
+        loaded++;
+        this._realPct = Math.round((loaded / total) * 100);
+        this._timePct = this._realPct;
+        this._updateProgress();
+      }
+    };
+    const loadAll = Promise.all(Array.from({ length: this._CONCURRENCY }, worker));
     await Promise.race([loadAll, new Promise((resolve) => setTimeout(resolve, this._MAX_WAIT_MS))]);
-    // Suelo mínimo de permanencia (ver cabecera) — si todo cargó de sobra
-    // rápido (conexión buena o ya en caché de una partida anterior en la
-    // misma sesión de página), la barra espera aquí lo que le falte para
-    // llegar a _MIN_SHOW_MS antes de ocultarse.
     const remaining = this._MIN_SHOW_MS - (Date.now() - startedAt);
     if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
-    // Pedido explícito: "la barra de loading deberia rellenarse de manera que
-    // coincida el terminar de rellenarse con empezar el nivel" — la barra NO
-    // se completa ni se oculta aquí: se queda al ~96% (avance de reloj, ver
-    // _startTimeBasedFill) mientras startMatch/resumeMatch construyen el
-    // tablero, y Preload.finish() (llamado justo cuando la partida ya está
-    // lista, ver js/newgame-flow.js) la remata a 100% y la oculta.
-    this._stopFill = stopTimeBasedFill;
-    // Llega a 100% justo al cumplirse el tiempo mínimo y se deja pintar un
-    // par de fotogramas antes de que la construcción (síncrona) del tablero
-    // congele la pantalla: así el 100% se ve y coincide con empezar el nivel.
     this._timePct = 100;
     this._updateProgress();
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));

@@ -8887,8 +8887,7 @@ body.backpack-giving--katapum * {
 }
 .tut-panel--compact { bottom: auto; top: 10px; align-items: flex-start; }
 .tut-panel--compact .tut-progress { display: none; }
-.tut-panel--compact .tut-portrait { height: 84px; margin-right: -8px; }
-.tut-panel--compact .tut-text { font-size: 0.8rem; min-height: 0; }
+.tut-panel--compact .tut-portrait { height: 120px; margin-right: -8px; }
 .tut-panel--compact .tut-btn { pointer-events: auto; }
 
 .tut-panel--compact .tut-mission { margin-top: 12px; }

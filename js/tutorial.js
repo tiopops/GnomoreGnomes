@@ -168,7 +168,7 @@ const Tutorial = {
     // Revela toda la zona de práctica.
     if (typeof Fog !== "undefined" && Fog.revealAround) {
       setTimeout(() => {
-        Fog.revealAround(o.row, o.col, 14);
+        Fog.revealAround(o.row, o.col, 8);
         Fog.applyVisibility();
       }, 2200);
     }
@@ -452,7 +452,7 @@ const Tutorial = {
         ok: "Tinkle, perdóname. Eras tú o yo.",
       },
       {
-        say: `Y ahora lo ingenioso del juego: ¡Golpéalo! Cada golpe le suma puntos (cuanta más fuerza, más puntos) y esos puntos serán el daño de tu “estampada”. Nuestro deporte nacional, ¡yupi! Sí, ya sé que suena a locura. De hecho lo es.`,
+        say: `Y ahora lo MÁS ingenioso del juego: ¡Golpéalo! Cada golpe le suma puntos (cuanta más fuerza, más puntos) y esos puntos serán el daño de tu “estampada”. Nuestro deporte nacional, ¡yupi! Sí, ya sé que suena a locura. De hecho lo es.`,
         mission: "Golpea al gnomo (icono del puño)",
         onStart: () => {
           T._refill();
@@ -468,7 +468,7 @@ const Tutorial = {
           const g = T._gnome();
           return g && g.points >= 3;
         },
-        ok: "¡Puntos! Tinkle, de toda la familia, tú siempre fuiste quien mejor encajaba los golpes. Bueno, el tío Honky era mejor, pero el tío Honky solo es un recuerdo, un recuerdo disperso sobre el césped...",
+        ok: "¡Puntos! Tinkle, de toda la familia, tú siempre fuiste quien mejor encajaba los golpes. Bueno, el tío Klink era mejor, pero el tío Klink solo es un recuerdo, un recuerdo disperso sobre el césped...",
       },
       {
         say: `Noticia: pasarse el balón también da puntos, por si en algún momento te duelen los nudillos. Pulsa el icono de lanzar y luego selecciona a tu amigo. Quien lanza gasta acción; quien recibe, no. Es lo más parecido a la justicia que verás por aquí.`,
@@ -715,21 +715,27 @@ const Tutorial = {
   _spotAtNear(unit, maxD = 2) {
     if (!unit) return null;
     const ob = this._ob();
-    let best = null;
-    for (let dr = -maxD; dr <= maxD; dr++) {
-      for (let dc = -maxD; dc <= maxD; dc++) {
-        if (!dr && !dc) continue;
-        const r = unit.row + dr;
-        const c = unit.col + dc;
-        if (!this._tileOk(r, c)) continue;
-        if (this._entityNear(r, c, 0)) continue;
-        // Nada pegado al Obelisco: su recuadro tapa los iconos de debajo.
-        if (Math.max(Math.abs(r - ob.row), Math.abs(c - ob.col)) < 3) continue;
-        const score = Math.hypot(r - ob.row, c - ob.col) + Math.max(Math.abs(dr), Math.abs(dc)) * 0.8;
-        if (!best || score < best.score) best = { row: r, col: c, score };
+    // Primero lo más despejado (a 3+ casillas del Obelisco); si no hay
+    // hueco, se va relajando para que NUNCA falte el sitio (y el paso no se salte).
+    for (const minOb of [3, 2, 1]) {
+      for (const reach of maxD === 1 ? [1, 2] : [maxD]) {
+        let best = null;
+        for (let dr = -reach; dr <= reach; dr++) {
+          for (let dc = -reach; dc <= reach; dc++) {
+            if (!dr && !dc) continue;
+            const r = unit.row + dr;
+            const c = unit.col + dc;
+            if (!this._tileOk(r, c)) continue;
+            if (this._entityNear(r, c, 0)) continue;
+            if (Math.max(Math.abs(r - ob.row), Math.abs(c - ob.col)) < minOb) continue;
+            const score = Math.hypot(r - ob.row, c - ob.col) + Math.max(Math.abs(dr), Math.abs(dc)) * 0.8;
+            if (!best || score < best.score) best = { row: r, col: c, score };
+          }
+        }
+        if (best) return best;
       }
     }
-    return best;
+    return null;
   },
 
   // ---------- Motor de pasos ----------
@@ -1140,16 +1146,44 @@ const Tutorial = {
     }
   },
 
+  // Con una ventana abierta la viñeta de Nizak se queda arriba, con su texto
+  // normal, y la ventana se encoge/baja lo justo para caber DEBAJO de ella.
+  _fitPopup(el) {
+    if (this._fitEl && this._fitEl !== el && this._fitEl.isConnected) {
+      this._fitEl.style.scale = "";
+      this._fitEl.style.translate = "";
+    }
+    this._fitEl = el;
+    if (!el) return;
+    const P = this._els.panel;
+    let bottom = 0;
+    [...P.children].forEach((c) => {
+      const r = c.getBoundingClientRect();
+      if (r.height > 0 && !c.classList.contains("tut-skip")) bottom = Math.max(bottom, r.bottom);
+    });
+    el.style.transformOrigin = "50% 0";
+    const top0 = el.offsetTop;
+    const h = el.offsetHeight || 1;
+    const ty = Math.max(0, bottom + 10 - top0);
+    const avail = window.innerHeight - 8 - (top0 + ty);
+    const sc = Math.max(0.55, Math.min(1, avail / h));
+    el.style.translate = `0 ${ty.toFixed(1)}px`;
+    el.style.scale = sc.toFixed(3);
+  },
+
   _updatePointer() {
     const P = this._els.pointer;
     if (!P) return;
     // Con una ventana (reclutar, habilidades...) abierta la viñeta se hace
     // compacta y sube arriba para no tapar sus botones.
-    const popup = !!document.querySelector(".backpack-overlay");
+    const popupEl = document.querySelector(".backpack-overlay .backpack-panel");
+    const popup = !!popupEl;
     if (popup !== this._popupOpen) {
       this._popupOpen = popup;
       this._els.panel.classList.toggle("tut-panel--compact", popup);
+      if (!popup) this._fitPopup(null);
     }
+    if (popup) this._fitPopup(popupEl);
     let el = null;
     try {
       el = this._ctx.pointerTarget ? this._ctx.pointerTarget() : null;
