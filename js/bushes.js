@@ -224,6 +224,9 @@ const Bushes = {
       const hiddenUnit = typeof Units !== "undefined" ? Units.list.find((u) => u.id === bush.hiddenUnitId) : null;
       if (hiddenUnit && hiddenUnit.team !== unit.team) {
         this._springAmbush(bush, hiddenUnit, unit);
+        // Si el intruso sobrevive, se queda con el arbusto y empuja fuera
+        // al ocupante anterior (que queda a la vista).
+        if (unit.hp > 0) this._takeOverBush(bush, unit, hiddenUnit);
         return true;
       }
     }
@@ -271,6 +274,27 @@ const Bushes = {
       Units.removeUnit(intruder);
       if (typeof Gnome !== "undefined") Gnome.dropHeldBy(intruder);
     }
+  },
+
+  _takeOverBush(bush, intruder, evicted) {
+    bush.hiddenUnitId = intruder.id;
+    const dirs = [];
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (dr || dc) dirs.push([dr, dc]);
+    dirs.sort(() => Math.random() - 0.5);
+    // _pushBackFixed empuja alejándose del "atacante": se le da un punto
+    // ficticio justo en el lado contrario de cada dirección probada.
+    (async () => {
+      for (const [dr, dc] of dirs) {
+        const fake = { row: evicted.row - dr, col: evicted.col - dc };
+        const r0 = evicted.row;
+        const c0 = evicted.col;
+        if (typeof Abilities !== "undefined") await Abilities._pushBackFixed(evicted, fake, 1);
+        if (evicted.row !== r0 || evicted.col !== c0) break;
+      }
+      bush.hiddenUnitId = intruder.id;
+      if (typeof Fog !== "undefined") Fog.applyVisibility();
+      this.refreshOcclusion();
+    })();
   },
 
   // ---------- Ocultar personajes propios escondidos detrás de un arbusto ----------
