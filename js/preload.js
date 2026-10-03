@@ -47,9 +47,10 @@ const Preload = {
   _overlayEl: null,
   _fillEl: null,
 
-  _MAX_WAIT_MS: 15000,
-  _MIN_SHOW_MS: 1200,
-  _CONCURRENCY: 8,
+  _MAX_WAIT_MS: 6000,
+  _MIN_SHOW_MS: 700,
+  _CONCURRENCY: 12,
+  _seen: new Set(),
   extra: [],
 
   // Los más pesados y universales del proyecto (ver du -h assets/), nunca
@@ -60,18 +61,12 @@ const Preload = {
     "assets/iconos/recurso_roca_nodo.png",
     "assets/iconos/recurso_pino_nodo.png",
     "assets/iconos/recurso_mena_nodo.png",
-    "assets/iconos/recurso_madera.png",
-    "assets/iconos/recurso_roca.png",
-    "assets/iconos/recurso_metal.png",
     // Decoración de escenario (js/hierbajos.js/bushes.js) — igual de
     // universal, se revela con la niebla en cualquier mapa.
     "assets/escenario/hierbajos.png",
     "assets/iconos/arbusto.png",
     // Objetos de mochila (js/backpack.js) — universales, no dependen de
     // la raza ni del mapa.
-    "assets/iconos/atrapapinreles.png",
-    "assets/iconos/katapum.png",
-    "assets/iconos/totemvision.png",
     // Pedido explícito: "acercar alejar la camara hace que flickeen las
     // losetas cuando resolucion adaptativa esta activado" — causa real:
     // hierba_01.png/agua_03.png (la textura normal) SÍ estaban aquí desde
@@ -96,8 +91,6 @@ const Preload = {
   // quien la llame debe esperarla (await) antes de seguir con el resto de
   // la construcción de la partida.
   async run() {
-    if (this._done) return;
-    this._done = true; // una sola vez por sesión de página, pase lo que pase abajo
     this._ensureOverlay();
     this._show();
     const startedAt = Date.now();
@@ -119,7 +112,14 @@ const Preload = {
     // para que al construir la partida el navegador ya la tenga lista en
     // memoria y no haya tirones. Se cargan en tandas de _CONCURRENCY.
     const urls = [...new Set([...this._HEAVY_ASSETS, ...(typeof PRELOAD_ASSETS !== "undefined" ? PRELOAD_ASSETS : []), ...(this.extra || [])])];
+    // Lo que ya se cargó en esta sesión (otra partida, el tutorial) no se repite.
+    urls.splice(0, urls.length, ...urls.filter((u) => !this._seen.has(u)));
+    urls.forEach((u) => this._seen.add(u));
     const total = urls.length;
+    if (!total) {
+      this._timePct = 100;
+      this._updateProgress();
+    }
     let loaded = 0;
     let next = 0;
     const worker = async () => {
@@ -134,7 +134,7 @@ const Preload = {
           img.src = url;
         });
         loaded++;
-        this._realPct = Math.round((loaded / total) * 100);
+        this._realPct = Math.round((loaded / Math.max(1, total)) * 100);
         this._timePct = this._realPct;
         this._updateProgress();
       }
