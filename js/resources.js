@@ -166,7 +166,7 @@ const Resources = {
   // Cofres de Reliquias: 1 por jugador, en sitios apartados e impredecibles
   // (lejos de las bases y entre sí; si no cabe, se van relajando las distancias).
   _spawnChests(boardSize) {
-    const count = typeof Teams !== "undefined" ? Teams.all.length : 2;
+    const count = (typeof Teams !== "undefined" ? Teams.all.length : 2) + 1; // jugadores + 1
     for (let i = 0; i < count; i++) {
       let placed = false;
       for (let relax = 0; relax <= 4 && !placed; relax++) {
@@ -583,6 +583,7 @@ const Resources = {
           big: true,
           onArrive: () => {
             Relics.grant("player", relicId);
+            this._fadeChest(node);
             if (typeof SFX !== "undefined") SFX.itemEaten();
             if (typeof Backpack !== "undefined" && Backpack._btnEl) {
               const btn = Backpack._btnEl;
@@ -596,8 +597,16 @@ const Resources = {
       }, 450);
     } else {
       Relics.grant(team, relicId); // el rival la recoge en silencio
+      setTimeout(() => this._fadeChest(node), 1200);
     }
     await new Promise((resolve) => setTimeout(resolve, 350));
+  },
+
+  // El cofre se desvanece una vez la reliquia ha llegado a su dueño.
+  _fadeChest(node) {
+    this.list = this.list.filter((n) => n.id !== node.id);
+    node.el.classList.add("resource-node--destroyed");
+    setTimeout(() => node.el.remove(), 340);
   },
 
   // ---------- Destrucción + recolección ----------

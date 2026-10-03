@@ -269,6 +269,8 @@ const Glory = {
     const killBonus = this.pendingBonus[team];
     const nextTotal = GLORY_PER_TURN_START + killBonus + villagesBonus;
 
+    const hudImg = this._els[team] && this._els[team].querySelector(".glory-hud__icon");
+    const iconSrc = hudImg ? hudImg.getAttribute("src") : "";
     const overlay = document.createElement("div");
     overlay.className = "glory-popup-overlay";
     overlay.addEventListener("click", () => this.closePopup());
@@ -281,7 +283,7 @@ const Glory = {
           </button>
           <h2 class="glory-popup-title">Puntos de Gloria</h2>
           <div class="glory-popup-total">
-            <i class="ph-fill ph-trophy"></i>
+            ${iconSrc ? `<img class="glory-popup-total__img" src="${iconSrc}" alt="">` : `<i class="ph-fill ph-trophy"></i>`}
             <span>${this.points[team]}</span>
           </div>
           <p class="glory-popup-subtitle">Vas a ganar esto al empezar tu próximo turno:</p>

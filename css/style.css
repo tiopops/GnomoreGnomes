@@ -9335,3 +9335,12 @@ body.tut-on .settings-gear-btn--account { display: none; }
 .backpack-slot--relic .skills-node__rank::after {
   background: #ffcf3f;
 }
+
+/* Popup de gloria: icono de la raza (mismo tamaño que el del HUD exterior) en vez de la copa */
+.glory-popup-total__img {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 190, 60, 0.4));
+}
