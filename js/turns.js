@@ -515,6 +515,39 @@ const Turns = {
     return false;
   },
 
+  // ¿Lleva el gnomo carga suficiente para machacar `target` (tótem/obelisco)?
+  // Nunca con 0 puntos: hace falta al menos 4 puntos, o los justos para
+  // destruirlo si le quedan menos.
+  _aiGnomeCharged(held, target) {
+    if (!held || held.points <= 0) return false;
+    const need = Math.min(4, Math.max(1, target && typeof target.hp === "number" ? target.hp : 4));
+    return held.points >= need;
+  },
+
+  // Una acción de "carga" del gnomo: golpe o pase, el de mayor valor esperado.
+  async _aiBuildGnome(unit, held) {
+    const type = UNIT_TYPES[unit.typeId];
+    const hitValue = type.fuerza + (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0);
+    const mov = Units.moveRangeOf(unit);
+    let bestAlly = null;
+    let bestValue = 0;
+    Units.list.forEach((u) => {
+      if (u.team !== unit.team || u.id === unit.id) return;
+      const d = Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col));
+      if (d > mov + 2) return;
+      const value = held.computePassSuccess(type.agilidad, d, mov) * held.computePassPoints(d, mov);
+      if (value > bestValue) {
+        bestValue = value;
+        bestAlly = u;
+      }
+    });
+    if (bestAlly && bestValue >= hitValue) {
+      await held.executePass(unit, bestAlly);
+    } else {
+      held.hit(unit);
+    }
+  },
+
   // ---------- Estrategia de la IA ----------
   // Al empezar su turno cada IA valora tres caminos hacia la victoria y elige
   // el que mejor puntúa: "assault" (destruir el Obelisco del rival más débil),
@@ -735,7 +768,7 @@ const Turns = {
         }
         // Estrategia "assault": con el gnomo cargado, machacar el Obelisco.
         const plan0 = this._aiPlan[unit.team];
-        if (plan0 && plan0.mode === "assault" && plan0.target && held.points > 0) {
+        if (plan0 && plan0.mode === "assault" && plan0.target && this._aiGnomeCharged(held, plan0.target)) {
           if (this._aiCanReach(unit, plan0.target)) {
             await Obelisks.approachAndAttack(unit, plan0.target);
             return true;
@@ -763,7 +796,7 @@ const Turns = {
           // alcance pero el gnomo todavía a 0, cae a la rama de
           // golpear/pasar de más abajo (misma que "sin tótem al alcance")
           // en vez de malgastar el turno en un golpe que no hace nada.
-          if (inRange && held.points > 0) {
+          if (inRange && this._aiGnomeCharged(held, inRange)) {
             await Villages.attack(unit, inRange);
             return true;
           }
@@ -778,18 +811,10 @@ const Turns = {
             }
           }
         }
-        const ally = Units.list.find(
-          (u) =>
-            u.team === unit.team &&
-            u.id !== unit.id &&
-            Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <=
-              Units.moveRangeOf(unit) + 2
-        );
-        if (ally && Math.random() < 0.5) {
-          await held.executePass(unit, ally);
-        } else {
-          held.hit(unit);
-        }
+        // Cargar el gnomo: se elige lo que más puntos esperados da, un golpe
+        // (fuerza + armería, siempre) o un pase a un aliado (probabilidad de
+        // éxito x puntos por distancia).
+        await this._aiBuildGnome(unit, held);
         return true;
       }
     }
