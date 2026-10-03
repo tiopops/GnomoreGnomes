@@ -9174,3 +9174,22 @@ body.tut-on .settings-gear-btn--account { display: none; }
 /* Las losetas "recordadas" cambian de golpe (sin transición de filtro): animar
    decenas de filtros a la vez era otro coste innecesario de pintado. */
 .tile.gg-remembered { transition: none; }
+
+/* ---------- Memoria de la GPU: nada oculto debe seguir ocupando una capa ----------
+   Las pantallas y los overlays cerrados solo estaban a opacity:0, así que el
+   navegador los mantenía como capas de composición a pantalla completa (con
+   todos sus paneles dentro): decenas de megapíxeles de textura para nada. Al
+   hacer zoom repetidamente, la GPU se quedaba sin memoria y empezaba a soltar
+   texturas: losetas y menús que desaparecen. Con visibility:hidden (aplicado
+   tras acabar el fundido de cierre) el navegador libera esas capas; al abrir,
+   se hace visible al instante, así que la animación de entrada no cambia. */
+.screen:not(.screen--active),
+.settings-overlay:not(.settings-overlay--visible),
+.match-loading-overlay:not(.match-loading-overlay--visible),
+.backpack-overlay:not(.backpack-overlay--visible),
+.glory-popup-overlay:not(.glory-popup-overlay--visible),
+.unit-info-overlay:not(.unit-info-overlay--visible),
+.obelisk-gameover-overlay:not(.obelisk-gameover-overlay--visible) {
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.25s;
+}
