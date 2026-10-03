@@ -80,6 +80,21 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Buscar amigos por correo: emails/{correo en minúsculas} -> { uid, username }.
+    // Solo se puede leer conociendo el correo exacto (no se puede listar) y solo
+    // se crea con el correo de la propia cuenta autenticada.
+    match /emails/{email} {
+      allow get: if request.auth != null;
+      allow list: if false;
+      allow create: if request.auth != null
+        && request.auth.token.email != null
+        && email == request.auth.token.email.lower()
+        && request.resource.data.keys().hasOnly(['uid', 'username'])
+        && request.resource.data.uid == request.auth.uid
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == request.resource.data.username;
+      allow update, delete: if false;
+    }
+
     // Chat efímero entre amigos aceptados. Los mensajes son temporales: el
     // receptor los guarda en memoria y los borra al recibirlos.
     match /chats/{pairId}/msgs/{msgId} {

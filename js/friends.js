@@ -257,7 +257,7 @@ const Friends = {
       <div class="p5-banner__label settings-panel__title">${I18N.t("fr_title")}</div>
       <div class="friends-add">
         <label class="account-field"><span class="account-field__label">${I18N.t("fr_add_title")}</span>
-          <input id="fr-name" type="text" placeholder="${I18N.t("fr_ph")}" maxlength="16" autocomplete="off" spellcheck="false" autocapitalize="none"></label>
+          <input id="fr-name" type="text" placeholder="${I18N.t("fr_ph")}" maxlength="64" autocomplete="off" spellcheck="false" autocapitalize="none"></label>
         <button type="button" class="p5-banner p5-banner--action friends-send" data-act="send"><span class="p5-banner__label">${I18N.t("fr_add_btn")}</span></button>
       </div>
       ${msg}
@@ -380,7 +380,7 @@ const Friends = {
           .map(
             (m) => `<div class="chat-msg chat-msg--${m.mine ? "me" : "them"}${m.failed ? " chat-msg--failed" : ""}">
               <div class="chat-msg__bubble">${this._esc(m.text)}</div>
-              <div class="chat-msg__time">${m.failed ? I18N.t("fr_chat_fail") : this._fmtTime(m.ts)}</div></div>`
+              <div class="chat-msg__time">${m.failed ? (m.err === "permission-denied" ? I18N.t("fr_chat_rules") : I18N.t("fr_chat_fail")) : this._fmtTime(m.ts)}</div></div>`
           )
           .join("")
       : `<div class="friends-empty">${this._esc(I18N.t("fr_chat_empty").replace("{0}", c.name))}</div>`;
@@ -438,6 +438,7 @@ const Friends = {
     } catch (e) {
       console.warn("chat send:", e);
       m.failed = true;
+      m.err = e && e.code;
       if (this._chat && this._chat.pairId === c.pairId) this._renderChat();
     }
   },
@@ -459,11 +460,12 @@ const Friends = {
     const input = document.getElementById("fr-name");
     const name = (input ? input.value : "").trim();
     if (!name) return this._say(I18N.t("fr_e_empty"));
-    if (!ACCOUNT_NAME_RE.test(name)) return this._say(I18N.t("fr_e_notfound"));
+    const byEmail = name.includes("@");
+    if (byEmail ? !/^\S+@\S+\.\S+$/.test(name) : !ACCOUNT_NAME_RE.test(name)) return this._say(I18N.t("fr_e_notfound"));
     this._busy = true;
     try {
       const db = this._db;
-      const target = await db.collection("usernames").doc(name.toLowerCase()).get();
+      const target = await db.collection(byEmail ? "emails" : "usernames").doc(name.toLowerCase()).get();
       if (!target.exists) return this._say(I18N.t("fr_e_notfound"));
       const to = target.data().uid;
       const toName = target.data().username;

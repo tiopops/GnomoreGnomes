@@ -9399,3 +9399,8 @@ body.tut-on .settings-gear-btn--account { display: none; }
 .chat-send { padding: 9px 18px; flex: none; }
 .chat-send .p5-banner__label { font-size: 1.1rem; display: flex; }
 @keyframes chat-pop { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: none; } }
+
+/* Registro: botón amarillo cuando todos los campos están rellenos */
+.account-submit { transition: transform 0.15s ease, filter 0.15s ease; }
+.account-submit--ready { --p5-tone: #ffcf3d; }
+.account-submit--ready .p5-banner__label { color: #111; text-shadow: none; }

@@ -58,7 +58,11 @@ const Account = {
     if (this._overlay) return;
     const overlay = document.createElement("div");
     overlay.className = "settings-overlay account-overlay";
-    overlay.addEventListener("click", () => this.close());
+    // Crear cuenta: solo se cierra con la X (así no se pierde lo escrito por un clic fuera).
+    overlay.addEventListener("click", () => {
+      if (this._mode === "register" && !this._user) return;
+      this.close();
+    });
     const panel = document.createElement("div");
     panel.className = "p5-banner settings-panel account-panel";
     panel.addEventListener("click", (e) => e.stopPropagation());
@@ -163,6 +167,16 @@ const Account = {
       })
     );
     const go = () => this._submit();
+    // Registro: el botón se pone amarillo cuando todos los campos están rellenos.
+    if (m === "register") {
+      const submitBtn = B.querySelector("[data-act=submit]");
+      const refreshReady = () => {
+        const ready = [...B.querySelectorAll("form input")].every((i) => i.value.trim() !== "");
+        submitBtn.classList.toggle("account-submit--ready", ready);
+      };
+      B.querySelectorAll("form input").forEach((i) => i.addEventListener("input", refreshReady));
+      refreshReady();
+    }
     B.querySelector("[data-act=submit]").addEventListener("click", go);
     B.querySelector("form").addEventListener("submit", (e) => {
       e.preventDefault();
@@ -230,6 +244,7 @@ const Account = {
             if (snap.exists) this._profile = snap.data();
           } catch (e) {}
         }
+        if (user && this._profile) this._indexEmail(user, this._profile.username); // cuentas anteriores al buscador por correo
         this._btn.classList.toggle("settings-gear-btn--logged", !!user);
         document.dispatchEvent(new CustomEvent("gg:authchange", { detail: { user, profile: this._profile } }));
         if (this._overlay.classList.contains("settings-overlay--visible") && !this._busy) this._render();
@@ -341,11 +356,24 @@ const Account = {
       } catch (e2) {}
       throw { code: "name-taken" };
     }
+    this._indexEmail(user, nick); // para que te puedan añadir como amigo por correo (sin bloquear el registro)
     this._profile = { username: nick, usernameLower: lower, email };
     try {
       await user.updateProfile({ displayName: nick });
       await user.sendEmailVerification();
     } catch (e) {}
+  },
+
+  // emails/{correo en minúsculas} -> { uid, username }: solo para buscar amigos por correo.
+  async _indexEmail(user, nick) {
+    try {
+      if (!user || !user.email || !nick) return;
+      const ref = this._db.collection("emails").doc(user.email.toLowerCase());
+      if ((await ref.get()).exists) return;
+      await ref.set({ uid: user.uid, username: nick });
+    } catch (e) {
+      console.warn("emails index:", e && e.code);
+    }
   },
 
   async logout() {
