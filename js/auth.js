@@ -154,8 +154,8 @@ const Account = {
       <form class="account-form" novalidate>${fields}</form>
       ${note}
       <button type="button" class="p5-banner p5-banner--action account-submit" data-act="submit"><span class="p5-banner__label">${submit}</span></button>
-      ${m === "login" ? '<button type="button" class="account-link" data-mode="reset">${I18N.t("acc_forgot")}</button>' : ""}
-      ${m === "reset" ? '<button type="button" class="account-link" data-mode="login">${I18N.t("acc_back")}</button>' : ""}`;
+      ${m === "login" ? `<button type="button" class="account-link" data-mode="reset">${I18N.t("acc_forgot")}</button>` : ""}
+      ${m === "reset" ? `<button type="button" class="account-link" data-mode="login">${I18N.t("acc_back")}</button>` : ""}`;
     B.querySelectorAll("[data-mode]").forEach((b) =>
       b.addEventListener("click", () => {
         this._mode = b.dataset.mode;
