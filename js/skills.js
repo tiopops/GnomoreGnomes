@@ -309,7 +309,7 @@ const Skills = {
   },
 
   cost(def) {
-    return def.level; // "cada nivel cuesta 1 punto de victoria más que el anterior"
+    return def.level + 1; // nivel 1 = 2 puntos, nivel 2 = 3...
   },
 
   // Estado de un nodo para `team`:
