@@ -48,6 +48,8 @@ const EN_DICT = {
 "¡MOCHILA LLENA!": "BACKPACK FULL!",
 "Botas TrotaMontes": "TrotaMontes Boots",
 "AcariciaGnomos": "GnomeCaresser",
+"FeroGnomas": "GnomePheromones",
+"Perfume hecho a base de feromonas de barba gnoma. Mientras lo lleves en la mochila, los gnomos no huyen al verte, y los que estén a 3 casillas o menos de una unidad tuya se acercarán a ella antes de empezar tu turno. Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.": "Perfume made from gnome-beard pheromones. While it is in your backpack, gnomes do not flee from you, and those within 3 tiles of one of your units will walk up to it before your turn starts. Loses 1 durability each time one of your units dies; at 0 it breaks and stops working.",
 "Un puño americano con pinchos dorados. Cada vez que pegas a un gnomo, le haces +3 de daño. Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.": "Golden-spiked brass knuckles. Every time you hit a gnome, it takes +3 damage. Loses 1 durability each time one of your units dies; at 0 it breaks and stops working.",
 "Unas botas hechas para recorrer montañas. Todas tus unidades ganan +1 de Movimiento. Pierden 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruyen y dejan de tener efecto.": "Boots made for crossing mountains. All your units gain +1 Movement. They lose 1 durability each time one of your units dies; at 0 they are destroyed and stop working.",
 "¡ATRAPADO!": "TRAPPED!",

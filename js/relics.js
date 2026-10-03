@@ -24,6 +24,13 @@ const RELIC_TYPES = {
     description:
       "Un puño americano con pinchos dorados. Cada vez que pegas a un gnomo, le haces +3 de daño. Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.",
   },
+  ferognomas: {
+    name: "FeroGnomas",
+    iconUrl: "assets/iconos/reliquia_ferognomas.png",
+    durability: 5,
+    description:
+      "Perfume hecho a base de feromonas de barba gnoma. Mientras lo lleves en la mochila, los gnomos no huyen al verte, y los que estén a 3 casillas o menos de una unidad tuya se acercarán a ella antes de empezar tu turno. Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.",
+  },
 };
 
 const Relics = {
@@ -58,6 +65,11 @@ const Relics = {
   // +1 de movimiento por cada par de Botas TrotaMontes activo.
   moveBonus(team) {
     return this.list(team).filter((r) => r.relicId === "trotamontes" && r.durability > 0).length;
+  },
+
+  // FeroGnomas: los gnomos no huyen y se acercan a las unidades del equipo.
+  hasFeroGnomas(team) {
+    return this.list(team).some((r) => r.relicId === "ferognomas" && r.durability > 0);
   },
 
   // AcariciaGnomos: +3 al daño (puntos) de cada golpe a un gnomo.

@@ -1194,7 +1194,31 @@ function createGnomeInstance() {
       const dist = Math.max(Math.abs(mover.row - this.row), Math.abs(mover.col - this.col));
       if (dist > GNOME_VISION_RADIUS) return; // fuera de su rango de visión, no se entera
       if (typeof Bushes !== "undefined" && Bushes.isHidingUnit(mover)) return; // escondido en un arbusto, invisible también para el gnomo
+      if (typeof Relics !== "undefined" && Relics.hasFeroGnomas(mover.team)) return; // FeroGnomas: no huyen
       await this._fleeAwayFrom(mover.row, mover.col, 2);
+    },
+
+    // FeroGnomas: camina hacia `unit` hasta quedar a su lado (máx. 3 pasos).
+    async _approachUnit(unit) {
+      const path = [];
+      let r = this.row;
+      let c = this.col;
+      for (let i = 0; i < 3; i++) {
+        if (Math.max(Math.abs(unit.row - r), Math.abs(unit.col - c)) <= 1) break;
+        const step = this._bestFleeStep(r, c, Math.sign(unit.row - r), Math.sign(unit.col - c));
+        if (!step) break;
+        const dBefore = Math.max(Math.abs(unit.row - r), Math.abs(unit.col - c));
+        const dAfter = Math.max(Math.abs(unit.row - step.row), Math.abs(unit.col - step.col));
+        if (dAfter >= dBefore) break;
+        path.push(step);
+        r = step.row;
+        c = step.col;
+      }
+      if (path.length === 0) return;
+      this.busy = true;
+      await Units.walkPath(this, path);
+      this.busy = false;
+      this._refreshSelectedUnitRange();
     },
 
     // Núcleo compartido de "huir N casillas alejándose de un punto" — lo
@@ -1922,8 +1946,30 @@ const Gnome = {
   // vez, da igual de quién sea el turno que lo dispara). Si YA hay al menos
   // un gnomo suelto (heldBy null) ahora mismo no hace nada — la condición
   // es "siempre hay AL MENOS uno", no "uno por cada X turnos".
-  onTurnStart() {
+  onTurnStart(team) {
     this.ensureLooseGnome();
+    return this._attractToTeam(team);
+  },
+
+  // FeroGnomas (js/relics.js): antes de empezar el turno de `team`, cada gnomo
+  // suelto a 3 casillas o menos de una unidad suya se acerca a ella.
+  async _attractToTeam(team) {
+    if (typeof Relics === "undefined" || !team || !Relics.hasFeroGnomas(team)) return;
+    const moves = [];
+    this.list
+      .filter((g) => !g.heldBy && !g.busy && g.el && !g.isDecoy)
+      .forEach((g) => {
+        let best = null;
+        let bestD = Infinity;
+        Units.list.forEach((u) => {
+          if (u.team !== team) return;
+          const d = Math.max(Math.abs(u.row - g.row), Math.abs(u.col - g.col));
+          if (d <= 3 && d < bestD) { best = u; bestD = d; }
+        });
+        if (!best || bestD <= 1) return;
+        moves.push(g._approachUnit(best));
+      });
+    await Promise.all(moves);
   },
 
   // Mismo espíritu que Shops.spawn/Villages.spawn ("intenta unas cuantas
