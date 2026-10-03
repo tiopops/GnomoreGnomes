@@ -278,7 +278,7 @@ const TerrainMap = {
 // MARGIN_TILES de seguridad extra (mismo espíritu que el x3 de
 // Fog.updateCulling: cubrir incluso un arrastre/zoom brusco que mueva la
 // cámara de golpe en un solo frame sin dejar un hueco visible un instante).
-const TILE_CULL_MARGIN = 3;
+const TILE_CULL_MARGIN = 4;
 function getVisibleTileRange(panX, panY, scale, viewportW, viewportH, size) {
   const corners = [
     { x: 0, y: 0 },
@@ -641,7 +641,7 @@ function renderMap(map, container) {
     const img = document.createElement("img");
     img.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
     if (typeof SpriteQuality !== "undefined") {
-      SpriteQuality.register(img, baseSrc);
+      SpriteQuality.register(img, baseSrc, { shift: 1 });
     } else {
       img.dataset.srcOrig = baseSrc;
       img.src = baseSrc;
@@ -683,7 +683,7 @@ function renderMap(map, container) {
       revealImg.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
       revealImg.className = "tile__terrain-reveal";
       if (typeof SpriteQuality !== "undefined") {
-        SpriteQuality.register(revealImg, t.src);
+        SpriteQuality.register(revealImg, t.src, { shift: 1 });
       } else {
         revealImg.dataset.srcOrig = t.src;
         revealImg.src = t.src;

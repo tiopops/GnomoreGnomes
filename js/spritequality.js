@@ -116,7 +116,7 @@ const SpriteQuality = {
             return;
           }
           const orig = imgEl.dataset.srcOrig;
-          if (orig) imgEl.src = orig;
+          if (orig) imgEl.src = this._srcForTier(orig, 0, +imgEl.dataset.sqShift || 0);
         });
       }
     }
@@ -135,7 +135,7 @@ const SpriteQuality = {
 
   // Convención de nombre de archivo de cada nivel (ver cabecera) — null en
   // el 0 porque "normal" es la ruta original tal cual, sin sufijo.
-  _TIER_SUFFIX: [null, "_midres"],
+  _TIER_SUFFIX: [null, "_midres", "_lowres"],
 
   tier: 0, // 0 normal, 1 media — nivel EFECTIVO ahora mismo
   // true = "todavía no ha cruzado hacia abajo del todo" / "ya ha vuelto a
@@ -158,17 +158,22 @@ const SpriteQuality = {
     return imgEl.classList.contains("tile__fog");
   },
 
-  _srcForTier(originalSrc, tier) {
-    const suffix = this._TIER_SUFFIX[tier];
+  // `shift`: las losetas de terreno (1254px de origen, se pintan a ~190-250px)
+  // no necesitan nunca su imagen completa: su nivel "normal" ya usa la media
+  // y el "lejano" la pequeña. Menos memoria de textura = menos descartes del
+  // navegador = menos parpadeos negros al hacer zoom repetidamente.
+  _srcForTier(originalSrc, tier, shift) {
+    const suffix = this._TIER_SUFFIX[Math.min(tier + (shift || 0), this._TIER_SUFFIX.length - 1)];
     if (!suffix) return originalSrc;
     return originalSrc.replace(/(\.[a-zA-Z0-9]+)$/, `${suffix}$1`);
   },
 
   // Punto de entrada único (ver cabecera) — cualquier mecánica que cree un
   // sprite del tablero llama a esto en vez de asignar .src a mano.
-  register(imgEl, originalSrc) {
+  register(imgEl, originalSrc, opts) {
     if (!imgEl || !originalSrc) return;
     imgEl.dataset.srcOrig = originalSrc;
+    if (opts && opts.shift) imgEl.dataset.sqShift = String(opts.shift);
     if (this._FOG_ALWAYS_LOWRES && this._isFogSprite(imgEl) && typeof lowResTileSrc === "function") {
       // La niebla no entra en el Set de sprites que siguen el zoom (ver
       // _isFogSprite) — se fija una vez aquí y ya no vuelve a cambiar de
@@ -182,9 +187,9 @@ const SpriteQuality = {
     // que aún no se ha cargado: se queda en blanco hasta que llega. Si esa
     // calidad aún no está lista arranca con la original y se mejora (cambia)
     // en cuanto esté cargada y decodificada.
-    const wanted = this._srcForTier(originalSrc, this.tier);
+    const wanted = this._srcForTier(originalSrc, this.tier, +imgEl.dataset.sqShift || 0);
     if (this.tier !== 0 && !this._loaded.has(wanted)) {
-      imgEl.src = originalSrc;
+      imgEl.src = this._srcForTier(originalSrc, 0, +imgEl.dataset.sqShift || 0);
       this._swap(imgEl, this.tier);
     } else {
       imgEl.src = wanted;
@@ -239,7 +244,7 @@ const SpriteQuality = {
   _swap(imgEl, tier) {
     const orig = imgEl.dataset.srcOrig;
     if (!orig) return;
-    const url = this._srcForTier(orig, tier);
+    const url = this._srcForTier(orig, tier, +imgEl.dataset.sqShift || 0);
     // Pedido explícito: "cuando está activo el modo resolución dinámica hay
     // errores gráficos...al alejar y acercar la cámara a veces las losetas y
     // otros elementos desaparecen". Causa: asignar de golpe un src que el
