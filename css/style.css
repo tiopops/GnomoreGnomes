@@ -4112,11 +4112,21 @@ body.ability-targeting--mind * {
    mismo lenguaje que .option-card/.backpack-btn del resto del juego. */
 .glory-hud--clickable {
   cursor: var(--cursor-pointer);
-  transition: transform 0.15s ease;
+  /* La animación de entrada (forwards) fija `transform`, así que el feedback
+     usa las propiedades individuales `scale`/`translate`, que se combinan
+     con ella en vez de ser pisadas. Mismo gesto que .backpack-btn. */
+  transition: scale 0.15s ease, translate 0.15s ease, filter 0.15s ease;
 }
 
-.glory-hud--clickable:hover {
-  transform: scale(1.04);
+.glory-hud--clickable:hover,
+.glory-hud--clickable:active {
+  filter: drop-shadow(0 0 10px rgba(255, 207, 63, 0.85));
+  translate: 0 -3px;
+  scale: 1.08;
+}
+
+.glory-hud--clickable:active {
+  scale: 1.14;
 }
 
 /* ---------- Popup de origen de los Puntos de Gloria (js/glory.js) ----------
