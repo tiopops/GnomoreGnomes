@@ -81,6 +81,7 @@ const Villages = {
   // que Shops.spawn (js/shops.js), con la misma tolerancia creciente si el
   // mapa está muy lleno para encontrar sitio perfectamente equidistante.
   spawn(boardSize) {
+    if (typeof Teams !== "undefined" && Teams.rivalCount >= 2) return this._spawnSpread(boardSize);
     const MIN_SEPARATION = 3;
     const obeliskSpots = typeof Obelisks !== "undefined" ? Obelisks.list.map((o) => ({ row: o.row, col: o.col })) : [];
     let maxImbalance = 1;
@@ -111,6 +112,42 @@ const Villages = {
       );
       if (tooClose) continue;
       this._create(row, col);
+    }
+  },
+
+  // Varios rivales: la regla de equidistancia a TODOS los obeliscos solo
+  // admite el centro del mapa, así que se reparten por todo el tablero con
+  // "mejor candidato" (cada nuevo tótem = el punto de entre varios al azar
+  // más alejado de los obeliscos y de los tótems ya puestos).
+  _spawnSpread(boardSize) {
+    const count = 4 + 2 * Teams.rivalCount; // 8 con 2 rivales, 10 con 3
+    const obeliskSpots = typeof Obelisks !== "undefined" ? Obelisks.list.map((o) => ({ row: o.row, col: o.col })) : [];
+    const minFromObelisk = Math.max(4, Math.floor(boardSize / 6));
+    const dist = (a, b) => Math.max(Math.abs(a.row - b.row), Math.abs(a.col - b.col));
+    const valid = (row, col) => {
+      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) return false;
+      if (typeof Units !== "undefined" && Units.unitAt(row, col)) return false;
+      if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) return false;
+      if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) return false;
+      if (typeof Altar !== "undefined" && Altar.isNear(row, col)) return false;
+      if (typeof Resources !== "undefined" && Resources.at(row, col)) return false;
+      if (this.at(row, col)) return false;
+      if (obeliskSpots.some((o) => dist(o, { row, col }) < minFromObelisk)) return false;
+      return true;
+    };
+    for (let n = 0; n < count; n++) {
+      let best = null;
+      let bestScore = -1;
+      for (let k = 0; k < 60; k++) {
+        const row = Math.floor(Math.random() * boardSize);
+        const col = Math.floor(Math.random() * boardSize);
+        if (!valid(row, col)) continue;
+        const others = obeliskSpots.concat(this.list.map((v) => ({ row: v.row, col: v.col })));
+        const score = Math.min(...others.map((o) => dist(o, { row, col })));
+        if (score > bestScore) { bestScore = score; best = { row, col }; }
+      }
+      if (!best || bestScore < 3) break;
+      this._create(best.row, best.col);
     }
   },
 

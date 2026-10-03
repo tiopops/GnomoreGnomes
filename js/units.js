@@ -301,14 +301,17 @@ const Units = {
       const behindEls = this._behindElsForUnit(unit);
       let occluding = false;
       if (behindEls.length) {
-        const uRect = unit.el.getBoundingClientRect();
-        // La mitad inferior del personaje (sus pies) SIEMPRE es clicable para
-        // poder seleccionarlo; solo se vuelve transparente cuando el ratón
-        // está sobre el rival de detrás y por encima de esa zona.
+        // Se mide con los SPRITES (lo visible), no con la caja del contenedor,
+        // que es bastante más grande y daba falsos solapes con rivales lejanos.
+        const uRect = (unit.spriteEl || unit.el).getBoundingClientRect();
+        // El 70% inferior del personaje SIEMPRE es clicable para poder
+        // seleccionarlo; solo se vuelve transparente cuando el ratón está
+        // sobre el rival de detrás y por encima de esa zona.
         const mouseInFoot =
-          mx >= uRect.left && mx <= uRect.right && my >= uRect.top + uRect.height * 0.5 && my <= uRect.bottom;
+          mx >= uRect.left && mx <= uRect.right && my >= uRect.top + uRect.height * 0.3 && my <= uRect.bottom;
         const mouseOverBehind = behindEls.some((el) => {
-          const r = el.getBoundingClientRect();
+          const sp = el.querySelector(".unit__sprite");
+          const r = (sp || el).getBoundingClientRect();
           return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom;
         });
         occluding = mouseOverBehind && !mouseInFoot;
