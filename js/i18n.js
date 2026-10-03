@@ -6,6 +6,7 @@ const STRINGS = {
   es: {
     game_title: "Gnomore Gnomes",
     menu_new_game: "Nueva Partida",
+    menu_tutorial: "Tutorial",
     menu_resume_game: "Reanudar Partida",
     menu_multiplayer: "Multijugador (próximamente)",
     menu_footer: "Prototipo en construcción",
@@ -45,6 +46,7 @@ const STRINGS = {
   en: {
     game_title: "Gnomore Gnomes",
     menu_new_game: "New Game",
+    menu_tutorial: "Tutorial",
     menu_resume_game: "Resume Game",
     menu_multiplayer: "Multiplayer (coming soon)",
     menu_footer: "Prototype under construction",

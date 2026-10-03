@@ -517,6 +517,7 @@ const Turns = {
   // Si ninguna de las 4 aplica, esa unidad no hace nada más este turno (no
   // malgasta sus acciones moviéndose sin rumbo).
   async _runEnemyTurn() {
+    if (typeof Tutorial !== "undefined" && Tutorial.active) return; // tutorial: rival pasivo
     const enemies = Units.list.filter((u) => u.team === "enemy");
     for (const unit of enemies) {
       for (let i = 0; i < TURNS_MAX_ACTIONS; i++) {

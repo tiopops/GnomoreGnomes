@@ -875,6 +875,7 @@ function createGnomeInstance() {
     // Acotado entre 5% y 98% fuera del caso adyacente, para que ahí nunca
     // sea ni un fallo ni un éxito garantizados.
     computePassSuccess(agilidad, distance, movimiento) {
+      if (typeof Tutorial !== "undefined" && Tutorial.active) return 1; // el tutorial no falla pases
       if (distance <= 1) return 1;
       const overreach = Math.max(0, distance - movimiento);
       if (overreach === 0) return Math.min(98, 90 + agilidad * 3) / 100;
@@ -1184,6 +1185,7 @@ function createGnomeInstance() {
     // no haya quedado escondido en un arbusto justo en este mismo
     // movimiento (ver Bushes.isHidingUnit, js/bushes.js).
     async reactToPlayerMove(mover) {
+    if (typeof Tutorial !== "undefined" && Tutorial.active) return; // tutorial: el gnomo de práctica se deja coger
       if (!this.el || this.heldBy || this.busy) return;
       const dist = Math.max(Math.abs(mover.row - this.row), Math.abs(mover.col - this.col));
       if (dist > GNOME_VISION_RADIUS) return; // fuera de su rango de visión, no se entera

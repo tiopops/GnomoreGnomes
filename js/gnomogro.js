@@ -585,6 +585,10 @@ const GnomOgro = {
       SFX.death();
     }
     this._shakeViewport(true);
+    // Charco de sangre del doble de tamaño donde cae el GnomOgro.
+    if (typeof BloodSplat !== "undefined") {
+      BloodSplat.spawnAt(g.row, g.col, { scale: 2, lifetime: 4000 });
+    }
     g.el.classList.remove("gnomogro--targeted");
     g.el.style.transition = "opacity 0.6s ease, transform 0.6s ease";
     g.el.style.opacity = "0";

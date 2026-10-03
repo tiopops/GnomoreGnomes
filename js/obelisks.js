@@ -1068,8 +1068,16 @@ const Obelisks = {
         `<img src="${def.spriteUrl}" class="backpack-slot__icon" alt="${def.name}">` +
         `<span class="shop-slot__price"><span class="shop-slot__price__num">${price}</span></span>`;
       slotEl.classList.toggle("backpack-slot--selected", typeId === this._selectedTypeId);
+      // Tutorial (js/tutorial.js): solo TruenoEspora se puede elegir; el
+      // resto aparece desactivado.
+      const lockedByTutorial = typeof Tutorial !== "undefined" && Tutorial.active && typeId !== "seta_artificiero";
+      if (lockedByTutorial) {
+        slotEl.disabled = true;
+        slotEl.classList.add("backpack-slot--disabled");
+      }
       slotEl.addEventListener("click", (e) => {
         e.stopPropagation();
+        if (lockedByTutorial) return;
         this._onRecruitSlotClick(typeId);
       });
       this._slotsEl.appendChild(slotEl);

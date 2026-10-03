@@ -57,7 +57,9 @@ const BloodSplat = {
   // se ha visto nada ahí, no hay nada que "recordar" luego — a diferencia
   // del mobiliario fijo, esto vive solo 3 segundos, no merece la pena
   // arrastrar todo el sistema de niebla/memoria para algo tan efímero).
-  spawnAt(row, col) {
+  // opts.scale multiplica el tamaño (el GnomOgro deja un charco enorme) y
+  // opts.lifetime alarga el tiempo en pantalla.
+  spawnAt(row, col, opts = {}) {
     if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) return null;
 
     const spriteUrl = BLOOD_SPLAT_SPRITES[Math.floor(Math.random() * BLOOD_SPLAT_SPRITES.length)];
@@ -77,7 +79,7 @@ const BloodSplat = {
     // pelín de escala al azar, para que dos charcos seguidos en la misma
     // zona no se vean como calcados.
     const flip = Math.random() < 0.5 ? -1 : 1;
-    const scale = 0.9 + Math.random() * 0.3;
+    const scale = (0.9 + Math.random() * 0.3) * (opts.scale || 1);
     spriteEl.style.transform = `scale(${(scale * flip).toFixed(2)}, ${scale.toFixed(2)})`;
     el.appendChild(spriteEl);
 
@@ -90,7 +92,7 @@ const BloodSplat = {
     splat.timeoutId = setTimeout(() => {
       el.classList.add("blood-splat--fading");
       setTimeout(() => this._remove(splat), BLOOD_SPLAT_FADE_MS);
-    }, BLOOD_SPLAT_LIFETIME_MS);
+    }, opts.lifetime || BLOOD_SPLAT_LIFETIME_MS);
 
     return splat;
   },

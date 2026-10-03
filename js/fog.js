@@ -208,6 +208,7 @@ const Fog = {
   // activa (debug) se considera todo percibido, igual que hace isFogged
   // devolviendo "no hay niebla" con false.
   isPerceived(row, col) {
+    if (typeof Tutorial !== "undefined" && Tutorial.active) return true; // tutorial: todo a la vista
     if (!this.perceivedGrid) return true;
     if (row < 0 || col < 0 || row >= this.size || col >= this.size) return false;
     return !!this.perceivedGrid[row][col];
