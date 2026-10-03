@@ -356,7 +356,7 @@ const Units = {
     const id = `unit-${this._nextId++}`;
 
     const el = document.createElement("div");
-    el.className = `unit unit--${team}`;
+    el.className = `unit ${Teams.cls("unit", team).join(" ")} ${Teams.variantClass(team)}`.trim();
     el.dataset.unitId = id;
 
     // Indicador opcional de equipo (js/teammarkers.js, apagado por
@@ -367,7 +367,7 @@ const Units = {
     // apilamiento explícito). Su visibilidad la decide un único toggle de
     // clase en <body> (ver TeamMarkers), nunca JS por unidad.
     const teamMarkerEl = document.createElement("div");
-    teamMarkerEl.className = `unit__team-marker unit__team-marker--${team}`;
+    teamMarkerEl.className = `unit__team-marker ${Teams.cls("unit__team-marker", team).join(" ")}`;
     el.appendChild(teamMarkerEl);
 
     const flipEl = document.createElement("div");

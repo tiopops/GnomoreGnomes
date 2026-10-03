@@ -738,7 +738,7 @@ const Shops = {
   _restockMsgEl: null,
 
   _activeTeams() {
-    return ["player", "enemy"];
+    return Teams.all;
   },
 
   _shuffled(arr) {

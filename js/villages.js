@@ -58,7 +58,7 @@ const Villages = {
   // que Glory._raceIds, cada archivo con su propia copia en vez de leer la
   // del otro directamente (regla de oro: un archivo por mecánica).
   init(playerRaceId, enemyRaceId) {
-    this._raceIds = { player: playerRaceId, enemy: enemyRaceId };
+    this._raceIds = Object.assign({}, Teams.raceIds);
     this._initMouseTracking();
   },
 
@@ -874,7 +874,9 @@ const Villages = {
       village.hp = village.maxHp;
     }
     village.el.classList.remove("village--neutral");
-    village.el.classList.add(`village--${team}`);
+    village.el.classList.remove("team-variant-1", "team-variant-2", "team-variant-3");
+    village.el.classList.add(...Teams.cls("village", team));
+    if (Teams.variantClass(team)) village.el.classList.add(Teams.variantClass(team));
     // Registrar de nuevo (no solo asignar .src): así SpriteQuality (ver
     // js/spritequality.js) actualiza qué imagen "normal" recordar para
     // este tótem — si no, un cambio de calidad posterior por zoom lo haría

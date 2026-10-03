@@ -106,6 +106,11 @@ const Resources = {
   // leído por Turns._aiRunEconomyPhase (js/turns.js) para las mejoras
   // automáticas del rival.
   enemyCounts: { madera: 0, roca: 0, metal: 0 },
+  aiCounts: {},
+  countsFor(team) {
+    if (team === "player") return this.counts;
+    return (this.aiCounts[team] = this.aiCounts[team] || { madera: 0, roca: 0, metal: 0 });
+  },
 
   init() {
     this._initMouseTracking();
@@ -119,7 +124,8 @@ const Resources = {
     this._ghosts.forEach((g) => g.el.remove());
     this._ghosts = [];
     this.counts = { madera: 0, roca: 0, metal: 0 };
-    this.enemyCounts = { madera: 0, roca: 0, metal: 0 };
+    this.aiCounts = {};
+    this.enemyCounts = this.countsFor("enemy");
     if (typeof Backpack !== "undefined") Backpack.refreshResourceBadges && Backpack.refreshResourceBadges();
   },
 
@@ -523,7 +529,7 @@ const Resources = {
     // forma silenciosa (sin mochila a la que volar, ver
     // enemyCounts/_collectSilently más abajo).
     const isPlayerCollecting = destroyer && destroyer.team === "player";
-    const isEnemyCollecting = destroyer && destroyer.team === "enemy";
+    const isEnemyCollecting = destroyer && destroyer.team !== "player";
 
     // Pedido explícito (memoria de niebla): "si yo en algun momento vi un
     // arbol en una casilla y me alejo de el... pero si luego vuelvo y
@@ -538,7 +544,7 @@ const Resources = {
     // recolectando su recurso de verdad aunque el jugador no lo vea
     // desaparecer todavía (su economía no depende de la niebla DEL
     // JUGADOR).
-    if (isEnemyCollecting) this.enemyCounts[def.resourceId] = (this.enemyCounts[def.resourceId] || 0) + 1 + (typeof Skills !== "undefined" ? Skills.rank("enemy", "recolector") : 0);
+    if (isEnemyCollecting) { const _c = this.countsFor(destroyer.team); _c[def.resourceId] = (_c[def.resourceId] || 0) + 1 + (typeof Skills !== "undefined" ? Skills.rank(destroyer.team, "recolector") : 0); }
     if (!isPlayerCollecting && typeof Fog !== "undefined" && Fog.perceivedGrid && !Fog.isPerceived(node.row, node.col)) {
       this._ghosts.push({ row: node.row, col: node.col, el: node.el });
       return;

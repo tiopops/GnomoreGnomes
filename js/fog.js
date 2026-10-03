@@ -197,6 +197,9 @@ const Fog = {
   // "typeof Fog" Y "Fog.revealedGrid" a la vez, con esto basta.
   isFogged(row, col) {
     if (!this.revealedGrid) return false;
+    // Con varios rivales, la IA no está limitada por la niebla del jugador
+    // (si no, quedarían encerrados en su esquina).
+    if (typeof Teams !== "undefined" && Teams.rivalCount > 1 && typeof Turns !== "undefined" && Turns._aiRunning && Turns.activeTeam !== "player") return false;
     if (row < 0 || col < 0 || row >= this.size || col >= this.size) return false;
     return !this.revealedGrid[row][col];
   },

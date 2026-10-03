@@ -133,7 +133,7 @@ const UnitInfo = {
     const btn = this.ensureButton();
     const type = UNIT_TYPES[unit.typeId];
     this.faceEl.setAttribute("aria-label", type.name);
-    this.faceEl.classList.toggle("unit-info-btn__face--enemy", unit.team === "enemy");
+    this.faceEl.classList.toggle("unit-info-btn__face--enemy", unit.team !== "player");
     // Recorte individual por personaje (ver FACE_OFFSETS arriba) — se
     // aplica inline porque el resto de reglas de .unit-info-btn__face sí
     // son fijas en el CSS.
@@ -254,7 +254,7 @@ const UnitInfo = {
     overlay.innerHTML = `
       <div class="p5-banner unit-info-card">
         <div class="unit-info-card__content">
-          <div class="unit-info-portrait${unit.team === "enemy" ? " unit-info-portrait--enemy" : ""}">
+          <div class="unit-info-portrait${unit.team !== "player" ? " unit-info-portrait--enemy" : ""}">
             <img src="${type.spriteUrl}" alt="">
           </div>
           ${desc ? `<p class="unit-info-desc">${desc}</p>` : ""}

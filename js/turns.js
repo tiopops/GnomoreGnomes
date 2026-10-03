@@ -391,6 +391,14 @@ const Turns = {
   // ---------- Cambio de turno ----------
 
   // Cartel "¡ES TU TURNO!" (un jugador y multijugador).
+  showBanner(text) {
+    const el = document.createElement("div");
+    el.className = "turn-banner";
+    el.innerHTML = '<span class="turn-banner__text">' + text + "</span>";
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2100);
+  },
+
   showTurnBanner() {
     if (typeof Tutorial !== "undefined" && Tutorial.active) return;
     if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return;
@@ -431,24 +439,26 @@ const Turns = {
     // cuando el ordenador "pulsa" el suyo automáticamente al terminar su
     // turno — dos veces por ronda completa, no una.
     if (typeof Gnome !== "undefined") Gnome.applyTurnPassDecay();
-    this.activeTeam = "enemy";
-    this._resetTeamActions("enemy");
-    this._aiRunning = true;
-    this._updateButtonState();
-    // Puntos de Gloria (js/glory.js) — +2 al empezar el turno del rival
-    // también: el marcador en pantalla es solo el del jugador (ver nota de
-    // cabecera de glory.js), pero el rival igualmente acumula los suyos por
-    // dentro para cuando su IA los pueda gastar más adelante.
-    if (typeof Glory !== "undefined") Glory.grantTurnStart("enemy");
-    await this._fireTurnStart("enemy");
-    // El GnomOgro pudo destruir un Obelisco justo al empezar este turno.
-    if (typeof Obelisks !== "undefined" && Obelisks.gameOver) {
-      this._aiRunning = false;
-      return;
+    for (const aiTeam of Teams.ai()) {
+      // Un bando sin Obelisco ya está eliminado: no juega.
+      if (typeof Obelisks !== "undefined" && !Obelisks.byTeam(aiTeam)) continue;
+      this.activeTeam = aiTeam;
+      this._resetTeamActions(aiTeam);
+      this._aiRunning = true;
+      this._updateButtonState();
+      if (typeof Glory !== "undefined") Glory.grantTurnStart(aiTeam);
+      await this._fireTurnStart(aiTeam);
+      if (typeof Obelisks !== "undefined" && Obelisks.gameOver) {
+        this._aiRunning = false;
+        return;
+      }
+      await this._runEnemyTurn(aiTeam);
+      await this._fireTurnEnd(aiTeam);
+      if (typeof Obelisks !== "undefined" && Obelisks.gameOver) {
+        this._aiRunning = false;
+        return;
+      }
     }
-
-    await this._runEnemyTurn();
-    await this._fireTurnEnd("enemy");
 
     if (typeof Gnome !== "undefined") Gnome.applyTurnPassDecay();
     this._aiRunning = false;
@@ -490,29 +500,22 @@ const Turns = {
   },
 
   losingTeam() {
-    const a = this.standingOf("player");
-    const b = this.standingOf("enemy");
-    for (let i = 0; i < a.length; i++) {
-      if (a[i] < b[i]) return "player";
-      if (a[i] > b[i]) return "enemy";
-    }
-    return null;
+    const alive = Teams.all.filter((t) => typeof Obelisks === "undefined" || Obelisks.byTeam(t));
+    if (alive.length < 2) return null;
+    const cmp = (x, y) => {
+      for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] - y[i];
+      return 0;
+    };
+    const sorted = alive.map((t) => ({ t, st: this.standingOf(t) })).sort((p, q) => cmp(p.st, q.st));
+    if (cmp(sorted[0].st, sorted[1].st) === 0) return null;
+    return sorted[0].t;
   },
 
-  // Pedido explícito: "los enemigos pueden tomar la decision de invocar al
-  // gnomogro si ven que la partida asi lo requiere o estan perdiendo".
-  // Con un gnomo cargado en la mano y el Altar en pie, la IA lo estampa si:
-  //   - su gnomo (por sí solo) llena lo que falta: el GnomOgro sería suyo; o
-  //   - va perdiendo: alimenta el altar sin más; o
-  //   - la partida se alarga (ronda >= 20, "la partida lo requiere"): lo
-  //     alimenta solo mientras no lo deje en "lleno" (70%), para no
-  //     regalarle al jugador un remate fácil.
-  // Un gnomo sin puntos no cuenta (no rellena nada): se sigue cargando.
   _aiShouldSacrificeAtAltar(unit, held) {
     if (typeof Altar === "undefined") return false;
     const altar = Altar.current();
     if (!altar || held.points <= 0) return false;
-    const mine = altar.fills[unit.team === "enemy" ? "enemy" : "player"];
+    const mine = altar.fills[unit.team];
     if (held.points >= ALTAR_MAX_FILL - mine) return true;
     if (this.losingTeam() === unit.team) return true;
     if (this.roundNumber >= 20) return mine + held.points < ALTAR_LLENO_THRESHOLD;
@@ -531,9 +534,9 @@ const Turns = {
   //      (un gnomo suelto o, si no, el personaje del jugador más cercano).
   // Si ninguna de las 4 aplica, esa unidad no hace nada más este turno (no
   // malgasta sus acciones moviéndose sin rumbo).
-  async _runEnemyTurn() {
+  async _runEnemyTurn(team = "enemy") {
     if (typeof Tutorial !== "undefined" && Tutorial.active) return; // tutorial: rival pasivo
-    const enemies = Units.list.filter((u) => u.team === "enemy");
+    const enemies = Units.list.filter((u) => u.team === team);
     for (const unit of enemies) {
       for (let i = 0; i < TURNS_MAX_ACTIONS; i++) {
         if (!this.canAct(unit)) break;
@@ -545,7 +548,7 @@ const Turns = {
         await new Promise((resolve) => setTimeout(resolve, 260));
       }
     }
-    this._aiRunEconomyPhase();
+    this._aiRunEconomyPhase(team);
   },
 
   // Pedido explícito: "los enemigos tambien pueden recoger recursos e
@@ -557,14 +560,14 @@ const Turns = {
   // en ese orden y repitiendo mientras le siga alcanzando — nunca dentro
   // de ningún popup real (la IA no "abre" ninguna interfaz), ver
   // Armory.attemptAutoUpgrade/Shops.attemptAutoBuy.
-  _aiRunEconomyPhase() {
+  _aiRunEconomyPhase(team = "enemy") {
     if (typeof Armory !== "undefined") {
       let bought = true;
-      while (bought) bought = Armory.attemptAutoUpgrade("enemy");
+      while (bought) bought = Armory.attemptAutoUpgrade(team);
     }
     if (typeof Shops !== "undefined") {
       let bought = true;
-      while (bought) bought = Shops.attemptAutoBuy("enemy");
+      while (bought) bought = Shops.attemptAutoBuy(team);
     }
   },
 
@@ -657,7 +660,7 @@ const Turns = {
         }
         const ally = Units.list.find(
           (u) =>
-            u.team === "enemy" &&
+            u.team === unit.team &&
             u.id !== unit.id &&
             Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col)) <=
               UNIT_TYPES[unit.typeId].movimiento + 2
@@ -774,7 +777,7 @@ const Turns = {
     }
     if (!target) {
       target = Units.list
-        .filter((u) => u.team === "player")
+        .filter((u) => u.team !== unit.team)
         .reduce((best, u) => {
           const d = Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col));
           return !best || d < best.d ? { row: u.row, col: u.col, d } : best;

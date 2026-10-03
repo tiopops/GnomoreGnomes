@@ -118,7 +118,7 @@ const Obelisks = {
   // Se llama junto a Villages.init/Glory.init (newgame-flow.js) — mismo
   // patrón que esos dos: guarda qué raza pinta cada equipo.
   init(playerRaceId, enemyRaceId) {
-    this._raceIds = { player: playerRaceId, enemy: enemyRaceId };
+    this._raceIds = Object.assign({}, Teams.raceIds);
     this.gameOver = false;
     this._initMouseTracking();
   },
@@ -133,8 +133,8 @@ const Obelisks = {
     this._selectedId = null;
     this._targetedIds = [];
     this.gameOver = false;
-    this._passes = { player: 0, enemy: 0 };
-    this._deaths = { player: 0, enemy: 0 };
+    this._passes = Teams.keyed(0);
+    this._deaths = Teams.keyed(0);
   },
 
   at(row, col) {
@@ -197,25 +197,23 @@ const Obelisks = {
 
   _pickCorners(size) {
     const corners = this._corners(size);
-    const playerIndex = Math.floor(Math.random() * corners.length);
-    const playerCorner = corners[playerIndex];
-    // Cualquiera de las 3 restantes vale, con la misma probabilidad cada
-    // una (incluida la opuesta) — nunca la misma que el jugador.
-    const remaining = corners.filter((_, i) => i !== playerIndex);
-    const enemyCorner = remaining[Math.floor(Math.random() * remaining.length)];
-    return [playerCorner, enemyCorner];
+    // Baraja las 4 esquinas: el jugador y cada rival toman una distinta.
+    for (let i = corners.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [corners[i], corners[j]] = [corners[j], corners[i]];
+    }
+    return corners;
   },
 
   // Coloca los DOS Obeliscos, cada uno cerca de una esquina distinta (la
   // loseta libre más próxima a esa esquina, buscando en espiral igual que
   // Gnome.spawnNear).
   spawn(size, playerRaceId, enemyRaceId) {
-    const [playerCorner, enemyCorner] = this._pickCorners(size);
-    const playerSpot = this._findFreeTileNear(playerCorner.row, playerCorner.col, size);
-    if (playerSpot) this._create("player", playerSpot.row, playerSpot.col, playerRaceId);
-
-    const enemySpot = this._findFreeTileNear(enemyCorner.row, enemyCorner.col, size);
-    if (enemySpot) this._create("enemy", enemySpot.row, enemySpot.col, enemyRaceId);
+    const corners = this._pickCorners(size);
+    Teams.all.forEach((team, i) => {
+      const spot = this._findFreeTileNear(corners[i].row, corners[i].col, size);
+      if (spot) this._create(team, spot.row, spot.col, Teams.raceIds[team]);
+    });
   },
 
   _tileFree(row, col) {
@@ -249,7 +247,7 @@ const Obelisks = {
     // Reutiliza "unit" solo por el posicionamiento base, igual que
     // Villages/Shops — nunca entra en Units.list.
     const el = document.createElement("div");
-    el.className = `unit obelisk obelisk--${team}`;
+    el.className = `unit obelisk ${Teams.cls("obelisk", team).join(" ")} ${Teams.variantClass(team)}`.trim();
 
     const spriteEl = document.createElement("img");
     spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
@@ -809,18 +807,38 @@ const Obelisks = {
     await new Promise((resolve) => setTimeout(resolve, 420));
     obelisk.el.remove();
     this.list = this.list.filter((o) => o.id !== obelisk.id);
-    this._checkWinLose();
+    this._checkWinLose(obelisk.team);
   },
 
   // Con el motor actual estrictamente a 2 bandos ("player"/"enemy", ver
   // cabecera de turns.js) basta con mirar si queda solo un Obelisco en pie:
   // ese equipo es el ganador. Escrito para poder crecer el día que haya más
   // de 2 equipos (cuenta cuántos siguen vivos, no asume "el otro" a ciegas).
-  _checkWinLose() {
+  _checkWinLose(destroyedTeam) {
     if (this.gameOver) return;
-    const alive = ["player", "enemy"].filter((team) => this.byTeam(team));
-    if (alive.length <= 1) {
-      this._endGame(alive[0] || null);
+    const alive = Teams.all.filter((team) => this.byTeam(team));
+    if (!this.byTeam("player") || alive.length <= 1) {
+      this._endGame(this.byTeam("player") && alive.length === 1 ? alive[0] : alive.find((t) => t !== "player") || null);
+      return;
+    }
+    if (destroyedTeam && destroyedTeam !== "player") this._eliminateTeam(destroyedTeam);
+  },
+
+  // Un rival sin Obelisco queda eliminado: sus unidades caen y sus tótems
+  // vuelven a ser neutrales. La partida continúa con el resto.
+  _eliminateTeam(team) {
+    Units.list.filter((u) => u.team === team).forEach((u) => Units.removeUnit(u));
+    if (typeof Villages !== "undefined") {
+      Villages.list.filter((v) => v.owner === team).forEach((v) => {
+        v.owner = "neutral";
+        v.hp = v.maxHp || v.hp;
+        v.el.classList.remove(...Teams.cls("village", team), "team-variant-1", "team-variant-2", "team-variant-3");
+        v.el.classList.add("village--neutral");
+        if (typeof SpriteQuality !== "undefined") SpriteQuality.register(v.spriteEl, Villages.spriteFor("neutral"));
+      });
+    }
+    if (typeof Turns !== "undefined" && typeof Turns.showBanner === "function") {
+      Turns.showBanner("RIVAL " + Teams.rivalIndex(team) + " ELIMINADO");
     }
   },
 
@@ -855,21 +873,19 @@ const Obelisks = {
         ? Villages.list.filter((v) => v.owner === team).reduce((sum, v) => sum + v.hp, 0)
         : 0;
 
+    const score = (t) => [hpOf(t), totemsOf(t), totemHpOf(t)];
+    const alive = Teams.all.filter((t) => this.byTeam(t));
     let winner = null;
-    const hpDiff = hpOf("player") - hpOf("enemy");
-    if (hpDiff > 0) winner = "player";
-    else if (hpDiff < 0) winner = "enemy";
-    else {
-      const totemDiff = totemsOf("player") - totemsOf("enemy");
-      if (totemDiff > 0) winner = "player";
-      else if (totemDiff < 0) winner = "enemy";
-      else {
-        const totemHpDiff = totemHpOf("player") - totemHpOf("enemy");
-        if (totemHpDiff > 0) winner = "player";
-        else if (totemHpDiff < 0) winner = "enemy";
-        // si sigue empatado en los 3 criterios, winner se queda en null: empate de verdad
-      }
-    }
+    let best = null;
+    let tie = false;
+    alive.forEach((t) => {
+      const sc = score(t);
+      if (!best) { best = { t, sc }; return; }
+      let c = 0;
+      for (let i = 0; i < sc.length && !c; i++) c = sc[i] - best.sc[i];
+      if (c > 0) { best = { t, sc }; tie = false; } else if (c === 0) tie = true;
+    });
+    if (best && !tie) winner = best.t;
     this._endGame(winner, "turnLimit");
   },
 
@@ -886,22 +902,19 @@ const Obelisks = {
       ["Pases de gnomo logrados", (t) => this._passes[t] || 0],
       ["Bajas sufridas", (t) => this._deaths[t] || 0],
     ];
+    const cls = (t) => (t === "player" ? "player" : "enemy");
     return rows
       .map(
         ([label, fn]) => `
-        <div class="obelisk-gameover-stats__row">
+        <div class="obelisk-gameover-stats__row obelisk-gameover-stats__row--n" style="grid-template-columns: 62px 1fr repeat(${Teams.rivalCount}, 62px)">
           <span class="obelisk-gameover-stats__value obelisk-gameover-stats__value--player">${fn("player")}</span>
           <span class="obelisk-gameover-stats__label">${label}</span>
-          <span class="obelisk-gameover-stats__value obelisk-gameover-stats__value--enemy">${fn("enemy")}</span>
+          ${Teams.ai().map((t) => `<span class="obelisk-gameover-stats__value obelisk-gameover-stats__value--${cls(t)}">${fn(t)}</span>`).join("")}
         </div>`
       )
       .join("");
   },
 
-  // Pantalla central de fin de partida — mismo lenguaje visual que
-  // .start-error-banner (banderín .p5-banner grande) pero a pantalla
-  // completa (bloquea cualquier clic sobre el tablero con su propio fondo,
-  // ver CSS), con un único botón para volver al menú principal.
   _showGameOverOverlay(winnerTeam, reason) {
     if (this._gameOverEl) this._gameOverEl.remove();
 
@@ -916,7 +929,7 @@ const Obelisks = {
         ? `Se acabaron los ${TURNS_MAX_ROUNDS} turnos y todo sigue exactamente igualado.`
         : `Se acabaron los ${TURNS_MAX_ROUNDS} turnos — gana quien más resistió.`;
     } else {
-      msg = won ? "Has destruido el Obelisco Ancestral rival." : "Tu Obelisco Ancestral ha sido destruido.";
+      msg = won ? (Teams.rivalCount > 1 ? "Has destruido todos los Obeliscos rivales." : "Has destruido el Obelisco Ancestral rival.") : "Tu Obelisco Ancestral ha sido destruido.";
     }
 
     // Logo del equipo ganador (el de ambos en un empate) y jingle del resultado.
@@ -942,10 +955,10 @@ const Obelisks = {
         <div class="p5-banner__label obelisk-gameover-panel__title">${title}</div>
         <div class="obelisk-gameover-panel__msg">${msg}</div>
         <div class="obelisk-gameover-stats">
-          <div class="obelisk-gameover-stats__row obelisk-gameover-stats__row--header">
+          <div class="obelisk-gameover-stats__row obelisk-gameover-stats__row--header obelisk-gameover-stats__row--n" style="grid-template-columns: 62px 1fr repeat(${Teams.rivalCount}, 62px)">
             <span class="obelisk-gameover-stats__value obelisk-gameover-stats__value--player">TÚ</span>
             <span class="obelisk-gameover-stats__label"></span>
-            <span class="obelisk-gameover-stats__value obelisk-gameover-stats__value--enemy">RIVAL</span>
+            ${Teams.ai().map((t) => `<span class="obelisk-gameover-stats__value obelisk-gameover-stats__value--enemy">${Teams.rivalCount > 1 ? "RIVAL " + Teams.rivalIndex(t) : "RIVAL"}</span>`).join("")}
           </div>
           ${this._statsRowsHtml()}
         </div>
@@ -1325,13 +1338,13 @@ const Obelisks = {
   // mismo espíritu que Turns._aiActOnce ("con el tiempo definiremos una IA
   // más compleja").
   onTurnStart(team) {
-    if (this.gameOver || team !== "enemy") return;
-    const obelisk = this.byTeam("enemy");
+    if (this.gameOver || team === "player") return;
+    const obelisk = this.byTeam(team);
     if (!obelisk) return;
-    const used = this.recruitedCountFor("enemy");
-    const max = this.populationFor("enemy");
+    const used = this.recruitedCountFor(team);
+    const max = this.populationFor(team);
     if (used >= max) return;
-    const points = typeof Glory !== "undefined" ? Glory.points.enemy : 0;
+    const points = typeof Glory !== "undefined" ? Glory.points[team] : 0;
     const roster = Object.keys(UNIT_TYPES).filter((typeId) => UNIT_TYPES[typeId].raceId === obelisk.raceId);
     const affordable = roster.filter((typeId) => Units.recruitPriceFor(typeId) <= points);
     if (affordable.length === 0) return;
@@ -1341,8 +1354,8 @@ const Obelisks = {
     const tile = tiles[Math.floor(Math.random() * tiles.length)];
     const price = Units.recruitPriceFor(typeId);
 
-    if (typeof Glory !== "undefined") Glory.spend("enemy", price);
-    const unit = Units.spawnUnit({ typeId, row: tile.row, col: tile.col, team: "enemy" });
+    if (typeof Glory !== "undefined") Glory.spend(team, price);
+    const unit = Units.spawnUnit({ typeId, row: tile.row, col: tile.col, team });
     if (typeof Turns !== "undefined") {
       Turns.actionsUsed[unit.id] = 1;
       Turns.refreshExhaustedClass(unit);

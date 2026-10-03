@@ -99,7 +99,7 @@ const SettingsMenu = {
     const showTab = (id) => {
       this._tab = id;
       TABS.forEach((t) => {
-        t.pane.style.display = t.id === id ? "" : "none";
+        t.pane.classList.toggle("settings-pane--hidden", t.id !== id);
         tabBtns[t.id].classList.toggle("skills-tab--active", t.id === id);
       });
     };
@@ -175,7 +175,7 @@ const SettingsMenu = {
       musicBtn.querySelector(".settings-toggle").dataset.checked = String(next);
     });
     colAudio.appendChild(musicBtn);
-    colAudio.appendChild(this._buildSlider(I18N.t("settings_music_vol"), typeof Music !== "undefined" ? Music.volume : 0.5, (v) => {
+    colAudio.appendChild(this._buildSlider(I18N.t("settings_music_vol"), typeof Music !== "undefined" ? Music.volume : 0.3, (v) => {
       if (typeof Music !== "undefined") Music.setVolume(v);
     }));
 
@@ -370,7 +370,7 @@ const SettingsMenu = {
     this._syncPerfLock();
 
     // Selector de idioma (ES por defecto / EN), con su bandera.
-    panel.appendChild(this._buildLanguageRow());
+    colAudio.appendChild(this._buildLanguageRow());
 
     // Pedido explícito: "debajo del todo el boton salir de la partida
     // centrado" — fuera de las dos columnas, como fila propia del panel

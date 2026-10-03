@@ -78,7 +78,7 @@ const Armory = {
   _trackEls: { arma: null, armadura: null },
 
   resetAll() {
-    this.state = { player: { arma: 0, armadura: 0 }, enemy: { arma: 0, armadura: 0 } };
+    this.state = Teams.keyed(() => ({ arma: 0, armadura: 0 }));
     this._selected = null;
     this.closePopup();
   },
@@ -426,7 +426,7 @@ const Armory = {
   // compró algo, para que quien la llame (ver Turns._aiRunEconomyPhase)
   // sepa si merece la pena reintentar con lo que le quede.
   attemptAutoUpgrade(team) {
-    const counts = team === "player" ? Resources.counts : Resources.enemyCounts;
+    const counts = Resources.countsFor(team);
     if (!counts) return false;
     for (const kind of ["arma", "armadura"]) {
       const owned = this._levelOf(team, kind);

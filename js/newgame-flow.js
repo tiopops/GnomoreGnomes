@@ -181,25 +181,43 @@ function populateLevelSelect() {
 function populateOpponentSelect() {
   const list = document.getElementById("opponent-list");
   list.innerHTML = "";
-  OPPONENT_OPTIONS.forEach((n) => {
-    const label = I18N.t(n === 1 ? "opponents_label" : "opponents_label_plural", { n });
-    list.appendChild(
-      renderOptionCard({
-        // Bug reportado: "el icono de 1 rival deberia ser un usuario, no 3"
-        // — antes era "ph-users-three" fijo para cualquier n. Ahora refleja
-        // de verdad la cantidad: un solo icono de persona para n === 1,
-        // grupo de tres para 2 o más (mismo icono de sobra para cuando en
-        // el futuro haya opciones de más rivales, ver OPPONENT_OPTIONS en
-        // matchsetup.js).
-        icon: n === 1 ? "ph-user" : "ph-users-three",
-        title: label,
-        onClick: () => {
-          matchDraft.opponents = n;
-          startMatch(matchDraft);
-        },
-      })
-    );
+  const opts = OPPONENT_OPTIONS;
+  let idx = Math.max(0, opts.indexOf(matchDraft.opponents));
+  const root = document.createElement("div");
+  root.className = "opp-stepper";
+  root.innerHTML =
+    '<div class="opp-stepper__row">' +
+    '<button type="button" class="p5-banner p5-banner--action opp-stepper__arrow" data-dir="-1" aria-label="-"><i class="ph-fill ph-caret-left"></i></button>' +
+    '<div class="p5-banner opp-stepper__value"><div class="opp-stepper__icons"></div><div class="opp-stepper__label p5-banner__label"></div></div>' +
+    '<button type="button" class="p5-banner p5-banner--action opp-stepper__arrow" data-dir="1" aria-label="+"><i class="ph-fill ph-caret-right"></i></button>' +
+    "</div>" +
+    '<button type="button" class="p5-banner p5-banner--action opp-stepper__go"><i class="ph-fill ph-sword"></i><span class="p5-banner__label">' + I18N.t("start_match") + "</span></button>";
+  const iconsEl = root.querySelector(".opp-stepper__icons");
+  const labelEl = root.querySelector(".opp-stepper__label");
+  const arrows = root.querySelectorAll(".opp-stepper__arrow");
+  const paint = () => {
+    const n = opts[idx];
+    iconsEl.innerHTML = '<i class="ph-fill ph-user"></i>'.repeat(n);
+    labelEl.textContent = I18N.t(n === 1 ? "opponents_label" : "opponents_label_plural", { n });
+    arrows[0].classList.toggle("opp-stepper__arrow--off", idx === 0);
+    arrows[1].classList.toggle("opp-stepper__arrow--off", idx === opts.length - 1);
+  };
+  arrows.forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const next = idx + Number(btn.dataset.dir);
+      if (next < 0 || next >= opts.length) return;
+      if (typeof SFX !== "undefined") SFX.click();
+      idx = next;
+      paint();
+    })
+  );
+  root.querySelector(".opp-stepper__go").addEventListener("click", () => {
+    if (typeof SFX !== "undefined") SFX.click();
+    matchDraft.opponents = opts[idx];
+    startMatch(matchDraft);
   });
+  paint();
+  list.appendChild(root);
 }
 
 async function startMatch({ modeId, raceId, levelId, opponents }) {
@@ -248,7 +266,7 @@ async function startMatch({ modeId, raceId, levelId, opponents }) {
     // consultar TerrainMap.isWalkable para no colocar rivales/gnomos sobre
     // agua).
     if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
-    const { playerSpawnSpots } = spawnTestUnits(size, raceId);
+    const { playerSpawnSpots } = spawnTestUnits(size, raceId, opponents);
     showScreen("screen-board");
     screenHistory.length = 0;
     screenHistory.push("main-menu", "screen-board");
@@ -275,7 +293,7 @@ async function resumeMatch() {
     const map = { size: saved.size, tiles: saved.tiles };
     renderMap(map, document.getElementById("board-tiles"));
     if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
-    const { playerSpawnSpots } = spawnTestUnits(saved.size, saved.raceId);
+    const { playerSpawnSpots } = spawnTestUnits(saved.size, saved.raceId, saved.opponents);
     showScreen("screen-board");
     screenHistory.length = 0;
     screenHistory.push("main-menu", "screen-board");
@@ -336,7 +354,7 @@ function _showStartMatchError(err) {
 // Puntos de Gloria, turnos) — el roster de cada raza (UNIT_TYPES filtrado
 // por raceId) ya no se usa aquí para colocar nada, lo consulta Obelisks al
 // abrir su menú de "Reclutar".
-function spawnTestUnits(size, raceId) {
+function spawnTestUnits(size, raceId, opponents) {
   if (typeof Units === "undefined") return;
   const boardTiles = document.getElementById("board-tiles");
   Units.init(boardTiles, size);
@@ -359,6 +377,11 @@ function spawnTestUnits(size, raceId) {
     (r) => r.available && r.id !== finalRaceId
   );
   const finalEnemyRaceId = enemyRace ? enemyRace.id : finalRaceId;
+  // Bandos: rival 1 = otra raza; rival 2 = raza del jugador (con variante de
+  // color); rival 3 = raza del rival 1 (con variante).
+  const _rivals = Math.max(1, Math.min(3, opponents || 1));
+  const _races = { player: finalRaceId, enemy: finalEnemyRaceId, enemy2: finalRaceId, enemy3: finalEnemyRaceId };
+  Teams.setup(_rivals, _races);
 
   // Niebla de guerra (js/fog.js): TODO el mapa arranca oculto — hay que
   // inicializarla ANTES de revelar nada, y DESPUÉS de renderMap (llamado

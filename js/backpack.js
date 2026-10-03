@@ -990,7 +990,7 @@ const Backpack = {
   // resto del camino: "pierde automaticamente el turno" no tendría sentido
   // si el personaje pudiera seguir andando después).
   checkTrapAt(unit, row, col) {
-    if (!unit || unit.team !== "enemy") return false; // el jugador nunca activa su propio cepo
+    if (!unit || unit.team === "player") return false; // el jugador nunca activa su propio cepo
     const trap = this.traps.find((t) => t.row === row && t.col === col);
     if (!trap) return false;
     this._springTrap(trap, unit);
@@ -1072,7 +1072,7 @@ const Backpack = {
   _startTargetingKatapum(uid) {
     if (typeof Units === "undefined") return;
     const isValidTarget = (u) =>
-      u.team === "enemy" && u.el && !u.el.classList.contains("unit--fog-hidden");
+      u.team !== "player" && u.el && !u.el.classList.contains("unit--fog-hidden");
     const targets = Units.list.filter(isValidTarget);
     if (targets.length === 0) return; // no hay ningún rival a la vista, no se gasta el cohete
 
@@ -1110,7 +1110,7 @@ const Backpack = {
     const target = Units.list.find((u) => u.id === unitEl.dataset.unitId);
     if (
       !target ||
-      target.team !== "enemy" ||
+      target.team === "player" ||
       (typeof Fog !== "undefined" && Fog.isFogged(target.row, target.col))
     ) {
       return;

@@ -53,9 +53,9 @@ const Glory = {
   // newgame-flow.js), justo después de Turns.reset() — recibe la raza de
   // cada equipo para poder pintar el icono correcto de cada uno.
   init(playerRaceId, enemyRaceId) {
-    this.points = { player: 0, enemy: 0 };
-    this.pendingBonus = { player: 0, enemy: 0 };
-    this._raceIds = { player: playerRaceId, enemy: enemyRaceId };
+    this.points = Teams.keyed(0);
+    this.pendingBonus = Teams.keyed(0);
+    this._raceIds = Object.assign({}, Teams.raceIds);
     // Solo el marcador del JUGADOR se pinta en pantalla (ver nota de
     // cabecera) — el del rival se lleva por dentro sin HUD propio.
     this._ensureHud("player", playerRaceId);

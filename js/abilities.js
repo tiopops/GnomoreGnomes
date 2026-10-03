@@ -626,9 +626,9 @@ const Abilities = {
 
   _resolveMindControl(unit, target) {
     this._mindControlled = { unitId: target.id, originalTeam: target.team };
-    target.el.classList.remove(`unit--${target.team}`);
+    target.el.classList.remove(...Teams.cls("unit", target.team));
     target.team = unit.team;
-    target.el.classList.add(`unit--${unit.team}`);
+    target.el.classList.add(...Teams.cls("unit", unit.team));
     target.el.classList.add("unit--mind-controlled");
     // Pedido explícito: "la habilidad del urgamentes maneja una unica
     // accion del enemigo, no dos...imagina que el enemigo tiene el
@@ -660,9 +660,9 @@ const Abilities = {
     const target = Units.list.find((u) => u.id === this._mindControlled.unitId);
     if (target) {
       const original = this._mindControlled.originalTeam;
-      target.el.classList.remove(`unit--${target.team}`, "unit--mind-controlled");
+      target.el.classList.remove(...Teams.cls("unit", target.team), "unit--mind-controlled");
       target.team = original;
-      target.el.classList.add(`unit--${original}`);
+      target.el.classList.add(...Teams.cls("unit", original));
       if (typeof Turns !== "undefined") {
         Turns.actionsUsed[target.id] = TURNS_MAX_ACTIONS;
         Turns._applyExhaustedClass(target);

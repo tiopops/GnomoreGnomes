@@ -40,7 +40,7 @@ const Plague = {
     if (typeof Turns === "undefined" || Turns.roundNumber !== PLAGUE_ROUND) return;
     if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return;
     if (!this._target) {
-      this._target = Turns.losingTeam() || (Math.random() < 0.5 ? "player" : "enemy");
+      this._target = Turns.losingTeam() || (Teams.all[Math.floor(Math.random() * Teams.all.length)]);
     }
     if (team !== this._target) return;
     this._fired = true;

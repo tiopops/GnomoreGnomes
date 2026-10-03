@@ -107,7 +107,7 @@ const GnomOgro = {
   // `team` es el bando de quien dio el golpe de gracia (pedido explícito).
   spawn(team, row, col) {
     if (this.current) return; // ya hay uno vivo (no debería poder pasar, defensivo)
-    const otherTeam = team === "player" ? "enemy" : "player";
+    const otherTeam = team === "player" ? "enemy" : "player"; // (objetivo concreto se decide por unidad)
 
     const el = document.createElement("div");
     el.className = "unit gnomogro";

@@ -201,6 +201,7 @@ const Altar = {
       segmentEnemyEls.push(seg);
     }
     el.appendChild(barEnemyEl);
+    const extraBars = {}; // sin barras visibles para los rivales: cada jugador solo ve la suya
 
     // Clic directo sobre el propio altar cuando está "marcado" (ver showFor
     // más abajo) — mismo patrón que Villages/Resources: no hace falta
@@ -219,13 +220,14 @@ const Altar = {
     const altar = {
       row,
       col,
-      fills: { player: 0, enemy: 0 },
+      fills: Teams.keyed(0),
       el,
       spriteEl,
       barEl,
       segmentEls,
       barEnemyEl,
       segmentEnemyEls,
+      extraBars,
     };
     altar.state = "vacio";
     this._placeInstant(altar);
@@ -250,12 +252,15 @@ const Altar = {
     altar.segmentEnemyEls.forEach((seg, i) => {
       seg.classList.toggle("unit__hpbar-segment--filled", i < altar.fills.enemy);
     });
+    Object.keys(altar.extraBars || {}).forEach((t) => {
+      altar.extraBars[t].forEach((seg, i) => seg.classList.toggle("unit__hpbar-segment--filled", i < altar.fills[t]));
+    });
   },
 
   // Llenado del equipo con la barra MÁS llena (el sprite del altar y la IA
   // miran el "peor caso").
   maxFill(altar) {
-    return Math.max(altar.fills.player, altar.fills.enemy);
+    return Math.max(...Teams.all.map((t) => altar.fills[t] || 0));
   },
 
   // Sprite según el llenado (ver ALTAR_MEDIO_THRESHOLD/ALTAR_LLENO_THRESHOLD):
@@ -464,7 +469,7 @@ const Altar = {
     await anim.finished.catch(() => {});
     fly.remove();
 
-    const team = unit.team === "enemy" ? "enemy" : "player";
+    const team = unit.team;
     altar.fills[team] = Math.min(ALTAR_MAX_FILL, altar.fills[team] + MUSHROOM_ALTAR_POINTS);
     this._refreshBar(altar);
     Units.spawnFloatingText(altar, `+${MUSHROOM_ALTAR_POINTS}`, { className: "dmg-popup" });
@@ -569,7 +574,7 @@ const Altar = {
     // de restados. gnome.points ya viene fijado más arriba (antes de que
     // Gnome.destroyInstance lo borre del todo), así que se lee de una vez.
     const fillAmount = gnome ? gnome.points : MUSHROOM_ALTAR_POINTS;
-    const team = unit.team === "enemy" ? "enemy" : "player";
+    const team = unit.team;
     altar.fills[team] = Math.min(ALTAR_MAX_FILL, altar.fills[team] + fillAmount);
     this._refreshBar(altar);
     Units.spawnFloatingText(altar, `+${fillAmount}`, { className: "dmg-popup" });

@@ -4,7 +4,7 @@
    una entrada en BOARD_SIZE_BY_OPPONENTS. Si no hay entrada específica, se calcula
    con una fórmula por defecto. */
 
-const OPPONENT_OPTIONS = [1];
+const OPPONENT_OPTIONS = [1, 2, 3];
 
 const BOARD_SIZE_BY_OPPONENTS = {
   // Pedido explícito (segunda pasada): "el escenario contra un jugador debe
@@ -13,6 +13,8 @@ const BOARD_SIZE_BY_OPPONENTS = {
   // tótems neutrales (ver VILLAGE_COUNT en villages.js) que necesitan sitio
   // de sobra para repartirse sin quedar todos pegados entre sí.
   1: 25,
+  2: 29,
+  3: 33,
 };
 
 function getBoardSize(numOpponents) {

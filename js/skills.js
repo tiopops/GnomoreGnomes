@@ -281,8 +281,8 @@ const Skills = {
   ranks: { player: {}, enemy: {} },
 
   resetAll() {
-    this.ranks = { player: {}, enemy: {} };
-    this.chargeUsed = { player: false, enemy: false };
+    this.ranks = Teams.keyed(() => ({}));
+    this.chargeUsed = Teams.keyed(false);
     if (typeof SkillsUI !== "undefined") SkillsUI.onReset();
   },
 
@@ -385,7 +385,7 @@ const Skills = {
   // son RIVALES de `team`.
   _rootAnchorsAgainst(team) {
     const anchors = [];
-    ["player", "enemy"].forEach((owner) => {
+    Teams.all.forEach((owner) => {
       if (owner === team || !this.has(owner, "raices")) return;
       if (typeof Obelisks !== "undefined") {
         const o = Obelisks.byTeam(owner);
@@ -781,7 +781,7 @@ const Skills = {
   // "Si llevas una piedra en la mochila": el recurso "roca" del equipo.
   _spendRock(team) {
     if (typeof Resources === "undefined") return false;
-    const counts = team === "player" ? Resources.counts : Resources.enemyCounts;
+    const counts = Resources.countsFor(team);
     if (!counts || (counts.roca || 0) < 1) return false;
     counts.roca -= 1;
     if (team === "player" && typeof Backpack !== "undefined" && Backpack.refreshResourceBadges) {

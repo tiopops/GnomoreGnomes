@@ -224,7 +224,7 @@ const BoardView = {
   },
 
   // Zooms repetidos acaban acumulando texturas de la capa GPU enorme de la
-  // cámara (errores gráficos). Tras ~8 cambios de escala y 600ms de calma se
+  // cámara (errores gráficos). Tras ~3 cambios de escala y 100ms de calma se
   // suelta la capa (will-change:auto) y se vuelve a pedir en el siguiente
   // frame, lo que obliga al navegador a liberar y re-rasterizar limpio.
   _zoomChanges: 0,
@@ -235,13 +235,13 @@ const BoardView = {
       this._zoomChanges++;
       clearTimeout(this._flushTimer);
       this._flushTimer = setTimeout(() => {
-        if (this._zoomChanges < 8) { this._zoomChanges = 0; return; }
+        if (this._zoomChanges < 3) { this._zoomChanges = 0; return; }
         this._zoomChanges = 0;
         const el = this.cameraEl;
         el.style.willChange = "auto";
         void el.offsetWidth;
         requestAnimationFrame(() => { el.style.willChange = ""; });
-      }, 600);
+      }, 100);
     }
     this._lastScaleSeen = this.scale;
   },
