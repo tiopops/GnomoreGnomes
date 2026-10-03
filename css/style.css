@@ -8841,6 +8841,14 @@ body.backpack-giving--katapum * {
   background: #ffcf3f;
   clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%);
 }
+.tut-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.24) var(--p, 0%), transparent var(--p, 0%));
+}
 .tut-btn--final { font-size: 1.15rem; padding: 12px 34px; right: -14px; }
 .tut-btn--final::before { background: #53d86a; }
 @keyframes tut-btn-pulse { 0%,100% { transform: rotate(-2deg) scale(1); } 50% { transform: rotate(-2deg) scale(1.07); } }

@@ -86,7 +86,9 @@ const Tutorial = {
     clearInterval(this._timer);
     clearTimeout(this._typeTimer);
     clearTimeout(this._okTimer);
-    clearTimeout(this._talkTimer);
+    cancelAnimationFrame(this._okRaf);
+    this._advance = null;
+    if (this._keyHandler) document.removeEventListener("keydown", this._keyHandler);
     cancelAnimationFrame(this._raf);
     cancelAnimationFrame(this._holdRaf);
     this._hold = null;
@@ -771,31 +773,49 @@ const Tutorial = {
     if (m) m.classList.add("tut-mission--done");
     const go = () => {
       clearTimeout(this._okTimer);
+      cancelAnimationFrame(this._okRaf);
+      this._advance = null;
       if (this.active && this.stepIndex === i) this._goto(i + 1);
     };
     if (s.ok) {
       this._setMood("aplaude");
       this._typeText(s.ok);
     }
-    // El jugador decide cuándo seguir: botón CONTINUAR.
+    // Avance automático y cómodo: la frase se lee a su ritmo y el botón
+    // CONTINUAR se va "llenando". Pasar el ratón por la viñeta pausa la
+    // espera; pulsar la viñeta/botón, Enter o Espacio adelanta al instante.
     const E = this._els;
     E.btn.style.display = "";
-    E.btn.textContent = "Continuar";
+    E.btn.textContent = "Continuar ▸";
     E.btn.classList.remove("tut-btn--final");
-    E.btn.onclick = () => {
+    E.btn.style.setProperty("--p", "0%");
+    const len = s.ok ? s.ok.length : 0;
+    const typeMs = (len / 2) * 24;
+    const total = typeMs + (s.quick ? 500 + len * 32 : 1100 + len * 42);
+    let elapsed = 0;
+    let last = performance.now();
+    cancelAnimationFrame(this._okRaf);
+    const tick = (now) => {
+      if (!this.active || this.stepIndex !== i) return;
+      const paused = E.panel.matches(":hover") && !s.quick;
+      if (!paused) elapsed += now - last;
+      last = now;
+      E.btn.style.setProperty("--p", `${Math.min(100, (elapsed / total) * 100)}%`);
+      if (elapsed >= total) return go();
+      this._okRaf = requestAnimationFrame(tick);
+    };
+    this._okRaf = requestAnimationFrame(tick);
+    this._advance = () => {
       if (typeof SFX !== "undefined") SFX.click();
       go();
     };
-    // Si la misión era pulsar un botón/opción, avanza sola: el tiempo justo
-    // para leer la frase (escritura + ~38 ms por carácter).
-    if (s.quick) {
-      const len = s.ok ? s.ok.length : 0;
-      this._okTimer = setTimeout(go, s.ok ? 700 + len * 50 : 300);
-    }
+    E.btn.onclick = this._advance;
   },
 
   _renderStep(s, i, total) {
     const E = this._els;
+    cancelAnimationFrame(this._okRaf);
+    this._advance = null;
     this._setMood(this._MOODS[i] || "normal");
     this._typeText(s.say);
     E.mission.classList.remove("tut-mission--done");
@@ -1021,9 +1041,19 @@ const Tutorial = {
     E.skip = panel.querySelector(".tut-skip");
     // Pulsar la viñeta salta la escritura animada.
     panel.querySelector(".tut-bubble").addEventListener("click", () => {
-      clearTimeout(this._typeTimer);
-      E.text.textContent = this._fullText || "";
+      if (E.text.textContent !== (this._fullText || "")) {
+        clearTimeout(this._typeTimer);
+        E.text.textContent = this._fullText || "";
+      } else if (this._advance) this._advance();
     });
+    this._keyHandler = (e) => {
+      if (!this.active || !this._advance) return;
+      if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") {
+        e.preventDefault();
+        this._advance();
+      }
+    };
+    document.addEventListener("keydown", this._keyHandler);
     // Dos pulsaciones para salir: un clic suelto nunca cierra el tutorial.
     E.skip.addEventListener("click", () => {
       if (!this._skipArmed) {
