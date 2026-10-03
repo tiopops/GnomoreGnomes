@@ -908,6 +908,7 @@ const Villages = {
     // tótem recién conquistado empieza a plena vida.
     if (typeof Skills !== "undefined") {
       Skills.refreshWalls();
+      Skills.refreshRoots();
       village.hp = village.maxHp;
     }
     village.el.classList.remove("village--neutral");

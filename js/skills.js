@@ -387,7 +387,8 @@ const Skills = {
   _applyPurchase(team, id) {
     if (id === "centinela") this._refreshPerception(team);
     if (id === "refuerzos" && typeof Obelisks !== "undefined") Obelisks.refreshAll();
-    if (id === "codo_con_codo") this.refreshCohesion();
+    if (id === "codo_con_codo" || id === "raices") this.refreshCohesion();
+    if (typeof Glory !== "undefined") Glory.refreshPreview(team);
     if (id === "muralla") this.refreshWalls();
     if (id === "escudos") {
       Units.list.filter((u) => u.team === team).forEach((u) => this.setShield(u, true));
@@ -428,9 +429,33 @@ const Skills = {
     return dist + extra;
   },
 
+  // Sprite de raíces palpitando bajo cada unidad que sufre el efecto
+  // (está en una casilla adyacente a un tótem/Obelisco rival con Raíces).
+  refreshRoots() {
+    if (typeof Units === "undefined") return;
+    Units.list.forEach((unit) => {
+      if (!unit.el) return;
+      const anchors = this._rootAnchorsAgainst(unit.team);
+      const on = anchors.some((a) => Math.max(Math.abs(a.row - unit.row), Math.abs(a.col - unit.col)) <= 1);
+      if (on && !unit.rootsEl) {
+        const img = document.createElement("img");
+        img.className = "unit__roots";
+        img.src = "assets/decals/raices.png";
+        img.alt = "";
+        img.draggable = false;
+        unit.el.insertBefore(img, unit.el.firstChild);
+        unit.rootsEl = img;
+      } else if (!on && unit.rootsEl) {
+        unit.rootsEl.remove();
+        unit.rootsEl = null;
+      }
+    });
+  },
+
   // ---------- CODO CON CODO: aguante por vecinos aliados ----------
   refreshCohesion() {
     if (typeof Units === "undefined") return;
+    this.refreshRoots();
     Units.list.forEach((unit) => {
       let bonus = 0;
       const rank = this.rank(unit.team, "codo_con_codo");

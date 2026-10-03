@@ -30,7 +30,7 @@ const STRINGS = {
     choose_level: "Elige el nivel",
     level_mushboom_forest: "Bosque MushBoom",
     level_mushboom_forest_flavor: "Un bosque de ríos y lagos donde cualquier seta puede ser una bomba.",
-    level_mushboom_forest_f1: "Setas explosivas: aparecen por el mapa de vez en cuando. Si recoges una, explota a los 3 turnos: 5 de daño al portador y a las casillas adyacentes.",
+    level_mushboom_forest_f1: "Setas explosivas: aparecen por el mapa de vez en cuando. Si recoges una, explota a los 3 turnos: 5 de daño al portador y a todo lo adyacente (unidades, tótems y Obeliscos, de cualquier bando).",
     level_mushboom_forest_f2: "Altar de Sacrificios: cada jugador tiene su propia barra de ofrendas. Entrega una seta o un gnomo junto al altar como ofrenda (una seta rellena 10 puntos); el primero en llenarla invoca al GnomOgro.",
     level_mushboom_forest_f3: "GnomOgro: 30 de vida y 10 de ataque. Avanza hacia la base rival y la destruye si nadie lo detiene.",
     level_colinas_rockntroll: "Colinas Rock'n Troll",

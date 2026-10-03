@@ -383,7 +383,48 @@ const Mushrooms = {
       await Units.removeUnit(u);
       if (typeof Gnome !== "undefined") Gnome.dropHeldBy(u);
     }
+    await this._damageStructures(row, col);
     if (typeof Obelisks !== "undefined" && Obelisks.refreshAll) Obelisks.refreshAll();
+  },
+
+  // La explosión también daña tótems y Obeliscos adyacentes, sea cual sea su
+  // bando (incluido el propio). Un tótem que llega a 0 deja de pertenecer a
+  // su dueño y vuelve a ser neutral; un Obelisco a 0 es destruido.
+  async _damageStructures(row, col) {
+    const near = (e) => Math.max(Math.abs(e.row - row), Math.abs(e.col - col)) <= 1;
+    const hit = (e) => {
+      e.hp = Math.max(0, e.hp - MUSHROOM_DAMAGE);
+      Units.updateHpBar(e);
+      Units.spawnFloatingText(e, `-${MUSHROOM_DAMAGE}`, { className: "dmg-popup" });
+      Units.playShake(e);
+    };
+    if (typeof Villages !== "undefined") {
+      for (const v of Villages.list.filter(near)) {
+        hit(v);
+        if (v.hp <= 0 && v.owner !== "neutral") {
+          const prev = v.owner;
+          v.owner = "neutral";
+          v.gloryBonus = 1;
+          v.hp = v.maxHp;
+          v.el.classList.remove(...Teams.cls("village", prev), "team-variant-1", "team-variant-2", "team-variant-3");
+          v.el.classList.add("village--neutral");
+          if (typeof SpriteQuality !== "undefined") SpriteQuality.register(v.spriteEl, Villages.spriteFor("neutral"));
+          Units.updateHpBar(v);
+          if (typeof Glory !== "undefined") Glory.refreshPreview(prev);
+          if (typeof Skills !== "undefined") {
+            Skills.refreshRoots();
+          }
+          if (typeof Obelisks !== "undefined" && Obelisks.refreshAllPopBadges) Obelisks.refreshAllPopBadges();
+          if (typeof Fog !== "undefined" && Fog.applyVisibility) Fog.applyVisibility();
+        }
+      }
+    }
+    if (typeof Obelisks !== "undefined") {
+      for (const o of Obelisks.list.filter(near)) {
+        hit(o);
+        if (o.hp <= 0) await Obelisks._destroy(o);
+      }
+    }
   },
 };
 

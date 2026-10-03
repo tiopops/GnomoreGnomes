@@ -260,7 +260,7 @@ const EN_DICT = {
 "Caza gnomos, cárgalos y machácalos en la base rival.": "Hunt gnomes, load them up and smash them at the enemy base.",
 "Bosque MushBoom": "MushBoom Forest",
 "Un bosque de ríos y lagos donde cualquier seta puede ser una bomba.": "A forest of rivers and lakes where any mushroom can be a bomb.",
-"Setas explosivas: aparecen por el mapa de vez en cuando. Si recoges una, explota a los 3 turnos: 5 de daño al portador y a las casillas adyacentes.": "Explosive mushrooms: they appear on the map every now and then. If you pick one up, it explodes after 3 turns: 5 damage to the carrier and adjacent tiles.",
+"Setas explosivas: aparecen por el mapa de vez en cuando. Si recoges una, explota a los 3 turnos: 5 de daño al portador y a todo lo adyacente (unidades, tótems y Obeliscos, de cualquier bando).": "Explosive mushrooms: they appear on the map every now and then. If you pick one up, it explodes after 3 turns: 5 damage to the carrier and everything adjacent (units, totems and Obelisks, of any side).",
 "Altar de Sacrificios: cada jugador tiene su propia barra de ofrendas. Entrega una seta o un gnomo junto al altar como ofrenda (una seta rellena 10 puntos); el primero en llenarla invoca al GnomOgro.": "Altar of Sacrifice: each player has their own offering bar. Deliver a mushroom or a gnome next to the altar as an offering (one mushroom fills 10 points); the first to fill it summons the GnomOgre.",
 "GnomOgro: 30 de vida y 10 de ataque. Avanza hacia la base rival y la destruye si nadie lo detiene.": "GnomOgre: 30 health and 10 attack. It marches toward the enemy base and destroys it if nobody stops it.",
 "Colinas Rock'n Troll": "Rock'n Troll Hills",
