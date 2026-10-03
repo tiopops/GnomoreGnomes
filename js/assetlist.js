@@ -2,6 +2,8 @@
    durante la barra de carga, para que no haya tirones al empezar la partida.
    Generada a partir de assets/ — añade aquí las imágenes nuevas. */
 const PRELOAD_ASSETS = [
+ "assets/niveles/logo_mushboom_forest.png",
+ "assets/niveles/logo_colinas_rockntroll.png",
  "assets/decals/efecto_sangre_01.png",
  "assets/decals/efecto_sangre_01_midres.png",
  "assets/decals/efecto_sangre_02.png",

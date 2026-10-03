@@ -275,6 +275,34 @@ const SFX = {
   // arpegio ascendente de 3 notas (a diferencia de death(), que es solo 2 y
   // empieza con un golpe grave) para que suene a "tesoro"/moneda, no a
   // "victoria de combate" — nada de golpe seco inicial, solo brillo.
+  // Fin de partida (Obelisks._showGameOverOverlay): un jingle por resultado.
+  // Victoria: fanfarria ascendente que remata en acorde; derrota: notas que
+  // caen en menor con un golpe grave; empate: dos notas neutras.
+  victory() {
+    const seq = [[523, 0], [659, 150], [784, 300], [1047, 450]];
+    seq.forEach(([f, t], i) => setTimeout(() => this._pluck(`win-${i}`, f, "triangle", 0.28, 0.3), t));
+    setTimeout(() => {
+      this._pluck("win-chord-1", 1047, "triangle", 1.1, 0.26);
+      this._pluck("win-chord-2", 784, "triangle", 1.1, 0.22);
+      this._pluck("win-chord-3", 659, "sine", 1.1, 0.22);
+      this._pluck("win-thud", 130, "square", 0.3, 0.3);
+    }, 620);
+    setTimeout(() => this._pluck("win-sparkle", 2093, "sine", 0.6, 0.14), 900);
+  },
+  defeat() {
+    const seq = [[392, 0], [349, 330], [311, 660], [262, 990]];
+    seq.forEach(([f, t], i) => setTimeout(() => this._pluck(`lose-${i}`, f, "triangle", 0.5, 0.28), t));
+    setTimeout(() => {
+      this._pluck("lose-low", 98, "square", 1.2, 0.3);
+      this._pluck("lose-minor", 196, "sine", 1.2, 0.22);
+    }, 1350);
+  },
+  draw() {
+    this._pluck("draw-1", 440, "triangle", 0.4, 0.26);
+    setTimeout(() => this._pluck("draw-2", 440, "triangle", 0.4, 0.24), 300);
+    setTimeout(() => this._pluck("draw-3", 392, "triangle", 0.8, 0.24), 600);
+  },
+
   glory() {
     this._pluck("glory-1", 660, "triangle", 0.18, 0.24);
     setTimeout(() => this._pluck("glory-2", 880, "triangle", 0.18, 0.24), 70);

@@ -919,10 +919,23 @@ const Obelisks = {
       msg = won ? "Has destruido el Obelisco Ancestral rival." : "Tu Obelisco Ancestral ha sido destruido.";
     }
 
+    // Logo del equipo ganador (el de ambos en un empate) y jingle del resultado.
+    const logoOf = (team) => {
+      const lv = typeof getLevel === "function" ? getLevel(this._raceIds[team]) : null;
+      return lv && lv.logoImg ? `<img class="obelisk-gameover-panel__logo" src="${lv.logoImg}" alt="" draggable="false">` : "";
+    };
+    const logos = draw ? logoOf("player") + logoOf("enemy") : logoOf(winnerTeam);
+    if (typeof SFX !== "undefined") {
+      if (draw) SFX.draw && SFX.draw();
+      else if (won) SFX.victory && SFX.victory();
+      else SFX.defeat && SFX.defeat();
+    }
+
     const overlay = document.createElement("div");
     overlay.className = "obelisk-gameover-overlay";
     overlay.innerHTML = `
       <div class="p5-banner obelisk-gameover-panel ${variantClass}">
+        <div class="obelisk-gameover-panel__logos${draw ? " obelisk-gameover-panel__logos--duo" : ""}">${logos}</div>
         <i class="ph ${icon} obelisk-gameover-panel__icon"></i>
         <div class="p5-banner__label obelisk-gameover-panel__title">${title}</div>
         <div class="obelisk-gameover-panel__msg">${msg}</div>

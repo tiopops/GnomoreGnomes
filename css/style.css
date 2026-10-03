@@ -7038,6 +7038,16 @@ body.backpack-giving--katapum * {
 .obelisk-gameover-panel__icon {
   font-size: 3.4rem;
 }
+.obelisk-gameover-panel__logos { position: relative; z-index: 3; display: flex; justify-content: center; gap: 8px; margin-bottom: 4px; }
+.obelisk-gameover-panel__logo {
+  width: min(300px, 70vw);
+  height: auto;
+  filter: drop-shadow(3px 4px 0 rgba(0, 0, 0, 0.55));
+  animation: gameover-logo-in 0.6s cubic-bezier(0.34, 1.5, 0.64, 1) both;
+  user-select: none;
+}
+.obelisk-gameover-panel__logos--duo .obelisk-gameover-panel__logo { width: min(180px, 38vw); }
+@keyframes gameover-logo-in { 0% { transform: scale(0.4) rotate(-6deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
 
 .obelisk-gameover-panel--win .obelisk-gameover-panel__icon,
 .obelisk-gameover-panel--win .obelisk-gameover-panel__title {
