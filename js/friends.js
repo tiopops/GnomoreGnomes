@@ -8,7 +8,13 @@
      friends/{uidMenor_uidMayor}: { users:[from,to], from, to, fromName, toName,
                                     status:'pending'|'accepted', createdAt }
      presence/{uid}: { lastSeen }   (latido cada minuto mientras hay sesión)
+   Chat efímero: chats/{idPareja}/msgs/{auto}: { from, text, ts }. Los mensajes
+   solo viajan por Firestore: el receptor los guarda en MEMORIA y los borra de
+   la base de datos en cuanto los recibe; el historial vive solo en la pantalla
+   y desaparece al cerrar o recargar el navegador.
    Los duelos / partidas entre amigos NO están aquí (multijugador pospuesto). */
+
+const CHAT_MAX_LEN = 200;
 
 const FRIENDS_ONLINE_MS = 150000; // "en línea" = latido en los últimos 2,5 min
 const FRIENDS_BEAT_MS = 60000;
@@ -28,6 +34,10 @@ const Friends = {
   _confirm: null, // id de amistad pendiente de confirmar borrado
   _msg: null, // {text, kind}
   _busy: false,
+  _chat: null, // {pairId, uid, name} mientras hay un chat abierto
+  _msgs: {}, // pairId -> [{id, mine, text, ts, failed}]
+  _unread: {}, // pairId -> nº de mensajes sin leer
+  _chatUnsubs: {}, // pairId -> función para dejar de escuchar
 
   get _db() {
     return Account._db;
@@ -118,6 +128,11 @@ const Friends = {
     this._beat = null;
     this._docs = [];
     this._presence = {};
+    Object.values(this._chatUnsubs).forEach((f) => f());
+    this._chatUnsubs = {};
+    this._msgs = {};
+    this._unread = {};
+    this._chat = null;
     this._uid = user ? user.uid : null;
     this._name = (profile && profile.username) || (user && user.displayName) || "";
     if (!user) {
@@ -131,6 +146,7 @@ const Friends = {
       .onSnapshot(
         (snap) => {
           this._docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          this._syncChats();
           this._updateBadge();
           if (this._isOpen()) {
             this._render();
@@ -184,7 +200,7 @@ const Friends = {
     return Date.now() - (this._presence[uid] || 0) < FRIENDS_ONLINE_MS;
   },
   _updateBadge() {
-    const n = this._incoming().length;
+    const n = this._incoming().length + Object.values(this._unread).reduce((a, b) => a + b, 0);
     this._badge.textContent = n > 9 ? "9+" : String(n);
     this._badge.style.display = n ? "flex" : "none";
   },
@@ -202,7 +218,8 @@ const Friends = {
       actions = `<button type="button" class="p5-banner p5-banner--action friends-btn" data-act="accept" data-id="${v.id}" style="--p5-tone:#1f6b34"><span class="p5-banner__label">${I18N.t("fr_accept")}</span></button>
         <button type="button" class="p5-banner p5-banner--action friends-btn" data-act="del" data-id="${v.id}" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">${I18N.t("fr_reject")}</span></button>`;
     else if (kind === "out") actions = `<button type="button" class="p5-banner p5-banner--action friends-btn" data-act="del" data-id="${v.id}" style="--p5-tone:#2b2733"><span class="p5-banner__label">${I18N.t("fr_cancel")}</span></button>`;
-    else actions = `<button type="button" class="friends-trash" data-act="ask" data-id="${v.id}" title="${I18N.t("fr_remove")}" aria-label="${I18N.t("fr_remove")}"><i class="ph ph-trash"></i></button>`;
+    else actions = `<button type="button" class="friends-chatbtn" data-act="chat" data-id="${v.id}" title="${I18N.t("fr_chat")}" aria-label="${I18N.t("fr_chat")}"><i class="ph-fill ph-chat-circle-dots"></i>${this._unread[v.id] ? `<span class="friends-chatbtn__n">${this._unread[v.id] > 9 ? "9+" : this._unread[v.id]}</span>` : ""}</button>
+        <button type="button" class="friends-trash" data-act="ask" data-id="${v.id}" title="${I18N.t("fr_remove")}" aria-label="${I18N.t("fr_remove")}"><i class="ph ph-trash"></i></button>`;
     if (kind === "friend" && this._confirm === v.id) {
       return `<div class="friends-row friends-row--confirm">
         <div class="friends-row__txt">${this._esc(I18N.t("fr_confirm").replace("{0}", v.otherName))}</div>
@@ -224,6 +241,7 @@ const Friends = {
   _render() {
     const B = this._body;
     if (!B) return;
+    if (this._chat && this._uid) return this._renderChat();
     if (!this._uid) {
       B.innerHTML = `<div class="p5-banner__label settings-panel__title">${I18N.t("fr_title")}</div><div class="account-msg account-msg--error">${I18N.t("fr_login")}</div>`;
       return;
@@ -260,6 +278,7 @@ const Friends = {
         if (typeof SFX !== "undefined") SFX.click();
         const a = b.dataset.act;
         if (a === "send") this._send();
+        else if (a === "chat") this._openChat(b.dataset.id);
         else if (a === "accept") this._accept(b.dataset.id);
         else if (a === "del") this._remove(b.dataset.id);
         else if (a === "ask") {
@@ -271,6 +290,156 @@ const Friends = {
         }
       })
     );
+  },
+
+  // ---------- Chat efímero ----------
+  _friendByPair(pairId) {
+    return this._accepted().find((f) => f.id === pairId) || null;
+  },
+
+  // Escucha los chats de todos los amigos aceptados (para avisar de mensajes
+  // nuevos aunque el chat esté cerrado) y deja de escuchar a quien ya no lo es.
+  _syncChats() {
+    const ids = new Set(this._accepted().map((f) => f.id));
+    Object.keys(this._chatUnsubs).forEach((id) => {
+      if (ids.has(id)) return;
+      this._chatUnsubs[id]();
+      delete this._chatUnsubs[id];
+      delete this._msgs[id];
+      delete this._unread[id];
+      if (this._chat && this._chat.pairId === id) this._chat = null;
+    });
+    ids.forEach((id) => {
+      if (this._chatUnsubs[id]) return;
+      const col = this._db.collection("chats").doc(id).collection("msgs");
+      this._chatUnsubs[id] = col.orderBy("ts").onSnapshot(
+        (snap) => this._onChatSnap(id, snap),
+        (e) => console.warn("chat:", e && e.code)
+      );
+    });
+  },
+
+  _onChatSnap(pairId, snap) {
+    const list = (this._msgs[pairId] = this._msgs[pairId] || []);
+    let incoming = 0;
+    snap.docChanges().forEach((ch) => {
+      if (ch.type !== "added") return;
+      const d = ch.doc.data();
+      if (d.from === this._uid) {
+        // Un mensaje mío que sigue sin recoger: lo borro pasados 30 min.
+        if (Date.now() - (d.ts || 0) > 1800000) ch.doc.ref.delete().catch(() => {});
+        return;
+      }
+      if (!list.some((m) => m.id === ch.doc.id)) {
+        list.push({ id: ch.doc.id, mine: false, text: String(d.text || "").slice(0, CHAT_MAX_LEN), ts: d.ts || Date.now() });
+        incoming++;
+      }
+      ch.doc.ref.delete().catch(() => {}); // recibido: ya no hace falta en la base de datos
+    });
+    if (!incoming) return;
+    list.sort((a, b) => a.ts - b.ts);
+    const open = this._chat && this._chat.pairId === pairId && this._isOpen();
+    if (!open) {
+      this._unread[pairId] = (this._unread[pairId] || 0) + incoming;
+      if (typeof SFX !== "undefined" && SFX.click) SFX.click();
+      this._updateBadge();
+      if (this._isOpen() && !this._chat) this._render();
+    } else this._renderChat();
+  },
+
+  _openChat(pairId) {
+    const f = this._friendByPair(pairId);
+    if (!f) return;
+    this._chat = { pairId, uid: f.otherUid, name: f.otherName };
+    this._unread[pairId] = 0;
+    this._updateBadge();
+    this._renderChat();
+  },
+
+  _closeChat() {
+    this._chat = null;
+    this._render();
+  },
+
+  _fmtTime(ts) {
+    const d = new Date(ts);
+    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  },
+
+  _renderChat() {
+    const B = this._body;
+    const c = this._chat;
+    if (!B || !c) return;
+    const prev = document.getElementById("fr-chat-input");
+    const typed = prev ? prev.value : "";
+    const hadFocus = prev && document.activeElement === prev;
+    const on = this._isOn(c.uid);
+    const list = this._msgs[c.pairId] || [];
+    const msgs = list.length
+      ? list
+          .map(
+            (m) => `<div class="chat-msg chat-msg--${m.mine ? "me" : "them"}${m.failed ? " chat-msg--failed" : ""}">
+              <div class="chat-msg__bubble">${this._esc(m.text)}</div>
+              <div class="chat-msg__time">${m.failed ? I18N.t("fr_chat_fail") : this._fmtTime(m.ts)}</div></div>`
+          )
+          .join("")
+      : `<div class="friends-empty">${this._esc(I18N.t("fr_chat_empty").replace("{0}", c.name))}</div>`;
+    const stick = (() => {
+      const l = B.querySelector(".chat-list");
+      return !l || l.scrollHeight - l.scrollTop - l.clientHeight < 60;
+    })();
+    B.innerHTML = `
+      <div class="chat-head">
+        <button type="button" class="chat-back" data-act="chatback" aria-label="${I18N.t("fr_chat_back")}"><i class="ph-bold ph-arrow-left"></i></button>
+        <span class="friends-dot friends-dot--${on ? "on" : "off"}"></span>
+        <div class="friends-row__txt"><span class="friends-row__name">${this._esc(c.name)}</span>
+          <span class="friends-row__sub">${on ? I18N.t("fr_online") : I18N.t("fr_offline")}</span></div>
+      </div>
+      <div class="chat-list">${msgs}</div>
+      <div class="chat-note"><i class="ph ph-clock-countdown"></i> ${I18N.t("fr_chat_note")}</div>
+      <div class="chat-compose">
+        <label class="account-field chat-field"><input id="fr-chat-input" type="text" maxlength="${CHAT_MAX_LEN}" placeholder="${I18N.t("fr_chat_ph")}" autocomplete="off" spellcheck="false"></label>
+        <button type="button" class="p5-banner p5-banner--action chat-send" data-act="chatsend" aria-label="${I18N.t("fr_chat_send")}"><span class="p5-banner__label"><i class="ph-fill ph-paper-plane-right"></i></span></button>
+      </div>`;
+    const list$ = B.querySelector(".chat-list");
+    if (stick || !prev) list$.scrollTop = list$.scrollHeight;
+    const input = document.getElementById("fr-chat-input");
+    input.value = typed;
+    if (hadFocus || !prev) input.focus();
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        this._sendChat();
+      }
+    });
+    B.querySelector('[data-act="chatback"]').addEventListener("click", () => {
+      if (typeof SFX !== "undefined") SFX.click();
+      this._closeChat();
+    });
+    B.querySelector('[data-act="chatsend"]').addEventListener("click", () => {
+      if (typeof SFX !== "undefined") SFX.click();
+      this._sendChat();
+    });
+  },
+
+  async _sendChat() {
+    const c = this._chat;
+    const input = document.getElementById("fr-chat-input");
+    if (!c || !input) return;
+    const text = input.value.trim().slice(0, CHAT_MAX_LEN);
+    if (!text) return;
+    input.value = "";
+    const list = (this._msgs[c.pairId] = this._msgs[c.pairId] || []);
+    const m = { id: "local" + Date.now() + Math.random(), mine: true, text, ts: Date.now() };
+    list.push(m);
+    this._renderChat();
+    try {
+      await this._db.collection("chats").doc(c.pairId).collection("msgs").add({ from: this._uid, text, ts: m.ts });
+    } catch (e) {
+      console.warn("chat send:", e);
+      m.failed = true;
+      if (this._chat && this._chat.pairId === c.pairId) this._renderChat();
+    }
   },
 
   _say(text, kind) {

@@ -79,5 +79,24 @@ service cloud.firestore {
         && request.resource.data.lastSeen is number;
       allow delete: if false;
     }
+
+    // Chat efímero entre amigos aceptados. Los mensajes son temporales: el
+    // receptor los guarda en memoria y los borra al recibirlos.
+    match /chats/{pairId}/msgs/{msgId} {
+      function isPair() {
+        let f = get(/databases/$(database)/documents/friends/$(pairId));
+        return request.auth != null && f.data.status == 'accepted' && request.auth.uid in f.data.users;
+      }
+      allow read: if isPair();
+      allow create: if isPair()
+        && request.resource.data.keys().hasOnly(['from', 'text', 'ts'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 200
+        && request.resource.data.ts is number;
+      allow update: if false;
+      allow delete: if isPair();
+    }
   }
 }
