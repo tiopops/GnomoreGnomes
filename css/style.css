@@ -9133,13 +9133,14 @@ body.tut-on .settings-gear-btn--account { display: none; }
   .settings-gear-btn.settings-gear-btn.settings-gear-btn--friends.settings-gear-btn--friends { right: 118px; }
 }
 body.tut-on .settings-gear-btn--friends { display: none !important; }
+#btn-multiplayer { position: relative; }
 .friends-badge {
-  position: absolute; top: -6px; right: -6px; z-index: 3; min-width: 22px; height: 22px; padding: 0 5px;
+  position: absolute; top: 6px; right: 10px; z-index: 3; min-width: 22px; height: 22px; padding: 0 5px;
   background: #e8453c; color: #fff; border: 2.5px solid #000; border-radius: 12px;
   font-weight: 900; font-size: 0.75rem; align-items: center; justify-content: center; display: none;
 }
-.friends-panel { width: min(470px, 94vw); max-height: 88vh; overflow-y: auto; }
-.friends-body { gap: 14px; }
+.friends-panel { width: min(470px, 94vw); overflow: visible; }
+.friends-body { gap: 14px; max-height: calc(86vh - 100px); overflow-y: auto; overflow-x: hidden; padding: 0 6px 6px 0; scrollbar-width: thin; scrollbar-color: #ffcf3d #1a1722; }
 .friends-add { display: flex; flex-direction: column; gap: 10px; }
 .friends-send { align-self: center; padding: 9px 26px; }
 .friends-section { display: flex; flex-direction: column; gap: 8px; }

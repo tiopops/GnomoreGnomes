@@ -51,20 +51,15 @@ const Friends = {
   },
 
   // ---------- Botón ----------
+  // Sin botón propio: se abre desde MULTIJUGADOR en el menú principal. Ese
+  // botón también lleva el globito rojo de solicitudes pendientes.
   _ensureButton() {
-    if (this._btn) return;
-    const btn = document.createElement("button");
-    btn.className = "settings-gear-btn settings-gear-btn--friends";
-    btn.setAttribute("aria-label", I18N.t("fr_aria"));
-    btn.innerHTML = '<i class="ph-fill ph-users settings-gear-btn__icon"></i><span class="friends-badge"></span>';
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (typeof SFX !== "undefined") SFX.click();
-      this.open();
-    });
-    document.body.appendChild(btn);
-    this._btn = btn;
-    this._badge = btn.querySelector(".friends-badge");
+    const mp = document.getElementById("btn-multiplayer");
+    if (!mp || this._badge) return;
+    const badge = document.createElement("span");
+    badge.className = "friends-badge";
+    mp.appendChild(badge);
+    this._badge = badge;
   },
 
   _ensurePopup() {
@@ -125,7 +120,6 @@ const Friends = {
     this._presence = {};
     this._uid = user ? user.uid : null;
     this._name = (profile && profile.username) || (user && user.displayName) || "";
-    this._btn.classList.toggle("settings-gear-btn--visible", !!user);
     if (!user) {
       this._updateBadge();
       if (this._isOpen()) this.close();
@@ -349,6 +343,5 @@ const Friends = {
 
 document.addEventListener("DOMContentLoaded", () => Friends.init());
 document.addEventListener("gg:langchange", () => {
-  if (Friends._btn) Friends._btn.setAttribute("aria-label", I18N.t("fr_aria"));
   if (Friends._isOpen()) Friends._render();
 });
