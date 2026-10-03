@@ -643,8 +643,6 @@ const Shops = {
     if (unit.team !== "player") return;
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
     this.list.forEach((shop, i) => {
-      const dist = Math.max(Math.abs(shop.row - unit.row), Math.abs(shop.col - unit.col));
-      if (dist <= SHOP_INTERACT_RANGE) return;
       if (typeof Fog !== "undefined" && Fog.isFogged(shop.row, shop.col)) return;
       if (!this.findApproachTile(unit, shop)) return;
       Units.addMarker({
@@ -655,10 +653,11 @@ const Shops = {
         delayIndex: i,
         visibleClass: "attack-marker--visible",
         owner: "shops",
+        alwaysOnTop: true,
         onClick: () => this.approachAndOpen(unit, shop),
         buildContent: (marker) => {
           const icon = document.createElement("i");
-          icon.className = "ph ph-storefront attack-marker__icon";
+          icon.className = "ph ph-crosshair-simple attack-marker__icon"; // misma señal amarilla que los recursos
           marker.appendChild(icon);
         },
       });
