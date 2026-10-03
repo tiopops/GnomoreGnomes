@@ -7025,7 +7025,7 @@ body.backpack-giving--katapum * {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 40px 54px;
+  padding: 78px 54px 32px;
   max-width: min(480px, calc(100vw - 40px));
   transform: scale(0.85);
   transition: transform 0.32s cubic-bezier(0.34, 1.6, 0.64, 1);
@@ -7036,17 +7036,29 @@ body.backpack-giving--katapum * {
 }
 
 .obelisk-gameover-panel__icon {
-  font-size: 3.4rem;
+  display: none; /* el logo del equipo ocupa su sitio */
 }
-.obelisk-gameover-panel__logos { position: relative; z-index: 3; display: flex; justify-content: center; gap: 8px; margin-bottom: 4px; }
+.obelisk-gameover-panel__logos {
+  position: absolute;
+  z-index: 3;
+  top: -78px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  width: max-content;
+  max-width: 96vw;
+  pointer-events: none;
+}
 .obelisk-gameover-panel__logo {
-  width: min(300px, 70vw);
+  width: min(340px, 78vw);
   height: auto;
   filter: drop-shadow(3px 4px 0 rgba(0, 0, 0, 0.55));
   animation: gameover-logo-in 0.6s cubic-bezier(0.34, 1.5, 0.64, 1) both;
   user-select: none;
 }
-.obelisk-gameover-panel__logos--duo .obelisk-gameover-panel__logo { width: min(180px, 38vw); }
+.obelisk-gameover-panel__logos--duo .obelisk-gameover-panel__logo { width: min(200px, 44vw); }
 @keyframes gameover-logo-in { 0% { transform: scale(0.4) rotate(-6deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
 
 .obelisk-gameover-panel--win .obelisk-gameover-panel__icon,
