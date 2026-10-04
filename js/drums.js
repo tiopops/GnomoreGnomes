@@ -332,10 +332,10 @@ const Drums = {
     await new Promise((r) => setTimeout(r, 380));
   },
 
-  _impact(x, y, t) {
-    if (typeof SFX !== "undefined" && SFX.enabled) { try { SFX.explosion(); } catch (e) {} }
+  _impact(x, y, t, light) {
+    if (!light && typeof SFX !== "undefined" && SFX.enabled) { try { SFX.explosion(); } catch (e) {} }
     const vp = document.getElementById("board-viewport");
-    if (vp) {
+    if (vp && !light) {
       vp.classList.remove("board-viewport--shake--big");
       void vp.offsetWidth;
       vp.classList.add("board-viewport--shake--big");

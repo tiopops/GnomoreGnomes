@@ -86,7 +86,7 @@ const RESOURCE_TYPES = {
 const RESOURCE_DESCRIPTIONS = {
   madera: "Madera recogida de los pinos. No se usa por sí sola: se gasta como moneda para mejorar arma y armadura en la Armería.",
   roca: "Roca recogida de las canteras. No se usa por sí sola: se gasta como moneda para mejorar arma y armadura en la Armería.",
-  fragmento: "Un trocito de roca caída del cielo. Aún no sirve para nada, pero queda monísimo en la mochila.",
+  fragmento: "Un trocito de roca caída del cielo. Púlsalo otra vez y apunta: se lo lanzas a un rival, tótem u Obelisco enemigo y le quita 1 de vida. Se gasta.",
   metal: "Mena de hierro, mucho más escasa que la madera o la roca. Solo hace falta para el nivel 3 de mejoras en la Armería.",
 };
 

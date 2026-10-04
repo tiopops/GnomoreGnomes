@@ -9610,3 +9610,22 @@ body.drums-raining::after {
 .drum-frag.gg-remembered { filter: saturate(0.25) brightness(0.65) drop-shadow(0 3px 3px rgba(0, 0, 0, 0.5)); }
 /* Arbusto de Rock'n Troll un poco más grande */
 .bush__sprite--rock { width: 150px; }
+
+/* Roca lanzada desde la mochila (js/backpack.js) */
+.rock-projectile {
+  position: fixed;
+  z-index: 99999;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  will-change: left, top;
+}
+.rock-projectile__sprite {
+  display: block;
+  width: 48px;
+  height: auto;
+  filter: drop-shadow(2px 4px 4px rgba(0, 0, 0, 0.5));
+}
+.unit--katapum-target .village__sprite,
+.unit--katapum-target .obelisk__sprite {
+  filter: drop-shadow(0 0 10px rgba(255, 61, 46, 0.95)) drop-shadow(0 0 5px rgba(255, 61, 46, 0.7));
+}

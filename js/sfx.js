@@ -427,6 +427,67 @@ const SFX = {
     } catch (e) {}
   },
 
+  // Roca lanzada desde la mochila (js/backpack.js): silbido corto de aire.
+  rockThrow(dur) {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      const len = Math.round(ctx.sampleRate * Math.max(0.2, dur));
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const n = ctx.createBufferSource();
+      n.buffer = buf;
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass";
+      f.Q.value = 1.4;
+      f.frequency.setValueAtTime(500, now);
+      f.frequency.exponentialRampToValueAtTime(1500, now + dur * 0.5);
+      f.frequency.exponentialRampToValueAtTime(700, now + dur);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.linearRampToValueAtTime(0.14, now + dur * 0.25);
+      g.gain.linearRampToValueAtTime(0.0001, now + dur);
+      n.connect(f); f.connect(g); g.connect(ctx.destination);
+      n.start(now);
+    } catch (e) {}
+  },
+
+  // Impacto de piedra: golpe seco grave + chasquido de roca.
+  rockHit() {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(130, now);
+      o.frequency.exponentialRampToValueAtTime(48, now + 0.16);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.linearRampToValueAtTime(0.5, now + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(now); o.stop(now + 0.25);
+      const len = Math.round(ctx.sampleRate * 0.09);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      const n = ctx.createBufferSource();
+      n.buffer = buf;
+      const f = ctx.createBiquadFilter();
+      f.type = "highpass";
+      f.frequency.value = 1800;
+      const ng = ctx.createGain();
+      ng.gain.value = 0.3;
+      n.connect(f); f.connect(ng); ng.connect(ctx.destination);
+      n.start(now);
+    } catch (e) {}
+  },
+
   // Tambor de guerra (js/drums.js): tom grave con caída de tono + golpecito
   // de parche; `soft` para el simple roce de una unidad que se acerca.
   drum(soft) {

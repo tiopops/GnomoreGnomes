@@ -58,7 +58,7 @@ const EN_DICT = {
 "Setarcoiris": "Rainbowshroom",
 "Pierde 1 de durabilidad cuando muere un aliado.": "Loses 1 durability whenever an ally dies.",
 "Fragmento de roca": "Rock Fragment",
-"Un trocito de roca caída del cielo. Aún no sirve para nada, pero queda monísimo en la mochila.": "A little chunk of rock fallen from the sky. Useless for now, but it looks adorable in the backpack.",
+"Un trocito de roca caída del cielo. Púlsalo otra vez y apunta: se lo lanzas a un rival, tótem u Obelisco enemigo y le quita 1 de vida. Se gasta.": "A little chunk of rock fallen from the sky. Tap it again and aim: you throw it at an enemy unit, totem or Obelisk for 1 damage. Gets used up.",
 "¡Llueven rocas!": "Rocks are falling!",
 "¡Los tambores deciden!": "The drums decide!",
 "Gnomeda de la Suerte": "Lucky Gnomeda",

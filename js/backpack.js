@@ -586,6 +586,7 @@ const Backpack = {
   },
 
   _useItem(uid) {
+    if (uid === "resource-fragmento") { this.closePopup(); this._startTargetingRock(); return; }
     const entry = this.inventory.find((it) => it.uid === uid);
     if (!entry) return;
     this.closePopup();
@@ -1143,6 +1144,8 @@ const Backpack = {
     this._katapumUid = null;
     document.body.classList.remove("backpack-giving--katapum");
     Units.list.forEach((u) => u.el && u.el.classList.remove("unit--katapum-target"));
+    document.querySelectorAll(".unit--katapum-target").forEach((el) => el.classList.remove("unit--katapum-target"));
+    this._rockMode = false;
     if (this._katapumPickHandler) {
       window.removeEventListener("click", this._katapumPickHandler, { capture: true });
       this._katapumPickHandler = null;
@@ -1158,8 +1161,14 @@ const Backpack = {
     e.preventDefault();
     e.stopPropagation();
     const uid = this._katapumUid;
+    const rockMode = this._rockMode;
     this._cancelTargetingKatapum();
     if (isFixedUi || !unitEl) return; // cancela sin gastar, se puede reintentar
+    if (rockMode) {
+      const t = this._rockTargetFromEl(unitEl);
+      if (t) this._launchRock(t);
+      return;
+    }
 
     const target = Units.list.find((u) => u.id === unitEl.dataset.unitId);
     if (
@@ -1170,6 +1179,103 @@ const Backpack = {
       return;
     }
     this._launchKatapum(uid, target);
+  },
+
+  // ---------- Lanzar roca (fragmentos de los Tambores de Guerra) ----------
+  // Misma mecánica de apuntado que el KataPum!, pero el objetivo puede ser
+  // un rival, un tótem rival o un Obelisco rival a la vista. Gasta 1
+  // fragmento por lanzamiento y quita 1 de vida.
+  _rockTargets() {
+    const visible = (e) => e.el && !e.el.classList.contains("unit--fog-hidden") && !(typeof Fog !== "undefined" && Fog.isFogged(e.row, e.col));
+    const out = [];
+    Units.list.filter((u) => u.team !== "player" && visible(u)).forEach((u) => out.push({ kind: "unit", ref: u, row: u.row, col: u.col, el: u.el }));
+    if (typeof Villages !== "undefined") Villages.list.filter((v) => v.owner !== "player" && v.owner !== "neutral" && visible(v)).forEach((v) => out.push({ kind: "village", ref: v, row: v.row, col: v.col, el: v.el }));
+    if (typeof Obelisks !== "undefined") Obelisks.list.filter((o) => o.team !== "player" && visible(o)).forEach((o) => out.push({ kind: "obelisk", ref: o, row: o.row, col: o.col, el: o.el }));
+    return out;
+  },
+
+  _rockTargetFromEl(el) {
+    return this._rockTargets().find((t) => t.el === el) || null;
+  },
+
+  _startTargetingRock() {
+    if (typeof Units === "undefined" || !((Resources.counts.fragmento || 0) > 0)) return;
+    const targets = this._rockTargets();
+    if (targets.length === 0) return; // nada a la vista: no se gasta
+    this._katapumUid = "rock";
+    this._rockMode = true;
+    Units.clearRangeOverlays();
+    document.body.classList.add("backpack-giving--katapum");
+    targets.forEach((t) => t.el.classList.add("unit--katapum-target"));
+    this._katapumPickHandler = (e) => this._onKatapumPickClick(e);
+    window.addEventListener("click", this._katapumPickHandler, { capture: true });
+  },
+
+  _launchRock(target) {
+    if (!((Resources.counts.fragmento || 0) > 0)) return;
+    Resources.counts.fragmento--;
+    if (Resources.counts.fragmento <= 0) delete Resources.counts.fragmento;
+    this._renderSlots();
+    if (this.refreshResourceBadges) this.refreshResourceBadges();
+    const selected = Units.list.find((u) => u.id === Units.selectedId && u.team === "player");
+    if (selected) Units.faceTowardsTile(selected, target.row, target.col);
+    this._animateRockThrow(target);
+  },
+
+  _animateRockThrow(target) {
+    const btnEl = this._btnEl;
+    const startRect = btnEl ? btnEl.getBoundingClientRect() : { left: 40, top: 700, width: 60, height: 60 };
+    const endRect = target.el.getBoundingClientRect();
+    const start = { x: startRect.left + startRect.width / 2, y: startRect.top + startRect.height / 2 };
+    // Se apunta al centro del cuerpo del objetivo.
+    const end = { x: endRect.left + endRect.width / 2, y: endRect.top + endRect.height * 0.55 };
+    if (btnEl) {
+      btnEl.classList.remove("backpack-btn--launch");
+      void btnEl.offsetWidth;
+      btnEl.classList.add("backpack-btn--launch");
+      setTimeout(() => btnEl.classList.remove("backpack-btn--launch"), 380);
+    }
+    const dx = end.x - start.x, dy = end.y - start.y;
+    const dist = Math.hypot(dx, dy);
+    const duration = Math.min(1000, 360 + dist * 0.6);
+    const arc = Math.min(160, 40 + dist * 0.12);
+    const el = document.createElement("div");
+    el.className = "rock-projectile";
+    const img = document.createElement("img");
+    img.src = "assets/niveles/rockntroll/fragmento.png";
+    img.className = "rock-projectile__sprite";
+    img.draggable = false;
+    img.alt = "";
+    el.appendChild(img);
+    document.body.appendChild(el);
+    if (typeof SFX !== "undefined" && SFX.rockThrow) SFX.rockThrow(duration / 1000);
+    const spin = (Math.random() < 0.5 ? -1 : 1) * (540 + Math.random() * 360);
+    const t0 = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / duration);
+      const x = start.x + dx * t;
+      const y = start.y + dy * t - Math.sin(Math.PI * t) * arc;
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      img.style.transform = `rotate(${spin * t}deg) scale(${1 - 0.25 * t})`;
+      if (t < 1) requestAnimationFrame(step);
+      else {
+        el.remove();
+        this._rockImpact(target);
+      }
+    };
+    requestAnimationFrame(step);
+  },
+
+  _rockImpact(target) {
+    if (typeof SFX !== "undefined" && SFX.rockHit) SFX.rockHit();
+    if (typeof Drums !== "undefined") {
+      const c = getTileCenter(target.row, target.col, Units.boardSize);
+      Drums._impact(c.x, c.y, target, true);
+      const unit = target.kind === "unit" ? target.ref : null;
+      Drums._applyDamage(target, 1, "player");
+      if (unit && unit.hp <= 0 && typeof Glory !== "undefined") Glory.queueKillBonus("player");
+    }
   },
 
   // Lanzador: "desde el personaje que lo lanza" (pedido explícito) — el
