@@ -249,6 +249,7 @@ async function startMatch({ modeId, raceId, levelId, opponents }) {
     // que se activan solo para "opponents === 1" en vez de para
     // cualquier tamaño de escenario; el día que haya un modo con más
     // rivales que también los quiera, basta con ampliar esta condición.
+    if (typeof LevelAssets !== "undefined") LevelAssets.apply(levelId || "mushboom_forest");
     const map = generateMap(size, { rivers: opponents === 1 });
 
     SaveGame.save({
@@ -292,6 +293,7 @@ async function resumeMatch() {
     // Ver la nota larga de Preload en startMatch, justo arriba — mismo
     // criterio aquí.
     if (typeof Preload !== "undefined") await Preload.run();
+    if (typeof LevelAssets !== "undefined") LevelAssets.apply(saved.levelId || "mushboom_forest");
     const map = { size: saved.size, tiles: saved.tiles };
     renderMap(map, document.getElementById("board-tiles"));
     if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
@@ -479,6 +481,13 @@ function spawnTestUnits(size, raceId, opponents) {
   if (typeof Shops !== "undefined") {
     Shops.resetAll();
     Shops.spawn(size);
+  }
+
+  // Tambores de Guerra (js/drums.js) — solo en Colinas Rock'n Troll. ANTES de
+  // arbustos/recursos para que estos esquiven sus casillas.
+  if (typeof Drums !== "undefined") {
+    Drums.resetAll();
+    Drums.spawn(size);
   }
 
   // Arbustos (js/bushes.js) — pedido explícito: "los arbustos... reparti-

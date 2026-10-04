@@ -35,6 +35,7 @@ const Tutorial = {
     if (this.active) return;
     try {
       if (typeof Preload !== "undefined") await Preload.run();
+      if (typeof LevelAssets !== "undefined") LevelAssets.apply("mushboom_forest");
       const size = getBoardSize(1);
       const map = generateMap(size, { rivers: false });
       // Escena de tutorial: el centro del mapa es SIEMPRE hierba despejada.
@@ -114,7 +115,7 @@ const Tutorial = {
     if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) return false;
     if (typeof Altar !== "undefined" && Altar.at(r, c)) return false;
     if (typeof Bushes !== "undefined" && Bushes.at(r, c)) return false;
-    if (typeof Resources !== "undefined" && Resources.at(r, c)) return false;
+    if ((typeof Resources !== "undefined" && Resources.at(r, c)) || (typeof Drums !== "undefined" && Drums.at(r, c))) return false;
     return true;
   },
 

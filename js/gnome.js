@@ -223,7 +223,7 @@ function createGnomeInstance() {
       // Obelisco Ancestral (js/obelisks.js) — tampoco aparece encima de uno.
       const noObelisk = (r, c) => typeof Obelisks === "undefined" || !Obelisks.at(r, c);
       // Recursos de escenario (js/resources.js) — tampoco aparece encima de una.
-      const noResource = (r, c) => typeof Resources === "undefined" || !Resources.at(r, c);
+      const noResource = (r, c) => typeof Resources === "undefined" || !Resources.at(r, c) && !(typeof Drums !== "undefined" && Drums.at(r, c));
       // Altar de Sacrificios (js/altar.js) — tampoco aparece encima de él.
       const noAltar = (r, c) => (typeof Altar === "undefined" || !Altar.at(r, c)) && !(typeof GnomOgro !== "undefined" && GnomOgro.at(r, c));
       if (
@@ -489,7 +489,7 @@ function createGnomeInstance() {
           if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
           if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
-          if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
+          if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;
           const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
           if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
@@ -688,6 +688,8 @@ function createGnomeInstance() {
       // es una de las 2 acciones del turno.
       if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
       if (typeof Turns !== "undefined") Turns.useAction(unit);
+      // Tambores de Guerra (js/drums.js): golpe junto a un tambor.
+      if (typeof Drums !== "undefined") Drums.onGnomeHit(unit);
       const dmg =
         UNIT_TYPES[unit.typeId].fuerza +
         (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0) +
@@ -818,7 +820,7 @@ function createGnomeInstance() {
           if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
           if (typeof Altar !== "undefined" && Altar.at(row, col)) continue;
           if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
-          if (typeof Resources !== "undefined" && Resources.at(row, col)) continue;
+          if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) continue;
           if (typeof TotemVision !== "undefined" && TotemVision.at(row, col)) continue;
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           tiles.push({ row, col });
@@ -1071,7 +1073,7 @@ function createGnomeInstance() {
           if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
           if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
-          if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
+          if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
           const minDist = Units.list.reduce(
             (min, u) => Math.min(min, Math.max(Math.abs(u.row - row), Math.abs(u.col - col))),
@@ -1398,7 +1400,7 @@ function createGnomeInstance() {
           if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof Altar !== "undefined" && Altar.at(r, c)) continue; // Altar de Sacrificios (js/altar.js)
           if (typeof GnomOgro !== "undefined" && GnomOgro.at(r, c)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
-          if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
+          if ((typeof Resources !== "undefined" && Resources.at(r, c)) || (typeof Drums !== "undefined" && Drums.at(r, c))) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           const alignment = dr * dRow + dc * dCol;
           const openness = this._tileOpenness(r, c);
@@ -1432,7 +1434,7 @@ function createGnomeInstance() {
           if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof Altar !== "undefined" && Altar.at(r, c)) continue; // Altar de Sacrificios (js/altar.js)
           if (typeof GnomOgro !== "undefined" && GnomOgro.at(r, c)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
-          if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
+          if ((typeof Resources !== "undefined" && Resources.at(r, c)) || (typeof Drums !== "undefined" && Drums.at(r, c))) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           free++;
         }

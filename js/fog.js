@@ -195,6 +195,16 @@ const Fog = {
   // false si no hay niebla activa todavía (p.ej. una herramienta de debug
   // que no llama a Fog.init) — así ningún otro archivo necesita comprobar
   // "typeof Fog" Y "Fog.revealedGrid" a la vez, con esto basta.
+  // Niebla REAL del jugador, sin la excepción del turno de la IA: para el
+  // escenario estático (pinos, rocas, arbustos, hierbajos, tambores), que
+  // durante el turno rival asomaba sobre la niebla porque isFogged() devuelve
+  // false mientras juega la IA.
+  isFoggedReal(row, col) {
+    if (!this.revealedGrid) return false;
+    if (row < 0 || col < 0 || row >= this.size || col >= this.size) return false;
+    return !this.revealedGrid[row][col];
+  },
+
   isFogged(row, col) {
     if (!this.revealedGrid) return false;
     // La IA no está limitada por la niebla del jugador
@@ -499,7 +509,7 @@ const Fog = {
       if (typeof Bushes !== "undefined") {
         Bushes.list.forEach((b) => {
           if (!b.el) return;
-          const fogged = this.isFogged(b.row, b.col);
+          const fogged = this.isFoggedReal(b.row, b.col);
           b.el.classList.toggle("unit--fog-hidden", fogged);
           // Pedido explícito: elemento estático de escenario ya explorado
           // pero fuera de percepción ahora mismo -> se queda a la vista,
@@ -520,6 +530,7 @@ const Fog = {
       // Hierbajos (js/hierbajos.js) — vegetación decorativa, mismo criterio
       // que arbustos/recursos: oculta bajo niebla sin descubrir todavía.
       if (typeof Hierbajos !== "undefined") Hierbajos.refreshFog();
+      if (typeof Drums !== "undefined") Drums.refreshFog();
     }
     if (typeof Gnome !== "undefined") {
       const veo = Gnome.veoGnomes("player"); // GnomeVeo: gnomos siempre visibles
@@ -881,6 +892,21 @@ const Fog = {
       TotemVision.list.forEach((t) => {
         if (!t.el) return;
         coverFrom(t.row, t.col, t.el);
+      });
+    }
+    // Hierbajos y Tambores de guerra: mismo problema geométrico (sprite más
+    // alto/ancho que su loseta) — antes los hierbajos nunca pasaban por aquí
+    // y asomaban POR ENCIMA de la niebla vecina.
+    if (typeof Hierbajos !== "undefined") {
+      Hierbajos.list.forEach((h) => {
+        if (!h.el) return;
+        coverFrom(h.row, h.col, h.el);
+      });
+    }
+    if (typeof Drums !== "undefined") {
+      Drums.list.forEach((d) => {
+        if (!d.el) return;
+        coverFrom(d.row, d.col, d.el);
       });
     }
     // Altar de Sacrificios (js/altar.js) — mismo "objeto grande y fijo del

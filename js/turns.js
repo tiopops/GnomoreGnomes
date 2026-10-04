@@ -611,7 +611,8 @@ const Turns = {
       (Obelisks.at(r, c) && !(r === target.row && c === target.col)) ||
       Villages.at(r, c) ||
       (typeof Shops !== "undefined" && Shops.at(r, c)) ||
-      (typeof Resources !== "undefined" && Resources.at(r, c));
+      (typeof Resources !== "undefined" && Resources.at(r, c)) ||
+      (typeof Drums !== "undefined" && Drums.at(r, c));
     const queue = [[target.row, target.col]];
     map[target.row][target.col] = 0;
     for (let i = 0; i < queue.length; i++) {

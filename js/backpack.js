@@ -243,7 +243,7 @@ const Backpack = {
   buildResourceBadges(container) {
     container.innerHTML = "";
     const counts = typeof Resources !== "undefined" ? Resources.counts : { madera: 0, roca: 0, metal: 0 };
-    Object.keys(RESOURCE_TYPES).forEach((resourceId) => {
+    Object.keys(RESOURCE_TYPES).filter((id) => id !== "fragmento").forEach((resourceId) => {
       const def = RESOURCE_TYPES[resourceId];
       const badge = document.createElement("div");
       badge.className = "resource-badge";
@@ -527,19 +527,40 @@ const Backpack = {
   _updateDescText() {
     if (!this._descEl) return;
     const entry = this._allSlotEntries().find((it) => it.uid === this._selectedUid);
-    if (!entry) {
-      this._descEl.textContent = "";
-      return;
-    }
+    this._descEl.textContent = "";
+    if (!entry) return;
+    // Nombre resaltado en amarillo + descripción corta debajo (pedido
+    // explícito: "debe aparecer su nombre resaltado en amarillo").
+    const nameEl = document.createElement("span");
+    nameEl.className = "backpack-desc__name";
+    const textEl = document.createElement("span");
+    let note = null;
     if (entry.kind === "relic") {
       const def = RELIC_TYPES[entry.relic.relicId];
-      this._descEl.textContent = `${def.name} (${entry.relic.durability}/${entry.relic.max}). ${def.description}`;
-      return;
+      nameEl.textContent = def.name;
+      const dur = document.createElement("span");
+      dur.className = "backpack-desc__dur";
+      dur.textContent = ` ${entry.relic.durability}/${entry.relic.max}`;
+      nameEl.appendChild(dur);
+      textEl.textContent = def.description;
+      note = "Pierde 1 de durabilidad cuando muere un aliado.";
+    } else if (entry.kind === "resource") {
+      nameEl.textContent = RESOURCE_TYPES[entry.resourceId].name;
+      textEl.textContent = (typeof RESOURCE_DESCRIPTIONS !== "undefined" && RESOURCE_DESCRIPTIONS[entry.resourceId]) || "";
+    } else {
+      nameEl.textContent = ITEM_TYPES[entry.itemId].name;
+      textEl.textContent = ITEM_DESCRIPTIONS[entry.itemId] || "";
     }
-    this._descEl.textContent =
-      entry.kind === "resource"
-        ? (typeof RESOURCE_DESCRIPTIONS !== "undefined" && RESOURCE_DESCRIPTIONS[entry.resourceId]) || ""
-        : ITEM_DESCRIPTIONS[entry.itemId] || "";
+    this._descEl.appendChild(nameEl);
+    this._descEl.appendChild(document.createElement("br"));
+    this._descEl.appendChild(textEl);
+    if (note) {
+      this._descEl.appendChild(document.createTextNode(" "));
+      const noteEl = document.createElement("span");
+      noteEl.className = "backpack-desc__note";
+      noteEl.textContent = note;
+      this._descEl.appendChild(noteEl);
+    }
   },
 
   // Hueco libre en la mochila ahora mismo — lo consulta Shops (js/shops.js)
@@ -699,7 +720,7 @@ const Backpack = {
         if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
         if (typeof Altar !== "undefined" && Altar.at(r, c)) continue; // Altar de Sacrificios (js/altar.js)
         if (typeof GnomOgro !== "undefined" && GnomOgro.at(r, c)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
-        if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
+        if ((typeof Resources !== "undefined" && Resources.at(r, c)) || (typeof Drums !== "undefined" && Drums.at(r, c))) continue; // Recursos de escenario (js/resources.js)
         if (typeof TotemVision !== "undefined" && TotemVision.at(r, c)) continue; // TotemVision (js/totemvision.js)
         // Igual que cualquier otra mecánica del proyecto: no se ofrece
         // colocar nada sobre una loseta que ni siquiera se ha revelado.

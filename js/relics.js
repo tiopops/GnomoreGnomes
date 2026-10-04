@@ -15,35 +15,35 @@ const RELIC_TYPES = {
     iconUrl: "assets/iconos/reliquia_trotamontes.png",
     durability: 5,
     description:
-      "Unas botas hechas para recorrer montañas. Todas tus unidades ganan +1 de Movimiento. Pierden 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruyen y dejan de tener efecto.",
+      "Botas hechas para escalar montañas, no para mirar atrás. Todas tus unidades ganan +1 de Movimiento.",
   },
   acariciagnomos: {
     name: "AcariciaGnomos",
     iconUrl: "assets/iconos/reliquia_acariciagnomos.png",
     durability: 5,
     description:
-      "Un puño americano con pinchos dorados. Tus unidades ganan +1 de daño base, pero solo cuando pegan a un gnomo (cada puño extra suma otro +1). Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.",
+      "Un puño americano con pinchos dorados, para acariciar gnomos. Tus unidades hacen +1 de daño al pegarles (cada puño suma otro +1).",
   },
   ferognomas: {
     name: "FeroGnomas",
     iconUrl: "assets/iconos/reliquia_ferognomas.png",
     durability: 5,
     description:
-      "Perfume hecho a base de feromonas de barba gnoma. Mientras lo lleves en la mochila, los gnomos no huyen al verte, y los que estén a 3 casillas o menos de una unidad tuya se acercarán a ella antes de empezar tu turno. Cada perfume extra multiplica el radio (2 perfumes = 6 casillas, 3 = 9...). Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.",
+      "Perfume de feromonas de barba gnoma. Los gnomos a 3 casillas o menos vienen solos hacia ti y no huyen (cada frasco extra suma 3 casillas).",
   },
   gnomeveo: {
     name: "GnomeVeo",
     iconUrl: "assets/iconos/reliquia_gnomeveo.png",
     durability: 5,
     description:
-      "Unas gafas con nariz y bigote. Si miras directamente al sol te queman la sombra. Revelan en el mapa un gnomo libre, aunque esté bajo la niebla, hasta que lo capturas; entonces te muestran otro distinto. Cada par extra muestra un gnomo más (2 gafas = 2 gnomos, 3 = 3...). Pierden 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruyen y dejan de tener efecto.",
+      "Gafas con nariz y bigote. Mirar al sol te quema la sombra; mirar gnomos, no. Te muestran un gnomo libre aunque haya niebla (cada par extra, uno más).",
   },
   gnomeda: {
     name: "Gnomeda de la Suerte",
     iconUrl: "assets/iconos/reliquia_gnomeda.png",
     durability: 3,
     description:
-      "Fabricada con el oro más puro de las minas de Rock'n'Troll y estampada... estampada contra un gnomo en el momento de su fabricación. Te da +2 Puntos de Gloria por turno mientras la lleves en la mochila (cada moneda extra suma otros +2). Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.",
+      "Oro puro de Rock'n'Troll, estampado contra un gnomo (sin querer). Te da +2 Puntos de Gloria por turno (cada moneda extra suma otros +2).",
   },
 };
 

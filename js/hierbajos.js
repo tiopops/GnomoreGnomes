@@ -114,7 +114,7 @@ const Hierbajos = {
     if (typeof Altar !== "undefined" && Altar.at(row, col)) return false; // Altar de Sacrificios (js/altar.js)
     if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) return false; // GnomOgro (js/gnomogro.js): casilla ocupada
     if (typeof Bushes !== "undefined" && Bushes.at(row, col)) return false;
-    if (typeof Resources !== "undefined" && Resources.at(row, col)) return false;
+    if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) return false;
     if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) return false;
     if (this.at(row, col)) return false;
     return true;
@@ -130,8 +130,9 @@ const Hierbajos = {
     // Calidad de sprite dinámica según el zoom (pedido explícito, ver
     // js/spritequality.js) — los hierbajos son con diferencia el elemento
     // más numeroso del tablero, así que son de los que más se benefician.
-    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, "assets/escenario/hierbajos.png");
-    else spriteEl.src = "assets/escenario/hierbajos.png";
+    const hSrc = typeof LevelAssets !== "undefined" ? LevelAssets.hierbajosSprite() : "assets/escenario/hierbajos.png";
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, hSrc);
+    else spriteEl.src = hSrc;
     spriteEl.alt = "";
     spriteEl.draggable = false;
     // Variación aleatoria de tamaño/espejado — pedido explícito: "dar
@@ -185,7 +186,7 @@ const Hierbajos = {
   refreshFog() {
     if (typeof Fog === "undefined") return;
     this.list.forEach((h) => {
-      const fogged = Fog.isFogged(h.row, h.col);
+      const fogged = Fog.isFoggedReal(h.row, h.col);
       h.el.classList.toggle("unit--fog-hidden", fogged);
       // Pedido explícito (memoria de niebla): decoración ya explorada pero
       // fuera de percepción ahora mismo -> se queda "recordada" (atenuada +

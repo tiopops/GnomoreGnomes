@@ -1,6 +1,18 @@
 /* Imágenes que Preload (js/preload.js) carga durante la barra de carga: solo
    lo necesario para que la partida arranque sin tirones (lo demás carga a demanda). */
 const PRELOAD_ASSETS = [
+ "assets/niveles/rockntroll/tierra_midres.png",
+ "assets/niveles/rockntroll/piedra_midres.png",
+ "assets/niveles/rockntroll/agua_1_midres.png",
+ "assets/niveles/rockntroll/agua_2_midres.png",
+ "assets/niveles/rockntroll/pino_midres.png",
+ "assets/niveles/rockntroll/roca_midres.png",
+ "assets/niveles/rockntroll/mena_midres.png",
+ "assets/niveles/rockntroll/arbusto_midres.png",
+ "assets/niveles/rockntroll/hierbajos_midres.png",
+ "assets/niveles/rockntroll/tambor_midres.png",
+ "assets/niveles/rockntroll/roca_caida_midres.png",
+ "assets/niveles/rockntroll/fragmento_midres.png",
  "assets/niveles/logo_mushboom_forest.png",
   "assets/niveles/logo_empate.png",
  "assets/niveles/logo_colinas_rockntroll.png",

@@ -74,6 +74,9 @@ const RESOURCE_TYPES = {
   madera: { name: "Madera", iconUrl: "assets/iconos/recurso_madera.png" },
   roca: { name: "Roca", iconUrl: "assets/iconos/recurso_roca.png" },
   metal: { name: "Metal", iconUrl: "assets/iconos/recurso_metal.png" },
+  // Rock'n Troll: astillas de las rocas de los Tambores de Guerra. Sin uso
+  // por ahora (se apilan en la mochila).
+  fragmento: { name: "Fragmento de roca", iconUrl: "assets/niveles/rockntroll/fragmento.png" },
 };
 
 // Pedido explícito: "los recursos ocupan espacio en la mochila...son como un
@@ -83,6 +86,7 @@ const RESOURCE_TYPES = {
 const RESOURCE_DESCRIPTIONS = {
   madera: "Madera recogida de los pinos. No se usa por sí sola: se gasta como moneda para mejorar arma y armadura en la Armería.",
   roca: "Roca recogida de las canteras. No se usa por sí sola: se gasta como moneda para mejorar arma y armadura en la Armería.",
+  fragmento: "Un trocito de roca caída del cielo. Aún no sirve para nada, pero queda monísimo en la mochila.",
   metal: "Mena de hierro, mucho más escasa que la madera o la roca. Solo hace falta para el nivel 3 de mejoras en la Armería.",
 };
 
@@ -228,6 +232,7 @@ const Resources = {
     if (typeof Shops !== "undefined" && Shops.at(row, col)) return false;
     if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) return false;
     if (typeof Altar !== "undefined" && Altar.at(row, col)) return false; // Altar de Sacrificios (js/altar.js)
+    if (typeof Drums !== "undefined" && Drums.at(row, col)) return false;
     if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) return false; // GnomOgro (js/gnomogro.js): casilla ocupada
     if (typeof Bushes !== "undefined" && Bushes.at(row, col)) return false;
     if (this.at(row, col)) return false;
@@ -277,6 +282,7 @@ const Resources = {
     else spriteEl.src = def.spriteUrl;
     spriteEl.alt = "";
     spriteEl.draggable = false;
+    if (kind !== "cofre" && Math.random() < 0.5) spriteEl.style.scale = "-1 1"; // volteo aleatorio
     // Pedido explícito: "todo en el escenario se mueve al compas...pon
     // delays en las animaciones de los elementos del escenario para que no
     // todos los arboles se muevan igual" — .resource-node__sprite comparte
@@ -338,7 +344,7 @@ const Resources = {
   refreshFog() {
     if (typeof Fog === "undefined") return;
     this.list.forEach((n) => {
-      const fogged = Fog.isFogged(n.row, n.col);
+      const fogged = Fog.isFoggedReal(n.row, n.col);
       n.el.classList.toggle("unit--fog-hidden", fogged);
       // Pedido explícito (memoria de niebla): ya explorada pero fuera de la
       // percepción real de las unidades/tótems/Obeliscos propios ahora

@@ -980,6 +980,8 @@ const Units = {
       // corta el resto del camino — "acaba todas sus acciones" no pegaría
       // con seguir andando después.
       if (typeof Bushes !== "undefined" && Bushes.checkStepInto(unit, step.row, step.col)) break;
+      // Fragmentos de roca (js/drums.js): se recogen al pisarlos.
+      if (typeof Drums !== "undefined") Drums.onUnitStep(unit, step.row, step.col);
     }
     unit.el.classList.remove("unit--moving");
     unit.spriteEl.classList.remove("unit__sprite--hop");
@@ -1068,7 +1070,7 @@ const Units = {
           if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
           if (typeof Altar !== "undefined" && Altar.at(r, c)) continue; // Altar de Sacrificios (js/altar.js)
           if (typeof GnomOgro !== "undefined" && GnomOgro.at(r, c)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
-          if (typeof Resources !== "undefined" && Resources.at(r, c)) continue; // Recursos de escenario (js/resources.js)
+          if ((typeof Resources !== "undefined" && Resources.at(r, c)) || (typeof Drums !== "undefined" && Drums.at(r, c))) continue; // Recursos de escenario (js/resources.js)
           if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
           neighbors.push({ row: r, col: c });
         }

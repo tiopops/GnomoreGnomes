@@ -91,7 +91,7 @@ const Altar = {
     if (typeof Shops !== "undefined" && Shops.at(r, c)) return false;
     if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) return false;
     if (this.at(r, c)) return false;
-    if (typeof Resources !== "undefined" && Resources.at(r, c)) return false;
+    if ((typeof Resources !== "undefined" && Resources.at(r, c)) || (typeof Drums !== "undefined" && Drums.at(r, c))) return false;
     if (typeof GnomOgro !== "undefined" && GnomOgro.at(r, c)) return false;
     return true;
   },

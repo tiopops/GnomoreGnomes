@@ -418,6 +418,7 @@ function getTileFromPoint(x, y, size) {
 
 function pickVariant(typeInfo, row, col) {
   const variants = typeInfo.variants;
+  if (typeInfo.zones && typeof LevelAssets !== "undefined") return typeInfo.zones[LevelAssets.zoneIndex(row, col)];
   if (variants.length === 1) return variants[0];
   // Selección determinista (misma partida = mismo mapa) en vez de aleatoria pura.
   // Hash entero simple (no lineal en fila/columna) para que no salgan

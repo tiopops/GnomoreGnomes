@@ -106,7 +106,7 @@ const Villages = {
       // Altar.isNear (js/altar.js): sin este margen de 1 casilla un poblado
       // recién colocado podría acabar tapándolo visualmente.
       if (typeof Altar !== "undefined" && Altar.isNear(row, col)) continue; // Altar de Sacrificios (js/altar.js)
-      if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
+      if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) continue; // Recursos de escenario (js/resources.js)
       if (this.at(row, col)) continue;
       const tooClose = this.list.some(
         (v) => Math.max(Math.abs(v.row - row), Math.abs(v.col - col)) < MIN_SEPARATION
@@ -132,7 +132,7 @@ const Villages = {
       if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) return false;
       if (typeof Obelisks !== "undefined" && Obelisks.isAdjacent(row, col)) return false; // el anillo del Obelisco debe quedar libre para reclutar
       if (typeof Altar !== "undefined" && Altar.isNear(row, col)) return false;
-      if (typeof Resources !== "undefined" && Resources.at(row, col)) return false;
+      if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) return false;
       if (this.at(row, col)) return false;
       if (obeliskSpots.some((o) => dist(o, { row, col }) < minFromObelisk)) return false;
       return true;
@@ -527,7 +527,7 @@ const Villages = {
         if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
         if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
         if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
-        if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
+        if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) continue; // Recursos de escenario (js/resources.js)
         if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;

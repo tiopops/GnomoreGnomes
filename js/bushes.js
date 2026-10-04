@@ -92,7 +92,7 @@ const Bushes = {
       if (typeof Obelisks !== "undefined" && Obelisks.isAdjacent(row, col)) continue; // el anillo del Obelisco debe quedar libre para reclutar
       if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
       if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
-      if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
+      if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) continue; // Recursos de escenario (js/resources.js)
       if (this.at(row, col)) continue;
       const tooClose = this.list.some(
         (b) => Math.max(Math.abs(b.row - row), Math.abs(b.col - col)) < BUSH_MIN_SEPARATION
@@ -115,8 +115,12 @@ const Bushes = {
     spriteEl.className = "bush__sprite";
     // Calidad de sprite dinámica según el zoom (pedido explícito, ver
     // js/spritequality.js).
-    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, "assets/iconos/arbusto.png");
-    else spriteEl.src = "assets/iconos/arbusto.png";
+    const bushSrc = typeof LevelAssets !== "undefined" ? LevelAssets.bushSprite() : "assets/iconos/arbusto.png";
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, bushSrc);
+    else spriteEl.src = bushSrc;
+    // Volteo horizontal aleatorio (naturalidad) — propiedad `scale`
+    // independiente del transform de la animación idle.
+    if (Math.random() < 0.5) spriteEl.style.scale = "-1 1";
     spriteEl.alt = "";
     spriteEl.draggable = false;
     // Pedido explícito: "todo en el escenario se mueve al compas...pon

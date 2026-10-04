@@ -96,6 +96,13 @@
           <option value="water">Solo agua</option>
         </select>
       </div>
+      <div class="control">
+        <label for="levelSet">Juego de losetas (nivel)</label>
+        <select id="levelSet">
+          <option value="mush">Bosque MushBoom (hierba / agua)</option>
+          <option value="rock">Colinas Rock'n Troll (tierra+piedra mezcladas / agua 1+2)</option>
+        </select>
+      </div>
     </div>
 
     <div>
@@ -169,6 +176,17 @@
       grass: { src: "../assets/losetas/hierba_01.png", nativeWidth: 1024, nativeHeight: 854 },
       water: { src: "../assets/losetas/agua_03.png", nativeWidth: 1024, nativeHeight: 854 },
     };
+    // Rock'n Troll: el suelo "hierba" son dos texturas (tierra/piedra) en
+    // zonas; el agua tiene dos variantes. Mismo recorte 1024x854.
+    const ROCK_SRC = {
+      grass: ["../assets/niveles/rockntroll/tierra.png", "../assets/niveles/rockntroll/piedra.png"],
+      water: ["../assets/niveles/rockntroll/agua_1.png", "../assets/niveles/rockntroll/agua_2.png"],
+    };
+    function srcFor(type, row, col) {
+      if (document.getElementById("levelSet").value !== "rock") return TILE_ART[type].src;
+      const i = type === "grass" ? ((Math.floor(col / 2) + Math.floor(row / 3)) % 2) : ((row * 3 + col) % 2);
+      return ROCK_SRC[type][i];
+    }
     const GRID_SIZE = 8;
     const DEFAULTS = { scale: 100, offsetX: 0, offsetY: 0 };
 
@@ -272,7 +290,7 @@
           const renderHeight = renderWidth * (art.nativeHeight / art.nativeWidth);
 
           const img = document.createElement("img");
-          img.src = art.src;
+          img.src = srcFor(type, row, col);
           img.width = renderWidth;
           img.height = renderHeight;
           img.draggable = false;
@@ -303,7 +321,7 @@
         `water: scale=${cfg.water.scale.toFixed(2)}  offsetX=${cfg.water.offsetX}  offsetY=${cfg.water.offsetY}`;
     }
 
-    [viewModeInput, topHeightInput, tileWidthInput, featherInput].forEach((el) => {
+    [document.getElementById('levelSet'), viewModeInput, topHeightInput, tileWidthInput, featherInput].forEach((el) => {
       el.addEventListener("input", render);
       el.addEventListener("change", render);
     });

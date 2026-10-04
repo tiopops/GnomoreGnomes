@@ -29,7 +29,7 @@ const LEVELS = [
     islandImg: "assets/niveles/isla_colinas_rockntroll.png",
     logoImg: "assets/niveles/logo_colinas_rockntroll.png",
     color: "#8a8f99",
-    available: false,
+    available: true,
   },
 ];
 

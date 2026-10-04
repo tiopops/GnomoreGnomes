@@ -744,7 +744,7 @@ const Obelisks = {
         if (this.at(row, col)) continue;
         if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
         if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
-        if (typeof Resources !== "undefined" && Resources.at(row, col)) continue; // Recursos de escenario (js/resources.js)
+        if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) continue; // Recursos de escenario (js/resources.js)
         if (typeof TerrainMap !== "undefined" && !(typeof Skills !== "undefined" ? Skills.walkableFor(unit.team, row, col) : TerrainMap.isWalkable(row, col))) continue;
         const moveDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
         if (moveDist > moveRange || (typeof Skills !== "undefined" && Skills.moveCost(unit, row, col) > moveRange)) continue;
