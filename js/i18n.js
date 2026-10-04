@@ -34,7 +34,10 @@ const STRINGS = {
     level_mushboom_forest_f2: "Altar de Sacrificios: cada jugador tiene su propia barra de ofrendas. Entrega una seta o un gnomo junto al altar como ofrenda (una seta rellena 10 puntos); el primero en llenarla invoca al GnomOgro.",
     level_mushboom_forest_f3: "GnomOgro: 30 de vida y 10 de ataque. Avanza hacia la base rival y la destruye si nadie lo detiene.",
     level_colinas_rockntroll: "Colinas Rock'n Troll",
-    level_colinas_rockntroll_flavor: "Colinas rocosas con mecánicas propias, aún por revelar. Llegarán más adelante en el desarrollo.",
+    level_colinas_rockntroll_flavor: "Colinas rocosas donde el suelo manda: tierra, piedra y tambores que hacen llover rocas.",
+    level_colinas_rockntroll_f1: "Tambores de Guerra: cada jugador tiene su ruleta de 10 porciones. Domina un tambor con más unidades a su lado, o pega a un gnomo junto a él, para rellenarla.",
+    level_colinas_rockntroll_f2: "Lluvia de rocas: el primero en llenarla (o quien lidere cada 10 turnos) aplasta unidades, tótems y Obeliscos rivales. Cada lluvia pega más fuerte.",
+    level_colinas_rockntroll_f3: "Fragmentos: las rocas rotas sueltan trozos que puedes recoger y guardar en la mochila.",
     level_coming_soon: "Próximamente",
 
     choose_opponents: "Elige el número de rivales",
@@ -170,7 +173,10 @@ const STRINGS = {
     level_mushboom_forest_f2: "Sacrifice Altar: each player has their own offering bar. Offer a mushroom or a gnome next to the altar (a mushroom fills 10 points); the first to fill it summons the GnomOgre.",
     level_mushboom_forest_f3: "GnomOgre: 30 health and 10 attack. It marches on the enemy base and destroys it unless someone stops it.",
     level_colinas_rockntroll: "Rock'n Troll Hills",
-    level_colinas_rockntroll_flavor: "Rocky hills with their own mechanics, coming later in development.",
+    level_colinas_rockntroll_flavor: "Rocky hills where the ground rules: dirt, stone and drums that make it rain rocks.",
+    level_colinas_rockntroll_f1: "War Drums: every player has a 10-slice wheel. Hold a drum with more units beside it, or hit a gnome next to it, to fill yours.",
+    level_colinas_rockntroll_f2: "Rock rain: whoever fills the wheel first (or leads every 10 turns) crushes rival units, totems and Obelisks. Each rain hits harder.",
+    level_colinas_rockntroll_f3: "Fragments: broken rocks drop shards you can pick up and keep in your backpack.",
     level_coming_soon: "Coming soon",
 
     choose_opponents: "Choose number of opponents",
