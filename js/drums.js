@@ -156,7 +156,12 @@ const Drums = {
   },
 
   _shake(d, soft) {
-    if (typeof SFX !== "undefined" && SFX.enabled) { try { SFX.drum(soft); } catch (e) {} }
+    // Un solo sonido aunque tiemblen varios a la vez (sin solaparse).
+    const t = performance.now();
+    if (typeof SFX !== "undefined" && SFX.enabled && t - (this._lastSound || 0) > 450) {
+      this._lastSound = t;
+      try { SFX.drum(soft); } catch (e) {}
+    }
     if (!d.spriteEl.animate) return;
     d.spriteEl.animate(
       [
