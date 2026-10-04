@@ -28,6 +28,7 @@ const Drums = {
   frags: [],
   slices: {},
   rains: 0,
+  note: {}, // nota musical por equipo: empieza en 1 y sube +1 cada vez que ese equipo consigue hacer caer las rocas
   _nextId: 1,
   _busy: false,
 
@@ -43,7 +44,8 @@ const Drums = {
     this.slices = {};
     this.rains = 0;
     this._busy = false;
-    (typeof Teams !== "undefined" ? Teams.all : ["player", "enemy"]).forEach((t) => (this.slices[t] = 0));
+    this.note = {};
+    (typeof Teams !== "undefined" ? Teams.all : ["player", "enemy"]).forEach((t) => { this.slices[t] = 0; this.note[t] = 1; });
     document.body.classList.remove("drums-raining");
   },
 
@@ -260,7 +262,8 @@ const Drums = {
   async _rain(causers, victimTeams) {
     if (this._busy) return;
     this._busy = true;
-    const dmg = DRUM_BASE_RAIN_DAMAGE + this.rains;
+    // Daño = 1 + nota musical (2 la primera vez, +1 por cada lluvia lograda por ese equipo).
+    const dmg = Math.max(...causers.map((c) => this.note[c] || 1)) + DRUM_BASE_RAIN_DAMAGE - 1;
     document.body.classList.add("drums-raining");
     if (typeof Banners !== "undefined") Banners.text("¡Llueven rocas!", 0);
     await new Promise((r) => setTimeout(r, 900));
@@ -277,6 +280,7 @@ const Drums = {
     await Promise.all(jobs);
 
     this.rains++;
+    causers.forEach((c) => (this.note[c] = (this.note[c] || 1) + 1));
     this.slices = {};
     Teams.all.forEach((t) => (this.slices[t] = 0));
     this.list.forEach((d) => (d.hits = {}));
@@ -512,9 +516,9 @@ const Drums = {
   },
 
   _updateBadge(d) {
-    const n = d.plays.player || 0;
+    const n = this.note.player || 1;
     const fogged = typeof Fog !== "undefined" && Fog.isFoggedReal(d.row, d.col);
-    d.badgeEl.classList.toggle("drum-plays--visible", n > 0 && !fogged);
+    d.badgeEl.classList.toggle("drum-plays--visible", !fogged);
     if (d._badgeN === n) return;
     const grew = n > (d._badgeN || 0);
     d._badgeN = n;
@@ -554,8 +558,7 @@ const Drums = {
       `<polygon class="drum-plate" points="${plate}"/>` +
       slices +
       `<text class="drum-count" x="70" y="79" text-anchor="middle">${have}/${DRUM_SLICES}</text>` +
-      `</svg>` +
-      (pending ? `<span class="drum-marker__tag">+${pending}</span>` : "")
+      `</svg>`
     );
   },
 };
