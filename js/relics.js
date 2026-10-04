@@ -22,7 +22,7 @@ const RELIC_TYPES = {
     iconUrl: "assets/iconos/reliquia_acariciagnomos.png",
     durability: 5,
     description:
-      "Un puño americano con pinchos dorados. Cada vez que pegas a un gnomo, le haces +3 de daño. Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.",
+      "Un puño americano con pinchos dorados. Tus unidades ganan +1 de daño base, pero solo cuando pegan a un gnomo (cada puño extra suma otro +1). Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.",
   },
   ferognomas: {
     name: "FeroGnomas",
@@ -103,9 +103,9 @@ const Relics = {
     return 2 * this.list(team).filter((r) => r.relicId === "gnomeda" && r.durability > 0).length;
   },
 
-  // AcariciaGnomos: +3 al daño (puntos) de cada golpe a un gnomo.
+  // AcariciaGnomos: +1 al daño base de la unidad, SOLO al pegar a un gnomo.
   gnomeHitBonus(team) {
-    return 3 * this.list(team).filter((r) => r.relicId === "acariciagnomos" && r.durability > 0).length;
+    return 1 * this.list(team).filter((r) => r.relicId === "acariciagnomos" && r.durability > 0).length;
   },
 
   // Una unidad de `unit.team` ha muerto: cada reliquia del equipo pierde 1.
