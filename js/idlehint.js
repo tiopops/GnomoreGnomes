@@ -64,7 +64,7 @@ const IdleHint = {
     }
     const { x, y } = getTileCenter(u.row, u.col, Units.boardSize);
     el.style.left = `${x}px`;
-    el.style.top = `${y - 150}px`;
+    el.style.top = `${y - 240}px`;
     el.style.zIndex = String((u.row + u.col) * 10 + 9);
   },
 
