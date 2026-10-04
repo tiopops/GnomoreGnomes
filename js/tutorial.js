@@ -585,7 +585,7 @@ const Tutorial = {
         ok: "¡Reliquia en la mochila! Son las Botas TrotaMontes: +1 de Movimiento para todas tus unidades. Fíjate en su marcador, ese 5/5 que tiene al lado: esa es su durabilidad. Cuida de tus unidades o las botas se gastarán antes de tiempo. Y no, no guardo el ticket de compra, así que olvídate de la garantía.",
       },
       {
-        say: `No hay nada mejor que conquistar un tótem con un gnomo cargado de puntos. Tu personaje lo estampa contra él y le resta tanta vida como puntos lleve. Si se queda sin puntos, el tótem es tuyo y te da Puntos de Gloria cada turno. Acércate con quien lleva el gnomo y pulsa la diana. Lo que la gente del gremio conoce como “estampada”.`,
+        say: `No hay nada mejor que conquistar un tótem con un gnomo cargado de puntos. Tu personaje lo estampa contra él y le resta tanta vida como puntos lleve. Si se queda sin puntos, el tótem es tuyo y te da +1 Punto de Gloria cada turno. Uno. Sí, uno, no hagas planes de jubilación. Eso sí, si quitas todos sus puntos de una y lo revientas de una única estampada, te dará +2. ¿Por qué me miras a mí y al tótem de esa manera? Acércate con quien lleva el gnomo y pulsa la diana. Lo que la gente del gremio conoce como “estampada”.`,
         mission: "Haz una “estampada” con el gnomo contra el tótem",
         onStart: () => {
           T._refill();
