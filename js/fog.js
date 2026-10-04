@@ -809,13 +809,15 @@ const Fog = {
       // Pedido explícito: un objeto en zona VISIBLE con niebla por encima
       // SÍ debe asomarse por encima de ella. Los que están en niebla ya van
       // ocultos (unit--fog-hidden), así que aquí ya no hay nada que tapar.
-      if (this.OBJECTS_PEEK_OVER_FOG) return;
+      // Solo se salta si su propia loseta está de verdad revelada; un objeto sobre niebla real
+      // (p. ej. durante el turno rival, donde isFogged() es false) sigue tapado por ella.
+      if (this.OBJECTS_PEEK_OVER_FOG && !this.isFoggedReal(row, col)) return;
       if (!el || el.classList.contains("unit--fog-hidden")) return;
       const rect = this._expandedRect(el);
       if (rect.width === 0 || rect.height === 0) return;
       const z = (row + col) * 10 + 5;
       unrevealed.forEach((tile) => {
-        if (tile.row === row && tile.col === col) return; // la propia loseta no cuenta como "vecina"
+        if (tile.row === row && tile.col === col && !this.isFoggedReal(row, col)) return; // la propia loseta no cuenta como "vecina" (salvo si el objeto está sobre niebla real)
         const overlapX = Math.max(0, Math.min(rect.right, tile.rect.right) - Math.max(rect.left, tile.rect.left));
         const overlapY = Math.max(0, Math.min(rect.bottom, tile.rect.bottom) - Math.max(rect.top, tile.rect.top));
         if (overlapX * overlapY < this._OVERLAP_MIN_AREA_PX) return;
