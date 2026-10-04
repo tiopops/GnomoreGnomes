@@ -1191,6 +1191,7 @@ const Backpack = {
     Units.list.filter((u) => u.team !== "player" && visible(u)).forEach((u) => out.push({ kind: "unit", ref: u, row: u.row, col: u.col, el: u.el }));
     if (typeof Villages !== "undefined") Villages.list.filter((v) => v.owner !== "player" && v.owner !== "neutral" && visible(v)).forEach((v) => out.push({ kind: "village", ref: v, row: v.row, col: v.col, el: v.el }));
     if (typeof Obelisks !== "undefined") Obelisks.list.filter((o) => o.team !== "player" && visible(o)).forEach((o) => out.push({ kind: "obelisk", ref: o, row: o.row, col: o.col, el: o.el }));
+    if (typeof Volcano !== "undefined") Volcano.rockTargets("player").forEach((t) => out.push(t)); // volcán y lava (js/volcano.js)
     return out;
   },
 
@@ -1269,6 +1270,8 @@ const Backpack = {
 
   _rockImpact(target) {
     if (typeof SFX !== "undefined" && SFX.rockHit) SFX.rockHit();
+    if (target.kind === "volcano") { Volcano.onRockHit(target.ref, "player"); return; }
+    if (target.kind === "lava") { Volcano.extinguish(target.ref); return; }
     if (typeof Drums !== "undefined") {
       const c = getTileCenter(target.row, target.col, Units.boardSize);
       Drums._impact(c.x, c.y, target, true);

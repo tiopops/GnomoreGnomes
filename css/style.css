@@ -9629,3 +9629,93 @@ body.drums-raining::after {
 .unit--katapum-target .obelisk__sprite {
   filter: drop-shadow(0 0 10px rgba(255, 61, 46, 0.95)) drop-shadow(0 0 5px rgba(255, 61, 46, 0.7));
 }
+
+/* ---------- Volcán (js/volcano.js) ---------- */
+.volcano {
+  transform: translate(-50%, -64%);
+}
+.volcano__sprite {
+  display: block;
+  width: 330px;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.45));
+  transform-origin: 50% 80%;
+}
+.volcano--on .volcano__sprite { animation: unit-idle-breathe 3.2s ease-in-out infinite; }
+.volcano--erupting .volcano__sprite {
+  animation: unit-idle-breathe 1.6s ease-in-out infinite;
+  filter: drop-shadow(0 0 18px rgba(255, 120, 20, 0.85)) drop-shadow(0 8px 8px rgba(0, 0, 0, 0.45));
+}
+.volcano.volcano--pulse .volcano__sprite {
+  animation: altar-pulse 0.32s ease-out;
+}
+.volcano__bar {
+  --hp-fill: #ff9a1f;
+  opacity: 1;
+  top: -22px;
+  width: 220px;
+  height: 10px;
+  gap: 0.6px;
+}
+.volcano__bar .unit__hpbar-segment { background: #2b1408; }
+.volcano__bar .unit__hpbar-segment--filled { background: var(--hp-fill); }
+.volcano__seg--mark { margin-right: 3px; }
+.volcano__badge {
+  position: absolute;
+  left: 50%;
+  top: -58px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px 2px 6px;
+  background: var(--vb, #ff5148);
+  border: 2.5px solid #000;
+  border-radius: 14px;
+  color: #fff;
+  font: 800 16px/1 var(--font-display, inherit);
+  text-shadow: 0 1px 0 #000;
+  pointer-events: none;
+}
+.volcano--targeted .volcano__sprite { filter: drop-shadow(0 0 10px rgba(255, 207, 61, 0.95)); }
+body.backpack-giving--katapum .volcano.unit--katapum-target,
+body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events: auto; }
+.volcano.unit--katapum-target .volcano__sprite,
+.lava-puddle.unit--katapum-target .lava-puddle__sprite {
+  filter: drop-shadow(0 0 10px rgba(255, 61, 46, 0.95)) drop-shadow(0 0 5px rgba(255, 61, 46, 0.7));
+}
+
+.lava-puddle {
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: lava-appear 0.5s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.lava-puddle__sprite {
+  display: block;
+  width: 200px;
+  height: auto;
+  scale: var(--lv-s, 1 1);
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 0 10px rgba(255, 110, 20, 0.7));
+  animation: lava-glow 2.4s ease-in-out infinite;
+}
+@keyframes lava-appear {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes lava-glow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 110, 20, 0.6)) brightness(1); }
+  50% { filter: drop-shadow(0 0 16px rgba(255, 140, 30, 0.9)) brightness(1.12); }
+}
+.lava-burst, .lava-steam {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.lava-burst { background: radial-gradient(circle, #ffe27a 0%, #ff8a1f 55%, rgba(255, 60, 0, 0) 75%); }
+.lava-steam { background: radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(220,220,220,0.4) 55%, rgba(255,255,255,0) 75%); }

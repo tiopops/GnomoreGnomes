@@ -531,6 +531,7 @@ const Fog = {
       // que arbustos/recursos: oculta bajo niebla sin descubrir todavía.
       if (typeof Hierbajos !== "undefined") Hierbajos.refreshFog();
       if (typeof Drums !== "undefined") Drums.refreshFog();
+      if (typeof Volcano !== "undefined") Volcano.refreshFog();
     }
     if (typeof Gnome !== "undefined") {
       const veo = Gnome.veoGnomes("player"); // GnomeVeo: gnomos siempre visibles
@@ -908,6 +909,12 @@ const Fog = {
       Drums.list.forEach((d) => {
         if (!d.el) return;
         coverFrom(d.row, d.col, d.el);
+      });
+    }
+    if (typeof Volcano !== "undefined") {
+      Volcano.list.forEach((v) => {
+        if (!v.el) return;
+        coverFrom(v.row, v.col, v.el);
       });
     }
     // Altar de Sacrificios (js/altar.js) — mismo "objeto grande y fijo del

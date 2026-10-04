@@ -421,6 +421,11 @@ function spawnTestUnits(size, raceId, opponents) {
     Altar.resetAll();
     if (typeof LevelAssets === "undefined" || LevelAssets.current === "mushboom_forest") Altar.spawn(size); // Rock'n Troll no lleva Altar de Sacrificios
   }
+  // Volcán (js/volcano.js) — solo Rock'n Troll, centrado como el Altar.
+  if (typeof Volcano !== "undefined") {
+    Volcano.resetAll();
+    Volcano.spawn(size);
+  }
   if (typeof GnomOgro !== "undefined") {
     GnomOgro.resetAll();
   if (typeof Plague !== "undefined") Plague.resetAll();

@@ -982,9 +982,13 @@ const Units = {
       if (typeof Bushes !== "undefined" && Bushes.checkStepInto(unit, step.row, step.col)) break;
       // Fragmentos de roca (js/drums.js): se recogen al pisarlos.
       if (typeof Drums !== "undefined") Drums.onUnitStep(unit, step.row, step.col);
+      if (typeof Volcano !== "undefined") Volcano.onUnitStep(unit, step.row, step.col); // lava (js/volcano.js)
     }
     unit.el.classList.remove("unit--moving");
     unit.spriteEl.classList.remove("unit__sprite--hop");
+    // Lava (js/volcano.js): quemadura por haber pisado lava durante el trayecto.
+    if (typeof Volcano !== "undefined") await Volcano.afterWalk(unit);
+    if (!unit.el) return;
     // Niebla de guerra (js/fog.js) — quien acaba de moverse (rival o gnomo
     // huyendo) puede haber entrado en una loseta sin revelar (o salido de
     // una): reevalúa aquí, en el ÚNICO sitio por el que pasa cualquier

@@ -786,6 +786,7 @@ function createGnomeInstance() {
       // elección). Más allá del propio movimiento el lanzamiento puede
       // fallar (computePassSuccess, "overreach"); un fallo cae siempre
       // dentro del mismo límite de 4 casillas (ver findDropTile).
+      if (typeof Volcano !== "undefined") Volcano.addThrowMarker(unit, this); // lanzar al volcán (js/volcano.js)
       const movimiento = Units.moveRangeOf(unit);
       const tiles = this._throwableTiles(unit);
       tiles.forEach((tile, i) => {

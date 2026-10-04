@@ -208,6 +208,8 @@ const Altar = {
   },
 
   at(row, col) {
+    // El Volcán (js/volcano.js, Rock'n Troll) ocupa casilla igual que el Altar.
+    if (typeof Volcano !== "undefined" && Volcano.at(row, col)) return true;
     return this.list.some((a) => a.row === row && a.col === col);
   },
 
@@ -225,6 +227,7 @@ const Altar = {
   // coloca ALREDEDOR del Altar, no al revés (ver Altar._tileFree, que ya
   // hace lo mismo mirando hacia fuera).
   isNear(row, col, radius = 1) {
+    if (typeof Volcano !== "undefined" && Volcano.isNear(row, col, radius)) return true;
     return this.list.some((a) => Math.max(Math.abs(a.row - row), Math.abs(a.col - col)) <= radius);
   },
 
