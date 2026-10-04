@@ -26,7 +26,7 @@ const IdleHint = {
       !Turns._aiRunning &&
       !(typeof Tutorial !== "undefined" && Tutorial.active) &&
       document.getElementById("screen-board") &&
-      document.getElementById("screen-board").classList.contains("active")
+      document.getElementById("screen-board").classList.contains("screen--active")
     );
   },
 

@@ -626,6 +626,7 @@ const Fog = {
         const fogged = this.isFogged(o.row, o.col);
         o.el.classList.toggle("unit--fog-hidden", fogged);
         o.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(o.row, o.col));
+        if (typeof Units !== "undefined" && Units.updateHpBar) Units.updateHpBar(o);
       });
     }
     // TotemVision (js/totemvision.js) — mismo criterio que un tótem/tienda:

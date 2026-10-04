@@ -1170,7 +1170,15 @@ const Units = {
   // CÓMO se ve. ----
 
   updateHpBar(unit) {
-    const hp = Math.max(0, unit.hp);
+    // Obelisco rival fuera de la vista (recordado/en niebla): la barra se queda
+    // con el último valor que se vio, no se actualiza con el real.
+    let shown = unit.hp;
+    if (unit.popEl && unit.team !== "player" && typeof Fog !== "undefined" && Fog.isPerceived && !Fog.isPerceived(unit.row, unit.col)) {
+      if (unit._seenHp !== undefined) shown = unit._seenHp;
+    } else if (unit.popEl) {
+      unit._seenHp = unit.hp;
+    }
+    const hp = Math.max(0, shown);
     unit.hpSegmentEls.forEach((seg, i) => {
       const wasFilled = seg.classList.contains("unit__hpbar-segment--filled");
       const filled = i < hp;
