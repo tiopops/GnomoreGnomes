@@ -38,6 +38,13 @@ const RELIC_TYPES = {
     description:
       "Unas gafas con nariz y bigote. Si miras directamente al sol te queman la sombra. Revelan en el mapa un gnomo libre, aunque esté bajo la niebla, hasta que lo capturas; entonces te muestran otro distinto. Cada par extra muestra un gnomo más (2 gafas = 2 gnomos, 3 = 3...). Pierden 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruyen y dejan de tener efecto.",
   },
+  gnomeda: {
+    name: "Gnomeda de la Suerte",
+    iconUrl: "assets/iconos/reliquia_gnomeda.png",
+    durability: 3,
+    description:
+      "Fabricada con el oro más puro de las minas de Rock'n'Troll y estampada... estampada contra un gnomo en el momento de su fabricación. Te da +2 Puntos de Gloria por turno mientras la lleves en la mochila (cada moneda extra suma otros +2). Pierde 1 punto de durabilidad cada vez que muere una de tus unidades; al llegar a 0 se destruye y deja de tener efecto.",
+  },
 };
 
 const Relics = {
@@ -91,6 +98,11 @@ const Relics = {
     return this.list(team).filter((r) => r.relicId === "gnomeveo" && r.durability > 0).length;
   },
 
+  // Gnomeda de la Suerte: +2 de gloria por turno por cada moneda activa.
+  gloryBonus(team) {
+    return 2 * this.list(team).filter((r) => r.relicId === "gnomeda" && r.durability > 0).length;
+  },
+
   // AcariciaGnomos: +3 al daño (puntos) de cada golpe a un gnomo.
   gnomeHitBonus(team) {
     return 3 * this.list(team).filter((r) => r.relicId === "acariciagnomos" && r.durability > 0).length;
@@ -108,6 +120,7 @@ const Relics = {
   },
 
   _refreshUi(team) {
+    if (typeof Glory !== "undefined" && Glory._renderPreview) Glory._renderPreview(team);
     if (team === "player" && typeof Backpack !== "undefined" && Backpack._slotsEl) Backpack._renderSlots();
     if (typeof Units !== "undefined" && Units.selectedId) {
       const sel = Units.list.find((u) => u.id === Units.selectedId);

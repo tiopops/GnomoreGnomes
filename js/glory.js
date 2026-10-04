@@ -121,7 +121,7 @@ const Glory = {
   // jugador). `team` es "player" | "enemy".
   grantTurnStart(team) {
     if (!(team in this.points)) return;
-    const gained = GLORY_PER_TURN_START + this.pendingBonus[team] + this._villagesBonus(team);
+    const gained = GLORY_PER_TURN_START + this.pendingBonus[team] + this._villagesBonus(team) + this._relicBonus(team);
     this.points[team] += gained;
     this.pendingBonus[team] = 0;
     this._render(team, { bump: true, gained });
@@ -137,6 +137,11 @@ const Glory = {
   // turno en vez de llevar la cuenta por duplicado en este archivo (regla de
   // oro: un archivo por mecánica — Glory no sabe nada de cómo se conquista
   // un poblado, solo cuánto suma).
+  // Gnomeda de la Suerte (js/relics.js): +2 de gloria por turno por cada moneda activa.
+  _relicBonus(team) {
+    return typeof Relics !== "undefined" ? Relics.gloryBonus(team) : 0;
+  },
+
   _villagesBonus(team) {
     return typeof Villages !== "undefined" ? Villages.gloryBonusFor(team) : 0;
   },
@@ -235,7 +240,7 @@ const Glory = {
   _renderPreview(team) {
     const previewEl = this._previewEls[team];
     if (!previewEl) return;
-    const next = GLORY_PER_TURN_START + this.pendingBonus[team] + this._villagesBonus(team);
+    const next = GLORY_PER_TURN_START + this.pendingBonus[team] + this._villagesBonus(team) + this._relicBonus(team);
     previewEl.textContent = `+${next} / turno`;
   },
 
@@ -267,7 +272,8 @@ const Glory = {
     const villages = typeof Villages !== "undefined" ? Villages.ownedCount(team) : 0;
     const villagesBonus = this._villagesBonus(team);
     const killBonus = this.pendingBonus[team];
-    const nextTotal = GLORY_PER_TURN_START + killBonus + villagesBonus;
+    const relicBonus = this._relicBonus(team);
+    const nextTotal = GLORY_PER_TURN_START + killBonus + villagesBonus + relicBonus;
 
     const hudImg = this._els[team] && this._els[team].querySelector(".glory-hud__icon");
     const iconSrc = hudImg ? hudImg.getAttribute("src") : "";
@@ -306,6 +312,7 @@ const Glory = {
               villagesBonus,
               { muted: villagesBonus === 0 }
             )}
+            ${relicBonus > 0 ? this._sourceRow("ph-coin", "Gnomeda de la Suerte", relicBonus) : ""}
           </div>
           <div class="glory-popup-row glory-popup-row--next">
             <span class="glory-popup-row__label">Próximo turno</span>
