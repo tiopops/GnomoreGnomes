@@ -155,7 +155,8 @@ const Drums = {
     this.refreshMarkers();
   },
 
-  _shake(d) {
+  _shake(d, soft) {
+    if (typeof SFX !== "undefined" && SFX.enabled) { try { SFX.drum(soft); } catch (e) {} }
     if (!d.spriteEl.animate) return;
     d.spriteEl.animate(
       [
@@ -163,9 +164,8 @@ const Drums = {
         { translate: "6px 0", rotate: "3deg" }, { translate: "-4px 0", rotate: "-2deg" },
         { translate: "3px 0", rotate: "1deg" }, { translate: "0 0", rotate: "0deg" },
       ],
-      { duration: 480, easing: "ease-out" }
+      { duration: soft ? 360 : 480, easing: "ease-out" }
     );
-    if (typeof SFX !== "undefined" && SFX.enabled) { try { SFX.hit(); } catch (e) {} }
   },
 
   // ---------- Fin de turno ----------
@@ -395,6 +395,14 @@ const Drums = {
 
   // Llamado desde Units.walkPath en cada salto.
   onUnitStep(unit, row, col) {
+    // Roce: una unidad que llega a una casilla junto a un tambor lo toca.
+    const now = performance.now();
+    this.list.forEach((d) => {
+      if (Math.max(Math.abs(d.row - row), Math.abs(d.col - col)) !== 1) return;
+      if (d.el.classList.contains("unit--fog-hidden") || now - (d._lastTouch || 0) < 700) return;
+      d._lastTouch = now;
+      this._shake(d, true);
+    });
     if (!this.frags.length || unit.team !== "player") return;
     const f = this.frags.find((x) => x.row === row && x.col === col);
     if (!f) return;

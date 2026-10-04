@@ -427,6 +427,42 @@ const SFX = {
     } catch (e) {}
   },
 
+  // Tambor de guerra (js/drums.js): tom grave con caída de tono + golpecito
+  // de parche; `soft` para el simple roce de una unidad que se acerca.
+  drum(soft) {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      const peak = soft ? 0.22 : 0.4;
+      const base = (soft ? 190 : 150) * (0.95 + Math.random() * 0.1);
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(base * 1.7, now);
+      o.frequency.exponentialRampToValueAtTime(base * 0.55, now + 0.18);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.linearRampToValueAtTime(peak, now + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + (soft ? 0.28 : 0.42));
+      o.connect(g); g.connect(ctx.destination);
+      o.start(now); o.stop(now + 0.45);
+      // Golpe de parche: ruido filtrado muy corto.
+      const len = Math.round(ctx.sampleRate * 0.05);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+      const n = ctx.createBufferSource();
+      n.buffer = buf;
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass"; f.frequency.value = 900; f.Q.value = 0.8;
+      const ng = ctx.createGain();
+      ng.gain.value = soft ? 0.08 : 0.16;
+      n.connect(f); f.connect(ng); ng.connect(ctx.destination);
+      n.start(now);
+    } catch (e) {}
+  },
+
   explosion() {
     const ctx = this.ensureCtx();
     if (!ctx) return;
