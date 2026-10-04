@@ -167,7 +167,7 @@ const Drums = {
   _shake(d, soft) {
     // Un solo sonido aunque tiemblen varios a la vez (sin solaparse).
     const t = performance.now();
-    if (typeof SFX !== "undefined" && SFX.enabled && t - (this._lastSound || 0) > 450) {
+    if (typeof SFX !== "undefined" && SFX.enabled && t - (this._lastSound || 0) > 450 && !(soft && this._resolving)) {
       this._lastSound = t;
       try { SFX.drum(soft); } catch (e) {}
     }
@@ -212,6 +212,11 @@ const Drums = {
   // ---------- Fin de turno ----------
   async onTurnEnd(team) {
     if (!this.isActive() || !this.list.length) return;
+    this._resolving = true;
+    try { await this._resolveTurnEnd(team); } finally { this._resolving = false; }
+  },
+
+  async _resolveTurnEnd(team) {
     // 1) Porciones del turno
     let gained = 0;
     this.list.forEach((d) => {

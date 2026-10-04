@@ -435,6 +435,16 @@ const SFX = {
     try {
       if (ctx.state === "suspended") ctx.resume();
       const now = ctx.currentTime;
+      // Corta el tambor anterior (si aún suena) para que nunca se solapen.
+      if (this._drumVoice) {
+        try {
+          const og = this._drumVoice.g.gain;
+          og.cancelScheduledValues(now);
+          og.setValueAtTime(og.value, now);
+          og.linearRampToValueAtTime(0.0001, now + 0.03);
+          this._drumVoice.o.stop(now + 0.05);
+        } catch (e) {}
+      }
       const peak = soft ? 0.22 : 0.4;
       const base = (soft ? 190 : 150) * (0.95 + Math.random() * 0.1);
       const o = ctx.createOscillator();
@@ -447,6 +457,7 @@ const SFX = {
       g.gain.exponentialRampToValueAtTime(0.0001, now + (soft ? 0.28 : 0.42));
       o.connect(g); g.connect(ctx.destination);
       o.start(now); o.stop(now + 0.45);
+      this._drumVoice = { o, g };
       // Golpe de parche: ruido filtrado muy corto.
       const len = Math.round(ctx.sampleRate * 0.05);
       const buf = ctx.createBuffer(1, len, ctx.sampleRate);

@@ -419,7 +419,7 @@ function spawnTestUnits(size, raceId, opponents) {
   // se coloca aquí, nace más adelante cuando el Altar se llena del todo.
   if (typeof Altar !== "undefined") {
     Altar.resetAll();
-    Altar.spawn(size);
+    if (typeof LevelAssets === "undefined" || LevelAssets.current === "mushboom_forest") Altar.spawn(size); // Rock'n Troll no lleva Altar de Sacrificios
   }
   if (typeof GnomOgro !== "undefined") {
     GnomOgro.resetAll();
