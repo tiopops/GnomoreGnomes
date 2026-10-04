@@ -9585,3 +9585,28 @@ body.drums-raining::after {
   box-shadow: 0 0 14px rgba(255, 200, 90, 0.5), inset 0 0 12px rgba(255, 200, 90, 0.25);
   pointer-events: none;
 }
+
+/* Placa de "veces tocado" del tambor (js/drums.js) */
+.drum-plays {
+  position: absolute;
+  transform: translate(-50%, 0) rotate(-3deg);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 9px 1px 7px;
+  background: #ffd23f;
+  color: #1a1208;
+  border: 2px solid #000;
+  font-family: "Russo One", sans-serif;
+  font-size: 15px;
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.45));
+  transition: opacity 0.2s ease;
+}
+.drum-plays--visible { opacity: 1; }
+.drum-plays i { font-size: 16px; }
+
+.drum-frag.gg-remembered { filter: saturate(0.25) brightness(0.65) drop-shadow(0 3px 3px rgba(0, 0, 0, 0.5)); }
+/* Arbusto de Rock'n Troll un poco más grande */
+.bush__sprite--rock { width: 150px; }

@@ -36,7 +36,7 @@ const Drums = {
   },
 
   resetAll() {
-    this.list.forEach((d) => { d.el.remove(); if (d.markerEl) d.markerEl.remove(); });
+    this.list.forEach((d) => { d.el.remove(); if (d.markerEl) d.markerEl.remove(); if (d.badgeEl) d.badgeEl.remove(); });
     this.frags.forEach((f) => f.el.remove());
     this.list = [];
     this.frags = [];
@@ -110,10 +110,18 @@ const Drums = {
     markerEl.className = "drum-marker";
     markerEl.style.left = `${x}px`;
     markerEl.style.top = `${y - 238}px`;
-    markerEl.style.zIndex = String((row + col) * 10 + 9);
+    markerEl.style.zIndex = String((row + col) * 10 + 45);
     Units.container.appendChild(markerEl);
 
-    const drum = { id: `drum-${this._nextId++}`, row, col, el, spriteEl, markerEl, hits: {} };
+    // Placa con las veces que TU equipo ha hecho sonar este tambor.
+    const badgeEl = document.createElement("div");
+    badgeEl.className = "drum-plays";
+    badgeEl.style.left = `${x}px`;
+    badgeEl.style.top = `${y - 128}px`;
+    badgeEl.style.zIndex = String((row + col) * 10 + 45);
+    Units.container.appendChild(badgeEl);
+
+    const drum = { id: `drum-${this._nextId++}`, row, col, el, spriteEl, markerEl, badgeEl, hits: {}, plays: {} };
     this.list.push(drum);
     return drum;
   },
@@ -150,6 +158,7 @@ const Drums = {
     this.list.forEach((d) => {
       if (Math.max(Math.abs(unit.row - d.row), Math.abs(unit.col - d.col)) > 1) return;
       d.hits[unit.team] = (d.hits[unit.team] || 0) + 1;
+      d.plays[unit.team] = (d.plays[unit.team] || 0) + 1;
       this._shake(d);
     });
     this.refreshMarkers();
@@ -212,7 +221,7 @@ const Drums = {
     this.list.forEach((d) => (d.hits[team] = 0));
     if (gained > 0) {
       this.slices[team] = Math.min(DRUM_SLICES, (this.slices[team] || 0) + gained);
-      this.list.forEach((d) => { if (this.majority(d) === team) this._shake(d); });
+      this.list.forEach((d) => { if (this.majority(d) === team) { d.plays[team] = (d.plays[team] || 0) + 1; this._shake(d); } });
     }
     this.refreshMarkers();
     // 2) ¿10/10?
@@ -463,7 +472,12 @@ const Drums = {
       d.el.classList.toggle("unit--fog-hidden", fogged);
       d.el.classList.toggle("gg-remembered", !fogged && !Fog.isPerceived(d.row, d.col));
     });
-    this.frags.forEach((f) => f.el.classList.toggle("unit--fog-hidden", Fog.isFoggedReal(f.row, f.col)));
+    this.frags.forEach((f) => {
+      const fogged = Fog.isFoggedReal(f.row, f.col);
+      f.el.classList.toggle("unit--fog-hidden", fogged);
+      // Explorado pero fuera de percepción: oscurecido como el resto del escenario.
+      f.el.classList.toggle("gg-remembered", !fogged && !Fog.isPerceived(f.row, f.col));
+    });
     this.refreshMarkers();
   },
 
@@ -474,6 +488,7 @@ const Drums = {
     const have = this.slices[team] || 0;
     const pending = this.totalPending(team);
     this.list.forEach((d) => {
+      this._updateBadge(d);
       const near = this._unitsNear(d.row, d.col).some((u) => u.team === team);
       const fogged = typeof Fog !== "undefined" && Fog.isFoggedReal(d.row, d.col);
       const show = near && !fogged && !Obelisks.gameOver;
@@ -489,6 +504,22 @@ const Drums = {
         d.markerEl.classList.add("drum-marker--flash");
       }
     });
+  },
+
+  _updateBadge(d) {
+    const n = d.plays.player || 0;
+    const fogged = typeof Fog !== "undefined" && Fog.isFoggedReal(d.row, d.col);
+    d.badgeEl.classList.toggle("drum-plays--visible", n > 0 && !fogged);
+    if (d._badgeN === n) return;
+    const grew = n > (d._badgeN || 0);
+    d._badgeN = n;
+    d.badgeEl.innerHTML = `<i class="ph-fill ph-music-notes"></i><span>×${n}</span>`;
+    if (grew && d.badgeEl.animate) {
+      d.badgeEl.animate(
+        [{ scale: "1" }, { scale: "1.35" }, { scale: "1" }],
+        { duration: 380, easing: "cubic-bezier(.34,1.6,.64,1)" }
+      );
+    }
   },
 
   _markerSvg(have, pending, color, full) {

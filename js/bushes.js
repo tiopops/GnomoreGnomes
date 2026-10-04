@@ -118,6 +118,7 @@ const Bushes = {
     const bushSrc = typeof LevelAssets !== "undefined" ? LevelAssets.bushSprite() : "assets/iconos/arbusto.png";
     if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, bushSrc);
     else spriteEl.src = bushSrc;
+    if (typeof LevelAssets !== "undefined" && LevelAssets.current === "colinas_rockntroll") spriteEl.classList.add("bush__sprite--rock");
     // Volteo horizontal aleatorio (naturalidad) — propiedad `scale`
     // independiente del transform de la animación idle.
     if (Math.random() < 0.5) spriteEl.style.scale = "-1 1";
