@@ -358,7 +358,7 @@ const Drums = {
       spots.push({ r, c });
     }
     spots.sort(() => Math.random() - 0.5);
-    const n = Math.min(spots.length, t.kind === "unit" ? 2 : 3);
+    const n = Math.min(spots.length, 2 + Math.floor(Math.random() * 3)); // 2 a 4 por roca
     const from = getTileCenter(t.row, t.col, size);
     for (let i = 0; i < n; i++) {
       const { r, c } = spots[i];
@@ -408,9 +408,17 @@ const Drums = {
       d._lastTouch = now;
       this._shake(d, true);
     });
-    if (!this.frags.length || unit.team !== "player") return;
+    if (!this.frags.length) return;
     const f = this.frags.find((x) => x.row === row && x.col === col);
     if (!f) return;
+    if (unit.team !== "player") {
+      // Cualquier bando puede recogerlos: el rival se los queda.
+      this.frags = this.frags.filter((x) => x !== f);
+      f.el.remove();
+      const c = Resources.countsFor(unit.team);
+      c.fragmento = (c.fragmento || 0) + 1;
+      return;
+    }
     if (typeof Backpack !== "undefined" && !(Resources.counts.fragmento > 0) && !Backpack.hasFreeSlot()) return; // mochila llena: se queda en el suelo
     this.frags = this.frags.filter((x) => x !== f);
     f.el.remove();
