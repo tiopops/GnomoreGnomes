@@ -8899,7 +8899,7 @@ body.backpack-giving--katapum * {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 8px 0 0 -14px;
+  margin: 32px 0 0 -14px; /* deja sitio al botón Continuar, que sobresale por debajo de la burbuja */
   padding: 7px 24px;
   color: #fff;
   font-weight: 900;
@@ -8930,7 +8930,7 @@ body.backpack-giving--katapum * {
 .tut-panel--compact .tut-portrait { height: 120px; margin-right: -8px; }
 .tut-panel--compact .tut-btn { pointer-events: auto; }
 
-.tut-panel--compact .tut-mission { margin-top: 12px; }
+.tut-panel--compact .tut-mission { margin-top: 32px; }
 .tut-panel--compact .tut-skip { top: -30px; }
 .tut-progress { height: 5px; margin: 14px 12px 0 0; background: rgba(0, 0, 0, 0.45); }
 .tut-progress__bar { height: 100%; width: 0; background: #ffcf3f; transition: width 0.4s ease; }
