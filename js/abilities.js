@@ -29,28 +29,28 @@ const ABILITIES = {
     // js/unitinfo.js, que usan iconImg si existe y si no caen a `icon`.
     iconImg: "assets/iconos/golem_espinas.png",
     description:
-      "Se cura hasta su vida máxima de base y se envuelve de espinas hasta su próximo turno: mientras dure, cualquiera que lo golpee se hace 1 punto de daño a sí mismo. Gasta 1 acción. Un solo uso por partida.",
+      "Se cura hasta su vida máxima de base y se envuelve de espinas hasta su próximo turno: mientras dure, cualquiera que lo golpee se hace 1 punto de daño a sí mismo. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
   },
   surcabosques: {
     name: "Visión Lejana",
     icon: "ph-eye",
     iconImg: "assets/iconos/vision_lejana.png",
     description:
-      "Revela una zona cualquiera del mapa (3 casillas alrededor del punto elegido), esté donde esté. Tras activarla, el cursor se convierte en un ojo: el siguiente clic sobre el mapa la usa ahí mismo. Gasta 1 acción. Un solo uso por partida.",
+      "Revela una zona cualquiera del mapa (3 casillas alrededor del punto elegido), esté donde esté. Tras activarla, el cursor se convierte en un ojo: el siguiente clic sobre el mapa la usa ahí mismo. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
   },
   seta_artificiero: {
     name: "Hongo Trampa",
     icon: "ph-bomb",
     iconImg: "assets/iconos/hongo_trampa.png",
     description:
-      "Coloca una seta-trampa invisible para el enemigo en una casilla adyacente libre. Si una unidad enemiga la pisa, explota: le quita 1 punto de vida y la deja inactiva hasta su siguiente turno. Gasta 1 acción. Un solo uso por partida.",
+      "Coloca una seta-trampa invisible para el enemigo en una casilla adyacente libre. Si una unidad enemiga la pisa, explota: le quita 1 punto de vida y la deja inactiva hasta su siguiente turno. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
   },
   urgamentes: {
     name: "Voluntad Quebrada",
     icon: "ph-brain",
     iconImg: "assets/iconos/voluntad_quebrada.png",
     description:
-      "Toma el control total de un personaje enemigo adyacente durante el resto de este turno: se puede mover, atacar, coger/golpear/pasar su gnomo o incluso usar su propia habilidad, como si fuera propio. Gasta 1 acción. Un solo uso por partida.",
+      "Toma el control total de un personaje enemigo adyacente durante el resto de este turno: se puede mover, atacar, coger/golpear/pasar su gnomo o incluso usar su propia habilidad, como si fuera propio. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
   },
   punoroca: {
     name: "Nudillos Rocosos",
@@ -59,14 +59,14 @@ const ABILITIES = {
     // ver el resto de comentarios "iconImg" de este archivo).
     iconImg: "assets/iconos/nudillos_rocosos.png",
     description:
-      "Golpea y empuja 4 casillas en línea recta a un enemigo adyacente (se detiene en el primer obstáculo); el golpeado queda agotado el siguiente turno. Gasta 1 acción. Un solo uso por partida. PuñoRroca es tan bruto que, si no tiene un aliado (cualquiera) justo al lado nada más empezar a andar, da tumbos al azar en vez de ir donde se le indica.",
+      "Golpea y empuja 4 casillas en línea recta a un enemigo adyacente (se detiene en el primer obstáculo); el golpeado queda agotado el siguiente turno. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio. PuñoRroca es tan bruto que, si no tiene un aliado (cualquiera) justo al lado nada más empezar a andar, da tumbos al azar en vez de ir donde se le indica.",
   },
   goblin_lanzador: {
     name: "Resorte Goblin",
     icon: "ph-hand-grabbing",
     iconImg: "assets/iconos/resorte_goblin.png",
     description:
-      "Agarra a un personaje adyacente (amigo o enemigo, incluso si lleva el gnomo cogido) y lo lanza a cualquier casilla libre dentro de su propia área de movimiento, también al agua (quien no sea anfibio se ahoga). Gasta 1 acción. Un solo uso por partida.",
+      "Agarra a un personaje adyacente (amigo o enemigo, incluso si lleva el gnomo cogido) y lo lanza a cualquier casilla libre dentro de su propia área de movimiento, también al agua (quien no sea anfibio se ahoga). Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
   },
 };
 
@@ -1064,6 +1064,18 @@ const Abilities = {
   // se toca aquí: esa parte del pedido original SÍ era permanente ("se cura
   // hasta su vida máxima de base"), solo la protección de espinas caduca.
   onTurnStart(team) {
+    // Recarga: quien empieza su turno pegado a un tótem de su propio equipo
+    // recupera la habilidad gastada (incentivo para capturar tótems).
+    if (typeof Villages !== "undefined") {
+      Units.list.forEach((unit) => {
+        if (unit.team !== team || !unit.abilityUsed || !ABILITIES[unit.typeId]) return;
+        const near = Villages.list.some((v) => v.owner === team && Math.max(Math.abs(v.row - unit.row), Math.abs(v.col - unit.col)) <= 1);
+        if (!near) return;
+        unit.abilityUsed = false;
+        if (typeof Units.spawnFloatingText === "function") Units.spawnFloatingText(unit, "¡Habilidad recargada!", { className: "dmg-popup" });
+      });
+      this._refreshButton();
+    }
     Units.list.forEach((unit) => {
       if (unit.team !== team || !unit.thorny) return;
       unit.thorny = false;

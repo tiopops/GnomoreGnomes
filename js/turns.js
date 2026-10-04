@@ -591,10 +591,12 @@ const Turns = {
     }
 
     const jitter = () => (Math.random() - 0.5) * 0.4;
+    const volcano = typeof Volcano !== "undefined" ? Volcano.aiPlanScore(team) : -9;
     const scored = [
       ["assault", assault + jitter()],
       ["totems", totems + jitter()],
       ["ogro", ogro + jitter()],
+      ["volcano", volcano + jitter()],
     ].sort((a, b) => b[1] - a[1]);
     this._aiPlan[team] = { mode: scored[0][0], target: tObelisk };
   },
@@ -633,16 +635,20 @@ const Turns = {
   },
 
   _aiPickMoveTileByPath(unit, target) {
-    const tiles = Movement.reachableTiles(unit);
+    let tiles = Movement.reachableTiles(unit);
+    // Lava (js/volcano.js): nunca un camino que lo mate; penaliza cada casilla de lava.
+    const lavaOf = (t) => (typeof Volcano !== "undefined" ? Volcano.aiTileLava(unit, t) : 0);
+    if (typeof Volcano !== "undefined" && Volcano.eruption) tiles = tiles.filter((t) => lavaOf(t) < unit.hp);
     if (!tiles.length) return null;
     const map = this._aiDistMap(target);
     const cur = map[unit.row][unit.col];
     let best = null;
-    let bestD = cur;
+    let bestScore = cur;
     tiles.forEach((t) => {
       const d = map[t.row][t.col];
-      if (d < bestD) {
-        bestD = d;
+      const score = d + 2 * lavaOf(t);
+      if (d < cur && score < bestScore) {
+        bestScore = score;
         best = t;
       }
     });
@@ -723,6 +729,13 @@ const Turns = {
   async _aiActOnce(unit) {
     if (!unit.el) return false; // pudo morir a mitad del propio turno rival
 
+    // Volcán (js/volcano.js): remate con piedra y reacción a la lava.
+    if (typeof Volcano !== "undefined") {
+      await Volcano.aiRockFinisher(unit.team);
+      if (await Volcano.aiHandleLava(unit)) return true;
+      if (!unit.el) return false;
+    }
+
     // GnomOgro (js/gnomogro.js) — pedido explícito: "cuando el gnomogro
     // entra en juego los enemigos deben ir a intentar matarlo por todos los
     // medios, si no irá a su base y la romperá". Prioridad máxima para la
@@ -762,6 +775,7 @@ const Turns = {
         // de un solo golpe pesa más que la gloria persistente de un
         // tótem), pero solo si el Altar sigue en pie (Altar.current()
         // devuelve null en cuanto se llena/desaparece).
+        if (typeof Volcano !== "undefined" && (await Volcano.aiFeed(unit, held))) return true;
         if (this._aiShouldSacrificeAtAltar(unit, held)) {
           const altar = Altar.current();
           const approach = Altar.findApproachTile(unit, altar);
@@ -988,14 +1002,20 @@ const Turns = {
   // mismo criterio de acercamiento sin duplicar el bucle.
   _aiPickMoveTileToward(unit, target) {
     if (typeof Movement === "undefined" || !target) return null;
-    const tiles = Movement.reachableTiles(unit);
+    let tiles = Movement.reachableTiles(unit);
+    // Lava (js/volcano.js): nunca un camino que lo mate; cada casilla de lava pesa.
+    const lavaOf = (t) => (typeof Volcano !== "undefined" ? Volcano.aiTileLava(unit, t) : 0);
+    if (typeof Volcano !== "undefined" && Volcano.eruption) tiles = tiles.filter((t) => lavaOf(t) < unit.hp);
     if (tiles.length === 0) return null;
 
     let best = null;
     let bestDist = Infinity;
+    let bestScore = Infinity;
     tiles.forEach((t) => {
       const d = Math.max(Math.abs(t.row - target.row), Math.abs(t.col - target.col));
-      if (d < bestDist) {
+      const score = d + 2 * lavaOf(t);
+      if (score < bestScore) {
+        bestScore = score;
         bestDist = d;
         best = t;
       }

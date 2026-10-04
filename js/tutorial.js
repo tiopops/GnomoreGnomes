@@ -626,7 +626,7 @@ const Tutorial = {
           const v = T._village();
           return v && v.owner === "player";
         },
-        ok: "¡Un tótem conquistado! ¿Tinkle? ¿Alguien puede llamar a emergencias? O a una funeraria...",
+        ok: "¡Un tótem conquistado! ¿Tinkle? ¿Alguien puede llamar a emergencias? O a una funeraria... Y un truco: si una de tus unidades empieza el turno pegada a un tótem tuyo, recarga su habilidad especial. Capturar tótems también sirve para eso.",
       },
       {
         say: `Tu Obelisco guarda más trucos. Selecciónalo y abre Habilidades: tres ramas (Guerra, Protección y Supervivencia) con mejoras permanentes que se compran con Puntos de Gloria. Échale un vistazo y ciérrala con la X. No te pido que entiendas nada, de momento con que sepas que está ahí, es suficiente.`,

@@ -212,6 +212,7 @@ const Backpack = {
     this._placingUid = null;
     this._givingUid = null;
     this._katapumUid = null;
+    this._rockRound = {};
     this._hasPlayerSelection = false;
     this.closePopup();
     // "inicialmente la mochila aparece vacia salvo con una seta arcoiris,
@@ -485,6 +486,7 @@ const Backpack = {
         if (entry.kind === "resource") {
           const def = RESOURCE_TYPES[entry.resourceId];
           slotEl.className += " backpack-slot--resource";
+          if (entry.resourceId === "fragmento" && !this.canThrowRock("player")) slotEl.className += " backpack-slot--spent";
           slotEl.innerHTML =
             `<img src="${def.iconUrl}" class="backpack-slot__icon" alt="${def.name}">` +
             `<span class="shop-slot__price"><span class="shop-slot__price__num">${entry.count}</span></span>`;
@@ -585,8 +587,25 @@ const Backpack = {
     this.inventory.push({ uid: this._nextUid++, itemId });
   },
 
+  // Piedras (fragmentos): como mucho UNA por turno y por equipo.
+  _rockRound: {},
+  canThrowRock(team = "player") {
+    return this._rockRound[team] !== (typeof Turns !== "undefined" ? Turns.roundNumber : 0);
+  },
+  markRockThrown(team = "player") {
+    this._rockRound[team] = typeof Turns !== "undefined" ? Turns.roundNumber : 0;
+  },
+
   _useItem(uid) {
-    if (uid === "resource-fragmento") { this.closePopup(); this._startTargetingRock(); return; }
+    if (uid === "resource-fragmento") {
+      if (!this.canThrowRock("player")) {
+        if (typeof UiHint !== "undefined") UiHint.show("Solo puedes lanzar una piedra por turno");
+        return;
+      }
+      this.closePopup();
+      this._startTargetingRock();
+      return;
+    }
     const entry = this.inventory.find((it) => it.uid === uid);
     if (!entry) return;
     this.closePopup();
@@ -1146,6 +1165,7 @@ const Backpack = {
     Units.list.forEach((u) => u.el && u.el.classList.remove("unit--katapum-target"));
     document.querySelectorAll(".unit--katapum-target").forEach((el) => el.classList.remove("unit--katapum-target"));
     this._rockMode = false;
+    if (typeof Volcano !== "undefined") Volcano.clearHitEls();
     if (this._katapumPickHandler) {
       window.removeEventListener("click", this._katapumPickHandler, { capture: true });
       this._katapumPickHandler = null;
@@ -1162,11 +1182,12 @@ const Backpack = {
     e.stopPropagation();
     const uid = this._katapumUid;
     const rockMode = this._rockMode;
+    // El objetivo se resuelve ANTES de cancelar (cancelar retira los recuadros de lava).
+    const rockTarget = rockMode && unitEl ? this._rockTargetFromEl(unitEl) : null;
     this._cancelTargetingKatapum();
     if (isFixedUi || !unitEl) return; // cancela sin gastar, se puede reintentar
     if (rockMode) {
-      const t = this._rockTargetFromEl(unitEl);
-      if (t) this._launchRock(t);
+      if (rockTarget) this._launchRock(rockTarget);
       return;
     }
 
@@ -1200,7 +1221,7 @@ const Backpack = {
   },
 
   _startTargetingRock() {
-    if (typeof Units === "undefined" || !((Resources.counts.fragmento || 0) > 0)) return;
+    if (typeof Units === "undefined" || !((Resources.counts.fragmento || 0) > 0) || !this.canThrowRock("player")) return;
     const targets = this._rockTargets();
     if (targets.length === 0) return; // nada a la vista: no se gasta
     this._katapumUid = "rock";
@@ -1213,7 +1234,8 @@ const Backpack = {
   },
 
   _launchRock(target) {
-    if (!((Resources.counts.fragmento || 0) > 0)) return;
+    if (!((Resources.counts.fragmento || 0) > 0) || !this.canThrowRock("player")) return;
+    this.markRockThrown("player");
     Resources.counts.fragmento--;
     if (Resources.counts.fragmento <= 0) delete Resources.counts.fragmento;
     this._renderSlots();

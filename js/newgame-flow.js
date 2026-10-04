@@ -250,6 +250,7 @@ async function startMatch({ modeId, raceId, levelId, opponents }) {
     // cualquier tamaño de escenario; el día que haya un modo con más
     // rivales que también los quiera, basta con ampliar esta condición.
     if (typeof LevelAssets !== "undefined") LevelAssets.apply(levelId || "mushboom_forest");
+    if (typeof Music !== "undefined") Music._refresh(); // pista del nivel
     const map = generateMap(size, { rivers: opponents === 1 });
 
     SaveGame.save({
@@ -294,6 +295,7 @@ async function resumeMatch() {
     // criterio aquí.
     if (typeof Preload !== "undefined") await Preload.run();
     if (typeof LevelAssets !== "undefined") LevelAssets.apply(saved.levelId || "mushboom_forest");
+    if (typeof Music !== "undefined") Music._refresh();
     const map = { size: saved.size, tiles: saved.tiles };
     renderMap(map, document.getElementById("board-tiles"));
     if (typeof TerrainMap !== "undefined") TerrainMap.init(map);

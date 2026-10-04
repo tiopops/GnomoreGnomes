@@ -10,11 +10,12 @@ const Music = {
   TRACKS: {
     menu: "assets/musica/MainTheme.mp3",
     match: "assets/musica/MushBoomForestMainTheme.mp3",
+    rock: "assets/musica/RocknTrollaMainTheme.mp3", // Colinas Rock'n Troll
   },
   enabled: true,
   volume: 0.2,
   _els: {},
-  _gain: { menu: 0, match: 0 },
+  _gain: { menu: 0, match: 0, rock: 0 },
   _target: null,
   _unlocked: false,
   _timer: null,
@@ -31,7 +32,7 @@ const Music = {
       const a = new Audio();
       a.src = this.TRACKS[k];
       a.loop = true;
-      a.preload = "auto";
+      a.preload = k === "rock" ? "metadata" : "auto";
       a.volume = 0;
       this._els[k] = a;
     }
@@ -50,7 +51,8 @@ const Music = {
   _wanted() {
     if (!this.enabled) return null;
     const board = document.getElementById("screen-board");
-    return board && board.classList.contains("screen--active") ? "match" : "menu";
+    if (!(board && board.classList.contains("screen--active"))) return "menu";
+    return typeof LevelAssets !== "undefined" && LevelAssets.current === "colinas_rockntroll" ? "rock" : "match";
   },
 
   _refresh() {

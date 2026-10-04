@@ -26,7 +26,7 @@ const VOLCANO_SPRITES = {
 const VOLCANO_LAVA_SPRITES = [VOLCANO_DIR + "lava_1.png", VOLCANO_DIR + "lava_2.png"];
 const VOLCANO_TEAM_COLORS = { player: "#3aa0ff", enemy: "#ff5148", enemy2: "#52d66a", enemy3: "#c067ff" };
 const VOLCANO_INTERACT_RANGE = 1;
-const VOLCANO_EXTINGUISH_RANGE = 2; // distancia máxima (a alguna unidad propia) para apagar una casilla
+const VOLCANO_EXTINGUISH_RANGE = 3; // distancia máxima (a alguna unidad propia) para apagar una casilla
 
 const Volcano = {
   list: [], // como mucho uno
@@ -294,13 +294,13 @@ const Volcano = {
   },
 
   // 1 de daño (unidad, tótem u obelisco). `owner` cobra la muerte.
-  _burn(t, owner) {
+  _burn(t, owner, dmg = 1) {
     const unit = t.kind === "unit" ? t.ref : null;
     if (unit && !unit.el) return;
     if (typeof SFX !== "undefined") SFX.hit();
     const c = getTileCenter(t.row, t.col, Units.boardSize);
     this._flame(c.x, c.y, t.row, t.col);
-    if (typeof Drums !== "undefined") Drums._applyDamage(t, 1, owner);
+    if (typeof Drums !== "undefined") Drums._applyDamage(t, dmg, owner);
     if (unit && unit.hp <= 0 && typeof Glory !== "undefined" && unit.team !== owner) Glory.queueKillBonus(owner);
   },
 
@@ -320,18 +320,23 @@ const Volcano = {
   // ---------- Quemaduras de unidades ----------
   // Pisar lava durante un desplazamiento (Units.walkPath): se marca; el daño
   // (como mucho 1 por ronda) se aplica al terminar el desplazamiento.
+  // Cada casilla de lava pisada = 1 de daño.
   onUnitStep(unit, row, col) {
-    if (this.eruption && this.lavaAt(row, col)) unit._lavaStep = true;
+    if (this.eruption && this.lavaAt(row, col)) unit._lavaSteps = (unit._lavaSteps || 0) + 1;
   },
 
   async afterWalk(unit) {
-    if (!unit._lavaStep) return;
-    unit._lavaStep = false;
-    if (!this.eruption || !unit.el) return;
-    if (unit._burnRound === Turns.roundNumber) return;
-    unit._burnRound = Turns.roundNumber;
-    this._burn({ kind: "unit", ref: unit, row: unit.row, col: unit.col }, this.eruption.owner);
+    const n = unit._lavaSteps || 0;
+    unit._lavaSteps = 0;
+    if (!n || !this.eruption || !unit.el) return;
+    this._burn({ kind: "unit", ref: unit, row: unit.row, col: unit.col }, this.eruption.owner, n);
     await new Promise((r) => setTimeout(r, 250));
+  },
+
+  // Lava que pisaría un camino (para que la IA lo evite).
+  lavaOnPath(path) {
+    if (!this.eruption) return 0;
+    return path.reduce((n, s) => n + (this.lavaAt(s.row, s.col) ? 1 : 0), 0);
   },
 
   // Inicio de turno de `team`.
@@ -345,10 +350,9 @@ const Volcano = {
       await this._wave();
     }
     // Quien empieza su turno sobre lava se quema (1 por ronda).
-    const burning = Units.list.filter((u) => u.team === team && this.lavaAt(u.row, u.col) && u._burnRound !== Turns.roundNumber);
+    const burning = Units.list.filter((u) => u.team === team && this.lavaAt(u.row, u.col));
     for (const u of burning) {
       if (!this.eruption) break;
-      u._burnRound = Turns.roundNumber;
       this._burn({ kind: "unit", ref: u, row: u.row, col: u.col }, this.eruption.owner);
       await new Promise((r) => setTimeout(r, 300));
     }
@@ -404,11 +408,34 @@ const Volcano = {
       this.lava.forEach((l) => {
         if (!visible(l)) return;
         if (mine.some((u) => Math.max(Math.abs(u.row - l.row), Math.abs(u.col - l.col)) <= VOLCANO_EXTINGUISH_RANGE)) {
-          out.push({ kind: "lava", ref: l, row: l.row, col: l.col, el: l.el });
+          out.push({ kind: "lava", ref: l, row: l.row, col: l.col, el: this._hitEl(l) });
         }
       });
     }
     return out;
+  },
+
+  // Recuadro romboidal clicable por casilla de lava (aunque haya una unidad
+  // o un edificio encima o delante): evita que el clic lo intercepte otro
+  // elemento.
+  _hitEl(l) {
+    if (l.hitEl && l.hitEl.isConnected) return l.hitEl;
+    const el = document.createElement("div");
+    el.className = "unit lava-hit";
+    const { x, y } = getTileCenter(l.row, l.col, Units.boardSize);
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.zIndex = "9000"; // por encima de cualquier sprite alto (volcán, árboles, obelisco)
+    Units.container.appendChild(el);
+    l.hitEl = el;
+    return el;
+  },
+
+  clearHitEls() {
+    const els = Array.from(document.querySelectorAll(".lava-hit"));
+    this.lava.forEach((l) => { l.hitEl = null; });
+    // Se quitan con un pequeño retraso: el lanzamiento mide su rect justo después.
+    els.forEach((e) => { e.style.pointerEvents = "none"; e.style.visibility = "hidden"; setTimeout(() => e.remove(), 300); });
   },
 
   async onRockHit(v, team) {
@@ -583,6 +610,146 @@ const Volcano = {
     Gnome.destroyInstance(gnome);
     await this.addPoints(v, holder.team, amount);
     if (holder.el) Units.refreshRange(holder);
+  },
+
+  // ---------- IA (la CPU conoce la lava y el volcán) ----------
+  // Casillas de lava que pisaría ir en línea recta de `unit` a `tile`.
+  aiTileLava(unit, tile) {
+    if (!this.eruption) return 0;
+    return this.lavaOnPath(Units.stepPath(unit.row, unit.col, tile.row, tile.col));
+  },
+
+  // Guardia central (Units.walkPath, solo rivales): si el camino los mataría,
+  // se detienen justo antes de la primera casilla de lava.
+  aiGuardPath(unit, path) {
+    if (!this.eruption || !path.length) return path;
+    const n = this.lavaOnPath(path);
+    if (n < unit.hp) return path;
+    const i = path.findIndex((s) => this.lavaAt(s.row, s.col));
+    return i <= 0 ? [] : path.slice(0, i);
+  },
+
+  _aiRocks(team) {
+    const c = typeof Resources !== "undefined" && Resources.countsFor ? Resources.countsFor(team) : null;
+    return c ? c.fragmento || 0 : 0;
+  },
+
+  _aiCanThrow(team) {
+    return this._aiRocks(team) > 0 && typeof Backpack !== "undefined" && Backpack.canThrowRock(team);
+  },
+
+  _aiSpendRock(team) {
+    Resources.countsFor(team).fragmento--;
+    Backpack.markRockThrown(team);
+  },
+
+  // ¿Qué hace la CPU con esta unidad frente a la lava? Devuelve true si
+  // ya usó una acción (movimiento) y no debe hacer nada más con ella.
+  async aiHandleLava(unit) {
+    if (!this.eruption || !unit.el) return false;
+    const reach = typeof Movement !== "undefined" ? Movement.reachableTiles(unit) : [];
+    const safe = () => (typeof Movement !== "undefined" ? Movement.reachableTiles(unit) : []).filter((t) => !this.lavaAt(t.row, t.col) && this.aiTileLava(unit, t) === 0);
+    const nearestRival = () => Units.list.filter((u) => u.team !== unit.team).reduce((b, u) => {
+      const d = Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col));
+      return !b || d < b.d ? { u, d } : b;
+    }, null);
+    const goal = nearestRival();
+    const distGoal = (t) => (goal ? Math.max(Math.abs(t.row - goal.u.row), Math.abs(t.col - goal.u.col)) : 0);
+    const onLava = !!this.lavaAt(unit.row, unit.col);
+    let exits = safe();
+    // Apagar una casilla de lava adyacente con una piedra para abrir salida
+    // (una sola piedra por turno).
+    if ((onLava || (exits.length === 0 && this.lava.some((l) => Math.max(Math.abs(l.row - unit.row), Math.abs(l.col - unit.col)) <= 1))) && exits.length === 0 && this._aiCanThrow(unit.team)) {
+      const adj = this.lava
+        .filter((l) => Math.max(Math.abs(l.row - unit.row), Math.abs(l.col - unit.col)) === 1)
+        .filter((l) => this._lavaTileFreeToStand(unit, l))
+        .sort((a, b) => distGoal(a) - distGoal(b));
+      if (adj.length) {
+        this._aiSpendRock(unit.team);
+        if (typeof SFX !== "undefined" && SFX.rockThrow) SFX.rockThrow(0.35);
+        await new Promise((r) => setTimeout(r, 350));
+        this.extinguish(adj[0]);
+        await new Promise((r) => setTimeout(r, 300));
+        exits = safe();
+      }
+    }
+    if (onLava && Turns.canAct(unit)) {
+      // Sobre lava: salir a la casilla segura que más le acerque a un rival.
+      if (exits.length) {
+        exits.sort((a, b) => distGoal(a) - distGoal(b));
+        await Movement.moveTo(unit, exits[0].row, exits[0].col);
+        return true;
+      }
+      // Sin salida limpia: el camino que menos lava cruce (sin morir) hasta una casilla sin lava.
+      const out = reach
+        .filter((t) => !this.lavaAt(t.row, t.col))
+        .map((t) => ({ t, n: this.aiTileLava(unit, t) }))
+        .filter((x) => x.n < unit.hp)
+        .sort((a, b) => a.n - b.n || distGoal(a.t) - distGoal(b.t));
+      if (out.length) {
+        await Movement.moveTo(unit, out[0].t.row, out[0].t.col);
+        return true;
+      }
+    }
+    return false;
+  },
+
+  _lavaTileFreeToStand(unit, l) {
+    if (Units.unitAt(l.row, l.col)) return false;
+    if (typeof Villages !== "undefined" && Villages.at(l.row, l.col)) return false;
+    if (typeof Obelisks !== "undefined" && Obelisks.at(l.row, l.col)) return false;
+    return true;
+  },
+
+  // Puntuación (para el plan de la IA) de usar el volcán.
+  aiPlanScore(team) {
+    const v = this.current();
+    if (!v || !this._accepts(v)) return -9;
+    const rivals = Teams.all.filter((t) => t !== team && (typeof Obelisks === "undefined" || Obelisks.byTeam(t)));
+    if (!rivals.length) return -9;
+    const losing = typeof Turns !== "undefined" && Turns.losingTeam() === team ? 0.4 : 0;
+    return 0.45 + (v.points >= VOLCANO_ON_AT ? 0.5 : 0) + losing + (v.lastTeam === team ? 0.2 : 0);
+  },
+
+  // ¿Le conviene a `unit` (con `held` en la mano) usar el volcán ahora?
+  _aiWantsFeed(unit, held) {
+    const v = this.current();
+    if (!v || !this._accepts(v) || held.points <= 0) return false;
+    const after = v.points + held.points;
+    if (after >= VOLCANO_MAX) return true; // remate: la erupción es suya
+    const plan = Turns._aiPlan[unit.team];
+    if (!plan || plan.mode !== "volcano") return false;
+    // No dejárselo al rival a tiro: si tras sumar quedan pocos puntos y un rival
+    // con gnomo puede rematar, mejor no regalarlo.
+    const left = VOLCANO_MAX - after;
+    const rivalCarrier = Units.list.some((u) => u.team !== unit.team && typeof Gnome !== "undefined" && Gnome.isHeldBy(u.id) && Math.max(Math.abs(u.row - v.row), Math.abs(u.col - v.col)) <= 7);
+    return !(left <= 9 && rivalCarrier);
+  },
+
+  async aiFeed(unit, held) {
+    const v = this.current();
+    if (!this._aiWantsFeed(unit, held)) return false;
+    if (this.findApproachTile(unit, v)) {
+      await this.approachAndSmash(unit, v);
+      return true;
+    }
+    const dest = Turns._aiPickMoveTileToward(unit, { row: v.row, col: v.col });
+    if (dest) {
+      await Movement.moveTo(unit, dest.row, dest.col);
+      return true;
+    }
+    return false;
+  },
+
+  // Piedra de remate (sin gastar acción): si una piedra completa la erupción.
+  async aiRockFinisher(team) {
+    const v = this.current();
+    if (!v || !this._accepts(v) || v.points + 1 < VOLCANO_MAX || !this._aiCanThrow(team)) return false;
+    this._aiSpendRock(team);
+    if (typeof SFX !== "undefined" && SFX.rockThrow) SFX.rockThrow(0.4);
+    await new Promise((r) => setTimeout(r, 400));
+    await this.addPoints(v, team, 1);
+    return true;
   },
 
   // ---------- Niebla ----------

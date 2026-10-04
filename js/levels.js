@@ -24,7 +24,7 @@ const LEVELS = [
     id: "colinas_rockntroll",
     nameKey: "level_colinas_rockntroll",
     flavorKey: "level_colinas_rockntroll_flavor",
-    featureKeys: ["level_colinas_rockntroll_f1", "level_colinas_rockntroll_f2", "level_colinas_rockntroll_f3"],
+    featureKeys: ["level_colinas_rockntroll_f1", "level_colinas_rockntroll_f2", "level_colinas_rockntroll_f3", "level_colinas_rockntroll_f4"],
     featureIcons: ["ph-music-notes", "ph-cloud-rain", "ph-cube"],
     islandImg: "assets/niveles/isla_colinas_rockntroll.png",
     logoImg: "assets/niveles/logo_colinas_rockntroll.png",

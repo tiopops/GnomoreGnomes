@@ -6229,8 +6229,8 @@ body.backpack-giving--bevida * {
 body.backpack-giving--katapum,
 body.backpack-giving--katapum * {
   cursor:
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256"><path fill="%23ff3d2e" d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,191.63V184a8,8,0,0,0-16,0v31.63A88.13,88.13,0,0,1,40.37,136H72a8,8,0,0,0,0-16H40.37A88.13,88.13,0,0,1,120,40.37V72a8,8,0,0,0,16,0V40.37A88.13,88.13,0,0,1,215.63,120H184a8,8,0,0,0,0,16h31.63A88.13,88.13,0,0,1,136,215.63Z"/></svg>')
-      16 16,
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 256 256"><path fill="%23ff3d2e" d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,191.63V184a8,8,0,0,0-16,0v31.63A88.13,88.13,0,0,1,40.37,136H72a8,8,0,0,0,0-16H40.37A88.13,88.13,0,0,1,120,40.37V72a8,8,0,0,0,16,0V40.37A88.13,88.13,0,0,1,215.63,120H184a8,8,0,0,0,0,16h31.63A88.13,88.13,0,0,1,136,215.63Z"/></svg>')
+      32 32,
     pointer !important;
 }
 
@@ -9423,6 +9423,7 @@ body.tut-on .settings-gear-btn--account { display: none; }
 }
 .recruit-name { color: #ffcf3d; }
 /* Selección de casillas: drop-shadow sigue el clip-path (box-shadow se recortaba como con máscara) */
+.backpack-slot--spent { opacity: 0.4; filter: grayscale(0.8); }
 .backpack-slot--selected, .armory-node--selected { box-shadow: none !important; filter: drop-shadow(0 0 7px rgba(255,207,63,.8)); }
 
 /* ---------- Final de partida v2: emblema grande del equipo ganador ---------- */
@@ -9679,6 +9680,7 @@ body.drums-raining::after {
   text-shadow: 0 1px 0 #000;
   pointer-events: none;
 }
+.volcano:hover { transform: translate(-50%, -64%) scale(1.04); filter: brightness(1.1); }
 .volcano--targeted .volcano__sprite { filter: drop-shadow(0 0 10px rgba(255, 207, 61, 0.95)); }
 body.backpack-giving--katapum .volcano.unit--katapum-target,
 body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events: auto; }
@@ -9687,6 +9689,15 @@ body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events
   filter: drop-shadow(0 0 10px rgba(255, 61, 46, 0.95)) drop-shadow(0 0 5px rgba(255, 61, 46, 0.7));
 }
 
+.lava-hit {
+  width: calc(var(--tile-w, 188px) * 0.92);
+  height: calc(var(--tile-w, 188px) * 0.46);
+  transform: translate(-50%, -50%);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: rgba(255, 61, 46, 0.35);
+  pointer-events: auto;
+}
+.lava-hit:hover { transform: translate(-50%, -50%); background: rgba(255, 61, 46, 0.6); filter: none; }
 .lava-puddle {
   pointer-events: none;
   transform: translate(-50%, -50%);

@@ -786,6 +786,8 @@ const Fog = {
     return { left, top, right, bottom, width: right - left, height: bottom - top };
   },
 
+  OBJECTS_PEEK_OVER_FOG: true,
+
   _refreshFogCoverZ() {
     if (!this.revealedGrid || !this._fogEls) return;
     // Rectángulos reales de TODAS las nubes que sigan sin revelar (a la vez
@@ -804,6 +806,10 @@ const Fog = {
     });
 
     const coverFrom = (row, col, el) => {
+      // Pedido explícito: un objeto en zona VISIBLE con niebla por encima
+      // SÍ debe asomarse por encima de ella. Los que están en niebla ya van
+      // ocultos (unit--fog-hidden), así que aquí ya no hay nada que tapar.
+      if (this.OBJECTS_PEEK_OVER_FOG) return;
       if (!el || el.classList.contains("unit--fog-hidden")) return;
       const rect = this._expandedRect(el);
       if (rect.width === 0 || rect.height === 0) return;

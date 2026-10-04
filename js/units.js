@@ -952,6 +952,8 @@ const Units = {
     // acercarse a atacar/coger el gnomo/un tótem/abrir la tienda... sin
     // tener que tocar cada mecánica por separado.
     if (unit.typeId === "punoroca") path = this._applyPunorocaWobble(unit, path);
+    // Lava (js/volcano.js): la CPU nunca camina hacia una muerte segura por lava.
+    if (unit.team !== "player" && typeof Volcano !== "undefined") path = Volcano.aiGuardPath(unit, path);
     // Arbustos (js/bushes.js) — cualquier desplazamiento, sea a donde sea,
     // implica dejar de estar escondido en el arbusto que se ocupara hasta
     // ahora (si había alguno): se limpia ANTES del primer salto, no al

@@ -32,6 +32,11 @@ const Drums = {
   _nextId: 1,
   _busy: false,
 
+  // Porciones que necesita llenar `team`: 10 + 1 por cada subida de nota.
+  maxSlices(team) {
+    return DRUM_SLICES + Math.max(0, (this.note[team] || 1) - 1);
+  },
+
   isActive() {
     return typeof LevelAssets !== "undefined" && LevelAssets.current === "colinas_rockntroll";
   },
@@ -151,7 +156,7 @@ const Drums = {
 
   totalPending(team) {
     const n = this.list.reduce((a, d) => a + this.pendingFor(team, d), 0);
-    return Math.min(n, DRUM_SLICES - (this.slices[team] || 0));
+    return Math.min(n, this.maxSlices(team) - (this.slices[team] || 0));
   },
 
   // Llamado desde Gnome.hit: cada golpe de una unidad adyacente a un tambor.
@@ -227,12 +232,12 @@ const Drums = {
     });
     this.list.forEach((d) => (d.hits[team] = 0));
     if (gained > 0) {
-      this.slices[team] = Math.min(DRUM_SLICES, (this.slices[team] || 0) + gained);
+      this.slices[team] = Math.min(this.maxSlices(team), (this.slices[team] || 0) + gained);
       this.list.forEach((d) => { if (this.majority(d) === team) { d.plays[team] = (d.plays[team] || 0) + 1; this._shake(d); } });
     }
     this.refreshMarkers();
     // 2) ¿10/10?
-    if (this.slices[team] >= DRUM_SLICES) {
+    if (this.slices[team] >= this.maxSlices(team)) {
       await this._flashFull(team);
       await this._rain([team], Teams.all.filter((t) => t !== team));
       return;
@@ -503,10 +508,10 @@ const Drums = {
       const show = near && !fogged && !Obelisks.gameOver;
       d.markerEl.classList.toggle("drum-marker--visible", show);
       if (!show) return;
-      const key = `${have}/${pending}/${mode || ""}`;
+      const key = `${have}/${pending}/${this.maxSlices(team)}/${mode || ""}`;
       if (d._markerKey === key) return;
       d._markerKey = key;
-      d.markerEl.innerHTML = this._markerSvg(have, pending, DRUM_TEAM_COLORS[team], mode === "flash");
+      d.markerEl.innerHTML = this._markerSvg(have, pending, DRUM_TEAM_COLORS[team], mode === "flash", this.maxSlices(team));
       if (mode === "flash") {
         d.markerEl.classList.remove("drum-marker--flash");
         void d.markerEl.offsetWidth;
@@ -522,7 +527,7 @@ const Drums = {
     if (d._badgeN === n) return;
     const grew = n > (d._badgeN || 0);
     d._badgeN = n;
-    d.badgeEl.innerHTML = `<i class="ph-fill ph-music-notes"></i><span>×${n}</span>`;
+    d.badgeEl.innerHTML = `<i class="ph-fill ph-music-notes"></i><span>+${n}</span>`;
     if (grew && d.badgeEl.animate) {
       d.badgeEl.animate(
         [{ scale: "1" }, { scale: "1.35" }, { scale: "1" }],
@@ -531,13 +536,13 @@ const Drums = {
     }
   },
 
-  _markerSvg(have, pending, color, full) {
+  _markerSvg(have, pending, color, full, total = DRUM_SLICES) {
     const cx = 70, cy = 70, rIn = 30, rOut = 52, gap = 0.07;
     const pt = (r, a) => `${(cx + Math.cos(a) * r).toFixed(1)},${(cy + Math.sin(a) * r).toFixed(1)}`;
     let slices = "";
-    for (let i = 0; i < DRUM_SLICES; i++) {
-      const a0 = -Math.PI / 2 + (i / DRUM_SLICES) * Math.PI * 2 + gap;
-      const a1 = -Math.PI / 2 + ((i + 1) / DRUM_SLICES) * Math.PI * 2 - gap;
+    for (let i = 0; i < total; i++) {
+      const a0 = -Math.PI / 2 + (i / total) * Math.PI * 2 + gap;
+      const a1 = -Math.PI / 2 + ((i + 1) / total) * Math.PI * 2 - gap;
       const jag = 1 + ((i * 37) % 5) * 0.025; // astilla irregular
       const rO = rOut * jag;
       const am = (a0 + a1) / 2;
@@ -557,7 +562,7 @@ const Drums = {
       `<svg viewBox="0 0 140 140" width="108" height="108" xmlns="http://www.w3.org/2000/svg">` +
       `<polygon class="drum-plate" points="${plate}"/>` +
       slices +
-      `<text class="drum-count" x="70" y="79" text-anchor="middle">${have}/${DRUM_SLICES}</text>` +
+      `<text class="drum-count" x="70" y="79" text-anchor="middle">${have}/${total}</text>` +
       `</svg>`
     );
   },

@@ -522,9 +522,22 @@ const Obelisks = {
   // por encima para verlo".
   _behindElsFor(obelisk) {
     const els = [];
+    // Además de las 4 casillas fijas, cualquier cosa más atrás (menor
+    // profundidad fila+columna) cuyo recuadro se solape de verdad con el
+    // sprite del Obelisco cuenta como "detrás" (el sprite es muy alto y
+    // tapa casillas lejanas).
+    const oRect = obelisk.spriteEl ? obelisk.spriteEl.getBoundingClientRect() : null;
+    const depth = obelisk.row + obelisk.col;
+    const overlapsSprite = (r, c, el) => {
+      if (!oRect || r + c >= depth) return false;
+      const b = el.getBoundingClientRect();
+      const w = Math.min(b.right, oRect.right) - Math.max(b.left, oRect.left);
+      const h = Math.min(b.bottom, oRect.bottom) - Math.max(b.top, oRect.top);
+      return w > 24 && h > 24;
+    };
     Units.list.forEach((unit) => {
       if (!unit.el || unit.el.classList.contains("unit--fog-hidden")) return;
-      if (this._OCCLUSION_OFFSETS.some(([dr, dc]) => unit.row === obelisk.row + dr && unit.col === obelisk.col + dc)) {
+      if (this._OCCLUSION_OFFSETS.some(([dr, dc]) => unit.row === obelisk.row + dr && unit.col === obelisk.col + dc) || overlapsSprite(unit.row, unit.col, unit.el)) {
         els.push(unit.el);
       }
     });
@@ -533,7 +546,7 @@ const Obelisks = {
       const r = Number(m.dataset.row);
       const c = Number(m.dataset.col);
       if (Number.isNaN(r) || Number.isNaN(c)) return;
-      if (this._OCCLUSION_OFFSETS.some(([dr, dc]) => r === obelisk.row + dr && c === obelisk.col + dc)) {
+      if (this._OCCLUSION_OFFSETS.some(([dr, dc]) => r === obelisk.row + dr && c === obelisk.col + dc) || overlapsSprite(r, c, m)) {
         els.push(m);
       }
     });
