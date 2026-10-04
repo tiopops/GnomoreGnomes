@@ -9574,3 +9574,14 @@ body.drums-raining::after {
   font-weight: 400;
   letter-spacing: 0.02em;
 }
+
+/* Onda del tambor al sonar (js/drums.js) */
+.drum-wave {
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  border: 5px solid rgba(255, 226, 150, 0.9);
+  box-shadow: 0 0 14px rgba(255, 200, 90, 0.5), inset 0 0 12px rgba(255, 200, 90, 0.25);
+  pointer-events: none;
+}

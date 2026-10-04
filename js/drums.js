@@ -163,14 +163,41 @@ const Drums = {
       try { SFX.drum(soft); } catch (e) {}
     }
     if (!d.spriteEl.animate) return;
+    // Encoge hacia abajo y se estira hacia arriba, al ritmo del golpe.
+    const k = soft ? 0.5 : 1;
     d.spriteEl.animate(
       [
-        { translate: "0 0", rotate: "0deg" }, { translate: "-7px 0", rotate: "-3deg" },
-        { translate: "6px 0", rotate: "3deg" }, { translate: "-4px 0", rotate: "-2deg" },
-        { translate: "3px 0", rotate: "1deg" }, { translate: "0 0", rotate: "0deg" },
+        { scale: "1 1" },
+        { scale: `${1 + 0.07 * k} ${1 - 0.1 * k}`, offset: 0.18 },
+        { scale: `${1 - 0.04 * k} ${1 + 0.07 * k}`, offset: 0.45 },
+        { scale: `${1 + 0.015 * k} ${1 - 0.02 * k}`, offset: 0.7 },
+        { scale: "1 1" },
       ],
-      { duration: soft ? 360 : 480, easing: "ease-out" }
+      { duration: soft ? 380 : 520, easing: "ease-out" }
     );
+    this._wave(d, soft);
+  },
+
+  // Onda sutil que se expande por el suelo desde el tambor.
+  _wave(d, soft) {
+    const { x, y } = getTileCenter(d.row, d.col, Units.boardSize);
+    const n = soft ? 1 : 2;
+    for (let i = 0; i < n; i++) {
+      const w = document.createElement("div");
+      w.className = "drum-wave";
+      w.style.left = `${x}px`;
+      w.style.top = `${y + 6}px`;
+      w.style.zIndex = String((d.row + d.col) * 10 + 3);
+      Units.container.appendChild(w);
+      const a = w.animate(
+        [
+          { transform: "translate(-50%,-50%) scale(0.25, 0.125)", opacity: soft ? 0.5 : 0.75 },
+          { transform: "translate(-50%,-50%) scale(1.5, 0.75)", opacity: 0 },
+        ],
+        { duration: 700, delay: i * 140, easing: "ease-out", fill: "backwards" }
+      );
+      a.onfinish = () => w.remove();
+    }
   },
 
   // ---------- Fin de turno ----------
