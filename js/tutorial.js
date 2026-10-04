@@ -309,7 +309,7 @@ const Tutorial = {
         onStart: () => T._refill(),
       },
       {
-        say: `Antes de seguir, un truco útil: mantén pulsada la cara de tu personaje, abajo a la izquierda, y verás todas sus estadísticas. Con las unidades enemigas funciona igual: selecciónalas y mira de qué pasta están hechas… antes de que te hagan pasta a ti.`,
+        say: `Antes de seguir, un truco útil: mantén pulsada la cara de tu unidad, abajo a la izquierda, y verás todas sus estadísticas. Con las unidades enemigas funciona igual: selecciónalas y mira de qué pasta están hechas… antes de que te hagan pasta a ti.`,
         mission: "Mantén pulsada su cara (3 s)",
         hold: true,
         onStart: () => {
@@ -325,8 +325,8 @@ const Tutorial = {
         ok: "Ahora sabes cuánto aguanta, cuánto pega y cuánto le queda. Información de oro, y gratis.",
       },
       {
-        say: `Uno solo se aburre, y yo me aburro con él. Recluta otro igual: Obelisco, Reclutar, personaje, RECLUTAR y casilla. Necesitarás a alguien a quien lanzar cosas (sí, cosas: yo soy una de ellas).`,
-        mission: "Recluta un segundo personaje",
+        say: `Uno solo se aburre, y yo me aburro con él. Recluta otro igual: Obelisco, Reclutar, unidad, RECLUTAR y casilla. Necesitarás a alguien a quien lanzar cosas (sí, cosas: yo soy una de ellas).`,
+        mission: "Recluta un segunda unidad",
         target: () => {
           if (Obelisks._pendingRecruit) return T._placeMarker();
           if (Obelisks._overlayEl) {
@@ -415,7 +415,7 @@ const Tutorial = {
         ok: "Invisible. Como mi cuenta bancaria.",
       },
       {
-        say: `¿Ves ese gnomo de ahí? El que tiembla como un flan. Es Tinkle, mi primo segundo. Aquí lo llamamos «balón». Acércate y pulsa la manita para cogerlo. Si hace falta, tu personaje caminará solo hasta él.`,
+        say: `¿Ves ese gnomo de ahí? El que tiembla como un flan. Es Tinkle, mi primo segundo. Aquí lo llamamos «balón». Acércate y pulsa la manita para cogerlo. Si hace falta, tu unidad caminará solo hasta él.`,
         mission: "Coge a Tinkle",
         onStart: () => {
           T._refill();
@@ -488,7 +488,7 @@ const Tutorial = {
         ok: "¡Buen lanzamiento! Tinkle, ¿todo bien? Se te ve mareado.",
       },
       {
-        say: `Mientras uno carga con el gnomo no puede atacar, así que el que tenga las manos libres que se encargue de ese que te mira raro. Tranquilo, no devolverá el golpe (ni siquiera sabe, al pobre lo han programado para que no lo haga). Selecciona a tu personaje libre y pulsa al enemigo.`,
+        say: `Mientras uno carga con el gnomo no puede atacar, así que el que tenga las manos libres que se encargue de ese que te mira raro. Tranquilo, no devolverá el golpe (ni siquiera sabe, al pobre lo han programado para que no lo haga). Selecciona a tu unidad libre y pulsa al enemigo.`,
         mission: "Ataca al enemigo",
         onStart: () => {
           // Espera a que el pase termine para saber quién lleva a Tinkle.
@@ -538,7 +538,7 @@ const Tutorial = {
         ok: "Muy bien. Ahora seguro que le duele algo, y mañana también.",
       },
       {
-        say: `¿Ves ese pino? Y las rocas, y la mena de hierro: también se golpean. Tienen 2 puntos de resistencia y, al romperse, sueltan un recurso que vuela solito hasta tu mochila (abajo a la izquierda). Selecciona a tu personaje libre y pulsa el pino. Ojalá salga todo bien, toquemos madera.`,
+        say: `¿Ves ese pino? Y las rocas, y la mena de hierro: también se golpean. Tienen 2 puntos de resistencia y, al romperse, sueltan un recurso que vuela solito hasta tu mochila (abajo a la izquierda). Selecciona a tu unidad libre y pulsa el pino. Ojalá salga todo bien, toquemos madera.`,
         mission: "Tala el pino (2 golpes)",
         onStart: () => {
           T._refill();
@@ -586,7 +586,7 @@ const Tutorial = {
         ok: "¡Reliquia en la mochila! Son las Botas TrotaMontes: +1 de Movimiento para todas tus unidades. Fíjate en su marcador, ese 5/5 que tiene al lado: esa es su durabilidad. Cuida de tus unidades o las botas se gastarán antes de tiempo. Y no, no guardo el ticket de compra, así que olvídate de la garantía.",
       },
       {
-        say: `No hay nada mejor que conquistar un tótem con un gnomo cargado de puntos. Tu personaje lo estampa contra él y le resta tanta vida como puntos lleve. Si se queda sin puntos, el tótem es tuyo y te da +1 Punto de Gloria cada turno. Uno. Sí, uno, no hagas planes de jubilación. Eso sí, si quitas todos sus puntos de una y lo revientas de una única estampada, te dará +2. ¿Por qué me miras a mí y al tótem de esa manera? Acércate con quien lleva el gnomo y pulsa la diana. Lo que la gente del gremio conoce como “estampada”.`,
+        say: `No hay nada mejor que conquistar un tótem con un gnomo cargado de puntos. Tu unidad lo estampa contra él y le resta tanta vida como puntos lleve. Si se queda sin puntos, el tótem es tuyo y te da +1 Punto de Gloria cada turno. Uno. Sí, uno, no hagas planes de jubilación. Eso sí, si quitas todos sus puntos de una y lo revientas de una única estampada, te dará +2. ¿Por qué me miras a mí y al tótem de esa manera? Acércate con quien lleva el gnomo y pulsa la diana. Lo que la gente del gremio conoce como “estampada”.`,
         mission: "Haz una “estampada” con el gnomo contra el tótem",
         onStart: () => {
           T._refill();
@@ -638,7 +638,7 @@ const Tutorial = {
         ok: "Demasiado árbol de habilidades para tan poco bosque.",
       },
       {
-        say: `Y por último, la Armería: aquí gastas esa madera, roca y metal en subir el Arma y la Armadura de todos tus personajes, nivel a nivel (el 1 cuesta una madera y una roca). Es el único sitio de este juego donde la madera sirve para algo bueno. Ábrela y ciérrala.`,
+        say: `Y por último, la Armería: aquí gastas esa madera, roca y metal en subir el Arma y la Armadura de todas tus unidades, nivel a nivel (el 1 cuesta una madera y una roca). Es el único sitio de este juego donde la madera sirve para algo bueno. Ábrela y ciérrala.`,
         mission: "Abre la Armería y ciérrala",
         onStart: () => {
           T._ctx.arOpened = false;
@@ -821,13 +821,14 @@ const Tutorial = {
     E.btn.style.setProperty("--p", "0%");
     const len = s.ok ? s.ok.length : 0;
     const typeMs = (len / 2) * 24;
-    const total = typeMs + (s.quick ? 500 + len * 32 : 1100 + len * 42);
+    // Tiempo de lectura generoso (antes los pasos "quick" saltaban sin dar tiempo a leer).
+    const total = typeMs + (s.quick ? 1800 + len * 60 : 2400 + len * 70);
     let elapsed = 0;
     let last = performance.now();
     cancelAnimationFrame(this._okRaf);
     const tick = (now) => {
       if (!this.active || this.stepIndex !== i) return;
-      const paused = E.panel.matches(":hover") && !s.quick;
+      const paused = E.panel.matches(":hover");
       if (!paused) elapsed += now - last;
       last = now;
       E.btn.style.setProperty("--p", `${Math.min(100, (elapsed / total) * 100)}%`);

@@ -50,7 +50,7 @@ const SKILL_DEFS = [
     maxRank: 1,
     fallbackIcon: "ph-tree",
     describe: () =>
-      "Tus tótems y tu Obelisco Ancestral echan raíces: a los personajes enemigos les cuesta 1 punto de movimiento extra por cada paso que den entrando, saliendo o moviéndose por las casillas adyacentes a ellos.",
+      "Tus tótems y tu Obelisco Ancestral echan raíces: a los unidades enemigas les cuesta 1 punto de movimiento extra por cada paso que den entrando, saliendo o moviéndose por las casillas adyacentes a ellos.",
   },
   {
     id: "piel_roca",
@@ -61,7 +61,7 @@ const SKILL_DEFS = [
     maxRank: 1,
     fallbackIcon: "ph-mountains",
     describe: () =>
-      "Si un ataque fuese a matar a uno de tus personajes y llevas al menos 1 Roca en la mochila, se consume esa Roca y el personaje se queda con 1 punto de vida. Cada personaje solo puede usarlo una vez por turno.",
+      "Si un ataque fuese a matar a una de tus unidades y llevas al menos 1 Roca en la mochila, se consume esa Roca y la unidad se queda con 1 punto de vida. Cada unidad solo puede usarlo una vez por turno.",
   },
   {
     id: "codo_con_codo",
@@ -72,7 +72,7 @@ const SKILL_DEFS = [
     maxRank: 3,
     fallbackIcon: "ph-users-three",
     describe: (rank) =>
-      `Tus personajes ganan +1 de Aguante por cada aliado en una casilla adyacente, hasta un máximo de +${rank || 1} (+1 por nivel, hasta +3). El bonus desaparece en cuanto se separan.`,
+      `Tus unidades ganan +1 de Aguante por cada aliado en una casilla adyacente, hasta un máximo de +${rank || 1} (+1 por nivel, hasta +3). El bonus desaparece en cuanto se separan.`,
   },
   {
     id: "evasion",
@@ -83,7 +83,7 @@ const SKILL_DEFS = [
     maxRank: 3,
     fallbackIcon: "ph-wind",
     describe: (rank) =>
-      `Tus personajes tienen un +${(rank || 1) * 10}% de probabilidad de esquivar un ataque enemigo cuerpo a cuerpo (+10% por nivel, hasta +30%).`,
+      `Tus unidades tienen un +${(rank || 1) * 10}% de probabilidad de esquivar un ataque enemigo cuerpo a cuerpo (+10% por nivel, hasta +30%).`,
   },
   {
     id: "muralla",
@@ -105,7 +105,7 @@ const SKILL_DEFS = [
     maxRank: 1,
     fallbackIcon: "ph-spiral",
     describe: () =>
-      "Cada vez que un enemigo golpea cuerpo a cuerpo a uno de tus personajes, recibe 1 punto de daño.",
+      "Cada vez que un enemigo golpea cuerpo a cuerpo a una de tus unidades, recibe 1 punto de daño.",
   },
   {
     id: "escudos",
@@ -116,7 +116,7 @@ const SKILL_DEFS = [
     maxRank: 1,
     fallbackIcon: "ph-shield-check",
     describe: () =>
-      "Tus personajes ganan un escudo que anula el próximo ataque que reciban y después desaparece. Si empiezas tu turno con un personaje sin escudo en una casilla adyacente a uno de tus tótems o a tu Obelisco, el escudo se rearma.",
+      "Tus unidades ganan un escudo que anula el próximo ataque que reciban y después desaparece. Si empiezas tu turno con una unidad sin escudo en una casilla adyacente a uno de tus tótems o a tu Obelisco, el escudo se rearma.",
   },
   // ---------- Rama GUERRA ----------
   {
@@ -128,7 +128,7 @@ const SKILL_DEFS = [
     maxRank: 1,
     fallbackIcon: "ph-lightning",
     describe: () =>
-      "Una vez por turno, uno de tus personajes puede moverse y atacar a la vez gastando una única acción en lugar de dos. Se aplica solo al acercarse a un enemigo, a un tótem o a un Obelisco para golpearlo.",
+      "Una vez por turno, una de tus unidades puede moverse y atacar a la vez gastando una única acción en lugar de dos. Se aplica solo al acercarse a un enemigo, a un tótem o a un Obelisco para golpearlo.",
   },
   {
     id: "camaradas",
@@ -161,7 +161,7 @@ const SKILL_DEFS = [
     maxRank: 3,
     fallbackIcon: "ph-drop",
     describe: (rank) =>
-      `Cada vez que un personaje mata a un enemigo, gana +1 de ataque durante su próximo turno. Se acumula hasta ${rank || 1} ${(rank || 1) === 1 ? "vez" : "veces"} (+1 por nivel, hasta 3) y el personaje se va tiñendo de rojo. Un turno sin matar reinicia la sed de sangre.`,
+      `Cada vez que una unidad mata a un enemigo, gana +1 de ataque durante su próximo turno. Se acumula hasta ${rank || 1} ${(rank || 1) === 1 ? "vez" : "veces"} (+1 por nivel, hasta 3) y la unidad se va tiñendo de rojo. Un turno sin matar reinicia la sed de sangre.`,
   },
   {
     id: "ultimo_aliento",
@@ -172,7 +172,7 @@ const SKILL_DEFS = [
     maxRank: 1,
     fallbackIcon: "ph-heartbeat",
     describe: () =>
-      "Un personaje tuyo que se ha quedado con 1 punto de vida por haber recibido daño gana +1 de ataque. No se aplica a los personajes que tienen 1 de vida como vida máxima.",
+      "Una unidad tuya que se ha quedado con 1 punto de vida por haber recibido daño gana +1 de ataque. No se aplica a las unidades que tienen 1 de vida como vida máxima.",
   },
   {
     id: "emboscada",
@@ -183,7 +183,7 @@ const SKILL_DEFS = [
     maxRank: 3,
     fallbackIcon: "ph-eye-slash",
     describe: (rank) =>
-      `Un personaje tuyo que ataca desde dentro de un arbusto (se haya movido hasta él o no) gana +${rank || 1} de ataque en ese golpe (+1 por nivel, hasta +3).`,
+      `Una unidad tuya que ataca desde dentro de un arbusto (se haya movido hasta él o no) gana +${rank || 1} de ataque en ese golpe (+1 por nivel, hasta +3).`,
   },
   {
     id: "punto_estrategico",
@@ -217,7 +217,7 @@ const SKILL_DEFS = [
     maxRank: 3,
     fallbackIcon: "ph-users-four",
     describe: (rank) =>
-      `Aumenta en +${rank || 1} la población máxima de tu ejército, es decir, cuántos personajes puedes tener a la vez (+1 por nivel, hasta +3).`,
+      `Aumenta en +${rank || 1} la población máxima de tu ejército, es decir, cuántas unidades puedes tener a la vez (+1 por nivel, hasta +3).`,
   },
   {
     id: "anfibio",
@@ -228,7 +228,7 @@ const SKILL_DEFS = [
     maxRank: 1,
     fallbackIcon: "ph-waves",
     describe: () =>
-      "Tus personajes pueden caminar sobre las casillas de agua como si fueran de tierra: podrán moverse por ellas y atravesarlas.",
+      "Tus unidades pueden caminar sobre las casillas de agua como si fueran de tierra: podrán moverse por ellas y atravesarlas.",
   },
   {
     id: "abundancia",

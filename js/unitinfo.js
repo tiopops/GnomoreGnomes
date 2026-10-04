@@ -86,7 +86,7 @@ const UnitInfo = {
     const btn = document.createElement("button");
     btn.id = "unit-info-btn";
     btn.className = "unit-info-btn";
-    btn.setAttribute("aria-label", "Mantén pulsado para ver las estadísticas del personaje");
+    btn.setAttribute("aria-label", "Mantén pulsado para ver las estadísticas dla unidad");
     // La cara del propio personaje seleccionado, recortada en círculo, en
     // vez de un icono genérico de "i" — así el botón identifica de un
     // vistazo A QUIÉN estás consultando (útil sobre todo cuando hay varias

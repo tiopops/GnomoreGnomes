@@ -50,7 +50,7 @@ const ABILITIES = {
     icon: "ph-brain",
     iconImg: "assets/iconos/voluntad_quebrada.png",
     description:
-      "Toma el control total de un personaje enemigo adyacente durante el resto de este turno: se puede mover, atacar, coger/golpear/pasar su gnomo o incluso usar su propia habilidad, como si fuera propio. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
+      "Toma el control total de una unidad enemiga adyacente durante el resto de este turno: se puede mover, atacar, coger/golpear/pasar su gnomo o incluso usar su propia habilidad, como si fuera propio. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
   },
   punoroca: {
     name: "Nudillos Rocosos",
@@ -66,7 +66,7 @@ const ABILITIES = {
     icon: "ph-hand-grabbing",
     iconImg: "assets/iconos/resorte_goblin.png",
     description:
-      "Agarra a un personaje adyacente (amigo o enemigo, incluso si lleva el gnomo cogido) y lo lanza a cualquier casilla libre dentro de su propia área de movimiento, también al agua (quien no sea anfibio se ahoga). Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
+      "Agarra a una unidad adyacente (amiga o enemiga, incluso si lleva el gnomo cogido) y la lanza a cualquier casilla libre dentro de su propia área de movimiento, también al agua (quien no sea anfibio se ahoga). Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
   },
 };
 

@@ -275,7 +275,7 @@ const GnomeCalib = {
     panel.innerHTML = `
       <div class="gnome-calib-panel__title">Calibrando: <span id="gnomeCalibCharName">—</span> <span id="gnomeCalibPoseName"></span></div>
       <div class="gnome-calib-panel__values" id="gnomeCalibValues">right — · bottom — · tamaño (compartido) —</div>
-      <div class="gnome-calib-panel__hint">Arrastra el gnomo para moverlo (por personaje y por pose). Arrastra el puntito de su esquina para cambiar su tamaño — este es el MISMO para todos los personajes y las dos poses, se ajusta mirando a cualquiera.</div>
+      <div class="gnome-calib-panel__hint">Arrastra el gnomo para moverlo (por unidad y por pose). Arrastra el puntito de su esquina para cambiar su tamaño — este es el MISMO para todas las unidades y las dos poses, se ajusta mirando a cualquiera.</div>
       <button class="gnome-calib-panel__copy" id="gnomeCalibPoseBtn">Ver pose: machacagnomos</button>
       <button class="gnome-calib-panel__copy" id="gnomeCalibCopyBtn">Copiar ajustes (GNOME_SIZES + GNOME_ATTACH_OFFSETS)</button>
       <span class="gnome-calib-panel__copied" id="gnomeCalibCopiedMsg">Copiado ✓</span>
