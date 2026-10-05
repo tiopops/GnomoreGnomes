@@ -9843,3 +9843,8 @@ body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events
   color: #4ade5a;
   text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7), 0 0 10px rgba(74, 222, 90, 0.55);
 }
+
+/* Transparencia del volcán cuando alguien queda detrás (Volcano.refreshOcclusion, js/volcano.js):
+   los clics atraviesan hasta quien esté debajo (salvo si es objetivo de roca/cohete). */
+.volcano--occluding { opacity: 0.45; transition: opacity 0.15s ease; }
+.volcano--occluding:not(.unit--katapum-target):not(.volcano--targeted) { pointer-events: none; }

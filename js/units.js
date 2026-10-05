@@ -1012,6 +1012,7 @@ const Units = {
     if (typeof Villages !== "undefined") Villages.refreshOcclusion();
     if (typeof Obelisks !== "undefined") Obelisks.refreshOcclusion();
     if (typeof Altar !== "undefined") Altar.refreshOcclusion();
+    if (typeof Volcano !== "undefined") Volcano.refreshOcclusion();
     if (typeof Bushes !== "undefined") Bushes.refreshOcclusion();
     // Pedido explícito: "si un enemigo se pone detras de mi personaje, mi
     // personaje debe adquirir el sistema de transparencias" — mismo punto

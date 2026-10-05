@@ -152,6 +152,7 @@ const Volcano = {
       if (unit) this.approachAndSmash(unit, v);
     });
     this.list.push(v);
+    this._initMouseTracking();
     this._refreshBar(v);
     return v;
   },
@@ -999,6 +1000,80 @@ const Volcano = {
   },
 
   // ---------- Niebla ----------
+  // ---------- Transparencia cuando alguien queda detrás (mismo sistema que
+  // Altar/Obelisks.refreshOcclusion) — pedido explícito: "el volcán debe
+  // tener el sistema de transparencias si alguien se coloca en un sitio que
+  // lo tapa". Como el sprite es enorme, en vez de 4 losetas fijas cuenta
+  // cualquier unidad visible o marcador de zona más atrasado (fila+col
+  // menor) cuyo recuadro se solape con el del volcán. Con el ratón/dedo
+  // sobre el volcán o sobre quien está detrás, se vuelve semitransparente
+  // y deja pasar los clics. ----------
+  _lastMouseX: null,
+  _lastMouseY: null,
+  _mouseTrackingReady: false,
+  _initMouseTracking() {
+    if (this._mouseTrackingReady) return;
+    this._mouseTrackingReady = true;
+    window.addEventListener("mousemove", (e) => {
+      this._lastMouseX = e.clientX;
+      this._lastMouseY = e.clientY;
+      this.refreshOcclusion(e.clientX, e.clientY);
+    });
+    const touch = (e) => {
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      this._lastMouseX = t.clientX;
+      this._lastMouseY = t.clientY;
+      this.refreshOcclusion(t.clientX, t.clientY);
+    };
+    window.addEventListener("touchstart", touch, { passive: true });
+    window.addEventListener("touchmove", touch, { passive: true });
+  },
+
+  _behindElsFor(v, rect) {
+    const els = [];
+    const depth = v.row + v.col;
+    const overlaps = (r) => r.right > rect.left && r.left < rect.right && r.bottom > rect.top && r.top < rect.bottom;
+    Units.list.forEach((unit) => {
+      if (!unit.el || unit.el.classList.contains("unit--fog-hidden")) return;
+      if (unit.row + unit.col >= depth) return;
+      if (overlaps(unit.el.getBoundingClientRect())) els.push(unit.el);
+    });
+    (Units.markerEls || []).forEach((m) => {
+      if (!m || !m.isConnected) return;
+      const r = Number(m.dataset.row), c = Number(m.dataset.col);
+      if (Number.isNaN(r) || Number.isNaN(c) || r + c >= depth) return;
+      if (overlaps(m.getBoundingClientRect())) els.push(m);
+    });
+    return els;
+  },
+
+  refreshOcclusion(mouseX, mouseY) {
+    if (typeof Units === "undefined") return;
+    this._initMouseTracking();
+    const mx = typeof mouseX === "number" ? mouseX : this._lastMouseX;
+    const my = typeof mouseY === "number" ? mouseY : this._lastMouseY;
+    this.list.forEach((v) => {
+      if (!v.spriteEl) return;
+      if (v.el.classList.contains("unit--fog-hidden") || mx === null || my === null) {
+        v.el.classList.remove("volcano--occluding");
+        return;
+      }
+      const rect = v.spriteEl.getBoundingClientRect();
+      const behindEls = this._behindElsFor(v, rect);
+      let occluding = false;
+      if (behindEls.length) {
+        const overVolcano = mx >= rect.left && mx <= rect.right && my >= rect.top && my <= rect.bottom;
+        const overBehind = behindEls.some((el) => {
+          const r = el.getBoundingClientRect();
+          return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom;
+        });
+        occluding = overVolcano || overBehind;
+      }
+      v.el.classList.toggle("volcano--occluding", occluding);
+    });
+  },
+
   refreshFog() {
     if (typeof Fog === "undefined") return;
     this.list.forEach((v) => {
