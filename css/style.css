@@ -9425,12 +9425,11 @@ body.tut-on .settings-gear-btn--account { display: none; }
   position: absolute;
   pointer-events: none;
   transform: translate(-50%, 0);
-  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.55));
 }
-.idle-arrow svg { display: block; animation: idle-arrow-bounce 0.85s ease-in-out infinite; }
+.idle-arrow svg { display: block; animation: idle-arrow-bounce 0.85s ease-in-out infinite; transform-origin: 50% 20%; }
 @keyframes idle-arrow-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(12px); }
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(14px) rotate(3deg); }
 }
 .recruit-name { color: #ffcf3d; }
 /* Selección de casillas: drop-shadow sigue el clip-path (box-shadow se recortaba como con máscara) */

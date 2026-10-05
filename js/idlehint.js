@@ -59,8 +59,14 @@ const IdleHint = {
     if (!el) {
       el = document.createElement("div");
       el.className = "idle-arrow";
+      // Flecha irregular y angulosa, con el mismo trazo negro grueso y sombra dura
+      // desplazada que los botones del juego (más grande que la anterior).
       el.innerHTML =
-        '<svg viewBox="0 0 40 46" width="44" height="50" aria-hidden="true"><path d="M12 2h16v18h9L20 43 3 20h9z" fill="#ffcf3d" stroke="#000" stroke-width="3.5" stroke-linejoin="round"/></svg>';
+        '<svg viewBox="0 0 60 72" width="64" height="77" aria-hidden="true">' +
+        '<path d="M17 3 L42 1 L39 27 L56 25 L33 69 L4 28 L19 29 Z" fill="rgba(20,10,30,.55)" transform="translate(4 4)"/>' +
+        '<path d="M17 3 L42 1 L39 27 L56 25 L33 69 L4 28 L19 29 Z" fill="#ffcf3d" stroke="#000" stroke-width="4.5" stroke-linejoin="miter" stroke-miterlimit="3"/>' +
+        '<path d="M22 8 L36 7 L33 31 L44 30 L33 55 Z" fill="#fff0a0" opacity=".75"/>' +
+        '</svg>';
       Units.container.appendChild(el);
       this._arrows[u.id] = el;
     }
