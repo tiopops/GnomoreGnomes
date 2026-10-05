@@ -80,7 +80,30 @@ const Volcano = {
   spawn(size) {
     if (!this.isActive()) return;
     const c = { row: Math.floor(size / 2), col: Math.floor(size / 2) };
-    const spot = typeof Altar !== "undefined" ? Altar._findFreeTileNear(c.row, c.col, size, true) : c;
+    // Prefiere el punto más cercano al centro cuyo cuadrado de 5x5 (el volcán
+    // + 2 anillos) sea todo hierba y sin Obeliscos ni Altar; si no hay ninguno,
+    // el sitio libre más cercano de siempre.
+    const clear = (r, cc) => {
+      for (let dr = -2; dr <= 2; dr++)
+        for (let dc = -2; dc <= 2; dc++) {
+          const rr = r + dr, c2 = cc + dc;
+          if (rr < 0 || c2 < 0 || rr >= size || c2 >= size) return false;
+          if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(rr, c2)) return false;
+          if (typeof Obelisks !== "undefined" && Obelisks.at(rr, c2)) return false;
+          if (typeof Altar !== "undefined" && Altar.at(rr, c2)) return false;
+        }
+      return true;
+    };
+    let spot = null;
+    for (let radius = 0; radius <= size && !spot; radius++) {
+      for (let dr = -radius; dr <= radius && !spot; dr++) {
+        for (let dc = -radius; dc <= radius && !spot; dc++) {
+          if (Math.max(Math.abs(dr), Math.abs(dc)) !== radius) continue;
+          if (clear(c.row + dr, c.col + dc)) spot = { row: c.row + dr, col: c.col + dc };
+        }
+      }
+    }
+    if (!spot) spot = typeof Altar !== "undefined" ? Altar._findFreeTileNear(c.row, c.col, size, true) : c;
     if (!spot) return;
     this._create(spot.row, spot.col);
     if (typeof Altar !== "undefined" && Altar._clearTileFor) Altar._clearTileFor(spot.row, spot.col);

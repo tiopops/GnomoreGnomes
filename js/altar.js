@@ -229,7 +229,8 @@ const Altar = {
   // coloca ALREDEDOR del Altar, no al revés (ver Altar._tileFree, que ya
   // hace lo mismo mirando hacia fuera).
   isNear(row, col, radius = 1) {
-    if (typeof Volcano !== "undefined" && Volcano.isNear(row, col, radius)) return true;
+    // El Volcán exige 2 anillos libres de mobiliario (tótems, tienda...); solo hierbajos y arbustos pueden estar cerca.
+    if (typeof Volcano !== "undefined" && Volcano.isNear(row, col, Math.max(radius, 2))) return true;
     return this.list.some((a) => Math.max(Math.abs(a.row - row), Math.abs(a.col - col)) <= radius);
   },
 

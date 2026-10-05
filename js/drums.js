@@ -83,6 +83,7 @@ const Drums = {
     if (typeof Shops !== "undefined" && Shops.at(row, col)) return false;
     if (typeof Obelisks !== "undefined" && (Obelisks.at(row, col) || Obelisks.isAdjacent(row, col))) return false;
     if (typeof Altar !== "undefined" && Altar.at(row, col)) return false;
+    if (typeof Volcano !== "undefined" && Volcano.isNear(row, col, 2)) return false; // 2 anillos libres alrededor del volcán
     if (this.at(row, col)) return false;
     // Todos sus vecinos transitables mínimos para poder rodearlo.
     let open = 0;
