@@ -295,12 +295,12 @@ const Volcano = {
     this.burners.push(entry);
     this._refreshBar(v);
     const hidden = typeof Fog !== "undefined" && Fog.isFogged(unit.row, unit.col);
-    if (!hidden) await this._runTo(v, unit);
+    await this._runTo(v, unit, hidden); // en la niebla corre y se pierde entre la bruma
     if (!unit.el || unit._fireGnome !== entry) return;
     this._attach(entry);
   },
 
-  _runTo(v, unit) {
+  _runTo(v, unit, hidden) {
     return new Promise((resolve) => {
       const size = Units.boardSize;
       const vc = getTileCenter(v.row, v.col, size);
@@ -343,9 +343,13 @@ const Volcano = {
           const k = (t - JUMP) / runMs;
           const x = ex + (uc.x - dir * 50 - ex) * k, y = ey + (uc.y - ey) * k;
           const ph = (t - JUMP) / 62; // zancada rápida
+          if (hidden) el.style.opacity = String(Math.max(0, 1 - k * 1.15)); // se desvanece en la niebla
           put(x, y - Math.abs(Math.sin(ph)) * 24, 1 + 0.07 * Math.sin(ph * 2), 1 - 0.07 * Math.sin(ph * 2), 9 * Math.sin(ph));
           const st = Math.floor(ph / Math.PI);
           if (st !== lastStep) { lastStep = st; if (st % 2 === 0 && typeof SFX !== "undefined" && SFX.fireStep) SFX.fireStep(); }
+        } else if (hidden) {
+          el.remove();
+          return resolve();
         } else if (t < JUMP + runMs + JUMP2) {
           const k = (t - JUMP - runMs) / JUMP2;
           const x0 = uc.x - dir * 50, y0 = uc.y;
