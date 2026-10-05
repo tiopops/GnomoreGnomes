@@ -163,27 +163,13 @@ const Drums = {
   // Llamado desde Gnome.hit: cada golpe de una unidad adyacente a un tambor.
   onGnomeHit(unit) {
     if (!this.isActive()) return;
-    let touched = false;
     this.list.forEach((d) => {
       if (Math.max(Math.abs(unit.row - d.row), Math.abs(unit.col - d.col)) > 1) return;
       d.hits[unit.team] = (d.hits[unit.team] || 0) + 1;
       d.plays[unit.team] = (d.plays[unit.team] || 0) + 1;
       this._shake(d);
-      touched = true;
     });
-    if (touched) this._announceHit(unit.team);
     this.refreshMarkers();
-  },
-
-  // Aviso en pantalla al golpear un tambor: rojo si lo hace un rival, amarillo
-  // si lo haces tú. Con un pequeño margen para no apilar carteles seguidos.
-  _announceHit(team) {
-    if (typeof Banners === "undefined") return;
-    const now = performance.now();
-    if (now - (this._lastAnnounce || 0) < 2500) return;
-    this._lastAnnounce = now;
-    if (team === "player") Banners.text("¡Haces sonar los tambores con fuerza!", 1, "yellow");
-    else Banners.text("¡Los tambores deciden!", 1, "red");
   },
 
   _shake(d, soft) {
@@ -254,6 +240,11 @@ const Drums = {
     // 2) ¿10/10?
     if (this.slices[team] >= this.maxSlices(team)) {
       await this._flashFull(team);
+      // Aviso antes de que caigan las rocas: amarillo si lo logras tú, rojo si es el rival.
+      if (typeof Banners !== "undefined") {
+        if (team === "player") await Banners.text("¡Haces sonar los tambores con fuerza!", 1, "yellow").ended;
+        else await Banners.text("¡El rival hace sonar los tambores!", 1, "red").ended;
+      }
       await this._rain([team], Teams.all.filter((t) => t !== team));
       return;
     }
@@ -305,6 +296,7 @@ const Drums = {
     Teams.all.forEach((t) => (this.slices[t] = 0));
     this.list.forEach((d) => (d.hits = {}));
     document.body.classList.remove("drums-raining");
+    if (typeof Banners !== "undefined") Banners.text("¡Los tambores deciden!", 1, "yellow"); // se mudan de sitio
     await this._relocate(); // tras la lluvia, los tambores cambian de sitio
     this.refreshMarkers();
     if (typeof Obelisks !== "undefined" && Obelisks.refreshAll) Obelisks.refreshAll();
