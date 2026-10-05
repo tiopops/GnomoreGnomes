@@ -417,6 +417,11 @@ const Obelisks = {
       }
       if (this.gameOver) return;
       if (obelisk.team !== "player") return; // solo se "abre" el propio, nunca el del rival
+      // Pulsar el Obelisco propio centra la vista en él (todo lo que permita la cámara).
+      if (typeof BoardView !== "undefined" && typeof getTileCenter === "function" && typeof Units !== "undefined") {
+        const c = getTileCenter(obelisk.row, obelisk.col, Units.boardSize);
+        BoardView.panToContentPoint(c.x, c.y);
+      }
       if (typeof Turns !== "undefined" && Turns.activeTeam !== obelisk.team) return;
       e.stopPropagation();
       this.toggleSelect(obelisk);

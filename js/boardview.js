@@ -149,6 +149,18 @@ const BoardView = {
     this._apply();
   },
 
+  // Centra la vista con suavizado en un punto del contenido (todo lo que
+  // permita la cámara: pasa por _clampTargetPan). Usado al pulsar el
+  // Obelisco propio.
+  panToContentPoint(contentX, contentY) {
+    if (!this.viewportEl) return;
+    this._zoomAnchor = null;
+    this.targetPanX = this.viewportEl.clientWidth / 2 - contentX * this.targetScale;
+    this.targetPanY = this.viewportEl.clientHeight / 2 - contentY * this.targetScale;
+    this._clampTargetPan();
+    this._startLoop();
+  },
+
   _clampScale(scale) {
     return Math.min(this.maxScale, Math.max(this.minScale, scale));
   },
