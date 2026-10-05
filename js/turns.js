@@ -375,6 +375,7 @@ const Turns = {
     // técnicamente ya estén todos "agotados" de la ronda anterior).
     const ready = isPlayerTurn && this._allPlayerUnitsExhausted();
     this._btn.classList.toggle("end-turn-btn--ready", ready);
+    this._syncReadyChime(ready);
 
     if (!isPlayerTurn) {
       this._btnLabelEl.textContent = "Turno rival…";
@@ -386,6 +387,23 @@ const Turns = {
       this._btnLabelEl.textContent = "Pasar turno";
       this._setIcon("ph ph-hourglass-simple end-turn-btn__icon");
     }
+  },
+
+  // Aviso sonoro al compás del pulso del botón (1.3 s por ciclo, el punto
+  // álgido del latido cae a la mitad): suena en cada latido mientras estén
+  // todos los personajes agotados. Se para en cuanto deja de estarlo.
+  _syncReadyChime(ready) {
+    if (!ready) {
+      if (this._readyChimeTimer) { clearTimeout(this._readyChimeTimer); clearInterval(this._readyChimeTimer); this._readyChimeTimer = null; }
+      return;
+    }
+    if (this._readyChimeTimer) return;
+    const beat = () => { if (typeof SFX !== "undefined" && SFX.readyChime) SFX.readyChime(); };
+    // Primer latido a mitad de ciclo (650 ms) y luego uno cada 1300 ms.
+    this._readyChimeTimer = setTimeout(() => {
+      beat();
+      this._readyChimeTimer = setInterval(beat, 1300);
+    }, 650);
   },
 
   // ---------- Cambio de turno ----------

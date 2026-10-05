@@ -351,6 +351,22 @@ const SFX = {
     setTimeout(() => this._pluck("vision-4", 1660, "sine", 0.42, 0.14), 260);
   },
 
+  // Habilidad recargada junto a un tótem (Abilities.onTurnStart): arpegio
+  // cálido y ascendente, corto.
+  recharge() {
+    this._pluck("rch-1", 523, "triangle", 0.16, 0.2);
+    setTimeout(() => this._pluck("rch-2", 659, "triangle", 0.16, 0.2), 80);
+    setTimeout(() => this._pluck("rch-3", 784, "triangle", 0.18, 0.2), 160);
+    setTimeout(() => this._pluck("rch-4", 1047, "sine", 0.4, 0.16), 250);
+  },
+
+  // Aviso suave del botón PASAR TURNO cuando ya no queda nada por hacer
+  // (Turns._syncEndTurnBtn): dos notas cortas y agradables, bajitas.
+  readyChime() {
+    this._pluck("rdy-1", 880, "sine", 0.18, 0.1);
+    setTimeout(() => this._pluck("rdy-2", 1319, "sine", 0.3, 0.08), 110);
+  },
+
   // Mochila (js/backpack.js) — colocar un objeto sobre el tablero: un
   // "plop" corto y limpio, distinto del click de menú/UI para que se lea
   // como una acción sobre el propio tablero, no como navegación.
