@@ -161,7 +161,7 @@ const EN_DICT = {
 "Anfibio": "Amphibious",
 "Tus unidades pueden caminar sobre las casillas de agua como si fueran de tierra: podrán moverse por ellas y atravesarlas.": "Your units can walk on water tiles as if they were land: they can move onto them and cross them.",
 "Abundancia": "Abundance",
-"Cada tótem bajo tu control te da +{0} punto{1} de gloria extra al empezar tu turno (+1 por nivel, hasta +3 por tótem).": "Each totem under your control gives you +{0} extra glory point{1} at the start of your turn (+1 per level, up to +3 per totem).",
+"Cada tótem que controlas te da +1 de gloria extra al empezar tu turno, hasta un máximo de {0} tótem{1}.": "Each totem you control gives you +1 extra glory at the start of your turn, up to a maximum of {0} totem{1}.",
 "Regateo": "Haggling",
 "Todos los productos de la Tienda Goblin cuestan la mitad, redondeando hacia abajo (nunca menos de 1 punto de gloria).": "All Goblin Shop products cost half, rounded down (never less than 1 glory point).",
 "Recolector": "Gatherer",

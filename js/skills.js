@@ -239,7 +239,7 @@ const SKILL_DEFS = [
     maxRank: 3,
     fallbackIcon: "ph-coins",
     describe: (rank) =>
-      `Cada tótem bajo tu control te da +${rank || 1} punto${(rank || 1) === 1 ? "" : "s"} de gloria extra al empezar tu turno (+1 por nivel, hasta +3 por tótem).`,
+      `Cada tótem que controlas te da +1 de gloria extra al empezar tu turno, hasta un máximo de ${rank || 1} tótem${(rank || 1) === 1 ? "" : "s"}.`,
   },
   {
     id: "regateo",

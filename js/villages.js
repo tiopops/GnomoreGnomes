@@ -174,11 +174,11 @@ const Villages = {
   // los turnos en vez de +1" (ver _capture, gloryBonus se fija ahí al
   // conquistarlo y no cambia después, así que sumarlos basta).
   gloryBonusFor(team) {
-    // Abundancia (js/skills.js): +X de gloria extra por cada tótem propio.
-    const extra = typeof Skills !== "undefined" ? Skills.rank(team, "abundancia") : 0;
-    return this.list
-      .filter((v) => v.owner === team)
-      .reduce((sum, v) => sum + VILLAGE_GLORY_PER_TURN + extra, 0);
+    // Abundancia (js/skills.js): +1 de gloria extra por cada tótem propio, pero solo
+    // cuentan tantos tótems como el nivel de la habilidad (máx. +3).
+    const rank = typeof Skills !== "undefined" ? Skills.rank(team, "abundancia") : 0;
+    const owned = this.list.filter((v) => v.owner === team).length;
+    return owned * VILLAGE_GLORY_PER_TURN + Math.min(owned, rank);
   },
 
   spriteFor(owner) {
