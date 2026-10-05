@@ -238,8 +238,8 @@ const SKILL_DEFS = [
     name: "Abundancia",
     maxRank: 3,
     fallbackIcon: "ph-coins",
-    describe: (rank) =>
-      `Cada tótem que controlas te da +1 de gloria extra al empezar tu turno, hasta un máximo de ${rank || 1} tótem${(rank || 1) === 1 ? "" : "s"}.`,
+    describe: () =>
+      "Cada tótem que controlas te da +1 de gloria extra al empezar tu turno, hasta un máximo de 1 tótem por cada punto de esta habilidad.",
   },
   {
     id: "regateo",
