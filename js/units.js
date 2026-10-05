@@ -607,7 +607,7 @@ const Units = {
     const { x, y } = getTileCenter(unit.row, unit.col, this.boardSize);
     unit.el.style.left = `${x}px`;
     unit.el.style.top = `${y}px`;
-    unit.el.style.zIndex = String((unit.row + unit.col) * 10 + 5);
+    unit.el.style.zIndex = unit.el.classList.contains("gnome--veo") ? "3000" : String((unit.row + unit.col) * 10 + 5); // GnomeVeo: sigue sobre la niebla
     this._applyFacing(unit);
   },
 
@@ -1151,7 +1151,7 @@ const Units = {
     const { x, y } = getTileCenter(row, col, this.boardSize);
     unit.el.style.left = `${x}px`;
     unit.el.style.top = `${y}px`;
-    unit.el.style.zIndex = String((row + col) * 10 + 5);
+    unit.el.style.zIndex = unit.el.classList.contains("gnome--veo") ? "3000" : String((row + col) * 10 + 5); // GnomeVeo: sigue sobre la niebla
 
     // Trampa de TruenoEspora (js/abilities.js) — se comprueba en CADA
     // paso, no solo al final del camino, para que explote en el instante

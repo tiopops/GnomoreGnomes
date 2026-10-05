@@ -1140,7 +1140,7 @@ function createGnomeInstance() {
 
         this.el.classList.add("gnome--flying");
         this.el.style.display = "";
-        this.el.style.zIndex = "900";
+        this.el.style.zIndex = this.el.classList.contains("gnome--veo") ? "3000" : "900";
         this.spriteEl.style.width = `${GNOME_SIZES.flying}px`;
 
         // Grito mientras vuela por el aire (pedido explícito: "un sonido...

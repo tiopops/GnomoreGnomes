@@ -120,6 +120,7 @@ const Relics = {
   },
 
   _refreshUi(team) {
+    if (typeof Fog !== "undefined" && Fog.applyVisibility) Fog.applyVisibility(); // GnomeVeo: mostrar/ocultar el gnomo al instante
     if (typeof Glory !== "undefined" && Glory._renderPreview) Glory._renderPreview(team);
     if (team === "player" && typeof Backpack !== "undefined" && Backpack._slotsEl) Backpack._renderSlots();
     if (typeof Units !== "undefined" && Units.selectedId) {
