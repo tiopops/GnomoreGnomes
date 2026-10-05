@@ -182,8 +182,8 @@ const Drums = {
     const now = performance.now();
     if (now - (this._lastAnnounce || 0) < 2500) return;
     this._lastAnnounce = now;
-    if (team === "player") Banners.text("¡Los tambores deciden!", 1, "yellow");
-    else Banners.text("¡Un rival hace sonar los tambores!", 1, "red");
+    if (team === "player") Banners.text("¡Haces sonar los tambores con fuerza!", 1, "yellow");
+    else Banners.text("¡Los tambores deciden!", 1, "red");
   },
 
   _shake(d, soft) {
@@ -305,10 +305,65 @@ const Drums = {
     Teams.all.forEach((t) => (this.slices[t] = 0));
     this.list.forEach((d) => (d.hits = {}));
     document.body.classList.remove("drums-raining");
+    await this._relocate(); // tras la lluvia, los tambores cambian de sitio
     this.refreshMarkers();
     if (typeof Obelisks !== "undefined" && Obelisks.refreshAll) Obelisks.refreshAll();
     if (typeof Fog !== "undefined") Fog.applyVisibility();
     this._busy = false;
+  },
+
+  // Tras cada lluvia de rocas los tambores se mudan a otros sitios libres
+  // (mismas reglas que al repartirlos al empezar: lejos de obeliscos, del
+  // volcán y entre sí). Se desvanecen, se recolocan y reaparecen.
+  _placeAt(d, row, col) {
+    const { x, y } = getTileCenter(row, col, Units.boardSize);
+    d.row = row;
+    d.col = col;
+    d.el.style.left = `${x}px`;
+    d.el.style.top = `${y}px`;
+    d.el.style.zIndex = String((row + col) * 10 + 5);
+    d.markerEl.style.left = `${x}px`;
+    d.markerEl.style.top = `${y - 238}px`;
+    d.markerEl.style.zIndex = String((row + col) * 10 + 45);
+    d.badgeEl.style.left = `${x}px`;
+    d.badgeEl.style.top = `${y - 128}px`;
+    d.badgeEl.style.zIndex = String((row + col) * 10 + 45);
+  },
+
+  _pickNewSpot(d, size) {
+    const others = this.list.filter((o) => o !== d);
+    for (let i = 0; i < 4000; i++) {
+      const row = 2 + Math.floor(Math.random() * (size - 4));
+      const col = 2 + Math.floor(Math.random() * (size - 4));
+      if (Math.max(Math.abs(row - d.row), Math.abs(col - d.col)) < 3) continue; // que de verdad cambie de sitio
+      if (!this._free(row, col, size)) continue;
+      if (typeof Resources !== "undefined" && Resources.at && Resources.at(row, col)) continue;
+      if (typeof Bushes !== "undefined" && Bushes.at && Bushes.at(row, col)) continue;
+      if (others.some((o) => Math.max(Math.abs(o.row - row), Math.abs(o.col - col)) < 4)) continue;
+      if (typeof Obelisks !== "undefined" && Obelisks.list.some((o) => Math.max(Math.abs(o.row - row), Math.abs(o.col - col)) < 5)) continue;
+      return { row, col };
+    }
+    return null;
+  },
+
+  async _relocate() {
+    const size = Units.boardSize;
+    const moves = this.list.map((d) => ({ d, spot: this._pickNewSpot(d, size) })).filter((m) => m.spot);
+    if (!moves.length) return;
+    const parts = (d) => [d.el, d.markerEl, d.badgeEl];
+    moves.forEach(({ d }) => parts(d).forEach((e) => e.animate && e.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 350, fill: "forwards" })));
+    await new Promise((r) => setTimeout(r, 380));
+    moves.forEach(({ d, spot }) => {
+      this._placeAt(d, spot.row, spot.col);
+      d.plays = {};
+      d._markerKey = null;
+      parts(d).forEach((e) => e.getAnimations && e.getAnimations().forEach((a) => a.cancel()));
+      if (d.spriteEl.animate) d.spriteEl.animate([{ transform: "translateY(-60px)", opacity: 0 }, { transform: "translateY(0)", opacity: 1 }], { duration: 450, easing: "cubic-bezier(.3,1.6,.5,1)" });
+      this._wave(d, false);
+    });
+    if (typeof SFX !== "undefined" && SFX.drum) { try { SFX.drum(true); } catch (e) {} }
+    this.refreshFog();
+    await new Promise((r) => setTimeout(r, 500));
   },
 
   async _dropRock(t, dmg, causer) {
