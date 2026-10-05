@@ -7711,11 +7711,10 @@ body.backpack-giving--katapum .unit--katapum-target * {
 .armory-node__owned-check {
   position: absolute;
   z-index: 2;
-  top: -6px;
-  right: -6px;
-  font-size: 1.15rem;
-  color: #57c15c;
-  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.6));
+  top: -10px;
+  right: -10px;
+  width: 30px;
+  height: 30px;
   pointer-events: none;
 }
 
@@ -9428,8 +9427,8 @@ body.tut-on .settings-gear-btn--account { display: none; }
 }
 .idle-arrow svg { display: block; animation: idle-arrow-bounce 0.85s ease-in-out infinite; transform-origin: 50% 20%; }
 @keyframes idle-arrow-bounce {
-  0%, 100% { transform: translateY(0) rotate(-5deg); }
-  50% { transform: translateY(14px) rotate(3deg); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(14px); }
 }
 .recruit-name { color: #ffcf3d; }
 /* Selección de casillas: drop-shadow sigue el clip-path (box-shadow se recortaba como con máscara) */

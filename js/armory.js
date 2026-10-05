@@ -64,6 +64,15 @@ const ARMORY_TRACK_LABELS = { arma: "ARMA", armadura: "ARMADURA" };
 const ARMORY_STAT_ICON = { arma: "ph-boxing-glove", armadura: "ph-shield" };
 const ARMORY_STAT_LABEL = { arma: "Fuerza", armadura: "Aguante" };
 
+// Check verde de "ya comprado": forma irregular y angulosa (mismo trazo negro grueso y
+// sombra dura que el resto de la interfaz) con una marca dibujada a mano.
+const ARMORY_CHECK_SVG =
+  '<svg class="armory-node__owned-check" viewBox="0 0 40 40" width="30" height="30" aria-hidden="true">' +
+  '<path d="M7 5 L33 3 L38 14 L35 33 L21 38 L4 34 L2 17 Z" fill="rgba(10,6,20,.6)" transform="translate(2 2)"/>' +
+  '<path d="M7 5 L33 3 L38 14 L35 33 L21 38 L4 34 L2 17 Z" fill="#57c15c" stroke="#000" stroke-width="3" stroke-linejoin="miter" stroke-miterlimit="3"/>' +
+  '<path d="M9 21 L16 28 L31 11" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="square" stroke-linejoin="miter"/>' +
+  "</svg>";
+
 const Armory = {
   state: { player: { arma: 0, armadura: 0 }, enemy: { arma: 0, armadura: 0 } },
 
@@ -280,7 +289,7 @@ const Armory = {
       nodeEl.innerHTML =
         `<img src="${ARMORY_ICONS[kind][lvl - 1]}" class="armory-node__icon" alt="">` +
         `<span class="armory-node__lvl"><span class="armory-node__lvl-num">Lvl. ${lvl}</span></span>` +
-        (boughtAlready ? '<i class="ph-fill ph-check-circle armory-node__owned-check"></i>' : "");
+        (boughtAlready ? ARMORY_CHECK_SVG : "");
       // Solo el propio nodo comprado o el siguiente disponible se pueden
       // seleccionar (ver descripción) — uno todavía bloqueado más allá del
       // siguiente no muestra nada nuevo, "bloqueadas entre sí".
