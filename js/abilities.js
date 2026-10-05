@@ -287,7 +287,7 @@ const Abilities = {
 
     SFX.glory();
     Units.playShake(unit);
-    Units.spawnFloatingText(unit, "¡ESPINAS!", { className: "dmg-popup gnome-points-popup" });
+    Units.spawnFloatingText(unit, "¡ESPINAS!", { className: "dmg-popup popup--good" });
     this._consume(unit);
   },
 
@@ -381,7 +381,7 @@ const Abilities = {
     // efecto de sonido agradable como de magia reveladora" — en vez del
     // click genérico de UI de antes.
     SFX.visionReveal();
-    Units.spawnFloatingText(unit, "¡VISIÓN!", { className: "dmg-popup gnome-points-popup" });
+    Units.spawnFloatingText(unit, "¡VISIÓN!", { className: "dmg-popup popup--good" });
     this._consume(unit);
     // La unidad sigue seleccionada tras usarla (puede que le quede la otra
     // acción) — vuelve a mostrar su radio normal, oculto al empezar a
@@ -1063,6 +1063,26 @@ const Abilities = {
   // interacción normal de GolemCorteza. La curación de _activateThorns no
   // se toca aquí: esa parte del pedido original SÍ era permanente ("se cura
   // hasta su vida máxima de base"), solo la protección de espinas caduca.
+  // Efecto de recarga sobre la propia unidad: aro dorado en el suelo que se
+  // expande, columna de luz, destellos que suben y un brillo en el sprite.
+  _rechargeFx(unit) {
+    if (!unit.el) return;
+    if (typeof SFX !== "undefined" && SFX.recharge) SFX.recharge();
+    const fx = document.createElement("div");
+    fx.className = "recharge-fx";
+    fx.innerHTML = '<i class="recharge-fx__ring"></i><i class="recharge-fx__ring recharge-fx__ring--2"></i><i class="recharge-fx__beam"></i>';
+    for (let i = 0; i < 14; i++) {
+      const sp = document.createElement("i");
+      sp.className = "recharge-fx__spark";
+      sp.style.setProperty("--x", `${(Math.random() - 0.5) * 100}px`);
+      sp.style.setProperty("--d", `${Math.random() * 0.35}s`);
+      sp.style.setProperty("--h", `${90 + Math.random() * 90}px`);
+      fx.appendChild(sp);
+    }
+    unit.el.appendChild(fx);
+    setTimeout(() => { fx.remove(); }, 1800);
+  },
+
   onTurnStart(team) {
     // Recarga: quien empieza su turno pegado a un tótem de su propio equipo
     // recupera la habilidad gastada (incentivo para capturar tótems).
@@ -1072,7 +1092,8 @@ const Abilities = {
         const near = Villages.list.some((v) => v.owner === team && Math.max(Math.abs(v.row - unit.row), Math.abs(v.col - unit.col)) <= 1);
         if (!near) return;
         unit.abilityUsed = false;
-        if (typeof Units.spawnFloatingText === "function") Units.spawnFloatingText(unit, "¡Habilidad recargada!", { className: "dmg-popup" });
+        if (typeof Units.spawnFloatingText === "function") Units.spawnFloatingText(unit, "¡Habilidad recargada!", { className: "dmg-popup popup--good" });
+        this._rechargeFx(unit);
       });
       this._refreshButton();
     }

@@ -682,7 +682,7 @@ const Backpack = {
     totem.hp = totem.maxHp;
     Units.updateHpBar(totem);
     SFX.itemEaten();
-    Units.spawnFloatingText(totem, "¡REPARADO!", { className: "dmg-popup gnome-points-popup" });
+    Units.spawnFloatingText(totem, "¡REPARADO!", { className: "dmg-popup popup--good" });
   },
 
   _giveBevidaTo(uid, target) {
@@ -693,7 +693,7 @@ const Backpack = {
     target.maxHp = type.aguante + bonus + (target.cohesionBonus || 0);
     Units.updateHpBar(target);
     SFX.itemEaten();
-    Units.spawnFloatingText(target, "¡BEBEVIDA!", { className: "dmg-popup gnome-points-popup" });
+    Units.spawnFloatingText(target, "¡BEBEVIDA!", { className: "dmg-popup popup--good" });
   },
 
   // ---------- Colocación sobre el tablero ----------

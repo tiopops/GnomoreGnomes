@@ -772,7 +772,7 @@ const Skills = {
       .forEach((u) => {
         if (anchors.some((a) => Math.max(Math.abs(a.row - u.row), Math.abs(a.col - u.col)) <= 1)) {
           this.setShield(u, true);
-          Units.spawnFloatingText(u, "¡Escudo!", { className: "dmg-popup" });
+          Units.spawnFloatingText(u, "¡Escudo!", { className: "dmg-popup popup--good" });
         }
       });
   },
@@ -792,14 +792,14 @@ const Skills = {
 
     const evasion = this.rank(team, "evasion");
     if (melee && evasion > 0 && Math.random() < evasion * 0.1) {
-      Units.spawnFloatingText(target, "¡Esquiva!", { className: "dmg-popup" });
+      Units.spawnFloatingText(target, "¡Esquiva!", { className: "dmg-popup popup--good" });
       if (typeof SFX !== "undefined" && SFX.hover) SFX.hover();
       return { prevented: true, reason: "evasion" };
     }
 
     if (target.shielded) {
       this.setShield(target, false);
-      Units.spawnFloatingText(target, "¡Bloqueado!", { className: "dmg-popup" });
+      Units.spawnFloatingText(target, "¡Bloqueado!", { className: "dmg-popup popup--good" });
       Units.playShake(target);
       if (typeof SFX !== "undefined") SFX.hit();
       return { prevented: true, reason: "shield" };
@@ -815,7 +815,7 @@ const Skills = {
       target.stoneSkinRound = round;
       target.hp = 1;
       Units.updateHpBar(target);
-      Units.spawnFloatingText(target, "¡Piel de Roca!", { className: "dmg-popup" });
+      Units.spawnFloatingText(target, "¡Piel de Roca!", { className: "dmg-popup popup--good" });
       Units.playShake(target);
       if (typeof SFX !== "undefined") SFX.hit();
       return { prevented: true, reason: "stone" };

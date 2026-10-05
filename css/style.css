@@ -9837,3 +9837,9 @@ body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events
 @keyframes rchRing { 0% { opacity: 0; transform: scale(0.2); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(1.4); } }
 @keyframes rchBeam { 0% { opacity: 0; transform: scaleY(0.3); transform-origin: bottom; } 30% { opacity: 1; } 100% { opacity: 0; transform: scaleY(1.1); transform-origin: bottom; } }
 @keyframes rchSpark { 0% { opacity: 0; transform: translateY(0) scale(1); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(calc(var(--h) * -1)) scale(0.3); } }
+
+/* Efectos beneficiosos (curar, reparar, recargar, defensas...): texto flotante en verde. */
+.popup--good {
+  color: #4ade5a;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7), 0 0 10px rgba(74, 222, 90, 0.55);
+}
