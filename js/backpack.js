@@ -1471,8 +1471,7 @@ const Backpack = {
 
   _explodeKatapum(target) {
     const damage = this._rollKatapumDamage();
-    // Se enseña la tirada del dado sobre el objetivo.
-    Units.spawnFloatingText(target, `Dado: ${this._lastKatapumRoll}`, { className: "dmg-popup gnome-points-popup" });
+    // Solo se muestra el daño (sale de Skills.resolveDamage), no la tirada del dado.
     // Escudo/Piel de Roca (js/skills.js) también valen contra el misil; la
     // Evasión no (es teledirigido, no es un golpe cuerpo a cuerpo).
     if (typeof Skills !== "undefined") Skills.resolveDamage(target, damage, { melee: false });
