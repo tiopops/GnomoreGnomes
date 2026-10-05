@@ -36,7 +36,7 @@ const STRINGS = {
     level_colinas_rockntroll: "Colinas Rock'n Troll",
     level_colinas_rockntroll_flavor: "Colinas rocosas con tambores que hacen llover rocas y un volcán en el centro.",
     level_colinas_rockntroll_f1: "Tambores de Guerra: domínalos con más unidades para hacer llover rocas sobre el rival.",
-    level_colinas_rockntroll_f2: "Fragmentos: las rocas rotas sueltan piedras que guardas en la mochila y lanzas (una por turno).",
+    level_colinas_rockntroll_f2: "Fragmentos: las rocas rotas sueltan piedras que guardas en la mochila y lanzas todas las que quieras.",
     level_colinas_rockntroll_f3: "Volcán: aliméntalo con gnomos o piedras y soltará gnomos en llamas contra el rival.",
     level_coming_soon: "Próximamente",
 
@@ -175,7 +175,7 @@ const STRINGS = {
     level_colinas_rockntroll: "Rock'n Troll Hills",
     level_colinas_rockntroll_flavor: "Rocky hills with drums that make it rain rocks and a volcano in the middle.",
     level_colinas_rockntroll_f1: "War Drums: hold them with more units to make rocks rain down on your rival.",
-    level_colinas_rockntroll_f2: "Fragments: broken rocks drop stones you keep in your backpack and throw (one per turn).",
+    level_colinas_rockntroll_f2: "Fragments: broken rocks drop stones you keep in your backpack and throw as many as you like.",
     level_colinas_rockntroll_f3: "Volcano: feed it gnomes or stones and it will unleash burning gnomes on your rival.",
     level_coming_soon: "Coming soon",
 
