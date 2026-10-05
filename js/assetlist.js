@@ -54,6 +54,8 @@ const PRELOAD_ASSETS = [
  "assets/equipos/MushboomForest/gnomo_grita.png",
  "assets/equipos/MushboomForest/gnomo_idle.png",
  "assets/equipos/MushboomForest/gnomo_idle_midres.png",
+ "assets/equipos/MushboomForest/gnomo_corre.png",
+ "assets/equipos/MushboomForest/gnomo_corre_midres.png",
  "assets/equipos/MushboomForest/machacagnomos_hombre_arbol.png",
  "assets/equipos/MushboomForest/machacagnomos_hombre_arbol_impacto.png",
  "assets/equipos/MushboomForest/machacagnomos_seta_artificiero.png",

@@ -50,6 +50,12 @@ const GNOME_THROW_MAX_RANGE = 4;
 const GNOME_ASSETS = {
   idle: "assets/equipos/MushboomForest/gnomo_idle.png",
   grita: "assets/equipos/MushboomForest/gnomo_grita.png",
+  // Sprite de carrera (pedido explícito: "añado sprite de gnomo corriendo,
+  // la animación de correr de cuando está en llamas aplícala para cuando el
+  // gnomo huya"): se usa SOLO mientras huye (_fleeAwayFrom), con la misma
+  // zancada rápida que el gnomo en llamas del volcán (ver
+  // .gnome__sprite--run en css/style.css).
+  corre: "assets/equipos/MushboomForest/gnomo_corre.png",
 };
 
 // Pedido explícito (Señuelo Explosivo, tienda goblin, js/backpack.js): "un
@@ -1230,6 +1236,16 @@ function createGnomeInstance() {
     // pueda reutilizar EXACTAMENTE la misma lógica de evitar rincones
     // (_bestFleeStep/_tileOpenness) con otro punto de referencia y otro
     // número de casillas, en vez de duplicarla.
+    // Cambia entre el sprite de reposo y el de carrera (huida). Los señuelos
+    // nunca corren (su dibujo es una estaca clavada).
+    _setRunning(on) {
+      if (!this.spriteEl || this.isDecoy) return;
+      this.spriteEl.classList.toggle("gnome__sprite--run", on);
+      const src = on ? GNOME_ASSETS.corre : GNOME_ASSETS.idle;
+      if (typeof SpriteQuality !== "undefined") SpriteQuality.register(this.spriteEl, src);
+      else this.spriteEl.src = src;
+    },
+
     async _fleeAwayFrom(fromRow, fromCol, steps) {
       let dRow = Math.sign(this.row - fromRow);
       let dCol = Math.sign(this.col - fromCol);
@@ -1251,7 +1267,14 @@ function createGnomeInstance() {
       if (path.length === 0) return;
 
       this.busy = true;
-      await Units.walkPath(this, path);
+      // Huida: sprite de carrera + zancada rápida (la misma del gnomo en
+      // llamas del volcán). Se restaura el sprite de reposo al terminar.
+      this._setRunning(true);
+      try {
+        await Units.walkPath(this, path);
+      } finally {
+        this._setRunning(false);
+      }
       this.busy = false;
       // Este gnomo acaba de cambiar de loseta: si hay una unidad
       // seleccionada ahora mismo (sea o no la que se acaba de mover), su

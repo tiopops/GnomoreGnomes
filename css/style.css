@@ -9794,3 +9794,19 @@ body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events
   background: #ffb02e;
   box-shadow: 0 0 10px 4px #f0701c;
 }
+
+/* Gnomo huyendo (js/gnome.js _setRunning): sprite de carrera con la misma
+   zancada rápida del gnomo en llamas del volcán (rebote + aplastado +
+   balanceo). Más específico que .unit--moving .unit__sprite--hop para
+   sustituir el salto normal mientras corre. */
+.unit--moving .unit__sprite.gnome__sprite.gnome__sprite--run {
+  animation: gnome-run-stride 0.2s linear infinite;
+  transform-origin: 50% 90%;
+}
+@keyframes gnome-run-stride {
+  0%   { transform: translateY(0) scale(1, 1) rotate(-8deg); }
+  25%  { transform: translateY(-14px) scale(0.93, 1.07) rotate(0deg); }
+  50%  { transform: translateY(0) scale(1.07, 0.93) rotate(8deg); }
+  75%  { transform: translateY(-14px) scale(0.93, 1.07) rotate(0deg); }
+  100% { transform: translateY(0) scale(1, 1) rotate(-8deg); }
+}
