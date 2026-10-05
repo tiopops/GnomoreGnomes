@@ -2,8 +2,10 @@
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
      - Medir cuánto lleva abierto el turno del jugador.
      - Pasados IDLE_HINT_MS (10 s), poner una flecha amarilla animada sobre la
-       cabeza de cada unidad del jugador que aún no ha usado ninguna acción,
-       y quitarla en cuanto la usa (o al terminar el turno / morir). */
+       cabeza de cada unidad del jugador que NO está seleccionada y aún puede
+       actuar (aunque ya haya gastado una acción, mientras le quede otra), y
+       quitarla al instante en cuanto se la selecciona (o al terminar el turno
+       / morir / quedarse sin acciones). Si se deselecciona, vuelve a salir. */
 const IDLE_HINT_MS = 10000;
 
 const IdleHint = {
@@ -13,7 +15,7 @@ const IdleHint = {
   _timer: null,
 
   init() {
-    this._timer = setInterval(() => this._tick(), 250);
+    this._timer = setInterval(() => this._tick(), 100);
   },
 
   _active() {
@@ -43,7 +45,7 @@ const IdleHint = {
       this._clear();
     }
     if (Date.now() - this._since < IDLE_HINT_MS) return;
-    const unused = Units.list.filter((u) => u.team === "player" && u.el && !(Turns.actionsUsed[u.id] > 0) && Turns.canAct(u));
+    const unused = Units.list.filter((u) => u.team === "player" && u.el && u.id !== Units.selectedId && Turns.canAct(u));
     const ids = new Set(unused.map((u) => u.id));
     Object.keys(this._arrows).forEach((id) => {
       if (!ids.has(id)) this._remove(id);
