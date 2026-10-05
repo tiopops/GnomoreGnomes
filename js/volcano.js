@@ -166,16 +166,8 @@ const Volcano = {
     const color = VOLCANO_TEAM_COLORS[v.lastTeam] || "#ff9a1f";
     v.barEl.style.setProperty("--hp-fill", color);
     v.segmentEls.forEach((seg, i) => seg.classList.toggle("unit__hpbar-segment--filled", i < v.points));
-    // Con la erupción en marcha: cuántos gnomos en llamas siguen agarrados.
-    if (this.eruption && this.burners.length) {
-      v.badgeEl.style.display = "";
-      v.badgeEl.innerHTML =
-        '<svg viewBox="0 0 24 28" width="18" height="21" aria-hidden="true"><path d="M12 1c1 5 7 7 7 14a7 7 0 0 1-14 0c0-3 2-4 3-7 1 1 2 2 2 4 2-3 2-7 2-11z" fill="#ffcf3d" stroke="#000" stroke-width="2" stroke-linejoin="round"/></svg>' +
-        `<b>${this.burners.length}</b>`;
-      v.badgeEl.style.setProperty("--vb", VOLCANO_TEAM_COLORS[this.eruption.owner] || "#ff5148");
-    } else {
-      v.badgeEl.style.display = "none";
-    }
+    // (Sin contador de gnomos en llamas sobre el volcán: se quitó a petición.)
+    v.badgeEl.style.display = "none";
   },
 
   _stateFor(v) {
