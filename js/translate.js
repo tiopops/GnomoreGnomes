@@ -124,7 +124,7 @@ const EN_DICT = {
 "PROTECCIÓN": "PROTECTION",
 "SUPERVIVENCIA": "SURVIVAL",
 "Raíces": "Roots",
-"Tus tótems y tu Obelisco Ancestral echan raíces: a los unidades enemigas les cuesta 1 punto de movimiento extra por cada paso que den entrando, saliendo o moviéndose por las casillas adyacentes a ellos.": "Your totems and your Ancestral Obelisk take root: enemy units pay 1 extra movement point for every step they take entering, leaving or moving through the tiles adjacent to them.",
+"Tus tótems y tu Obelisco Ancestral echan raíces: a las unidades enemigas les cuesta 1 punto de movimiento extra por cada paso que den entrando, saliendo o moviéndose por las casillas adyacentes a ellos.": "Your totems and your Ancestral Obelisk take root: enemy units pay 1 extra movement point for every step they take entering, leaving or moving through the tiles adjacent to them.",
 "Piel de Roca": "Rock Skin",
 "Si un ataque fuese a matar a una de tus unidades y llevas al menos 1 Roca en la mochila, se consume esa Roca y la unidad se queda con 1 punto de vida. Cada unidad solo puede usarlo una vez por turno.": "If an attack would kill one of your units and you carry at least 1 Rock in your backpack, that Rock is consumed and the unit is left with 1 health. Each unit can only use this once per turn.",
 "Codo con Codo": "Shoulder to Shoulder",

@@ -50,7 +50,7 @@ const SKILL_DEFS = [
     maxRank: 1,
     fallbackIcon: "ph-tree",
     describe: () =>
-      "Tus tótems y tu Obelisco Ancestral echan raíces: a los unidades enemigas les cuesta 1 punto de movimiento extra por cada paso que den entrando, saliendo o moviéndose por las casillas adyacentes a ellos.",
+      "Tus tótems y tu Obelisco Ancestral echan raíces: a las unidades enemigas les cuesta 1 punto de movimiento extra por cada paso que den entrando, saliendo o moviéndose por las casillas adyacentes a ellos.",
   },
   {
     id: "piel_roca",
