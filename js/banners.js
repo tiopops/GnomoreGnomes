@@ -36,14 +36,14 @@ const Banners = {
   },
 
   // Cartel genérico de texto central (mismo estilo que ¡ES TU TURNO!).
-  text(text, priority = 1) {
+  text(text, priority = 1, tone) {
     let el;
     return this.enqueue({
       priority,
       duration: 2100,
       show: () => {
         el = document.createElement("div");
-        el.className = "turn-banner";
+        el.className = "turn-banner" + (tone ? " turn-banner--" + tone : "");
         el.innerHTML = '<span class="turn-banner__text">' + text + "</span>";
         document.body.appendChild(el);
       },

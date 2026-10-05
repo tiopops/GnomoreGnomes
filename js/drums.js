@@ -163,13 +163,27 @@ const Drums = {
   // Llamado desde Gnome.hit: cada golpe de una unidad adyacente a un tambor.
   onGnomeHit(unit) {
     if (!this.isActive()) return;
+    let touched = false;
     this.list.forEach((d) => {
       if (Math.max(Math.abs(unit.row - d.row), Math.abs(unit.col - d.col)) > 1) return;
       d.hits[unit.team] = (d.hits[unit.team] || 0) + 1;
       d.plays[unit.team] = (d.plays[unit.team] || 0) + 1;
       this._shake(d);
+      touched = true;
     });
+    if (touched) this._announceHit(unit.team);
     this.refreshMarkers();
+  },
+
+  // Aviso en pantalla al golpear un tambor: rojo si lo hace un rival, amarillo
+  // si lo haces tú. Con un pequeño margen para no apilar carteles seguidos.
+  _announceHit(team) {
+    if (typeof Banners === "undefined") return;
+    const now = performance.now();
+    if (now - (this._lastAnnounce || 0) < 2500) return;
+    this._lastAnnounce = now;
+    if (team === "player") Banners.text("¡Los tambores deciden!", 1, "yellow");
+    else Banners.text("¡Un rival hace sonar los tambores!", 1, "red");
   },
 
   _shake(d, soft) {

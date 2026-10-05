@@ -9848,3 +9848,7 @@ body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events
    los clics atraviesan hasta quien esté debajo (salvo si es objetivo de roca/cohete). */
 .volcano--occluding { opacity: 0.45; transition: opacity 0.15s ease; }
 .volcano--occluding:not(.unit--katapum-target):not(.volcano--targeted) { pointer-events: none; }
+
+/* Carteles de color (Banners.text con tono): rojo = rival, amarillo = tú. */
+.turn-banner--red .turn-banner__text { font-size: clamp(1.5rem, 4vw, 2.8rem); white-space: nowrap; color: #ff4a4a; text-shadow: 0 3px 0 #6e0f0f, 0 0 18px rgba(255, 70, 70, 0.6); }
+.turn-banner--yellow .turn-banner__text { color: #ffd24a; }

@@ -66,6 +66,7 @@ const EN_DICT = {
 "El volcán se apaga: vuelve a estar disponible": "The volcano dies down: it is available again",
 "¡Llueven rocas!": "Rocks are falling!",
 "¡Los tambores deciden!": "The drums decide!",
+"¡Un rival hace sonar los tambores!": "A rival is sounding the drums!",
 "Gnomeda de la Suerte": "Lucky Gnomeda",
 "Oro puro de Rock'n'Troll, estampado contra un gnomo (sin querer). Te da +2 Puntos de Gloria por turno (cada moneda extra suma otros +2).": "Pure Rock'n'Troll gold, stamped onto a gnome (by accident). Gives you +2 Glory Points per turn (each extra coin adds another +2).",
 "Gafas con nariz y bigote. Mirar al sol te quema la sombra; mirar gnomos, no. Te muestran un gnomo libre aunque haya niebla (cada par extra, uno más).": "Glasses with a nose and moustache. Staring at the sun burns your shadow; staring at gnomes doesn't. They show you a free gnome even through fog (each extra pair, one more).",
