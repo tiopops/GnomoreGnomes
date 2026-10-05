@@ -587,9 +587,11 @@ const Backpack = {
     this.inventory.push({ uid: this._nextUid++, itemId });
   },
 
-  // Piedras (fragmentos): como mucho UNA por turno y por equipo.
+  // Piedras (fragmentos): el jugador puede lanzar todas las que tenga en cada
+  // turno (pedido explícito); la CPU sigue limitada a UNA por turno.
   _rockRound: {},
   canThrowRock(team = "player") {
+    if (team === "player") return true;
     return this._rockRound[team] !== (typeof Turns !== "undefined" ? Turns.roundNumber : 0);
   },
   markRockThrown(team = "player") {

@@ -58,7 +58,7 @@ const EN_DICT = {
 "Setarcoiris": "Rainbowshroom",
 "Pierde 1 de durabilidad cuando muere un aliado.": "Loses 1 durability whenever an ally dies.",
 "Fragmento de roca": "Rock Fragment",
-"Un trocito de roca caída del cielo. Púlsalo otra vez y apunta: tíraselo al volcán (+1), apaga con él una casilla de lava o quita un gnomo en llamas agarrado a una de tus unidades. No sirve contra el enemigo. Solo una piedra por turno.": "A little chunk of rock fallen from the sky. Tap it again and aim: toss it into the volcano (+1), put out a lava tile or remove a burning gnome clinging to one of your units. It can't be thrown at the enemy. Only one stone per turn.",
+"Un trocito de roca caída del cielo. Púlsalo otra vez y apunta: tíraselo al volcán (+1), apaga con él una casilla de lava o quita un gnomo en llamas agarrado a una de tus unidades. No sirve contra el enemigo. Puedes lanzar todas las que quieras por turno.": "A little chunk of rock fallen from the sky. Tap it again and aim: toss it into the volcano (+1), put out a lava tile or remove a burning gnome clinging to one of your units. It can't be thrown at the enemy. Throw as many as you like each turn.",
 "¡Habilidad recargada!": "Ability recharged!",
 "Solo puedes lanzar una piedra por turno": "You can only throw one stone per turn",
 "¡El volcán se enciende!": "The volcano lights up!",
