@@ -1279,6 +1279,8 @@ const Units = {
     if (!drowned && typeof BloodSplat !== "undefined") BloodSplat.spawnAt(unit.row, unit.col);
     // Seta explosiva (js/mushrooms.js): si moría llevando una, estalla.
     if (typeof Mushrooms !== "undefined") Mushrooms.onUnitDying(unit);
+    // Gnomo en llamas del Volcán (js/volcano.js): si moría con uno agarrado, suelta lava.
+    if (typeof Volcano !== "undefined") Volcano.onUnitDying(unit);
     unit.el.classList.add(drowned ? "unit--drowning" : "unit--dying");
     if (!drowned) SFX.death();
     await new Promise((resolve) => setTimeout(resolve, drowned ? 900 : 420));

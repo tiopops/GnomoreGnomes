@@ -15,6 +15,8 @@ const PRELOAD_ASSETS = [
  "assets/niveles/rockntroll/volcan_encendido_midres.png",
  "assets/niveles/rockntroll/volcan_erupcion_midres.png",
  "assets/niveles/rockntroll/lava_1_midres.png",
+ "assets/niveles/rockntroll/gnomo_fuego_corre_midres.png",
+ "assets/niveles/rockntroll/gnomo_fuego_agarrado_midres.png",
  "assets/niveles/rockntroll/lava_2_midres.png",
  "assets/niveles/rockntroll/roca_caida_midres.png",
  "assets/niveles/rockntroll/fragmento_midres.png",

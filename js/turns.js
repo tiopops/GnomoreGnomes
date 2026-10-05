@@ -732,6 +732,7 @@ const Turns = {
     // Volcán (js/volcano.js): remate con piedra y reacción a la lava.
     if (typeof Volcano !== "undefined") {
       await Volcano.aiRockFinisher(unit.team);
+      await Volcano.aiDouseGnome(unit.team);
       if (await Volcano.aiHandleLava(unit)) return true;
       if (!unit.el) return false;
     }

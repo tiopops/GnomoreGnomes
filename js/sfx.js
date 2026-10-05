@@ -488,6 +488,90 @@ const SFX = {
     } catch (e) {}
   },
 
+  // ---------- Volcán (js/volcano.js) ----------
+  // Ráfaga de ruido filtrado (base de los sonidos de fuego/lava).
+  _noiseBurst(dur, type, f0, f1, gain, delay = 0) {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime + delay;
+      const len = Math.round(ctx.sampleRate * dur);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const n = ctx.createBufferSource();
+      n.buffer = buf;
+      const f = ctx.createBiquadFilter();
+      f.type = type;
+      f.frequency.setValueAtTime(f0, now);
+      f.frequency.exponentialRampToValueAtTime(Math.max(40, f1), now + dur);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.linearRampToValueAtTime(gain, now + Math.min(0.05, dur * 0.2));
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      n.connect(f).connect(g).connect(this.master);
+      n.start(now);
+      n.stop(now + dur);
+    } catch (e) {}
+  },
+
+  _tone(freq, freq2, dur, type, gain, delay = 0) {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime + delay;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, now);
+      if (freq2) o.frequency.exponentialRampToValueAtTime(freq2, now + dur);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.linearRampToValueAtTime(gain, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      o.connect(g).connect(this.master);
+      o.start(now);
+      o.stop(now + dur + 0.02);
+    } catch (e) {}
+  },
+
+  // Retumbar grave del volcán antes de estallar.
+  volcanoRumble() {
+    this._noiseBurst(1.6, "lowpass", 220, 60, 0.7);
+    this._tone(52, 30, 1.6, "sawtooth", 0.22);
+  },
+
+  // Chillido corto y agudo de los gnomos en llamas al salir del cráter.
+  fireScream() {
+    this._noiseBurst(0.9, "bandpass", 700, 2600, 0.3, 0.1);
+    this._tone(900, 520, 0.5, "sawtooth", 0.08, 0.15);
+    this._tone(1250, 700, 0.45, "square", 0.04, 0.3);
+  },
+
+  // Whoosh del salto del gnomo.
+  fireWhoosh() {
+    this._noiseBurst(0.45, "bandpass", 500, 2400, 0.3);
+  },
+
+  // Pisadas rápidas y chisporroteantes de la carrera.
+  fireStep() {
+    this._noiseBurst(0.05, "bandpass", 1100, 700, 0.16);
+  },
+
+  // El gnomo se agarra a la unidad: golpecito + chisporroteo.
+  fireGrab() {
+    this._tone(170, 70, 0.16, "square", 0.3);
+    this._noiseBurst(0.12, "highpass", 1500, 2500, 0.22);
+    this._noiseBurst(0.7, "highpass", 4500, 6000, 0.1, 0.1);
+  },
+
+  // Explosión del gnomo: estampido + salpicadura de lava.
+  fireBoom() {
+    this._noiseBurst(0.85, "lowpass", 1600, 90, 0.8);
+    this._tone(125, 36, 0.7, "sine", 0.65);
+    this._noiseBurst(0.6, "bandpass", 1800, 500, 0.3, 0.15);
+  },
+
   // Tambor de guerra (js/drums.js): tom grave con caída de tono + golpecito
   // de parche; `soft` para el simple roce de una unidad que se acerca.
   drum(soft) {

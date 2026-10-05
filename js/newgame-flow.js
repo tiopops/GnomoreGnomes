@@ -143,7 +143,11 @@ function renderLevelCard(level) {
       (k, i) => `
       <span class="race-card__stat race-card__stat--virtue">
         <i class="ph ${level.featureIcons[i] || "ph-check-circle"} race-card__stat-icon"></i>
-        <span>${I18N.t(k)}</span>
+        <span>${(() => {
+          // "Nombre: explicación" -> el nombre en negrita (lectura rápida).
+          const txt = I18N.t(k), at = txt.indexOf(": ");
+          return at > 0 ? `<b>${txt.slice(0, at)}</b>${txt.slice(at)}` : txt;
+        })()}</span>
       </span>`
     )
     .join("");

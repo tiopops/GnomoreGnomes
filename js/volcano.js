@@ -1,27 +1,36 @@
 /* Gnomore Gnomes — Volcán (nivel Colinas Rock'n Troll).
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
-     - Colocar UN volcán en el centro del mapa (solo en ese nivel), bloquea su
+     - Colocar UN volcán en el centro del mapa (solo en ese nivel); bloquea su
        casilla igual que el Altar (Altar.at/isNear lo consultan).
-     - Su carga compartida de 0 a 20 puntos: estampar un gnomo (puntos del
-       gnomo), lanzarle un gnomo (idem) o tirarle un fragmento de roca (+1).
-       Apagado (<10) -> encendido (>=10) -> erupción (20).
-     - La erupción dura 5 turnos del equipo que la provocó (el último que
-       aportó puntos). Cada turno suyo, los rivales quedan rodeados de charcos
-       de lava (solo donde falten; nunca en agua ni sobre obstáculos) y sus
-       estructuras sufren 1 punto bajo su propio charco.
-     - Quien pisa lava (o empieza el turno sobre ella) pierde 1 punto por
-       ronda. Un fragmento de roca apaga una casilla de lava cercana.
-     - Pasados los 5 turnos: la lava se enfría, el volcán se apaga y el
-       contador vuelve a 0. */
+     - Su carga compartida de 0 a 20 puntos. SOLO se alimenta sacrificando
+       gnomos (suman sus puntos, estampados o lanzados) o lanzándole piedras
+       (de 1 en 1). Apagado (<10) -> encendido (>=10) -> erupción (20).
+     - Erupción: las acciones se pausan un instante y del volcán sale un
+       gnomo en llamas por cada unidad rival, corriendo hacia ella (más
+       deprisa cuanto más lejos esté), saltando y agarrándose a ella.
+     - Gnomo agarrado: palpita ardiendo sobre la unidad. Una piedra lanzada a
+       la unidad propia lo hace desaparecer (sin lava). Si no, al acabar el
+       turno de su dueño explota: -1 de vida a la unidad y lava en todas las
+       casillas adyacentes posibles. Si la unidad muere con el gnomo
+       agarrado, también suelta la lava.
+     - Lava: pisarla quita 1 de vida por pisada. Permanece hasta el final del
+       SIGUIENTE turno del jugador al que le explotó el gnomo; una piedra
+       puede apagar una casilla antes.
+     - Cuando no quedan gnomos ni lava, el volcán se apaga con la barra a 0 y
+       vuelve a estar disponible.
+   Nada de piedras contra unidades/estructuras rivales (ver Backpack). */
 
 const VOLCANO_ON_AT = 10;
 const VOLCANO_MAX = 20;
-const VOLCANO_ERUPT_TURNS = 5;
 const VOLCANO_DIR = "assets/niveles/rockntroll/";
 const VOLCANO_SPRITES = {
   apagado: VOLCANO_DIR + "volcan_apagado.png",
   encendido: VOLCANO_DIR + "volcan_encendido.png",
   erupcion: VOLCANO_DIR + "volcan_erupcion.png",
+};
+const VOLCANO_FIRE_SPRITES = {
+  corre: VOLCANO_DIR + "gnomo_fuego_corre.png",
+  agarrado: VOLCANO_DIR + "gnomo_fuego_agarrado.png",
 };
 const VOLCANO_LAVA_SPRITES = [VOLCANO_DIR + "lava_1.png", VOLCANO_DIR + "lava_2.png"];
 const VOLCANO_TEAM_COLORS = { player: "#3aa0ff", enemy: "#ff5148", enemy2: "#52d66a", enemy3: "#c067ff" };
@@ -31,7 +40,9 @@ const VOLCANO_EXTINGUISH_RANGE = 3; // distancia máxima (a alguna unidad propia
 const Volcano = {
   list: [], // como mucho uno
   lava: [], // { row, col, el }
-  eruption: null, // { owner, left }
+  eruption: null, // { owner } mientras haya gnomos en llamas o lava en el suelo
+  burners: [], // gnomos en llamas agarrados: { unit, el }
+  _busy: 0, // >0 mientras se anima una erupción/explosión (no se apaga a medias)
 
   isActive() {
     return typeof LevelAssets !== "undefined" && LevelAssets.current === "colinas_rockntroll";
@@ -46,7 +57,11 @@ const Volcano = {
     this.lava.forEach((l) => l.el.remove());
     this.list = [];
     this.lava = [];
+    this.burners.forEach((b) => b.el && b.el.remove());
+    this.burners = [];
     this.eruption = null;
+    this._busy = 0;
+    this._lock(false);
   },
 
   at(row, col) {
@@ -127,11 +142,12 @@ const Volcano = {
     const color = VOLCANO_TEAM_COLORS[v.lastTeam] || "#ff9a1f";
     v.barEl.style.setProperty("--hp-fill", color);
     v.segmentEls.forEach((seg, i) => seg.classList.toggle("unit__hpbar-segment--filled", i < v.points));
-    if (this.eruption) {
+    // Con la erupción en marcha: cuántos gnomos en llamas siguen agarrados.
+    if (this.eruption && this.burners.length) {
       v.badgeEl.style.display = "";
       v.badgeEl.innerHTML =
         '<svg viewBox="0 0 24 28" width="18" height="21" aria-hidden="true"><path d="M12 1c1 5 7 7 7 14a7 7 0 0 1-14 0c0-3 2-4 3-7 1 1 2 2 2 4 2-3 2-7 2-11z" fill="#ffcf3d" stroke="#000" stroke-width="2" stroke-linejoin="round"/></svg>' +
-        `<b>${this.eruption.left + 1}</b>`;
+        `<b>${this.burners.length}</b>`;
       v.badgeEl.style.setProperty("--vb", VOLCANO_TEAM_COLORS[this.eruption.owner] || "#ff5148");
     } else {
       v.badgeEl.style.display = "none";
@@ -186,10 +202,12 @@ const Volcano = {
   },
 
   async _erupt(v, team) {
-    this.eruption = { owner: team, left: VOLCANO_ERUPT_TURNS };
+    this.eruption = { owner: team };
+    this._busy++;
+    this._lock(true);
     this._refreshSprite(v);
     this._refreshBar(v);
-    if (typeof SFX !== "undefined" && SFX.explosion) SFX.explosion();
+    if (typeof SFX !== "undefined") { SFX.volcanoRumble && SFX.volcanoRumble(); SFX.explosion && SFX.explosion(); }
     if (typeof Villages !== "undefined" && Villages._flashScreen) Villages._flashScreen();
     const vp = document.getElementById("board-viewport");
     if (vp) {
@@ -199,14 +217,253 @@ const Volcano = {
       setTimeout(() => vp.classList.remove("board-viewport--shake--big"), 420);
     }
     if (typeof Banners !== "undefined") Banners.text("¡El volcán entra en erupción!", 0);
-    await new Promise((r) => setTimeout(r, 700));
-    await this._wave();
+    this._embers(v);
+    await new Promise((r) => setTimeout(r, 1100)); // pausa de todas las acciones
+    const rivals = this._enemyTeams();
+    const victims = Units.list.filter((u) => rivals.includes(u.team) && u.el && !u._fireGnome);
+    if (typeof SFX !== "undefined" && SFX.fireScream) SFX.fireScream();
+    await Promise.all(victims.map((u, i) => new Promise((r) => setTimeout(r, i * 160)).then(() => this._launch(v, u))));
+    this._lock(false);
+    this._busy--;
+    this._refreshBar(v);
+    this._checkReset();
   },
 
-  // ---------- Oleada de lava ----------
+  // Bloquea los clics mientras dura la erupción (las acciones de todos se pausan).
+  _lock(on) {
+    let el = document.getElementById("volcano-lock");
+    if (!on) { if (el) el.remove(); return; }
+    if (el) return;
+    el = document.createElement("div");
+    el.id = "volcano-lock";
+    el.className = "volcano-lock";
+    document.body.appendChild(el);
+  },
+
+  _embers(v) {
+    const base = getTileCenter(v.row, v.col, Units.boardSize);
+    for (let i = 0; i < 26; i++) {
+      const e = document.createElement("div");
+      e.className = "volcano-ember";
+      e.style.left = `${base.x + (Math.random() - 0.5) * 120}px`;
+      e.style.top = `${base.y - 110}px`;
+      e.style.zIndex = "8000";
+      Units.container.appendChild(e);
+      const dx = (Math.random() - 0.5) * 320, up = 160 + Math.random() * 220;
+      e.animate(
+        [{ transform: "translate(0,0) scale(1)", opacity: 1 }, { transform: `translate(${dx * 0.6}px,${-up}px) scale(1)`, opacity: 1, offset: 0.45 }, { transform: `translate(${dx}px,${-up + 260}px) scale(.4)`, opacity: 0 }],
+        { duration: 1100 + Math.random() * 800, easing: "ease-out", delay: Math.random() * 300 }
+      ).onfinish = () => e.remove();
+    }
+  },
+
   _enemyTeams() {
     const owner = this.eruption && this.eruption.owner;
     return Teams.all.filter((t) => t !== owner && (typeof Obelisks === "undefined" || Obelisks.byTeam(t)));
+  },
+
+  // ---------- Gnomos en llamas ----------
+  // Sale del cráter, salta al suelo, corre en línea recta hasta la unidad
+  // (más deprisa cuanto más lejos esté) y se le agarra.
+  async _launch(v, unit) {
+    if (!unit.el || unit._fireGnome) return;
+    const entry = { unit, el: null };
+    unit._fireGnome = entry;
+    this.burners.push(entry);
+    this._refreshBar(v);
+    const hidden = typeof Fog !== "undefined" && Fog.isFogged(unit.row, unit.col);
+    if (!hidden) await this._runTo(v, unit);
+    if (!unit.el || unit._fireGnome !== entry) return;
+    this._attach(entry);
+  },
+
+  _runTo(v, unit) {
+    return new Promise((resolve) => {
+      const size = Units.boardSize;
+      const vc = getTileCenter(v.row, v.col, size);
+      const uc = getTileCenter(unit.row, unit.col, size);
+      const tiles = Math.max(Math.abs(v.row - unit.row), Math.abs(v.col - unit.col));
+      const el = document.createElement("div");
+      el.className = "fire-runner";
+      const img = document.createElement("img");
+      img.src = VOLCANO_FIRE_SPRITES.corre;
+      img.draggable = false;
+      img.alt = "";
+      el.appendChild(img);
+      el.style.zIndex = "8000";
+      Units.container.appendChild(el);
+      const dir = uc.x >= vc.x ? 1 : -1; // el sprite mira a la derecha
+      const put = (x, y, sx, sy, rot) => {
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.style.transform = `translate(-50%,-90%) scale(${dir * sx},${sy}) rotate(${rot * dir}deg)`;
+      };
+      // 1) salto desde el cráter hasta el suelo, junto al volcán
+      const sx0 = vc.x, sy0 = vc.y - 120;
+      const ang = Math.atan2(uc.y - vc.y, uc.x - vc.x);
+      const ex = vc.x + Math.cos(ang) * 130, ey = vc.y + 40 + Math.sin(ang) * 40;
+      // 2) carrera: la velocidad crece con la distancia (nunca se hace eterna)
+      const runDist = Math.hypot(uc.x - dir * 50 - ex, uc.y - ey);
+      const speed = 480 + 70 * tiles; // px/s
+      const runMs = Math.max(380, Math.min(1500, (runDist / speed) * 1000));
+      const t0 = performance.now();
+      const JUMP = 520, JUMP2 = 360;
+      const ax = uc.x, ay = uc.y - 62;
+      if (typeof SFX !== "undefined" && SFX.fireWhoosh) SFX.fireWhoosh();
+      let lastStep = -1;
+      const frame = (now) => {
+        const t = now - t0;
+        if (t < JUMP) {
+          const k = t / JUMP;
+          put(sx0 + (ex - sx0) * k, sy0 + (ey - sy0) * k - Math.sin(k * Math.PI) * 110, 1, 1, k * 25);
+        } else if (t < JUMP + runMs) {
+          const k = (t - JUMP) / runMs;
+          const x = ex + (uc.x - dir * 50 - ex) * k, y = ey + (uc.y - ey) * k;
+          const ph = (t - JUMP) / 62; // zancada rápida
+          put(x, y - Math.abs(Math.sin(ph)) * 24, 1 + 0.07 * Math.sin(ph * 2), 1 - 0.07 * Math.sin(ph * 2), 9 * Math.sin(ph));
+          const st = Math.floor(ph / Math.PI);
+          if (st !== lastStep) { lastStep = st; if (st % 2 === 0 && typeof SFX !== "undefined" && SFX.fireStep) SFX.fireStep(); }
+        } else if (t < JUMP + runMs + JUMP2) {
+          const k = (t - JUMP - runMs) / JUMP2;
+          const x0 = uc.x - dir * 50, y0 = uc.y;
+          put(x0 + (ax - x0) * k, y0 + (ay - y0) * k - Math.sin(k * Math.PI) * 80, 1, 1, -k * 25);
+        } else {
+          el.remove();
+          return resolve();
+        }
+        requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+    });
+  },
+
+  // Gnomo ya agarrado: un hijo de la propia unidad (la sigue al moverse).
+  _attach(entry) {
+    const unit = entry.unit;
+    const el = document.createElement("div");
+    el.className = "fire-gnome";
+    const img = document.createElement("img");
+    img.draggable = false;
+    img.alt = "";
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(img, VOLCANO_FIRE_SPRITES.agarrado);
+    else img.src = VOLCANO_FIRE_SPRITES.agarrado;
+    el.appendChild(img);
+    unit.el.appendChild(el);
+    entry.el = el;
+    if (typeof SFX !== "undefined") { SFX.fireGrab && SFX.fireGrab(); }
+    const v = this.current();
+    if (v) this._refreshBar(v);
+  },
+
+  _detach(unit) {
+    const entry = unit._fireGnome;
+    if (!entry) return null;
+    unit._fireGnome = null;
+    this.burners = this.burners.filter((b) => b !== entry);
+    return entry;
+  },
+
+  // Una piedra contra tu propia unidad: el gnomo desaparece sin dejar lava.
+  removeGnome(unit) {
+    const entry = this._detach(unit);
+    if (!entry) return;
+    const c = getTileCenter(unit.row, unit.col, Units.boardSize);
+    this._steam(c.x, c.y - 40, unit.row, unit.col, 4);
+    if (typeof SFX !== "undefined" && SFX.splash) SFX.splash();
+    if (entry.el) entry.el.animate([{ opacity: 1, transform: "translate(-50%,-50%) scale(1)" }, { opacity: 0, transform: "translate(-50%,-50%) scale(.2)" }], { duration: 300 }).onfinish = () => entry.el.remove();
+    const v = this.current();
+    if (v) this._refreshBar(v);
+    this._checkReset();
+  },
+
+  // Fin del turno de `team`: caduca SU lava anterior y explotan sus gnomos.
+  async onTurnEnd(team) {
+    if (!this.eruption) return;
+    this._busy++;
+    // 1) la lava que le dejó una explosión anterior desaparece ahora
+    const old = this.lava.filter((l) => l.team === team);
+    const held = old.filter((l) => l.skip > 0); // lava nacida durante su propio turno: aguanta un turno más
+    held.forEach((l) => l.skip--);
+    const gone = old.filter((l) => !held.includes(l));
+    if (gone.length) {
+      this.lava = this.lava.filter((l) => !gone.includes(l));
+      gone.forEach((l) => l.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700, easing: "ease-in" }).onfinish = () => l.el.remove());
+    }
+    // 2) explotan los gnomos agarrados a sus unidades
+    for (const b of this.burners.filter((x) => x.unit.team === team)) {
+      if (!b.unit.el || b.unit._fireGnome !== b) continue;
+      await this._explode(b);
+    }
+    this._busy--;
+    this._checkReset();
+  },
+
+  async _explode(b) {
+    const unit = b.unit;
+    this._detach(unit);
+    const row = unit.row, col = unit.col, team = unit.team;
+    const c = getTileCenter(row, col, Units.boardSize);
+    if (typeof SFX !== "undefined" && SFX.fireBoom) SFX.fireBoom();
+    if (b.el) b.el.remove();
+    const fl = document.createElement("div");
+    fl.className = "volcano-flash";
+    fl.style.left = `${c.x}px`;
+    fl.style.top = `${c.y - 50}px`;
+    fl.style.zIndex = String((row + col) * 10 + 15);
+    Units.container.appendChild(fl);
+    fl.animate([{ transform: "translate(-50%,-50%) scale(.3)", opacity: 1 }, { transform: "translate(-50%,-50%) scale(1.6)", opacity: 0 }], { duration: 480, easing: "ease-out" }).onfinish = () => fl.remove();
+    this._lavaAround(row, col, team, 0);
+    await new Promise((r) => setTimeout(r, 260));
+    // la explosión del gnomo quita 1 de vida
+    if (unit.el) this._burn({ kind: "unit", ref: unit, row, col }, (this.eruption || {}).owner);
+    await new Promise((r) => setTimeout(r, 520));
+    const v = this.current();
+    if (v) this._refreshBar(v);
+  },
+
+  // Lava en TODAS las casillas adyacentes posibles de (row, col).
+  _lavaAround(row, col, team, skip) {
+    let n = 0;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      if (!dr && !dc) continue;
+      const r = row + dr, c = col + dc;
+      if (!this._lavaTileOk(r, c)) continue;
+      setTimeout(() => this._placeLava(r, c, false, team, skip), n++ * 45);
+    }
+  },
+
+  // Una unidad con gnomo agarrado muere: también suelta la lava.
+  onUnitDying(unit) {
+    const b = this._detach(unit);
+    if (!b || !this.eruption) return;
+    if (b.el) b.el.remove();
+    const mine = typeof Turns !== "undefined" && Turns.activeTeam === unit.team;
+    this._lavaAround(unit.row, unit.col, unit.team, mine ? 1 : 0);
+    const v = this.current();
+    if (v) this._refreshBar(v);
+    setTimeout(() => this._checkReset(), 600);
+  },
+
+  // Sin gnomos ni lava (y sin animaciones en curso): el volcán se apaga y
+  // vuelve a estar disponible con la barra reiniciada.
+  _checkReset() {
+    if (!this.eruption || this._busy > 0 || this.burners.length || this.lava.length) return;
+    this._end();
+  },
+
+  _steam(x, y, row, col, n) {
+    for (let i = 0; i < n; i++) {
+      const p = document.createElement("div");
+      p.className = "lava-steam";
+      p.style.left = `${x + (Math.random() - 0.5) * 70}px`;
+      p.style.top = `${y}px`;
+      p.style.zIndex = String((row + col) * 10 + 14);
+      Units.container.appendChild(p);
+      p.animate(
+        [{ transform: "translate(-50%,-30%) scale(.4)", opacity: 0.8 }, { transform: `translate(-50%,${-120 - Math.random() * 60}%) scale(1.5)`, opacity: 0 }],
+        { duration: 800 + Math.random() * 300, easing: "ease-out", delay: i * 60 }
+      ).onfinish = () => p.remove();
+    }
   },
 
   _lavaTileOk(r, c) {
@@ -226,43 +483,7 @@ const Volcano = {
     return true;
   },
 
-  async _wave() {
-    if (!this.eruption) return;
-    const enemies = this._enemyTeams();
-    const owner = this.eruption.owner;
-    const spots = [];
-    Units.list.filter((u) => enemies.includes(u.team)).forEach((u) => {
-      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
-        if (!dr && !dc) continue;
-        const r = u.row + dr, c = u.col + dc;
-        if (this._lavaTileOk(r, c) && !spots.some((s) => s.row === r && s.col === c)) spots.push({ row: r, col: c });
-      }
-    });
-    spots.sort(() => Math.random() - 0.5);
-    spots.forEach((s, i) => setTimeout(() => this._placeLava(s.row, s.col), i * 70));
-
-    // Estructuras rivales: charco bajo ellas y 1 de daño por ronda.
-    const hits = [];
-    if (typeof Villages !== "undefined") Villages.list.filter((x) => x.owner !== owner && x.owner !== "neutral" && enemies.includes(x.owner)).forEach((x) => hits.push({ kind: "village", ref: x, row: x.row, col: x.col }));
-    if (typeof Obelisks !== "undefined") Obelisks.list.filter((x) => enemies.includes(x.team)).forEach((x) => hits.push({ kind: "obelisk", ref: x, row: x.row, col: x.col }));
-    hits.forEach((t, i) => setTimeout(() => {
-      if (!this.lavaAt(t.row, t.col)) this._placeLava(t.row, t.col, true);
-    }, (spots.length + i) * 70));
-    await new Promise((r) => setTimeout(r, Math.min(1400, (spots.length + hits.length) * 70 + 250)));
-    for (const t of hits) {
-      if (!this.eruption) break;
-      this._burn(t, owner);
-      await new Promise((r) => setTimeout(r, 160));
-    }
-    if (this.eruption) {
-      this.eruption.left--;
-      const v = this.current();
-      if (v) this._refreshBar(v);
-    }
-    if (typeof Fog !== "undefined") Fog.applyVisibility();
-  },
-
-  _placeLava(row, col, force) {
+  _placeLava(row, col, force, team, skip) {
     if (!this.eruption) return;
     if (this.lavaAt(row, col)) return;
     if (!force && !this._lavaTileOk(row, col)) return;
@@ -284,7 +505,7 @@ const Volcano = {
     el.style.top = `${y}px`;
     el.style.zIndex = String((row + col) * 10 + 1);
     Units.container.appendChild(el);
-    const l = { row, col, el };
+    const l = { row, col, el, team: team || null, skip: skip || 0 };
     this.lava.push(l);
     if (typeof Fog !== "undefined" && Fog.isFoggedReal) {
       const fogged = Fog.isFoggedReal(row, col);
@@ -339,17 +560,9 @@ const Volcano = {
     return path.reduce((n, s) => n + (this.lavaAt(s.row, s.col) ? 1 : 0), 0);
   },
 
-  // Inicio de turno de `team`.
+  // Inicio de turno de `team`: quien empieza sobre lava se quema (1 por turno).
   async onTurnStart(team) {
     if (!this.eruption) return;
-    if (team === this.eruption.owner) {
-      if (this.eruption.left <= 0) {
-        await this._end();
-        return;
-      }
-      await this._wave();
-    }
-    // Quien empieza su turno sobre lava se quema (1 por ronda).
     const burning = Units.list.filter((u) => u.team === team && this.lavaAt(u.row, u.col));
     for (const u of burning) {
       if (!this.eruption) break;
@@ -358,13 +571,10 @@ const Volcano = {
     }
   },
 
-  async _end() {
+  // El volcán vuelve a estar disponible (sin gnomos ni lava): barra a 0.
+  _end() {
     const v = this.current();
     this.eruption = null;
-    const gone = this.lava.splice(0);
-    gone.forEach((l) => {
-      l.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 900, easing: "ease-in" }).onfinish = () => l.el.remove();
-    });
     if (v) {
       v.points = 0;
       v.lastTeam = null;
@@ -372,8 +582,7 @@ const Volcano = {
       this._refreshSprite(v);
       this._pulse(v);
     }
-    if (typeof Banners !== "undefined") Banners.text("El volcán se apaga", 0);
-    await new Promise((r) => setTimeout(r, 700));
+    if (typeof Banners !== "undefined") Banners.text("El volcán se apaga: vuelve a estar disponible", 0);
   },
 
   // ---------- Apagar lava con una piedra ----------
@@ -382,19 +591,9 @@ const Volcano = {
     this.lava = this.lava.filter((x) => x !== l);
     const c = getTileCenter(l.row, l.col, Units.boardSize);
     if (typeof SFX !== "undefined" && SFX.splash) SFX.splash();
-    for (let i = 0; i < 5; i++) {
-      const p = document.createElement("div");
-      p.className = "lava-steam";
-      p.style.left = `${c.x + (Math.random() - 0.5) * 70}px`;
-      p.style.top = `${c.y}px`;
-      p.style.zIndex = String((l.row + l.col) * 10 + 14);
-      Units.container.appendChild(p);
-      p.animate(
-        [{ transform: "translate(-50%,-30%) scale(.4)", opacity: 0.8 }, { transform: `translate(-50%,${-120 - Math.random() * 60}%) scale(1.5)`, opacity: 0 }],
-        { duration: 800 + Math.random() * 300, easing: "ease-out", delay: i * 60 }
-      ).onfinish = () => p.remove();
-    }
+    this._steam(c.x, c.y, l.row, l.col, 5);
     l.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 350 }).onfinish = () => l.el.remove();
+    this._checkReset();
   },
 
   // ---------- Objetivos para el lanzamiento de rocas (Backpack) ----------
@@ -404,6 +603,8 @@ const Volcano = {
     const v = this.current();
     if (v && this._accepts(v) && visible(v)) out.push({ kind: "volcano", ref: v, row: v.row, col: v.col, el: v.el });
     if (this.eruption) {
+      // Tus unidades con un gnomo en llamas agarrado: la piedra lo apaga.
+      Units.list.filter((u) => u.team === team && u._fireGnome && visible(u)).forEach((u) => out.push({ kind: "firegnome", ref: u, row: u.row, col: u.col, el: u.el }));
       const mine = Units.list.filter((u) => u.team === team);
       this.lava.forEach((l) => {
         if (!visible(l)) return;
@@ -739,6 +940,24 @@ const Volcano = {
       return true;
     }
     return false;
+  },
+
+  // La CPU apaga con una piedra el gnomo en llamas de una de sus unidades
+  // (sin gastar acción): si la unidad corre peligro de morir, o le sobran piedras.
+  async aiDouseGnome(team) {
+    if (!this.eruption || !this._aiCanThrow(team)) return false;
+    const mine = Units.list.filter((u) => u.team === team && u._fireGnome && u.el);
+    if (!mine.length) return false;
+    const risky = mine.filter((u) => u.hp <= 2).sort((a, b) => a.hp - b.hp)[0];
+    const pick = risky || (this._aiRocks(team) >= 2 ? mine.sort((a, b) => a.hp - b.hp)[0] : null);
+    if (!pick) return false;
+    this._aiSpendRock(team);
+    if (typeof SFX !== "undefined" && SFX.rockThrow) SFX.rockThrow(0.4);
+    await new Promise((r) => setTimeout(r, 400));
+    if (typeof SFX !== "undefined" && SFX.rockHit) SFX.rockHit();
+    this.removeGnome(pick);
+    await new Promise((r) => setTimeout(r, 300));
+    return true;
   },
 
   // Piedra de remate (sin gastar acción): si una piedra completa la erupción.

@@ -1203,15 +1203,15 @@ const Backpack = {
   },
 
   // ---------- Lanzar roca (fragmentos de los Tambores de Guerra) ----------
-  // Misma mecánica de apuntado que el KataPum!, pero el objetivo puede ser
-  // un rival, un tótem rival o un Obelisco rival a la vista. Gasta 1
-  // fragmento por lanzamiento y quita 1 de vida.
+  // Misma mecánica de apuntado que el KataPum!, pero los objetivos son solo
+  // los del Volcán (js/volcano.js): el propio volcán (+1), una casilla de lava
+  // (se apaga) o una unidad TUYA con un gnomo en llamas agarrado (el gnomo
+  // desaparece). Nunca unidades ni estructuras rivales. Gasta 1 fragmento.
   _rockTargets() {
     const visible = (e) => e.el && !e.el.classList.contains("unit--fog-hidden") && !(typeof Fog !== "undefined" && Fog.isFogged(e.row, e.col));
     const out = [];
-    Units.list.filter((u) => u.team !== "player" && visible(u)).forEach((u) => out.push({ kind: "unit", ref: u, row: u.row, col: u.col, el: u.el }));
-    if (typeof Villages !== "undefined") Villages.list.filter((v) => v.owner !== "player" && v.owner !== "neutral" && visible(v)).forEach((v) => out.push({ kind: "village", ref: v, row: v.row, col: v.col, el: v.el }));
-    if (typeof Obelisks !== "undefined") Obelisks.list.filter((o) => o.team !== "player" && visible(o)).forEach((o) => out.push({ kind: "obelisk", ref: o, row: o.row, col: o.col, el: o.el }));
+    // Nada de piedras contra unidades o estructuras rivales: solo el volcán, la lava y
+    // tus propias unidades con un gnomo en llamas (todo en Volcano.rockTargets).
     if (typeof Volcano !== "undefined") Volcano.rockTargets("player").forEach((t) => out.push(t)); // volcán y lava (js/volcano.js)
     return out;
   },
@@ -1294,6 +1294,7 @@ const Backpack = {
     if (typeof SFX !== "undefined" && SFX.rockHit) SFX.rockHit();
     if (target.kind === "volcano") { Volcano.onRockHit(target.ref, "player"); return; }
     if (target.kind === "lava") { Volcano.extinguish(target.ref); return; }
+    if (target.kind === "firegnome") { Volcano.removeGnome(target.ref); return; }
     if (typeof Drums !== "undefined") {
       const c = getTileCenter(target.row, target.col, Units.boardSize);
       Drums._impact(c.x, c.y, target, true);

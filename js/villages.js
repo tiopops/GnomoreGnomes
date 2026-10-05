@@ -29,6 +29,9 @@
    (ver cabecera de units.js) — ninguno de esos archivos sabe que este
    existe, todos hablan solo con Units. */
 
+const VILLAGE_GLORY_PER_TURN = 2; // puntos de victoria fijos por turno de cada tótem propio
+
+
 const VILLAGE_MAX_HP = 10;
 // Pedido explícito (segunda pasada): "tambien habran 5 totems normales" —
 // de 2 a 5, junto con el escenario 25x25 (ver BOARD_SIZE_BY_OPPONENTS en
@@ -175,7 +178,7 @@ const Villages = {
     const extra = typeof Skills !== "undefined" ? Skills.rank(team, "abundancia") : 0;
     return this.list
       .filter((v) => v.owner === team)
-      .reduce((sum, v) => sum + (v.gloryBonus || 1) + extra, 0);
+      .reduce((sum, v) => sum + VILLAGE_GLORY_PER_TURN + extra, 0);
   },
 
   spriteFor(owner) {
@@ -903,7 +906,9 @@ const Villages = {
     // hasta su próximo turno — se guarda ANTES de pisar `village.owner`.
     const previousOwner = village.owner;
     village.owner = team;
-    village.gloryBonus = gloryBonus || 1;
+    // Pedido explícito: capturar un tótem da SIEMPRE 2 puntos de victoria fijos por turno,
+    // sea cual sea la forma de capturarlo (antes 1 o 2 según el golpe).
+    village.gloryBonus = VILLAGE_GLORY_PER_TURN;
     village.hp = VILLAGE_MAX_HP; // un poblado recién conquistado vuelve a estar sano
     // Muralla (js/skills.js): su vida máxima depende del NUEVO dueño; un
     // tótem recién conquistado empieza a plena vida.

@@ -86,7 +86,7 @@ const RESOURCE_TYPES = {
 const RESOURCE_DESCRIPTIONS = {
   madera: "Madera recogida de los pinos. No se usa por sí sola: se gasta como moneda para mejorar arma y armadura en la Armería.",
   roca: "Roca recogida de las canteras. No se usa por sí sola: se gasta como moneda para mejorar arma y armadura en la Armería.",
-  fragmento: "Un trocito de roca caída del cielo. Púlsalo otra vez y apunta: se lo lanzas a un rival, tótem u Obelisco enemigo (1 de vida), se lo tiras al volcán (+1) o apagas una casilla de lava. Solo una piedra por turno.",
+  fragmento: "Un trocito de roca caída del cielo. Púlsalo otra vez y apunta: tíraselo al volcán (+1), apaga con él una casilla de lava o quita un gnomo en llamas agarrado a una de tus unidades. No sirve contra el enemigo. Solo una piedra por turno.",
   metal: "Mena de hierro, mucho más escasa que la madera o la roca. Solo hace falta para el nivel 3 de mejoras en la Armería.",
 };
 
