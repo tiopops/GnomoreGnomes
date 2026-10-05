@@ -296,6 +296,13 @@ const Drums = {
     Teams.all.forEach((t) => (this.slices[t] = 0));
     this.list.forEach((d) => (d.hits = {}));
     document.body.classList.remove("drums-raining");
+    // Orden: 1) se resuelven las muertes de la avalancha, 2) se recalcula la niebla de guerra,
+    // 3) los tambores se mudan (sin enseñar su nueva posición si cae bajo la niebla).
+    await Promise.allSettled(this._deaths || []);
+    this._deaths = [];
+    await new Promise((r) => setTimeout(r, 300));
+    if (typeof Obelisks !== "undefined" && Obelisks.refreshAll) Obelisks.refreshAll();
+    if (typeof Fog !== "undefined") Fog.applyVisibility();
     if (typeof Banners !== "undefined") Banners.text("¡Los tambores deciden!", 1, "yellow"); // se mudan de sitio
     await this._relocate(); // tras la lluvia, los tambores cambian de sitio
     this.refreshMarkers();
@@ -322,8 +329,9 @@ const Drums = {
     d.badgeEl.style.zIndex = String((row + col) * 10 + 45);
   },
 
-  _pickNewSpot(d, size) {
-    const others = this.list.filter((o) => o !== d);
+  _pickNewSpot(d, size, chosen) {
+    // Los demás tambores cuentan en su nueva posición si ya la tienen elegida.
+    const others = this.list.filter((o) => o !== d).map((o) => (chosen && chosen.get(o)) || o);
     for (let i = 0; i < 4000; i++) {
       const row = 2 + Math.floor(Math.random() * (size - 4));
       const col = 2 + Math.floor(Math.random() * (size - 4));
@@ -338,22 +346,41 @@ const Drums = {
     return null;
   },
 
+  // ¿Se ve ahora mismo esa casilla (explorada y percibida por el jugador)?
+  _seenNow(row, col) {
+    if (typeof Fog === "undefined") return true;
+    return !Fog.isFoggedReal(row, col) && Fog.isPerceived(row, col);
+  },
+
   async _relocate() {
     const size = Units.boardSize;
-    const moves = this.list.map((d) => ({ d, spot: this._pickNewSpot(d, size) })).filter((m) => m.spot);
+    const chosen = new Map();
+    const moves = [];
+    this.list.forEach((d) => {
+      const spot = this._pickNewSpot(d, size, chosen);
+      if (!spot) return;
+      chosen.set(d, spot);
+      moves.push({ d, spot });
+    });
     if (!moves.length) return;
     const parts = (d) => [d.el, d.markerEl, d.badgeEl];
-    moves.forEach(({ d }) => parts(d).forEach((e) => e.animate && e.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 350, fill: "forwards" })));
+    // Solo se ve desvanecerse el tambor que el jugador está viendo ahora mismo.
+    moves.forEach((m) => { m.oldSeen = this._seenNow(m.d.row, m.d.col); m.newSeen = this._seenNow(m.spot.row, m.spot.col); });
+    moves.forEach(({ d, oldSeen }) => { if (oldSeen) parts(d).forEach((e) => e.animate && e.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 350, fill: "forwards" })); });
     await new Promise((r) => setTimeout(r, 380));
-    moves.forEach(({ d, spot }) => {
+    moves.forEach(({ d, spot, newSeen }) => {
       this._placeAt(d, spot.row, spot.col);
       d.plays = {};
       d._markerKey = null;
+      // Si el nuevo sitio no se ve ahora mismo, queda oculto hasta que el jugador lo perciba.
+      d._unseen = !newSeen;
       parts(d).forEach((e) => e.getAnimations && e.getAnimations().forEach((a) => a.cancel()));
-      if (d.spriteEl.animate) d.spriteEl.animate([{ transform: "translateY(-60px)", opacity: 0 }, { transform: "translateY(0)", opacity: 1 }], { duration: 450, easing: "cubic-bezier(.3,1.6,.5,1)" });
-      this._wave(d, false);
+      if (newSeen) {
+        if (d.spriteEl.animate) d.spriteEl.animate([{ transform: "translateY(-60px)", opacity: 0 }, { transform: "translateY(0)", opacity: 1 }], { duration: 450, easing: "cubic-bezier(.3,1.6,.5,1)" });
+        this._wave(d, false);
+      }
     });
-    if (typeof SFX !== "undefined" && SFX.drum) { try { SFX.drum(true); } catch (e) {} }
+    if (moves.some((m) => m.newSeen || m.oldSeen) && typeof SFX !== "undefined" && SFX.drum) { try { SFX.drum(true); } catch (e) {} }
     this.refreshFog();
     await new Promise((r) => setTimeout(r, 500));
   },
@@ -438,7 +465,10 @@ const Drums = {
         Units.playShake(u);
       }
       if (u.hp <= 0) {
-        Units.removeUnit(u).then(() => { if (typeof Gnome !== "undefined") Gnome.dropHeldBy(u); });
+        // Se guarda la promesa: _rain espera a que terminen todas las muertes antes de mudar los tambores.
+        (this._deaths = this._deaths || []).push(
+          Units.removeUnit(u).then(() => { if (typeof Gnome !== "undefined") Gnome.dropHeldBy(u); })
+        );
       }
       return;
     }
@@ -544,7 +574,8 @@ const Drums = {
   refreshFog() {
     if (typeof Fog === "undefined") return;
     this.list.forEach((d) => {
-      const fogged = Fog.isFoggedReal(d.row, d.col);
+      if (d._unseen && Fog.isPerceived(d.row, d.col) && !Fog.isFoggedReal(d.row, d.col)) d._unseen = false;
+      const fogged = Fog.isFoggedReal(d.row, d.col) || !!d._unseen;
       d.el.classList.toggle("unit--fog-hidden", fogged);
       d.el.classList.toggle("gg-remembered", !fogged && !Fog.isPerceived(d.row, d.col));
     });
@@ -566,7 +597,7 @@ const Drums = {
     this.list.forEach((d) => {
       this._updateBadge(d);
       const near = this._unitsNear(d.row, d.col).some((u) => u.team === team);
-      const fogged = typeof Fog !== "undefined" && Fog.isFoggedReal(d.row, d.col);
+      const fogged = typeof Fog !== "undefined" && (Fog.isFoggedReal(d.row, d.col) || !!d._unseen);
       const show = near && !fogged && !Obelisks.gameOver;
       d.markerEl.classList.toggle("drum-marker--visible", show);
       if (!show) return;
@@ -584,7 +615,7 @@ const Drums = {
 
   _updateBadge(d) {
     const n = this.note.player || 1;
-    const fogged = typeof Fog !== "undefined" && Fog.isFoggedReal(d.row, d.col);
+    const fogged = typeof Fog !== "undefined" && (Fog.isFoggedReal(d.row, d.col) || !!d._unseen);
     d.badgeEl.classList.toggle("drum-plays--visible", !fogged);
     if (d._badgeN === n) return;
     const grew = n > (d._badgeN || 0);
