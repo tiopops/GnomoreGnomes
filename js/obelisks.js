@@ -1195,18 +1195,33 @@ const Obelisks = {
       // sí se habla de verdad de sus habilidades antes de reclutarlo.
       const flavor = typeof UNIT_DESCRIPTIONS !== "undefined" ? UNIT_DESCRIPTIONS[typeId] : null;
       const ability = typeof ABILITIES !== "undefined" ? ABILITIES[typeId] : null;
+      // Estructura en bloques (rediseño): cabecera nombre + precio, frase de
+      // sabor, ficha de estadísticas y, aparte, la habilidad especial.
+      const firstSentence = (t) => {
+        const m = /^.*?[.!?](\s|$)/.exec(t || "");
+        return m ? m[0].trim() : t || "";
+      };
+      const abilityIcon = ability
+        ? ability.iconImg
+          ? `<img class="rc__ability-icon" src="${ability.iconImg}" alt="">`
+          : `<i class="ph ${ability.icon} rc__ability-icon"></i>`
+        : "";
       this._descEl.innerHTML =
-        `<strong class="recruit-name">${def.name}</strong><br>` +
-        (flavor ? `${flavor}<br>` : "") +
-        (ability ? `<em class="recruit-desc__ability">Habilidad especial: ${ability.name}</em><br>` : "") +
-        `<div class="unit-info-stats recruit-desc__stats">` +
+        `<div class="rc">` +
+        `<div class="rc__head"><strong class="recruit-name rc__name">${def.name}</strong>` +
+        `<span class="rc__price" title="Coste de reclutar"><i class="ph ph-trophy"></i><b>${price}</b><span>gloria</span></span></div>` +
+        (flavor ? `<p class="rc__flavor">${flavor}</p>` : "") +
+        `<div class="unit-info-stats rc__stats">` +
         `${UnitInfo.statRow("ph-shield", "Aguante", def.aguante)}` +
         `${UnitInfo.statRow("ph-footprints", "Movimiento", def.movimiento)}` +
         `${UnitInfo.statRow("ph-boxing-glove", "Fuerza", def.fuerza)}` +
         `${UnitInfo.statRow("ph-wind", "Agilidad", def.agilidad)}` +
         `${UnitInfo.statRow("ph-eye", "Percepción", def.percepcion)}` +
         `</div>` +
-        `<strong class="shop-desc__price-line">Reclutar cuesta ${price} puntos de gloria.</strong>`;
+        (ability
+          ? `<div class="rc__ability">${abilityIcon}<div><b>${ability.name}</b><span>${firstSentence(ability.description)}</span></div></div>`
+          : "") +
+        `</div>`;
     } else {
       this._descEl.textContent = "";
     }
