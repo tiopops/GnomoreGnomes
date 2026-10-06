@@ -264,7 +264,7 @@ const RECRUIT_PRICES = {
   seta_artificiero: 3,
   goblin_lanzador: 2,
   urgamentes: 3,
-  punoroca: 3,
+  punoroca: 4,
 };
 
 const Units = {
