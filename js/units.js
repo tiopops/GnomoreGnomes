@@ -99,8 +99,8 @@ const UNIT_TYPES = {
     // sprite normal durante el golpe (ver Units.pegarGnomoSpriteFor).
     pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_hombre_arbol.png?v=2",
     aguante: 4,
-    movimiento: 1,
-    fuerza: 3,
+    movimiento: 2,
+    fuerza: 4,
     agilidad: 1,
     percepcion: 1,
     attackRange: 1,
@@ -118,9 +118,9 @@ const UNIT_TYPES = {
     machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_surcabosques_impacto.png",
     pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_surcabosques.png",
     aguante: 1,
-    movimiento: 4,
+    movimiento: 3,
     fuerza: 1,
-    agilidad: 3,
+    agilidad: 4,
     percepcion: 3,
     attackRange: 1,
     defaultFacing: "right",
@@ -133,7 +133,7 @@ const UNIT_TYPES = {
     machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_seta_artificiero_impacto.png",
     pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_seta_artificiero.png",
     aguante: 2,
-    movimiento: 2,
+    movimiento: 3,
     fuerza: 2,
     agilidad: 3,
     percepcion: 2,
@@ -150,8 +150,8 @@ const UNIT_TYPES = {
     aguante: 2,
     movimiento: 3,
     fuerza: 1,
-    agilidad: 5,
-    percepcion: 3,
+    agilidad: 4,
+    percepcion: 2,
     attackRange: 1,
     defaultFacing: "right",
   },
@@ -166,7 +166,7 @@ const UNIT_TYPES = {
     movimiento: 3,
     fuerza: 2,
     agilidad: 2,
-    percepcion: 2,
+    percepcion: 3,
     attackRange: 1,
     defaultFacing: "right",
   },
@@ -181,9 +181,9 @@ const UNIT_TYPES = {
     machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca.png",
     machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca_impacto.png",
     pegarGnomoUrl: "assets/equipos/ColinasRockNTroll/pegargnomo_punoroca.png",
-    aguante: 5,
+    aguante: 4,
     movimiento: 3,
-    fuerza: 5,
+    fuerza: 3,
     agilidad: 1,
     percepcion: 1,
     attackRange: 1,
@@ -221,11 +221,32 @@ const SPRITE_SCALES = {
 // abajo hacen ese relleno), igual de opcional que machacaUrl/
 // machacaImpactUrl — así un personaje sin calibrar aún no aparece con un
 // tamaño distinto sin querer.
-const SPRITE_SCALES_MACHACA = {};
-const SPRITE_SCALES_IMPACT = {};
+const SPRITE_SCALES_MACHACA = {
+  hombre_arbol: 1.5,
+  surcabosques: 1,
+  seta_artificiero: 1,
+  goblin_lanzador: 1.05,
+  urgamentes: 1.1,
+  punoroca: 1.75,
+};
+const SPRITE_SCALES_IMPACT = {
+  hombre_arbol: 1.5,
+  surcabosques: 1.25,
+  seta_artificiero: 1.3,
+  goblin_lanzador: 1.25,
+  urgamentes: 1.4,
+  punoroca: 1.8,
+};
 // Tamaño de la pose "pegar al gnomo" (pegarGnomoUrl). Sin entrada = mismo
 // tamaño que iddle (Units.pegarGnomoScaleFor).
-const SPRITE_SCALES_PEGAR = {};
+const SPRITE_SCALES_PEGAR = {
+  hombre_arbol: 1.4,
+  surcabosques: 1,
+  seta_artificiero: 1,
+  goblin_lanzador: 1,
+  urgamentes: 0.9,
+  punoroca: 1.5,
+};
 
 // Precio de reclutar cada tipo de personaje desde el Obelisco Ancestral de
 // su equipo (js/obelisks.js), en Puntos de Gloria — pedido explícito: "cada
@@ -238,12 +259,12 @@ const SPRITE_SCALES_PEGAR = {};
 // primero por el debug).
 const RECRUIT_PRICES = {
   default: 2,
-  hombre_arbol: 2,
+  hombre_arbol: 4,
   surcabosques: 2,
-  seta_artificiero: 2,
+  seta_artificiero: 3,
   goblin_lanzador: 2,
-  urgamentes: 2,
-  punoroca: 2,
+  urgamentes: 3,
+  punoroca: 3,
 };
 
 const Units = {

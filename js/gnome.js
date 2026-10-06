@@ -98,8 +98,8 @@ const GNOME_VISION_RADIUS = 3;
 // solo cambia dónde se engancha.
 const GNOME_SIZES = {
   ground: 69,
-  flying: 86,
-  run: 69, // gnomo corriendo (huida), sprite gnomo_corre
+  flying: 93,
+  run: 80, // gnomo corriendo (huida), sprite gnomo_corre
   held: 85,
 };
 
@@ -170,11 +170,11 @@ const GNOME_ATTACH_OFFSETS = {
 const GNOME_ATTACH_OFFSETS_MACHACA = {
   default: { right: -14, bottom: 40 },
   hombre_arbol: { right: -21, bottom: 71 },
-  surcabosques: { right: -14, bottom: 40 },
-  seta_artificiero: { right: -14, bottom: 40 },
+  surcabosques: { right: -37, bottom: 68.7 },
+  seta_artificiero: { right: -42, bottom: 56.6 },
   goblin_lanzador: { right: -14, bottom: 40 },
-  urgamentes: { right: -14, bottom: 40 },
-  punoroca: { right: -14, bottom: 40 },
+  urgamentes: { right: 38, bottom: 64.2 },
+  punoroca: { right: 22, bottom: 68.3 },
 };
 
 // Pose "pegar al gnomo" (Gnome.hit): el personaje cambia a su sprite
@@ -182,7 +182,14 @@ const GNOME_ATTACH_OFFSETS_MACHACA = {
 // igual que en "machaca". SIN entrada = usa el de reposo (GNOME_ATTACH_OFFSETS)
 // — así un personaje sin calibrar nunca mueve al gnomo durante el golpe.
 // Se calibra desde debug/calibrar-gnomo.html (o ?calibrarGnomo).
-const GNOME_ATTACH_OFFSETS_PEGAR = {};
+const GNOME_ATTACH_OFFSETS_PEGAR = {
+  hombre_arbol: { right: 40, bottom: 20.4 },
+  surcabosques: { right: 12, bottom: -4.7 },
+  seta_artificiero: { right: 8, bottom: -2.9 },
+  goblin_lanzador: { right: -40, bottom: -6.5 },
+  urgamentes: { right: 4, bottom: 0.4 },
+  punoroca: { right: -26, bottom: 36.6 },
+};
 
 // ---------- Cada gnomo individual ----------
 //

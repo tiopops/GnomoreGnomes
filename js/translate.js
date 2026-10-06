@@ -254,7 +254,7 @@ const EN_DICT = {
 "Un golem de corteza y musgo que nunca ha tenido prisa por llegar a ningún sitio, pero tampoco por caer.": "A bark-and-moss golem who has never been in a hurry to get anywhere, but never in a hurry to fall either.",
 "Se desliza entre los árboles más rápido de lo que nadie puede seguirle la pista.": "Glides through the trees faster than anyone can track.",
 "Experimenta con esporas explosivas y, milagrosamente, casi nunca se hace daño a sí mismo.": "Experiments with explosive spores and, miraculously, almost never hurts himself.",
-"El mejor brazo del Equipo MascaRrocas — nadie lanza un gnomo más lejos ni más certero.": "The best arm on Team MascaRrocas — nobody throws a gnome farther or more accurately.",
+"El mejor brazo de las Colinas Rock'n Troll — nadie lanza un gnomo más lejos ni más certero.": "The best arm of the Rock'n Troll Hills — nobody throws a gnome farther or more accurately.",
 "Piensa cada jugada tres veces antes de moverse, lo cual explica por qué siempre llega tarde.": "Thinks every move through three times before acting, which explains why he's always late.",
 "Sus puños son más duros que la piedra de la que sacó el nombre.": "His fists are harder than the stone he took his name from.",
 "Mantén pulsado para ver las estadísticas dla unidad": "Hold to see the unit's stats",
