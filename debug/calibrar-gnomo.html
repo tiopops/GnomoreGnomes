@@ -125,6 +125,11 @@
     transform: translate(-50%, -100%);
   }
 
+  #stageRun { position: relative; width: 188px; height: 164px; }
+  #stageRun img.tile-ref { position: absolute; left: 0; top: 0; width: 188px; display: block; }
+  #stageRun .run-anchor { position: absolute; left: 50%; top: 58%; width: 0; height: 0; }
+  #stageRun .run-anchor img { position: absolute; left: 0; bottom: 0; transform: translateX(-50%); transform-origin: 50% 90%; animation: gnome-run-stride 0.2s linear infinite; }
+
   #stageFlying { position: relative; width: 220px; height: 180px; }
   .arc-ref {
     position: absolute;
@@ -212,6 +217,10 @@
       <input type="range" id="groundWidth" min="20" max="140" step="1" value="69">
     </div>
     <div class="control">
+      <label for="runWidth">Tamaño corriendo — <span class="value" id="runWidthVal">69</span> px</label>
+      <input type="range" id="runWidth" min="20" max="140" step="1" value="69">
+    </div>
+    <div class="control">
       <label for="flyingWidth">Tamaño en vuelo — <span class="value" id="flyingWidthVal">73</span> px</label>
       <input type="range" id="flyingWidth" min="20" max="140" step="1" value="73">
     </div>
@@ -233,6 +242,15 @@
         <div id="stageFlying">
           <div class="arc-ref"></div>
           <img class="gnome-ref" id="flyingImg" src="../assets/equipos/MushboomForest/gnomo_grita.png" alt="">
+        </div>
+      </div>
+    </div>
+    <div class="stage-col">
+      <div class="stage-col-label">Corriendo (huida, con la zancada del juego)</div>
+      <div class="stage-wrap">
+        <div id="stageRun">
+          <img class="tile-ref" src="../assets/losetas/hierba_01.png" alt="">
+          <div class="run-anchor"><img id="runImg" src="../assets/equipos/MushboomForest/gnomo_corre.png" alt=""></div>
         </div>
       </div>
     </div>
@@ -264,7 +282,7 @@
     const POS_DEFAULTS = { right: -14, bottom: 6 };
     const POS_DEFAULTS_MACHACA = { right: -14, bottom: 40 }; // igual que GNOME_ATTACH_OFFSETS_MACHACA.default en js/gnome.js
     const POS_STORAGE_KEY_PEGAR = "gnomore-gnomo-posicion-pegar-v1"; // pose "pegar al gnomo" — misma clave que GNOME_CALIB_STORAGE_KEY_PEGAR en js/gnomecalib.js
-    const HELD_WIDTH_DEFAULT = 46;
+    const HELD_WIDTH_DEFAULT = 85; // igual que GNOME_SIZES.held en js/gnome.js
 
     function loadPositionsFrom(key) {
       try { return JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { return {}; }
@@ -275,8 +293,8 @@
     function loadPositions() { return loadPositionsFrom(POS_STORAGE_KEY); }
     function savePositions(data) { savePositionsTo(POS_STORAGE_KEY, data); }
     function loadSizes() {
-      try { return Object.assign({ ground: 69, flying: 73 }, JSON.parse(localStorage.getItem(SIZE_STORAGE_KEY)) || {}); }
-      catch (e) { return { ground: 69, flying: 73 }; }
+      try { return Object.assign({ ground: 69, flying: 86, run: 69 }, JSON.parse(localStorage.getItem(SIZE_STORAGE_KEY)) || {}); }
+      catch (e) { return { ground: 69, flying: 86, run: 69 }; }
     }
     function saveSizes(data) {
       try { localStorage.setItem(SIZE_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
@@ -331,6 +349,9 @@
     const flyingWidthVal = document.getElementById("flyingWidthVal");
     const groundImg = document.getElementById("groundImg");
     const flyingImg = document.getElementById("flyingImg");
+    const runWidth = document.getElementById("runWidth");
+    const runWidthVal = document.getElementById("runWidthVal");
+    const runImg = document.getElementById("runImg");
     const output = document.getElementById("output");
     const copyBtn = document.getElementById("copyBtn");
     const copiedMsg = document.getElementById("copiedMsg");
@@ -496,6 +517,7 @@
         "const GNOME_SIZES = {",
         `  ground: ${sizes.ground},`,
         `  flying: ${sizes.flying},`,
+        `  run: ${sizes.run},`,
         `  held: ${heldWidth},`,
         "};",
         "",
@@ -588,6 +610,16 @@
       saveSizes(sizes);
       updateOutput();
     }
+    function renderRun() {
+      sizes.run = Number(runWidth.value);
+      runWidthVal.textContent = sizes.run;
+      runImg.style.width = sizes.run + "px";
+      saveSizes(sizes);
+      updateOutput();
+    }
+    runWidth.value = sizes.run;
+    runWidth.addEventListener("input", renderRun);
+    renderRun();
     heldWidthInput.value = heldWidth;
     groundWidth.value = sizes.ground;
     flyingWidth.value = sizes.flying;

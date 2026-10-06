@@ -340,6 +340,7 @@ const GnomeCalib = {
       "const GNOME_SIZES = {",
       `  ground: ${GNOME_SIZES.ground},`,
       `  flying: ${GNOME_SIZES.flying},`,
+      `  run: ${GNOME_SIZES.run},`,
       `  held: ${this.getHeldWidth()},`,
       "};",
       "",

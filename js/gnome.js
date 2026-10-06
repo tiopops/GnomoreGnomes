@@ -99,6 +99,7 @@ const GNOME_VISION_RADIUS = 3;
 const GNOME_SIZES = {
   ground: 69,
   flying: 86,
+  run: 69, // gnomo corriendo (huida), sprite gnomo_corre
   held: 85,
 };
 
@@ -1260,6 +1261,7 @@ function createGnomeInstance() {
     _setRunning(on) {
       if (!this.spriteEl || this.isDecoy) return;
       this.spriteEl.classList.toggle("gnome__sprite--run", on);
+      this.spriteEl.style.width = `${on ? GNOME_SIZES.run : this._groundWidth()}px`;
       const src = on ? GNOME_ASSETS.corre : GNOME_ASSETS.idle;
       if (typeof SpriteQuality !== "undefined") SpriteQuality.register(this.spriteEl, src);
       else this.spriteEl.src = src;
