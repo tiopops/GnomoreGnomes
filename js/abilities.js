@@ -644,6 +644,7 @@ const Abilities = {
       Turns._applyExhaustedClass(target);
     }
 
+    this._mindTint(unit, target, true);
     SFX.click();
     Units.spawnFloatingText(target, "¡CONTROLADO!", { className: "dmg-popup gnome-points-popup" });
 
@@ -668,8 +669,40 @@ const Abilities = {
         Turns._applyExhaustedClass(target);
       }
       if (Units.selectedId === target.id) Units.deselect();
+      this._mindTint(null, target, false);
+    } else {
+      this._mindTint(null, null, false);
     }
     this._mindControlled = null;
+  },
+
+  // Tinte morado de todo el tablero mientras dura el control mental, salvo
+  // el Urgamentes y la unidad controlada (que se mantienen por encima de la
+  // capa gracias a .unit--mc-keep, ver style.css). Entra y sale con fundido.
+  _mindTint(caster, target, on) {
+    const old = document.getElementById("mind-tint");
+    if (on) {
+      if (old) old.remove();
+      if (!Units.container) return;
+      const ov = document.createElement("div");
+      ov.id = "mind-tint";
+      ov.className = "mind-tint";
+      Units.container.appendChild(ov);
+      void ov.offsetWidth;
+      ov.classList.add("mind-tint--on");
+      [caster, target].forEach((u) => u && u.el && u.el.classList.add("unit--mc-keep"));
+      this._mindKeep = [caster && caster.id, target && target.id];
+    } else {
+      (this._mindKeep || []).forEach((id) => {
+        const u = Units.list.find((x) => x.id === id);
+        if (u && u.el) u.el.classList.remove("unit--mc-keep");
+      });
+      this._mindKeep = null;
+      if (old) {
+        old.classList.remove("mind-tint--on");
+        setTimeout(() => old.remove(), 700);
+      }
+    }
   },
 
   // ---------- PuñoRoca: Nudillos Rocosos ----------
