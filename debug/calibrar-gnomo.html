@@ -200,6 +200,12 @@
       <button class="toggle-btn" id="poseBtn">Ver pose: machacagnomos</button>
       <span style="font-size:0.75rem;color:var(--muted);" id="poseName">Pose actual: iddle</span>
     </div>
+    <div class="control" id="poseSizeCtl" style="display:none;">
+      <label for="poseScale">Tamaño del sprite en esta pose — <span class="value" id="poseScaleVal">1.00</span>x (iddle = <span id="idleScaleVal">1.00</span>x)</label>
+      <input type="range" id="poseScale" min="0.4" max="2.5" step="0.05" value="1">
+      <label style="font-size:0.75rem;color:var(--muted);"><input type="checkbox" id="ghostIdle" checked> Superponer iddle (fantasma) para comparar</label>
+      <span style="font-size:0.75rem;color:var(--muted);">Se comparte con configurar-personajes (mismo valor guardado).</span>
+    </div>
     <div class="control" style="min-width: auto;">
       <button class="reset-btn" id="resetBtn">Reiniciar posición de este personaje (pose actual)</button>
     </div>
@@ -496,7 +502,52 @@
         : pose === "pegar" ? Units.pegarGnomoSpriteFor(currentTypeId)
         : type.spriteUrl;
       currentEls.spriteEl.src = "../" + (url || type.spriteUrl);
+      const ctl = document.getElementById("poseSizeCtl");
+      ctl.style.display = pose === "idle" ? "none" : "";
+      const idleScale = SPRITE_SCALES[currentTypeId] ?? SPRITE_SCALES.default;
+      document.getElementById("idleScaleVal").textContent = idleScale.toFixed(2);
+      const sc = pose === "idle" ? idleScale : poseScaleFor(currentTypeId);
+      currentEls.spriteEl.style.width = Math.round(120 * sc) + "px";
+      if (pose !== "idle") { poseScaleInput.value = sc; poseScaleVal.textContent = sc.toFixed(2); }
+      updateGhost();
     }
+
+    // Tamaño de la pose: mismo almacenamiento que debug/configurar-personajes.html
+    const CHAR_STORAGE_KEY = "gnomore-tamano-stats-personajes-v1";
+    const poseScaleInput = document.getElementById("poseScale");
+    const poseScaleVal = document.getElementById("poseScaleVal");
+    const ghostIdle = document.getElementById("ghostIdle");
+    function loadCharStore() { try { return JSON.parse(localStorage.getItem(CHAR_STORAGE_KEY)) || {}; } catch (e) { return {}; } }
+    function poseScaleField() { return pose === "machaca" ? "scaleMachaca" : "scalePegar"; }
+    function poseScaleFor(typeId) {
+      const saved = (loadCharStore()[typeId] || {})[poseScaleField()];
+      if (saved != null) return saved;
+      return pose === "machaca" ? Units.machacaScaleFor(typeId) : Units.pegarGnomoScaleFor(typeId);
+    }
+    function updateGhost() {
+      const old = stageHeld.querySelector(".idle-ghost");
+      if (old) old.remove();
+      if (pose === "idle" || !ghostIdle.checked || !currentEls) return;
+      const type = UNIT_TYPES[currentTypeId];
+      const g = document.createElement("div");
+      g.className = "unit unit--player idle-ghost";
+      g.style.opacity = "0.35"; g.style.pointerEvents = "none"; g.style.zIndex = "0";
+      const flip = document.createElement("div"); flip.className = "unit__flip";
+      flip.style.transform = facingLeft ? "scaleX(-1)" : "scaleX(1)";
+      const img = document.createElement("img"); img.className = "unit__sprite";
+      img.src = "../" + type.spriteUrl; img.draggable = false;
+      img.style.width = Math.round(120 * (SPRITE_SCALES[currentTypeId] ?? SPRITE_SCALES.default)) + "px";
+      flip.appendChild(img); g.appendChild(flip); stageHeld.insertBefore(g, stageHeld.firstChild);
+    }
+    poseScaleInput.addEventListener("input", () => {
+      const v = Number(poseScaleInput.value);
+      poseScaleVal.textContent = v.toFixed(2);
+      currentEls.spriteEl.style.width = Math.round(120 * v) + "px";
+      const store = loadCharStore();
+      store[currentTypeId] = Object.assign(store[currentTypeId] || {}, { [poseScaleField()]: v });
+      try { localStorage.setItem(CHAR_STORAGE_KEY, JSON.stringify(store)); } catch (e) {}
+    });
+    ghostIdle.addEventListener("change", updateGhost);
 
     function currentValues() {
       return { right: curRight, bottom: curBottom };
@@ -571,7 +622,7 @@
 
     teamSelect.addEventListener("change", () => loadTeam(teamSelect.value));
     charSelect.addEventListener("change", () => loadCharacter(charSelect.value));
-    flipBtn.addEventListener("click", () => { facingLeft = !facingLeft; applyFacing(); });
+    flipBtn.addEventListener("click", () => { facingLeft = !facingLeft; applyFacing(); updateGhost(); });
     poseBtn.addEventListener("click", () => {
       pose = nextPose();
       poseBtn.textContent = "Ver pose: " + POSE_LABELS[nextPose()];

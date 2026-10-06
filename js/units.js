@@ -97,7 +97,7 @@ const UNIT_TYPES = {
     // ponemos al golemcorteza". Mismo criterio opcional que machacaUrl/
     // espinasUrl: un personaje sin esta entrada simplemente se queda con su
     // sprite normal durante el golpe (ver Units.pegarGnomoSpriteFor).
-    pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_hombre_arbol.png",
+    pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_hombre_arbol.png?v=2",
     aguante: 4,
     movimiento: 1,
     fuerza: 3,
@@ -116,6 +116,7 @@ const UNIT_TYPES = {
     spriteUrl: "assets/equipos/MushboomForest/unidad_02.png",
     machacaUrl: "assets/equipos/MushboomForest/machacagnomos_surcabosques.png",
     machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_surcabosques_impacto.png",
+    pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_surcabosques.png",
     aguante: 1,
     movimiento: 4,
     fuerza: 1,
@@ -130,6 +131,7 @@ const UNIT_TYPES = {
     spriteUrl: "assets/equipos/MushboomForest/unidad_03.png",
     machacaUrl: "assets/equipos/MushboomForest/machacagnomos_seta_artificiero.png",
     machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_seta_artificiero_impacto.png",
+    pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_seta_artificiero.png",
     aguante: 2,
     movimiento: 2,
     fuerza: 2,
@@ -144,6 +146,7 @@ const UNIT_TYPES = {
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_01.png",
     machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_goblin_lanzador.png",
     machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_goblin_lanzador_impacto.png",
+    pegarGnomoUrl: "assets/equipos/ColinasRockNTroll/pegargnomo_goblin_lanzador.png",
     aguante: 2,
     movimiento: 3,
     fuerza: 1,
@@ -158,6 +161,7 @@ const UNIT_TYPES = {
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_02.png",
     machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_urgamentes.png",
     machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_urgamentes_impacto.png",
+    pegarGnomoUrl: "assets/equipos/ColinasRockNTroll/pegargnomo_urgamentes.png",
     aguante: 2,
     movimiento: 3,
     fuerza: 2,
@@ -176,6 +180,7 @@ const UNIT_TYPES = {
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_03.png",
     machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca.png",
     machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca_impacto.png",
+    pegarGnomoUrl: "assets/equipos/ColinasRockNTroll/pegargnomo_punoroca.png",
     aguante: 5,
     movimiento: 3,
     fuerza: 5,
