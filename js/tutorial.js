@@ -309,7 +309,7 @@ const Tutorial = {
         onStart: () => T._refill(),
       },
       {
-        say: `Antes de seguir, un truco útil: mantén pulsada la cara de tu unidad, abajo a la izquierda, y verás todas sus estadísticas. Con las unidades enemigas funciona igual: selecciónalas y mira de qué pasta están hechas… antes de que te hagan pasta a ti.`,
+        say: `Antes de seguir, un truco útil: selecciona a TruenoEspora y mantén pulsada la cara de tu unidad, abajo a la izquierda, y verás todas sus estadísticas. Con las unidades enemigas funciona igual: selecciónalas y mira de qué pasta están hechas… antes de que te hagan pasta a ti.`,
         mission: "Mantén pulsada su cara (3 s)",
         hold: true,
         onStart: () => {
@@ -712,7 +712,13 @@ const Tutorial = {
   // con más sitio; la 2.ª, la de más abajo (por delante del Obelisco).
   _placeMarker() {
     const ms = [...document.querySelectorAll(".board-marker.obelisk-placement-marker")];
-    if (!ms.length) return null;
+    if (!ms.length) {
+      this._pmEl = null;
+      return null;
+    }
+    // Elección estable: antes se recalculaba cada fotograma según la posición en
+    // pantalla (que cambia al mover la cámara) y el puntero saltaba entre dos casillas.
+    if (this._pmEl && this._pmEl.isConnected && ms.includes(this._pmEl)) return this._pmEl;
     const rc = (m) => {
       const r = m.getBoundingClientRect();
       return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
@@ -729,9 +735,11 @@ const Tutorial = {
     if (this._my().length === 0) {
       // Lado con más espacio hacia el centro de la pantalla.
       const dir = ox < window.innerWidth / 2 ? 1 : -1;
-      return pool.sort((a, b) => (rc(b).x - rc(a).x) * dir)[0];
+      this._pmEl = pool.sort((a, b) => (rc(b).x - rc(a).x) * dir)[0];
+      return this._pmEl;
     }
-    return pool.sort((a, b) => rc(b).y - rc(a).y)[0];
+    this._pmEl = pool.sort((a, b) => rc(b).y - rc(a).y)[0];
+    return this._pmEl;
   },
 
   // Casilla libre junto a `unit`, la más cercana al Obelisco (el centro de la

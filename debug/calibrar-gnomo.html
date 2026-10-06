@@ -263,6 +263,7 @@
     const HELD_WIDTH_STORAGE_KEY = "gnomore-gnomo-tamano-cogido-v1"; // mismo formato que usa js/gnomecalib.js
     const POS_DEFAULTS = { right: -14, bottom: 6 };
     const POS_DEFAULTS_MACHACA = { right: -14, bottom: 40 }; // igual que GNOME_ATTACH_OFFSETS_MACHACA.default en js/gnome.js
+    const POS_STORAGE_KEY_PEGAR = "gnomore-gnomo-posicion-pegar-v1"; // pose "pegar al gnomo" — misma clave que GNOME_CALIB_STORAGE_KEY_PEGAR en js/gnomecalib.js
     const HELD_WIDTH_DEFAULT = 46;
 
     function loadPositionsFrom(key) {
@@ -292,19 +293,26 @@
 
     let tuned = loadPositions();
     let tunedMachaca = loadPositionsFrom(POS_STORAGE_KEY_MACHACA);
+    let tunedPegar = loadPositionsFrom(POS_STORAGE_KEY_PEGAR);
     let sizes = loadSizes();
     let heldWidth = loadHeldWidth();
     let facingLeft = false;
-    let pose = "idle"; // "idle" | "machaca"
+    let pose = "idle"; // "idle" | "machaca" | "pegar"
     let currentEls = null;
     let currentTypeId = null;
     let curRight = POS_DEFAULTS.right; // ya no hay sliders — este es el estado vivo que mueve el arrastre
     let curBottom = POS_DEFAULTS.bottom;
     let drag = null;
 
-    function tableForPose() { return pose === "machaca" ? tunedMachaca : tuned; }
-    function defaultsForPose() { return pose === "machaca" ? POS_DEFAULTS_MACHACA : POS_DEFAULTS; }
-    function storageKeyForPose() { return pose === "machaca" ? POS_STORAGE_KEY_MACHACA : POS_STORAGE_KEY; }
+    function tableForPose() { return pose === "machaca" ? tunedMachaca : pose === "pegar" ? tunedPegar : tuned; }
+    // En "pegar", sin calibrar el gnomo se queda donde está en iddle (igual que el juego real).
+    function defaultsForPose(typeId) {
+      if (pose === "pegar") return tuned[typeId] || POS_DEFAULTS;
+      return pose === "machaca" ? POS_DEFAULTS_MACHACA : POS_DEFAULTS;
+    }
+    function storageKeyForPose() { return pose === "machaca" ? POS_STORAGE_KEY_MACHACA : pose === "pegar" ? POS_STORAGE_KEY_PEGAR : POS_STORAGE_KEY; }
+    const POSE_LABELS = { idle: "iddle", machaca: "machacagnomos", pegar: "pegar al gnomo" };
+    function nextPose() { return pose === "idle" ? "machaca" : pose === "machaca" ? "pegar" : "idle"; }
 
     const teamSelect = document.getElementById("teamSelect");
     const charSelect = document.getElementById("charSelect");
@@ -462,8 +470,9 @@
     function updateHeldSprite() {
       if (!currentEls || !currentTypeId) return;
       const type = UNIT_TYPES[currentTypeId];
-      const url = pose === "machaca" && typeof Units !== "undefined"
-        ? Units.machacaSpriteFor(currentTypeId)
+      const url = typeof Units === "undefined" ? type.spriteUrl
+        : pose === "machaca" ? Units.machacaSpriteFor(currentTypeId)
+        : pose === "pegar" ? Units.pegarGnomoSpriteFor(currentTypeId)
         : type.spriteUrl;
       currentEls.spriteEl.src = "../" + (url || type.spriteUrl);
     }
@@ -506,6 +515,14 @@
         lines.push(`  ${typeId}: { right: ${v.right}, bottom: ${v.bottom} },`);
       });
       lines.push("};");
+      lines.push("");
+      lines.push("// Pose pegar al gnomo — solo los calibrados (el resto usa el de iddle)");
+      lines.push("const GNOME_ATTACH_OFFSETS_PEGAR = {");
+      Object.keys(UNIT_TYPES).forEach((typeId) => {
+        const v = tunedPegar[typeId];
+        if (v) lines.push(`  ${typeId}: { right: ${v.right}, bottom: ${v.bottom} },`);
+      });
+      lines.push("};");
       output.value = lines.join("\n");
     }
 
@@ -518,7 +535,7 @@
     }
 
     function loadCharacter(typeId) {
-      const v = tableForPose()[typeId] || defaultsForPose();
+      const v = tableForPose()[typeId] || defaultsForPose(typeId);
       curRight = v.right;
       curBottom = v.bottom;
       buildHeldStage(typeId);
@@ -534,9 +551,9 @@
     charSelect.addEventListener("change", () => loadCharacter(charSelect.value));
     flipBtn.addEventListener("click", () => { facingLeft = !facingLeft; applyFacing(); });
     poseBtn.addEventListener("click", () => {
-      pose = pose === "machaca" ? "idle" : "machaca";
-      poseBtn.textContent = pose === "machaca" ? "Ver pose: iddle" : "Ver pose: machacagnomos";
-      poseName.textContent = "Pose actual: " + (pose === "machaca" ? "machacagnomos" : "iddle");
+      pose = nextPose();
+      poseBtn.textContent = "Ver pose: " + POSE_LABELS[nextPose()];
+      poseName.textContent = "Pose actual: " + POSE_LABELS[pose];
       loadCharacter(charSelect.value);
       updateHeldSprite();
     });

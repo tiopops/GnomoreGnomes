@@ -218,6 +218,9 @@ const SPRITE_SCALES = {
 // tamaño distinto sin querer.
 const SPRITE_SCALES_MACHACA = {};
 const SPRITE_SCALES_IMPACT = {};
+// Tamaño de la pose "pegar al gnomo" (pegarGnomoUrl). Sin entrada = mismo
+// tamaño que iddle (Units.pegarGnomoScaleFor).
+const SPRITE_SCALES_PEGAR = {};
 
 // Precio de reclutar cada tipo de personaje desde el Obelisco Ancestral de
 // su equipo (js/obelisks.js), en Puntos de Gloria — pedido explícito: "cada
@@ -574,6 +577,11 @@ const Units = {
     const def = UNIT_TYPES[typeId];
     if (!def) return "";
     return def.pegarGnomoUrl || def.spriteUrl || "";
+  },
+
+  pegarGnomoScaleFor(typeId) {
+    const v = SPRITE_SCALES_PEGAR[typeId];
+    return v != null ? v : SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default;
   },
 
   // Tamaño (multiplicador del ancho base de 120px) de la pose "machaca" —

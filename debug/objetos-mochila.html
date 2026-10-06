@@ -115,19 +115,16 @@
   </div>
 </div>
 
+<script src="../js/i18n.js"></script>
+<script src="../js/races.js"></script>
+<script src="../js/units.js"></script>
+<script src="../js/backpack.js"></script>
 <script>
-  // Copia local — mismo dato que ITEM_TYPES en js/backpack.js. Si se añade
-  // un objeto nuevo ahí, añádelo también aquí para poder editar su
-  // descripción con esta misma herramienta.
-  const ITEM_TYPES = {
-    setarcoiris: { name: "Setarcoiris", iconUrl: "../assets/iconos/setarcoiris.png" },
-  };
-
-  // Copia local de ITEM_DESCRIPTIONS — la fuente de verdad sigue siendo
-  // js/backpack.js; esto es solo el punto de partida para editar aquí.
-  const ITEM_DESCRIPTIONS = {
-    setarcoiris: "La comida favorita de los gnomos. Colócala junto a uno de tus personajes: en dos turnos atraerá a un gnomo hambriento.",
-  };
+  // Datos REALES del juego: ITEM_TYPES e ITEM_DESCRIPTIONS se leen de
+  // js/backpack.js (cargado arriba), así esta herramienta siempre está al día
+  // con todos los objetos sin copiar nada a mano. Las rutas de iconos son
+  // relativas a la raíz del juego, de ahí el "../".
+  const ITEM_ICON = (id) => "../" + ITEM_TYPES[id].iconUrl;
 
   const grid = document.getElementById("grid");
   const previewIcon = document.getElementById("preview-icon");
@@ -135,7 +132,7 @@
 
   function updatePreview(itemId, text) {
     const def = ITEM_TYPES[itemId];
-    previewIcon.src = def.iconUrl;
+    previewIcon.src = ITEM_ICON(itemId);
     previewIcon.alt = def.name;
     previewDesc.textContent = text;
   }

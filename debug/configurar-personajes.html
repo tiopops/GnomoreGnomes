@@ -314,6 +314,7 @@
         scale: saved.scale ?? (SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default),
         scaleMachaca: saved.scaleMachaca ?? Units.machacaScaleFor(typeId),
         scaleImpacto: saved.scaleImpacto ?? Units.impactScaleFor(typeId),
+        scalePegar: saved.scalePegar ?? Units.pegarGnomoScaleFor(typeId),
         aguante: saved.aguante ?? type.aguante,
         movimiento: saved.movimiento ?? type.movimiento,
         fuerza: saved.fuerza ?? type.fuerza,
@@ -469,10 +470,14 @@
       if (impactUrl && impactUrl !== machacaUrl) {
         buildPoseColumn("impacto", "impacto", impactUrl, "scaleImpacto");
       }
+      const pegarUrl = Units.pegarGnomoSpriteFor(typeId);
+      if (pegarUrl && pegarUrl !== type.spriteUrl) {
+        buildPoseColumn("pegar al gnomo", "pegar", pegarUrl, "scalePegar");
+      }
       if (poseRow.children.length === 0) {
         const note = document.createElement("div");
         note.className = "card__pose-none";
-        note.textContent = "Este personaje todavía no tiene sprites propios de machaca/impacto — usa el de iddle en el juego real, nada que calibrar aquí.";
+        note.textContent = "Este personaje todavía no tiene sprites propios de machaca/impacto — usa el de iddle en el juego real, nada que calibrar aquí. (Cuando añadas pegargnomo_*, machacagnomos_*, etc. en units.js aparecerán aquí solas.)";
         poseRow.appendChild(note);
       }
 
@@ -613,6 +618,7 @@
           scale: SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default,
           scaleMachaca: Units.machacaScaleFor(typeId),
           scaleImpacto: Units.impactScaleFor(typeId),
+          scalePegar: Units.pegarGnomoScaleFor(typeId),
           aguante: type.aguante,
           movimiento: type.movimiento,
           fuerza: type.fuerza,
@@ -664,6 +670,15 @@
         const type = UNIT_TYPES[typeId];
         if (Units.impactSpriteFor(typeId) === Units.machacaSpriteFor(typeId)) return;
         lines.push(`  ${typeId}: ${tuned[typeId].scaleImpacto},`);
+      });
+      lines.push("};");
+      lines.push("");
+      lines.push("// --- js/units.js — SPRITE_SCALES_PEGAR (solo quien tiene pegarGnomoUrl propio) ---");
+      lines.push("const SPRITE_SCALES_PEGAR = {");
+      typeIds.forEach((typeId) => {
+        const type = UNIT_TYPES[typeId];
+        if (Units.pegarGnomoSpriteFor(typeId) === type.spriteUrl) return;
+        lines.push(`  ${typeId}: ${tuned[typeId].scalePegar},`);
       });
       lines.push("};");
       lines.push("");

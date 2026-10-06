@@ -254,12 +254,16 @@ const UnitInfo = {
     overlay.innerHTML = `
       <div class="p5-banner unit-info-card">
         <div class="unit-info-card__content">
-          <div class="unit-info-portrait${unit.team !== "player" ? " unit-info-portrait--enemy" : ""}">
-            <img src="${type.spriteUrl}" alt="">
+          <div class="unit-info-head">
+            <div class="unit-info-portrait${unit.team !== "player" ? " unit-info-portrait--enemy" : ""}">
+              <img src="${type.spriteUrl}" alt="">
+            </div>
+            <div class="unit-info-head__text">
+              <h2 class="unit-info-name">${type.name}</h2>
+              <div class="unit-info-hp"><i class="ph ph-heart"></i><b>${unit.hp}</b> / ${unit.maxHp} <span>vida</span></div>
+              ${desc ? `<p class="unit-info-desc">${desc}</p>` : ""}
+            </div>
           </div>
-          ${desc ? `<p class="unit-info-desc">${desc}</p>` : ""}
-          <h2 class="unit-info-name">${type.name}</h2>
-          <div class="unit-info-hp"><i class="ph ph-heart"></i> ${unit.hp} / ${unit.maxHp}</div>
           <div class="unit-info-stats">
             ${this.statRow("ph-shield", "Aguante", type.aguante, typeof Armory !== "undefined" ? Armory.defenseBonus(unit.team) : 0)}
             ${this.statRow("ph-footprints", "Movimiento", type.movimiento, typeof Relics !== "undefined" ? Relics.moveBonus(unit.team) : 0)}

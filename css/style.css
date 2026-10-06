@@ -9850,3 +9850,43 @@ body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events
 /* Carteles de color (Banners.text con tono): rojo = rival, amarillo = tú. */
 .turn-banner--red .turn-banner__text { font-size: clamp(1.5rem, 4vw, 2.8rem); white-space: nowrap; color: #ff4a4a; text-shadow: 0 3px 0 #6e0f0f, 0 0 18px rgba(255, 70, 70, 0.6); }
 .turn-banner--yellow .turn-banner__text { color: #ffd24a; }
+
+/* ---------- Tarjeta de info de la unidad (rediseño legibilidad) ----------
+   Pedido: "todo se ve muy pequeño sobretodo el texto, las tarjetas deben
+   ser claras, concisas y toda la información se vea clara de un vistazo".
+   Cabecera (retrato + nombre + vida + frase) y debajo estadísticas y
+   habilidad con tipografía grande. Sobrescribe las reglas antiguas. */
+.unit-info-card { width: min(560px, 94vw); padding: 34px 34px 30px; text-align: left; }
+.unit-info-head { display: flex; align-items: center; gap: 22px; margin-bottom: 20px; }
+.unit-info-portrait { width: 150px; flex: 0 0 150px; margin: 0; }
+.unit-info-head__text { flex: 1; min-width: 0; }
+.unit-info-name { margin: 0 0 8px; font-size: 2.1rem; line-height: 1.05; }
+.unit-info-hp { margin: 0 0 10px; justify-content: flex-start; gap: 8px; font-size: 1.5rem; font-weight: 700; color: #ff8a8a; }
+.unit-info-hp b { font-size: 1.9rem; color: #fff; font-weight: 900; }
+.unit-info-hp span { font-size: 1rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.unit-info-desc { margin: 0; font-size: 1.05rem; line-height: 1.35; color: var(--muted); }
+.unit-info-stats { gap: 12px; padding-top: 16px; border-top: 2px solid rgba(255,255,255,0.12); }
+.unit-stat-row { gap: 14px; }
+.unit-stat-icon { font-size: 1.7rem; width: 30px; }
+.unit-stat-label { font-size: 1.3rem; font-weight: 700; color: var(--ink); width: 150px; }
+.unit-stat-pips { height: 20px; padding: 3px 5px; gap: 3px; }
+.unit-stat-pip { clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%); }
+.unit-stat-overflow { font-size: 1.3rem; }
+.unit-info-ability { margin-top: 18px; padding: 14px 18px; }
+.unit-info-ability__header { gap: 10px; }
+.unit-info-ability__icon-img { width: 30px; height: 30px; }
+.unit-info-ability__icon-img--surcabosques { width: 34px; height: 34px; }
+.unit-info-ability__header i { font-size: 1.6rem; }
+.unit-info-ability__name { font-size: 1.35rem; }
+.unit-info-ability__tag { font-size: 0.9rem; }
+.unit-info-ability__desc { margin-top: 6px; font-size: 1.1rem; line-height: 1.35; opacity: 1; color: var(--ink); }
+@media (max-width: 520px) {
+  .unit-info-card { padding: 26px 20px 22px; }
+  .unit-info-head { gap: 14px; }
+  .unit-info-portrait { width: 100px; flex-basis: 100px; }
+  .unit-info-name { font-size: 1.6rem; }
+  .unit-info-hp { font-size: 1.2rem; } .unit-info-hp b { font-size: 1.5rem; }
+  .unit-info-desc { font-size: 0.95rem; }
+  .unit-stat-label { font-size: 1.1rem; width: 110px; }
+  .unit-info-ability__desc { font-size: 1rem; }
+}

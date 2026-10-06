@@ -176,6 +176,13 @@ const GNOME_ATTACH_OFFSETS_MACHACA = {
   punoroca: { right: -14, bottom: 40 },
 };
 
+// Pose "pegar al gnomo" (Gnome.hit): el personaje cambia a su sprite
+// pegarGnomoUrl durante el golpe y el gnomo cogido necesita su PROPIO ajuste,
+// igual que en "machaca". SIN entrada = usa el de reposo (GNOME_ATTACH_OFFSETS)
+// — así un personaje sin calibrar nunca mueve al gnomo durante el golpe.
+// Se calibra desde debug/calibrar-gnomo.html (o ?calibrarGnomo).
+const GNOME_ATTACH_OFFSETS_PEGAR = {};
+
 // ---------- Cada gnomo individual ----------
 //
 // Fábrica en vez de clase por consistencia con el resto del proyecto (todo
@@ -665,8 +672,11 @@ function createGnomeInstance() {
     // igual que ya hacía attachTo antes de este refactor.
     setAttachPose(unit, pose) {
       if (!this.attachEl) return;
-      const table = pose === "machaca" ? GNOME_ATTACH_OFFSETS_MACHACA : GNOME_ATTACH_OFFSETS;
-      let offset = table[unit.typeId] || table.default;
+      const table =
+        pose === "machaca" ? GNOME_ATTACH_OFFSETS_MACHACA : pose === "pegar" ? GNOME_ATTACH_OFFSETS_PEGAR : GNOME_ATTACH_OFFSETS;
+      let offset =
+        table[unit.typeId] ||
+        (pose === "pegar" ? GNOME_ATTACH_OFFSETS[unit.typeId] || GNOME_ATTACH_OFFSETS.default : table.default);
       let heldWidth = GNOME_SIZES.held;
       if (typeof GnomeCalib !== "undefined" && GnomeCalib.active) {
         offset = GnomeCalib.getOffset(unit.typeId, pose) || offset;
@@ -727,8 +737,17 @@ function createGnomeInstance() {
           const prevSrc = unit.spriteEl.src;
           if (hitSrc && unit.spriteEl.src.indexOf(hitSrc) === -1) {
             unit.spriteEl.src = hitSrc;
+            const prevW = unit.spriteEl.style.width;
+            if (typeof Units.pegarGnomoScaleFor === "function") {
+              unit.spriteEl.style.width = Math.round(120 * Units.pegarGnomoScaleFor(unit.typeId)) + "px";
+            }
+            this.setAttachPose(unit, "pegar");
             setTimeout(() => {
-              if (unit.spriteEl) unit.spriteEl.src = prevSrc;
+              if (unit.spriteEl) {
+                unit.spriteEl.src = prevSrc;
+                unit.spriteEl.style.width = prevW;
+              }
+              if (this.heldBy === unit.id) this.setAttachPose(unit, "idle");
             }, 320);
           }
         }
