@@ -70,6 +70,7 @@
     font-size: 0.9rem;
   }
   .toggle-btn:hover { background: var(--accent); border-color: var(--accent-hover); }
+  .toggle-btn--on { background: var(--accent); border-color: var(--accent-hover); }
   .reset-btn {
     background: transparent;
     color: #ff8a8a;
@@ -197,8 +198,13 @@
       <button class="toggle-btn" id="flipBtn">Girar personaje</button>
     </div>
     <div class="control" style="min-width: auto;">
-      <button class="toggle-btn" id="poseBtn">Ver pose: machacagnomos</button>
-      <span style="font-size:0.75rem;color:var(--muted);" id="poseName">Pose actual: iddle</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="toggle-btn" data-pose="idle">iddle</button>
+        <button class="toggle-btn" data-pose="machaca">machacagnomos</button>
+        <button class="toggle-btn" data-pose="pegar">pegar al gnomo</button>
+        <button class="toggle-btn" data-pose="impacto">gnomocontraelsuelo</button>
+      </div>
+      <span style="font-size:0.75rem;color:var(--muted);" id="poseName">Pose actual: iddle — quieto</span>
     </div>
     <div class="control" id="poseSizeCtl" style="display:none;">
       <label for="poseScale">Tamaño del sprite en esta pose — <span class="value" id="poseScaleVal">1.00</span>x (iddle = <span id="idleScaleVal">1.00</span>x)</label>
@@ -335,15 +341,19 @@
       return pose === "machaca" ? POS_DEFAULTS_MACHACA : POS_DEFAULTS;
     }
     function storageKeyForPose() { return pose === "machaca" ? POS_STORAGE_KEY_MACHACA : pose === "pegar" ? POS_STORAGE_KEY_PEGAR : POS_STORAGE_KEY; }
-    const POSE_LABELS = { idle: "iddle", machaca: "machacagnomos", pegar: "pegar al gnomo" };
-    function nextPose() { return pose === "idle" ? "machaca" : pose === "machaca" ? "pegar" : "idle"; }
+    const POSE_LABELS = {
+      idle: "iddle — quieto",
+      machaca: "machacagnomos — salta con el gnomo en la mano",
+      pegar: "pegar al gnomo — al usar la habilidad de pegarle",
+      impacto: "gnomocontraelsuelo — lo estampa al caer (el gnomo desaparece: solo se ajusta el tamaño del sprite)",
+    };
 
     const teamSelect = document.getElementById("teamSelect");
     const charSelect = document.getElementById("charSelect");
     const rightVal = document.getElementById("rightVal");
     const bottomVal = document.getElementById("bottomVal");
     const flipBtn = document.getElementById("flipBtn");
-    const poseBtn = document.getElementById("poseBtn");
+    const poseBtns = [...document.querySelectorAll("[data-pose]")];
     const poseName = document.getElementById("poseName");
     const resetBtn = document.getElementById("resetBtn");
     const stageHeld = document.getElementById("stageHeld");
@@ -500,8 +510,12 @@
       const url = typeof Units === "undefined" ? type.spriteUrl
         : pose === "machaca" ? Units.machacaSpriteFor(currentTypeId)
         : pose === "pegar" ? Units.pegarGnomoSpriteFor(currentTypeId)
+        : pose === "impacto" ? Units.impactSpriteFor(currentTypeId)
         : type.spriteUrl;
       currentEls.spriteEl.src = "../" + (url || type.spriteUrl);
+      currentEls.attachEl.style.display = pose === "impacto" ? "none" : "";
+      resetBtn.style.display = pose === "impacto" ? "none" : "";
+      poseBtns.forEach((b) => b.classList.toggle("toggle-btn--on", b.dataset.pose === pose));
       const ctl = document.getElementById("poseSizeCtl");
       ctl.style.display = pose === "idle" ? "none" : "";
       const idleScale = SPRITE_SCALES[currentTypeId] ?? SPRITE_SCALES.default;
@@ -518,11 +532,11 @@
     const poseScaleVal = document.getElementById("poseScaleVal");
     const ghostIdle = document.getElementById("ghostIdle");
     function loadCharStore() { try { return JSON.parse(localStorage.getItem(CHAR_STORAGE_KEY)) || {}; } catch (e) { return {}; } }
-    function poseScaleField() { return pose === "machaca" ? "scaleMachaca" : "scalePegar"; }
+    function poseScaleField() { return pose === "machaca" ? "scaleMachaca" : pose === "impacto" ? "scaleImpacto" : "scalePegar"; }
     function poseScaleFor(typeId) {
       const saved = (loadCharStore()[typeId] || {})[poseScaleField()];
       if (saved != null) return saved;
-      return pose === "machaca" ? Units.machacaScaleFor(typeId) : Units.pegarGnomoScaleFor(typeId);
+      return pose === "machaca" ? Units.machacaScaleFor(typeId) : pose === "impacto" ? Units.impactScaleFor(typeId) : Units.pegarGnomoScaleFor(typeId);
     }
     function updateGhost() {
       const old = stageHeld.querySelector(".idle-ghost");
@@ -623,13 +637,12 @@
     teamSelect.addEventListener("change", () => loadTeam(teamSelect.value));
     charSelect.addEventListener("change", () => loadCharacter(charSelect.value));
     flipBtn.addEventListener("click", () => { facingLeft = !facingLeft; applyFacing(); updateGhost(); });
-    poseBtn.addEventListener("click", () => {
-      pose = nextPose();
-      poseBtn.textContent = "Ver pose: " + POSE_LABELS[nextPose()];
+    poseBtns.forEach((btn) => btn.addEventListener("click", () => {
+      pose = btn.dataset.pose;
       poseName.textContent = "Pose actual: " + POSE_LABELS[pose];
       loadCharacter(charSelect.value);
       updateHeldSprite();
-    });
+    }));
     resetBtn.addEventListener("click", () => {
       const typeId = charSelect.value;
       const table = tableForPose();
