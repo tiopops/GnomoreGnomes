@@ -381,12 +381,43 @@ const Abilities = {
     // efecto de sonido agradable como de magia reveladora" — en vez del
     // click genérico de UI de antes.
     SFX.visionReveal();
+    this._visionWave(row, col);
     Units.spawnFloatingText(unit, "¡VISIÓN!", { className: "dmg-popup popup--good" });
     this._consume(unit);
     // La unidad sigue seleccionada tras usarla (puede que le quede la otra
     // acción) — vuelve a mostrar su radio normal, oculto al empezar a
     // apuntar (ver _startVisionTargeting).
     this._restoreNormalRange(unit);
+  },
+
+  // Efecto de Visión Lejana: onda circular azul turquesa (color del icono)
+  // que nace en la casilla pulsada y se expande por toda la zona revelada
+  // (7x7), tres anillos seguidos que se desvanecen. Solo visual.
+  _visionWave(row, col) {
+    if (!Units.container) return;
+    const n = Units.boardSize;
+    const c0 = getTileCenter(row, col, n);
+    const c1 = getTileCenter(row, col + 1, n);
+    const tileW = Math.abs(c1.x - c0.x) * 2;
+    const tileH = Math.abs(c1.y - c0.y) * 2;
+    const R = 3;
+    const W = (2 * R + 1) * tileW * 0.95;
+    const H = (2 * R + 1) * tileH * 0.95;
+    for (let k = 0; k < 3; k++) {
+      const ring = document.createElement("div");
+      ring.className = "vision-wave";
+      ring.style.left = `${c0.x}px`;
+      ring.style.top = `${c0.y}px`;
+      Units.container.appendChild(ring);
+      const anim = ring.animate(
+        [
+          { width: "30px", height: "18px", opacity: 1, borderWidth: "5px" },
+          { width: `${W}px`, height: `${H}px`, opacity: 0, borderWidth: "1px" },
+        ],
+        { duration: 1400, delay: k * 320, easing: "cubic-bezier(.15,.7,.3,1)", fill: "both" }
+      );
+      anim.onfinish = () => ring.remove();
+    }
   },
 
   // Devuelve el radio de movimiento/ataque normal (Movement/Combat/Gnome/
