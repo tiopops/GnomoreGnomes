@@ -1107,11 +1107,151 @@ const Abilities = {
   async _resolveThrow(goblin, thrown, destRow, destCol) {
     Units.clearRangeOverlays();
     this._consume(goblin);
+    await this._slingTension(goblin, thrown, destRow, destCol);
     await this._throwUnitTo(thrown, destRow, destCol);
     // Aterriza en agua: sin Anfibio se ahoga (mismo chapuzón que un empujón).
     if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(destRow, destCol) && thrown.el) {
       const amphibious = typeof Skills !== "undefined" && Skills.has(thrown.team, "anfibio");
       if (!amphibious && typeof Combat !== "undefined") await Combat._drown(goblin, thrown);
+    }
+  },
+
+  // ---------- Efectos del Lanzamiento (aprobados con demo) ----------
+  // Tensión de tirachinas: dos gomas del LanzaGnomos al lanzado, que se
+  // tensan; el lanzado se encoge y se echa atrás; aro de carga; al soltar,
+  // la goma restalla. Solo visual (usa las propiedades `translate` y el
+  // transform del sprite, sin tocar left/top de las unidades).
+  async _slingTension(goblin, thrown, destRow, destCol) {
+    if (!Units.container || !goblin.el || !thrown.el) return;
+    const n = Units.boardSize;
+    const G = getTileCenter(goblin.row, goblin.col, n);
+    const T = getTileCenter(thrown.row, thrown.col, n);
+    const Dd = getTileCenter(destRow, destCol, n);
+    let vx = Dd.x - T.x, vy = Dd.y - T.y;
+    const L = Math.hypot(vx, vy) || 1;
+    vx /= L; vy /= L;
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("class", "sling-svg");
+    svg.setAttribute("width", "1"); svg.setAttribute("height", "1");
+    Units.container.appendChild(svg);
+    const ring = document.createElement("div");
+    ring.className = "sling-ring";
+    Units.container.appendChild(ring);
+    const hand = { x: G.x - 2, y: G.y - 28 };
+    const CH = 900;
+    const ease = (k) => k * k * (3 - 2 * k);
+    const gS = goblin.spriteEl, tS = thrown.spriteEl;
+    await new Promise((resolve) => {
+      const t0 = performance.now();
+      const f = (now) => {
+        if (!thrown.el.isConnected) return resolve();
+        const k = Math.min(1, (now - t0) / CH), e = ease(k);
+        const tx = -vx * 26 * e, ty = -vy * 26 * e;
+        const tremT = k > 0.5 ? (k - 0.5) * 2 * 2.2 : 0, tremG = k * 2.4;
+        thrown.el.style.translate = `${tx + (Math.random() - 0.5) * tremT}px ${ty + (Math.random() - 0.5) * tremT}px`;
+        goblin.el.style.translate = `${-vx * 14 * e + (Math.random() - 0.5) * tremG}px ${(Math.random() - 0.5) * tremG}px`;
+        if (tS) tS.style.transform = `scale(${1 + 0.16 * e}, ${1 - 0.26 * e})`;
+        if (gS) gS.style.transform = `scale(${1 + 0.04 * e}, ${1 - 0.07 * e})`;
+        const bx = T.x + tx - vx * 10, by = T.y + ty - 26;
+        const sag = (1 - e) * 26 + Math.sin(now / 38) * e * 2.2;
+        const w = 7 - 4.2 * e;
+        const col = `rgb(${Math.round(150 + 80 * e)},${Math.round(95 - 40 * e)},40)`;
+        const mx = (hand.x + bx) / 2, my = (hand.y + by) / 2 + sag;
+        let h = `<path d="M${hand.x - 6} ${hand.y} Q${mx} ${my} ${bx} ${by - 8}" stroke="${col}" stroke-width="${w}" fill="none" stroke-linecap="round"/>` +
+          `<path d="M${hand.x + 6} ${hand.y + 6} Q${mx} ${my + 8} ${bx} ${by + 8}" stroke="${col}" stroke-width="${w}" fill="none" stroke-linecap="round"/>`;
+        if (e > 0.3) {
+          for (let i = 0; i < 3; i++) {
+            const m = 0.25 + i * 0.25;
+            const px = hand.x + (bx - hand.x) * m;
+            const py = hand.y + (by - hand.y) * m + sag * (1 - (2 * m - 1) ** 2) * 0.5;
+            const o = (Math.random() - 0.5) * 8;
+            h += `<line x1="${px - 5}" y1="${py - 8 + o}" x2="${px + 5}" y2="${py - 14 + o}" stroke="#fff4c2" stroke-width="2" stroke-linecap="round" opacity="${e * 0.9}"/>`;
+          }
+        }
+        svg.innerHTML = h;
+        const rs = 1 - e;
+        ring.style.left = `${T.x + tx}px`;
+        ring.style.top = `${T.y + ty + 6}px`;
+        ring.style.width = `${30 + 170 * rs}px`;
+        ring.style.height = `${16 + 95 * rs}px`;
+        ring.style.opacity = String(k < 0.97 ? 0.2 + 0.8 * e : 0);
+        if (k < 1) requestAnimationFrame(f); else resolve();
+      };
+      requestAnimationFrame(f);
+    });
+    // Soltar: la goma restalla en un destello y desaparece.
+    ring.remove();
+    const bx0 = T.x - vx * 36, by0 = T.y - vy * 26 - 26;
+    svg.innerHTML = `<line x1="${hand.x}" y1="${hand.y + 3}" x2="${bx0}" y2="${by0}" stroke="#fff" stroke-width="9" stroke-linecap="round"/>`;
+    const snap = document.createElement("div");
+    snap.className = "sling-snap";
+    snap.style.left = `${bx0}px`; snap.style.top = `${by0}px`;
+    Units.container.appendChild(snap);
+    snap.animate([{ transform: "translate(-50%,-50%) scale(.3)", opacity: 1 }, { transform: "translate(-50%,-50%) scale(1.6)", opacity: 0 }], { duration: 300, fill: "both" }).onfinish = () => snap.remove();
+    svg.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: "forwards" }).onfinish = () => svg.remove();
+    if (gS) {
+      gS.style.transform = "";
+      gS.animate([{ transform: "rotate(0)" }, { transform: "rotate(5deg) scale(.96,1.08)", offset: 0.3 }, { transform: "rotate(0)" }], { duration: 320, easing: "ease-out" });
+    }
+    goblin.el.style.translate = "";
+    thrown.el.style.translate = "";
+    if (tS) tS.style.transform = "";
+    this._throwDust(T.x, T.y + 10, 6, 28);
+  },
+
+  _throwDust(x, y, n, sz) {
+    for (let i = 0; i < n; i++) {
+      const d = document.createElement("div");
+      d.className = "punch-dust";
+      d.style.width = `${sz}px`; d.style.height = `${sz * 0.7}px`;
+      d.style.left = `${x + (Math.random() - 0.5) * 30}px`;
+      d.style.top = `${y + (Math.random() - 0.5) * 10}px`;
+      d.style.zIndex = "2850";
+      Units.container.appendChild(d);
+      d.animate([
+        { transform: "translate(-50%,-50%) scale(.4)", opacity: 0.9 },
+        { transform: `translate(${(Math.random() - 0.5) * 60 - 10}px,${-20 - Math.random() * 30}px) scale(2)`, opacity: 0 },
+      ], { duration: 650 + Math.random() * 250, easing: "ease-out", fill: "both" }).onfinish = () => d.remove();
+    }
+  },
+
+  // Doble semitransparente del lanzado, que se desvanece: estela del vuelo.
+  _throwGhost(unit) {
+    if (!Units.container || !unit.el) return;
+    const g = unit.el.cloneNode(true);
+    g.removeAttribute("id");
+    g.querySelectorAll("[id]").forEach((e) => e.removeAttribute("id"));
+    g.classList.add("throw-ghost");
+    g.style.pointerEvents = "none";
+    g.style.zIndex = "2850";
+    g.style.translate = "";
+    Units.container.appendChild(g);
+    g.animate([{ opacity: 0.5 }, { opacity: 0 }], { duration: 360, fill: "both" }).onfinish = () => g.remove();
+  },
+
+  // Aterrizaje: aro de polvo + rebote de goma amortiguado del sprite.
+  _throwLandFx(unit, row, col) {
+    if (!Units.container) return;
+    const c = getTileCenter(row, col, Units.boardSize);
+    this._throwDust(c.x, c.y + 10, 7, 32);
+    const ring = document.createElement("div");
+    ring.className = "punch-ring";
+    ring.style.left = `${c.x}px`; ring.style.top = `${c.y + 4}px`; ring.style.zIndex = "2800";
+    Units.container.appendChild(ring);
+    ring.animate([
+      { width: "40px", height: "22px", opacity: 1, borderWidth: "4px" },
+      { width: "220px", height: "120px", opacity: 0, borderWidth: "1px" },
+    ], { duration: 520, easing: "ease-out", fill: "both" }).onfinish = () => ring.remove();
+    if (unit.spriteEl) {
+      unit.spriteEl.animate([
+        { transform: "scale(1.28,.68)", offset: 0 },
+        { transform: "translateY(-14px) scale(.9,1.14)", offset: 0.28 },
+        { transform: "scale(1.12,.86)", offset: 0.52 },
+        { transform: "translateY(-4px) scale(.97,1.04)", offset: 0.74 },
+        { transform: "scale(1.03,.97)", offset: 0.9 },
+        { transform: "scale(1,1)", offset: 1 },
+      ], { duration: 620, easing: "ease-out" });
     }
   },
 
@@ -1144,6 +1284,7 @@ const Abilities = {
     // adelante" se lee mejor que una dirección aleatoria/siempre igual).
     const spinSign = end.x >= start.x ? 1 : -1;
     const DURATION_MS = 460;
+    let lastGhost = 0;
     await new Promise((resolve) => {
       const t0 = performance.now();
       const step = (now) => {
@@ -1165,6 +1306,7 @@ const Abilities = {
         const scaleY = 1 + heightFactor * 0.12 - edgeCompress * 0.22;
         const scaleX = 1 + edgeCompress * 0.16 - heightFactor * 0.05;
         if (spriteEl) spriteEl.style.transform = `scale(${scaleX}, ${scaleY})`;
+        if (now - lastGhost > 38) { lastGhost = now; this._throwGhost(unit); }
 
         if (t < 1) requestAnimationFrame(step);
         else resolve();
@@ -1184,6 +1326,7 @@ const Abilities = {
 
     SFX.hop();
     Units.playShake(unit);
+    this._throwLandFx(unit, destRow, destCol);
     // Trampa de TruenoEspora (ver checkTrigger arriba) — un lanzamiento
     // también puede hacer aterrizar a alguien justo encima de una mina.
     this.checkTrigger(unit);

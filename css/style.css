@@ -9946,3 +9946,9 @@ body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events
 .punch-ring { border: 5px solid rgba(120, 95, 60, 0.9); border-radius: 50%; box-shadow: 0 0 14px rgba(255, 200, 120, 0.6); box-sizing: border-box; }
 .punch-rock { clip-path: polygon(20% 0, 80% 10%, 100% 55%, 60% 100%, 10% 80%); border: 0; }
 .punch-dust { width: 34px; height: 24px; border-radius: 50%; background: radial-gradient(circle, rgba(230,215,185,.9), rgba(200,180,140,0)); }
+
+/* ---------- Efectos del Lanzamiento (Abilities._slingTension etc.) ---------- */
+.sling-svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: 2900; }
+.sling-ring { position: absolute; transform: translate(-50%, -50%); border: 3px solid rgba(255, 200, 80, .9); border-radius: 50%; box-shadow: 0 0 12px rgba(255, 170, 40, .7); pointer-events: none; z-index: 2800; box-sizing: border-box; }
+.sling-snap { position: absolute; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, #fffbe0, rgba(255, 224, 138, 0) 70%); pointer-events: none; z-index: 2910; }
+.throw-ghost { filter: saturate(.6) brightness(1.15); }
