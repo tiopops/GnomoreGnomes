@@ -693,7 +693,7 @@ const Altar = {
     // Charco de sangre (js/bloodsplat.js) — pedido explícito: "se aplasta
     // un gnomo" también deja charco, sobre la loseta de quien lo estampa
     // contra el Altar (mismo criterio que Villages._playEpicSmash).
-    if (gnome && typeof BloodSplat !== "undefined") BloodSplat.spawnAt(unit.row, unit.col);
+    if (gnome && typeof BloodSplat !== "undefined") BloodSplat.spawnAt(altar.row, altar.col, { scale: 1.7 }); // bajo el Altar, grande (como en los tótems)
 
     if (altar.fills[team] >= ALTAR_MAX_FILL) {
       await this._collapse(altar, unit.team);

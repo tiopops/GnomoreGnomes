@@ -768,7 +768,7 @@ const Volcano = {
     const amount = gnome.points;
     const team = unit.team;
     Gnome.destroyInstance(gnome);
-    if (typeof BloodSplat !== "undefined") BloodSplat.spawnAt(unit.row, unit.col);
+    if (typeof BloodSplat !== "undefined") BloodSplat.spawnAt(v.row, v.col, { scale: 1.7 }); // bajo el volcán, grande
     const erupted = this.addPoints(v, team, amount);
 
     await new Promise((r) => setTimeout(r, Math.max(0, TOTAL_MS - IMPACT_DELAY_MS)));
