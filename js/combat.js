@@ -493,28 +493,69 @@ const Combat = {
     return best;
   },
 
+  // Efectos de agua (aprobados con demo): chapuzón grande (gotas en arco,
+  // surtidor y dos ondas) y, para el ahogado, salpicaduras pequeñas del
+  // pataleo, burbujas y el plop final. Todo en coordenadas de loseta.
+  _waterDrops(x, y, z, n, pow) {
+    for (let i = 0; i < n; i++) {
+      const sz = 5 + Math.random() * 7;
+      const d = document.createElement("div");
+      d.className = "water-drop";
+      d.style.cssText = `left:${x}px;top:${y}px;z-index:${z};width:${sz}px;height:${sz * 1.3}px`;
+      Units.container.appendChild(d);
+      const ang = -1.57 + (Math.random() - 0.5) * 2.4;
+      const v = (40 + Math.random() * 70) * pow;
+      const tx = Math.cos(ang) * v, ty = Math.sin(ang) * v * 0.6;
+      d.animate([
+        { transform: "translate(-50%,-50%) scale(1)", opacity: 1 },
+        { transform: `translate(calc(-50% + ${tx}px),calc(-50% + ${ty - 50 * pow}px)) scale(1)`, opacity: 1, offset: 0.45 },
+        { transform: `translate(calc(-50% + ${tx * 1.3}px),calc(-50% + ${ty + 16}px)) scale(.4)`, opacity: 0 },
+      ], { duration: 520 + Math.random() * 320, easing: "cubic-bezier(.3,.7,.5,1)", fill: "both" }).onfinish = () => d.remove();
+    }
+  },
+
+  _waterRing(x, y, z, big) {
+    const r = document.createElement("div");
+    r.className = "water-ring";
+    r.style.cssText = `left:${x}px;top:${y}px;z-index:${z}`;
+    Units.container.appendChild(r);
+    r.animate([
+      { width: "20px", height: "10px", opacity: 1, borderWidth: "4px" },
+      { width: `${big ? 200 : 110}px`, height: `${big ? 104 : 58}px`, opacity: 0, borderWidth: "1px" },
+    ], { duration: big ? 800 : 560, easing: "cubic-bezier(.15,.7,.3,1)", fill: "both" }).onfinish = () => r.remove();
+  },
+
+  _waterBubbles(x, y, z, n) {
+    for (let i = 0; i < n; i++) {
+      const s = 4 + Math.random() * 8;
+      const b = document.createElement("div");
+      b.className = "water-bubble";
+      b.style.cssText = `left:${x + (Math.random() - 0.5) * 34}px;top:${y - 10}px;z-index:${z};width:${s}px;height:${s}px`;
+      Units.container.appendChild(b);
+      b.animate([
+        { transform: "translate(-50%,-50%) scale(.6)", opacity: 0 },
+        { opacity: 1, offset: 0.2 },
+        { transform: `translate(calc(-50% + ${(Math.random() - 0.5) * 20}px),${-30 - Math.random() * 50}px) scale(1.1)`, opacity: 0 },
+      ], { duration: 900 + Math.random() * 700, delay: i * 70, easing: "ease-out", fill: "both" }).onfinish = () => b.remove();
+    }
+  },
+
   _spawnSplash(row, col) {
-    const el = document.createElement("div");
-    el.className = "water-splash";
-    for (let i = 0; i < 2; i++) {
-      const ring = document.createElement("span");
-      ring.className = "water-splash__ring";
-      ring.style.animationDelay = `${i * 0.18}s`;
-      el.appendChild(ring);
-    }
-    for (let i = 0; i < 7; i++) {
-      const drop = document.createElement("i");
-      drop.className = "water-splash__drop";
-      drop.style.setProperty("--dx", `${(i - 3) * 11}px`);
-      drop.style.animationDelay = `${(i % 3) * 0.04}s`;
-      el.appendChild(drop);
-    }
-    Units.container.appendChild(el);
+    if (!Units.container) return;
     const { x, y } = getTileCenter(row, col, Units.boardSize);
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
-    el.style.zIndex = String((row + col) * 10 + 8);
-    setTimeout(() => el.remove(), 1200);
+    const z = (row + col) * 10 + 8;
+    this._waterDrops(x, y - 10, z, 16, 1.5);
+    this._waterRing(x, y + 2, z - 2, true);
+    setTimeout(() => this._waterRing(x, y + 2, z - 2, true), 160);
+    const sp = document.createElement("div");
+    sp.className = "water-jet";
+    sp.style.cssText = `left:${x}px;top:${y - 10}px;z-index:${z}`;
+    Units.container.appendChild(sp);
+    sp.animate([
+      { transform: "translate(-50%,-70%) scale(.3,.2)", opacity: 1 },
+      { transform: "translate(-50%,-90%) scale(1,1.2)", opacity: 0.9, offset: 0.35 },
+      { transform: "translate(-50%,-110%) scale(1.2,1.4)", opacity: 0 },
+    ], { duration: 520, fill: "both" }).onfinish = () => sp.remove();
   },
 };
 

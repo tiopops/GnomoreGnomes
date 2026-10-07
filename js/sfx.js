@@ -406,41 +406,32 @@ const SFX = {
   // timbre que death-thud) para darle cuerpo por debajo del ruido.
   // Chapuzón (js/combat.js, Combat._drown): ruido filtrado que cae de agudo a
   // grave (salpicadura) + un "bloop" grave de burbuja.
+  // Chapuzón (aprobado con demo): golpe de agua + "bloop" grave que sube.
   splash() {
     const ctx = this.ensureCtx();
     if (!ctx) return;
     try {
       if (ctx.state === "suspended") ctx.resume();
-      const now = ctx.currentTime;
-      const dur = 0.55;
-      const n = Math.round(ctx.sampleRate * dur);
-      const buf = ctx.createBuffer(1, n, ctx.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 1.8);
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      const f = ctx.createBiquadFilter();
-      f.type = "bandpass";
-      f.Q.value = 0.8;
-      f.frequency.setValueAtTime(2600, now);
-      f.frequency.exponentialRampToValueAtTime(500, now + dur);
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(0.45, now);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-      src.connect(f).connect(g).connect(this.master);
-      src.start(now);
-      const o = ctx.createOscillator();
-      o.type = "sine";
-      o.frequency.setValueAtTime(320, now + 0.05);
-      o.frequency.exponentialRampToValueAtTime(90, now + 0.35);
-      const og = ctx.createGain();
-      og.gain.setValueAtTime(0.0001, now);
-      og.gain.linearRampToValueAtTime(0.35, now + 0.06);
-      og.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
-      o.connect(og).connect(this.master);
-      o.start(now + 0.05);
-      o.stop(now + 0.45);
+      const t = ctx.currentTime;
+      this._noiseBurst(0.55, "lowpass", 3800, 300, 0.55);
+      this._noiseBurst(0.35, "highpass", 2500, 1200, 0.25, 0.02);
+      this._tone(180, 90, 0.38, "sine", 0.5, 0.02);
+      this._tone(300, 620, 0.25, "sine", 0.28, 0.12);
     } catch (e) {}
+  },
+  // Pataleo: chapoteo corto al ritmo de las sacudidas, con plips agudos al azar.
+  drownFlail() {
+    this._noiseBurst(0.12, "bandpass", 900 + Math.random() * 500, 500, 0.2);
+    if (Math.random() < 0.6) this._tone(500 + Math.random() * 500, 900 + Math.random() * 500, 0.1, "sine", 0.12, 0.03);
+  },
+  // Burbujas: "glub glub" ascendentes.
+  drownBubbles() {
+    [0, 0.11, 0.2, 0.34, 0.43, 0.55].forEach((d, i) => this._tone(260 + i * 30 + Math.random() * 60, 520 + i * 80, 0.14, "sine", 0.22, d));
+  },
+  // Plop final: gota grave y redonda.
+  drownPlop() {
+    this._tone(420, 120, 0.28, "sine", 0.55);
+    this._noiseBurst(0.1, "lowpass", 2200, 400, 0.18);
   },
 
   // Roca lanzada desde la mochila (js/backpack.js): silbido corto de aire.

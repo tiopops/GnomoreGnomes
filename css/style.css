@@ -9961,3 +9961,9 @@ body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events
 .mine-spore { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: rgba(200,160,255,.75); pointer-events: none; z-index: 2880; }
 .mine-ring { position: absolute; transform: translate(-50%,-50%); border: 4px solid rgba(190,140,255,.9); border-radius: 50%; box-shadow: 0 0 14px rgba(170,110,255,.6); box-sizing: border-box; pointer-events: none; z-index: 2800; }
 .mine-puff { position: absolute; transform: translate(-50%,-50%); border-radius: 50%; background: radial-gradient(circle, rgba(205,170,255,.9), rgba(160,110,230,0)); pointer-events: none; z-index: 2850; }
+
+/* Efectos de agua (Combat._waterDrops/_waterRing/_waterBubbles/_spawnSplash, Units._playDrown) */
+.water-drop { position: absolute; pointer-events: none; transform: translate(-50%,-50%); border-radius: 50% 50% 60% 60%; background: radial-gradient(circle at 35% 30%, #fff, #bfe3ff 55%, #7fbdee); }
+.water-ring { position: absolute; pointer-events: none; transform: translate(-50%,-50%); border: 3px solid rgba(235,248,255,.95); border-radius: 50%; box-sizing: border-box; }
+.water-bubble { position: absolute; pointer-events: none; transform: translate(-50%,-50%); border-radius: 50%; border: 1.5px solid rgba(255,255,255,.9); background: rgba(255,255,255,.25); }
+.water-jet { position: absolute; pointer-events: none; width: 120px; height: 90px; background: radial-gradient(ellipse at 50% 100%, rgba(230,245,255,.95), rgba(190,225,255,0) 70%); border-radius: 50%; }

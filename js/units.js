@@ -1300,6 +1300,54 @@ const Units = {
     popup.addEventListener("animationend", () => popup.remove());
   },
 
+  // Ahogarse (aprobado con demo): pataleo rápido con sacudidas de goma, se va
+  // hundiendo tapado por el agua con pequeñas salpicaduras, y al final
+  // burbujas, desvanecido y plop. Dura ~2 s. Los sonidos van en SFX.drown*.
+  async _playDrown(unit) {
+    const sprite = unit.spriteEl, flip = unit.flipEl;
+    const { x, y } = getTileCenter(unit.row, unit.col, this.boardSize);
+    const z = (unit.row + unit.col) * 10 + 8;
+    const SINK = 1500;
+    if (sprite) sprite.style.transformOrigin = "50% 90%";
+    const h = (flip && flip.offsetHeight) || 100;
+    await new Promise((resolve) => {
+      const t0 = performance.now();
+      let lastSplash = 0;
+      const f = (now) => {
+        if (!unit.el || !unit.el.isConnected) return resolve();
+        const t = Math.min(1, (now - t0) / SINK);
+        const sink = Math.pow(t, 1.4) * 62;
+        const flail = Math.sin(now / 55) * (1 - t * 0.5);
+        const bob = Math.sin(now / 170) * 5 * (1 - t);
+        if (sprite) sprite.style.transform = `translateY(${bob + sink}px) rotate(${flail * 14}deg) scale(${1 + Math.sin(now / 55 + 1) * 0.07 * (1 - t * 0.5)}, ${1 - Math.sin(now / 55 + 1) * 0.08 * (1 - t * 0.5)})`;
+        if (flip) flip.style.clipPath = `inset(0 0 ${Math.max(0, ((sink + 14) / h) * 100)}% 0)`;
+        if (now - lastSplash > 150 && t < 0.9) {
+          lastSplash = now;
+          if (typeof SFX !== "undefined" && SFX.drownFlail) SFX.drownFlail();
+          if (typeof Combat !== "undefined") {
+            Combat._waterDrops(x + (Math.random() - 0.5) * 50, y + 6, z, 3, 0.5);
+            if (Math.random() < 0.55) Combat._waterRing(x + (Math.random() - 0.5) * 40, y + 4, z - 2, false);
+          }
+        }
+        if (t < 1) requestAnimationFrame(f); else resolve();
+      };
+      requestAnimationFrame(f);
+    });
+    if (typeof Combat !== "undefined") {
+      Combat._waterBubbles(x, y, z, 10);
+      Combat._waterRing(x, y + 2, z - 2, false);
+    }
+    if (typeof SFX !== "undefined" && SFX.drownBubbles) SFX.drownBubbles();
+    if (unit.el) unit.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 280, fill: "forwards" });
+    await new Promise((r) => setTimeout(r, 220));
+    if (typeof Combat !== "undefined") {
+      Combat._waterDrops(x, y, z, 6, 0.8);
+      Combat._waterRing(x, y + 2, z - 2, true);
+    }
+    if (typeof SFX !== "undefined" && SFX.drownPlop) SFX.drownPlop();
+    await new Promise((r) => setTimeout(r, 300));
+  },
+
   // Elimina una unidad del juego (0 de vida, o cualquier otra razón futura)
   // con su propia animación antes de quitarla del DOM y de la lista.
   async removeUnit(unit, opts = {}) {
@@ -1316,9 +1364,13 @@ const Units = {
     if (typeof Mushrooms !== "undefined") Mushrooms.onUnitDying(unit);
     // Gnomo en llamas del Volcán (js/volcano.js): si moría con uno agarrado, suelta lava.
     if (typeof Volcano !== "undefined") Volcano.onUnitDying(unit);
-    unit.el.classList.add(drowned ? "unit--drowning" : "unit--dying");
-    if (!drowned) SFX.death();
-    await new Promise((resolve) => setTimeout(resolve, drowned ? 900 : 420));
+    if (drowned) {
+      await this._playDrown(unit);
+    } else {
+      unit.el.classList.add("unit--dying");
+      SFX.death();
+      await new Promise((resolve) => setTimeout(resolve, 420));
+    }
     unit.el.remove();
     this.list = this.list.filter((u) => u.id !== unit.id);
     if (typeof Skills !== "undefined") Skills.onUnitRemoved();
