@@ -9939,3 +9939,10 @@ body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events
   z-index: 2800;
   box-sizing: border-box;
 }
+
+/* ---------- Efecto de Nudillos Rocosos (Abilities._punchImpactFx / _dizzyStars) ---------- */
+.punch-flash, .punch-ring, .punch-rock, .punch-dust, .punch-star { position: absolute; pointer-events: none; transform: translate(-50%, -50%); }
+.punch-flash { width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, #fffbe0 0%, #ffe08a 45%, rgba(245,158,11,0) 72%); }
+.punch-ring { border: 5px solid rgba(120, 95, 60, 0.9); border-radius: 50%; box-shadow: 0 0 14px rgba(255, 200, 120, 0.6); box-sizing: border-box; }
+.punch-rock { clip-path: polygon(20% 0, 80% 10%, 100% 55%, 60% 100%, 10% 80%); border: 0; }
+.punch-dust { width: 34px; height: 24px; border-radius: 50%; background: radial-gradient(circle, rgba(230,215,185,.9), rgba(200,180,140,0)); }

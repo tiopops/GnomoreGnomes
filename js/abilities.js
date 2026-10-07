@@ -781,9 +781,109 @@ const Abilities = {
     }
     Units.playShake(target);
     SFX.hit();
+    this._punchImpactFx(target.row, target.col);
 
     await this._pushBackFixed(target, unit, 4);
+    this._dizzyStars(target);
     Units.refreshRange(unit);
+  },
+
+  // Efecto de Nudillos Rocosos (aprobado con demo): destello circular de luz,
+  // onda de choque marrón en el suelo, fragmentos de roca, polvo y un
+  // temblor corto del tablero. Solo visual.
+  _punchImpactFx(row, col) {
+    if (!Units.container) return;
+    const c = getTileCenter(row, col, Units.boardSize);
+    const add = (cls, x, y, z) => {
+      const e = document.createElement("div");
+      e.className = cls;
+      e.style.left = `${x}px`;
+      e.style.top = `${y}px`;
+      e.style.zIndex = String(z);
+      Units.container.appendChild(e);
+      return e;
+    };
+    const done = (a, e) => { a.onfinish = () => e.remove(); };
+    const flash = add("punch-flash", c.x, c.y - 40, 2900);
+    done(flash.animate([
+      { transform: "translate(-50%,-50%) scale(.2)", opacity: 1 },
+      { transform: "translate(-50%,-50%) scale(1)", opacity: 1, offset: 0.35 },
+      { transform: "translate(-50%,-50%) scale(1.5)", opacity: 0 },
+    ], { duration: 420, easing: "ease-out", fill: "both" }), flash);
+    const ring = add("punch-ring", c.x, c.y + 4, 2800);
+    done(ring.animate([
+      { width: "40px", height: "22px", opacity: 1, borderWidth: "6px" },
+      { width: "360px", height: "200px", opacity: 0, borderWidth: "1px" },
+    ], { duration: 620, easing: "cubic-bezier(.15,.7,.3,1)", fill: "both" }), ring);
+    const cols = ["#8b7355", "#6b5a43", "#a08a68", "#575049"];
+    for (let i = 0; i < 14; i++) {
+      const sz = 8 + Math.random() * 10;
+      const f = add("punch-rock", c.x, c.y - 10, 2910);
+      f.style.width = f.style.height = `${sz}px`;
+      f.style.background = cols[i % 4];
+      const ang = (i / 14) * Math.PI * 2 + Math.random() * 0.4;
+      const v = 70 + Math.random() * 90;
+      const tx = Math.cos(ang) * v, ty = Math.sin(ang) * v * 0.5;
+      done(f.animate([
+        { transform: "translate(-50%,-50%) rotate(0)", opacity: 1 },
+        { transform: `translate(calc(-50% + ${tx * 0.6}px),calc(-50% + ${ty - 90 - Math.random() * 50}px)) rotate(${180 + Math.random() * 200}deg)`, opacity: 1, offset: 0.45 },
+        { transform: `translate(calc(-50% + ${tx}px),calc(-50% + ${ty + 30}px)) rotate(${360 + Math.random() * 300}deg)`, opacity: 0 },
+      ], { duration: 800 + Math.random() * 300, easing: "cubic-bezier(.3,.6,.5,1)", fill: "both" }), f);
+    }
+    for (let i = 0; i < 7; i++) {
+      const d = add("punch-dust", c.x + (Math.random() - 0.5) * 30, c.y + 10 + (Math.random() - 0.5) * 10, 2850);
+      done(d.animate([
+        { transform: "translate(-50%,-50%) scale(.4)", opacity: 0.9 },
+        { transform: `translate(${(Math.random() - 0.5) * 60 - 10}px,${-20 - Math.random() * 30}px) scale(2)`, opacity: 0 },
+      ], { duration: 650 + Math.random() * 250, easing: "ease-out", fill: "both" }), d);
+    }
+    // Temblor del tablero con la propiedad `translate` (no pisa el transform).
+    const amp = 7, frames = [];
+    for (let i = 0; i < 9; i++) {
+      const a = amp * (1 - i / 9);
+      frames.push({ translate: `${(Math.random() - 0.5) * 2 * a}px ${(Math.random() - 0.5) * 2 * a}px` });
+    }
+    frames.push({ translate: "0px 0px" });
+    Units.container.animate(frames, { duration: 380 });
+  },
+
+  // Estrellas de cómic (irregulares, un solo color) que orbitan la cabeza
+  // del golpeado durante unos segundos: marca de "aturdido/agotado".
+  _dizzyStars(target) {
+    if (!Units.container || !target.el) return;
+    const c = getTileCenter(target.row, target.col, Units.boardSize);
+    const stars = [];
+    for (let i = 0; i < 4; i++) {
+      const sz = 36 + Math.random() * 10;
+      const pts = [];
+      for (let k = 0; k < 10; k++) {
+        const ang = (k / 10) * Math.PI * 2 - Math.PI / 2 + (Math.random() - 0.5) * 0.25;
+        const r = (k % 2 ? 4.2 : 10) * (0.8 + Math.random() * 0.4);
+        pts.push(`${(12 + Math.cos(ang) * r).toFixed(1)},${(12 + Math.sin(ang) * r).toFixed(1)}`);
+      }
+      const e = document.createElement("div");
+      e.className = "punch-star";
+      e.innerHTML = `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24"><polygon points="${pts.join(" ")}" fill="#fbbf24"/></svg>`;
+      Units.container.appendChild(e);
+      stars.push({ e, ph: (i / 4) * Math.PI * 2, rot: Math.random() * 360 });
+    }
+    const t0 = performance.now(), DUR = 2700;
+    const frame = (t) => {
+      const k = (t - t0) / DUR;
+      if (k >= 1 || !target.el.isConnected) { stars.forEach((o) => o.e.remove()); return; }
+      const fade = k > 0.85 ? (1 - k) / 0.15 : 1;
+      stars.forEach((o) => {
+        const a = o.ph + (t - t0) / 380;
+        const x = Math.cos(a) * 52, y = Math.sin(a) * 15;
+        o.e.style.left = `${c.x + x}px`;
+        o.e.style.top = `${c.y - 70 + y}px`;
+        o.e.style.zIndex = y > 0 ? "2950" : "1";
+        o.e.style.opacity = String(fade);
+        o.e.style.transform = `translate(-50%,-50%) rotate(${o.rot + (t - t0) / 3}deg) scale(${0.85 + 0.2 * Math.sin(a)})`;
+      });
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
   },
 
   async _pushBackFixed(target, attacker, distance) {
