@@ -782,7 +782,7 @@ const Villages = {
     // `big` (golpe mortal de un solo tiro) dobla la altura del salto — ver
     // .unit--epic-smash--big / @keyframes unit-epic-smash-big en style.css.
     if (big) unit.el.classList.add("unit--epic-smash--big");
-    if (typeof SFX !== "undefined") SFX.hit();
+    if (typeof SFX !== "undefined" && this._isLive(village)) SFX.hit();
 
     // Sincronizado a mano con @keyframes unit-epic-smash (style.css).
     // Pedido explícito: "la animacion de estamparlo al final debe aparecer
@@ -808,15 +808,23 @@ const Villages = {
       unit.spriteEl.src = impactSrc;
       unit.spriteEl.style.width = Math.round(120 * Units.impactScaleFor(typeId)) + "px";
     }
-    Units.updateHpBar(village);
-    Units.spawnFloatingText(village, `-${damage}`, { className: "dmg-popup" });
-    // "¡GOLPE MORTAL!" solo tiene sentido cuando de verdad lo es (golpe que
-    // elimina de golpe TODOS los puntos de un tótem a plena vida) — un
-    // golpe normal (ahora también con salto, pero sin remate) solo muestra
-    // el número de daño de siempre.
-    if (big) Units.spawnFloatingText(village, "¡GOLPE MORTAL!", { className: "dmg-popup gnome-points-popup" });
-    Units.playShake(village);
-    if (typeof SFX !== "undefined") (big ? SFX.glory() : SFX.hit());
+    // Niebla de guerra: si el tótem no se percibe ahora mismo, nada de esto
+    // se ve ni se oye (la barra de vida se queda con lo último visto y se
+    // pone al día al volver a percibirlo, ver syncVisual).
+    const live = this._isLive(village);
+    if (live) {
+      Units.updateHpBar(village);
+      Units.spawnFloatingText(village, `-${damage}`, { className: "dmg-popup" });
+      // "¡GOLPE MORTAL!" solo tiene sentido cuando de verdad lo es (golpe que
+      // elimina de golpe TODOS los puntos de un tótem a plena vida) — un
+      // golpe normal (ahora también con salto, pero sin remate) solo muestra
+      // el número de daño de siempre.
+      if (big) Units.spawnFloatingText(village, "¡GOLPE MORTAL!", { className: "dmg-popup gnome-points-popup" });
+      Units.playShake(village);
+      if (typeof SFX !== "undefined") (big ? SFX.glory() : SFX.hit());
+    } else {
+      village._visualDirty = true;
+    }
     // "la camara debe temblar al impactar contra el suelo...el temblor sera
     // el doble de grande" (en el golpe mortal) — sobre board-viewport (nunca
     // board-camera: ese ya lleva su propio transform de paneo/zoom puesto
@@ -826,7 +834,7 @@ const Villages = {
     // NORMAL (cualquier golpe a un tótem); --big lo dobla para el golpe
     // mortal de un solo tiro.
     const viewportEl = document.getElementById("board-viewport");
-    if (viewportEl) {
+    if (viewportEl && live) {
       const shakeClass = big ? "board-viewport--shake--big" : "board-viewport--shake";
       viewportEl.classList.remove("board-viewport--shake", "board-viewport--shake--big");
       void viewportEl.offsetWidth;
@@ -843,12 +851,12 @@ const Villages = {
     // un gnomo" también deja charco, sobre la loseta del personaje que lo
     // estampa (ahí es donde cae el golpe), mismo instante que el resto del
     // feedback de impacto.
-    if (gnome && typeof BloodSplat !== "undefined") BloodSplat.spawnAt(village.row, village.col, { scale: 1.7 });
+    if (gnome && live && typeof BloodSplat !== "undefined") BloodSplat.spawnAt(village.row, village.col, { scale: 1.7 });
     // "un pequeño destello blanco puede iluminar la pantalla un instante"
     // (pedido explícito) — reservado para el golpe mortal, que es el
     // momento realmente "épico"; un golpe normal (ahora con salto pero sin
     // remate) no lo dispara para no deslumbrar en cada golpe cualquiera.
-    if (big) this._flashScreen();
+    if (big && live) this._flashScreen();
 
     await new Promise((resolve) => setTimeout(resolve, TOTAL_MS - IMPACT_DELAY_MS));
 
@@ -894,6 +902,48 @@ const Villages = {
   // mortal en un solo golpe, ver attack()/_playEpicSmash) queda fijado aquí
   // para siempre — un poblado no "pierde" el bonus con el que se conquistó
   // hasta que alguien vuelva a conquistarlo.
+  // true si el jugador ve este tótem EN DIRECTO ahora mismo (sin niebla
+  // encima y dentro de percepción). Sin niebla activa, siempre true.
+  _isLive(village) {
+    if (typeof Fog === "undefined" || !Fog.revealedGrid) return true;
+    return !Fog.isFoggedReal(village.row, village.col) && Fog.isPerceived(village.row, village.col);
+  },
+
+  // Aspecto del tótem según su dueño (sprite + clases de equipo + barra de vida).
+  _applyOwnerVisual(village, team) {
+    village.el.classList.remove("village--neutral");
+    village.el.classList.remove("team-variant-1", "team-variant-2", "team-variant-3");
+    village.el.classList.add(...Teams.cls("village", team));
+    if (Teams.variantClass(team)) village.el.classList.add(Teams.variantClass(team));
+    // Registrar de nuevo (no solo asignar .src): así SpriteQuality (ver
+    // js/spritequality.js) actualiza qué imagen "normal" recordar para
+    // este tótem — si no, un cambio de calidad posterior por zoom lo haría
+    // volver a la textura NEUTRAL antigua en vez de a la del nuevo dueño.
+    // El cambio de textura de la conquista es instantáneo a propósito (sin
+    // fundido): es el propio contenido lo que cambia, no una cuestión de
+    // calidad, y el pop de conquista de aquí abajo ya es su feedback visual.
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(village.spriteEl, this.spriteFor(team));
+    else village.spriteEl.src = this.spriteFor(team);
+    Units.updateHpBar(village);
+  },
+
+  // Al volver a percibir un tótem cuyo estado cambió estando en niebla,
+  // se pone al día de golpe (sin pop ni sonido: es solo "lo que ves ahora").
+  syncVisual(village) {
+    if (!village._visualDirty || !village.el) return;
+    village._visualDirty = false;
+    const team = village.owner;
+    village.el.classList.toggle("village--neutral", team === "neutral");
+    if (team !== "neutral") {
+      village.el.classList.remove("team-variant-1", "team-variant-2", "team-variant-3");
+      Teams.cls("village", team).forEach((c) => village.el.classList.add(c));
+      if (Teams.variantClass(team)) village.el.classList.add(Teams.variantClass(team));
+    }
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(village.spriteEl, this.spriteFor(team));
+    else village.spriteEl.src = this.spriteFor(team);
+    Units.updateHpBar(village);
+  },
+
   _capture(village, team, gloryBonus) {
     this.deselect();
     // "cuando pierdes el control de un totem los puntos de gloria
@@ -917,35 +967,33 @@ const Villages = {
       Skills.refreshRoots();
       village.hp = village.maxHp;
     }
-    village.el.classList.remove("village--neutral");
-    village.el.classList.remove("team-variant-1", "team-variant-2", "team-variant-3");
-    village.el.classList.add(...Teams.cls("village", team));
-    if (Teams.variantClass(team)) village.el.classList.add(Teams.variantClass(team));
-    // Registrar de nuevo (no solo asignar .src): así SpriteQuality (ver
-    // js/spritequality.js) actualiza qué imagen "normal" recordar para
-    // este tótem — si no, un cambio de calidad posterior por zoom lo haría
-    // volver a la textura NEUTRAL antigua en vez de a la del nuevo dueño.
-    // El cambio de textura de la conquista es instantáneo a propósito (sin
-    // fundido): es el propio contenido lo que cambia, no una cuestión de
-    // calidad, y el pop de conquista de aquí abajo ya es su feedback visual.
-    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(village.spriteEl, this.spriteFor(team));
-    else village.spriteEl.src = this.spriteFor(team);
-    Units.updateHpBar(village);
-    // Quita el temblor de "golpe recibido" (Units.playShake, ver attack()
-    // más arriba) ANTES de añadir el pop de conquista: los dos animan la
-    // misma propiedad (transform) sobre el mismo elemento, así que dejarlos
-    // solapados un instante se vería a tirones — el pop de conquista es el
-    // que manda en este momento, más grande y con más sentido que el golpe.
-    village.el.classList.remove("unit--hit");
-    village.el.classList.remove("village--captured");
-    void village.el.offsetWidth;
-    village.el.classList.add("village--captured");
-    // "Al conseguir un totem debe escucharse un sonido de satisfaccion"
-    // (pedido explícito) — sonido propio y más "grande" que el genérico de
-    // gloria (SFX.glory, ese sigue sonando aparte en el impacto del golpe
-    // mortal, ver _playEpicSmash), justo en el instante de la conquista.
-    if (typeof SFX !== "undefined") SFX.captureVillage();
-    Units.spawnFloatingText(village, "¡Conquistado!", { className: "dmg-popup gnome-points-popup" });
+    // Niebla de guerra (pedido explícito, con captura): "la niebla SOLO MUESTRA
+    // LO ÚLTIMO QUE EL JUGADOR PUDO VER, no lo que ocurre en tiempo real" —
+    // si el jugador no percibe este tótem ahora mismo, el cambio de dueño no
+    // se pinta (ni sprite, ni pop, ni texto, ni sonido); queda pendiente
+    // (_visualDirty) y se aplica en cuanto vuelva a percibirlo (syncVisual,
+    // llamado desde Fog.applyVisibility).
+    if (this._isLive(village)) {
+      this._applyOwnerVisual(village, team);
+      village._visualDirty = false;
+      // Quita el temblor de "golpe recibido" (Units.playShake, ver attack()
+      // más arriba) ANTES de añadir el pop de conquista: los dos animan la
+      // misma propiedad (transform) sobre el mismo elemento, así que dejarlos
+      // solapados un instante se vería a tirones — el pop de conquista es el
+      // que manda en este momento, más grande y con más sentido que el golpe.
+      village.el.classList.remove("unit--hit");
+      village.el.classList.remove("village--captured");
+      void village.el.offsetWidth;
+      village.el.classList.add("village--captured");
+      // "Al conseguir un totem debe escucharse un sonido de satisfaccion"
+      // (pedido explícito) — sonido propio y más "grande" que el genérico de
+      // gloria (SFX.glory, ese sigue sonando aparte en el impacto del golpe
+      // mortal, ver _playEpicSmash), justo en el instante de la conquista.
+      if (typeof SFX !== "undefined") SFX.captureVillage();
+      Units.spawnFloatingText(village, "¡Conquistado!", { className: "dmg-popup gnome-points-popup" });
+    } else {
+      village._visualDirty = true;
+    }
     // El indicador discreto "+X / turno" del HUD de gloria (solo se pinta
     // el del jugador, ver glory.js) debe reflejar el nuevo poblado ya
     // mismo, no esperar al próximo inicio de turno — y lo mismo para quien

@@ -43,7 +43,7 @@ const ABILITIES = {
     icon: "ph-bomb",
     iconImg: "assets/iconos/hongo_trampa.png",
     description:
-      "Coloca una seta-trampa invisible para el enemigo en una casilla adyacente libre. Si una unidad enemiga la pisa, explota: le quita 1 punto de vida y la deja inactiva hasta su siguiente turno. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
+      "Coloca una seta-trampa invisible para el enemigo en una casilla libre a hasta 4 casillas (la lanza). Si una unidad enemiga la pisa, explota: le quita 1 punto de vida y la deja inactiva hasta su siguiente turno. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
   },
   urgamentes: {
     name: "Voluntad Quebrada",
@@ -449,40 +449,40 @@ const Abilities = {
   _mines: [], // { row, col, ownerTeam, el }
 
   _activateMine(unit) {
-    const tiles = this._adjacentFreeTiles(unit);
+    const tiles = this._mineTargetTiles(unit);
     if (tiles.length === 0) return; // no queda ninguna casilla libre alrededor, no se gasta la habilidad
     this._startMinePlacement(unit, tiles);
   },
 
-  _adjacentFreeTiles(unit) {
-    const offsets = [
-      [0, 1],
-      [0, -1],
-      [1, 0],
-      [-1, 0],
-      [1, 1],
-      [1, -1],
-      [-1, 1],
-      [-1, -1],
-    ];
+  // Alcance de lanzamiento de la seta trampa (casillas, Chebyshev): ya no solo
+  // adyacente — se puede lanzar a distancia y queda en la casilla elegida.
+  _mineTargetTiles(unit) {
+    const R = 4;
     const tiles = [];
-    for (const [dr, dc] of offsets) {
-      const r = unit.row + dr;
-      const c = unit.col + dc;
-      if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) continue;
-      if (Units.unitAt(r, c)) continue;
-      if (typeof Gnome !== "undefined" && Gnome.isAt(r, c)) continue;
-      if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
-      if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
-      if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) continue; // Obelisco Ancestral (js/obelisks.js)
-      if (typeof Altar !== "undefined" && Altar.at(r, c)) continue; // Altar de Sacrificios (js/altar.js)
-      if (typeof GnomOgro !== "undefined" && GnomOgro.at(r, c)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
-      if ((typeof Resources !== "undefined" && Resources.at(r, c)) || (typeof Drums !== "undefined" && Drums.at(r, c))) continue; // Recursos de escenario (js/resources.js)
-      if (this._mines.some((m) => m.row === r && m.col === c)) continue;
-      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
-      tiles.push({ row: r, col: c });
+    for (let dr = -R; dr <= R; dr++) {
+      for (let dc = -R; dc <= R; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const r = unit.row + dr;
+        const c = unit.col + dc;
+        if (this._mineTileFree(r, c)) tiles.push({ row: r, col: c });
+      }
     }
     return tiles;
+  },
+
+  _mineTileFree(r, c) {
+    if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) return false;
+    if (Units.unitAt(r, c)) return false;
+    if (typeof Gnome !== "undefined" && Gnome.isAt(r, c)) return false;
+    if (typeof Villages !== "undefined" && Villages.at(r, c)) return false;
+    if (typeof Shops !== "undefined" && Shops.at(r, c)) return false;
+    if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) return false;
+    if (typeof Altar !== "undefined" && Altar.at(r, c)) return false;
+    if (typeof GnomOgro !== "undefined" && GnomOgro.at(r, c)) return false;
+    if ((typeof Resources !== "undefined" && Resources.at(r, c)) || (typeof Drums !== "undefined" && Drums.at(r, c))) return false;
+    if (this._mines.some((m) => m.row === r && m.col === c)) return false;
+    if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) return false;
+    return true;
   },
 
   // Mismo patrón exacto que _startThrowDestination: marcadores de rango
@@ -506,13 +506,116 @@ const Abilities = {
     });
   },
 
-  _resolveMinePlacement(unit, row, col) {
+  async _resolveMinePlacement(unit, row, col) {
     Units.clearRangeOverlays();
-    this._placeMineAt(unit, row, col);
     this._consume(unit);
+    await this._throwMineFx(unit, row, col);
+    this._placeMineAt(unit, row, col);
+    this._mineLandFx(row, col);
     // La unidad sigue seleccionada tras colocar la mina (puede que le
     // quede la otra acción) — recupera su radio normal.
     this._restoreNormalRange(unit);
+  },
+
+  // Lanzamiento de la seta (aprobado con demo): el lanzador se agacha y se
+  // estira, la seta vuela en arco girando UNA o DOS vueltas completas (así
+  // siempre aterriza de pie, en posición natural) con rastro de esporas.
+  // Solo si el jugador ve la jugada (lanzador propio o casilla percibida).
+  async _throwMineFx(unit, row, col) {
+    if (!Units.container || !unit.el) return;
+    const visible = unit.team === "player" || typeof Fog === "undefined" || !Fog.revealedGrid ||
+      Fog.isPerceived(row, col) || Fog.isPerceived(unit.row, unit.col);
+    if (!visible) return;
+    const n = Units.boardSize;
+    const A = getTileCenter(unit.row, unit.col, n);
+    const B = getTileCenter(row, col, n);
+    const dist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
+    const S = unit.spriteEl;
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    if (S) {
+      const dur = 170 * Math.min(2, 1 + dist * 0.2);
+      S.style.transformOrigin = "50% 100%";
+      S.animate([{ transform: "scale(1,1)" }, { transform: "scale(1.12,.86)" }], { duration: dur, fill: "forwards", easing: "ease-in-out" });
+      await wait(dur);
+      const rel = S.animate([
+        { transform: "scale(1.12,.86)" },
+        { transform: "scale(.92,1.12)", offset: 0.35 },
+        { transform: "scale(1.04,.97)", offset: 0.7 },
+        { transform: "scale(1,1)" },
+      ], { duration: 380, easing: "ease-out" });
+      rel.onfinish = () => { S.getAnimations().forEach((a) => a.cancel()); };
+    }
+    const m = document.createElement("img");
+    m.className = "mine-flight";
+    m.src = "assets/iconos/seta_trampa.png";
+    m.alt = "";
+    m.style.zIndex = "2900";
+    Units.container.appendChild(m);
+    const DUR = 260 + 110 * dist, arcH = 40 + 22 * dist;
+    const sx = A.x, sy = A.y - 40, ex = B.x, ey = B.y + 6;
+    const turns = dist > 1 ? 2 : 1; // vueltas ENTERAS: siempre acaba derecha
+    await new Promise((resolve) => {
+      const t0 = performance.now();
+      let lastS = 0;
+      const f = (now) => {
+        const t = Math.min(1, (now - t0) / DUR), h = 4 * t * (1 - t);
+        const x = sx + (ex - sx) * t, y = sy + (ey - sy) * t - arcH * h * 1.6;
+        m.style.left = `${x}px`;
+        m.style.top = `${y}px`;
+        m.style.transform = `translate(-50%,-80%) rotate(${t * 360 * turns}deg) scale(${1 + h * 0.25})`;
+        if (now - lastS > 45) {
+          lastS = now;
+          const sp = document.createElement("div");
+          sp.className = "mine-spore";
+          sp.style.left = `${x}px`; sp.style.top = `${y - 12}px`;
+          Units.container.appendChild(sp);
+          sp.animate([{ transform: "translate(-50%,-50%) scale(1)", opacity: 0.8 }, { transform: "translate(-50%,-50%) scale(.2)", opacity: 0 }], { duration: 420, fill: "both" }).onfinish = () => sp.remove();
+        }
+        if (t < 1) requestAnimationFrame(f); else resolve();
+      };
+      requestAnimationFrame(f);
+    });
+    m.remove();
+  },
+
+  // Aterrizaje: rebote de goma de la seta ya colocada, nube de esporas y
+  // onda circular morada, y un pulso de "armada".
+  _mineLandFx(row, col) {
+    if (!Units.container) return;
+    const mine = this._mines.find((x) => x.row === row && x.col === col);
+    if (mine && mine.el) {
+      const sp = mine.el.querySelector(".ability-mine__sprite");
+      if (sp) {
+        sp.style.transformOrigin = "50% 100%";
+        sp.animate([
+          { transform: "scale(1.5,.55)" },
+          { transform: "translateY(-22px) scale(.88,1.18)", offset: 0.3 },
+          { transform: "scale(1.2,.82)", offset: 0.55 },
+          { transform: "translateY(-6px) scale(.96,1.05)", offset: 0.78 },
+          { transform: "scale(1,1)" },
+        ], { duration: 640, easing: "ease-out" });
+      }
+    }
+    const c = getTileCenter(row, col, Units.boardSize);
+    const ring = document.createElement("div");
+    ring.className = "mine-ring";
+    ring.style.left = `${c.x}px`; ring.style.top = `${c.y + 4}px`;
+    Units.container.appendChild(ring);
+    ring.animate([
+      { width: "30px", height: "16px", opacity: 1, borderWidth: "5px" },
+      { width: "170px", height: "92px", opacity: 0, borderWidth: "1px" },
+    ], { duration: 620, easing: "cubic-bezier(.15,.7,.3,1)", fill: "both" }).onfinish = () => ring.remove();
+    for (let i = 0; i < 10; i++) {
+      const sz = 16 + Math.random() * 16;
+      const d = document.createElement("div");
+      d.className = "mine-puff";
+      d.style.cssText = `left:${c.x + (Math.random() - 0.5) * 30}px;top:${c.y - 6}px;width:${sz}px;height:${sz * 0.8}px`;
+      Units.container.appendChild(d);
+      d.animate([
+        { transform: "translate(-50%,-50%) scale(.4)", opacity: 0.9 },
+        { transform: `translate(${(Math.random() - 0.5) * 90}px,${-14 - Math.random() * 38}px) scale(2.1)`, opacity: 0 },
+      ], { duration: 800 + Math.random() * 350, easing: "ease-out", fill: "both" }).onfinish = () => d.remove();
+    }
   },
 
   _placeMineAt(unit, row, col) {

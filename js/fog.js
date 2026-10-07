@@ -571,6 +571,9 @@ const Fog = {
         // o enemigo ya explorado que quede fuera del alcance real de las
         // unidades propias.
         v.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(v.row, v.col));
+        // Niebla = solo lo último visto: al volver a percibirlo se pone al día
+        // lo que cambió mientras estaba fuera de vista (ver Villages.syncVisual).
+        if (!fogged && this.isPerceived(v.row, v.col) && Villages.syncVisual) Villages.syncVisual(v);
       });
     }
     // Objetos colocados en el tablero (js/backpack.js, p.ej. la
