@@ -707,7 +707,7 @@ function createGnomeInstance() {
     // ---------- Golpear ----------
 
     hit(unit) {
-      if (this.heldBy !== unit.id || this.busy) return;
+      if (this.heldBy !== unit.id || this.busy || this._hitting) return;
       // Turnos (js/turns.js) — pedido explícito: "pegar al gnomo una vez"
       // es una de las 2 acciones del turno.
       if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
@@ -718,55 +718,103 @@ function createGnomeInstance() {
         UNIT_TYPES[unit.typeId].fuerza +
         (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0) +
         (typeof Relics !== "undefined" ? Relics.gnomeHitBonus(unit.team) : 0);
+      this._hitting = true;
+      this._playHit(unit, dmg).finally(() => { this._hitting = false; });
+    },
+
+    // Golpe con efecto goma (aprobado con demo): anticipación (se encoge y
+    // echa atrás), embestida que acelera hacia el impacto, y al impactar el
+    // gnomo se aplasta como gelatina, con un destello circular. La
+    // intensidad depende del daño: flojo = todo muy rápido; fuerte =
+    // anticipación lenta y embestida rápida. El NÚMERO del daño no lleva
+    // efecto de goma (se queda con el popup de siempre).
+    async _playHit(unit, dmg) {
+      const k = Math.max(0, Math.min(1, (dmg - 1) / 5));
+      const W = 100 + 480 * k; // anticipación
+      const LUNGE = 85 + 45 * k; // embestida
+      const F = 0.5 + 0.5 * k; // resto (rebotes, gnomo, destello)
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const sprite = unit.spriteEl;
+      const attach = this.attachEl;
+      const dep = 0.5 + 0.5 * k;
+      const back = -10 - 14 * dep;
+      const squashBack = `translateX(${back}px) scale(${1 + 0.18 * dep}, ${1 - 0.22 * dep})`;
+      const stretch = `translateX(${22 + 14 * k}px) scale(0.86, 1.2)`;
+      const prevOrigin = sprite ? sprite.style.transformOrigin : "";
+      if (sprite) sprite.style.transformOrigin = "50% 100%";
+      // 1) Anticipación
+      let anims = [];
+      if (sprite) anims.push(sprite.animate([{ transform: "translateX(0) scale(1,1)" }, { transform: squashBack }], { duration: W, fill: "forwards", easing: "ease-in-out" }));
+      if (attach) anims.push(attach.animate([{ transform: "scale(1,1)" }, { transform: `scale(${1 + 0.14 * dep}, ${1 - 0.16 * dep})` }], { duration: W, fill: "forwards", easing: "ease-in-out" }));
+      await wait(W);
+      if (!unit.el || !unit.el.isConnected) { anims.forEach((a) => a.cancel()); return; }
+      // 2a) Embestida con el sprite de pegar
+      const prevSrc = sprite ? sprite.src : null;
+      let swapped = false;
+      let prevW = "";
+      if (sprite && typeof Units !== "undefined") {
+        const hitSrc = Units.pegarGnomoSpriteFor(unit.typeId);
+        if (hitSrc && sprite.src.indexOf(hitSrc) === -1) {
+          sprite.src = hitSrc;
+          prevW = sprite.style.width;
+          if (typeof Units.pegarGnomoScaleFor === "function") sprite.style.width = Math.round(120 * Units.pegarGnomoScaleFor(unit.typeId)) + "px";
+          this.setAttachPose(unit, "pegar");
+          swapped = true;
+        }
+      }
+      anims.forEach((a) => a.cancel());
+      anims = [];
+      if (sprite) anims.push(sprite.animate([{ transform: squashBack }, { transform: stretch }], { duration: LUNGE, fill: "forwards", easing: "cubic-bezier(.6,0,1,.6)" }));
+      await wait(LUNGE);
+      // 3) Impacto: aquí ocurre el golpe de verdad (puntos, sonido, popup)
       this._addPoints(dmg);
       SFX.hit();
-      // Retroalimentación de animación en AMBOS lados del golpe, no solo en
-      // el gnomo (regla de oro del proyecto: todo necesita sonido y/o
-      // animación coherente con la acción) — quien golpea da un puñetazo
-      // corto (unit--punching, mismo patrón de swap de clase que
-      // unit--moving/unit__sprite--hop: sustituye a la respiración continua
-      // mientras dura, nunca se mezcla con ella) sincronizado con el temblor
-      // ya existente del gnomo (gnome-attach--hit).
-      if (unit.el) {
-        unit.el.classList.remove("unit--punching");
-        void unit.spriteEl.offsetWidth;
-        unit.el.classList.add("unit--punching");
-        // Pedido explícito: "debe cambiarse en el instante que se usa la
-        // habilidad pegar gnomo para simular que lo golpea, todos tendran
-        // la suya, de momento solo se lo ponemos al golemcorteza" — mismo
-        // relleno en cascada que machacaSpriteFor (ver Units.pegarGnomoSpriteFor):
-        // un personaje sin sprite propio de golpe simplemente no cambia
-        // (la función devuelve su sprite normal, sin efecto visible). Se
-        // guarda el src ACTUAL (no unit type.spriteUrl a secas) para
-        // restaurar exactamente lo que hubiera, por si el personaje está en
-        // otra pose especial (p.ej. transformado en Golem de Espinas).
-        if (unit.spriteEl && typeof Units !== "undefined") {
-          const hitSrc = Units.pegarGnomoSpriteFor(unit.typeId);
-          const prevSrc = unit.spriteEl.src;
-          if (hitSrc && unit.spriteEl.src.indexOf(hitSrc) === -1) {
-            unit.spriteEl.src = hitSrc;
-            const prevW = unit.spriteEl.style.width;
-            if (typeof Units.pegarGnomoScaleFor === "function") {
-              unit.spriteEl.style.width = Math.round(120 * Units.pegarGnomoScaleFor(unit.typeId)) + "px";
-            }
-            this.setAttachPose(unit, "pegar");
-            setTimeout(() => {
-              if (unit.spriteEl) {
-                unit.spriteEl.src = prevSrc;
-                unit.spriteEl.style.width = prevW;
-              }
-              if (this.heldBy === unit.id) this.setAttachPose(unit, "idle");
-            }, 320);
-          }
-        }
-        setTimeout(() => unit.el.classList.remove("unit--punching"), 320);
+      anims.forEach((a) => a.cancel());
+      if (sprite) {
+        sprite.animate([
+          { transform: stretch, offset: 0 },
+          { transform: "translateX(6px) scale(1.12, .9)", offset: 0.3 },
+          { transform: "translateX(-3px) scale(.96, 1.05)", offset: 0.55 },
+          { transform: "translateX(1px) scale(1.02, .98)", offset: 0.8 },
+          { transform: "translateX(0) scale(1, 1)", offset: 1 },
+        ], { duration: 520 * F, easing: "ease-out" });
       }
-      if (this.attachEl) {
-        this.attachEl.classList.remove("gnome-attach--hit");
-        void this.attachEl.offsetWidth;
-        this.attachEl.classList.add("gnome-attach--hit");
+      if (attach) {
+        const jel = [[1.55, 0.55, 0], [0.8, 1.3, 0.2], [1.2, 0.85, 0.4], [0.92, 1.1, 0.6], [1.06, 0.95, 0.8], [1, 1, 1]];
+        attach.animate(jel.map(([x, y, o]) => ({ transform: `translateX(${o < 0.5 ? (1 - o) * 14 : 0}px) scale(${x}, ${y})`, offset: o })), { duration: 620 * F, easing: "ease-out" });
+        this._hitFlash(attach, k, F);
       }
       Units.spawnFloatingText(unit, `+${dmg}`, { className: "dmg-popup gnome-points-popup" });
+      await wait(520 * F);
+      if (sprite) {
+        sprite.style.transformOrigin = prevOrigin;
+        if (swapped) {
+          sprite.src = prevSrc;
+          sprite.style.width = prevW;
+        }
+      }
+      if (swapped && this.heldBy === unit.id) this.setAttachPose(unit, "idle");
+    },
+
+    // Destello circular pequeño sobre el gnomo cogido.
+    _hitFlash(attach, k, F) {
+      if (typeof Units === "undefined" || !Units.container) return;
+      const cr = Units.container.getBoundingClientRect();
+      const scale = Units.container.offsetWidth ? cr.width / Units.container.offsetWidth : 1;
+      const r = attach.getBoundingClientRect();
+      if (!scale) return;
+      const x = (r.left + r.width / 2 - cr.left) / scale;
+      const y = (r.top + r.height / 2 - cr.top) / scale;
+      const fl = document.createElement("div");
+      fl.className = "gnome-hit-flash";
+      const S = 70 + 40 * k;
+      fl.style.cssText = `left:${x}px;top:${y}px;width:${S}px;height:${S}px`;
+      Units.container.appendChild(fl);
+      fl.animate([
+        { transform: "translate(-50%,-50%) scale(.2)", opacity: 1 },
+        { transform: "translate(-50%,-50%) scale(1)", opacity: 1, offset: 0.35 },
+        { transform: "translate(-50%,-50%) scale(1.5)", opacity: 0 },
+      ], { duration: 380 * F, easing: "ease-out", fill: "both" }).onfinish = () => fl.remove();
     },
 
     // ---------- Pasar ----------

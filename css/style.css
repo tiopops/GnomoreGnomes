@@ -9952,3 +9952,6 @@ body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events
 .sling-ring { position: absolute; transform: translate(-50%, -50%); border: 3px solid rgba(255, 200, 80, .9); border-radius: 50%; box-shadow: 0 0 12px rgba(255, 170, 40, .7); pointer-events: none; z-index: 2800; box-sizing: border-box; }
 .sling-snap { position: absolute; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, #fffbe0, rgba(255, 224, 138, 0) 70%); pointer-events: none; z-index: 2910; }
 .throw-ghost { filter: saturate(.6) brightness(1.15); }
+
+/* Destello del golpe al gnomo (Gnome._hitFlash) */
+.gnome-hit-flash { position: absolute; border-radius: 50%; pointer-events: none; z-index: 2900; background: radial-gradient(circle, #fffbe0 0%, #ffe08a 45%, rgba(245,158,11,0) 72%); }
