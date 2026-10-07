@@ -1319,7 +1319,7 @@ const Abilities = {
     g.style.zIndex = "2850";
     g.style.translate = "";
     Units.container.appendChild(g);
-    g.animate([{ opacity: 0.22 }, { opacity: 0 }], { duration: 240, fill: "both" }).onfinish = () => g.remove();
+    g.animate([{ opacity: 0.1 }, { opacity: 0 }], { duration: 240, fill: "both" }).onfinish = () => g.remove();
   },
 
   // Aterrizaje: aro de polvo + rebote de goma amortiguado del sprite.
