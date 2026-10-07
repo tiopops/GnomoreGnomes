@@ -1319,7 +1319,7 @@ const Abilities = {
     g.style.zIndex = "2850";
     g.style.translate = "";
     Units.container.appendChild(g);
-    g.animate([{ opacity: 0.5 }, { opacity: 0 }], { duration: 360, fill: "both" }).onfinish = () => g.remove();
+    g.animate([{ opacity: 0.22 }, { opacity: 0 }], { duration: 240, fill: "both" }).onfinish = () => g.remove();
   },
 
   // Aterrizaje: aro de polvo + rebote de goma amortiguado del sprite.
@@ -1399,7 +1399,7 @@ const Abilities = {
         const scaleY = 1 + heightFactor * 0.12 - edgeCompress * 0.22;
         const scaleX = 1 + edgeCompress * 0.16 - heightFactor * 0.05;
         if (spriteEl) spriteEl.style.transform = `scale(${scaleX}, ${scaleY})`;
-        if (now - lastGhost > 38) { lastGhost = now; this._throwGhost(unit); }
+        if (now - lastGhost > 85) { lastGhost = now; this._throwGhost(unit); }
 
         if (t < 1) requestAnimationFrame(step);
         else resolve();
