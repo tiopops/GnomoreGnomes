@@ -31,11 +31,13 @@ const Tutorial = {
   _els: {},
 
   // ---------- Arranque / salida ----------
-  async start() {
+  async start(scenario = "basic") {
     if (this.active) return;
+    this._scenario = scenario;
     try {
       if (typeof Preload !== "undefined") await Preload.run();
-      if (typeof LevelAssets !== "undefined") LevelAssets.apply("mushboom_forest");
+      if (typeof LevelAssets !== "undefined") LevelAssets.apply(scenario === "rock" ? "colinas_rockntroll" : "mushboom_forest");
+      if (typeof Music !== "undefined" && Music._refresh) Music._refresh(); // pista del nivel
       const size = getBoardSize(1);
       const map = generateMap(size, { rivers: false });
       // Escena de tutorial: el centro del mapa es SIEMPRE hierba despejada.
@@ -68,6 +70,7 @@ const Tutorial = {
       syncBoardCamera(playerSpawnSpots[0]);
       _playInitialFogReveal(playerSpawnSpots);
       this._setupScene();
+      if (scenario !== "basic" && this._setupLevelScene) this._setupLevelScene();
       if (typeof Preload !== "undefined") Preload.finish();
       this._buildUI();
       // Pequeña pausa para que acabe el fundido y el revelado de niebla.
@@ -261,8 +264,41 @@ const Tutorial = {
     });
   },
 
+  // Pasos con los textos de js/tutorial-texts.js (o los del borrador del debug
+  // de diálogos, solo si se activó allí "usar mis cambios en el juego").
   _steps() {
+    const steps = this._stepsRaw();
+    const tx = this._textsFor(this._scenario);
+    if (tx) {
+      steps.forEach((s, i) => {
+        const t = tx[i];
+        if (!t) return;
+        ["say", "mission", "ok", "button"].forEach((k) => {
+          if (s[k] && t[k]) {
+            s[k] = t[k];
+            if (t.en && t.en[k] && typeof I18N !== "undefined" && I18N.addTr) I18N.addTr(t[k], t.en[k]);
+          }
+        });
+        if (t.mood) s.mood = t.mood;
+      });
+    }
+    return steps;
+  },
+
+  _textsFor(scenario) {
+    try {
+      if (localStorage.getItem("gg_tutorial_debug") === "1") {
+        const draft = JSON.parse(localStorage.getItem("gg_tutorial_texts_draft") || "null");
+        if (draft && draft[scenario]) return draft[scenario];
+      }
+    } catch (e) {}
+    return typeof TUTORIAL_TEXTS !== "undefined" ? TUTORIAL_TEXTS[scenario] : null;
+  },
+
+  _stepsRaw() {
     const T = this;
+    if (this._scenario === "mush" && this._stepsMush) return this._stepsMush();
+    if (this._scenario === "rock" && this._stepsRock) return this._stepsRock();
     return [
       {
         say: `Vaya, otro verdugo. Perdón, «jugador»: así os llamamos antes de que nos aplastéis. Soy ${TUTORIAL_GUIDE_NAME}, llevo media vida dedicándome a ser vuestra pelota en este deporte de majaras. Siempre digo que de algo hay que vivir. Bueno, vivir, vivir... Te enseñaré lo básico para que, al menos, me aplastes con cierta elegancia.`,
@@ -855,7 +891,7 @@ const Tutorial = {
     const E = this._els;
     cancelAnimationFrame(this._okRaf);
     this._advance = null;
-    this._setMood(this._MOODS[i] || "normal");
+    this._setMood(s.mood || (this._scenario === "basic" ? this._MOODS[i] : null) || "normal");
     this._typeText(s.say);
     E.mission.classList.remove("tut-mission--done");
     E.mission.style.display = s.mission ? "" : "none";
@@ -1248,7 +1284,7 @@ const Tutorial = {
 // Menú principal.
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("btn-tutorial");
-  if (btn) btn.addEventListener("click", () => Tutorial.start());
+  if (btn) btn.addEventListener("click", () => (Tutorial.showMenu ? Tutorial.showMenu() : Tutorial.start()));
   // Salir de la partida desde ajustes también cierra el tutorial.
   if (typeof SettingsMenu !== "undefined" && SettingsMenu._exitMatch) {
     const orig = SettingsMenu._exitMatch;

@@ -59,7 +59,7 @@ const ABILITIES = {
     // ver el resto de comentarios "iconImg" de este archivo).
     iconImg: "assets/iconos/nudillos_rocosos.png",
     description:
-      "Golpea y empuja 4 casillas en línea recta a un enemigo adyacente (se detiene en el primer obstáculo); el golpeado queda agotado el siguiente turno. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio. PuñoRroca es tan bruto que, si no tiene un aliado (cualquiera) justo al lado nada más empezar a andar, da tumbos al azar en vez de ir donde se le indica.",
+      "Golpea y empuja 4 casillas en línea recta a un enemigo adyacente (se detiene en el primer obstáculo; si cae al agua sin ser anfibio, se ahoga); el golpeado queda agotado el siguiente turno. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio. PuñoRroca es tan bruto que, si no tiene un aliado (cualquiera) justo al lado nada más empezar a andar, da tumbos al azar en vez de ir donde se le indica.",
   },
   goblin_lanzador: {
     name: "Resorte Goblin",
@@ -899,7 +899,7 @@ const Abilities = {
     this._punchImpactFx(target.row, target.col);
 
     await this._pushBackFixed(target, unit, 4);
-    this._dizzyStars(target);
+    if (Units.list.includes(target)) this._dizzyStars(target); // si cayó al agua y se ahogó, no hay mareo
     Units.refreshRange(unit);
   },
 
@@ -1001,12 +1001,13 @@ const Abilities = {
     requestAnimationFrame(frame);
   },
 
-  async _pushBackFixed(target, attacker, distance) {
+  async _pushBackFixed(target, attacker, distance, noDrown = false) {
     const dRow = Math.sign(target.row - attacker.row);
     const dCol = Math.sign(target.col - attacker.col);
     if (dRow === 0 && dCol === 0) return;
 
     const path = [];
+    let drowns = false;
     let row = target.row;
     let col = target.col;
     for (let i = 0; i < distance; i++) {
@@ -1021,10 +1022,15 @@ const Abilities = {
       if (typeof Altar !== "undefined" && Altar.at(nextRow, nextCol)) break; // Altar de Sacrificios (js/altar.js)
       if (typeof GnomOgro !== "undefined" && GnomOgro.at(nextRow, nextCol)) break; // GnomOgro (js/gnomogro.js): casilla ocupada
       if ((typeof Resources !== "undefined" && Resources.at(nextRow, nextCol)) || (typeof Drums !== "undefined" && Drums.at(nextRow, nextCol))) break; // Recursos de escenario (js/resources.js)
-      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(nextRow, nextCol)) break;
+      if (noDrown && typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(nextRow, nextCol)) break;
       path.push({ row: nextRow, col: nextCol });
       row = nextRow;
       col = nextCol;
+      // Cae al agua: sin Anfibio se ahoga ahí (igual que el empujón normal, Combat._drown).
+      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(nextRow, nextCol)) {
+        if (!(typeof Skills !== "undefined" && Skills.has(target.team, "anfibio"))) drowns = true;
+        break;
+      }
     }
     if (path.length === 0) return;
 
@@ -1064,6 +1070,7 @@ const Abilities = {
     if (typeof Units !== "undefined") Units.refreshUnitOcclusion();
     if (typeof Shops !== "undefined") Shops.refreshAll();
     if (typeof Skills !== "undefined") Skills.refreshCohesion();
+    if (drowns) await Combat._drown(attacker, target);
   },
 
   // ---------- LanzaGnomos: Lanzamiento ----------

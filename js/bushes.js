@@ -294,7 +294,7 @@ const Bushes = {
         const fake = { row: evicted.row - dr, col: evicted.col - dc };
         const r0 = evicted.row;
         const c0 = evicted.col;
-        if (typeof Abilities !== "undefined") await Abilities._pushBackFixed(evicted, fake, 1);
+        if (typeof Abilities !== "undefined") await Abilities._pushBackFixed(evicted, fake, 1, true);
         if (evicted.row !== r0 || evicted.col !== c0) break;
       }
       bush.hiddenUnitId = intruder.id;

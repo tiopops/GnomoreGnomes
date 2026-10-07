@@ -9967,3 +9967,49 @@ body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events
 .water-ring { position: absolute; pointer-events: none; transform: translate(-50%,-50%); border: 3px solid rgba(235,248,255,.95); border-radius: 50%; box-sizing: border-box; }
 .water-bubble { position: absolute; pointer-events: none; transform: translate(-50%,-50%); border-radius: 50%; border: 1.5px solid rgba(255,255,255,.9); background: rgba(255,255,255,.25); }
 .water-jet { position: absolute; pointer-events: none; width: 120px; height: 90px; background: radial-gradient(ellipse at 50% 100%, rgba(230,245,255,.95), rgba(190,225,255,0) 70%); border-radius: 50%; }
+
+/* ---------- Submenú del Tutorial (js/tutorial-levels.js) ---------- */
+.tut-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(8, 10, 8, 0.72);
+  backdrop-filter: blur(4px);
+  animation: tut-menu-in 0.18s ease-out;
+}
+@keyframes tut-menu-in { from { opacity: 0; } to { opacity: 1; } }
+.tut-menu__box {
+  width: min(460px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: tut-pop 0.3s cubic-bezier(0.34, 1.5, 0.64, 1);
+}
+.tut-menu__title {
+  margin: 0;
+  text-align: center;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.7);
+}
+.tut-menu__list { gap: 14px; }
+.tut-menu__item { justify-content: flex-start; text-align: left; }
+.tut-menu__item > i { font-size: 1.7rem; flex: none; }
+.tut-menu__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tut-menu__name { font-size: 1rem; }
+.tut-menu__sub {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.85;
+}
+.tut-menu__close { align-self: center; margin-bottom: 0; }
