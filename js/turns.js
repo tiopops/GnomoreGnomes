@@ -150,6 +150,7 @@ const Turns = {
   useAction(unit) {
     this.actionsUsed[unit.id] = (this.actionsUsed[unit.id] || 0) + 1;
     this._applyExhaustedClass(unit);
+    if (typeof Abilities !== "undefined" && Abilities.onActionSpent) Abilities.onActionSpent(unit);
     if (Units.selectedId === unit.id && !this.canAct(unit)) {
       Units.deselect();
     }

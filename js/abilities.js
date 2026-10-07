@@ -783,8 +783,19 @@ const Abilities = {
     Units.spawnFloatingText(target, "¡CONTROLADO!", { className: "dmg-popup gnome-points-popup" });
 
     this._consume(unit);
+    // El controlado ya cuenta como propio: su percepción debe aplicarse YA, si no un
+    // rival junto a él (fuera de la percepción del UrgaMentes) sigue oculto y no se
+    // le puede pegar.
+    if (typeof Fog !== "undefined" && Fog.applyVisibility) Fog.applyVisibility();
     Units.deselect();
     Units.select(target);
+  },
+
+  // El tinte morado termina cuando el controlado gasta su acción (lo llama Turns.useAction).
+  onActionSpent(unit) {
+    if (!this._mindControlled || this._mindControlled.unitId !== unit.id) return;
+    if (typeof Turns !== "undefined" && Turns.canAct(unit)) return;
+    this._mindTint(null, null, false);
   },
 
   // "durante el resto de este turno" — termina aquí, llamado desde
@@ -804,6 +815,7 @@ const Abilities = {
       }
       if (Units.selectedId === target.id) Units.deselect();
       this._mindTint(null, target, false);
+      if (typeof Fog !== "undefined" && Fog.applyVisibility) Fog.applyVisibility();
     } else {
       this._mindTint(null, null, false);
     }
@@ -1233,16 +1245,11 @@ const Abilities = {
     let vx = Dd.x - T.x, vy = Dd.y - T.y;
     const L = Math.hypot(vx, vy) || 1;
     vx /= L; vy /= L;
-    const NS = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(NS, "svg");
-    svg.setAttribute("class", "sling-svg");
-    svg.setAttribute("width", "1"); svg.setAttribute("height", "1");
-    Units.container.appendChild(svg);
     const ring = document.createElement("div");
     ring.className = "sling-ring";
     Units.container.appendChild(ring);
-    const hand = { x: G.x - 2, y: G.y - 28 };
     const CH = 900;
+    SFX.slingStretch(CH / 1000);
     const ease = (k) => k * k * (3 - 2 * k);
     const gS = goblin.spriteEl, tS = thrown.spriteEl;
     await new Promise((resolve) => {
@@ -1256,23 +1263,6 @@ const Abilities = {
         goblin.el.style.translate = `${-vx * 14 * e + (Math.random() - 0.5) * tremG}px ${(Math.random() - 0.5) * tremG}px`;
         if (tS) tS.style.transform = `scale(${1 + 0.16 * e}, ${1 - 0.26 * e})`;
         if (gS) gS.style.transform = `scale(${1 + 0.04 * e}, ${1 - 0.07 * e})`;
-        const bx = T.x + tx - vx * 10, by = T.y + ty - 26;
-        const sag = (1 - e) * 26 + Math.sin(now / 38) * e * 2.2;
-        const w = 7 - 4.2 * e;
-        const col = `rgb(${Math.round(150 + 80 * e)},${Math.round(95 - 40 * e)},40)`;
-        const mx = (hand.x + bx) / 2, my = (hand.y + by) / 2 + sag;
-        let h = `<path d="M${hand.x - 6} ${hand.y} Q${mx} ${my} ${bx} ${by - 8}" stroke="${col}" stroke-width="${w}" fill="none" stroke-linecap="round"/>` +
-          `<path d="M${hand.x + 6} ${hand.y + 6} Q${mx} ${my + 8} ${bx} ${by + 8}" stroke="${col}" stroke-width="${w}" fill="none" stroke-linecap="round"/>`;
-        if (e > 0.3) {
-          for (let i = 0; i < 3; i++) {
-            const m = 0.25 + i * 0.25;
-            const px = hand.x + (bx - hand.x) * m;
-            const py = hand.y + (by - hand.y) * m + sag * (1 - (2 * m - 1) ** 2) * 0.5;
-            const o = (Math.random() - 0.5) * 8;
-            h += `<line x1="${px - 5}" y1="${py - 8 + o}" x2="${px + 5}" y2="${py - 14 + o}" stroke="#fff4c2" stroke-width="2" stroke-linecap="round" opacity="${e * 0.9}"/>`;
-          }
-        }
-        svg.innerHTML = h;
         const rs = 1 - e;
         ring.style.left = `${T.x + tx}px`;
         ring.style.top = `${T.y + ty + 6}px`;
@@ -1286,13 +1276,12 @@ const Abilities = {
     // Soltar: la goma restalla en un destello y desaparece.
     ring.remove();
     const bx0 = T.x - vx * 36, by0 = T.y - vy * 26 - 26;
-    svg.innerHTML = `<line x1="${hand.x}" y1="${hand.y + 3}" x2="${bx0}" y2="${by0}" stroke="#fff" stroke-width="9" stroke-linecap="round"/>`;
+    SFX.slingRelease();
     const snap = document.createElement("div");
     snap.className = "sling-snap";
     snap.style.left = `${bx0}px`; snap.style.top = `${by0}px`;
     Units.container.appendChild(snap);
     snap.animate([{ transform: "translate(-50%,-50%) scale(.3)", opacity: 1 }, { transform: "translate(-50%,-50%) scale(1.6)", opacity: 0 }], { duration: 300, fill: "both" }).onfinish = () => snap.remove();
-    svg.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: "forwards" }).onfinish = () => svg.remove();
     if (gS) {
       gS.style.transform = "";
       gS.animate([{ transform: "rotate(0)" }, { transform: "rotate(5deg) scale(.96,1.08)", offset: 0.3 }, { transform: "rotate(0)" }], { duration: 320, easing: "ease-out" });
@@ -1387,6 +1376,7 @@ const Abilities = {
     // adelante" se lee mejor que una dirección aleatoria/siempre igual).
     const spinSign = end.x >= start.x ? 1 : -1;
     const DURATION_MS = 460;
+    SFX.slingWhoosh(DURATION_MS / 1000);
     let lastGhost = 0;
     await new Promise((resolve) => {
       const t0 = performance.now();
@@ -1428,6 +1418,7 @@ const Abilities = {
     unit.el.classList.remove("unit--thrown");
 
     SFX.hop();
+    SFX.slingLand();
     Units.playShake(unit);
     this._throwLandFx(unit, destRow, destCol);
     // Trampa de TruenoEspora (ver checkTrigger arriba) — un lanzamiento

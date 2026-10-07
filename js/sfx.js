@@ -551,6 +551,28 @@ const SFX = {
     } catch (e) {}
   },
 
+  // ---------- Lanzamiento con tirachinas (Abilities._slingTension) ----------
+  // Goma que se tensa: crujido que sube de tono mientras dura la tensión.
+  slingStretch(dur) {
+    this._tone(140, 520, dur, "sawtooth", 0.1);
+    this._tone(180, 700, dur, "triangle", 0.12, dur * 0.05);
+    this._noiseBurst(dur, "bandpass", 300, 1400, 0.12);
+  },
+  // Suelta: chasquido seco de la goma.
+  slingRelease() {
+    this._tone(1100, 160, 0.22, "triangle", 0.38);
+    this._noiseBurst(0.09, "highpass", 3000, 1200, 0.3);
+  },
+  // Vuelo: silbido que baja de tono.
+  slingWhoosh(dur) {
+    this._noiseBurst(dur, "bandpass", 2200, 500, 0.28);
+  },
+  // Aterrizaje: golpe sordo.
+  slingLand() {
+    this._tone(130, 55, 0.2, "sine", 0.45);
+    this._noiseBurst(0.12, "lowpass", 900, 200, 0.3);
+  },
+
   // Retumbar grave del volcán antes de estallar.
   volcanoRumble() {
     this._noiseBurst(1.6, "lowpass", 220, 60, 0.7);
