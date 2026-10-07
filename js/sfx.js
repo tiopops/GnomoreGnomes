@@ -573,6 +573,104 @@ const SFX = {
     this._noiseBurst(0.12, "lowpass", 900, 200, 0.3);
   },
 
+  // ---------- Tambores de Guerra: ritmo tribal-rockero (aprobado con demo) ----------
+  // Solo percusión sintetizada (bombo, caja, toms, palillos): 2 compases a 148
+  // ppm, groove de rock y redoble tribal final. Dura ~3,5 s; mientras suena, la
+  // música de fondo se atenúa (Music.duck). Si ya está sonando, no se solapa.
+  _drumNoise(len, pow) {
+    const ctx = this.ctx;
+    const L = Math.round(ctx.sampleRate * len);
+    const b = ctx.createBuffer(1, L, ctx.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / L, pow);
+    return b;
+  },
+  _dKick(t, g) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator(), a = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(42, t + 0.12);
+    a.gain.setValueAtTime(0.0001, t);
+    a.gain.linearRampToValueAtTime(g, t + 0.004);
+    a.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+    o.connect(a); a.connect(this.master); o.start(t); o.stop(t + 0.35);
+    const n = ctx.createBufferSource(); n.buffer = this._drumNoise(0.02, 2);
+    const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 3000;
+    const ng = ctx.createGain(); ng.gain.value = g * 0.5;
+    n.connect(f); f.connect(ng); ng.connect(this.master); n.start(t);
+  },
+  _dSnare(t, g) {
+    const ctx = this.ctx;
+    const n = ctx.createBufferSource(); n.buffer = this._drumNoise(0.22, 1.6);
+    const f = ctx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 2200; f.Q.value = 0.7;
+    const ng = ctx.createGain(); ng.gain.value = g;
+    n.connect(f); f.connect(ng); ng.connect(this.master); n.start(t);
+    const o = ctx.createOscillator(), a = ctx.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(260, t);
+    o.frequency.exponentialRampToValueAtTime(150, t + 0.09);
+    a.gain.setValueAtTime(g * 0.7, t);
+    a.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(a); a.connect(this.master); o.start(t); o.stop(t + 0.2);
+  },
+  _dHat(t, g) {
+    const ctx = this.ctx;
+    const n = ctx.createBufferSource(); n.buffer = this._drumNoise(0.05, 3);
+    const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 7000;
+    const ng = ctx.createGain(); ng.gain.value = g;
+    n.connect(f); f.connect(ng); ng.connect(this.master); n.start(t);
+  },
+  _dTom(t, freq, g, len) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator(), a = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(freq * 1.8, t);
+    o.frequency.exponentialRampToValueAtTime(freq * 0.6, t + 0.16);
+    a.gain.setValueAtTime(0.0001, t);
+    a.gain.linearRampToValueAtTime(g, t + 0.006);
+    a.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(a); a.connect(this.master); o.start(t); o.stop(t + len + 0.03);
+    const n = ctx.createBufferSource(); n.buffer = this._drumNoise(0.05, 2);
+    const f = ctx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1100;
+    const ng = ctx.createGain(); ng.gain.value = g * 0.35;
+    n.connect(f); f.connect(ng); ng.connect(this.master); n.start(t);
+  },
+  drumTheme() {
+    const ctx = this.ensureCtx();
+    if (!ctx) return 0;
+    const nowMs = performance.now();
+    if (nowMs < (this._themeUntil || 0)) return 0; // ya suena: sin solapar
+    try {
+      if (ctx.state === "suspended") ctx.resume();
+      const BPM = 148, STEP = 60 / BPM / 4, NSTEP = 32;
+      const t0 = ctx.currentTime + 0.05;
+      const tomL = (t, g) => this._dTom(t, 85, g, 0.35);
+      const tomM = (t, g) => this._dTom(t, 125, g, 0.3);
+      const tomH = (t, g) => this._dTom(t, 185, g, 0.25);
+      const ev = [];
+      for (let i = 0; i < 16; i++) {
+        if (i % 4 === 0) ev.push([i, (t) => this._dKick(t, 0.95)]);
+        if (i === 4 || i === 12) ev.push([i, (t) => this._dSnare(t, 0.7)]);
+        if (i % 2 === 0) ev.push([i, (t) => this._dHat(t, 0.18)]);
+      }
+      ev.push([6, (t) => this._dKick(t, 0.8)], [10, (t) => this._dKick(t, 0.8)], [14, (t) => tomM(t, 0.55)], [15, (t) => tomH(t, 0.5)]);
+      [[16, tomL, 0.85], [18, tomL, 0.7], [19, tomM, 0.6], [20, tomM, 0.8], [22, tomH, 0.65], [23, tomM, 0.6],
+       [24, tomL, 0.85], [26, tomL, 0.7], [27, tomM, 0.6], [28, tomH, 0.7], [29, tomM, 0.7], [30, tomL, 0.8]]
+        .forEach(([i, fn, g]) => ev.push([i, (t) => fn(t, g)]));
+      for (let i = 16; i < 32; i += 4) ev.push([i, (t) => this._dKick(t, 0.85)]);
+      ev.push([20, (t) => this._dSnare(t, 0.6)], [28, (t) => this._dSnare(t, 0.65)], [30, (t) => this._dSnare(t, 0.55)], [31, (t) => this._dSnare(t, 0.7)]);
+      ev.forEach(([i, fn]) => fn(t0 + i * STEP));
+      const te = t0 + NSTEP * STEP;
+      this._dKick(te, 1);
+      this._dTom(te, 80, 0.9, 0.5);
+      this._dTom(te + 0.001, 60, 0.7, 0.6);
+      const totalMs = (NSTEP * STEP + 0.7) * 1000;
+      this._themeUntil = nowMs + totalMs;
+      return totalMs;
+    } catch (e) { return 0; }
+  },
+
   // Retumbar grave del volcán antes de estallar.
   volcanoRumble() {
     this._noiseBurst(1.6, "lowpass", 220, 60, 0.7);

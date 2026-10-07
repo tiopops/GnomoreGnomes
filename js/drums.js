@@ -177,7 +177,12 @@ const Drums = {
     const t = performance.now();
     if (typeof SFX !== "undefined" && SFX.enabled && t - (this._lastSound || 0) > 450 && !(soft && this._resolving)) {
       this._lastSound = t;
-      try { SFX.drum(soft); } catch (e) {}
+      try {
+        // Golpe normal: ritmo tribal-rockero con la música de fondo atenuada; el suave (reubicación) conserva el golpe corto.
+        const ms = soft ? 0 : SFX.drumTheme();
+        if (ms) { if (typeof Music !== "undefined" && Music.duck) Music.duck(ms); }
+        else if (soft || !(performance.now() < (SFX._themeUntil || 0))) SFX.drum(soft);
+      } catch (e) {}
     }
     if (!d.spriteEl.animate) return;
     // Encoge hacia abajo y se estira hacia arriba, al ritmo del golpe.

@@ -16,6 +16,9 @@ const Music = {
   volume: 0.2,
   _els: {},
   _gain: { menu: 0, match: 0, rock: 0 },
+  _duck: 1,
+  _duckGoal: 1,
+  _duckTimer: null,
   _target: null,
   _unlocked: false,
   _timer: null,
@@ -87,10 +90,25 @@ const Music = {
       if (g !== goal) busy = true;
       this._gain[k] = g;
       const a = this._els[k];
-      a.volume = Math.min(1, Math.max(0, g * this.volume));
+      a.volume = Math.min(1, Math.max(0, g * this.volume * this._duck));
       if (g === 0 && !a.paused && k !== this._target) a.pause();
     }
+    // Atenuación temporal (Music.duck): baja rápido, vuelve despacio.
+    if (this._duck !== this._duckGoal) {
+      busy = true;
+      const up = this._duckGoal > this._duck;
+      const st = dt / (up ? 1000 : 150) * 0.8;
+      this._duck = up ? Math.min(this._duckGoal, this._duck + st) : Math.max(this._duckGoal, this._duck - st);
+    }
     if (!busy) { clearInterval(this._timer); this._timer = null; }
+  },
+
+  // Baja la música al 20 % durante `ms` (p. ej. mientras suenan los Tambores de Guerra) y la devuelve.
+  duck(ms) {
+    this._duckGoal = 0.2;
+    if (this._duckTimer) clearTimeout(this._duckTimer);
+    this._duckTimer = setTimeout(() => { this._duckGoal = 1; this._startLoop(); }, ms);
+    this._startLoop();
   },
 
   setEnabled(on) {
@@ -102,7 +120,7 @@ const Music = {
   setVolume(v) {
     this.volume = Math.min(1, Math.max(0, v));
     try { localStorage.setItem(this._KEY_VOL, String(this.volume)); } catch (e) {}
-    for (const k of Object.keys(this._els)) this._els[k].volume = Math.min(1, this._gain[k] * this.volume);
+    for (const k of Object.keys(this._els)) this._els[k].volume = Math.min(1, this._gain[k] * this.volume * this._duck);
   },
 };
 document.addEventListener("DOMContentLoaded", () => Music.init());
