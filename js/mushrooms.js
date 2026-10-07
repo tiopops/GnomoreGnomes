@@ -115,7 +115,7 @@ const Mushrooms = {
       el.style.top = `${y}px`;
       el.style.zIndex = String((spot.row + spot.col) * 10 + 6);
       this.refreshFog();
-      el.style.opacity = "1";
+      el.style.opacity = ""; // sin inline: no pisar el opacity:0 de unit--fog-hidden
       setTimeout(() => { if (m.el) el.style.transition = ""; }, 400);
     }, 380);
   },
@@ -158,7 +158,9 @@ const Mushrooms = {
   refreshFog() {
     this.list.forEach((m) => {
       if (!m.el || m.heldBy) return;
-      const fogged = typeof Fog !== "undefined" && Fog.isFogged(m.row, m.col);
+      // isFoggedReal: isFogged() devuelve false durante el turno de la IA y las setas
+      // asomaban sobre la niebla (captura del usuario en Mushboom).
+      const fogged = typeof Fog !== "undefined" && (Fog.isFoggedReal ? Fog.isFoggedReal(m.row, m.col) : Fog.isFogged(m.row, m.col));
       m.el.classList.toggle("unit--fog-hidden", !!fogged);
       const remembered = typeof Fog !== "undefined" && !fogged && !Fog.isPerceived(m.row, m.col);
       m.el.classList.toggle("gg-remembered", !!remembered);
