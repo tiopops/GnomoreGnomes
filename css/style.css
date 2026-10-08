@@ -10093,3 +10093,55 @@ body.backpack-giving--katapum .lava-puddle.unit--katapum-target { pointer-events
   .mp-slot__art { width: 60px; height: 60px; }
   .mp-vs { font-size: 1.1rem; }
 }
+
+
+/* ---------- Tutorial en móvil: viñeta compacta y sin tapar la interfaz ---------- */
+/* Vertical: la viñeta va arriba (su `top` lo fija TutorialFrame.layoutPanel, bajo la gloria y los ajustes). */
+@media (max-width: 600px) and (orientation: portrait) {
+  body.tut-on .tut-panel,
+  body.tut-on .tut-panel--top,
+  body.tut-on .tut-panel--compact { left: 6px; right: 6px; top: 112px; bottom: auto; gap: 0; align-items: flex-start; }
+  body.tut-on .tut-portrait,
+  body.tut-on .tut-panel--compact .tut-portrait { height: 104px; margin: 30px -18px 0 0; }
+  body.tut-on .tut-bubble { padding: 15px 14px 18px 18px; }
+  body.tut-on .tut-text { font-size: 0.8rem; line-height: 1.28; min-height: 0; }
+  body.tut-on .tut-name { font-size: 0.74rem; top: -13px; left: 14px; padding: 2px 12px; }
+  body.tut-on .tut-mission { margin: 24px 0 0 -4px; padding: 4px 14px; gap: 7px; }
+  body.tut-on .tut-mission__text { font-size: 0.76rem; }
+  body.tut-on .tut-mission__label { font-size: 0.62rem; }
+  body.tut-on .tut-btn { right: 4px; bottom: -15px; padding: 6px 18px; font-size: 0.8rem; }
+  body.tut-on .tut-btn--final { font-size: 0.95rem; padding: 8px 22px; right: 4px; }
+  body.tut-on .tut-progress { margin: 10px 8px 0 0; }
+  body.tut-on .tut-skip { top: -22px; right: 6px; font-size: 0.62rem; padding: 2px 10px; }
+  body.tut-on .tut-hold { left: 12px; bottom: auto; top: 60%; min-width: 150px; padding: 8px 14px 10px; }
+  body.tut-on .tut-hold__num { font-size: 2rem; }
+}
+/* Horizontal (móvil): tira baja arriba, entre la gloria (izq.) y los ajustes (dcha.). */
+@media (max-height: 520px) and (orientation: landscape) {
+  body.tut-on .tut-panel,
+  body.tut-on .tut-panel--top,
+  body.tut-on .tut-panel--compact { left: 214px; right: 94px; top: 18px; bottom: auto; gap: 0; align-items: flex-start; max-width: none; }
+  body.tut-on .tut-portrait,
+  body.tut-on .tut-panel--compact .tut-portrait { height: 74px; width: auto; margin: 16px -10px 0 0; }
+  body.tut-on .tut-bubble { padding: 11px 14px 13px 16px; }
+  body.tut-on .tut-text { font-size: 0.72rem; line-height: 1.26; min-height: 0; }
+  body.tut-on .tut-name { font-size: 0.68rem; top: -11px; padding: 1px 10px; }
+  body.tut-on .tut-mission { margin: 20px 0 0 -4px; padding: 2px 12px; gap: 6px; }
+  body.tut-on .tut-mission__text { font-size: 0.7rem; }
+  body.tut-on .tut-mission__label { font-size: 0.58rem; }
+  body.tut-on .tut-btn { right: 4px; bottom: -13px; padding: 4px 14px; font-size: 0.72rem; }
+  body.tut-on .tut-btn--final { font-size: 0.85rem; padding: 6px 18px; right: 4px; }
+  body.tut-on .tut-progress { display: none; }
+  body.tut-on .tut-skip { top: auto; bottom: -26px; right: auto; left: 8px; font-size: 0.62rem; }
+  body.tut-on .tut-hold { left: 14px; bottom: auto; top: 46%; min-width: 130px; padding: 6px 12px 8px; }
+  body.tut-on .tut-hold__num { font-size: 1.6rem; }
+}
+
+/* Tutorial: la imagen de Nizak es solo decorativa; no debe bloquear toques a lo que hay debajo. */
+body.tut-on .tut-portrait, body.tut-on .tut-portrait * { pointer-events: none; }
+
+/* Selección de tutorial: mismas cartas que los niveles, tres en fila si caben. */
+#tutorial-list { max-width: 1320px; }
+@media (min-width: 1000px) {
+  #tutorial-list .level-card { width: min(410px, 30vw); }
+}

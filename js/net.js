@@ -502,7 +502,7 @@ const Net = {
   async _sendHash() {
     // Las animaciones de gnomos (huida, golpe...) acaban a ritmo distinto en cada ordenador: se espera a que paren.
     const t0 = Date.now();
-    while (Gnome.list.some((g) => g.busy || g._hitting) && Date.now() - t0 < 4000) await new Promise((r) => setTimeout(r, 80));
+    while ((Gnome.list.some((g) => g.busy || g._hitting) || (typeof Mushrooms !== "undefined" && Mushrooms._exploding > 0)) && Date.now() - t0 < 4000) await new Promise((r) => setTimeout(r, 80));
     const snap = this.snapshot();
     const h = this.hashOf(snap);
     const ix = this._turnIx;

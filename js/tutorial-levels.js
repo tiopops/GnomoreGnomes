@@ -12,55 +12,83 @@
 Object.assign(Tutorial, {
   _scenario: "basic",
 
-  // ---------- Submenú ----------
+  // ---------- Selección de tutorial (pantalla propia, como nivel/raza/rivales) ----------
+  _CARDS: [
+    {
+      id: "basic",
+      name: "Primeros pasos",
+      color: "#e8b33a",
+      island: "assets/niveles/isla_mushboom_forest.png",
+      flavor: "Lo básico del juego, paso a paso, con Nizak como guía.",
+      feats: [
+        ["ph-users-three", "Reclutar: tu Obelisco, tus unidades y los Puntos de Gloria"],
+        ["ph-sneaker-move", "Mover y esconderte: casillas, acciones y arbustos"],
+        ["ph-boxing-glove", "Gnomos y combate: coger, golpear, lanzar y conquistar un tótem"],
+      ],
+    },
+    {
+      id: "mush",
+      name: "Bosque MushBoom",
+      color: "#8fbf4d",
+      island: "assets/niveles/isla_mushboom_forest.png",
+      flavor: "Las reglas propias del Bosque MushBoom.",
+      feats: [
+        ["ph-bomb", "Setas explosivas: cógelas antes de que exploten"],
+        ["ph-skull", "Altar de Sacrificios: ofrece setas y gnomos"],
+        ["ph-sword", "GnomOgro: el gigante que despierta bajo el altar"],
+      ],
+    },
+    {
+      id: "rock",
+      name: "Colinas Rock'n Troll",
+      color: "#8a8f99",
+      island: "assets/niveles/isla_colinas_rockntroll.png",
+      flavor: "Las reglas propias de las Colinas Rock'n Troll.",
+      feats: [
+        ["ph-music-notes", "Tambores de Guerra: llena tu ruleta y haz llover rocas"],
+        ["ph-cube", "Fragmentos: recógelos y lánzalos"],
+        ["ph-fire", "El Volcán: aliméntalo y haz que entre en erupción"],
+      ],
+    },
+  ],
+
   showMenu() {
-    if (this.active || document.getElementById("tut-menu")) return;
-    const ov = document.createElement("div");
-    ov.id = "tut-menu";
-    ov.className = "tut-menu";
-    const items = [
-      { id: "basic", icon: "ph-graduation-cap", title: "Primeros pasos", sub: "Lo básico: reclutar, mover, gnomos y combate" },
-      { id: "mush", icon: "ph-tree", title: "Tutorial Bosque MushBoom", sub: "Setas explosivas, Altar de Sacrificios y GnomOgro" },
-      { id: "rock", icon: "ph-mountains", title: "Tutorial Colinas Rock'n Troll", sub: "Tambores de Guerra, fragmentos y Volcán" },
-    ];
-    ov.innerHTML = `<div class="tut-menu__box">
-      <h2 class="tut-menu__title">Tutorial</h2>
-      <nav class="tut-menu__list menu-buttons">
-        ${items
-          .map(
-            (it) => `<button type="button" class="menu-btn tut-menu__item" data-scenario="${it.id}">
-              <i class="ph ${it.icon}"></i>
-              <span class="tut-menu__text"><span class="tut-menu__name">${it.title}</span><span class="tut-menu__sub">${it.sub}</span></span>
-            </button>`
-          )
-          .join("")}
-      </nav>
-      <button type="button" class="back-btn tut-menu__close"><i class="ph ph-arrow-left"></i> <span>Volver</span></button>
-    </div>`;
-    document.body.appendChild(ov);
-    const close = () => {
-      document.removeEventListener("keydown", onKey);
-      ov.remove();
-    };
-    const onKey = (e) => {
-      if (e.key === "Escape") close();
-    };
-    document.addEventListener("keydown", onKey);
-    ov.addEventListener("click", (e) => {
-      if (e.target === ov) close();
-    });
-    ov.querySelector(".tut-menu__close").addEventListener("click", () => {
-      if (typeof SFX !== "undefined") SFX.click();
-      close();
-    });
-    ov.querySelectorAll(".tut-menu__item").forEach((b) =>
-      b.addEventListener("click", () => {
+    if (this.active) return;
+    const list = document.getElementById("tutorial-list");
+    if (!list) return;
+    list.innerHTML = "";
+    this._CARDS.forEach((c) => {
+      const card = document.createElement("button");
+      card.className = "race-card level-card";
+      card.style.setProperty("--card-accent", c.color);
+      card.style.setProperty("--float-delay", `-${(NR() * 5).toFixed(2)}s`);
+      const tr = (t) => (typeof I18N !== "undefined" && I18N.tr ? I18N.tr(t) : t);
+      const nameTx = tr(c.name);
+      card.setAttribute("aria-label", nameTx);
+      const feats = c.feats
+        .map(([icon, raw]) => {
+          const txt = tr(raw);
+          const at = txt.indexOf(": ");
+          const html = at > 0 ? `<b>${txt.slice(0, at)}</b>${txt.slice(at)}` : txt;
+          return `<span class="race-card__stat race-card__stat--virtue"><i class="ph ${icon} race-card__stat-icon"></i><span>${html}</span></span>`;
+        })
+        .join("");
+      card.innerHTML = `
+        <span class="level-card__stage">
+          <img src="${c.island}" alt="" class="level-card__island" />
+          <span class="level-card__name">${nameTx}</span>
+        </span>
+        <span class="race-card__body level-card__body">
+          <span class="race-card__flavor">${tr(c.flavor)}</span>
+          ${feats}
+        </span>`;
+      card.addEventListener("click", () => {
         if (typeof SFX !== "undefined") SFX.click();
-        const sc = b.dataset.scenario;
-        close();
-        this.start(sc);
-      })
-    );
+        this.start(c.id);
+      });
+      list.appendChild(card);
+    });
+    goToScreen("screen-tutorial-select");
   },
 
   // ---------- Escena de práctica (todos los tutoriales de nivel) ----------
@@ -134,15 +162,10 @@ Object.assign(Tutorial, {
     return ms[0];
   },
 
-  // Centra la cámara (con suavizado) en el punto medio de las casillas dadas,
-  // para que la acción de cada misión quepa siempre en pantalla.
-  _focus(...tiles) {
-    const ts = tiles.filter((t) => t && t.row != null);
-    if (!ts.length || typeof BoardView === "undefined" || !BoardView.panToContentPoint) return;
-    const pts = ts.map((t) => getTileCenter(t.row, t.col, Units.boardSize));
-    const x = pts.reduce((a, p) => a + p.x, 0) / pts.length;
-    const y = pts.reduce((a, p) => a + p.y, 0) / pts.length;
-    BoardView.panToContentPoint(x, y - 150);
+  // Pide a la cámara (TutorialFrame, js/tutorial-frame.js) que estas entidades o casillas
+  // queden SIEMPRE a la vista en la zona libre, sin que la viñeta ni los botones las tapen.
+  _focus(...ents) {
+    if (typeof TutorialFrame !== "undefined") TutorialFrame.setFocus(ents);
   },
 
   // Acerca el volcán a la unidad (como el tótem en "Primeros pasos"): así la

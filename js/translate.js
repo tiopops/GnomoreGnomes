@@ -13,6 +13,19 @@
    Para añadir un texto nuevo: añade su línea "español": "inglés" abajo. */
 
 const EN_DICT = {
+"Elige el tutorial": "Choose the tutorial",
+"Lo básico del juego, paso a paso, con Nizak como guía.": "The basics of the game, step by step, with Nizak as your guide.",
+"Reclutar: tu Obelisco, tus unidades y los Puntos de Gloria": "Recruiting: your Obelisk, your units and Glory Points",
+"Mover y esconderte: casillas, acciones y arbustos": "Moving and hiding: tiles, actions and bushes",
+"Gnomos y combate: coger, golpear, lanzar y conquistar un tótem": "Gnomes and combat: grab, hit, throw and capture a totem",
+"Las reglas propias del Bosque MushBoom.": "The MushBoom Forest's own rules.",
+"Setas explosivas: cógelas antes de que exploten": "Explosive mushrooms: grab them before they blow",
+"Altar de Sacrificios: ofrece setas y gnomos": "Sacrifice Altar: offer mushrooms and gnomes",
+"GnomOgro: el gigante que despierta bajo el altar": "GnomOgre: the giant that wakes beneath the altar",
+"Las reglas propias de las Colinas Rock'n Troll.": "The Rock'n Troll Hills' own rules.",
+"Tambores de Guerra: llena tu ruleta y haz llover rocas": "War Drums: fill your wheel and make rocks rain",
+"Fragmentos: recógelos y lánzalos": "Fragments: pick them up and throw them",
+"El Volcán: aliméntalo y haz que entre en erupción": "The Volcano: feed it and make it erupt",
 "Golem de Espinas": "Thorn Golem",
 "Se cura hasta su vida máxima de base y se envuelve de espinas hasta su próximo turno: mientras dure, cualquiera que lo golpee se hace 1 punto de daño a sí mismo. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.": "Heals to its base max health and wraps itself in thorns until its next turn: while active, anyone who hits it takes 1 damage themselves. Costs 1 action. One use: it recharges if you start your turn next to one of your own totems.",
 "Visión Lejana": "Far Sight",

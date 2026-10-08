@@ -815,6 +815,7 @@ const Tutorial = {
     const s = steps[i];
     if (!s) return this.finish();
     this._ctx.step = s;
+    if (typeof TutorialFrame !== "undefined") TutorialFrame.clearFocus();
     if (s.onStart) s.onStart();
     this._renderStep(s, i, steps.length);
     if (s.done) {
@@ -914,6 +915,7 @@ const Tutorial = {
     const totalMissions = this._steps().filter((x) => x.mission).length;
     E.progressBar.style.width = `${Math.round((done / totalMissions) * 100)}%`;
     this._ctx.pointerTarget = s.target || null;
+    if (typeof TutorialFrame !== "undefined") TutorialFrame.reset();
     E.panel.classList.add("tut-panel--pop");
     setTimeout(() => E.panel.classList.remove("tut-panel--pop"), 400);
   },
@@ -1159,10 +1161,10 @@ const Tutorial = {
     this._raf = requestAnimationFrame(loop);
   },
 
-  // Evita que la viñeta tape lo que hay que pulsar (o que el objetivo quede
-  // fuera de pantalla): si el objetivo cae bajo la viñeta, ésta salta arriba/
-  // abajo; si está fuera de la zona visible, la cámara lo centra.
-  _avoidOverlap(r) {
+  // Mantiene a la vista lo que hay que pulsar: la viñeta de Nizak y los botones fijos
+  // de la interfaz definen una "zona libre" y TutorialFrame (js/tutorial-frame.js) lleva
+  // la cámara para que el objetivo y la acción de alrededor queden dentro de ella.
+  _avoidOverlap(r, el) {
     const panel = this._els.panel;
     // Si el rótulo SALTAR queda sobre lo que hay que pulsar, se vuelve
     // transparente al ratón (el clic pasa al objetivo).
@@ -1172,48 +1174,12 @@ const Tutorial = {
       this._els.skip.style.pointerEvents = over ? "none" : "";
       this._els.skip.style.opacity = over ? "0.25" : "";
     }
-    if (!panel || this._popupOpen) return;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    if (!panel || this._popupOpen || r.isPopup || !el || typeof TutorialFrame === "undefined") return;
+    // La viñeta incluye el rótulo SALTAR TUTORIAL, que sobresale por encima.
     let pr = panel.getBoundingClientRect();
-    // El rótulo SALTAR TUTORIAL sobresale por encima: cuenta como parte de la viñeta.
     const sk = this._els.skip && this._els.skip.getBoundingClientRect();
-    if (sk && sk.width) pr = { left: Math.min(pr.left, sk.left), right: Math.max(pr.right, sk.right), top: Math.min(pr.top, sk.top), bottom: pr.bottom, height: pr.bottom - Math.min(pr.top, sk.top) };
-    const onTop = panel.classList.contains("tut-panel--top");
-    const hit = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-    const pad = { left: r.left - 14, right: r.right + 14, top: r.top - 60, bottom: r.bottom + 14 };
-    if (hit(pad, pr)) {
-      // Se prueba el otro extremo (abajo <-> arriba) sin solaparlo.
-      const topH = pr.height + 16;
-      const wouldBeTop = { left: pr.left, right: pr.right, top: 10, bottom: 10 + pr.height };
-      const wouldBeBottom = { left: pr.left, right: pr.right, top: vh - 26 - pr.height, bottom: vh - 26 };
-      const target = onTop ? wouldBeBottom : wouldBeTop;
-      if (!hit(pad, target)) panel.classList.toggle("tut-panel--top", !onTop);
-    }
-    // Cámara: centra el objetivo si queda fuera de la zona útil.
-    const pr2 = panel.getBoundingClientRect();
-    const safeTop = pr2.top < vh / 2 ? pr2.bottom + 20 : 90;
-    const safeBottom = pr2.top < vh / 2 ? vh - 80 : pr2.top - 20;
-    const cx = r.left + r.width / 2;
-    const cy = r.top + r.height / 2;
-    const now = performance.now();
-    if (
-      typeof BoardView !== "undefined" &&
-      (cx < 40 || cx > vw - 40 || cy < safeTop || cy > safeBottom) &&
-      now - (this._lastPan || 0) > 900 &&
-      !r.isPopup &&
-      !this._noPan
-    ) {
-      this._lastPan = now;
-      BoardView.targetPanX = BoardView.panX = BoardView.panX + (vw / 2 - cx);
-      BoardView.targetPanY = BoardView.panY = BoardView.panY + ((safeTop + safeBottom) / 2 - cy);
-      if (BoardView._clampTargetPan) {
-        BoardView._clampTargetPan();
-        BoardView.panX = BoardView.targetPanX;
-        BoardView.panY = BoardView.targetPanY;
-      }
-      BoardView._apply();
-    }
+    if (sk && sk.width) pr = { left: Math.min(pr.left, sk.left), right: Math.max(pr.right, sk.right), top: Math.min(pr.top, sk.top), bottom: Math.max(pr.bottom, sk.bottom) };
+    TutorialFrame.update(el, pr, false);
   },
 
   // Con una ventana abierta la viñeta de Nizak se queda arriba, con su texto
@@ -1236,14 +1202,30 @@ const Tutorial = {
     const h = el.offsetHeight || 1;
     const ty = Math.max(0, bottom + 10 - top0);
     const avail = window.innerHeight - 8 - (top0 + ty);
-    const sc = Math.max(0.55, Math.min(1, avail / h));
+    const sc = Math.max(window.innerHeight < 520 ? 0.36 : 0.55, Math.min(1, avail / h));
     el.style.translate = `0 ${ty.toFixed(1)}px`;
     el.style.scale = sc.toFixed(3);
+  },
+
+  _frameDefault() {
+    if (typeof TutorialFrame === "undefined" || this._popupOpen || !this._els.panel) return;
+    let el = null;
+    try {
+      const sel = Units.selectedId && Units.list.find((x) => x.id === Units.selectedId);
+      el = (sel && sel.el) || (this._my()[0] && this._my()[0].el) || (Obelisks.byTeam("player") || {}).el || null;
+    } catch (e) {}
+    if (!el || !el.isConnected) return;
+    const panel = this._els.panel;
+    let pr = panel.getBoundingClientRect();
+    const sk = this._els.skip && this._els.skip.getBoundingClientRect();
+    if (sk && sk.width) pr = { left: Math.min(pr.left, sk.left), right: Math.max(pr.right, sk.right), top: Math.min(pr.top, sk.top), bottom: Math.max(pr.bottom, sk.bottom) };
+    TutorialFrame.update(el, pr, false);
   },
 
   _updatePointer() {
     const P = this._els.pointer;
     if (!P) return;
+    if (typeof TutorialFrame !== "undefined") TutorialFrame.layoutPanel(this._els.panel);
     // Con una ventana (reclutar, habilidades...) abierta la viñeta se hace
     // compacta y sube arriba para no tapar sus botones.
     const popupEl = document.querySelector(".backpack-overlay .backpack-panel");
@@ -1260,6 +1242,9 @@ const Tutorial = {
     } catch (e) {}
     if (!el || !el.isConnected) {
       P.classList.remove("tut-pointer--on");
+      // Sin objetivo (pasos de solo texto): se encuadra lo principal (unidad elegida u Obelisco)
+      // para que la viñeta y los botones no lo tapen.
+      this._frameDefault();
       return;
     }
     const r = el.getBoundingClientRect();
@@ -1269,7 +1254,7 @@ const Tutorial = {
     }
     // Elementos fijos de la interfaz (cara del personaje, botones...) nunca mueven la cámara.
     this._noPan = !!(el.closest && !el.closest(".board-camera"));
-    this._avoidOverlap(r);
+    this._avoidOverlap(r, el);
     const size = Math.max(54, Math.min(120, Math.max(r.width, r.height) + 14));
     const cx = r.left + r.width / 2;
     const cy = r.top + r.height / 2;

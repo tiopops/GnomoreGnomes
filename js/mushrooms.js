@@ -344,7 +344,17 @@ const Mushrooms = {
     this._explode(m, unit);
   },
 
+  _exploding: 0,
   async _explode(m, dyingUnit) {
+    this._exploding++;
+    try {
+      await this._explodeInner(m, dyingUnit);
+    } finally {
+      this._exploding--;
+    }
+  },
+
+  async _explodeInner(m, dyingUnit) {
     const carrier = dyingUnit || Units.list.find((x) => x.id === m.heldBy);
     if (!carrier) {
       this.consume(m);
@@ -384,6 +394,14 @@ const Mushrooms = {
     for (const u of toRemove) {
       await Units.removeUnit(u);
       if (typeof Gnome !== "undefined") Gnome.dropHeldBy(u);
+    }
+    // Onda expansiva: las unidades adyacentes que sobreviven salen despedidas 1 casilla en la dirección
+    // contraria al centro de la explosión (si hay un obstáculo detrás, no se mueven; en el agua se ahogan).
+    if (typeof Abilities !== "undefined" && Abilities._pushBackFixed) {
+      const centro = { row, col, team: carrier.team, id: carrier.id };
+      for (const u of victims.filter((x) => Units.list.includes(x))) {
+        await Abilities._pushBackFixed(u, centro, 1);
+      }
     }
     await this._damageStructures(row, col, carrier.team);
     if (typeof Obelisks !== "undefined" && Obelisks.refreshAll) Obelisks.refreshAll();
