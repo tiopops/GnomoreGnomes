@@ -987,7 +987,7 @@ const Units = {
     // tener que tocar cada mecánica por separado.
     if (unit.typeId === "punoroca") path = this._applyPunorocaWobble(unit, path);
     // Lava (js/volcano.js): la CPU nunca camina hacia una muerte segura por lava.
-    if (unit.team !== "player" && typeof Volcano !== "undefined") path = Volcano.aiGuardPath(unit, path);
+    if (unit.team !== "player" && !(typeof Net !== "undefined" && Net.active) && typeof Volcano !== "undefined") path = Volcano.aiGuardPath(unit, path); // (en multijugador el rival es humano: no se le recorta el camino)
     // Arbustos (js/bushes.js) — cualquier desplazamiento, sea a donde sea,
     // implica dejar de estar escondido en el arbusto que se ocupara hasta
     // ahora (si había alguno): se limpia ANTES del primer salto, no al
@@ -1275,7 +1275,7 @@ const Units = {
         unit.facing = unit.facing === "left" ? "right" : "left";
         this._applyFacing(unit);
         tick();
-      }, 1400 + Math.random() * 800);
+      }, 1400 + NR() * 800);
     };
     tick();
   },
@@ -1325,8 +1325,8 @@ const Units = {
           lastSplash = now;
           if (typeof SFX !== "undefined" && SFX.drownFlail) SFX.drownFlail();
           if (typeof Combat !== "undefined") {
-            Combat._waterDrops(x + (Math.random() - 0.5) * 50, y + 6, z, 3, 0.5);
-            if (Math.random() < 0.55) Combat._waterRing(x + (Math.random() - 0.5) * 40, y + 4, z - 2, false);
+            Combat._waterDrops(x + (NR() - 0.5) * 50, y + 6, z, 3, 0.5);
+            if (NR() < 0.55) Combat._waterRing(x + (NR() - 0.5) * 40, y + 4, z - 2, false);
           }
         }
         if (t < 1) requestAnimationFrame(f); else resolve();

@@ -283,7 +283,7 @@ const Resources = {
     else spriteEl.src = def.spriteUrl;
     spriteEl.alt = "";
     spriteEl.draggable = false;
-    if (kind !== "cofre" && Math.random() < 0.5) spriteEl.style.scale = "-1 1"; // volteo aleatorio
+    if (kind !== "cofre" && NR() < 0.5) spriteEl.style.scale = "-1 1"; // volteo aleatorio
     // Pedido explícito: "todo en el escenario se mueve al compas...pon
     // delays en las animaciones de los elementos del escenario para que no
     // todos los arboles se muevan igual" — .resource-node__sprite comparte
@@ -293,7 +293,7 @@ const Resources = {
     // el reloj de la animación de cada instancia a un punto distinto del
     // ciclo desde el primer fotograma (con uno positivo se verían todos
     // quietos un rato antes de arrancar, que no es lo que queremos).
-    spriteEl.style.animationDelay = `-${(Math.random() * 4).toFixed(2)}s`;
+    spriteEl.style.animationDelay = `-${(NR() * 4).toFixed(2)}s`;
     el.appendChild(spriteEl);
     if (typeof Shadows !== "undefined") Shadows.attach(spriteEl);
 
@@ -563,7 +563,7 @@ const Resources = {
     if (!this.list.includes(node) || node.opened) return;
     if (node.kind === "cofre") {
       // La reliquia del jugador necesita sitio en la mochila.
-      if (unit.team === "player" && typeof Backpack !== "undefined" && !Backpack.hasFreeSlot()) {
+      if (unit.team === "player" && !(typeof Net !== "undefined" && Net.active) && typeof Backpack !== "undefined" && !Backpack.hasFreeSlot()) {
         if (typeof SFX !== "undefined") SFX.dropFail();
         Units.spawnFloatingText(unit, "¡MOCHILA LLENA!", { className: "dmg-popup" });
         return;
@@ -618,13 +618,17 @@ const Resources = {
       setTimeout(() => SFX.captureVillage && SFX.captureVillage(), 160);
     }
     const team = unit.team;
+    // Multijugador: la reliquia se concede YA (igual que la del rival) para que ambos clientes
+    // lo sepan al instante; el vuelo hasta la mochila queda como efecto.
+    const mpNow = team === "player" && typeof Net !== "undefined" && Net.active;
+    if (mpNow) Relics.grant("player", relicId);
     if (team === "player") {
       setTimeout(() => {
         this._spawnPickupAt(node.row, node.col, null, {
           iconUrl: relicDef.iconUrl,
           big: true,
           onArrive: () => {
-            Relics.grant("player", relicId);
+            if (!mpNow) Relics.grant("player", relicId);
             this._fadeChest(node);
             if (typeof SFX !== "undefined") SFX.itemEaten();
             if (typeof Backpack !== "undefined" && Backpack._btnEl) {
@@ -681,6 +685,11 @@ const Resources = {
     // recolectando su recurso de verdad aunque el jugador no lo vea
     // desaparecer todavía (su economía no depende de la niebla DEL
     // JUGADOR).
+    // Multijugador: el recuento se suma YA, igual que el del rival, para que ambos clientes lo sepan
+    // exacto (la animación de vuelo a la mochila queda solo como efecto, ver _collect).
+    if (isPlayerCollecting && typeof Net !== "undefined" && Net.active) {
+      this.counts[def.resourceId] = (this.counts[def.resourceId] || 0) + 1 + (typeof Skills !== "undefined" ? Skills.rank("player", "recolector") : 0);
+    }
     if (isEnemyCollecting) { const _c = this.countsFor(destroyer.team); _c[def.resourceId] = (_c[def.resourceId] || 0) + 1 + (typeof Skills !== "undefined" ? Skills.rank(destroyer.team, "recolector") : 0); }
     if (!isPlayerCollecting && typeof Fog !== "undefined" && Fog.perceivedGrid && !Fog.isPerceived(node.row, node.col)) {
       this._ghosts.push({ row: node.row, col: node.col, el: node.el });
@@ -778,6 +787,24 @@ const Resources = {
   },
 
   _collect(resourceId) {
+    if (typeof Net !== "undefined" && Net.active) { this._collectFx(); return; } // (el recuento ya se sumó al romper la fuente)
+    this._collectLegacy(resourceId);
+  },
+
+  // Solo efectos al "recibir" un recurso (sonido, pulso de la mochila).
+  _collectFx() {
+    if (typeof SFX !== "undefined") SFX.itemEaten();
+    if (typeof Backpack !== "undefined" && Backpack._btnEl) {
+      const btn = Backpack._btnEl;
+      btn.classList.remove("backpack-btn--pulse");
+      void btn.offsetWidth;
+      btn.classList.add("backpack-btn--pulse");
+      setTimeout(() => btn.classList.remove("backpack-btn--pulse"), 380);
+    }
+    if (typeof Backpack !== "undefined" && Backpack.refreshResourceBadges) Backpack.refreshResourceBadges();
+  },
+
+  _collectLegacy(resourceId) {
     // Pedido explícito: "los recursos ocupan espacio en la mochila...son
     // como un objeto mas que se consume como moneda en la armeria, pero
     // deben ocupar espacio, por eso tenemos 8 huecos" — un recurso del que

@@ -920,7 +920,7 @@ const Backpack = {
     });
   },
 
-  _placeAtrapaPinrelesAt(uid, row, col) {
+  _placeAtrapaPinrelesAt(uid, row, col, team = "player") {
     this._placingUid = null;
     Units.markerEls = Units.markerEls.filter((m) => {
       if (m._owner !== "backpack") return true;
@@ -956,7 +956,9 @@ const Backpack = {
     if (typeof Fog !== "undefined") el.classList.toggle("unit--fog-hidden", Fog.isFogged(row, col));
 
     SFX.itemPlace();
-    this.traps.push({ uid, itemId: "atrapapinreles", row, col, el });
+    // Multijugador: el cepo del rival es invisible para ti hasta que alguien cae en él.
+    if (team !== "player") el.style.display = "none";
+    this.traps.push({ uid, itemId: "atrapapinreles", row, col, el, ownerTeam: team });
   },
 
   // ---------- TotemVision ----------
@@ -985,7 +987,7 @@ const Backpack = {
     });
   },
 
-  _placeTotemVisionAt(uid, row, col) {
+  _placeTotemVisionAt(uid, row, col, forTeam) {
     this._placingUid = null;
     Units.markerEls = Units.markerEls.filter((m) => {
       if (m._owner !== "backpack") return true;
@@ -996,7 +998,7 @@ const Backpack = {
     this._restoreNormalRange();
 
     const unit = Units.list.find((u) => u.id === Units.selectedId);
-    const team = unit ? unit.team : "player";
+    const team = forTeam || (unit ? unit.team : "player");
     if (typeof TotemVision !== "undefined") TotemVision.place(team, row, col);
     SFX.itemPlace();
   },
@@ -1038,7 +1040,7 @@ const Backpack = {
     });
   },
 
-  _placeSenueloAt(uid, row, col) {
+  _placeSenueloAt(uid, row, col, forTeam) {
     this._placingUid = null;
     Units.markerEls = Units.markerEls.filter((m) => {
       if (m._owner !== "backpack") return true;
@@ -1049,7 +1051,7 @@ const Backpack = {
     this._restoreNormalRange();
 
     const unit = Units.list.find((u) => u.id === Units.selectedId);
-    const team = unit ? unit.team : "player";
+    const team = forTeam || (unit ? unit.team : "player");
     // La mecánica de verdad (hacerse pasar por un gnomo suelto, explotar al
     // intentar cogerlo) vive en Gnome.spawnDecoy — ver js/gnome.js, reutiliza
     // TODO el sistema de gnomos sueltos (niebla, aproximación, detección de
@@ -1066,9 +1068,10 @@ const Backpack = {
   // resto del camino: "pierde automaticamente el turno" no tendría sentido
   // si el personaje pudiera seguir andando después).
   checkTrapAt(unit, row, col) {
-    if (!unit || unit.team === "player") return false; // el jugador nunca activa su propio cepo
+    if (!unit) return false;
     const trap = this.traps.find((t) => t.row === row && t.col === col);
     if (!trap) return false;
+    if (unit.team === (trap.ownerTeam || "player")) return false; // nadie activa su propio cepo
     this._springTrap(trap, unit);
     return true;
   },
@@ -1119,7 +1122,7 @@ const Backpack = {
     unit.hp = Math.max(0, unit.hp - 1);
     Units.updateHpBar(unit);
     if (unit.hp <= 0) {
-      if (typeof Glory !== "undefined") Glory.queueKillBonus("player"); // el cepo es del jugador, el enemigo siempre es quien cae en él
+      if (typeof Glory !== "undefined") Glory.queueKillBonus(trap.ownerTeam || "player"); // el cepo es de quien lo puso; quien cae en él es el rival
       Units.removeUnit(unit).then(() => {
         if (typeof Gnome !== "undefined") Gnome.dropHeldBy(unit);
       });
@@ -1235,19 +1238,24 @@ const Backpack = {
     window.addEventListener("click", this._katapumPickHandler, { capture: true });
   },
 
-  _launchRock(target) {
-    if (!((Resources.counts.fragmento || 0) > 0) || !this.canThrowRock("player")) return;
-    this.markRockThrown("player");
-    Resources.counts.fragmento--;
-    if (Resources.counts.fragmento <= 0) delete Resources.counts.fragmento;
-    this._renderSlots();
-    if (this.refreshResourceBadges) this.refreshResourceBadges();
-    const selected = Units.list.find((u) => u.id === Units.selectedId && u.team === "player");
+  _launchRock(target, team = "player") {
+    const counts = Resources.countsFor(team);
+    if (!((counts.fragmento || 0) > 0) || !this.canThrowRock(team)) return;
+    this.markRockThrown(team);
+    counts.fragmento--;
+    if (counts.fragmento <= 0) delete counts.fragmento;
+    if (team === "player") {
+      this._renderSlots();
+      if (this.refreshResourceBadges) this.refreshResourceBadges();
+    }
+    const selected = Units.list.find((u) => u.id === Units.selectedId && u.team === team);
     if (selected) Units.faceTowardsTile(selected, target.row, target.col);
-    this._animateRockThrow(target);
+    // El rival (multijugador) no tiene tu mochila: sin vuelo desde el botón, solo el impacto.
+    if (team !== "player") return new Promise((r) => setTimeout(r, 450)).then(() => this._rockImpact(target, team));
+    return new Promise((resolve) => this._animateRockThrow(target, () => resolve(this._rockImpact(target, team))));
   },
 
-  _animateRockThrow(target) {
+  _animateRockThrow(target, onDone) {
     const btnEl = this._btnEl;
     const startRect = btnEl ? btnEl.getBoundingClientRect() : { left: 40, top: 700, width: 60, height: 60 };
     const endRect = target.el.getBoundingClientRect();
@@ -1274,7 +1282,7 @@ const Backpack = {
     el.appendChild(img);
     document.body.appendChild(el);
     if (typeof SFX !== "undefined" && SFX.rockThrow) SFX.rockThrow(duration / 1000);
-    const spin = (Math.random() < 0.5 ? -1 : 1) * (540 + Math.random() * 360);
+    const spin = (NR() < 0.5 ? -1 : 1) * (540 + NR() * 360);
     const t0 = performance.now();
     const step = (now) => {
       const t = Math.min(1, (now - t0) / duration);
@@ -1286,23 +1294,23 @@ const Backpack = {
       if (t < 1) requestAnimationFrame(step);
       else {
         el.remove();
-        this._rockImpact(target);
+        if (onDone) onDone(); else this._rockImpact(target, "player");
       }
     };
     requestAnimationFrame(step);
   },
 
-  _rockImpact(target) {
+  _rockImpact(target, team = "player") {
     if (typeof SFX !== "undefined" && SFX.rockHit) SFX.rockHit();
-    if (target.kind === "volcano") { Volcano.onRockHit(target.ref, "player"); return; }
+    if (target.kind === "volcano") return Volcano.onRockHit(target.ref, team);
     if (target.kind === "lava") { Volcano.extinguish(target.ref); return; }
     if (target.kind === "firegnome") { Volcano.removeGnome(target.ref); return; }
     if (typeof Drums !== "undefined") {
       const c = getTileCenter(target.row, target.col, Units.boardSize);
       Drums._impact(c.x, c.y, target, true);
       const unit = target.kind === "unit" ? target.ref : null;
-      Drums._applyDamage(target, 1, "player");
-      if (unit && unit.hp <= 0 && typeof Glory !== "undefined") Glory.queueKillBonus("player");
+      Drums._applyDamage(target, 1, team);
+      if (unit && unit.hp <= 0 && typeof Glory !== "undefined") Glory.queueKillBonus(team);
     }
   },
 
@@ -1312,14 +1320,15 @@ const Backpack = {
   // criterio más natural de "quién lo está usando"); si no hay ninguno
   // seleccionado, el personaje propio más cercano al objetivo elegido —
   // un cohete necesita salir de algún sitio del tablero.
-  _launchKatapum(uid, target) {
+  _launchKatapum(uid, target, team = "player") {
     this.inventory = this.inventory.filter((it) => it.uid !== uid);
+    this._katapumTeam = team;
 
-    const selected = Units.list.find((u) => u.id === Units.selectedId && u.team === "player");
+    const selected = Units.list.find((u) => u.id === Units.selectedId && u.team === team);
     let launcher = selected;
     if (!launcher) {
       const best = Units.list
-        .filter((u) => u.team === "player")
+        .filter((u) => u.team === team)
         .reduce((acc, u) => {
           const d = Math.max(Math.abs(u.row - target.row), Math.abs(u.col - target.col));
           return !acc || d < acc.d ? { u, d } : acc;
@@ -1329,7 +1338,7 @@ const Backpack = {
     if (!launcher) return; // caso límite: no queda ningún personaje propio en pie
 
     Units.faceTowardsTile(launcher, target.row, target.col);
-    this._animateKatapumThrow(launcher, target);
+    return this._animateKatapumThrow(launcher, target);
   },
 
   // Vuelo del cohete: JS fotograma a fotograma en línea recta (a
@@ -1437,8 +1446,7 @@ const Backpack = {
           el.remove();
           trailEl.classList.add("katapum-trail--fadeout");
           setTimeout(() => trailEl.remove(), 220);
-          this._explodeKatapum(target);
-          resolve();
+          Promise.resolve(this._explodeKatapum(target)).then(resolve, resolve);
         }
       };
       requestAnimationFrame(step);
@@ -1448,9 +1456,9 @@ const Backpack = {
   _spawnKatapumTrailParticle(x, y) {
     const el = document.createElement("div");
     el.className =
-      "katapum-particle katapum-particle--flying" + (Math.random() < 0.5 ? " katapum-particle--red" : " katapum-particle--yellow");
-    el.style.left = `${x + (Math.random() * 16 - 8)}px`;
-    el.style.top = `${y + (Math.random() * 16 - 8)}px`;
+      "katapum-particle katapum-particle--flying" + (NR() < 0.5 ? " katapum-particle--red" : " katapum-particle--yellow");
+    el.style.left = `${x + (NR() * 16 - 8)}px`;
+    el.style.top = `${y + (NR() * 16 - 8)}px`;
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 420);
   },
@@ -1502,9 +1510,9 @@ const Backpack = {
     this._spawnKatapumBlast(target.row, target.col);
 
     if (target.hp <= 0) {
-      if (typeof Glory !== "undefined") Glory.queueKillBonus("player"); // el cohete es del jugador, el objetivo siempre es rival
-      Units.removeUnit(target).then(() => {
-        if (typeof Gnome !== "undefined") Gnome.dropHeldBy(target);
+      if (typeof Glory !== "undefined") Glory.queueKillBonus(this._katapumTeam || "player"); // el cohete es de quien lo lanza, el objetivo siempre es rival
+      return Units.removeUnit(target).then(() => {
+        if (typeof Gnome !== "undefined") return Gnome.dropHeldBy(target);
       });
     }
   },

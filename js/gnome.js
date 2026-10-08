@@ -425,7 +425,7 @@ function createGnomeInstance() {
         // crear el gnomo, para que ya vaya más rápido el turno siguiente
         // aunque los puntos hayan subido a media espera.
         const factor = this._nervousnessFactor();
-        const delay = (1500 + Math.random() * 2500) * factor;
+        const delay = (1500 + NR() * 2500) * factor;
         this._flipTimer = setTimeout(() => {
           if (this.el && !this.heldBy && !this.busy) {
             this.facing = this.facing === "left" ? "right" : "left";
@@ -469,7 +469,7 @@ function createGnomeInstance() {
     _maybeIdleHop() {
       if (this.points < GNOME_HOP_MIN_POINTS) return;
       const chance = Math.min(GNOME_HOP_MAX_CHANCE, (this.points - GNOME_HOP_MIN_POINTS) * 0.05);
-      if (Math.random() > chance) return;
+      if (NR() > chance) return;
       this.spriteEl.classList.remove("unit__sprite--hop");
       void this.spriteEl.offsetWidth;
       this.spriteEl.classList.add("unit__sprite--hop");
@@ -1124,7 +1124,7 @@ function createGnomeInstance() {
       // el gnomo se aleja 3 casillas de los jugadores — mismo patrón que
       // dropFromDyingUnit: el jugador vivo más cercano como referencia.
       const nearestPlayer = Units.list
-        .filter((u) => u.team === "player")
+        .filter((u) => u.team === "player" || (typeof Net !== "undefined" && Net.active))
         .reduce((best, u) => {
           const d = Math.max(Math.abs(u.row - this.row), Math.abs(u.col - this.col));
           return !best || d < best.d ? { u, d } : best;
@@ -1426,7 +1426,7 @@ function createGnomeInstance() {
       // loseta donde ha caído en una dirección al azar (_fleeAwayFrom ya lo
       // resuelve así cuando from == la posición actual del gnomo).
       const nearestPlayer = Units.list
-        .filter((u) => u.team === "player")
+        .filter((u) => u.team === "player" || (typeof Net !== "undefined" && Net.active))
         .reduce((best, u) => {
           const d = Math.max(Math.abs(u.row - this.row), Math.abs(u.col - this.col));
           return !best || d < best.d ? { u, d } : best;
@@ -1462,7 +1462,7 @@ function createGnomeInstance() {
       await new Promise((resolve) => setTimeout(resolve, 260));
 
       const nearestPlayer = Units.list
-        .filter((u) => u.team === "player")
+        .filter((u) => u.team === "player" || (typeof Net !== "undefined" && Net.active))
         .reduce((best, u) => {
           const d = Math.max(Math.abs(u.row - this.row), Math.abs(u.col - this.col));
           return !best || d < best.d ? { u, d } : best;
@@ -1750,13 +1750,17 @@ const Gnome = {
   // GnomeInstance.reset) y vacía la lista; el DOM viejo ya lo habrá borrado
   // renderMap (mapgen.js) al pintar el escenario nuevo.
   resetAll() {
+    this._nextGid = 1;
     this.list.forEach((g) => g.reset());
     this.list = [];
     this._hideHoldingActions();
   },
 
+  _nextGid: 1,
   spawnNear(row, col) {
     const instance = createGnomeInstance();
+    instance.gid = this._nextGid++;
+    if (typeof Net !== "undefined") Net.wrapInstance(instance);
     instance.spawnNear(row, col);
     this.list.push(instance);
     return instance;
@@ -1772,6 +1776,8 @@ const Gnome = {
   // spawn() porque spawn() los consulta para decidir qué textura usar.
   spawnDecoy(team, row, col) {
     const instance = createGnomeInstance();
+    instance.gid = this._nextGid++;
+    if (typeof Net !== "undefined") Net.wrapInstance(instance);
     instance.isDecoy = true;
     instance.ownerTeam = team;
     instance.spawn(row, col);
@@ -2109,9 +2115,11 @@ const Gnome = {
     let guard = 0;
     while (this.list.filter((g) => !g.heldBy && !g.isDecoy).length < this.MIN_LOOSE && guard++ < 6) {
       let spot = null;
+      // Multijugador: sorteo propio (según el nº de gnomos creados) para no depender del ritmo de las animaciones.
+      const rnd = typeof Net !== "undefined" && Net.active ? GGRand.local(`loose|${Net.seed}|${this._nextGid}`) : Math.random;
       for (let attempts = 0; attempts < 200 && !spot; attempts++) {
-        const row = Math.floor(Math.random() * size);
-        const col = Math.floor(Math.random() * size);
+        const row = Math.floor(rnd() * size);
+        const col = Math.floor(rnd() * size);
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
         if (Units.unitAt(row, col) || this.isAt(row, col)) continue;
         spot = { row, col };

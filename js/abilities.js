@@ -366,27 +366,24 @@ const Abilities = {
     const { x: contentX, y: contentY } = BoardView.clientToContent(cx, cy);
     const { row, col } = getTileFromPoint(contentX, contentY, Units.boardSize);
 
-    if (typeof Fog !== "undefined") {
-      Fog.revealAround(row, col, 3);
-      // Pedido explícito: "la zona se revela sin niebla de guerra durante
-      // 4 segundos, despues la niebla se apodera de la zona de nuevo" —
-      // el terreno de revealAround, justo arriba, se queda revelado para
-      // siempre (memoria, como el resto del proyecto); esto añade 4s de
-      // percepción EN DIRECTO sobre esa misma zona, así que cualquier
-      // rival que hubiera ahí se ve de verdad durante esa ventana, no solo
-      // el paisaje vacío (ver la nota larga en Fog.addTemporaryPerception).
-      Fog.addTemporaryPerception(row, col, 3, 4000);
+    this._castVision(unit, row, col);
+  },
+
+  // Visión Lejana ya apuntada: revela la zona 4 s en directo (y la deja en
+  // memoria). En multijugador el rival solo gasta la habilidad: lo que ve él
+  // no se te enseña.
+  _castVision(unit, row, col) {
+    if (unit.team === "player") {
+      if (typeof Fog !== "undefined") {
+        Fog.revealAround(row, col, 3);
+        Fog.addTemporaryPerception(row, col, 3, 4000);
+      }
+      SFX.visionReveal();
+      this._visionWave(row, col);
+      Units.spawnFloatingText(unit, "¡VISIÓN!", { className: "dmg-popup popup--good" });
     }
-    // Pedido explícito: "vision lejana al usarse debe reproducir un
-    // efecto de sonido agradable como de magia reveladora" — en vez del
-    // click genérico de UI de antes.
-    SFX.visionReveal();
-    this._visionWave(row, col);
-    Units.spawnFloatingText(unit, "¡VISIÓN!", { className: "dmg-popup popup--good" });
     this._consume(unit);
-    // La unidad sigue seleccionada tras usarla (puede que le quede la otra
-    // acción) — vuelve a mostrar su radio normal, oculto al empezar a
-    // apuntar (ver _startVisionTargeting).
+    // La unidad sigue seleccionada tras usarla — vuelve a mostrar su radio normal.
     this._restoreNormalRange(unit);
   },
 
@@ -511,7 +508,7 @@ const Abilities = {
     this._consume(unit);
     await this._throwMineFx(unit, row, col);
     this._placeMineAt(unit, row, col);
-    this._mineLandFx(row, col);
+    if (unit.team === "player") this._mineLandFx(row, col);
     // La unidad sigue seleccionada tras colocar la mina (puede que le
     // quede la otra acción) — recupera su radio normal.
     this._restoreNormalRange(unit);
@@ -606,15 +603,15 @@ const Abilities = {
       { width: "170px", height: "92px", opacity: 0, borderWidth: "1px" },
     ], { duration: 620, easing: "cubic-bezier(.15,.7,.3,1)", fill: "both" }).onfinish = () => ring.remove();
     for (let i = 0; i < 10; i++) {
-      const sz = 16 + Math.random() * 16;
+      const sz = 16 + NR() * 16;
       const d = document.createElement("div");
       d.className = "mine-puff";
-      d.style.cssText = `left:${c.x + (Math.random() - 0.5) * 30}px;top:${c.y - 6}px;width:${sz}px;height:${sz * 0.8}px`;
+      d.style.cssText = `left:${c.x + (NR() - 0.5) * 30}px;top:${c.y - 6}px;width:${sz}px;height:${sz * 0.8}px`;
       Units.container.appendChild(d);
       d.animate([
         { transform: "translate(-50%,-50%) scale(.4)", opacity: 0.9 },
-        { transform: `translate(${(Math.random() - 0.5) * 90}px,${-14 - Math.random() * 38}px) scale(2.1)`, opacity: 0 },
-      ], { duration: 800 + Math.random() * 350, easing: "ease-out", fill: "both" }).onfinish = () => d.remove();
+        { transform: `translate(${(NR() - 0.5) * 90}px,${-14 - NR() * 38}px) scale(2.1)`, opacity: 0 },
+      ], { duration: 800 + NR() * 350, easing: "ease-out", fill: "both" }).onfinish = () => d.remove();
     }
   },
 
@@ -646,6 +643,8 @@ const Abilities = {
     // que ya usan el cepo AtrapaPinreles/Setarcoiris (ver backpack.js) para
     // que el objeto se vea siempre por encima de quien lo pise.
     el.style.zIndex = String(typeof Bushes !== "undefined" ? Bushes.trapZ(row, col) : (row + col) * 10 + 6);
+    // Multijugador: la mina del rival es invisible para ti hasta que explota.
+    if (unit.team !== "player") el.style.display = "none";
     this._mines.push({ row, col, ownerTeam: unit.team, el });
     SFX.click();
   },
@@ -787,6 +786,7 @@ const Abilities = {
     // rival junto a él (fuera de la percepción del UrgaMentes) sigue oculto y no se
     // le puede pegar.
     if (typeof Fog !== "undefined" && Fog.applyVisibility) Fog.applyVisibility();
+    if (typeof Net !== "undefined" && Net.active && Net._replaying) return; // el rival controla a esa unidad: tú no la seleccionas
     Units.deselect();
     Units.select(target);
   },
@@ -932,31 +932,31 @@ const Abilities = {
     ], { duration: 620, easing: "cubic-bezier(.15,.7,.3,1)", fill: "both" }), ring);
     const cols = ["#8b7355", "#6b5a43", "#a08a68", "#575049"];
     for (let i = 0; i < 14; i++) {
-      const sz = 8 + Math.random() * 10;
+      const sz = 8 + NR() * 10;
       const f = add("punch-rock", c.x, c.y - 10, 2910);
       f.style.width = f.style.height = `${sz}px`;
       f.style.background = cols[i % 4];
-      const ang = (i / 14) * Math.PI * 2 + Math.random() * 0.4;
-      const v = 70 + Math.random() * 90;
+      const ang = (i / 14) * Math.PI * 2 + NR() * 0.4;
+      const v = 70 + NR() * 90;
       const tx = Math.cos(ang) * v, ty = Math.sin(ang) * v * 0.5;
       done(f.animate([
         { transform: "translate(-50%,-50%) rotate(0)", opacity: 1 },
-        { transform: `translate(calc(-50% + ${tx * 0.6}px),calc(-50% + ${ty - 90 - Math.random() * 50}px)) rotate(${180 + Math.random() * 200}deg)`, opacity: 1, offset: 0.45 },
-        { transform: `translate(calc(-50% + ${tx}px),calc(-50% + ${ty + 30}px)) rotate(${360 + Math.random() * 300}deg)`, opacity: 0 },
-      ], { duration: 800 + Math.random() * 300, easing: "cubic-bezier(.3,.6,.5,1)", fill: "both" }), f);
+        { transform: `translate(calc(-50% + ${tx * 0.6}px),calc(-50% + ${ty - 90 - NR() * 50}px)) rotate(${180 + NR() * 200}deg)`, opacity: 1, offset: 0.45 },
+        { transform: `translate(calc(-50% + ${tx}px),calc(-50% + ${ty + 30}px)) rotate(${360 + NR() * 300}deg)`, opacity: 0 },
+      ], { duration: 800 + NR() * 300, easing: "cubic-bezier(.3,.6,.5,1)", fill: "both" }), f);
     }
     for (let i = 0; i < 7; i++) {
-      const d = add("punch-dust", c.x + (Math.random() - 0.5) * 30, c.y + 10 + (Math.random() - 0.5) * 10, 2850);
+      const d = add("punch-dust", c.x + (NR() - 0.5) * 30, c.y + 10 + (NR() - 0.5) * 10, 2850);
       done(d.animate([
         { transform: "translate(-50%,-50%) scale(.4)", opacity: 0.9 },
-        { transform: `translate(${(Math.random() - 0.5) * 60 - 10}px,${-20 - Math.random() * 30}px) scale(2)`, opacity: 0 },
-      ], { duration: 650 + Math.random() * 250, easing: "ease-out", fill: "both" }), d);
+        { transform: `translate(${(NR() - 0.5) * 60 - 10}px,${-20 - NR() * 30}px) scale(2)`, opacity: 0 },
+      ], { duration: 650 + NR() * 250, easing: "ease-out", fill: "both" }), d);
     }
     // Temblor del tablero con la propiedad `translate` (no pisa el transform).
     const amp = 7, frames = [];
     for (let i = 0; i < 9; i++) {
       const a = amp * (1 - i / 9);
-      frames.push({ translate: `${(Math.random() - 0.5) * 2 * a}px ${(Math.random() - 0.5) * 2 * a}px` });
+      frames.push({ translate: `${(NR() - 0.5) * 2 * a}px ${(NR() - 0.5) * 2 * a}px` });
     }
     frames.push({ translate: "0px 0px" });
     Units.container.animate(frames, { duration: 380 });
@@ -969,18 +969,18 @@ const Abilities = {
     const c = getTileCenter(target.row, target.col, Units.boardSize);
     const stars = [];
     for (let i = 0; i < 4; i++) {
-      const sz = 36 + Math.random() * 10;
+      const sz = 36 + NR() * 10;
       const pts = [];
       for (let k = 0; k < 10; k++) {
-        const ang = (k / 10) * Math.PI * 2 - Math.PI / 2 + (Math.random() - 0.5) * 0.25;
-        const r = (k % 2 ? 4.2 : 10) * (0.8 + Math.random() * 0.4);
+        const ang = (k / 10) * Math.PI * 2 - Math.PI / 2 + (NR() - 0.5) * 0.25;
+        const r = (k % 2 ? 4.2 : 10) * (0.8 + NR() * 0.4);
         pts.push(`${(12 + Math.cos(ang) * r).toFixed(1)},${(12 + Math.sin(ang) * r).toFixed(1)}`);
       }
       const e = document.createElement("div");
       e.className = "punch-star";
       e.innerHTML = `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24"><polygon points="${pts.join(" ")}" fill="#fbbf24"/></svg>`;
       Units.container.appendChild(e);
-      stars.push({ e, ph: (i / 4) * Math.PI * 2, rot: Math.random() * 360 });
+      stars.push({ e, ph: (i / 4) * Math.PI * 2, rot: NR() * 360 });
     }
     const t0 = performance.now(), DUR = 2700;
     const frame = (t) => {
@@ -1266,8 +1266,8 @@ const Abilities = {
         const k = Math.min(1, (now - t0) / CH), e = ease(k);
         const tx = -vx * 26 * e, ty = -vy * 26 * e;
         const tremT = k > 0.5 ? (k - 0.5) * 2 * 2.2 : 0, tremG = k * 2.4;
-        thrown.el.style.translate = `${tx + (Math.random() - 0.5) * tremT}px ${ty + (Math.random() - 0.5) * tremT}px`;
-        goblin.el.style.translate = `${-vx * 14 * e + (Math.random() - 0.5) * tremG}px ${(Math.random() - 0.5) * tremG}px`;
+        thrown.el.style.translate = `${tx + (NR() - 0.5) * tremT}px ${ty + (NR() - 0.5) * tremT}px`;
+        goblin.el.style.translate = `${-vx * 14 * e + (NR() - 0.5) * tremG}px ${(NR() - 0.5) * tremG}px`;
         if (tS) tS.style.transform = `scale(${1 + 0.16 * e}, ${1 - 0.26 * e})`;
         if (gS) gS.style.transform = `scale(${1 + 0.04 * e}, ${1 - 0.07 * e})`;
         const rs = 1 - e;
@@ -1304,14 +1304,14 @@ const Abilities = {
       const d = document.createElement("div");
       d.className = "punch-dust";
       d.style.width = `${sz}px`; d.style.height = `${sz * 0.7}px`;
-      d.style.left = `${x + (Math.random() - 0.5) * 30}px`;
-      d.style.top = `${y + (Math.random() - 0.5) * 10}px`;
+      d.style.left = `${x + (NR() - 0.5) * 30}px`;
+      d.style.top = `${y + (NR() - 0.5) * 10}px`;
       d.style.zIndex = "2850";
       Units.container.appendChild(d);
       d.animate([
         { transform: "translate(-50%,-50%) scale(.4)", opacity: 0.9 },
-        { transform: `translate(${(Math.random() - 0.5) * 60 - 10}px,${-20 - Math.random() * 30}px) scale(2)`, opacity: 0 },
-      ], { duration: 650 + Math.random() * 250, easing: "ease-out", fill: "both" }).onfinish = () => d.remove();
+        { transform: `translate(${(NR() - 0.5) * 60 - 10}px,${-20 - NR() * 30}px) scale(2)`, opacity: 0 },
+      ], { duration: 650 + NR() * 250, easing: "ease-out", fill: "both" }).onfinish = () => d.remove();
     }
   },
 
@@ -1482,9 +1482,9 @@ const Abilities = {
     for (let i = 0; i < 14; i++) {
       const sp = document.createElement("i");
       sp.className = "recharge-fx__spark";
-      sp.style.setProperty("--x", `${(Math.random() - 0.5) * 100}px`);
-      sp.style.setProperty("--d", `${Math.random() * 0.35}s`);
-      sp.style.setProperty("--h", `${90 + Math.random() * 90}px`);
+      sp.style.setProperty("--x", `${(NR() - 0.5) * 100}px`);
+      sp.style.setProperty("--d", `${NR() * 0.35}s`);
+      sp.style.setProperty("--h", `${90 + NR() * 90}px`);
       fx.appendChild(sp);
     }
     unit.el.appendChild(fx);

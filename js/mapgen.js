@@ -817,7 +817,7 @@ function renderMap(map, container) {
     // exactamente a la vez se lee como un efecto de pantalla, no como niebla
     // de verdad. Negativo para que arranque ya a mitad de ciclo en vez de
     // hacer esperar a la primera loseta hasta que empiece su turno.
-    fogImg.style.animationDelay = `-${(Math.random() * 9).toFixed(2)}s`;
+    fogImg.style.animationDelay = `-${(NR() * 9).toFixed(2)}s`;
     fragment.appendChild(fogImg);
   });
 

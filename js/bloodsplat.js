@@ -14,7 +14,7 @@
    (sin fundido de entrada, aparece ya puesto) contrasta a propósito con la
    desaparición, que SÍ es un fundido de opacidad de
    BLOOD_SPLAT_FADE_MS. BLOOD_SPLAT_SPRITES es una lista pensada para
-   crecer: con un solo elemento hoy, Math.random() siempre cae en el mismo,
+   crecer: con un solo elemento hoy, NR() siempre cae en el mismo,
    pero añadir una segunda/tercera imagen el día de mañana no necesita
    tocar nada más que ese array.
 
@@ -62,7 +62,7 @@ const BloodSplat = {
   spawnAt(row, col, opts = {}) {
     if (typeof Fog !== "undefined" && Fog.isFogged(row, col)) return null;
 
-    const spriteUrl = BLOOD_SPLAT_SPRITES[Math.floor(Math.random() * BLOOD_SPLAT_SPRITES.length)];
+    const spriteUrl = BLOOD_SPLAT_SPRITES[Math.floor(NR() * BLOOD_SPLAT_SPRITES.length)];
 
     const el = document.createElement("div");
     el.className = "unit blood-splat";
@@ -78,8 +78,8 @@ const BloodSplat = {
     // Hierbajos._create: "dar sensación de variedad") — espejado + un
     // pelín de escala al azar, para que dos charcos seguidos en la misma
     // zona no se vean como calcados.
-    const flip = Math.random() < 0.5 ? -1 : 1;
-    const scale = (0.9 + Math.random() * 0.3) * (opts.scale || 1);
+    const flip = NR() < 0.5 ? -1 : 1;
+    const scale = (0.9 + NR() * 0.3) * (opts.scale || 1);
     spriteEl.style.transform = `scale(${(scale * flip).toFixed(2)}, ${scale.toFixed(2)})`;
     el.appendChild(spriteEl);
 

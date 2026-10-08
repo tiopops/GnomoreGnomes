@@ -120,7 +120,7 @@ const SFX = {
   // ligera variación de tono para que suene a "hablar".
   talk() {
     const notes = [392, 440, 494, 523, 587, 494, 440];
-    const f = notes[Math.floor(Math.random() * notes.length)] * (0.97 + Math.random() * 0.06);
+    const f = notes[Math.floor(NR() * notes.length)] * (0.97 + NR() * 0.06);
     const v = this._getVoice("tut-talk", f, "sine");
     if (v && this.ctx) {
       try {
@@ -421,12 +421,12 @@ const SFX = {
   },
   // Pataleo: chapoteo corto al ritmo de las sacudidas, con plips agudos al azar.
   drownFlail() {
-    this._noiseBurst(0.12, "bandpass", 900 + Math.random() * 500, 500, 0.2);
-    if (Math.random() < 0.6) this._tone(500 + Math.random() * 500, 900 + Math.random() * 500, 0.1, "sine", 0.12, 0.03);
+    this._noiseBurst(0.12, "bandpass", 900 + NR() * 500, 500, 0.2);
+    if (NR() < 0.6) this._tone(500 + NR() * 500, 900 + NR() * 500, 0.1, "sine", 0.12, 0.03);
   },
   // Burbujas: "glub glub" ascendentes.
   drownBubbles() {
-    [0, 0.11, 0.2, 0.34, 0.43, 0.55].forEach((d, i) => this._tone(260 + i * 30 + Math.random() * 60, 520 + i * 80, 0.14, "sine", 0.22, d));
+    [0, 0.11, 0.2, 0.34, 0.43, 0.55].forEach((d, i) => this._tone(260 + i * 30 + NR() * 60, 520 + i * 80, 0.14, "sine", 0.22, d));
   },
   // Plop final: gota grave y redonda.
   drownPlop() {
@@ -444,7 +444,7 @@ const SFX = {
       const len = Math.round(ctx.sampleRate * Math.max(0.2, dur));
       const buf = ctx.createBuffer(1, len, ctx.sampleRate);
       const d = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      for (let i = 0; i < len; i++) d[i] = NR() * 2 - 1;
       const n = ctx.createBufferSource();
       n.buffer = buf;
       const f = ctx.createBiquadFilter();
@@ -482,7 +482,7 @@ const SFX = {
       const len = Math.round(ctx.sampleRate * 0.09);
       const buf = ctx.createBuffer(1, len, ctx.sampleRate);
       const d = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      for (let i = 0; i < len; i++) d[i] = (NR() * 2 - 1) * Math.pow(1 - i / len, 3);
       const n = ctx.createBufferSource();
       n.buffer = buf;
       const f = ctx.createBiquadFilter();
@@ -506,7 +506,7 @@ const SFX = {
       const len = Math.round(ctx.sampleRate * dur);
       const buf = ctx.createBuffer(1, len, ctx.sampleRate);
       const d = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      for (let i = 0; i < len; i++) d[i] = NR() * 2 - 1;
       const n = ctx.createBufferSource();
       n.buffer = buf;
       const f = ctx.createBiquadFilter();
@@ -573,7 +573,7 @@ const SFX = {
     const L = Math.round(ctx.sampleRate * len);
     const b = ctx.createBuffer(1, L, ctx.sampleRate);
     const d = b.getChannelData(0);
-    for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / L, pow);
+    for (let i = 0; i < L; i++) d[i] = (NR() * 2 - 1) * Math.pow(1 - i / L, pow);
     return b;
   },
   _dKick(t, g) {
@@ -718,7 +718,7 @@ const SFX = {
         } catch (e) {}
       }
       const peak = soft ? 0.22 : 0.4;
-      const base = (soft ? 190 : 150) * (0.95 + Math.random() * 0.1);
+      const base = (soft ? 190 : 150) * (0.95 + NR() * 0.1);
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = "sine";
@@ -734,7 +734,7 @@ const SFX = {
       const len = Math.round(ctx.sampleRate * 0.05);
       const buf = ctx.createBuffer(1, len, ctx.sampleRate);
       const d = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+      for (let i = 0; i < len; i++) d[i] = (NR() * 2 - 1) * Math.pow(1 - i / len, 2);
       const n = ctx.createBufferSource();
       n.buffer = buf;
       const f = ctx.createBiquadFilter();
@@ -762,7 +762,7 @@ const SFX = {
         // propios samples (decae más rápido que la ganancia de fuera, ver
         // abajo) para que el "cuerpo" del ruido ya suene a explosión y no
         // solo a estática cortada en seco.
-        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.6);
+        data[i] = (NR() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.6);
       }
       const noise = ctx.createBufferSource();
       noise.buffer = buffer;
@@ -844,7 +844,7 @@ const SFX = {
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2.2);
+        data[i] = (NR() * 2 - 1) * Math.pow(1 - i / bufferSize, 2.2);
       }
       const noise = ctx.createBufferSource();
       noise.buffer = buffer;
@@ -876,7 +876,7 @@ const SFX = {
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.4);
+        data[i] = (NR() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.4);
       }
       const noise = ctx.createBufferSource();
       noise.buffer = buffer;

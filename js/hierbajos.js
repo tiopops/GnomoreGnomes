@@ -72,13 +72,13 @@ const Hierbajos = {
     let clusterAttempts = 0;
     while (clustersPlaced < HIERBAJOS_CLUSTER_COUNT && clusterAttempts < 800) {
       clusterAttempts++;
-      const centerRow = Math.floor(Math.random() * boardSize);
-      const centerCol = Math.floor(Math.random() * boardSize);
+      const centerRow = Math.floor(NR() * boardSize);
+      const centerCol = Math.floor(NR() * boardSize);
       if (!this._tileFree(centerRow, centerCol, boardSize)) continue;
 
       const count =
         HIERBAJOS_PER_CLUSTER_MIN +
-        Math.floor(Math.random() * (HIERBAJOS_PER_CLUSTER_MAX - HIERBAJOS_PER_CLUSTER_MIN + 1));
+        Math.floor(NR() * (HIERBAJOS_PER_CLUSTER_MAX - HIERBAJOS_PER_CLUSTER_MIN + 1));
       let placedInCluster = 0;
       let instanceAttempts = 0;
       // El propio centro cuenta como el primero del racimo.
@@ -86,8 +86,8 @@ const Hierbajos = {
       placedInCluster++;
       while (placedInCluster < count && instanceAttempts < 60) {
         instanceAttempts++;
-        const dr = Math.floor(Math.random() * (HIERBAJOS_CLUSTER_RADIUS * 2 + 1)) - HIERBAJOS_CLUSTER_RADIUS;
-        const dc = Math.floor(Math.random() * (HIERBAJOS_CLUSTER_RADIUS * 2 + 1)) - HIERBAJOS_CLUSTER_RADIUS;
+        const dr = Math.floor(NR() * (HIERBAJOS_CLUSTER_RADIUS * 2 + 1)) - HIERBAJOS_CLUSTER_RADIUS;
+        const dc = Math.floor(NR() * (HIERBAJOS_CLUSTER_RADIUS * 2 + 1)) - HIERBAJOS_CLUSTER_RADIUS;
         if (dr === 0 && dc === 0) continue;
         const row = centerRow + dr;
         const col = centerCol + dc;
@@ -149,8 +149,8 @@ const Hierbajos = {
     // rotate() el sprite vuelve a verse tan nítido como cualquier otro
     // elemento del escenario (rocas, árboles...). Se mantiene el
     // escalado+espejado para conservar la variedad.
-    const scale = 0.8 + Math.random() * 0.5; // 0.8 – 1.3
-    const flip = Math.random() < 0.5 ? -1 : 1;
+    const scale = 0.8 + NR() * 0.5; // 0.8 – 1.3
+    const flip = NR() < 0.5 ? -1 : 1;
     spriteEl.style.transform = `scale(${(scale * flip).toFixed(2)}, ${scale.toFixed(2)})`;
     el.appendChild(spriteEl);
 

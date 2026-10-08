@@ -43,8 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
     sx3: 0.02, sy3: 0.02, rot3: -1, tx3: -2,
   };
   function applyRandomPunchVars() {
-    const intensity = 0.75 + Math.random() * 0.55; // 0.75 – 1.3
-    const dir = Math.random() < 0.5 ? 1 : -1; // izquierda o derecha, al azar
+    const intensity = 0.75 + NR() * 0.55; // 0.75 – 1.3
+    const dir = NR() < 0.5 ? 1 : -1; // izquierda o derecha, al azar
     logo.style.setProperty("--punch-sx1", (1 - BASE.sx1 * intensity).toFixed(3));
     logo.style.setProperty("--punch-sy1", (1 + BASE.sy1 * intensity).toFixed(3));
     logo.style.setProperty("--punch-rot1", `${(BASE.rot1 * intensity * dir).toFixed(1)}deg`);

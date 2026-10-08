@@ -141,7 +141,7 @@ const Movement = {
     // comentario de moveTo, "la IA rival llama a esto directamente"), así
     // que un gnomo recién nacido (p.ej. justo tras onRoundEnd) huía también
     // de cada movimiento de la IA en su propio turno, no solo del jugador.
-    if (typeof Gnome !== "undefined" && unit.team === "player") await Gnome.reactToPlayerMove(unit);
+    if (typeof Gnome !== "undefined" && (unit.team === "player" || (typeof Net !== "undefined" && Net.active))) await Gnome.reactToPlayerMove(unit);
     Units.refreshRange(unit);
   },
 };

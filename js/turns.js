@@ -100,9 +100,11 @@ const Turns = {
   // deja limpio el contador, siempre empieza el jugador, y (re)crea/muestra
   // el botón de PASAR TURNO.
   reset() {
-    this.activeTeam = "player";
+    const mp = typeof Net !== "undefined" && Net.active;
+    const first = mp ? Net.firstTeam() : "player";
+    this.activeTeam = first;
     this.actionsUsed = {};
-    this._aiRunning = false;
+    this._aiRunning = mp ? first !== Net.myTeam : false;
     // "de momento habran un maximo de 30 turnos por partida" — empieza en
     // el turno 1, sube una vez por cada ronda completa (ver endTurn).
     this.roundNumber = 1;
@@ -116,8 +118,8 @@ const Turns = {
     // Puntos de Gloria (js/glory.js) — pedido explícito: "al comienzo de
     // cada turno se generan automaticamente 2 puntos de gloria", y el
     // primer turno de la partida (el del jugador) no es una excepción.
-    if (typeof Glory !== "undefined") Glory.grantTurnStart("player");
-    this._fireTurnStart("player");
+    if (typeof Glory !== "undefined") Glory.grantTurnStart(first);
+    this._fireTurnStart(first);
   },
 
   // true si `unit` puede gastar todavía alguna de sus 2 acciones ESTE turno
@@ -423,6 +425,8 @@ const Turns = {
   },
 
   async endTurn() {
+    // Multijugador online (js/net.js): el motor de turnos por asientos lleva el control.
+    if (typeof Net !== "undefined" && Net.active) return Net.localEndTurn();
     if (this._aiRunning || this.activeTeam !== "player") return;
     // Fin de partida por límite de turnos (ver Obelisks.checkTurnLimit,
     // js/obelisks.js) — ya se decidió un ganador, no se procesa ningún

@@ -406,22 +406,25 @@ const Armory = {
       return;
     }
 
-    counts.madera -= cost.madera;
-    counts.roca -= cost.roca;
-    counts.metal -= cost.metal;
-    if (typeof Backpack !== "undefined" && Backpack.refreshResourceBadges) Backpack.refreshResourceBadges();
-
-    this.state[team][kind] = lvl;
+    this.upgrade(team, kind, lvl);
     SFX.itemEaten();
-
-    // La Armadura sube el AGUANTE de todas las unidades ya en juego de este
-    // equipo, no solo las que se recluten después (pedido explícito: "de
-    // todas sus unidades") — el Arma no necesita nada más aquí: su bonus se
-    // lee en caliente en cada golpe (ver combat.js/obelisks.js/gnome.js).
-    if (kind === "armadura") this.applyDefenseBonusToTeam(team);
 
     this._selected = `${kind}-${lvl}`;
     this._renderTracks();
+  },
+
+  // Efecto de una mejora ya validada (también lo repite el cliente rival en
+  // multijugador, ver js/net-hooks.js). La Armadura sube el AGUANTE de todas
+  // las unidades ya en juego del equipo; el Arma se lee en caliente en cada golpe.
+  upgrade(team, kind, lvl) {
+    const cost = ARMORY_LEVEL_COST[lvl - 1];
+    const counts = Resources.countsFor(team);
+    counts.madera -= cost.madera;
+    counts.roca -= cost.roca;
+    counts.metal -= cost.metal;
+    if (team === "player" && typeof Backpack !== "undefined" && Backpack.refreshResourceBadges) Backpack.refreshResourceBadges();
+    this.state[team][kind] = lvl;
+    if (kind === "armadura") this.applyDefenseBonusToTeam(team);
   },
 
   // Pedido explícito: "los enemigos tambien pueden recoger recursos e

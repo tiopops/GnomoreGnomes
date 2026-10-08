@@ -261,14 +261,14 @@ const Volcano = {
     for (let i = 0; i < 26; i++) {
       const e = document.createElement("div");
       e.className = "volcano-ember";
-      e.style.left = `${base.x + (Math.random() - 0.5) * 120}px`;
+      e.style.left = `${base.x + (NR() - 0.5) * 120}px`;
       e.style.top = `${base.y - 110}px`;
       e.style.zIndex = "8000";
       Units.container.appendChild(e);
-      const dx = (Math.random() - 0.5) * 320, up = 160 + Math.random() * 220;
+      const dx = (NR() - 0.5) * 320, up = 160 + NR() * 220;
       e.animate(
         [{ transform: "translate(0,0) scale(1)", opacity: 1 }, { transform: `translate(${dx * 0.6}px,${-up}px) scale(1)`, opacity: 1, offset: 0.45 }, { transform: `translate(${dx}px,${-up + 260}px) scale(.4)`, opacity: 0 }],
-        { duration: 1100 + Math.random() * 800, easing: "ease-out", delay: Math.random() * 300 }
+        { duration: 1100 + NR() * 800, easing: "ease-out", delay: NR() * 300 }
       ).onfinish = () => e.remove();
     }
   },
@@ -475,13 +475,13 @@ const Volcano = {
     for (let i = 0; i < n; i++) {
       const p = document.createElement("div");
       p.className = "lava-steam";
-      p.style.left = `${x + (Math.random() - 0.5) * 70}px`;
+      p.style.left = `${x + (NR() - 0.5) * 70}px`;
       p.style.top = `${y}px`;
       p.style.zIndex = String((row + col) * 10 + 14);
       Units.container.appendChild(p);
       p.animate(
-        [{ transform: "translate(-50%,-30%) scale(.4)", opacity: 0.8 }, { transform: `translate(-50%,${-120 - Math.random() * 60}%) scale(1.5)`, opacity: 0 }],
-        { duration: 800 + Math.random() * 300, easing: "ease-out", delay: i * 60 }
+        [{ transform: "translate(-50%,-30%) scale(.4)", opacity: 0.8 }, { transform: `translate(-50%,${-120 - NR() * 60}%) scale(1.5)`, opacity: 0 }],
+        { duration: 800 + NR() * 300, easing: "ease-out", delay: i * 60 }
       ).onfinish = () => p.remove();
     }
   },
@@ -513,11 +513,11 @@ const Volcano = {
     img.className = "lava-puddle__sprite";
     img.draggable = false;
     img.alt = "";
-    const src = VOLCANO_LAVA_SPRITES[Math.floor(Math.random() * VOLCANO_LAVA_SPRITES.length)];
+    const src = VOLCANO_LAVA_SPRITES[Math.floor(NR() * VOLCANO_LAVA_SPRITES.length)];
     if (typeof SpriteQuality !== "undefined") SpriteQuality.register(img, src);
     else img.src = src;
-    const flip = Math.random() < 0.5 ? -1 : 1;
-    const sc = 0.92 + Math.random() * 0.22;
+    const flip = NR() < 0.5 ? -1 : 1;
+    const sc = 0.92 + NR() * 0.22;
     img.style.setProperty("--lv-s", `${flip * sc} ${sc}`);
     el.appendChild(img);
     const { x, y } = getTileCenter(row, col, Units.boardSize);

@@ -63,7 +63,7 @@ function renderRaceCard({ iconImg, title, flavor, virtues, weaknesses, onClick, 
   // cuenta, que no vayan al compas" — delay negativo aleatorio (mismo truco
   // que la niebla, ver mapgen.js) para desincronizar la animación
   // race-card-float (style.css) de cada tarjeta entre sí.
-  card.style.setProperty("--float-delay", `-${(Math.random() * 4.2).toFixed(2)}s`);
+  card.style.setProperty("--float-delay", `-${(NR() * 4.2).toFixed(2)}s`);
   card.innerHTML = `
     <span class="race-card__art-wrap">
       <img src="${iconImg}" alt="" class="race-card__art" />
@@ -135,8 +135,8 @@ function renderLevelCard(level) {
   card.className = "race-card level-card" + (level.available ? "" : " level-card--locked");
   card.style.setProperty("--card-accent", level.color);
   // Isla y rótulo flotan cada uno por su cuenta (ritmos y desfases distintos).
-  card.style.setProperty("--float-delay", `-${(Math.random() * 5).toFixed(2)}s`);
-  card.style.setProperty("--logo-delay", `-${(Math.random() * 3.4).toFixed(2)}s`);
+  card.style.setProperty("--float-delay", `-${(NR() * 5).toFixed(2)}s`);
+  card.style.setProperty("--logo-delay", `-${(NR() * 3.4).toFixed(2)}s`);
   const name = I18N.t(level.nameKey);
   const feats = (level.featureKeys || [])
     .map(
@@ -225,7 +225,7 @@ function populateOpponentSelect() {
   list.appendChild(root);
 }
 
-async function startMatch({ modeId, raceId, levelId, opponents }) {
+async function startMatch({ modeId, raceId, levelId, opponents, mp }) {
   // Bug reportado: "el juego no se abre....se queda asi" — al pulsar "1
   // rival" el marcador de Puntos de Gloria (Glory.init, dentro de
   // spawnTestUnits) llegaba a pintarse, pero la pantalla se quedaba
@@ -255,9 +255,11 @@ async function startMatch({ modeId, raceId, levelId, opponents }) {
     // rivales que también los quiera, basta con ampliar esta condición.
     if (typeof LevelAssets !== "undefined") LevelAssets.apply(levelId || "mushboom_forest");
     if (typeof Music !== "undefined") Music._refresh(); // pista del nivel
+    // Multijugador online (js/net.js): mundo con semilla compartida.
+    if (mp && typeof GGRand !== "undefined") GGRand.enable("w" + Net.seed);
     const map = generateMap(size, { rivers: opponents === 1 });
 
-    SaveGame.save({
+    if (!mp) SaveGame.save({
       modeId,
       raceId,
       levelId: levelId || "mushboom_forest",
@@ -274,7 +276,7 @@ async function startMatch({ modeId, raceId, levelId, opponents }) {
     // consultar TerrainMap.isWalkable para no colocar rivales/gnomos sobre
     // agua).
     if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
-    const { playerSpawnSpots } = spawnTestUnits(size, raceId, opponents);
+    const { playerSpawnSpots } = spawnTestUnits(size, raceId, opponents, mp);
     showScreen("screen-board");
     screenHistory.length = 0;
     screenHistory.push("main-menu", "screen-board");
@@ -282,9 +284,10 @@ async function startMatch({ modeId, raceId, levelId, opponents }) {
     _playInitialFogReveal(playerSpawnSpots);
 
     const resumeBtn = document.getElementById("btn-resume-game");
-    if (resumeBtn) resumeBtn.disabled = false;
+    if (resumeBtn && !mp) resumeBtn.disabled = false;
     if (typeof Preload !== "undefined") Preload.finish();
-    setTimeout(() => { if (typeof Turns !== "undefined") Turns.showTurnBanner(); }, 900);
+    if (mp) Net.startTurns();
+    else setTimeout(() => { if (typeof Turns !== "undefined") Turns.showTurnBanner(); }, 900);
   } catch (err) {
     _recoverFromFailedMatchStart();
     _showStartMatchError(err);
@@ -364,7 +367,7 @@ function _showStartMatchError(err) {
 // Puntos de Gloria, turnos) — el roster de cada raza (UNIT_TYPES filtrado
 // por raceId) ya no se usa aquí para colocar nada, lo consulta Obelisks al
 // abrir su menú de "Reclutar".
-function spawnTestUnits(size, raceId, opponents) {
+function spawnTestUnits(size, raceId, opponents, mp) {
   if (typeof Units === "undefined") return;
   const boardTiles = document.getElementById("board-tiles");
   Units.init(boardTiles, size);
@@ -386,12 +389,14 @@ function spawnTestUnits(size, raceId, opponents) {
   const enemyRace = (typeof RACES !== "undefined" ? RACES : []).find(
     (r) => r.available && r.id !== finalRaceId
   );
-  const finalEnemyRaceId = enemyRace ? enemyRace.id : finalRaceId;
+  const finalEnemyRaceId = mp && mp.otherRace ? mp.otherRace : enemyRace ? enemyRace.id : finalRaceId;
   // Bandos: rival 1 = otra raza; rival 2 = raza del jugador (con variante de
   // color); rival 3 = raza del rival 1 (con variante).
   const _rivals = Math.max(1, Math.min(3, opponents || 1));
   const _races = { player: finalRaceId, enemy: finalEnemyRaceId, enemy2: finalRaceId, enemy3: finalEnemyRaceId };
   Teams.setup(_rivals, _races);
+  // Multijugador: el orden de Teams.all es el de los asientos (anfitrión primero) en AMBOS clientes.
+  if (mp && typeof Net !== "undefined" && Net.seat === 1) Teams.all.reverse();
 
   // Niebla de guerra (js/fog.js): TODO el mapa arranca oculto — hay que
   // inicializarla ANTES de revelar nada, y DESPUÉS de renderMap (llamado
@@ -575,6 +580,7 @@ function spawnTestUnits(size, raceId, opponents) {
     Mushrooms.spawnInitial(size);
   }
 
+  if (mp && typeof GGRand !== "undefined") GGRand.reseed("t0");
   if (typeof Turns !== "undefined") Turns.reset();
   // Icono de ajustes (js/settingsmenu.js) — sustituye al back-btn flotante
   // que tapaba el marcador de Puntos de Gloria (ver ese archivo) — visible

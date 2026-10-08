@@ -218,7 +218,8 @@ const Friends = {
       actions = `<button type="button" class="p5-banner p5-banner--action friends-btn" data-act="accept" data-id="${v.id}" style="--p5-tone:#1f6b34"><span class="p5-banner__label">${I18N.t("fr_accept")}</span></button>
         <button type="button" class="p5-banner p5-banner--action friends-btn" data-act="del" data-id="${v.id}" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">${I18N.t("fr_reject")}</span></button>`;
     else if (kind === "out") actions = `<button type="button" class="p5-banner p5-banner--action friends-btn" data-act="del" data-id="${v.id}" style="--p5-tone:#2b2733"><span class="p5-banner__label">${I18N.t("fr_cancel")}</span></button>`;
-    else actions = `<button type="button" class="friends-chatbtn" data-act="chat" data-id="${v.id}" title="${I18N.t("fr_chat")}" aria-label="${I18N.t("fr_chat")}"><i class="ph-fill ph-chat-circle-dots"></i>${this._unread[v.id] ? `<span class="friends-chatbtn__n">${this._unread[v.id] > 9 ? "9+" : this._unread[v.id]}</span>` : ""}</button>
+    else actions = `${on && typeof MPLobby !== "undefined" ? `<button type="button" class="friends-chatbtn friends-invitebtn" data-act="invite" data-id="${v.id}" title="${I18N.t("mp_invite")}" aria-label="${I18N.t("mp_invite")}"><i class="ph-fill ph-sword"></i></button>` : ""}
+        <button type="button" class="friends-chatbtn" data-act="chat" data-id="${v.id}" title="${I18N.t("fr_chat")}" aria-label="${I18N.t("fr_chat")}"><i class="ph-fill ph-chat-circle-dots"></i>${this._unread[v.id] ? `<span class="friends-chatbtn__n">${this._unread[v.id] > 9 ? "9+" : this._unread[v.id]}</span>` : ""}</button>
         <button type="button" class="friends-trash" data-act="ask" data-id="${v.id}" title="${I18N.t("fr_remove")}" aria-label="${I18N.t("fr_remove")}"><i class="ph ph-trash"></i></button>`;
     if (kind === "friend" && this._confirm === v.id) {
       return `<div class="friends-row friends-row--confirm">
@@ -279,6 +280,10 @@ const Friends = {
         const a = b.dataset.act;
         if (a === "send") this._send();
         else if (a === "chat") this._openChat(b.dataset.id);
+        else if (a === "invite") {
+          const f = this._friendByPair(b.dataset.id);
+          if (f) MPLobby.invite(f.otherUid, f.otherName);
+        }
         else if (a === "accept") this._accept(b.dataset.id);
         else if (a === "del") this._remove(b.dataset.id);
         else if (a === "ask") {
@@ -430,7 +435,7 @@ const Friends = {
     if (!text) return;
     input.value = "";
     const list = (this._msgs[c.pairId] = this._msgs[c.pairId] || []);
-    const m = { id: "local" + Date.now() + Math.random(), mine: true, text, ts: Date.now() };
+    const m = { id: "local" + Date.now() + NR(), mine: true, text, ts: Date.now() };
     list.push(m);
     this._renderChat();
     try {

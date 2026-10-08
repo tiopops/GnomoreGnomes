@@ -121,7 +121,7 @@ const Bushes = {
     if (typeof LevelAssets !== "undefined" && LevelAssets.current === "colinas_rockntroll") spriteEl.classList.add("bush__sprite--rock");
     // Volteo horizontal aleatorio (naturalidad) — propiedad `scale`
     // independiente del transform de la animación idle.
-    if (Math.random() < 0.5) spriteEl.style.scale = "-1 1";
+    if (NR() < 0.5) spriteEl.style.scale = "-1 1";
     spriteEl.alt = "";
     spriteEl.draggable = false;
     // Pedido explícito: "todo en el escenario se mueve al compas...pon
@@ -133,7 +133,7 @@ const Bushes = {
     // punto distinto del ciclo desde el primer fotograma (sin negativo se
     // verían todos quietos un rato antes de arrancar, ver el mismo truco en
     // Resources._create).
-    spriteEl.style.animationDelay = `-${(Math.random() * 3).toFixed(2)}s`;
+    spriteEl.style.animationDelay = `-${(NR() * 3).toFixed(2)}s`;
     el.appendChild(spriteEl);
     if (typeof Shadows !== "undefined") Shadows.attach(spriteEl);
 

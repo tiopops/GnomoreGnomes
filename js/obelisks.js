@@ -984,6 +984,8 @@ const Obelisks = {
       msg = draw
         ? `Se acabaron los ${TURNS_MAX_ROUNDS} turnos y todo sigue exactamente igualado.`
         : `Se acabaron los ${TURNS_MAX_ROUNDS} turnos — gana quien más resistió.`;
+    } else if (reason === "resigned") {
+      msg = I18N.t("mp_resigned");
     } else {
       msg = (won ? (Teams.rivalCount > 1 ? "Has destruido todos los Obeliscos rivales." : "Has destruido el Obelisco Ancestral rival.") : "Tu Obelisco Ancestral ha sido destruido.");
     }
@@ -1026,6 +1028,7 @@ const Obelisks = {
       </div>
     `;
     overlay.querySelector(".obelisk-gameover-panel__btn").addEventListener("click", () => {
+      if (typeof MPLobby !== "undefined") MPLobby.finishMatch(false);
       this._hideGameOverOverlay();
       if (typeof Glory !== "undefined") Glory.hideHud();
       if (typeof SettingsMenu !== "undefined") SettingsMenu.hideButton();
@@ -1418,7 +1421,7 @@ const Obelisks = {
   // mismo espíritu que Turns._aiActOnce ("con el tiempo definiremos una IA
   // más compleja").
   onTurnStart(team) {
-    if (this.gameOver || team === "player") return;
+    if (this.gameOver || team === "player" || (typeof Net !== "undefined" && Net.active)) return; // (en multijugador recluta el humano)
     const obelisk = this.byTeam(team);
     if (!obelisk) return;
     const used = this.recruitedCountFor(team);

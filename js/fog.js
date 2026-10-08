@@ -414,6 +414,7 @@ const Fog = {
   // que llama a esto justo después de terminar el desplazamiento paso a
   // paso, antes de que el gnomo reaccione).
   revealForUnit(unit) {
+    if (unit.team !== "player") return; // cada jugador tiene SU niebla (también en multijugador)
     const type = UNIT_TYPES[unit.typeId];
     this.revealAround(unit.row, unit.col, type.percepcion + (typeof Skills !== "undefined" && unit.team === "player" ? Skills.perceptionBonus("player") : 0));
   },

@@ -104,7 +104,7 @@ const Drums = {
     const src = DRUM_DIR + "tambor.png";
     if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, src);
     else spriteEl.src = src;
-    spriteEl.style.animationDelay = `-${(Math.random() * 3).toFixed(2)}s`;
+    spriteEl.style.animationDelay = `-${(NR() * 3).toFixed(2)}s`;
     el.appendChild(spriteEl);
     if (typeof Shadows !== "undefined") Shadows.attach(spriteEl);
     Units.container.appendChild(el);
@@ -288,8 +288,20 @@ const Drums = {
     Units.list.filter((u) => victimTeams.includes(u.team)).forEach((u) => targets.push({ kind: "unit", ref: u, row: u.row, col: u.col }));
     if (typeof Villages !== "undefined") Villages.list.filter((v) => victimTeams.includes(v.owner)).forEach((v) => targets.push({ kind: "village", ref: v, row: v.row, col: v.col }));
     if (typeof Obelisks !== "undefined") Obelisks.list.filter((o) => victimTeams.includes(o.team)).forEach((o) => targets.push({ kind: "obelisk", ref: o, row: o.row, col: o.col }));
-    targets.sort(() => Math.random() - 0.5);
+    if (typeof Net !== "undefined" && Net.active) {
+      // Orden canónico + sorteo propio: ambos clientes sueltan las rocas en el mismo orden.
+      const k = (t) => t.kind + "|" + String(t.row).padStart(3, "0") + "|" + String(t.col).padStart(3, "0");
+      targets.sort((x, y) => (k(x) < k(y) ? -1 : k(x) > k(y) ? 1 : 0));
+      const rnd = GGRand.local(`rain|${Net.seed}|${Turns.roundNumber}|${Turns.activeTeam === Teams.all[0] ? 0 : 1}`);
+      targets.sort(() => rnd() - 0.5);
+    } else {
+      targets.sort(() => Math.random() - 0.5);
+    }
 
+    if (typeof Net !== "undefined" && Net.active) {
+      const taken = new Set();
+      targets.forEach((t) => { t._plan = this._planSpots(t, taken); });
+    }
     const jobs = targets.map((t, i) => new Promise((resolve) => {
       setTimeout(() => this._dropRock(t, dmg, causers[0]).then(resolve, resolve), i * 230);
     }));
@@ -394,9 +406,11 @@ const Drums = {
     const hidden = typeof Fog !== "undefined" && Fog.isFoggedReal(t.row, t.col);
     const { x, y } = getTileCenter(t.row, t.col, Units.boardSize);
     let rock = null;
+    // Multijugador: mismo ritmo se vea o no la roca, para que los fragmentos caigan en el mismo orden en ambos clientes.
+    if (hidden && typeof Net !== "undefined" && Net.active) await new Promise((r) => setTimeout(r, 460));
     if (!hidden) {
-      const s = 0.75 + Math.random() * 0.5;
-      const flip = Math.random() < 0.5 ? -1 : 1;
+      const s = 0.75 + NR() * 0.5;
+      const flip = NR() < 0.5 ? -1 : 1;
       rock = document.createElement("img");
       rock.className = "drum-rock";
       rock.draggable = false;
@@ -423,10 +437,10 @@ const Drums = {
         [{ opacity: 1, filter: "brightness(1)" }, { opacity: 1, filter: "brightness(1.6)", offset: 0.25 }, { opacity: 0, filter: "brightness(1)" }],
         { duration: 520, easing: "ease-out", fill: "forwards" }
       );
-      this._fragments(t, hidden);
+      this._fragments(t, hidden, t._plan);
       setTimeout(() => rock.remove(), 560);
     } else {
-      this._fragments(t, true);
+      this._fragments(t, true, t._plan);
     }
     await new Promise((r) => setTimeout(r, 380));
   },
@@ -447,8 +461,8 @@ const Drums = {
       p.style.top = `${y}px`;
       p.style.zIndex = String((t.row + t.col) * 10 + 13);
       Units.container.appendChild(p);
-      const ang = (Math.PI * 2 * i) / 6 + Math.random() * 0.5;
-      const dist = 40 + Math.random() * 40;
+      const ang = (Math.PI * 2 * i) / 6 + NR() * 0.5;
+      const dist = 40 + NR() * 40;
       p.animate(
         [{ transform: "translate(-50%,-50%) scale(.4)", opacity: 0.85 },
          { transform: `translate(calc(-50% + ${Math.cos(ang) * dist}px), calc(-50% + ${Math.sin(ang) * dist * 0.5}px)) scale(1.6)`, opacity: 0 }],
@@ -488,7 +502,10 @@ const Drums = {
   },
 
   // ---------- Fragmentos ----------
-  _fragments(t, silent) {
+  // Casillas donde caerán los fragmentos de una roca rota (y cuántos). En multijugador la lluvia
+  // las calcula TODAS de golpe al empezar (`taken` = casillas ya reservadas), así no dependen del
+  // ritmo de las animaciones de cada ordenador.
+  _planSpots(t, taken) {
     const size = Units.boardSize;
     const spots = [];
     for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
@@ -501,11 +518,23 @@ const Drums = {
       if (typeof Villages !== "undefined" && Villages.at(r, c)) continue;
       if (typeof Shops !== "undefined" && Shops.at(r, c)) continue;
       if (this.frags.some((f) => f.row === r && f.col === c)) continue;
+      if (taken && taken.has(r + "," + c)) continue;
       if (Units.unitAt(r, c)) continue;
       spots.push({ r, c });
     }
-    spots.sort(() => Math.random() - 0.5);
-    const n = Math.min(spots.length, 2 + Math.floor(Math.random() * 3)); // 2 a 4 por roca
+    const mp = typeof Net !== "undefined" && Net.active;
+    const rnd = mp ? GGRand.local(`frag|${Net.seed}|${t.row}|${t.col}|${taken ? taken.size : this.frags.length}`) : Math.random;
+    spots.sort(() => rnd() - 0.5);
+    const n = Math.min(spots.length, 2 + Math.floor(rnd() * 3)); // 2 a 4 por roca
+    const out = spots.slice(0, n);
+    if (taken) out.forEach((q) => taken.add(q.r + "," + q.c));
+    return out;
+  },
+
+  _fragments(t, silent, plan) {
+    const size = Units.boardSize;
+    const spots = plan || this._planSpots(t, null);
+    const n = spots.length;
     const from = getTileCenter(t.row, t.col, size);
     for (let i = 0; i < n; i++) {
       const { r, c } = spots[i];
@@ -516,8 +545,8 @@ const Drums = {
       el.alt = "";
       const src = DRUM_DIR + "fragmento.png";
       if (typeof SpriteQuality !== "undefined") SpriteQuality.register(el, src); else el.src = src;
-      const flip = Math.random() < 0.5 ? -1 : 1;
-      const sc = 0.85 + Math.random() * 0.3;
+      const flip = NR() < 0.5 ? -1 : 1;
+      const sc = 0.85 + NR() * 0.3;
       el.style.left = `${to.x}px`;
       el.style.top = `${to.y}px`;
       el.style.zIndex = String((r + c) * 10 + 4);
@@ -566,12 +595,14 @@ const Drums = {
       c.fragmento = (c.fragmento || 0) + 1;
       return;
     }
-    if (typeof Backpack !== "undefined" && !(Resources.counts.fragmento > 0) && !Backpack.hasFreeSlot()) return; // mochila llena: se queda en el suelo
+    const mp = typeof Net !== "undefined" && Net.active; // en multijugador la mochila llena no impide recoger (el rival no puede saberlo)
+    if (!mp && typeof Backpack !== "undefined" && !(Resources.counts.fragmento > 0) && !Backpack.hasFreeSlot()) return; // mochila llena: se queda en el suelo
     this.frags = this.frags.filter((x) => x !== f);
     f.el.remove();
+    if (mp) Resources.counts.fragmento = (Resources.counts.fragmento || 0) + 1;
     Resources._spawnPickupAt(row, col, "fragmento", {
       iconUrl: DRUM_DIR + "fragmento.png",
-      onArrive: () => Resources._collect("fragmento"),
+      onArrive: () => (mp ? Resources._collectFx() : Resources._collect("fragmento")),
     });
   },
 

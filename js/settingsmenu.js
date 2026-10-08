@@ -385,6 +385,11 @@ const SettingsMenu = {
     exitBtn.addEventListener("click", () => {
       SFX.click();
       this.close();
+      if (typeof Net !== "undefined" && Net.active && !Net.ended && typeof Obelisks !== "undefined" && !Obelisks.gameOver) {
+        MPLobby.confirmResign(() => this._exitMatch());
+        return;
+      }
+      if (typeof MPLobby !== "undefined") MPLobby.finishMatch(false);
       this._exitMatch();
     });
     panel.appendChild(exitBtn);

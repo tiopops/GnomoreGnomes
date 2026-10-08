@@ -223,7 +223,7 @@ const Shops = {
     // delays en las animaciones" — mismo arreglo que Bushes/Resources._create
     // (ver esas notas): sin esto, con varias tiendas en la misma partida,
     // todas respiran (unit-idle-breathe) exactamente a la vez.
-    spriteEl.style.animationDelay = `-${(Math.random() * 2.6).toFixed(2)}s`;
+    spriteEl.style.animationDelay = `-${(NR() * 2.6).toFixed(2)}s`;
     el.appendChild(spriteEl);
     // Sombra proyectada (js/shadows.js) — la tienda no se mueve/salta, así
     // que la sombra se queda estática, siempre en su tamaño normal.
@@ -548,17 +548,23 @@ const Shops = {
       SFX.dropFail();
       return;
     }
-    if (typeof Glory === "undefined" || !Glory.spend("player", this.priceFor("player", entry))) return;
-
-    // "el objeto pasa a la mochila del jugador que lo compro"
-    Backpack.addItem(entry.itemId);
-    // "de momento pondremos a la venta 2 setas" — sin reposición todavía:
-    // el hueco queda vacío para siempre tras comprarlo (mismo aspecto que
-    // uno ya vacío de la mochila, ver .backpack-slot--empty).
-    shop.stock = shop.stock.filter((it) => it.uid !== entry.uid);
+    if (!this.purchase("player", shop, entry.uid)) return;
     this._selectedUid = null;
     SFX.buy();
     this._renderSlots();
+  },
+
+  // Compra ya validada de `team` (también la repite el cliente rival en
+  // multijugador: allí no hay mochila que rellenar, ver js/net-hooks.js).
+  purchase(team, shop, uid) {
+    const entry = shop.stock.find((it) => it.uid === uid);
+    if (!entry) return false;
+    if (typeof Glory === "undefined" || !Glory.spend(team, this.priceFor(team, entry))) return false;
+    // "el objeto pasa a la mochila del jugador que lo compro"
+    if (team === "player") Backpack.addItem(entry.itemId);
+    shop.stock = shop.stock.filter((it) => it.uid !== uid);
+    if (this._activeShop === shop) this._renderSlots();
+    return true;
   },
 
   // Pedido explícito: "los enemigos tambien pueden usar sus puntos de

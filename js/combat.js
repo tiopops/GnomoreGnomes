@@ -498,19 +498,19 @@ const Combat = {
   // pataleo, burbujas y el plop final. Todo en coordenadas de loseta.
   _waterDrops(x, y, z, n, pow) {
     for (let i = 0; i < n; i++) {
-      const sz = 5 + Math.random() * 7;
+      const sz = 5 + NR() * 7;
       const d = document.createElement("div");
       d.className = "water-drop";
       d.style.cssText = `left:${x}px;top:${y}px;z-index:${z};width:${sz}px;height:${sz * 1.3}px`;
       Units.container.appendChild(d);
-      const ang = -1.57 + (Math.random() - 0.5) * 2.4;
-      const v = (40 + Math.random() * 70) * pow;
+      const ang = -1.57 + (NR() - 0.5) * 2.4;
+      const v = (40 + NR() * 70) * pow;
       const tx = Math.cos(ang) * v, ty = Math.sin(ang) * v * 0.6;
       d.animate([
         { transform: "translate(-50%,-50%) scale(1)", opacity: 1 },
         { transform: `translate(calc(-50% + ${tx}px),calc(-50% + ${ty - 50 * pow}px)) scale(1)`, opacity: 1, offset: 0.45 },
         { transform: `translate(calc(-50% + ${tx * 1.3}px),calc(-50% + ${ty + 16}px)) scale(.4)`, opacity: 0 },
-      ], { duration: 520 + Math.random() * 320, easing: "cubic-bezier(.3,.7,.5,1)", fill: "both" }).onfinish = () => d.remove();
+      ], { duration: 520 + NR() * 320, easing: "cubic-bezier(.3,.7,.5,1)", fill: "both" }).onfinish = () => d.remove();
     }
   },
 
@@ -527,16 +527,16 @@ const Combat = {
 
   _waterBubbles(x, y, z, n) {
     for (let i = 0; i < n; i++) {
-      const s = 4 + Math.random() * 8;
+      const s = 4 + NR() * 8;
       const b = document.createElement("div");
       b.className = "water-bubble";
-      b.style.cssText = `left:${x + (Math.random() - 0.5) * 34}px;top:${y - 10}px;z-index:${z};width:${s}px;height:${s}px`;
+      b.style.cssText = `left:${x + (NR() - 0.5) * 34}px;top:${y - 10}px;z-index:${z};width:${s}px;height:${s}px`;
       Units.container.appendChild(b);
       b.animate([
         { transform: "translate(-50%,-50%) scale(.6)", opacity: 0 },
         { opacity: 1, offset: 0.2 },
-        { transform: `translate(calc(-50% + ${(Math.random() - 0.5) * 20}px),${-30 - Math.random() * 50}px) scale(1.1)`, opacity: 0 },
-      ], { duration: 900 + Math.random() * 700, delay: i * 70, easing: "ease-out", fill: "both" }).onfinish = () => b.remove();
+        { transform: `translate(calc(-50% + ${(NR() - 0.5) * 20}px),${-30 - NR() * 50}px) scale(1.1)`, opacity: 0 },
+      ], { duration: 900 + NR() * 700, delay: i * 70, easing: "ease-out", fill: "both" }).onfinish = () => b.remove();
     }
   },
 

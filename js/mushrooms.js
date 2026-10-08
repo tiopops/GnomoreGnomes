@@ -322,7 +322,7 @@ const Mushrooms = {
   },
 
   onTurnStart(team) {
-    if (team !== "player" || !this.active) return;
+    if (team !== Teams.all[0] || !this.active) return; // una vez por ronda (1.er bando de la ronda)
     const round = typeof Turns !== "undefined" ? Turns.roundNumber : 0;
     // Las setas sueltas van desapareciendo y reapareciendo en otro sitio
     // cada MUSHROOM_RELOCATE_EVERY rondas (pedido explícito).

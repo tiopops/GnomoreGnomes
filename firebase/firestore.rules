@@ -113,5 +113,44 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if isPair();
     }
+    // Partidas online 1 contra 1 (js/mp-lobby.js, js/net.js).
+    //   rooms/{id}: sala creada por el anfitrión para UN amigo aceptado.
+    //   Solo los dos participantes la ven. El anfitrión elige nivel/estado y
+    //   su raza; el invitado acepta/rechaza y elige la suya.
+    //   rooms/{id}/msgs/*: comandos de la partida (los escribe cada jugador
+    //   con su uid en "from") + un documento "ping_<uid>" de latido.
+    match /rooms/{roomId} {
+      allow get: if request.auth != null
+        && (resource == null || resource.data.hostUid == request.auth.uid || resource.data.guestUid == request.auth.uid);
+      // Invitaciones recibidas: la consulta debe filtrar por guestUid == tu uid.
+      allow list: if request.auth != null && resource.data.guestUid == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.hostUid == request.auth.uid
+        && request.resource.data.guestUid != request.auth.uid
+        && request.resource.data.status == 'lobby'
+        && request.resource.data.keys().hasOnly(['hostUid', 'hostName', 'guestUid', 'guestName', 'status', 'level',
+             'hostRace', 'guestRace', 'hostReady', 'guestReady', 'guestJoined', 'guestDeclined', 'createdAt'])
+        && get(/databases/$(database)/documents/friends/$(request.resource.data.hostUid < request.resource.data.guestUid
+             ? request.resource.data.hostUid + '_' + request.resource.data.guestUid
+             : request.resource.data.guestUid + '_' + request.resource.data.hostUid)).data.status == 'accepted';
+      allow update: if request.auth != null
+        && ((resource.data.hostUid == request.auth.uid
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['level', 'hostRace', 'hostReady', 'status', 'seed', 'startedAt']))
+            || (resource.data.guestUid == request.auth.uid
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['guestJoined', 'guestDeclined', 'guestRace', 'guestReady'])));
+      allow delete: if request.auth != null && resource.data.hostUid == request.auth.uid;
+
+      match /msgs/{msgId} {
+        function inRoom() {
+          let r = get(/databases/$(database)/documents/rooms/$(roomId));
+          return request.auth != null && (r.data.hostUid == request.auth.uid || r.data.guestUid == request.auth.uid);
+        }
+        allow read: if inRoom();
+        allow create, update: if inRoom() && request.resource.data.from == request.auth.uid;
+        allow delete: if inRoom();
+      }
+    }
   }
 }
