@@ -13,7 +13,9 @@ service cloud.firestore {
         && request.resource.data.usernameLower == name
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.keys().hasOnly(['uid', 'username', 'usernameLower', 'createdAt']);
-      allow update, delete: if false;
+      allow update: if false;
+      // Cambiar de nombre: el dueño libera el nombre anterior.
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
     // Para entrar con el NOMBRE de usuario: nombre → correo. Solo se puede leer
@@ -28,7 +30,8 @@ service cloud.firestore {
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.keys().hasOnly(['uid', 'email', 'createdAt'])
         && getAfter(/databases/$(database)/documents/usernames/$(name)).data.uid == request.auth.uid;
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
     // Perfil de cada usuario: solo lo ve y lo crea su dueño, y únicamente si
@@ -37,7 +40,17 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null && request.auth.uid == uid
         && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameLower)).data.uid == uid;
-      allow update, delete: if false;
+      // Cambiar el nombre de usuario: solo username/usernameLower, y el nuevo nombre
+      // debe quedar reservado a su nombre en la misma operación.
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['username', 'usernameLower', 'nameChangedAt'])
+        // Límite: un cambio de nombre cada 7 días (el primero es libre).
+        && request.resource.data.nameChangedAt == request.time
+        && (!('nameChangedAt' in resource.data) || request.time > resource.data.nameChangedAt + duration.value(7, 'd'))
+        && request.resource.data.username.matches('^[A-Za-z0-9_]{3,16}$')
+        && request.resource.data.usernameLower == request.resource.data.username.lower()
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameLower)).data.uid == uid;
+      allow delete: if false;
     }
     // Amigos: UN documento por pareja, con id fijo = los dos uid ordenados
     // ("uidMenor_uidMayor"), así es imposible duplicar una amistad.
@@ -61,11 +74,18 @@ service cloud.firestore {
             : request.resource.data.to + '_' + request.resource.data.from)
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == request.resource.data.fromName
         && get(/databases/$(database)/documents/usernames/$(request.resource.data.toName.lower())).data.uid == request.resource.data.to;
-      allow update: if request.auth != null
+      allow update: if (request.auth != null
         && resource.data.to == request.auth.uid
         && resource.data.status == 'pending'
         && request.resource.data.status == 'accepted'
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
+        // Cambio de nombre: cada uno actualiza SU nombre en la amistad.
+        || (request.auth != null && resource.data.from == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fromName'])
+        && request.resource.data.fromName == getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.username)
+        || (request.auth != null && resource.data.to == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['toName'])
+        && request.resource.data.toName == getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.username);
       allow delete: if request.auth != null && request.auth.uid in resource.data.users;
     }
 
@@ -92,7 +112,11 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['uid', 'username'])
         && request.resource.data.uid == request.auth.uid
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == request.resource.data.username;
-      allow update, delete: if false;
+      // Cambio de nombre: solo el campo username, igual al del perfil ya actualizado.
+      allow update: if request.auth != null && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['username'])
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == request.resource.data.username;
+      allow delete: if false;
     }
 
     // Chat efímero entre amigos aceptados. Los mensajes son temporales: el
@@ -151,6 +175,23 @@ service cloud.firestore {
         allow create, update: if inRoom() && request.resource.data.from == request.auth.uid;
         allow delete: if inRoom();
       }
+    }
+
+    // Estadísticas del jugador (js/stats.js): un documento por usuario, solo lo
+    // lee y lo escribe su dueño. Solo números (y el mapa por raza).
+    match /stats/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['games', 'wins', 'losses', 'draws', 'streak', 'bestStreak',
+             'onlineGames', 'onlineWins', 'aiGames', 'aiWins', 'totems', 'kills', 'races'])
+        && request.resource.data.games is number && request.resource.data.wins is number
+        && request.resource.data.losses is number && request.resource.data.draws is number
+        && request.resource.data.streak is number && request.resource.data.bestStreak is number
+        && request.resource.data.onlineGames is number && request.resource.data.onlineWins is number
+        && request.resource.data.aiGames is number && request.resource.data.aiWins is number
+        && request.resource.data.totems is number && request.resource.data.kills is number
+        && request.resource.data.races is map;
+      allow delete: if false;
     }
   }
 }

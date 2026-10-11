@@ -956,6 +956,7 @@ const Villages = {
     // hasta su próximo turno — se guarda ANTES de pisar `village.owner`.
     const previousOwner = village.owner;
     village.owner = team;
+    if (team === "player" && previousOwner !== team && typeof PlayerStats !== "undefined") PlayerStats.recordCapture();
     // Pedido explícito: capturar un tótem da SIEMPRE 2 puntos de victoria fijos por turno,
     // sea cual sea la forma de capturarlo (antes 1 o 2 según el golpe).
     village.gloryBonus = VILLAGE_GLORY_PER_TURN;

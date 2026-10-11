@@ -14,6 +14,7 @@
 
 const FIREBASE_SDK_VERSION = "10.12.2";
 const ACCOUNT_NAME_RE = /^[A-Za-z0-9_]{3,16}$/;
+const NAME_CHANGE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 const Account = {
   _btn: null,
@@ -27,6 +28,7 @@ const Account = {
   _db: null,
   _sdkPromise: null,
   _busy: false,
+  _editingName: false,
 
   init() {
     this._ensureButton();
@@ -112,17 +114,40 @@ const Account = {
         <div class="p5-banner__label settings-panel__title">${I18N.t("acc_my")}</div>
         <div class="account-card">
           <i class="ph-fill ph-user account-card__icon"></i>
-          <div class="account-card__nick">${this._esc(nick)}</div>
+          ${
+            this._editingName
+              ? `<label class="account-field account-field--rename"><input id="acc-newnick" type="text" value="${this._esc(nick)}" maxlength="16" autocomplete="off" spellcheck="false" autocapitalize="none"></label>
+                 <div class="account-rename-btns">
+                   <button type="button" class="p5-banner p5-banner--action friends-btn" data-act="rename-save" style="--p5-tone:#1f6b34"><span class="p5-banner__label">${I18N.t("acc_rename_save")}</span></button>
+                   <button type="button" class="p5-banner p5-banner--action friends-btn" data-act="rename-cancel" style="--p5-tone:#2b2733"><span class="p5-banner__label">${I18N.t("acc_rename_cancel")}</span></button>
+                 </div>`
+              : `<div class="account-card__nick">${this._esc(nick)}<button type="button" class="account-edit" data-act="rename" title="${I18N.t("acc_rename")}" aria-label="${I18N.t("acc_rename")}"><i class="ph-fill ph-pencil-simple"></i></button></div>`
+          }
           <div class="account-card__mail">${this._esc(this._user.email || "")}</div>
           <div class="account-card__state account-card__state--${verified ? "ok" : "pending"}">
             ${verified ? I18N.t("acc_verified") : I18N.t("acc_unverified")}
           </div>
         </div>
         ${note}
+        <div class="pstat" id="acc-stats"></div>
         <button type="button" class="p5-banner p5-banner--action account-submit" data-act="logout" style="--p5-tone:#5a1d1d">
           <span class="p5-banner__label">${I18N.t("acc_logout")}</span>
         </button>`;
       B.querySelector("[data-act=logout]").addEventListener("click", () => this.logout());
+      const bind = (act, fn) => { const el = B.querySelector(`[data-act=${act}]`); if (el) el.addEventListener("click", fn); };
+      bind("rename", () => {
+        const left = this._nameCooldownLeftMs();
+        if (left > 0) return this._note(I18N.t("acc_rename_wait", { n: this._daysText(left) }));
+        this._editingName = true;
+        this._render(I18N.t("acc_rename_hint"), "ok");
+        const i = document.getElementById("acc-newnick");
+        if (i) { i.focus(); i.select(); }
+      });
+      bind("rename-cancel", () => { this._editingName = false; this._render(); });
+      bind("rename-save", () => this._rename());
+      const ni = document.getElementById("acc-newnick");
+      if (ni) ni.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); this._rename(); } });
+      if (typeof PlayerStats !== "undefined") PlayerStats.mount(B.querySelector("#acc-stats"));
       return;
     }
     const m = this._mode;
@@ -197,7 +222,7 @@ const Account = {
     let el = this._body.querySelector(".account-msg");
     if (!el) {
       el = document.createElement("div");
-      const btn = this._body.querySelector("[data-act=submit]");
+      const btn = this._body.querySelector("[data-act=submit]") || this._body.querySelector(".pstat");
       if (btn) btn.parentNode.insertBefore(el, btn);
       else this._body.appendChild(el);
     }
@@ -376,7 +401,92 @@ const Account = {
     }
   },
 
+  // Límite: un cambio de nombre cada 7 días (también lo exigen las reglas de Firestore).
+  _nameCooldownLeftMs(profile) {
+    const p = profile || this._profile;
+    const at = p && p.nameChangedAt && typeof p.nameChangedAt.toMillis === "function" ? p.nameChangedAt.toMillis() : 0;
+    return at ? at + NAME_CHANGE_COOLDOWN_MS - Date.now() : 0;
+  },
+  _daysText(ms) {
+    const d = Math.max(1, Math.ceil(ms / 86400000));
+    return d === 1 ? I18N.t("acc_days_1") : I18N.t("acc_days_n", { n: d });
+  },
+
+  // Cambiar el nombre de usuario: reserva el nuevo, libera el viejo y actualiza
+  // el perfil, el índice de correo y el nombre en las amistades (todo en un lote).
+  async _rename() {
+    if (this._busy || !this._user || !this._profile) return;
+    const input = document.getElementById("acc-newnick");
+    const nick = ((input && input.value) || "").trim();
+    const old = this._profile.username;
+    if (nick === old) { this._editingName = false; return this._render(); }
+    if (!ACCOUNT_NAME_RE.test(nick)) return this._note(I18N.t("acc_e_nick"));
+    const left = this._nameCooldownLeftMs();
+    if (left > 0) return this._note(I18N.t("acc_rename_wait", { n: this._daysText(left) }));
+    try {
+      this._setBusy(true);
+      await this._ensureFirebase();
+      const uid = this._user.uid;
+      const db = this._db;
+      const lower = nick.toLowerCase();
+      const oldLower = old.toLowerCase();
+      const same = lower === oldLower; // solo cambian mayúsculas/minúsculas
+      if (!same && (await db.collection("usernames").doc(lower).get()).exists) throw { code: "name-taken" };
+      const fs = await db.collection("friends").where("users", "array-contains", uid).get();
+      const ts = firebase.firestore.FieldValue.serverTimestamp();
+      const batch = db.batch();
+      if (!same) {
+        batch.set(db.collection("usernames").doc(lower), { uid, username: nick, usernameLower: lower, createdAt: ts });
+        batch.set(db.collection("loginIndex").doc(lower), { uid, email: this._user.email, createdAt: ts });
+        batch.delete(db.collection("usernames").doc(oldLower));
+        batch.delete(db.collection("loginIndex").doc(oldLower));
+      }
+      batch.update(db.collection("users").doc(uid), { username: nick, usernameLower: lower, nameChangedAt: ts });
+      fs.forEach((d) => batch.update(d.ref, { [d.data().from === uid ? "fromName" : "toName"]: nick }));
+      try {
+        await batch.commit();
+      } catch (e) {
+        if (e && e.code === "permission-denied") {
+          // ¿Límite de 7 días (cambio hecho desde otro dispositivo) o nombre ocupado?
+          try {
+            const fresh = (await db.collection("users").doc(uid).get()).data();
+            const wait = this._nameCooldownLeftMs(fresh);
+            if (wait > 0) {
+              this._profile.nameChangedAt = fresh.nameChangedAt;
+              throw { code: "name-wait", ms: wait };
+            }
+          } catch (e2) { if (e2 && e2.code === "name-wait") throw e2; }
+          if (!same) throw { code: "name-taken" };
+        }
+        throw e;
+      }
+      // Índice de correo (para buscarte por correo): no bloquea si falla.
+      try {
+        const eref = db.collection("emails").doc(this._user.email.toLowerCase());
+        if ((await eref.get()).exists) await eref.update({ username: nick });
+        else await eref.set({ uid, username: nick });
+      } catch (e) { console.warn("emails index:", e && e.code); }
+      try { await this._user.updateProfile({ displayName: nick }); } catch (e) {}
+      this._profile.username = nick;
+      this._profile.usernameLower = lower;
+      this._profile.nameChangedAt = { toMillis: () => Date.now() };
+      if (typeof Friends !== "undefined") {
+        Friends._name = nick;
+        Friends._docs.forEach((d) => { if (d.from === uid) d.fromName = nick; else if (d.to === uid) d.toName = nick; });
+      }
+      if (typeof MPLobby !== "undefined") MPLobby._name = nick;
+      this._editingName = false;
+      this._setBusy(false);
+      this._render(I18N.t("acc_ok_renamed"), "ok");
+    } catch (e) {
+      this._setBusy(false);
+      if (e && e.code === "name-wait") return this._note(I18N.t("acc_rename_wait", { n: this._daysText(e.ms) }));
+      this._note(this._errText(e));
+    }
+  },
+
   async logout() {
+    this._editingName = false;
     try {
       await this._ensureFirebase();
       await this._auth.signOut();

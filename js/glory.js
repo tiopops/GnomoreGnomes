@@ -40,6 +40,12 @@
 const GLORY_PER_TURN_START = 2;
 const GLORY_PER_KILL = 1;
 
+// Pedido explícito: "vamos a limitarlo a 30... se marcarán como X/30; al llegar a
+// 30/30 ya no podrán subir más, se verán en rojo y el marcador palpitará" —
+// tope de gloria guardada: lo que sobra al empezar el turno se pierde, así
+// que acumular sin gastar no sirve de nada (ver Glory.grantTurnStart).
+const GLORY_CAP = 30;
+
 const Glory = {
   points: { player: 0, enemy: 0 },
   // Bonus ya "ganado" (bajas conseguidas) pero todavía sin sumar a points —
@@ -122,9 +128,13 @@ const Glory = {
   grantTurnStart(team) {
     if (!(team in this.points)) return;
     const gained = GLORY_PER_TURN_START + this.pendingBonus[team] + this._villagesBonus(team) + this._relicBonus(team);
-    this.points[team] += gained;
+    const room = Math.max(0, GLORY_CAP - this.points[team]);
+    const added = Math.min(gained, room);
+    const lost = gained - added;
+    this.points[team] += added;
     this.pendingBonus[team] = 0;
-    this._render(team, { bump: true, gained });
+    this._render(team, { bump: added > 0, gained: added });
+    if (lost > 0) this._showLost(team, lost);
     this._renderPreview(team);
   },
 
@@ -222,7 +232,10 @@ const Glory = {
   _render(team, { bump = false, gained = 0 } = {}) {
     const valueEl = this._valueEls[team];
     if (!valueEl) return;
-    valueEl.textContent = String(this.points[team]);
+    valueEl.innerHTML = `${this.points[team]}<small class="glory-hud__cap">/${GLORY_CAP}</small>`;
+    const full = this.points[team] >= GLORY_CAP;
+    if (this._els[team]) this._els[team].classList.toggle("glory-hud--full", full);
+    if (this._previewEls[team]) this._renderPreview(team);
     if (bump) {
       const el = this._els[team];
       el.classList.remove("glory-hud--bump");
@@ -237,11 +250,26 @@ const Glory = {
     }
   },
 
+  // "-N perdidos": aviso rojo que sube junto al marcador cuando el turno
+  // da más gloria de la que cabe (solo el marcador del jugador se pinta).
+  _showLost(team, lost) {
+    const hud = this._els[team];
+    if (!hud || team !== "player") return;
+    const r = hud.getBoundingClientRect();
+    const e = document.createElement("div");
+    e.className = "glory-lost";
+    e.textContent = `-${lost} perdidos`;
+    e.style.left = `${Math.round(r.left + r.width * 0.55)}px`;
+    e.style.top = `${Math.round(r.bottom - 6)}px`;
+    document.body.appendChild(e);
+    setTimeout(() => e.remove(), 1700);
+  },
+
   _renderPreview(team) {
     const previewEl = this._previewEls[team];
     if (!previewEl) return;
     const next = GLORY_PER_TURN_START + this.pendingBonus[team] + this._villagesBonus(team) + this._relicBonus(team);
-    previewEl.textContent = `+${next} / turno`;
+    previewEl.textContent = this.points[team] >= GLORY_CAP ? "LLENO" : `+${next} / turno`;
   },
 
   // Una fila del desglose del popup: icono + etiqueta + valor con signo,
@@ -290,9 +318,9 @@ const Glory = {
           <h2 class="glory-popup-title">Puntos de Gloria</h2>
           <div class="glory-popup-total">
             ${iconSrc ? `<img class="glory-popup-total__img" src="${iconSrc}" alt="">` : `<i class="ph-fill ph-trophy"></i>`}
-            <span>${this.points[team]}</span>
+            <span>${this.points[team]}<small class="glory-hud__cap">/${GLORY_CAP}</small></span>
           </div>
-          <p class="glory-popup-subtitle">Vas a ganar esto al empezar tu próximo turno:</p>
+          <p class="glory-popup-subtitle">${this.points[team] >= GLORY_CAP ? "Tu gloria está llena: lo que ganes ahora se pierde. ¡Gástala!" : "Vas a ganar esto al empezar tu próximo turno:"}</p>
           <div class="glory-popup-sources">
             ${this._sourceRow("ph-sparkle", "Base de cada turno", GLORY_PER_TURN_START)}
             ${this._sourceRow(

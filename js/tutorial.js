@@ -167,7 +167,7 @@ const Tutorial = {
       v.hp = 3;
       Units.updateHpBar(v);
     }
-    if (typeof Glory !== "undefined") Glory.points.player = 60;
+    if (typeof Glory !== "undefined") Glory.points.player = 30; // tope de gloria (GLORY_CAP)
     if (typeof Glory !== "undefined" && Glory.refresh) Glory.refresh();
     // Revela toda la zona de práctica YA (durante la pantalla de carga, sin
     // animación): así al abrirse el tutorial no hay un "ZAS" de niebla.

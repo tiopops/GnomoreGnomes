@@ -56,38 +56,26 @@ Object.assign(Tutorial, {
     if (this.active) return;
     const list = document.getElementById("tutorial-list");
     if (!list) return;
-    list.innerHTML = "";
-    this._CARDS.forEach((c) => {
-      const card = document.createElement("button");
-      card.className = "race-card level-card";
-      card.style.setProperty("--card-accent", c.color);
-      card.style.setProperty("--float-delay", `-${(NR() * 5).toFixed(2)}s`);
-      const tr = (t) => (typeof I18N !== "undefined" && I18N.tr ? I18N.tr(t) : t);
-      const nameTx = tr(c.name);
-      card.setAttribute("aria-label", nameTx);
-      const feats = c.feats
-        .map(([icon, raw]) => {
-          const txt = tr(raw);
-          const at = txt.indexOf(": ");
-          const html = at > 0 ? `<b>${txt.slice(0, at)}</b>${txt.slice(at)}` : txt;
-          return `<span class="race-card__stat race-card__stat--virtue"><i class="ph ${icon} race-card__stat-icon"></i><span>${html}</span></span>`;
-        })
-        .join("");
-      card.innerHTML = `
-        <span class="level-card__stage">
-          <img src="${c.island}" alt="" class="level-card__island" />
-          <span class="level-card__name">${nameTx}</span>
-        </span>
-        <span class="race-card__body level-card__body">
-          <span class="race-card__flavor">${tr(c.flavor)}</span>
-          ${feats}
-        </span>`;
-      card.addEventListener("click", () => {
+    const tr = (t) => (typeof I18N !== "undefined" && I18N.tr ? I18N.tr(t) : t);
+    const items = [
+      { id: "basic", icon: "ph-graduation-cap", title: "Primeros pasos", sub: "Lo básico: reclutar, mover, gnomos y combate" },
+      { id: "mush", icon: "ph-tree", title: "Tutorial Bosque MushBoom", sub: "Setas explosivas, Altar de Sacrificios y GnomOgro" },
+      { id: "rock", icon: "ph-mountains", title: "Tutorial Colinas Rock'n Troll", sub: "Tambores de Guerra, fragmentos y Volcán" },
+    ];
+    list.innerHTML = items
+      .map(
+        (it) => `<button type="button" class="menu-btn tut-menu__item" data-scenario="${it.id}">
+          <i class="ph ${it.icon}"></i>
+          <span class="tut-menu__text"><span class="tut-menu__name">${tr(it.title)}</span><span class="tut-menu__sub">${tr(it.sub)}</span></span>
+        </button>`
+      )
+      .join("");
+    list.querySelectorAll(".tut-menu__item").forEach((b) =>
+      b.addEventListener("click", () => {
         if (typeof SFX !== "undefined") SFX.click();
-        this.start(c.id);
-      });
-      list.appendChild(card);
-    });
+        this.start(b.dataset.scenario);
+      })
+    );
     goToScreen("screen-tutorial-select");
   },
 

@@ -180,7 +180,8 @@ const MPLobby = {
     const el = this._invEl;
     this._invEl = null;
     el.classList.remove("mp-invite--visible");
-    setTimeout(() => el.remove(), 250);
+    el.classList.add("mp-invite--out");
+    setTimeout(() => el.remove(), 380);
   },
 
   async decline(id) {
@@ -507,6 +508,7 @@ const MPLobby = {
     el.querySelector('[data-act="no"]').addEventListener("click", () => el.remove());
     el.querySelector('[data-act="yes"]').addEventListener("click", () => {
       el.remove();
+      if (typeof PlayerStats !== "undefined") PlayerStats.recordResign();
       this.finishMatch(true);
       if (done) done();
     });

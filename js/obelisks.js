@@ -120,6 +120,7 @@ const Obelisks = {
   init(playerRaceId, enemyRaceId) {
     this._raceIds = Object.assign({}, Teams.raceIds);
     this.gameOver = false;
+    if (typeof PlayerStats !== "undefined") PlayerStats.startMatch();
     this._initMouseTracking();
   },
 
@@ -890,6 +891,7 @@ const Obelisks = {
 
   _endGame(winnerTeam, reason) {
     this.gameOver = true;
+    if (typeof PlayerStats !== "undefined") PlayerStats.recordEnd(winnerTeam);
     this.closeRecruitPopup();
     this.closeAbilitiesPopup();
     this._cancelPlacementMode();
@@ -919,7 +921,15 @@ const Obelisks = {
         ? Villages.list.filter((v) => v.owner === team).reduce((sum, v) => sum + v.hp, 0)
         : 0;
 
-    const score = (t) => [hpOf(t), totemsOf(t), totemHpOf(t)];
+    // Desempate por "fuerza total": vida del Obelisco + vida de las unidades
+    // vivas + 5 por tótem + 2 por unidad viva (no solo el Obelisco: así gana
+    // quien de verdad domina la partida). Si aún así empatan, tótems y su vida.
+    const unitsOf = (team) => (typeof Units !== "undefined" ? Units.list.filter((u) => u.team === team) : []);
+    const strengthOf = (t) => {
+      const us = unitsOf(t);
+      return hpOf(t) + us.reduce((sum, u) => sum + Math.max(0, u.hp), 0) + 5 * totemsOf(t) + 2 * us.length;
+    };
+    const score = (t) => [strengthOf(t), totemsOf(t), totemHpOf(t)];
     const alive = Teams.all.filter((t) => this.byTeam(t));
     let winner = null;
     let best = null;

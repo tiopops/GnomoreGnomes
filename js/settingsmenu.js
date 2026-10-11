@@ -89,12 +89,16 @@ const SettingsMenu = {
     columnsEl.classList.add("settings-panel__columns--tabbed");
     colAudio.classList.add("settings-pane");
     colVisual.classList.add("settings-pane");
+    const colPad = document.createElement("div");
+    colPad.className = "settings-panel__column settings-pane";
+    if (typeof GamepadCtl !== "undefined") { colPad.appendChild(GamepadCtl.buildPane()); columnsEl.appendChild(colPad); }
     const tabsEl = document.createElement("div");
     tabsEl.className = "skills-tabs settings-tabs";
     const TABS = [
-      { id: "game", icon: "ph-fill ph-game-controller", label: I18N.t("settings_tab_game"), accent: "#e8b43a", pane: colAudio },
+      { id: "game", icon: "ph-bold ph-joystick", label: I18N.t("settings_tab_game"), accent: "#e8b43a", pane: colAudio },
       { id: "gfx", icon: "ph-fill ph-monitor", label: I18N.t("settings_tab_gfx"), accent: "#4aa8d8", pane: colVisual },
     ];
+    if (typeof GamepadCtl !== "undefined") TABS.push({ id: "pad", icon: "ph-fill ph-game-controller", label: I18N.t("settings_tab_pad"), accent: "#3fa34d", pane: colPad });
     const tabBtns = {};
     const showTab = (id) => {
       this._tab = id;
