@@ -8,7 +8,7 @@
 const ShopVendor = {
   CFG: {
     gx: -5.0, gy: -18.1, gs: 44.6,     // goblin: x, y y tamaño (% del ancho de la ventana)
-    cx: 90.1, cy: 55.3, cs: 9.4, ct: 9, // moneda: x, y (% del dibujo), tamaño (% del ancho del goblin) y grosor (% del ancho de la moneda)
+    cx: 90.1, cy: 55.3, cs: 9.4, ct: 18, // moneda: x, y (% del dibujo), tamaño (% del ancho del goblin) y grosor (% del ancho de la moneda)
     fk: 100,                           // gesto del goblin al lanzar (% de intensidad; 0 = ninguno)
     th: 60,                            // altura del lanzamiento (% de la altura del goblin)
     iv: 4, td: 1.1, sp: 2.2, as: 4,    // cada (s), vuelo (s), giro en reposo (s), vueltas en el aire
@@ -56,7 +56,7 @@ const ShopVendor = {
     const src = "assets/ui/goblin_moneda.png";
     const w = coin.clientWidth || 40;
     const T = (w * this.CFG.ct) / 100;
-    const N = Math.max(0, Math.round(T / 0.8));
+    const N = Math.max(0, Math.round(T / 0.4));
     let h = "";
     for (let i = 0; i < N; i++) h += `<img class="mid" src="${src}" alt="" draggable="false" style="transform:translateZ(${(-T / 2 + (T * (i + 1)) / (N + 1)).toFixed(2)}px)">`;
     h += `<img class="face" src="${src}" alt="" draggable="false" style="transform:translateZ(${(T / 2).toFixed(2)}px)">`;
