@@ -10426,7 +10426,8 @@ body.tut-on .tut-portrait, body.tut-on .tut-portrait * { pointer-events: none; }
   --pw: min(630px, 92vw);
   /* El goblin asoma por encima de la ventana: se baja la ventana lo justo
      para que NO se corte por arriba. */
-  margin-top: max(10vh, calc(var(--pw) * 0.2 + 4px));
+  --vend-over: 18.1; /* lo sobrante del goblin por encima de la ventana (% del ancho); lo fija js/shopvendor.js */
+  margin-top: max(10vh, calc(var(--pw) * var(--vend-over) / 100 * 0.985 + 4px));
 }
 .shop-vendor {
   position: absolute;
@@ -10439,7 +10440,10 @@ body.tut-on .tut-portrait, body.tut-on .tut-portrait * { pointer-events: none; }
   z-index: 3;
 }
 .shop-vendor__img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.shop-vendor__body { position: absolute; inset: 0; transform-style: preserve-3d; transform-origin: 82% 92%; }
 .shop-vendor__coin { position: absolute; transform-style: preserve-3d; will-change: transform; }
-.shop-vendor__coin img { width: 100%; display: block; }
+.shop-vendor__coin img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; max-width: none; }
+.shop-vendor__coin img.mid { filter: brightness(0.5) sepia(0.35) saturate(1.3); }
+.shop-vendor__coin img.face { backface-visibility: hidden; }
 .shop-vendor__front { position: absolute; overflow: hidden; }
 .shop-vendor__front img { position: absolute; display: block; max-width: none; }
