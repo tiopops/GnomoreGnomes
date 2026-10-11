@@ -10420,3 +10420,26 @@ body.tut-on .tut-portrait, body.tut-on .tut-portrait * { pointer-events: none; }
 .gp-key--on{--fill:#c99a2a}
 .gp-key--ok{--fill:#3f8f4b}
 @media (max-width:760px){.gp-kb__panel{padding:24px 18px 26px}.gp-key{width:7.4vw;height:44px;font-size:16px}.gp-key--w15{width:11vw}.gp-key--w2{width:14vw}.gp-key--space{width:22vw}}
+
+/* ===== Vendedor de la Tienda Goblin (js/shopvendor.js) ===== */
+.shop-overlay .backpack-panel {
+  --pw: min(630px, 92vw);
+  /* El goblin asoma por encima de la ventana: se baja la ventana lo justo
+     para que NO se corte por arriba. */
+  margin-top: max(10vh, calc(var(--pw) * 0.2 + 4px));
+}
+.shop-vendor {
+  position: absolute;
+  left: calc(var(--pw) * var(--gx) / 100 * 1.0216);
+  top: calc(var(--pw) * var(--gy) / 100 * 1.0216);
+  width: calc(var(--pw) * var(--gs) / 100 * 1.0216);
+  aspect-ratio: 992 / 648;
+  perspective: 600px;
+  pointer-events: none;
+  z-index: 3;
+}
+.shop-vendor__img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.shop-vendor__coin { position: absolute; transform-style: preserve-3d; will-change: transform; }
+.shop-vendor__coin img { width: 100%; display: block; }
+.shop-vendor__front { position: absolute; overflow: hidden; }
+.shop-vendor__front img { position: absolute; display: block; max-width: none; }

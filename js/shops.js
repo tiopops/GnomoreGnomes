@@ -332,7 +332,7 @@ const Shops = {
     this._selectedUid = null;
 
     const overlay = document.createElement("div");
-    overlay.className = "backpack-overlay";
+    overlay.className = "backpack-overlay shop-overlay";
     overlay.addEventListener("click", () => this.closePopup());
 
     const panel = document.createElement("div");
@@ -342,6 +342,9 @@ const Shops = {
     const panelBg = document.createElement("div");
     panelBg.className = "p5-banner backpack-panel__bg";
     panel.appendChild(panelBg);
+
+    // Vendedor goblin con su moneda (js/shopvendor.js): apoyado en el borde de la ventana.
+    if (typeof ShopVendor !== "undefined") ShopVendor.mount(panel);
 
     const closeBtn = document.createElement("button");
     closeBtn.className = "backpack-close-btn";
@@ -409,6 +412,7 @@ const Shops = {
 
   closePopup() {
     if (!this._overlayEl) return;
+    if (typeof ShopVendor !== "undefined") ShopVendor.stop();
     const el = this._overlayEl;
     this._overlayEl = null;
     this._slotsEl = null;

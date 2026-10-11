@@ -37,6 +37,8 @@ const PRELOAD_ASSETS = [
  "assets/edificios/obelisco_colinas_rockntroll_midres.png",
  "assets/edificios/obelisco_mushboom_forest.png",
  "assets/edificios/obelisco_mushboom_forest_midres.png",
+ "assets/ui/goblin_vendedor.png",
+ "assets/ui/goblin_moneda.png",
  "assets/edificios/tienda_goblin.png",
  "assets/edificios/tienda_goblin_midres.png",
  "assets/equipos/ColinasRockNTroll/machacagnomos_goblin_lanzador.png",
