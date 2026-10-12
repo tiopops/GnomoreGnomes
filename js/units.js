@@ -1316,7 +1316,13 @@ const Units = {
     const { x, y } = getTileCenter(unit.row, unit.col, this.boardSize);
     const z = (unit.row + unit.col) * 10 + 8;
     const SINK = 1500;
-    if (sprite) sprite.style.transformOrigin = "50% 90%";
+    if (sprite) {
+      sprite.style.transformOrigin = "50% 90%";
+      // La respiración en reposo (CSS animation) pisa el transform en línea y dejaba el sprite
+      // quieto mientras solo subía la máscara: se anula para que el sprite SE HUNDA de verdad.
+      sprite.style.animation = "none";
+      sprite.classList.remove("unit__sprite--hop");
+    }
     const h = (flip && flip.offsetHeight) || 100;
     await new Promise((resolve) => {
       const t0 = performance.now();
