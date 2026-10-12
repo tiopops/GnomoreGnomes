@@ -1289,12 +1289,10 @@ const Units = {
   // curación u otros mensajes) — se autodestruye solo al acabar su propia
   // animación de subida y desvanecido (ver style.css).
   spawnFloatingText(unit, text, { className = "dmg-popup" } = {}) {
-    // Pedido explícito: "cuando un gnomo suelto pierde puntos...los
-    // indicadores de +x y -x numericos no deben mostrarse a traves de la
-    // niebla" — un gnomo (o quien lo golpea) que el jugador no percibe
-    // ahora mismo no debe delatarse con su número flotante.
+    // Pedidos explícitos: los números flotantes (+x / -x, daño) de algo que el
+    // jugador no percibe ahora mismo no deben mostrarse a través de la niebla:
+    // delatarían la posición de los enemigos.
     if (
-      className.indexOf("gnome-points-popup") !== -1 &&
       unit.team !== "player" &&
       typeof Fog !== "undefined" &&
       (Fog.isFogged(unit.row, unit.col) || !Fog.isPerceived(unit.row, unit.col))

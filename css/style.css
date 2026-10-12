@@ -10595,39 +10595,51 @@ body.oracle-fog-lifted .tile__fog { opacity: 0 !important; transition: opacity 0
 .gp-lbl__ln{stroke:rgba(244,242,248,.45);stroke-width:1}
 .gp-tester{max-width:min(100%,500px) !important}
 
-/* Mi Cuenta en escritorio: dos columnas (perfil a la izquierda, estadísticas a la
-   derecha) para que quepa sin hacer scroll. */
-@media (min-width: 900px) and (min-height: 640px) {
-  .account-panel:has(.pstat) { width: min(900px, 94vw); }
-  .account-body:has(.pstat) {
-    display: grid;
-    grid-template-columns: 290px minmax(0, 1fr);
-    grid-template-rows: auto auto auto 1fr;
-    column-gap: 30px;
-    row-gap: 14px;
-    align-items: start;
-  }
-  .account-body:has(.pstat) > .settings-panel__title { grid-column: 1 / -1; }
-  .account-body:has(.pstat) > .account-card { grid-column: 1; grid-row: 2; }
-  .account-body:has(.pstat) > .account-msg { grid-column: 1; grid-row: 3; }
-  .account-body:has(.pstat) > .pstat { grid-column: 2; grid-row: 2 / 5; max-height: none; overflow: visible; }
-  .account-body:has(.pstat) > .account-submit { grid-column: 1; grid-row: 4; align-self: end; justify-self: center; }
-}
-@media (min-width: 900px) and (min-height: 640px) {
-  .account-panel:has(.pstat) { padding: 26px 36px 28px; }
-  .account-body:has(.pstat) > .pstat { gap: 8px; }
-  .pstat-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
-  .pstat-cell { padding: 7px 12px; }
+/* Mi Cuenta en escritorio: se mantiene VERTICAL (perfil arriba, estadísticas debajo)
+   pero más ancha, con las casillas en varias columnas, para que quepa sin scroll. */
+@media (min-width: 900px) and (min-height: 600px) {
+  .account-panel:has(.pstat) { width: min(780px, 94vw); padding: 24px 40px 26px; }
+  .account-body:has(.pstat) { gap: 10px; }
+  .account-body:has(.pstat) .account-card { padding: 0; gap: 2px; }
+  .account-body:has(.pstat) .account-card__icon { font-size: 2.2rem; line-height: 1; }
+  .account-body:has(.pstat) .account-card__nick { font-size: 1.3rem; }
+  .account-body:has(.pstat) .account-card__mail { font-size: 0.78rem; }
+  .account-body:has(.pstat) .account-card__state { margin-top: 0; }
+  .account-body:has(.pstat) > .pstat { max-height: none; overflow: visible; padding: 2px 8px 6px; gap: 8px; }
+  /* Estadísticas en 4 columnas: rango+pestañas, partidas, (online | récords), (razas | misión). */
+  .account-body:has(.pstat) > .pstat { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 10px; row-gap: 6px; align-items: start; }
+  .pstat > :nth-child(1) { grid-column: 1 / 3; grid-row: 1; justify-content: flex-start; }
+  .pstat > :nth-child(2) { grid-column: 3 / 5; grid-row: 1; align-self: center; }
+  .pstat > :nth-child(3) { grid-column: 1 / 5; grid-row: 2; }
+  .pstat > :nth-child(4) { grid-column: 1 / 5; grid-row: 3; }
+  .pstat > :nth-child(5) { grid-column: 1 / 3; grid-row: 4; }
+  .pstat > :nth-child(6) { grid-column: 1 / 3; grid-row: 5; }
+  .pstat > :nth-child(7) { grid-column: 3 / 5; grid-row: 4; }
+  .pstat > :nth-child(8) { grid-column: 3 / 5; grid-row: 5; }
+  .pstat > :nth-child(9) { grid-column: 1 / 3; grid-row: 6; }
+  .pstat > :nth-child(10) { grid-column: 1 / 3; grid-row: 7; }
+  .pstat > :nth-child(11) { grid-column: 3 / 5; grid-row: 6; }
+  .pstat > :nth-child(12) { grid-column: 3 / 5; grid-row: 7; align-self: stretch; }
+  .pstat > :nth-child(1) { margin-left: 8px; }
+  .pstat-grid { grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 8px; }
+  .pstat-races { grid-template-columns: 1fr !important; }
+  .pstat-cell { padding: 6px 12px; }
   .pstat-races { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .pstat-race { padding: 6px 12px; }
+  .pstat-race { padding: 5px 12px; }
   .pstat-race img { width: 34px; height: 34px; }
   .pstat-sec { margin-top: 0; }
-  .pstat-mission { padding: 7px 14px; }
+  .pstat-mission { padding: 6px 14px; }
+  .pstat-rank__badge { width: 46px; height: 46px; font-size: 1.3rem; }
+  .account-body:has(.pstat) > .account-submit { margin-top: 0; padding: 9px 30px; }
 }
-@media (min-width: 900px) and (min-height: 640px) {
-  .pstat-grid { grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); }
-  .account-body:has(.pstat) > .settings-panel__title { text-align: center; justify-self: stretch; margin: 0; }
+@media (min-width: 900px) and (min-height: 600px) and (max-height: 740px) {
+  .account-panel:has(.pstat) { padding: 16px 36px 18px; }
+  .account-body:has(.pstat) { gap: 6px; }
+  .account-body:has(.pstat) .account-card__icon { font-size: 1.7rem; }
+  .pstat-cell { padding: 4px 10px; }
+  .pstat-race { padding: 3px 10px; }
+  .pstat-mission { padding: 4px 12px; }
 }
 .gp-rescan{align-self:center;min-width:200px;justify-content:center;text-align:center}
 .gp-rescan .p5-banner__label{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%}
-.gp-diag{margin:6px auto 0;max-width:min(100%,520px);white-space:pre-wrap;word-break:break-word;font:600 11px/1.45 ui-monospace,Consolas,monospace;color:#c9c2d4;background:#14121a;border:2px solid #000;padding:8px 12px;text-align:left}
+.gp-diag{margin:6px auto 0;position:relative;z-index:3;max-width:min(100%,520px);white-space:pre-wrap;word-break:break-word;font:600 11px/1.45 ui-monospace,Consolas,monospace;color:#c9c2d4;background:#14121a;border:2px solid #000;padding:8px 12px;text-align:left}

@@ -172,14 +172,15 @@ const Drums = {
     this.refreshMarkers();
   },
 
-  _shake(d, soft) {
+  _shake(d, soft, theme) {
     // Un solo sonido aunque tiemblen varios a la vez (sin solaparse).
     const t = performance.now();
     if (typeof SFX !== "undefined" && SFX.enabled && t - (this._lastSound || 0) > 450 && !(soft && this._resolving)) {
       this._lastSound = t;
       try {
         // Golpe normal: ritmo tribal-rockero con la música de fondo atenuada; el suave (reubicación) conserva el golpe corto.
-        const ms = soft ? 0 : SFX.drumTheme();
+        // Pedido explícito: la canción de los tambores solo suena al COMPLETAR la barra, no al final de cada turno.
+        const ms = theme && !soft ? SFX.drumTheme() : 0;
         if (ms) { if (typeof Music !== "undefined" && Music.duck) Music.duck(ms); }
         else if (soft || !(performance.now() < (SFX._themeUntil || 0))) SFX.drum(soft);
       } catch (e) {}
@@ -239,7 +240,8 @@ const Drums = {
     this.list.forEach((d) => (d.hits[team] = 0));
     if (gained > 0) {
       this.slices[team] = Math.min(this.maxSlices(team), (this.slices[team] || 0) + gained);
-      this.list.forEach((d) => { if (this.majority(d) === team) { d.plays[team] = (d.plays[team] || 0) + 1; this._shake(d); } });
+      const full = this.slices[team] >= this.maxSlices(team);
+      this.list.forEach((d) => { if (this.majority(d) === team) { d.plays[team] = (d.plays[team] || 0) + 1; this._shake(d, false, full); } });
     }
     this.refreshMarkers();
     // 2) ¿10/10?

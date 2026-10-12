@@ -1123,7 +1123,7 @@ const GamepadCtl = {
   _showDiag() {
     if (!this._pane || !this._pane.isConnected) return;
     let el = this._pane.querySelector(".gp-diag");
-    if (!el) { el = document.createElement("pre"); el.className = "gp-diag"; const b = this._pane.querySelector(".gp-rescan"); if (b) b.insertAdjacentElement("afterend", el); else this._pane.appendChild(el); }
+    if (!el) { el = document.createElement("pre"); el.className = "gp-diag"; el.style.cssText = "margin:8px auto 0;max-width:100%;white-space:pre-wrap;word-break:break-word;font:600 11px/1.45 Consolas,monospace;color:#e8e4f0;background:#14121a;border:2px solid #000;padding:8px 12px;text-align:left;position:relative;z-index:3"; const b = this._pane.querySelector(".gp-rescan"); if (b) b.insertAdjacentElement("afterend", el); else this._pane.appendChild(el); }
     el.textContent = this._diag();
   },
   rescan() {
