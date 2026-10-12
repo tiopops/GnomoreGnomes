@@ -10628,3 +10628,5 @@ body.oracle-fog-lifted .tile__fog { opacity: 0 !important; transition: opacity 0
   .pstat-grid { grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); }
   .account-body:has(.pstat) > .settings-panel__title { text-align: center; justify-self: stretch; margin: 0; }
 }
+.gp-rescan{align-self:center;min-width:200px;justify-content:center;text-align:center}
+.gp-rescan .p5-banner__label{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%}

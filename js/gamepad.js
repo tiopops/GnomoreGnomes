@@ -169,6 +169,7 @@ const GamepadCtl = {
       const p = list[i];
       if (!p || !p.connected) continue;
       const score = (p.mapping === "standard" ? 100 : 0) + (p.axes && p.axes.length >= 2 ? 10 : 0) + (p.buttons && p.buttons.length >= 8 ? 1 : 0);
+      if (score < 10) continue; // sin ejes ni mapeo estándar: no es un mando (barra de sonido, etc.)
       if (score > bestScore) { best = p; bestScore = score; }
     }
     return best ? this._normalize(best) : null;
@@ -1093,6 +1094,7 @@ const GamepadCtl = {
         <i class="ph-fill ph-game-controller"></i>
         <span>${this.connected ? "Mando conectado: " + this._esc(this.padName) : "Sin mando. Conecta uno y pulsa cualquier botón."}</span>
       </div>
+      <button type="button" class="p5-banner p5-banner--action gp-rescan" style="--p5-tone:#2b3a52"><span class="p5-banner__label"><i class="ph ph-arrows-clockwise"></i> Buscar mando</span></button>
       <button type="button" class="p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle gp-hintsbtn" style="--p5-tone:#2b2733">
         <span class="settings-panel__option-main"><i class="ph ph-question settings-panel__option-icon"></i><span class="p5-banner__label">Ayudas del mando</span></span>
         <span class="settings-toggle" data-checked="${this.hints}"><i class="ph ph-check settings-toggle__check"></i></span>
@@ -1102,6 +1104,7 @@ const GamepadCtl = {
       <div class="gp-map">${rows}</div>
       <div class="gp-note">Cruceta o stick izquierdo: mover cursor y navegar. Stick derecho: cámara.</div>
       <button type="button" class="p5-banner p5-banner--action gp-reset" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">Restablecer</span></button>`;
+    pane.querySelector(".gp-rescan").addEventListener("click", () => { if (typeof SFX !== "undefined") SFX.click(); this.rescan(); });
     pane.querySelector(".gp-hintsbtn").addEventListener("click", () => {
       if (typeof SFX !== "undefined") SFX.click();
       this.setHints(!this.hints);
@@ -1115,6 +1118,16 @@ const GamepadCtl = {
       })
     );
     pane.querySelector(".gp-reset").addEventListener("click", () => { if (typeof SFX !== "undefined") SFX.click(); this._listening = null; this.resetMap(); });
+  },
+  // Botón "Buscar mando": vuelve a consultar al navegador si hay un mando.
+  rescan() {
+    const pad = this._getPad();
+    if (pad && !this.connected) this._onConnect(pad);
+    else if (!pad && this.connected) this._onDisconnect();
+    else {
+      this._toast(pad ? "Mando conectado" : "No se detecta ningún mando. Pulsa un botón del mando e inténtalo de nuevo.", "ph-fill ph-game-controller");
+      this._refreshPane();
+    }
   },
   _esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); },
   _stopListening() { this._listening = null; this._refreshPane(); },
@@ -1191,7 +1204,26 @@ const GamepadCtl = {
     if (!this._pane || !this._pane.isConnected) return;
     const svg = this._pane.querySelector(".gp-tester");
     if (!svg || !svg.isConnected || !this._isVisible(svg)) return;
-    svg.querySelectorAll("[data-pad]").forEach((el) => el.classList.toggle("gp-t--on", !!down[+el.dataset.pad]));
+    const mix = (v) => { const a = [74, 70, 85], b = [255, 213, 74]; return "rgb(" + a.map((c, i) => Math.round(c + (b[i] - c) * v)).join(",") + ")"; };
+    svg.querySelectorAll("[data-pad]").forEach((el) => {
+      const id = +el.dataset.pad;
+      let on = !!down[id];
+      if (id === 10 || id === 11) {
+        // Sticks: la tapa sigue al eje y se ilumina al moverlo o al pulsarlo.
+        const x = this._axis(pad, id === 10 ? 0 : 2), y = this._axis(pad, id === 10 ? 1 : 3);
+        const m = Math.min(1, Math.hypot(x, y));
+        const k = m > 1 ? 1 / m : 1;
+        el.style.transform = "translate(" + (x * k * 9).toFixed(1) + "px," + (y * k * 9).toFixed(1) + "px)";
+        if (m > 0.2) on = true;
+      } else if (id === 6 || id === 7) {
+        // Gatillos analógicos: brillo proporcional a lo que se aprieta.
+        const b = pad.buttons[id];
+        const v = b ? Math.max(b.value || 0, b.pressed ? 1 : 0) : 0;
+        el.style.fill = v > 0.04 ? mix(v) : "";
+        on = v > 0.55;
+      }
+      el.classList.toggle("gp-t--on", on);
+    });
   },
 };
 
