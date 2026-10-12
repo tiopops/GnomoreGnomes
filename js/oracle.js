@@ -102,6 +102,13 @@ const Oracle = {
   spawn(boardSize) {
     const obeliskSpots = typeof Obelisks !== "undefined" ? Obelisks.list.map((o) => ({ row: o.row, col: o.col })) : [];
     const shopSpots = typeof Shops !== "undefined" ? Shops.list.map((s) => ({ row: s.row, col: s.col })) : [];
+    const important = [];
+    ["Altar", "Volcano", "Villages", "Obelisks"].forEach((n) => {
+      let mod = null;
+      try { mod = eval(n); } catch (e) { mod = null; }
+      if (mod && mod.list) mod.list.forEach((b) => important.push({ row: b.row, col: b.col }));
+    });
+    let minImp = 5;
     let maxImbalance = 0;
     let minDist = Math.max(2, Math.floor(boardSize / 6));
     const minShop0 = Math.max(5, Math.floor(boardSize / 3));
@@ -112,6 +119,7 @@ const Oracle = {
       if (attempts % 150 === 0) maxImbalance++;
       if (attempts % 300 === 0) minDist = Math.max(1, minDist - 1);
       if (attempts % 800 === 0) minShop = Math.max(4, minShop - 1); // nunca por debajo de 4
+      if (attempts % 1000 === 0) minImp = Math.max(3, minImp - 1); // nunca por debajo de 3
       const row = Math.floor(Math.random() * boardSize);
       const col = Math.floor(Math.random() * boardSize);
       if (obeliskSpots.length) {
@@ -120,6 +128,10 @@ const Oracle = {
         if (Math.min(...dists) < minDist) continue;
       }
       if (shopSpots.some((s) => Math.max(Math.abs(row - s.row), Math.abs(col - s.col)) < minShop)) continue;
+      // Pedido explícito: "la casa del oraculo no puede aparecer en el centro
+      // junto a otros edificios importantes como el altar de sacrificios" —
+      // separación mínima respecto a Altar, Volcán, tótems y Obeliscos.
+      if (important.some((b) => Math.max(Math.abs(row - b.row), Math.abs(col - b.col)) < minImp)) continue;
       if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
       if (typeof Units !== "undefined" && Units.unitAt(row, col)) continue;
       if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
