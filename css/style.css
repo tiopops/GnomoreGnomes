@@ -10728,3 +10728,8 @@ body.gp-active, body.gp-active * { cursor: none !important; }
 .gp-lbl { font-size: 20px; }
 .settings-panel .settings-panel__columns--tabbed { position: relative; z-index: 2; }
 .settings-overlay { overflow-y: hidden; }
+
+/* Iconos de habilidad: se recortan con la misma silueta irregular del marco, así
+   el fondo del recuadro y el icono encajan sin esquinas rectas sobrantes. */
+.skills-node__icon { position: absolute; inset: var(--gg-frame-outline-width); width: calc(100% - 2 * var(--gg-frame-outline-width)); height: calc(100% - 2 * var(--gg-frame-outline-width)); object-fit: cover; clip-path: var(--gg-slot-clip); }
+.skills-row--fork .skills-node[data-slot="1"] .skills-node__icon { clip-path: polygon(0% 4%, 96% 0%, 100% 97%, 3% 100%); }

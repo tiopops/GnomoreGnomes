@@ -594,12 +594,12 @@ const GamepadCtl = {
     const skip = ".backpack-close-btn, .back-btn, [data-back], .settings-gear-btn, .skills-tab, .account-tab, .settings-tab, .main-logo-hit, .opp-stepper__arrow";
     const notSkip = list.filter((el) => !el.matches(skip));
     const pool = notSkip.length ? notSkip : list;
-    pool.sort((a, b) => {
-      const ra = a.getBoundingClientRect();
-      const rb = b.getBoundingClientRect();
-      return ra.top - rb.top || ra.left - rb.left;
-    });
-    this._focusEl = pool[0];
+    // Primera fila (la más alta) y, dentro de ella, la opción más a la izquierda.
+    const rects = pool.map((el) => ({ el, r: el.getBoundingClientRect() }));
+    const top = Math.min(...rects.map((o) => o.r.top));
+    const first = rects.filter((o) => o.r.top < top + 0.6 * Math.max(...rects.filter((q) => q.r.top === top).map((q) => q.r.height)));
+    first.sort((a, b) => a.r.left - b.r.left || a.r.top - b.r.top);
+    this._focusEl = first[0].el;
     return this._focusEl;
   },
   _dir(dx, dy) {
@@ -842,9 +842,29 @@ const GamepadCtl = {
     if (act === "glory") { if (typeof Glory !== "undefined" && Glory.openPopup) Glory.openPopup(); return; }
     if (act === "settings") { if (typeof SettingsMenu !== "undefined") SettingsMenu.open(); return; }
   },
+  // B primero cancela lo que se esté colocando/apuntando (Setarcoiris, TotemVision,
+  // BeVida, KataPum!, habilidades con objetivo) sin deseleccionar a la unidad.
+  _cancelTargets() {
+    let did = false;
+    const B = typeof Backpack !== "undefined" ? Backpack : null;
+    const A = typeof Abilities !== "undefined" ? Abilities : null;
+    try {
+      if (B) {
+        if (B._placingUid != null) { B._cancelPlacing(); did = true; }
+        if (B._givingUid != null) { B._cancelGivingBevida(); did = true; }
+        if (B._katapumUid != null) { B._cancelTargetingKatapum(); did = true; }
+      }
+      if (A) {
+        if (A._pickHandler) { A._cancelUnitPicking(); did = true; }
+        if (A._targetingUnit) { A._cancelTargeting(); did = true; }
+      }
+    } catch (e) {}
+    return did;
+  },
   _cancel() {
     this._obIdx = -1;
     document.querySelectorAll(".gp-ob-focus").forEach((b) => b.classList.remove("gp-ob-focus"));
+    if (this._cancelTargets()) return;
     if (typeof Abilities !== "undefined" && Abilities._cancelTargeting) { try { Abilities._cancelTargeting(); } catch (e) {} }
     if (typeof Units !== "undefined") Units.deselect();
     if (typeof Obelisks !== "undefined") Obelisks.deselect();
@@ -1058,6 +1078,18 @@ const GamepadCtl = {
       this._barEl = b;
     }
   },
+  // Área visible del elemento: pantalla ∩ contenedores con scroll que lo recortan.
+  _scrollClip(el) {
+    let L = 0, T = 0, R = innerWidth, B = innerHeight;
+    for (let p = el.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+      if (p.scrollHeight <= p.clientHeight + 1 && p.scrollWidth <= p.clientWidth + 1) continue;
+      const cs = getComputedStyle(p);
+      if (!/(auto|scroll|hidden)/.test(cs.overflowY + cs.overflowX)) continue;
+      const pr = p.getBoundingClientRect();
+      L = Math.max(L, pr.left); T = Math.max(T, pr.top); R = Math.min(R, pr.right); B = Math.min(B, pr.bottom);
+    }
+    return { L, T, R, B };
+  },
   // El anillo de foco copia la silueta irregular del elemento (su clip-path).
   _ringShape(el) {
     if (this._ringShapeEl === el) return;
@@ -1088,7 +1120,17 @@ const GamepadCtl = {
         s.top = r.top - 7 + "px";
         s.width = r.width + 14 + "px";
         s.height = r.height + 14 + "px";
-        this._ringEl.classList.add("gp-focus--on");
+        // En zonas con scroll, el anillo solo se ve dentro del área visible.
+        const c = this._scrollClip(el);
+        const vis = Math.max(0, Math.min(r.right, c.R) - Math.max(r.left, c.L)) * Math.max(0, Math.min(r.bottom, c.B) - Math.max(r.top, c.T));
+        if (vis < r.width * r.height * 0.35) {
+          this._ringEl.classList.remove("gp-focus--on");
+        } else {
+          const top = Math.max(0, c.T - (r.top - 7)), left = Math.max(0, c.L - (r.left - 7));
+          const bottom = Math.max(0, r.bottom + 7 - c.B), right = Math.max(0, r.right + 7 - c.R);
+          s.clipPath = top || left || bottom || right ? `inset(${top}px ${right}px ${bottom}px ${left}px)` : "none";
+          this._ringEl.classList.add("gp-focus--on");
+        }
       } else this._ringEl.classList.remove("gp-focus--on");
       this._cursorEl && this._cursorEl.classList.remove("gp-tile--on");
     } else {
