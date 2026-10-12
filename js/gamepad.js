@@ -162,8 +162,16 @@ const GamepadCtl = {
   // ---------- Conexión ----------
   _getPad() {
     const list = (navigator.getGamepads && navigator.getGamepads()) || [];
-    for (let i = 0; i < list.length; i++) if (list[i] && list[i].connected) return this._normalize(list[i]);
-    return null;
+    // Con varios dispositivos HID (barra de sonido, ratón gamer...) se elige el
+    // que parece un mando: mapeo estándar primero, luego el que tenga ejes.
+    let best = null, bestScore = -1;
+    for (let i = 0; i < list.length; i++) {
+      const p = list[i];
+      if (!p || !p.connected) continue;
+      const score = (p.mapping === "standard" ? 100 : 0) + (p.axes && p.axes.length >= 2 ? 10 : 0) + (p.buttons && p.buttons.length >= 8 ? 1 : 0);
+      if (score > bestScore) { best = p; bestScore = score; }
+    }
+    return best ? this._normalize(best) : null;
   },
   // Mandos que el navegador NO expone con la disposición estándar (p. ej. un
   // Xbox 360 USB con driver genérico/DirectInput): se traducen a la estándar.
