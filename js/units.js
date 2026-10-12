@@ -1328,7 +1328,8 @@ const Units = {
       sprite.classList.remove("unit__sprite--hop");
     }
     const h = (flip && flip.offsetHeight) || 100;
-    if (flip) flip.style.clipPath = `inset(0 0 ${WATER}px 0)`;
+    // Solo corta por ABAJO (línea de agua): los demás lados quedan abiertos para no recortar el sprite lateralmente.
+    if (flip) flip.style.clipPath = `inset(-400px -400px ${WATER}px -400px)`;
     const total = h + 10; // hasta que desaparece del todo bajo la línea de agua
     // La sombra proyectada es un elemento aparte (no baja con el sprite): se desvanece mientras se hunde.
     if (flip) flip.querySelectorAll(".gg-cast-shadow").forEach((sh) => sh.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SINK * 0.55, fill: "forwards", easing: "ease-in" }));
