@@ -5,6 +5,13 @@
 const screenHistory = ["main-menu"];
 
 function showScreen(id) {
+  // Limpieza al salir del tablero (js/matchcleanup.js) / permiso de sonido de juego al entrar.
+  if (typeof MatchCleanup !== "undefined") {
+    const board = document.getElementById("screen-board");
+    const wasBoard = !!(board && board.classList.contains("screen--active"));
+    if (id === "screen-board") MatchCleanup.enter();
+    else if (wasBoard) MatchCleanup.leave();
+  }
   document.querySelectorAll(".screen").forEach((s) => {
     s.classList.toggle("screen--active", s.id === id);
   });

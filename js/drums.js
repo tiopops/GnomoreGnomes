@@ -9,16 +9,14 @@
        cada golpe a un gnomo dado por una unidad adyacente a un tambor suma
        +1 más (solo si la mayoría sigue siendo suya; el tambor tiembla y el
        marcador deja una porción fantasma pendiente).
-     - Al llegar a 10/10, o en los turnos múltiplos de 10 (gana la pugna
-       quien más porciones tenga; los empatados en cabeza se libran), cae la
-       lluvia de rocas sobre los demás equipos: unidades, tótems y
+     - Al llegar a 10/10 (y SOLO entonces) cae la lluvia de rocas sobre los
+       demás equipos: unidades, tótems y
        obeliscos. El juego queda en pausa como en un turno ajeno.
        Daño = 2 + nº de lluvias anteriores.
      - Los fragmentos que saltan de cada roca rota: se recogen al pisarlos y
        van a la mochila (recurso apilable "Fragmento de roca"). */
 
 const DRUM_SLICES = 10;
-const DRUM_DISPUTE_EVERY = 10;
 const DRUM_BASE_RAIN_DAMAGE = 2;
 const DRUM_DIR = "assets/niveles/rockntroll/";
 const DRUM_TEAM_COLORS = { player: "#3aa0ff", enemy: "#ff5148", enemy2: "#52d66a", enemy3: "#c067ff" };
@@ -255,20 +253,7 @@ const Drums = {
       await this._rain([team], Teams.all.filter((t) => t !== team));
       return;
     }
-    // 3) Pugna cada 10 turnos, al cerrar la ronda
-    const alive = Teams.all.filter((t) => typeof Obelisks === "undefined" || Obelisks.byTeam(t));
-    const last = alive[alive.length - 1];
-    if (team === last && typeof Turns !== "undefined" && Turns.roundNumber % DRUM_DISPUTE_EVERY === 0) {
-      const max = Math.max(...alive.map((t) => this.slices[t] || 0));
-      if (max > 0) {
-        const leaders = alive.filter((t) => (this.slices[t] || 0) === max);
-        const victims = alive.filter((t) => !leaders.includes(t));
-        if (victims.length) {
-          if (typeof Banners !== "undefined") await Banners.text("¡Los tambores deciden!", 0).ended;
-          await this._rain(leaders, victims);
-        }
-      }
-    }
+    // Las rocas SOLO caen cuando un equipo completa su barra (10/10): ya no hay lluvia por "pugna" cada 10 turnos.
   },
 
   async _flashFull(team) {

@@ -442,9 +442,12 @@ const Turns = {
     if (typeof Abilities !== "undefined") Abilities.releaseMindControl();
     // Fin del turno del jugador (Torretas, js/skills.js): tablero bloqueado
     // mientras se animan las flechas.
+    const ep = typeof MatchCleanup !== "undefined" ? MatchCleanup.epoch : 0; // si se sale al menú, el turno se aborta
+    const gone = () => typeof MatchCleanup !== "undefined" && MatchCleanup.epoch !== ep;
     this._aiRunning = true;
     this._updateButtonState();
     await this._fireTurnEnd("player");
+    if (gone()) return;
     this._aiRunning = false;
     if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return;
     // Pedido explícito: "los gnomos que están sueltos... pierden 5 puntos
@@ -462,12 +465,15 @@ const Turns = {
       this._updateButtonState();
       if (typeof Glory !== "undefined") Glory.grantTurnStart(aiTeam);
       await this._fireTurnStart(aiTeam);
+      if (gone()) return;
       if (typeof Obelisks !== "undefined" && Obelisks.gameOver) {
         this._aiRunning = false;
         return;
       }
       await this._runEnemyTurn(aiTeam);
+      if (gone()) return;
       await this._fireTurnEnd(aiTeam);
+      if (gone()) return;
       if (typeof Obelisks !== "undefined" && Obelisks.gameOver) {
         this._aiRunning = false;
         return;
@@ -705,9 +711,11 @@ const Turns = {
   async _runEnemyTurn(team = "enemy") {
     if (typeof Tutorial !== "undefined" && Tutorial.active) return; // tutorial: rival pasivo
     const enemies = Units.list.filter((u) => u.team === team);
+    const ep = typeof MatchCleanup !== "undefined" ? MatchCleanup.epoch : 0;
     this._aiPlanTurn(team);
     for (const unit of enemies) {
       for (let i = 0; i < TURNS_MAX_ACTIONS; i++) {
+        if (typeof MatchCleanup !== "undefined" && MatchCleanup.epoch !== ep) return; // salió al menú
         if (!this.canAct(unit)) break;
         const acted = await this._aiActOnce(unit);
         if (!acted) break;

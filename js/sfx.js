@@ -70,6 +70,7 @@ const SFX = {
     // antes de que master exista de verdad.
     this.master.gain.value = this.enabled ? this.volume : 0;
     const compressor = this.ctx.createDynamicsCompressor();
+    this._comp = compressor; // (MatchCleanup: para rehacer el master al salir de la partida)
     this.master.connect(compressor).connect(this.ctx.destination);
     return this.ctx;
   },
