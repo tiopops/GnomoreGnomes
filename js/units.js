@@ -1295,7 +1295,7 @@ const Units = {
     if (
       unit.team !== "player" &&
       typeof Fog !== "undefined" &&
-      (Fog.isFogged(unit.row, unit.col) || !Fog.isPerceived(unit.row, unit.col))
+      (Fog.isFoggedReal(unit.row, unit.col) || !Fog.isPerceived(unit.row, unit.col))
     ) return;
     const { x, y } = getTileCenter(unit.row, unit.col, this.boardSize);
     const popup = document.createElement("div");

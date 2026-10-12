@@ -503,7 +503,7 @@ const Fog = {
         // AHORA MISMO alguien que se mueve.
         u.el.classList.toggle(
           "unit--fog-hidden",
-          this.isFogged(u.row, u.col) || !this.isPerceived(u.row, u.col) || inBush
+          this.isFoggedReal(u.row, u.col) || !this.isPerceived(u.row, u.col) || inBush
         );
       });
       // Arbustos (js/bushes.js) — mismo criterio sin excepción que un
@@ -552,7 +552,7 @@ const Fog = {
         // cuenta cada turno, así que fuera de percepción se oculta del todo
         // en vez de "recordarse" en su última posición vista (eso filtraría
         // dónde sigue estando ahora mismo).
-        g.el.classList.toggle("unit--fog-hidden", this.isFogged(g.row, g.col) || !this.isPerceived(g.row, g.col));
+        g.el.classList.toggle("unit--fog-hidden", this.isFoggedReal(g.row, g.col) || !this.isPerceived(g.row, g.col));
       });
     }
     // "los totems no deben verse a traves de la niebla, realmente NADA debe
@@ -565,7 +565,7 @@ const Fog = {
     if (typeof Villages !== "undefined") {
       Villages.list.forEach((v) => {
         if (!v.el) return;
-        const fogged = this.isFogged(v.row, v.col);
+        const fogged = this.isFoggedReal(v.row, v.col); // sin la excepción del turno rival (multijugador: no delatar edificios)
         v.el.classList.toggle("unit--fog-hidden", fogged);
         // Pedido explícito: mientras el tótem sea del jugador, su radio fijo
         // de percepción (FOG_VILLAGE_PERCEPTION_RADIUS) lo mantiene siempre
@@ -585,7 +585,7 @@ const Fog = {
     if (typeof Backpack !== "undefined") {
       Backpack.placedItems.forEach((item) => {
         if (!item.el) return;
-        const fogged = this.isFogged(item.row, item.col);
+        const fogged = this.isFoggedReal(item.row, item.col); // sin la excepción del turno rival (multijugador: no delatar edificios)
         item.el.classList.toggle("unit--fog-hidden", fogged);
         item.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(item.row, item.col));
       });
@@ -595,7 +595,7 @@ const Fog = {
     if (typeof Shops !== "undefined") {
       Shops.list.forEach((shop) => {
         if (!shop.el) return;
-        const fogged = this.isFogged(shop.row, shop.col);
+        const fogged = this.isFoggedReal(shop.row, shop.col); // sin la excepción del turno rival (multijugador: no delatar edificios)
         shop.el.classList.toggle("unit--fog-hidden", fogged);
         shop.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(shop.row, shop.col));
       });
@@ -603,7 +603,7 @@ const Fog = {
     if (typeof Oracle !== "undefined") {
       Oracle.list.forEach((o) => {
         if (!o.el) return;
-        const fogged = this.isFogged(o.row, o.col);
+        const fogged = this.isFoggedReal(o.row, o.col); // sin la excepción del turno rival (multijugador: no delatar edificios)
         o.el.classList.toggle("unit--fog-hidden", fogged);
         o.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(o.row, o.col));
       });
@@ -616,7 +616,7 @@ const Fog = {
     if (typeof Altar !== "undefined") {
       Altar.list.forEach((a) => {
         if (!a.el) return;
-        const fogged = this.isFogged(a.row, a.col);
+        const fogged = this.isFoggedReal(a.row, a.col); // sin la excepción del turno rival (multijugador: no delatar edificios)
         a.el.classList.toggle("unit--fog-hidden", fogged);
         a.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(a.row, a.col));
       });
@@ -637,7 +637,7 @@ const Fog = {
           o.el.classList.remove("gg-remembered");
           return;
         }
-        const fogged = this.isFogged(o.row, o.col);
+        const fogged = this.isFoggedReal(o.row, o.col); // sin la excepción del turno rival (multijugador: no delatar edificios)
         o.el.classList.toggle("unit--fog-hidden", fogged);
         o.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(o.row, o.col));
         if (typeof Units !== "undefined" && Units.updateHpBar) Units.updateHpBar(o);

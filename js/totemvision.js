@@ -112,7 +112,7 @@ const TotemVision = {
         t.el.classList.remove("unit--fog-hidden", "gg-remembered");
         return;
       }
-      const fogged = typeof Fog !== "undefined" && Fog.isFogged(t.row, t.col);
+      const fogged = typeof Fog !== "undefined" && Fog.isFoggedReal(t.row, t.col);
       const perceived = typeof Fog === "undefined" || Fog.isPerceived(t.row, t.col);
       t.el.classList.toggle("unit--fog-hidden", fogged || !perceived);
       t.el.classList.toggle("gg-remembered", !fogged && !perceived);

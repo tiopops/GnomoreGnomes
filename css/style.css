@@ -10643,3 +10643,6 @@ body.oracle-fog-lifted .tile__fog { opacity: 0 !important; transition: opacity 0
 .gp-rescan{align-self:center;min-width:200px;justify-content:center;text-align:center}
 .gp-rescan .p5-banner__label{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%}
 .gp-diag{margin:6px auto 0;position:relative;z-index:3;max-width:min(100%,520px);white-space:pre-wrap;word-break:break-word;font:600 11px/1.45 ui-monospace,Consolas,monospace;color:#c9c2d4;background:#14121a;border:2px solid #000;padding:8px 12px;text-align:left}
+.obelisk__menu-btn.gp-ob-focus{filter:drop-shadow(0 0 4px #ffd54a) drop-shadow(0 0 10px #ffd54a) !important;transform:scale(1.18) !important;outline:3px solid #ffd54a;outline-offset:2px;border-radius:50%}
+/* Confirmación de abandonar partida online: sin scroll (ni horizontal ni vertical). */
+.mp-panel--small { overflow: visible; max-height: none; }

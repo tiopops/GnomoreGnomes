@@ -721,7 +721,37 @@ const GamepadCtl = {
       this._beginClick(BoardView.viewportEl, p.x, p.y);
     }
   },
+  // Iconos del menú del Obelisco (Reclutar / Habilidades / Armería) visibles ahora mismo.
+  _obMenu() {
+    const btns = Array.from(document.querySelectorAll(".obelisk--selected .obelisk__menu-btn")).filter((b) => this._isVisible(b) && !b.disabled);
+    if (!btns.length) {
+      this._obIdx = -1;
+      document.querySelectorAll(".gp-ob-focus").forEach((b) => b.classList.remove("gp-ob-focus"));
+    }
+    return btns;
+  },
+  _obStep(dir, btns) {
+    const n = btns.length;
+    let i = typeof this._obIdx === "number" ? this._obIdx : -1;
+    i = i < 0 ? (dir > 0 ? 0 : n - 1) : (i + dir + n) % n;
+    this._obIdx = i;
+    btns.forEach((b, k) => b.classList.toggle("gp-ob-focus", k === i));
+    if (typeof SFX !== "undefined" && SFX.click) { try { SFX.click(); } catch (e) {} }
+  },
   _boardAction(act) {
+    // Con el Obelisco propio seleccionado: LB/RB recorren Reclutar · Habilidades · Armería y A abre la elegida.
+    const obBtns = this._obMenu();
+    if (obBtns.length) {
+      if (act === "prevUnit") { this._obStep(-1, obBtns); return; }
+      if (act === "nextUnit") { this._obStep(1, obBtns); return; }
+      if (act === "confirm" && this._obIdx >= 0 && obBtns[this._obIdx]) {
+        const b = obBtns[this._obIdx];
+        this._obIdx = -1;
+        b.classList.remove("gp-ob-focus");
+        this._clickNow(b);
+        return;
+      }
+    }
     if (act === "confirm") { this._activateTile(); return; }
     if (act === "back") { this._cancel(); return; }
     if (act === "actions") { this._openActions(); return; }
@@ -742,6 +772,8 @@ const GamepadCtl = {
     if (act === "settings") { if (typeof SettingsMenu !== "undefined") SettingsMenu.open(); return; }
   },
   _cancel() {
+    this._obIdx = -1;
+    document.querySelectorAll(".gp-ob-focus").forEach((b) => b.classList.remove("gp-ob-focus"));
     if (typeof Abilities !== "undefined" && Abilities._cancelTargeting) { try { Abilities._cancelTargeting(); } catch (e) {} }
     if (typeof Units !== "undefined") Units.deselect();
     if (typeof Obelisks !== "undefined") Obelisks.deselect();
@@ -1008,11 +1040,14 @@ const GamepadCtl = {
       items.push(["__dpad", "Mover"]);
     } else {
       const sel = typeof Units !== "undefined" && Units.selectedId;
-      items = sel
+      const obOpen = this._obMenu().length > 0;
+      items = obOpen
+        ? [["confirm", "Elegir"], ["back", "Cancelar"], ["prevUnit", "◂ Opción"], ["nextUnit", "Opción ▸"], ["endTurn", "Fin de turno"]]
+        : sel
         ? [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"]]
         : [["confirm", "Seleccionar"], ["actions", "Cuenta"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["endTurn", "Fin de turno"]];
     }
-    const key = items.map((x) => x[0] + this.map[x[0]]).join("|") + I18N.currentLang + mode.type;
+    const key = items.map((x) => x[0] + this.map[x[0]] + x[1]).join("|") + I18N.currentLang + mode.type;
     if (force || key !== this._lastBarKey) {
       this._lastBarKey = key;
       this._barEl.innerHTML = items
