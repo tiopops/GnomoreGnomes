@@ -110,6 +110,7 @@ const SettingsMenu = {
       this._tab = id;
       if (typeof Account !== "undefined") { if (id === "acct") Account.embed(colAcct); else Account.unembed(); }
       columnsEl.scrollTop = 0;
+      if (this._tabBtns) this.syncAccountTab();
       TABS.forEach((t) => {
         t.pane.classList.toggle("settings-pane--hidden", t.id !== id);
         tabBtns[t.id].classList.toggle("skills-tab--active", t.id === id);
@@ -477,6 +478,7 @@ const SettingsMenu = {
 
   open() {
     this._ensurePopup();
+    this.syncAccountTab();
     if (this._exitBtn) this._exitBtn.style.display = this._inMatch() ? "" : "none";
     this._syncPerfLock();
     SFX.click();
@@ -508,9 +510,9 @@ const SettingsMenu = {
   syncAccountTab() {
     const b = this._tabBtns && this._tabBtns.acct;
     if (!b) return;
-    const show = typeof GamepadCtl !== "undefined" && GamepadCtl.connected;
+    // Solo existe mientras se usa el mando (o si ya se está en ella).
+    const show = (typeof GamepadCtl !== "undefined" && GamepadCtl.connected && GamepadCtl.active) || this._tab === "acct";
     b.hidden = !show;
-    if (!show && this._tab === "acct" && this._showTab) this._showTab("game");
   },
 
   close() {

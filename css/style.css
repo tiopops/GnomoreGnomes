@@ -10733,3 +10733,13 @@ body.gp-active, body.gp-active * { cursor: none !important; }
    el fondo del recuadro y el icono encajan sin esquinas rectas sobrantes. */
 .skills-node__icon { position: absolute; inset: var(--gg-frame-outline-width); width: calc(100% - 2 * var(--gg-frame-outline-width)); height: calc(100% - 2 * var(--gg-frame-outline-width)); object-fit: cover; clip-path: var(--gg-slot-clip); }
 .skills-row--fork .skills-node[data-slot="1"] .skills-node__icon { clip-path: polygon(0% 4%, 96% 0%, 100% 97%, 3% 100%); }
+
+/* Recuadro de foco del mando: contorno que sigue la silueta del elemento (con sus
+   costes e insignias por encima) y se recorta con el scroll de su ventana. */
+.gp-focused {
+  filter:
+    drop-shadow(3px 0 0 #ffd54a) drop-shadow(-3px 0 0 #ffd54a) drop-shadow(0 3px 0 #ffd54a) drop-shadow(0 -3px 0 #ffd54a)
+    drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000) drop-shadow(0 -2px 0 #000)
+    drop-shadow(0 0 9px rgba(255, 213, 74, 0.8)) !important;
+  animation: none !important;
+}

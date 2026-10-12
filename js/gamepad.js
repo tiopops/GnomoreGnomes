@@ -228,10 +228,12 @@ const GamepadCtl = {
     document.body.classList.toggle("gp-active", !!v);
     if (!v) {
       this._ringEl && this._ringEl.classList.remove("gp-focus--on");
+      this._markFocus(null);
       this._cursorEl && this._cursorEl.classList.remove("gp-tile--on");
       this._barEl && this._barEl.classList.remove("gp-hints--on");
       this._badgeEls.forEach((b) => (b.style.display = "none"));
     }
+    if (typeof SettingsMenu !== "undefined" && SettingsMenu.syncAccountTab) SettingsMenu.syncAccountTab();
   },
 
   // ---------- Bucle ----------
@@ -274,6 +276,7 @@ const GamepadCtl = {
       this._prev = down;
       this._rep.key = "";
       this._ringEl && this._ringEl.classList.remove("gp-focus--on");
+      this._markFocus(null);
       this._cursorEl && this._cursorEl.classList.remove("gp-tile--on");
       this._barEl && this._barEl.classList.remove("gp-hints--on");
       this._badgeEls.forEach((b) => (b.style.display = "none"));
@@ -426,14 +429,22 @@ const GamepadCtl = {
     const p = this._pendingClick;
     this._pendingClick = null;
     if (!p || !p.el.isConnected) return;
+    if (this._isHoldBtn(p.el)) return; // la visión de la unidad se queda abierta; se cierra con B
     this._mouse("pointerup", p.el, p.x, p.y);
     this._mouse("mouseup", p.el, p.x, p.y);
     this._mouse("click", p.el, p.x, p.y);
   },
+  // Botones "mantener pulsado" del ratón: con mando se abren con A y se cierran con B.
+  _isHoldBtn(el) { return !!el && (el.id === "unit-info-btn" || (el.closest && !!el.closest("#unit-info-btn"))); },
   _clickNow(el) {
     const r = el.getBoundingClientRect();
     const x = r.left + r.width / 2;
     const y = r.top + r.height / 2;
+    if (this._isHoldBtn(el)) {
+      this._mouse("pointerdown", el, x, y);
+      this._mouse("mousedown", el, x, y);
+      return;
+    }
     this._mouse("pointerdown", el, x, y);
     this._mouse("mousedown", el, x, y);
     this._mouse("pointerup", el, x, y);
@@ -478,6 +489,7 @@ const GamepadCtl = {
     const root = mode.root;
     if (!root) return;
     if (root.classList.contains("gp-actions")) { this._closeActions(); return; }
+    if (root.classList.contains("unit-info-overlay") && typeof UnitInfo !== "undefined") { UnitInfo.closePopup(); this._invalidateMode(); return; }
     if (root.classList.contains("mp-invite--visible") || root.classList.contains("mp-invite")) {
       const no = root.querySelector('[data-act="no"]');
       if (no) this._clickNow(no);
@@ -1078,6 +1090,12 @@ const GamepadCtl = {
       this._barEl = b;
     }
   },
+  _markFocus(el) {
+    if (this._marked === el) return;
+    if (this._marked) this._marked.classList.remove("gp-focused");
+    this._marked = el;
+    if (el) el.classList.add("gp-focused");
+  },
   // Área visible del elemento: pantalla ∩ contenedores con scroll que lo recortan.
   _scrollClip(el) {
     let L = 0, T = 0, R = innerWidth, B = innerHeight;
@@ -1112,29 +1130,14 @@ const GamepadCtl = {
     // Anillo de foco en menús/ventanas.
     if (mode.type === "ui" && this.active) {
       const el = this._ensureFocus(mode);
-      if (el && this._isVisible(el)) {
-        const r = el.getBoundingClientRect();
-        this._ringShape(el);
-        const s = this._ringEl.style;
-        s.left = r.left - 7 + "px";
-        s.top = r.top - 7 + "px";
-        s.width = r.width + 14 + "px";
-        s.height = r.height + 14 + "px";
-        // En zonas con scroll, el anillo solo se ve dentro del área visible.
-        const c = this._scrollClip(el);
-        const vis = Math.max(0, Math.min(r.right, c.R) - Math.max(r.left, c.L)) * Math.max(0, Math.min(r.bottom, c.B) - Math.max(r.top, c.T));
-        if (vis < r.width * r.height * 0.35) {
-          this._ringEl.classList.remove("gp-focus--on");
-        } else {
-          const top = Math.max(0, c.T - (r.top - 7)), left = Math.max(0, c.L - (r.left - 7));
-          const bottom = Math.max(0, r.bottom + 7 - c.B), right = Math.max(0, r.right + 7 - c.R);
-          s.clipPath = top || left || bottom || right ? `inset(${top}px ${right}px ${bottom}px ${left}px)` : "none";
-          this._ringEl.classList.add("gp-focus--on");
-        }
-      } else this._ringEl.classList.remove("gp-focus--on");
+      this._ringEl.classList.remove("gp-focus--on");
+      // El recuadro se dibuja sobre el propio elemento (silueta con sus costes/insignias
+      // encima), así sigue su forma irregular y se recorta con el scroll.
+      this._markFocus(el && this._isVisible(el) ? el : null);
       this._cursorEl && this._cursorEl.classList.remove("gp-tile--on");
     } else {
       this._ringEl.classList.remove("gp-focus--on");
+      this._markFocus(null);
       if (mode.type === "board" && this.active && this._ensureCursor()) {
         this._placeCursor();
         this._cursorEl.classList.add("gp-tile--on");
