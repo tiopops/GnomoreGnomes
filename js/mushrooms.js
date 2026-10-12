@@ -372,7 +372,7 @@ const Mushrooms = {
   // Explosión en una casilla (centro row/col): daño, onda expansiva y estructuras.
   // La usa la seta del portador (arriba) y la seta lanzada a distancia por
   // TruenoEspora, que actúa como una granada al aterrizar (js/abilities.js).
-  async blastAt(row, col, teamOfBlast, dyingUnit, carrier) {
+  async blastAt(row, col, teamOfBlast, dyingUnit, carrier, damage = MUSHROOM_DAMAGE) {
     carrier = carrier || { row, col, team: teamOfBlast, id: null };
     if (typeof SFX !== "undefined") SFX.explosion();
     const viewportEl = document.getElementById("board-viewport");
@@ -390,11 +390,11 @@ const Mushrooms = {
     );
     const toRemove = [];
     for (const u of victims) {
-      if (typeof Skills !== "undefined") Skills.resolveDamage(u, MUSHROOM_DAMAGE, { melee: false });
+      if (typeof Skills !== "undefined") Skills.resolveDamage(u, damage, { melee: false });
       else {
-        u.hp = Math.max(0, u.hp - MUSHROOM_DAMAGE);
+        u.hp = Math.max(0, u.hp - damage);
         Units.updateHpBar(u);
-        Units.spawnFloatingText(u, `-${MUSHROOM_DAMAGE}`, { className: "dmg-popup" });
+        Units.spawnFloatingText(u, `-${damage}`, { className: "dmg-popup" });
         Units.playShake(u);
       }
       if (u.hp <= 0) toRemove.push(u);
@@ -411,19 +411,19 @@ const Mushrooms = {
         await Abilities._pushBackFixed(u, centro, 1);
       }
     }
-    await this._damageStructures(row, col, carrier.team);
+    await this._damageStructures(row, col, carrier.team, damage);
     if (typeof Obelisks !== "undefined" && Obelisks.refreshAll) Obelisks.refreshAll();
   },
 
   // La explosión también daña tótems y Obeliscos adyacentes, sea cual sea su
   // bando (incluido el propio). Un tótem que llega a 0 pasa a ser del equipo
   // que provocó la explosión (quien llevaba la seta); un Obelisco a 0 es destruido.
-  async _damageStructures(row, col, team) {
+  async _damageStructures(row, col, team, damage = MUSHROOM_DAMAGE) {
     const near = (e) => Math.max(Math.abs(e.row - row), Math.abs(e.col - col)) <= 1;
     const hit = (e) => {
-      e.hp = Math.max(0, e.hp - MUSHROOM_DAMAGE);
+      e.hp = Math.max(0, e.hp - damage);
       Units.updateHpBar(e);
-      Units.spawnFloatingText(e, `-${MUSHROOM_DAMAGE}`, { className: "dmg-popup" });
+      Units.spawnFloatingText(e, `-${damage}`, { className: "dmg-popup" });
       Units.playShake(e);
     };
     if (typeof Villages !== "undefined") {

@@ -514,7 +514,7 @@ const Abilities = {
     // empuja 1 casilla a los de alrededor). Adyacente = trampa como siempre.
     const throwDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
     if (throwDist > 1 && typeof Mushrooms !== "undefined" && Mushrooms.blastAt) {
-      await Mushrooms.blastAt(row, col, unit.team, null, { row, col, team: unit.team, id: unit.id });
+      await Mushrooms.blastAt(row, col, unit.team, null, { row, col, team: unit.team, id: unit.id }, 1);
       this._restoreNormalRange(unit);
       return;
     }
