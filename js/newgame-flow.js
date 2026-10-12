@@ -8,6 +8,10 @@ function showScreen(id) {
   document.querySelectorAll(".screen").forEach((s) => {
     s.classList.toggle("screen--active", s.id === id);
   });
+  // Fuera del tablero no debe quedar el botón del personaje seleccionado (esquina inferior izquierda).
+  if (id !== "screen-board" && typeof UnitInfo !== "undefined" && UnitInfo.onDeselect) {
+    try { UnitInfo.onDeselect(); } catch (e) {}
+  }
 }
 
 function goToScreen(id) {
