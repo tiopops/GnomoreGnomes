@@ -76,8 +76,6 @@ const GP_ACTION_BUTTONS = [
   { sel: ".gnome-action-btn--pass", icon: "ph-fill ph-paper-plane-tilt", label: () => "Pasar gnomo" },
   { sel: ".obelisk__menu-btn", icon: "ph-fill ph-castle-turret", label: (el) => el.getAttribute("aria-label") || "Obelisco" },
   { sel: "#unit-info-btn", icon: "ph-fill ph-info", label: () => "Información de la unidad" },
-  { sel: ".settings-gear-btn--account", icon: "ph-fill ph-user", label: () => "Cuenta" },
-  { sel: ".settings-gear-btn:not(.settings-gear-btn--account)", icon: "ph-fill ph-gear", label: () => "Ajustes" },
   { sel: ".backpack-btn", icon: "ph-fill ph-backpack", label: () => "Mochila" },
 ];
 
@@ -210,6 +208,7 @@ const GamepadCtl = {
     this._last = performance.now();
     this._toast("Mando conectado", "ph-fill ph-game-controller");
     this._refreshPane();
+    if (typeof SettingsMenu !== "undefined" && SettingsMenu.syncAccountTab) SettingsMenu.syncAccountTab();
     if (!this._raf) this._raf = requestAnimationFrame((t) => this._loop(t));
   },
   _onDisconnect() {
@@ -218,14 +217,20 @@ const GamepadCtl = {
     this._setActive(false);
     this._toast("Mando desconectado", "ph-fill ph-game-controller");
     this._refreshPane();
+    if (typeof SettingsMenu !== "undefined" && SettingsMenu.syncAccountTab) SettingsMenu.syncAccountTab();
     this._updateHints(true);
   },
   _setActive(v) {
     if (this.active === v) return;
     this.active = v;
+    // Con el mando: se oculta el puntero del ratón; al mover el ratón vuelve y
+    // desaparece toda la interfaz del mando (anillo, cursor, ayudas).
+    document.body.classList.toggle("gp-active", !!v);
     if (!v) {
       this._ringEl && this._ringEl.classList.remove("gp-focus--on");
       this._cursorEl && this._cursorEl.classList.remove("gp-tile--on");
+      this._barEl && this._barEl.classList.remove("gp-hints--on");
+      this._badgeEls.forEach((b) => (b.style.display = "none"));
     }
   },
 
@@ -262,8 +267,18 @@ const GamepadCtl = {
       const b = pad.buttons[i];
       down[i] = !!b && (b.pressed || b.value > 0.55);
     }
-    // Tecla del probador (pestaña Mando).
-    this._paintTester(down, pad);
+    // Probador (pestaña Mando): solo funciona con el botón TEST activado.
+    if (this._test) {
+      this._paintTester(down, pad);
+      if (down[8] && down[9]) this._setTest(false);
+      this._prev = down;
+      this._rep.key = "";
+      this._ringEl && this._ringEl.classList.remove("gp-focus--on");
+      this._cursorEl && this._cursorEl.classList.remove("gp-tile--on");
+      this._barEl && this._barEl.classList.remove("gp-hints--on");
+      this._badgeEls.forEach((b) => (b.style.display = "none"));
+      return;
+    }
     const ls = this._stick(pad, 0, 1);
     const rs = this._stick(pad, 2, 3);
     // ¿Hay actividad? -> el mando pasa a ser el "activo".
@@ -305,6 +320,7 @@ const GamepadCtl = {
     // Analógico: cámara (stick derecho), zoom (gatillos) y scroll en ventanas.
     const mode = this._mode(now);
     if (mode.type === "board") {
+      if (this.active) this._obMenu();
       if (rs.m > 0) {
         const dist = (typeof BoardView !== "undefined" ? BoardView.KEY_PAN_SPEED : 700) * dt * 1.15;
         BoardView._panBy(-rs.x * dist, -rs.y * dist);
@@ -361,7 +377,7 @@ const GamepadCtl = {
       if (screen && screen.id !== "screen-board") mode = { type: "ui", root: screen, layer: screen, menu: true };
       else mode = { type: "board", root: null };
     }
-    if (!this._modeCache || this._modeCache.root !== mode.root) this._focusEl = null;
+    if (!this._modeCache || this._modeCache.root !== mode.root) { this._focusEl = null; this._focusMem = null; }
     this._modeCache = mode;
     this._modeAt = now;
     return mode;
@@ -455,6 +471,7 @@ const GamepadCtl = {
       this._uiTab(mode, 1);
     } else if (act === "settings") {
       if (mode.layer && mode.layer.classList.contains("settings-overlay--visible")) this._uiBack(mode);
+      else if (mode.menu && typeof SettingsMenu !== "undefined") SettingsMenu.open();
     }
   },
   _uiBack(mode) {
@@ -476,10 +493,16 @@ const GamepadCtl = {
       this._mouse("click", root, r.left + 4, r.top + 4);
     }
   },
+  // Pestañas de la ventana (las de Ajustes/Habilidades mandan sobre las de entrar/registrarse).
+  _tabsIn(root) {
+    const vis = (q) => [...root.querySelectorAll(q)].filter((t) => this._isVisible(t));
+    const main = vis(".skills-tab");
+    return main.length > 1 ? main : vis(".account-tab, .settings-tab");
+  },
   _uiTab(mode, dir) {
     const root = mode.root;
     if (!root) return;
-    const tabs = [...root.querySelectorAll(".skills-tab, .account-tab, .settings-tab")].filter((t) => this._isVisible(t));
+    const tabs = this._tabsIn(root);
     if (tabs.length < 2) return;
     let cur = tabs.findIndex((t) => /active/.test(t.className));
     if (cur < 0) cur = 0;
@@ -521,20 +544,62 @@ const GamepadCtl = {
       return !!top && (el === top || el.contains(top) || top.contains(el));
     });
   },
+  _focusCenter(el) {
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  },
+  // Posición "lógica" del foco: n-ésimo elemento de su misma clase en la ventana.
+  _focusSig(el, root) {
+    const cls0 = el.classList && el.classList[0];
+    let idx = -1;
+    if (cls0) {
+      const same = [...root.querySelectorAll("." + CSS.escape(cls0))].filter((e) => this._isVisible(e));
+      idx = same.indexOf(el);
+    }
+    return { root, c: this._focusCenter(el), cls: el.className, cls0, idx, tab: /tab/.test(el.className) };
+  },
   _ensureFocus(mode) {
-    if (this._focusEl && this._focusEl.isConnected && this._isVisible(this._focusEl) && mode.root.contains(this._focusEl)) return this._focusEl;
+    const f = this._focusEl;
+    if (f && f.isConnected && this._isVisible(f) && mode.root.contains(f)) {
+      this._focusMem = this._focusSig(f, mode.root);
+      return f;
+    }
     const list = this._candidates(mode);
     if (!list.length) return null;
-    const notClose = list.filter((el) => !el.matches(".backpack-close-btn, .back-btn, [data-back]"));
-    const pool = notClose.length ? notClose : list;
+    const TAB = /tab/;
+    const m = this._focusMem;
+    // El elemento enfocado se ha vuelto a pintar (p. ej. al invertir puntos en una
+    // habilidad o comprar en la Armería): se queda en el MISMO puesto (n-ésimo de
+    // su clase) o, si no, en el más cercano; nunca salta a una pestaña.
+    if (m && m.root === mode.root) {
+      let best = null;
+      if (m.cls0 && m.idx >= 0) {
+        const same = [...mode.root.querySelectorAll("." + CSS.escape(m.cls0))].filter((e) => this._isVisible(e));
+        const cand = same[m.idx];
+        if (cand && list.includes(cand)) best = cand;
+      }
+      if (!best) {
+        const pool = list.filter((el) => m.tab || !TAB.test(el.className));
+        const base = pool.length ? pool : list;
+        let bd = Infinity;
+        base.forEach((el) => { const c = this._focusCenter(el); const d = Math.hypot(c.x - m.c.x, c.y - m.c.y); if (d < bd) { bd = d; best = el; } });
+      }
+      if (best) { this._focusEl = best; return best; }
+    }
+    // Foco inicial: el botón que invita a avanzar (EMPEZAR...) o, si no, la
+    // primera opción. Nunca el perfil/ajustes, las pestañas ni Atrás/Cerrar.
+    const PRIMARY = ".mp-overlay--confirm [data-act=\"no\"], .opp-stepper__go, [data-primary]";
+    const prim = list.find((el) => el.matches(PRIMARY));
+    if (prim) { this._focusEl = prim; return prim; }
+    const skip = ".backpack-close-btn, .back-btn, [data-back], .settings-gear-btn, .skills-tab, .account-tab, .settings-tab, .main-logo-hit, .opp-stepper__arrow";
+    const notSkip = list.filter((el) => !el.matches(skip));
+    const pool = notSkip.length ? notSkip : list;
     pool.sort((a, b) => {
       const ra = a.getBoundingClientRect();
       const rb = b.getBoundingClientRect();
       return ra.top - rb.top || ra.left - rb.left;
     });
-    // En ventanas con pestañas, empieza en la pestaña activa.
-    const act = pool.find((el) => /active/.test(el.className) && /tab/.test(el.className));
-    this._focusEl = act || pool[0];
+    this._focusEl = pool[0];
     return this._focusEl;
   },
   _dir(dx, dy) {
@@ -726,7 +791,13 @@ const GamepadCtl = {
     const btns = Array.from(document.querySelectorAll(".obelisk--selected .obelisk__menu-btn")).filter((b) => this._isVisible(b) && !b.disabled);
     if (!btns.length) {
       this._obIdx = -1;
+      this._obWas = false;
       document.querySelectorAll(".gp-ob-focus").forEach((b) => b.classList.remove("gp-ob-focus"));
+    } else if (!this._obWas && this.active) {
+      // Al abrirse el menú del Obelisco, la primera opción ya viene remarcada.
+      this._obWas = true;
+      this._obIdx = 0;
+      btns.forEach((b, k) => b.classList.toggle("gp-ob-focus", k === 0));
     }
     return btns;
   },
@@ -987,6 +1058,23 @@ const GamepadCtl = {
       this._barEl = b;
     }
   },
+  // El anillo de foco copia la silueta irregular del elemento (su clip-path).
+  _ringShape(el) {
+    if (this._ringShapeEl === el) return;
+    this._ringShapeEl = el;
+    let pts = "1.6,0 100,0 98.4,100 0,100";
+    const cs = [getComputedStyle(el, "::before").clipPath, getComputedStyle(el, "::after").clipPath, getComputedStyle(el).clipPath];
+    for (const c of cs) {
+      const m = c && c.match(/^polygon\((.*)\)$/);
+      if (!m) continue;
+      const parts = m[1].split(",").map((q) => q.trim().split(/\s+/));
+      if (parts.length >= 3 && parts.every((q) => q.length === 2 && /%$/.test(q[0]) && /%$/.test(q[1]))) {
+        pts = parts.map((q) => parseFloat(q[0]) + "," + parseFloat(q[1])).join(" ");
+        break;
+      }
+    }
+    this._ringEl.querySelectorAll("polygon").forEach((pg) => pg.setAttribute("points", pts));
+  },
   _frame(now, mode) {
     this._ensureVisuals();
     // Anillo de foco en menús/ventanas.
@@ -994,6 +1082,7 @@ const GamepadCtl = {
       const el = this._ensureFocus(mode);
       if (el && this._isVisible(el)) {
         const r = el.getBoundingClientRect();
+        this._ringShape(el);
         const s = this._ringEl.style;
         s.left = r.left - 7 + "px";
         s.top = r.top - 7 + "px";
@@ -1023,7 +1112,7 @@ const GamepadCtl = {
 
   _updateHints(force, mode, now) {
     if (!this._barEl) return;
-    const show = this.connected && this.hints;
+    const show = this.connected && this.hints && this.active && !this._test;
     if (!show) {
       this._barEl.classList.remove("gp-hints--on");
       this._badgeEls.forEach((b) => (b.style.display = "none"));
@@ -1036,7 +1125,7 @@ const GamepadCtl = {
       items = [["confirm", "Escribir"], ["back", "Cerrar"], ["actions", "Espacio"], ["endTurn", "Borrar"], ["settings", "Aceptar"], ["prevUnit", "◂ Cursor"], ["nextUnit", "Cursor ▸"]];
     } else if (mode.type === "ui") {
       items = [["confirm", "Aceptar"], ["back", "Atrás"]];
-      if (mode.root && mode.root.querySelectorAll(".skills-tab, .account-tab, .settings-tab").length > 1) items.push(["prevUnit", "◂ Pestaña"], ["nextUnit", "Pestaña ▸"]);
+      if (mode.root && this._tabsIn(mode.root).length > 1) items.push(["prevUnit", "◂ Pestaña"], ["nextUnit", "Pestaña ▸"]);
       items.push(["__dpad", "Mover"]);
     } else {
       const sel = typeof Units !== "undefined" && Units.selectedId;
@@ -1045,7 +1134,7 @@ const GamepadCtl = {
         ? [["confirm", "Elegir"], ["back", "Cancelar"], ["prevUnit", "◂ Opción"], ["nextUnit", "Opción ▸"], ["endTurn", "Fin de turno"]]
         : sel
         ? [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"]]
-        : [["confirm", "Seleccionar"], ["actions", "Cuenta"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["endTurn", "Fin de turno"]];
+        : [["confirm", "Seleccionar"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["endTurn", "Fin de turno"], ["settings", "Ajustes"]];
     }
     const key = items.map((x) => x[0] + this.map[x[0]] + x[1]).join("|") + I18N.currentLang + mode.type;
     if (force || key !== this._lastBarKey) {
@@ -1076,7 +1165,7 @@ const GamepadCtl = {
       document.querySelectorAll(sel).forEach((el) => { if (this._isVisible(el)) place(el, this._glyphOf(act)); });
     });
     if (mode.type === "ui" && mode.root) {
-      const tabs = [...mode.root.querySelectorAll(".skills-tab, .account-tab, .settings-tab")].filter((t) => this._isVisible(t));
+      const tabs = this._tabsIn(mode.root);
       if (tabs.length > 1 && !noBadges) {
         place(tabs[0], this._glyphOf("prevUnit"), true);
         const last = tabs[tabs.length - 1];
@@ -1129,7 +1218,11 @@ const GamepadCtl = {
         <i class="ph-fill ph-game-controller"></i>
         <span>${this.connected ? "Mando conectado: " + this._esc(this.padName) : "Sin mando. Conecta uno y pulsa cualquier botón."}</span>
       </div>
-      <button type="button" class="p5-banner p5-banner--action gp-rescan" style="--p5-tone:#2b3a52"><span class="p5-banner__label"><i class="ph ph-arrows-clockwise"></i> Buscar mando</span></button>
+      <div class="gp-btnrow">
+        <button type="button" class="p5-banner p5-banner--action gp-rescan" style="--p5-tone:#2b3a52"><span class="p5-banner__label"><i class="ph ph-arrows-clockwise"></i> Buscar mando</span></button>
+        <button type="button" class="p5-banner p5-banner--action gp-testbtn${this._test ? " gp-testbtn--on" : ""}" style="--p5-tone:${this._test ? "#1f6b34" : "#2b3a52"}"><span class="p5-banner__label"><i class="ph-fill ph-${this._test ? "stop" : "play"}"></i> ${this._test ? "Salir del test" : "Test"}</span></button>
+      </div>
+      ${this._test ? '<div class="gp-note gp-note--test">Modo test: pulsa los botones del mando para ver cómo se iluminan. Pulsa SELECT y START a la vez para salir.</div>' : ""}
       <button type="button" class="p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle gp-hintsbtn" style="--p5-tone:#2b2733">
         <span class="settings-panel__option-main"><i class="ph ph-question settings-panel__option-icon"></i><span class="p5-banner__label">Ayudas del mando</span></span>
         <span class="settings-toggle" data-checked="${this.hints}"><i class="ph ph-check settings-toggle__check"></i></span>
@@ -1140,6 +1233,12 @@ const GamepadCtl = {
       <div class="gp-note">Cruceta o stick izquierdo: mover cursor y navegar. Stick derecho: cámara.</div>
       <button type="button" class="p5-banner p5-banner--action gp-reset" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">Restablecer</span></button>`;
     pane.querySelector(".gp-rescan").addEventListener("click", () => { if (typeof SFX !== "undefined") SFX.click(); this.rescan(); });
+    pane.querySelector(".gp-testbtn").addEventListener("click", () => {
+      if (typeof SFX !== "undefined") SFX.click();
+      if (!this._test && !this.connected) { this._toast("Conecta un mando para hacer el test", "ph-fill ph-game-controller"); return; }
+      this._setTest(!this._test);
+    });
+    pane.classList.toggle("gp-pane--test", !!this._test);
     pane.querySelector(".gp-hintsbtn").addEventListener("click", () => {
       if (typeof SFX !== "undefined") SFX.click();
       this.setHints(!this.hints);
@@ -1154,12 +1253,12 @@ const GamepadCtl = {
     );
     pane.querySelector(".gp-reset").addEventListener("click", () => { if (typeof SFX !== "undefined") SFX.click(); this._listening = null; this.resetMap(); });
   },
-  // Botón "Buscar mando": vuelve a consultar al navegador si hay un mando.
-  _showDiag() {
-    if (!this._pane || !this._pane.isConnected) return;
-    let el = this._pane.querySelector(".gp-diag");
-    if (!el) { el = document.createElement("pre"); el.className = "gp-diag"; el.style.cssText = "margin:8px auto 0;max-width:100%;white-space:pre-wrap;word-break:break-word;font:600 11px/1.45 Consolas,monospace;color:#e8e4f0;background:#14121a;border:2px solid #000;padding:8px 12px;text-align:left;position:relative;z-index:3"; const b = this._pane.querySelector(".gp-rescan"); if (b) b.insertAdjacentElement("afterend", el); else this._pane.appendChild(el); }
-    el.textContent = this._diag();
+  _setTest(v) {
+    this._test = !!v;
+    this._prev = {};
+    this._lastBarKey = "";
+    this._refreshPane();
+    if (!v && this._pane) this._pane.querySelectorAll("[data-pad]").forEach((e) => { e.classList.remove("gp-t--on"); e.style.transform = ""; e.style.fill = ""; });
   },
   rescan() {
     const pad = this._getPad();
@@ -1169,21 +1268,6 @@ const GamepadCtl = {
       this._toast(pad ? "Mando conectado" : "No se detecta ningún mando. Pulsa un botón del mando e inténtalo de nuevo.", "ph-fill ph-game-controller");
       this._refreshPane();
     }
-    this._showDiag();
-  },
-  // Texto de diagnóstico: qué ve el navegador (para saber por qué no hay mando).
-  _diag() {
-    let f = false;
-    try { f = window.top !== window.self; } catch (e) { f = true; }
-    const out = [];
-    out.push("Contexto seguro: " + (window.isSecureContext ? "sí" : "NO") + " · en iframe: " + (f ? "SÍ" : "no") + " · protocolo: " + location.protocol);
-    if (!navigator.getGamepads) { out.push("Este navegador no ofrece la API de mandos."); return out.join("\n"); }
-    let list = [];
-    try { list = Array.from(navigator.getGamepads() || []); } catch (e) { out.push("Error al leer mandos: " + e.message); return out.join("\n"); }
-    const seen = list.filter(Boolean);
-    out.push("Dispositivos que ve el navegador: " + seen.length);
-    seen.forEach((g) => out.push("#" + g.index + " " + g.id + " · " + (g.mapping || "sin mapeo") + " · " + g.buttons.length + " botones, " + g.axes.length + " ejes"));
-    return out.join("\n");
   },
   _esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); },
   _stopListening() { this._listening = null; this._refreshPane(); },
@@ -1202,7 +1286,7 @@ const GamepadCtl = {
   _testerSvg() {
     const fb = (id, cx, cy, col, l) => `<g data-pad="${id}" class="gp-t gp-fb" style="--c:${col}"><circle cx="${cx}" cy="${cy}" r="12.5"/><circle class="gp-fb__hi" cx="${cx - 3.5}" cy="${cy - 4}" r="6"/><text x="${cx}" y="${cy + 5}" text-anchor="middle">${l}</text></g>`;
     const stick = (id, cx, cy) => `<circle class="gp-well" cx="${cx}" cy="${cy}" r="28"/><circle class="gp-well__in" cx="${cx}" cy="${cy}" r="24"/><g data-pad="${id}" class="gp-t gp-stk"><circle cx="${cx}" cy="${cy}" r="18"/><circle class="gp-stk__ring" cx="${cx}" cy="${cy}" r="12"/><circle class="gp-stk__ring" cx="${cx}" cy="${cy}" r="6"/></g>`;
-    return `<svg class="gp-tester" viewBox="-130 0 620 214" aria-hidden="true">
+    return `<svg class="gp-tester" viewBox="-190 -46 720 262" aria-hidden="true">
       <defs>
         <linearGradient id="gpBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b5668"/><stop offset=".45" stop-color="#3a3644"/><stop offset="1" stop-color="#1f1c26"/></linearGradient>
         <linearGradient id="gpShoulder" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a6578"/><stop offset="1" stop-color="#37333f"/></linearGradient>
@@ -1235,6 +1319,7 @@ const GamepadCtl = {
       const a = GP_ACTIONS.find((x) => this.map[x.id] === btn);
       return a ? a.label : "";
     };
+    // Todas las etiquetas quedan FUERA del dibujo del mando, unidas por una línea.
     // [botón, lado, y del texto, x destino del conector, y destino]
     const L = [
       [6, "l", 14, 92, 14], [4, "l", 46, 84, 48], [10, "l", 86, 98, 92], ["dp", "l", 146, 122, 146],
@@ -1244,16 +1329,19 @@ const GamepadCtl = {
     L.forEach(([btn, side, y, tx, ty]) => {
       const txt = btn === "dp" ? "Mover" : name(btn);
       if (!txt) return;
-      const x = side === "l" ? -12 : 342;
+      const x = side === "l" ? -14 : 344;
       const anchor = side === "l" ? "end" : "start";
-      const x1 = side === "l" ? -6 : 336;
-      out += `<line class="gp-lbl__ln" x1="${x1}" y1="${y - 3}" x2="${tx}" y2="${ty}"/><text class="gp-lbl" x="${x}" y="${y}" text-anchor="${anchor}">${this._esc(txt)}</text>`;
+      const x1 = side === "l" ? -8 : 338;
+      out += `<line class="gp-lbl__ln" x1="${x1}" y1="${y - 5}" x2="${tx}" y2="${ty}"/><text class="gp-lbl" x="${x}" y="${y}" text-anchor="${anchor}">${this._esc(txt)}</text>`;
     });
-    // Los dos botones del centro y la X llevan su nombre pegado al botón.
-    const small = (btn, x, y) => { const t = name(btn); return t ? `<text class="gp-lbl gp-lbl--s" x="${x}" y="${y}" text-anchor="middle">${this._esc(t)}</text>` : ""; };
-    out += small(8, 159, 118) + small(9, 201, 118);
-    const tx = name(2);
-    if (tx) out += `<text class="gp-lbl gp-lbl--s" x="226" y="60" text-anchor="end">${this._esc(tx)}</text>`;
+    // Botones centrales y X: línea vertical hacia arriba, texto sobre el mando.
+    const top = (btn, bx, by, ty, tx, anchor) => {
+      const t = name(btn);
+      return t ? `<line class="gp-lbl__ln" x1="${bx}" y1="${by}" x2="${bx}" y2="${ty + 6}"/><text class="gp-lbl" x="${tx}" y="${ty}" text-anchor="${anchor}">${this._esc(t)}</text>` : "";
+    };
+    out += top(8, 159, 95, -8, 165, "end");
+    out += top(2, 230, 80, -8, 224, "start");
+    out += top(9, 201, 95, -34, 201, "middle");
     return out;
   },
   _paintTester(down, pad) {

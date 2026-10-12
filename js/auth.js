@@ -98,6 +98,22 @@ const Account = {
     if (this._overlay) this._overlay.classList.remove("settings-overlay--visible");
   },
 
+  // Mi Cuenta dentro de Ajustes (pestaña que aparece con mando conectado).
+  embed(host) {
+    if (!this._body || this._embedded) return;
+    this._embedded = true;
+    this._mode = "login";
+    this._editingName = false;
+    this._render();
+    host.appendChild(this._body);
+    if (typeof GG_FIREBASE_CONFIG !== "undefined" && GG_FIREBASE_CONFIG) this._ensureFirebase().catch(() => {});
+  },
+  unembed() {
+    if (!this._embedded) return;
+    this._embedded = false;
+    if (this._panel && this._body) this._panel.appendChild(this._body);
+  },
+
   // ---------- Vista ----------
   _esc(s) {
     return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

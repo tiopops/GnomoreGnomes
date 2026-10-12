@@ -6100,7 +6100,7 @@ body.perf-mode .eye-cursor-fx {
 
 /* Resaltado — "si pulsas sobre un icono en la mochila, este se resalta" */
 .backpack-slot--selected {
-  box-shadow: 0 0 14px rgba(255, 207, 63, 0.55);
+  filter: drop-shadow(0 0 7px rgba(255, 207, 63, 0.75));
   transform: translateY(-2px) scale(1.04);
 }
 
@@ -7617,8 +7617,8 @@ body.backpack-giving--katapum .unit--katapum-target * {
 }
 
 @keyframes armory-node-pulse {
-  0%, 100% { box-shadow: 0 0 0 rgba(244, 242, 248, 0); }
-  50% { box-shadow: 0 0 14px rgba(244, 242, 248, 0.65); }
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(244, 242, 248, 0)); }
+  50% { filter: drop-shadow(0 0 7px rgba(244, 242, 248, 0.85)); }
 }
 
 /* Bloqueado (pedido explícito: "de color gris apagado") — icono apagado, no
@@ -7634,7 +7634,8 @@ body.backpack-giving--katapum .unit--katapum-target * {
    en ::before, tinte amarillo en ::after, resplandor). */
 .armory-node--selected {
   transform: scale(1.1);
-  box-shadow: 0 0 14px rgba(255, 207, 63, 0.55);
+  /* drop-shadow (no box-shadow): sigue la silueta irregular del recuadro. */
+  filter: drop-shadow(0 0 7px rgba(255, 207, 63, 0.75));
 }
 
 .armory-node--selected::before {
@@ -9158,7 +9159,7 @@ body.tut-on .settings-gear-btn--account { display: none; }
   font-weight: 900; font-size: 0.75rem; align-items: center; justify-content: center; display: none;
 }
 .friends-panel { width: min(470px, 94vw); overflow: visible; }
-.friends-body { gap: 14px; max-height: calc(86vh - 100px); overflow-y: auto; overflow-x: hidden; padding: 0 6px 6px 0; scrollbar-width: thin; scrollbar-color: #ffcf3d #1a1722; }
+.friends-body { gap: 14px; max-height: calc(86vh - 100px); overflow-y: auto; overflow-x: hidden; padding: 0 6px 6px 0; }
 .friends-add { display: flex; flex-direction: column; gap: 10px; }
 .friends-send { align-self: center; padding: 9px 26px; }
 .friends-section { display: flex; flex-direction: column; gap: 8px; }
@@ -10231,7 +10232,7 @@ body.tut-on .tut-portrait, body.tut-on .tut-portrait * { pointer-events: none; }
 
 /* ---------- Estadísticas del jugador (js/stats.js, menú de usuario) ----------
    Mismo marco de doble capa que el resto (contorno completo, sin máscara). */
-.pstat { display: flex; flex-direction: column; gap: 12px; max-height: max(220px, calc(100vh - 480px)); overflow-y: auto; overflow-x: hidden; padding: 4px 10px 10px 8px; scrollbar-width: thin; scrollbar-color: #ffcf3d #1a1722; }
+.pstat { display: flex; flex-direction: column; gap: 12px; max-height: max(220px, calc(100vh - 480px)); overflow-y: auto; overflow-x: hidden; padding: 4px 10px 10px 8px; }
 .pstat-off { opacity: 0.5; filter: grayscale(0.6); pointer-events: none; }
 .pstat-sec { font-weight: 900; font-size: 0.8rem; letter-spacing: 0.08em; color: #ffcf3d; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); text-transform: uppercase; text-align: center; margin-top: 4px; }
 .pstat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -10642,7 +10643,6 @@ body.oracle-fog-lifted .tile__fog { opacity: 0 !important; transition: opacity 0
 }
 .gp-rescan{align-self:center;min-width:200px;justify-content:center;text-align:center}
 .gp-rescan .p5-banner__label{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%}
-.gp-diag{margin:6px auto 0;position:relative;z-index:3;max-width:min(100%,520px);white-space:pre-wrap;word-break:break-word;font:600 11px/1.45 ui-monospace,Consolas,monospace;color:#c9c2d4;background:#14121a;border:2px solid #000;padding:8px 12px;text-align:left}
 .obelisk__menu-btn.gp-ob-focus{filter:drop-shadow(0 0 4px #ffd54a) drop-shadow(0 0 10px #ffd54a) !important;transform:scale(1.18) !important;outline:3px solid #ffd54a;outline-offset:2px;border-radius:50%}
 /* Confirmación de abandonar partida online: sin scroll (ni horizontal ni vertical). */
 .mp-panel--small { overflow: visible; max-height: none; }
@@ -10657,7 +10657,6 @@ body.oracle-fog-lifted .tile__fog { opacity: 0 !important; transition: opacity 0
   .race-card { width: min(300px, 92%); }
 }
 @media (max-width: 640px) {
-  .gp-pane { margin: 0 !important; padding: 8px 6px 18px !important; max-height: 58dvh !important; overflow-y: auto !important; }
   .gp-map { grid-template-columns: 1fr !important; }
   .gp-map__row { padding: 8px 22px 8px 16px !important; }
   .gp-tester { max-width: min(100%, 300px) !important; }
@@ -10671,3 +10670,61 @@ body.oracle-fog-lifted .tile__fog { opacity: 0 !important; transition: opacity 0
   .settings-tabs .settings-tab__icon { font-size: .95em; vertical-align: 0; }
 }
 @media (max-width: 350px) { .settings-tabs .settings-tab__icon { display: none; } }
+
+
+/* ===== Ajustes / Mi Cuenta: mismo tamaño, scroll propio con barra irregular ===== */
+.settings-panel { height: min(700px, calc(100dvh - 48px)); box-sizing: border-box; }
+.settings-panel .settings-panel__columns--tabbed { flex: 1 1 auto; min-height: 0; max-width: none; width: calc(100% + 68px); margin: 0 -34px; padding: 0 34px 6px 34px; overflow-y: auto; overflow-x: hidden; box-sizing: border-box; }
+.settings-panel .settings-pane { width: 100%; max-width: 420px; justify-self: center; }
+.settings-panel .settings-pane--wide { max-width: none; }
+.settings-panel .gp-pane { margin: 0 !important; padding: 8px 2px 16px !important; max-height: none !important; overflow: visible !important; }
+.account-panel:has(.pstat) { width: min(640px, 92vw); height: min(700px, calc(100dvh - 48px)); box-sizing: border-box; display: flex; flex-direction: column; }
+.account-panel:has(.pstat) .account-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; margin: 0 -30px; padding: 0 30px 6px; }
+.account-panel:has(.pstat) .account-body > .pstat { max-height: none; overflow: visible; }
+.settings-pane--acct .account-body { padding: 0; margin: 0; overflow: visible; }
+.settings-pane--acct .account-body > .settings-panel__title { display: none; }
+.settings-pane--acct .account-body > .pstat { max-height: none; overflow: visible; }
+.settings-tabs .skills-tab[hidden] { display: none; }
+
+/* Barra de scroll irregular (perspectiva torcida, doble capa): vive en su propio
+   carril, así que nunca se solapa con el contenido. */
+:root { --gg-sb-w: 18px; }
+.settings-panel .settings-panel__columns--tabbed::-webkit-scrollbar,
+.account-panel .account-body::-webkit-scrollbar,
+.gp-pane::-webkit-scrollbar,
+.friends-body::-webkit-scrollbar,
+.pstat::-webkit-scrollbar { width: var(--gg-sb-w); }
+.settings-panel .settings-panel__columns--tabbed::-webkit-scrollbar-track,
+.account-panel .account-body::-webkit-scrollbar-track,
+.gp-pane::-webkit-scrollbar-track,
+.friends-body::-webkit-scrollbar-track,
+.pstat::-webkit-scrollbar-track {
+  margin: 6px 0;
+  background: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 100' preserveAspectRatio='none'%3E%3Cpolygon points='3,0 16,2 14,100 1,98' fill='%2314121a' stroke='%23000' stroke-width='2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+.settings-panel .settings-panel__columns--tabbed::-webkit-scrollbar-thumb,
+.account-panel .account-body::-webkit-scrollbar-thumb,
+.gp-pane::-webkit-scrollbar-thumb,
+.friends-body::-webkit-scrollbar-thumb,
+.pstat::-webkit-scrollbar-thumb {
+  min-height: 48px;
+  background: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 40' preserveAspectRatio='none'%3E%3Cpolygon points='3,1 16,0 15,40 1,38' fill='%23ffcf3d' stroke='%23000' stroke-width='2.5' vector-effect='non-scaling-stroke' stroke-linejoin='miter'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+
+/* Modo mando: sin puntero hasta que se mueva el ratón. */
+body.gp-active, body.gp-active * { cursor: none !important; }
+.gp-btnrow { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.gp-btnrow > .p5-banner { flex: 1 1 150px; max-width: 240px; justify-content: center; text-align: center; }
+.gp-note--test { color: #ffd54a; }
+.gp-pane--test .gp-tester { filter: drop-shadow(0 0 8px rgba(255,213,74,.35)); }
+
+/* Tipografía del juego en toda la interfaz del mando. */
+.gp-lbl, .gp-hint, .gp-status, .gp-note, .gp-sec, .gp-glyph, .gp-fb text, .gp-t text, .gp-map__wait { font-family: "Russo One", system-ui, sans-serif !important; font-weight: 400 !important; }
+.gp-lbl { font-size: 18px; stroke-width: 4px; letter-spacing: .02em; }
+.gp-tester { max-width: min(100%, 560px) !important; }
+@media (max-width: 640px) { .gp-lbl, .gp-lbl__ln { display: none; } .gp-tester { max-width: min(100%, 300px) !important; } }
+.settings-tabs { max-width: 560px; }
+.settings-tabs .skills-tab { flex: 1 1 0; }
+.gp-lbl { font-size: 20px; }
+.settings-panel .settings-panel__columns--tabbed { position: relative; z-index: 2; }
+.settings-overlay { overflow-y: hidden; }

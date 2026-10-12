@@ -99,9 +99,17 @@ const SettingsMenu = {
       { id: "gfx", icon: "ph-fill ph-monitor", label: I18N.t("settings_tab_gfx"), accent: "#4aa8d8", pane: colVisual },
     ];
     if (typeof GamepadCtl !== "undefined") TABS.push({ id: "pad", icon: "ph-fill ph-game-controller", label: I18N.t("settings_tab_pad"), accent: "#3fa34d", pane: colPad });
+    // Con mando conectado aparece una pestaña extra: Mi Cuenta (se llega con START).
+    const colAcct = document.createElement("div");
+    colAcct.className = "settings-panel__column settings-pane settings-pane--acct settings-pane--wide";
+    columnsEl.appendChild(colAcct);
+    colPad.classList.add("settings-pane--wide");
+    if (typeof Account !== "undefined") TABS.push({ id: "acct", icon: "ph-fill ph-user", label: I18N.t("acc_tab"), accent: "#c9a227", pane: colAcct });
     const tabBtns = {};
     const showTab = (id) => {
       this._tab = id;
+      if (typeof Account !== "undefined") { if (id === "acct") Account.embed(colAcct); else Account.unembed(); }
+      columnsEl.scrollTop = 0;
       TABS.forEach((t) => {
         t.pane.classList.toggle("settings-pane--hidden", t.id !== id);
         tabBtns[t.id].classList.toggle("skills-tab--active", t.id === id);
@@ -116,9 +124,12 @@ const SettingsMenu = {
       tabsEl.appendChild(b);
       tabBtns[t.id] = b;
     });
+    this._showTab = showTab;
+    this._tabBtns = tabBtns;
     panel.appendChild(tabsEl);
     panel.appendChild(columnsEl);
-    showTab(this._tab || "game");
+    showTab(this._tab && this._tab !== "acct" ? this._tab : "game");
+    this.syncAccountTab();
 
     // Pedido explícito: "añade a configuracion otro checkbox que desconecte
     // los efectos de sonido (ojo! en un futuro habra musica, pero eso ira
@@ -393,8 +404,10 @@ const SettingsMenu = {
         MPLobby.confirmResign(() => this._exitMatch());
         return;
       }
-      if (typeof MPLobby !== "undefined") MPLobby.finishMatch(false);
-      this._exitMatch();
+      this._confirmExit(() => {
+        if (typeof MPLobby !== "undefined") MPLobby.finishMatch(false);
+        this._exitMatch();
+      });
     });
     panel.appendChild(exitBtn);
     this._exitBtn = exitBtn;
@@ -491,8 +504,34 @@ const SettingsMenu = {
     });
   },
 
+  // La pestaña Mi Cuenta solo existe mientras hay un mando conectado.
+  syncAccountTab() {
+    const b = this._tabBtns && this._tabBtns.acct;
+    if (!b) return;
+    const show = typeof GamepadCtl !== "undefined" && GamepadCtl.connected;
+    b.hidden = !show;
+    if (!show && this._tab === "acct" && this._showTab) this._showTab("game");
+  },
+
   close() {
     if (this._overlay) this._overlay.classList.remove("settings-overlay--visible");
+    if (typeof Account !== "undefined") Account.unembed();
+    if (this._tab === "acct") this._tab = "game";
+  },
+
+  // Confirmación de salir de la partida (mismo estilo que abandonar online).
+  _confirmExit(done) {
+    const el = document.createElement("div");
+    el.className = "mp-overlay mp-overlay--visible mp-overlay--confirm";
+    el.innerHTML = '<div class="mp-panel mp-panel--small p5-banner"><div class="mp-body">' +
+      '<div class="mp-wait">' + I18N.t("settings_exit_q") + '</div>' +
+      '<div class="mp-actions">' +
+      '<button type="button" class="p5-banner p5-banner--action mp-btn" data-act="yes" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">' + I18N.t("settings_exit_yes") + '</span></button>' +
+      '<button type="button" class="p5-banner p5-banner--action mp-btn" data-act="no" style="--p5-tone:#2b2733"><span class="p5-banner__label">' + I18N.t("settings_exit_no") + '</span></button>' +
+      '</div></div></div>';
+    el.querySelector('[data-act="no"]').addEventListener("click", () => { SFX.click(); el.remove(); });
+    el.querySelector('[data-act="yes"]').addEventListener("click", () => { SFX.click(); el.remove(); done(); });
+    document.body.appendChild(el);
   },
 
   // Mismo patrón que Turns._btn/end-turn-btn--visible: el icono vive fuera
