@@ -822,6 +822,11 @@ const GamepadCtl = {
     if (typeof SFX !== "undefined" && SFX.click) { try { SFX.click(); } catch (e) {} }
   },
   _boardAction(act) {
+    // El tutorial: su botón "Continuar" va antes que cualquier otra cosa de A.
+    if (act === "confirm") {
+      const tut = document.querySelector(".tut-btn");
+      if (tut && this._isVisible(tut)) { this._clickNow(tut); return; }
+    }
     // Con el Obelisco propio seleccionado: LB/RB recorren Reclutar · Habilidades · Armería y A abre la elegida.
     const obBtns = this._obMenu();
     if (obBtns.length) {
@@ -922,6 +927,7 @@ const GamepadCtl = {
     items.forEach((it) => {
       const b = document.createElement("button");
       b.type = "button";
+      b._gpEl = it.el; // el tutorial señala la opción que corresponde a su objetivo
       b.className = "p5-banner p5-banner--action gp-actions__item";
       b.style.setProperty("--p5-tone", "#2b2733");
       b.innerHTML = `<i class="${it.icon} gp-actions__icon"></i><span class="p5-banner__label">${(it.label || "").replace(/</g, "&lt;")}</span>`;

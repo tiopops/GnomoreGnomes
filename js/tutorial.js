@@ -283,7 +283,8 @@ const Tutorial = {
         if (t.mood) s.mood = t.mood;
       });
     }
-    return steps;
+    // Con el mando en la mano, el diálogo y las misiones cambian (js/tutorial-pad.js).
+    return this._padSteps ? this._padSteps(steps) : steps;
   },
 
   _textsFor(scenario) {
@@ -351,6 +352,7 @@ const Tutorial = {
         hold: true,
         onStart: () => {
           T._ctx.infoSeen = false;
+          T._ctx.infoShown = false;
         },
         target: () => {
           const u = T._my()[0];
@@ -358,7 +360,15 @@ const Tutorial = {
           if (Units.selectedId !== u.id) return T._unitEl(u);
           return document.getElementById("unit-info-btn") || T._unitEl(u);
         },
-        done: () => !!T._ctx.infoSeen,
+        done: () => {
+          // Con mando: se abre la visión (X > Información) y se cierra con B.
+          if (T._padMode()) {
+            const open = !!document.querySelector(".unit-info-overlay--visible");
+            if (open) T._ctx.infoShown = true;
+            return !!T._ctx.infoShown && !open;
+          }
+          return !!T._ctx.infoSeen;
+        },
         ok: "Ahora sabes cuánto aguanta, cuánto pega y cuánto le queda. Información de oro, y gratis.",
       },
       {
@@ -968,12 +978,21 @@ const Tutorial = {
       const t = e.target;
       if (!t || !t.closest) return;
       // Interfaz propia del tutorial y ajustes: siempre disponibles.
-      if (t.closest(".tut-panel, .tut-skip, .tut-hold, [class*='settings']")) return;
+      if (t.closest(".tut-panel, .tut-skip, .tut-hold, .gp-actions, [class*='settings']")) return;
       const x = e.clientX;
       const y = e.clientY;
       const obEl = this._ob() && this._ob().el;
       const obSprite = obEl && obEl.querySelector(".obelisk__sprite");
-      for (const a of this._allowedEls()) {
+      const allowedList = this._allowedEls();
+      // Las opciones del Obelisco están pegadas entre sí: solo vale la que pide la misión
+      // (con el mando A abre la marcada, que puede no ser la que toca).
+      const mb = t.closest(".obelisk__menu-btn");
+      if (mb && !allowedList.some((a) => a === mb || (a.contains && a.contains(mb) && a !== obSprite && a !== obEl))) {
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+      }
+      for (const a of allowedList) {
         try {
           if (a.contains && a.contains(t)) return;
           const u = a.closest && a.closest(".unit");
@@ -1022,6 +1041,8 @@ const Tutorial = {
       (e) => {
         const s = this._ctx && this._ctx.step;
         if (!this.active || !s || !s.hold || this._ctx.infoSeen) return;
+        // Con mando no hay que mantener nada: se abre con X y se cierra con B.
+        if (this._padMode && this._padMode()) return;
         if (e.target && e.target.closest && e.target.closest("#unit-info-btn")) this._holdStart();
       },
       true
@@ -1109,6 +1130,7 @@ const Tutorial = {
     E.holdFill = hold.querySelector(".tut-hold__fill");
     this._installGuard();
     this._installHold();
+    this._lastPadSig = this._padSig ? this._padSig() : undefined;
     E.panel = panel;
     E.portrait = panel.querySelector(".tut-portrait");
     E.text = panel.querySelector(".tut-text");
@@ -1156,6 +1178,7 @@ const Tutorial = {
     E.pointer = pointer;
     const loop = () => {
       if (!this.active) return;
+      if (this._padWatch) this._padWatch();
       this._updatePointer();
       this._raf = requestAnimationFrame(loop);
     };
@@ -1202,7 +1225,10 @@ const Tutorial = {
     const top0 = el.offsetTop;
     const h = el.offsetHeight || 1;
     const ty = Math.max(0, bottom + 10 - top0);
-    const avail = window.innerHeight - 8 - (top0 + ty);
+    // Con el mando, la barra de ayudas ocupa el borde inferior: la ventana no debe quedar bajo ella.
+    const hb = document.querySelector(".gp-hints--on");
+    const hbH = hb ? Math.max(0, window.innerHeight - hb.getBoundingClientRect().top) : 0;
+    const avail = window.innerHeight - 8 - hbH - (top0 + ty);
     const sc = Math.max(window.innerHeight < 520 ? 0.36 : 0.55, Math.min(1, avail / h));
     el.style.translate = `0 ${ty.toFixed(1)}px`;
     el.style.scale = sc.toFixed(3);
@@ -1240,6 +1266,11 @@ const Tutorial = {
     let el = null;
     try {
       el = this._ctx.pointerTarget ? this._ctx.pointerTarget() : null;
+      // Con el menú de acciones (X) abierto, el puntero señala la opción que toca.
+      if (el && this._padMode && this._padMode()) {
+        const it = [...document.querySelectorAll(".gp-actions__item")].find((b) => b._gpEl === el);
+        if (it) el = it;
+      }
     } catch (e) {}
     if (!el || !el.isConnected) {
       P.classList.remove("tut-pointer--on");
