@@ -1157,7 +1157,12 @@ const Obelisks = {
   _renderRecruitSlots() {
     if (!this._slotsEl || !this._activeRecruitObelisk) return;
     const obelisk = this._activeRecruitObelisk;
-    const roster = Object.keys(UNIT_TYPES).filter((typeId) => UNIT_TYPES[typeId].raceId === obelisk.raceId);
+    // Pedido explícito: "las unidades a reclutar deben aparecer ordenadas de
+    // izquierda a derecha de menos a mayor coste" (sort estable: a igual coste
+    // se mantiene el orden de siempre).
+    const roster = Object.keys(UNIT_TYPES)
+      .filter((typeId) => UNIT_TYPES[typeId].raceId === obelisk.raceId)
+      .sort((a, b) => Units.recruitPriceFor(a) - Units.recruitPriceFor(b));
     this._slotsEl.innerHTML = "";
     roster.forEach((typeId) => {
       const def = UNIT_TYPES[typeId];

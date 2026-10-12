@@ -366,6 +366,14 @@ const Mushrooms = {
     if (m.el) m.el.remove();
     this.list = this.list.filter((x) => x !== m);
 
+    await this.blastAt(row, col, carrier.team, dyingUnit, carrier);
+  },
+
+  // Explosión en una casilla (centro row/col): daño, onda expansiva y estructuras.
+  // La usa la seta del portador (arriba) y la seta lanzada a distancia por
+  // TruenoEspora, que actúa como una granada al aterrizar (js/abilities.js).
+  async blastAt(row, col, teamOfBlast, dyingUnit, carrier) {
+    carrier = carrier || { row, col, team: teamOfBlast, id: null };
     if (typeof SFX !== "undefined") SFX.explosion();
     const viewportEl = document.getElementById("board-viewport");
     if (viewportEl) {

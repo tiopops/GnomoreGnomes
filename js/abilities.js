@@ -507,6 +507,17 @@ const Abilities = {
     Units.clearRangeOverlays();
     this._consume(unit);
     await this._throwMineFx(unit, row, col);
+    // Pedido explícito: "cuando un truenoespora lanza una seta a una casilla
+    // mas lejana que una adyacente a el, la seta actua como una granada que
+    // explota al aterrizar y empuja" — a distancia > 1 no queda trampa: estalla
+    // al caer con la misma explosión de la seta explosiva (daño + onda que
+    // empuja 1 casilla a los de alrededor). Adyacente = trampa como siempre.
+    const throwDist = Math.max(Math.abs(row - unit.row), Math.abs(col - unit.col));
+    if (throwDist > 1 && typeof Mushrooms !== "undefined" && Mushrooms.blastAt) {
+      await Mushrooms.blastAt(row, col, unit.team, null, { row, col, team: unit.team, id: unit.id });
+      this._restoreNormalRange(unit);
+      return;
+    }
     this._placeMineAt(unit, row, col);
     if (unit.team === "player") this._mineLandFx(row, col);
     // La unidad sigue seleccionada tras colocar la mina (puede que le
