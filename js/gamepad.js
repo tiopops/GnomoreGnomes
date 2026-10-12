@@ -168,7 +168,7 @@ const GamepadCtl = {
     for (let i = 0; i < list.length; i++) {
       const p = list[i];
       if (!p || !p.connected) continue;
-      const score = (p.mapping === "standard" ? 100 : 0) + (p.axes && p.axes.length >= 2 ? 10 : 0) + (p.buttons && p.buttons.length >= 8 ? 1 : 0);
+      const score = (p.mapping === "standard" ? 100 : 0) + ((p.axes && p.axes.length >= 2) || (p.buttons && p.buttons.length >= 10) ? 10 : 0) + (p.buttons && p.buttons.length >= 8 ? 1 : 0);
       if (score < 10) continue; // sin ejes ni mapeo estándar: no es un mando (barra de sonido, etc.)
       if (score > bestScore) { best = p; bestScore = score; }
     }
@@ -1120,6 +1120,12 @@ const GamepadCtl = {
     pane.querySelector(".gp-reset").addEventListener("click", () => { if (typeof SFX !== "undefined") SFX.click(); this._listening = null; this.resetMap(); });
   },
   // Botón "Buscar mando": vuelve a consultar al navegador si hay un mando.
+  _showDiag() {
+    if (!this._pane || !this._pane.isConnected) return;
+    let el = this._pane.querySelector(".gp-diag");
+    if (!el) { el = document.createElement("pre"); el.className = "gp-diag"; const b = this._pane.querySelector(".gp-rescan"); if (b) b.insertAdjacentElement("afterend", el); else this._pane.appendChild(el); }
+    el.textContent = this._diag();
+  },
   rescan() {
     const pad = this._getPad();
     if (pad && !this.connected) this._onConnect(pad);
@@ -1128,6 +1134,21 @@ const GamepadCtl = {
       this._toast(pad ? "Mando conectado" : "No se detecta ningún mando. Pulsa un botón del mando e inténtalo de nuevo.", "ph-fill ph-game-controller");
       this._refreshPane();
     }
+    this._showDiag();
+  },
+  // Texto de diagnóstico: qué ve el navegador (para saber por qué no hay mando).
+  _diag() {
+    let f = false;
+    try { f = window.top !== window.self; } catch (e) { f = true; }
+    const out = [];
+    out.push("Contexto seguro: " + (window.isSecureContext ? "sí" : "NO") + " · en iframe: " + (f ? "SÍ" : "no") + " · protocolo: " + location.protocol);
+    if (!navigator.getGamepads) { out.push("Este navegador no ofrece la API de mandos."); return out.join("\n"); }
+    let list = [];
+    try { list = Array.from(navigator.getGamepads() || []); } catch (e) { out.push("Error al leer mandos: " + e.message); return out.join("\n"); }
+    const seen = list.filter(Boolean);
+    out.push("Dispositivos que ve el navegador: " + seen.length);
+    seen.forEach((g) => out.push("#" + g.index + " " + g.id + " · " + (g.mapping || "sin mapeo") + " · " + g.buttons.length + " botones, " + g.axes.length + " ejes"));
+    return out.join("\n");
   },
   _esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); },
   _stopListening() { this._listening = null; this._refreshPane(); },
