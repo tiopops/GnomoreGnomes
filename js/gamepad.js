@@ -128,6 +128,13 @@ const GamepadCtl = {
     document.addEventListener("gg:langchange", () => this._refreshPane());
     // Si el navegador ya expone un mando (recargar con él conectado).
     if (this._getPad()) this._onConnect(this._getPad());
+    // Respaldo: algunos navegadores no lanzan "gamepadconnected" (o lo lanzan
+    // antes de cargar el juego); se consulta periódicamente hasta ver un mando.
+    setInterval(() => {
+      if (this.connected || document.hidden) return;
+      const p = this._getPad();
+      if (p) this._onConnect(p);
+    }, 500);
   },
 
   _loadPrefs() {
@@ -155,8 +162,36 @@ const GamepadCtl = {
   // ---------- Conexión ----------
   _getPad() {
     const list = (navigator.getGamepads && navigator.getGamepads()) || [];
-    for (let i = 0; i < list.length; i++) if (list[i] && list[i].connected) return list[i];
+    for (let i = 0; i < list.length; i++) if (list[i] && list[i].connected) return this._normalize(list[i]);
     return null;
+  },
+  // Mandos que el navegador NO expone con la disposición estándar (p. ej. un
+  // Xbox 360 USB con driver genérico/DirectInput): se traducen a la estándar.
+  _normalize(pad) {
+    if (!pad || pad.mapping === "standard") return pad;
+    const B = (i) => pad.buttons[i] || { pressed: false, value: 0 };
+    const mk = (on) => ({ pressed: !!on, value: on ? 1 : 0 });
+    const ax = (i) => (pad.axes && pad.axes.length > i ? pad.axes[i] : 0);
+    const out = [];
+    for (let i = 0; i < 16; i++) out[i] = mk(false);
+    [0, 1, 2, 3, 4, 5].forEach((i) => (out[i] = B(i)));
+    out[8] = B(6); out[9] = B(7); out[10] = B(8); out[11] = B(9);
+    // Gatillos: eje 2 combinado (LT +, RT -) o botones 6/7 si el driver los da sueltos.
+    if (pad.buttons.length >= 8 && pad.axes.length < 6) { out[6] = B(6); out[7] = B(7); out[8] = B(8); out[9] = B(9); out[10] = B(10); out[11] = B(11); }
+    else { out[6] = mk(ax(2) > 0.5); out[7] = mk(ax(2) < -0.5); }
+    // Cruceta: botones 12-15 si existen; si no, el "hat" (eje 9).
+    if (pad.buttons.length >= 16) { for (let i = 12; i < 16; i++) out[i] = B(i); }
+    else if (pad.axes.length >= 10) {
+      const h = pad.axes[9];
+      const up = h === -1 || Math.abs(h + 0.714) < 0.1 || Math.abs(h - 1) < 0.1;
+      const right = Math.abs(h + 0.714) < 0.1 || Math.abs(h + 0.428) < 0.1 || Math.abs(h + 0.143) < 0.1;
+      const down = Math.abs(h + 0.143) < 0.1 || Math.abs(h - 0.143) < 0.1 || Math.abs(h - 0.428) < 0.1;
+      const left = Math.abs(h - 0.428) < 0.1 || Math.abs(h - 0.714) < 0.1 || Math.abs(h - 1) < 0.1;
+      out[12] = mk(up); out[13] = mk(down); out[14] = mk(left); out[15] = mk(right);
+    }
+    const rx = pad.axes.length >= 5 && Math.abs(ax(2)) <= 1 && pad.axes.length < 6 ? ax(3) : ax(2);
+    const ry = pad.axes.length >= 5 && pad.axes.length < 6 ? ax(4) : ax(3);
+    return { id: pad.id, connected: pad.connected, buttons: out, axes: [ax(0), ax(1), rx, ry] };
   },
   _onConnect(pad) {
     if (this.connected) return;
@@ -1090,7 +1125,7 @@ const GamepadCtl = {
   _testerSvg() {
     const fb = (id, cx, cy, col, l) => `<g data-pad="${id}" class="gp-t gp-fb" style="--c:${col}"><circle cx="${cx}" cy="${cy}" r="12.5"/><circle class="gp-fb__hi" cx="${cx - 3.5}" cy="${cy - 4}" r="6"/><text x="${cx}" y="${cy + 5}" text-anchor="middle">${l}</text></g>`;
     const stick = (id, cx, cy) => `<circle class="gp-well" cx="${cx}" cy="${cy}" r="28"/><circle class="gp-well__in" cx="${cx}" cy="${cy}" r="24"/><g data-pad="${id}" class="gp-t gp-stk"><circle cx="${cx}" cy="${cy}" r="18"/><circle class="gp-stk__ring" cx="${cx}" cy="${cy}" r="12"/><circle class="gp-stk__ring" cx="${cx}" cy="${cy}" r="6"/></g>`;
-    return `<svg class="gp-tester" viewBox="0 0 360 214" aria-hidden="true">
+    return `<svg class="gp-tester" viewBox="-130 0 620 214" aria-hidden="true">
       <defs>
         <linearGradient id="gpBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b5668"/><stop offset=".45" stop-color="#3a3644"/><stop offset="1" stop-color="#1f1c26"/></linearGradient>
         <linearGradient id="gpShoulder" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a6578"/><stop offset="1" stop-color="#37333f"/></linearGradient>
@@ -1113,7 +1148,36 @@ const GamepadCtl = {
       ${fb(3, 254, 70, "#f0b429", "Y")}${fb(0, 254, 118, "#3fa34d", "A")}${fb(2, 230, 94, "#2f7fd6", "X")}${fb(1, 278, 94, "#d23b3b", "B")}
       <circle class="gp-logo" cx="180" cy="74" r="15"/><circle class="gp-logo__in" cx="180" cy="74" r="11"/>
       <circle data-pad="8" class="gp-t gp-t--r gp-mini" cx="159" cy="102" r="6.5"/><circle data-pad="9" class="gp-t gp-t--r gp-mini" cx="201" cy="102" r="6.5"/>
+      ${this._labelsSvg()}
     </svg>`;
+  },
+  // Asignaciones SIEMPRE visibles sobre el dibujo del mando (pedido explícito:
+  // "las asignaciones deberían mostrarse siempre, no solo cuando pulso sobre ellas").
+  _labelsSvg() {
+    const name = (btn) => {
+      const a = GP_ACTIONS.find((x) => this.map[x.id] === btn);
+      return a ? a.label : "";
+    };
+    // [botón, lado, y del texto, x destino del conector, y destino]
+    const L = [
+      [6, "l", 14, 92, 14], [4, "l", 46, 84, 48], [10, "l", 86, 98, 92], ["dp", "l", 146, 122, 146],
+      [7, "r", 14, 262, 14], [5, "r", 46, 270, 48], [3, "r", 70, 268, 70], [1, "r", 94, 292, 94], [0, "r", 122, 268, 122], [11, "r", 150, 235, 150],
+    ];
+    let out = "";
+    L.forEach(([btn, side, y, tx, ty]) => {
+      const txt = btn === "dp" ? "Mover" : name(btn);
+      if (!txt) return;
+      const x = side === "l" ? -12 : 342;
+      const anchor = side === "l" ? "end" : "start";
+      const x1 = side === "l" ? -6 : 336;
+      out += `<line class="gp-lbl__ln" x1="${x1}" y1="${y - 3}" x2="${tx}" y2="${ty}"/><text class="gp-lbl" x="${x}" y="${y}" text-anchor="${anchor}">${this._esc(txt)}</text>`;
+    });
+    // Los dos botones del centro y la X llevan su nombre pegado al botón.
+    const small = (btn, x, y) => { const t = name(btn); return t ? `<text class="gp-lbl gp-lbl--s" x="${x}" y="${y}" text-anchor="middle">${this._esc(t)}</text>` : ""; };
+    out += small(8, 159, 118) + small(9, 201, 118);
+    const tx = name(2);
+    if (tx) out += `<text class="gp-lbl gp-lbl--s" x="226" y="60" text-anchor="end">${this._esc(tx)}</text>`;
+    return out;
   },
   _paintTester(down, pad) {
     if (!this._pane || !this._pane.isConnected) return;

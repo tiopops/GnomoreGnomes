@@ -10590,3 +10590,41 @@ body.oracle-fog-lifted .tile__fog { opacity: 0 !important; transition: opacity 0
 .rc__cost { min-width: 0; padding: 5px 16px 5px 12px; flex: none; }
 .rc__cost .or-chip__in b { font-size: 1.45rem; gap: 6px; }
 .rc__cost .or-chip__in b img { width: 30px; height: 30px; margin: -3px 0; }
+.gp-lbl{fill:#f4f2f8;font:700 13px system-ui,sans-serif;paint-order:stroke;stroke:#000;stroke-width:3px;stroke-linejoin:round}
+.gp-lbl--s{font-size:9.5px;stroke-width:2.4px}
+.gp-lbl__ln{stroke:rgba(244,242,248,.45);stroke-width:1}
+.gp-tester{max-width:min(100%,500px) !important}
+
+/* Mi Cuenta en escritorio: dos columnas (perfil a la izquierda, estadísticas a la
+   derecha) para que quepa sin hacer scroll. */
+@media (min-width: 900px) and (min-height: 640px) {
+  .account-panel:has(.pstat) { width: min(900px, 94vw); }
+  .account-body:has(.pstat) {
+    display: grid;
+    grid-template-columns: 290px minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 30px;
+    row-gap: 14px;
+    align-items: start;
+  }
+  .account-body:has(.pstat) > .settings-panel__title { grid-column: 1 / -1; }
+  .account-body:has(.pstat) > .account-card { grid-column: 1; grid-row: 2; }
+  .account-body:has(.pstat) > .account-msg { grid-column: 1; grid-row: 3; }
+  .account-body:has(.pstat) > .pstat { grid-column: 2; grid-row: 2 / 5; max-height: none; overflow: visible; }
+  .account-body:has(.pstat) > .account-submit { grid-column: 1; grid-row: 4; align-self: end; justify-self: center; }
+}
+@media (min-width: 900px) and (min-height: 640px) {
+  .account-panel:has(.pstat) { padding: 26px 36px 28px; }
+  .account-body:has(.pstat) > .pstat { gap: 8px; }
+  .pstat-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .pstat-cell { padding: 7px 12px; }
+  .pstat-races { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pstat-race { padding: 6px 12px; }
+  .pstat-race img { width: 34px; height: 34px; }
+  .pstat-sec { margin-top: 0; }
+  .pstat-mission { padding: 7px 14px; }
+}
+@media (min-width: 900px) and (min-height: 640px) {
+  .pstat-grid { grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); }
+  .account-body:has(.pstat) > .settings-panel__title { text-align: center; justify-self: stretch; margin: 0; }
+}
