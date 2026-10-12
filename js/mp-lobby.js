@@ -195,6 +195,7 @@ const MPLobby = {
       const snap = await ref.get();
       if (!snap.exists) { this._toast(this.t("mp_closed")); return; }
       await ref.update({ guestJoined: true });
+      if (typeof Friends !== "undefined") Friends.close(); // el invitado también deja el panel de amigos
       this._enter(id, false);
     } catch (e) {
       console.warn(e);
@@ -413,6 +414,9 @@ const MPLobby = {
     const host = this._isHost;
     const other = host ? d.guestName : d.hostName;
     if (this._overlay) this._overlay.classList.remove("mp-overlay--visible");
+    // Al empezar la partida no debe quedar NINGUNA interfaz multijugador abierta (amigos, invitación, chat).
+    this._hideInvite();
+    if (typeof Friends !== "undefined" && Friends.close) { try { Friends.close(); } catch (e) {} }
     if (this._unsubRoom) { this._unsubRoom(); this._unsubRoom = null; }
     const roomId = this._roomId;
     Net.onStatus = (s) => this._onNetStatus(s);
