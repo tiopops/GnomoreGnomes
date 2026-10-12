@@ -1219,6 +1219,10 @@ const Obelisks = {
         const m = /^.*?[.!?](\s|$)/.exec(t || "");
         return m ? m[0].trim() : t || "";
       };
+      // Pedido explícito: el coste lleva el icono de gloria de la raza y el
+      // número, con el mismo distintivo amarillo que el coste del Oráculo.
+      const gRace = typeof RACES !== "undefined" ? RACES.find((r) => r.id === Teams.raceIds.player) : null;
+      const gloryIconHtml = gRace && gRace.gloryIcon ? `<img src="${gRace.gloryIcon}" alt="">` : "";
       const abilityIcon = ability
         ? ability.iconImg
           ? `<img class="rc__ability-icon" src="${ability.iconImg}" alt="">`
@@ -1227,7 +1231,7 @@ const Obelisks = {
       this._descEl.innerHTML =
         `<div class="rc">` +
         `<div class="rc__head"><strong class="recruit-name rc__name">${def.name}</strong>` +
-        `<span class="rc__price" title="Coste de reclutar"><i class="ph ph-trophy"></i><b>${price}</b><span>gloria</span></span></div>` +
+        `<div class="or-cost rc__cost" title="Coste de reclutar"><span class="or-chip__in"><b>${gloryIconHtml}<span>${price}</span></b></span></div></div>` +
         (flavor ? `<p class="rc__flavor">${flavor}</p>` : "") +
         `<div class="unit-info-stats rc__stats">` +
         `${UnitInfo.statRow("ph-shield", "Aguante", def.aguante)}` +
