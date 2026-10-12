@@ -714,6 +714,8 @@ function createGnomeInstance() {
       if (typeof Turns !== "undefined") Turns.useAction(unit);
       // Tambores de Guerra (js/drums.js): golpe junto a un tambor.
       if (typeof Drums !== "undefined") Drums.onGnomeHit(unit);
+      // El Eterno (js/oracle.js): +1 de vida por golpe.
+      if (typeof Oracle !== "undefined") Oracle.onGnomeHit(unit);
       const dmg =
         UNIT_TYPES[unit.typeId].fuerza +
         (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0) +

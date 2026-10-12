@@ -393,6 +393,81 @@ const SFX = {
     setTimeout(() => this._pluck("buy-2", 1040, "triangle", 0.2, 0.3), 80);
   },
 
+  // ---------- Oráculo goblin (demo aprobada; aún sin conectar al juego) ----------
+  // Tono suelto con barrido de frecuencia (no usa las voces persistentes de
+  // _pluck: estos sonidos son poco frecuentes y necesitan subir/bajar de tono).
+  _sweep(type, f0, f1, dur, peak, delay) {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    try {
+      const t0 = ctx.currentTime + (delay || 0) / 1000;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(f0, t0);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(peak, t0 + Math.min(0.04, dur * 0.3));
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g).connect(this.master);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.05);
+    } catch (e) {}
+  },
+  // Pagar la tirada: moneda suave que cae.
+  oracleCoin() {
+    this._pluck("orc-coin-1", 980, "triangle", 0.12, 0.14);
+    setTimeout(() => this._pluck("orc-coin-2", 1480, "sine", 0.22, 0.14), 70);
+    this._sweep("sine", 140, 80, 0.25, 0.14, 40);
+  },
+  // Elegir carta: campanita suave (sin barrido, para que no suene a salto);
+  // la segunda (n = 2) añade un colchón grave sostenido que acumula tensión.
+  oracleLift(n) {
+    const f = n === 1 ? 659 : 784;
+    this._sweep("sine", f, f, 0.55, 0.09);
+    this._sweep("sine", f * 2, f * 2, 0.4, 0.025, 10);
+    if (n === 2) {
+      this._sweep("sine", 196, 196, 1.6, 0.05);
+      this._sweep("triangle", 294, 294, 1.6, 0.022);
+    }
+  },
+  // Latido grave y redondo (se repite acelerando durante el suspense).
+  oracleBeat(strength) {
+    const s = strength || 1;
+    this._sweep("sine", 80, 48, 0.18, 0.2 * s);
+    this._sweep("sine", 72, 44, 0.2, 0.14 * s, 130);
+  },
+  // Giro de carta: "fiu" corto y suave + tic.
+  oracleFlip() {
+    this._sweep("sine", 900, 360, 0.14, 0.09);
+    this._pluck("orc-flip-tick", 1400, "sine", 0.05, 0.08);
+  },
+  // Fallo: un suspiro breve y suave, nada molesto.
+  oracleFail() {
+    this._sweep("sine", 440, 330, 0.18, 0.07);
+    this._sweep("sine", 330, 247, 0.26, 0.06, 90);
+  },
+  // Acierto: golpe grave redondo + arpegio ascendente + brillo sostenido.
+  oracleWin() {
+    this._sweep("sine", 110, 60, 0.45, 0.26);
+    [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => {
+      setTimeout(() => this._pluck("orc-win-" + i, f, i % 2 ? "sine" : "triangle", 0.3 + i * 0.05, 0.14), 90 + i * 85);
+    });
+    this._sweep("sine", 2093, 2093, 1.4, 0.05, 620);
+    this._sweep("sine", 1568, 1568, 1.2, 0.04, 640);
+  },
+  // Maldición: zumbido grave que cae (más suave que un zumbido de error).
+  oracleCurse() {
+    this._sweep("triangle", 130, 55, 1.0, 0.14);
+    this._sweep("triangle", 184, 78, 1.0, 0.09);
+    this._sweep("sine", 70, 40, 0.8, 0.16, 100);
+  },
+  // La carta vuela a la mochila: barrido ascendente suave + "plop" al entrar.
+  oracleToBag() {
+    this._sweep("sine", 400, 1100, 0.5, 0.08);
+    setTimeout(() => this.itemPlace(), 620);
+  },
+
   // Cohete "KataPum!" (Backpack, js/backpack.js) — "en el momento del
   // impacto suena una explosion". A diferencia de TODO lo demás en este
   // archivo (osciladores puros vía _pluck/_getVoice, pensados para

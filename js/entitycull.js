@@ -58,6 +58,7 @@ const EntityCulling = {
     cull(typeof Villages !== "undefined" ? Villages.list : null);
     cull(typeof Obelisks !== "undefined" ? Obelisks.list : null);
     cull(typeof Shops !== "undefined" ? Shops.list : null);
+    cull(typeof Oracle !== "undefined" ? Oracle.list : null);
     cull(typeof Bushes !== "undefined" ? Bushes.list : null);
     cull(typeof Resources !== "undefined" ? Resources.list : null);
     cull(typeof Hierbajos !== "undefined" ? Hierbajos.list : null);

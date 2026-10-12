@@ -499,6 +499,13 @@ function spawnTestUnits(size, raceId, opponents, mp) {
     Shops.spawn(size);
   }
 
+  // Casa del Oráculo (js/oracle.js) — DESPUÉS de la Tienda Goblin: equidistante
+  // de los jugadores y siempre a buena distancia de la tienda.
+  if (typeof Oracle !== "undefined") {
+    Oracle.resetAll();
+    Oracle.spawn(size);
+  }
+
   // Tambores de Guerra (js/drums.js) — solo en Colinas Rock'n Troll. ANTES de
   // arbustos/recursos para que estos esquiven sus casillas.
   if (typeof Drums !== "undefined") {

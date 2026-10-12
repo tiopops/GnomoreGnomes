@@ -65,6 +65,16 @@
   Net.hook(Shops, "purchase", "shop.buy",
     (team, shop, uid) => ({ s: R(shop), uid }),
     (a) => { const s = U(a.s); return s ? [Net.otherTeam, s, a.uid] : null; });
+  // Casa del Oráculo (js/oracle.js): ir hasta ella, pagar y resolver las 2 cartas.
+  Net.hook(Oracle, "approachAndOpen", "oracle.go",
+    (unit, o) => ({ u: R(unit), s: R(o) }),
+    (a) => { const u = U(a.u), s = U(a.s); return alive(u, s) ? [u, s] : null; });
+  Net.hook(Oracle, "pay", "oracle.pay",
+    () => ({}),
+    () => [Net.otherTeam]);
+  Net.hook(Oracle, "resolve", "oracle.res",
+    (team, a, b) => ({ a, b }),
+    (x) => [Net.otherTeam, x.a, x.b]);
   Net.hook(Armory, "upgrade", "armory",
     (team, kind, lvl) => ({ k: kind, l: lvl }),
     (a) => [Net.otherTeam, a.k, a.l]);

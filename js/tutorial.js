@@ -149,6 +149,7 @@ const Tutorial = {
     if (typeof Resources !== "undefined") Resources.resetAll();
     if (typeof Bushes !== "undefined") Bushes.resetAll();
     if (typeof Shops !== "undefined" && Shops.resetAll) Shops.resetAll();
+    if (typeof Oracle !== "undefined" && Oracle.resetAll) Oracle.resetAll();
     // Un único tótem (el de práctica); los demás fuera de escena.
     if (Villages.list.length > 1) {
       Villages.list.slice(1).forEach((x) => x.el && x.el.remove());

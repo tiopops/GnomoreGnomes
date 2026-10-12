@@ -63,6 +63,10 @@ const BACKPACK_SLOT_COUNT = 8; // huecos totales del inventario (el resto, vací
 // mismo patrón que UNIT_DESCRIPTIONS en unitinfo.js, para poder editarla
 // desde un debug sin tocar datos de juego.
 const ITEM_TYPES = {
+  // Cartas del Oráculo (js/oracle.js): pasivas mientras estén en la mochila.
+  oraculo_renacido: { name: "El Renacido", iconUrl: "assets/oraculo/carta_renacido.webp" },
+  oraculo_afortunado: { name: "El Afortunado", iconUrl: "assets/oraculo/carta_afortunado.webp" },
+  oraculo_eterno: { name: "El Eterno", iconUrl: "assets/oraculo/carta_eterno.webp" },
   setarcoiris: {
     name: "Setarcoiris",
     iconUrl: "assets/iconos/setarcoiris.png",
@@ -141,6 +145,9 @@ const ITEM_TYPES = {
 // UNIT_DESCRIPTIONS) — un itemId sin entrada simplemente no muestra
 // ningún texto bajo el hueco resaltado.
 const ITEM_DESCRIPTIONS = {
+  oraculo_renacido: "Cuando una de tus unidades muere, ganas tantos puntos de gloria como costaba reclutarla. Beneficio pasivo, siempre activo.",
+  oraculo_afortunado: "Recibes 1 punto de gloria por turno por cada tótem que controlen tus rivales. Beneficio pasivo, siempre activo.",
+  oraculo_eterno: "Cuando una de tus unidades golpea a un gnomo, gana 1 punto de vida por golpe, hasta su vida máxima. Beneficio pasivo, siempre activo.",
   setarcoiris: "La comida favorita de los gnomos. Colócala junto a una de tus unidades: en dos turnos atraerá a un gnomo hambriento.",
   bevida: "Un brebaje revitalizante. Dáselo a una unidad aliada (pulsa sobre ella en el tablero) para restaurar toda su vida hasta su máximo de base, o úsalo sobre uno de tus tótems para repararlo por completo. No sirve con el Obelisco.",
   atrapapinreles: "Un cepo goblin oxidado. Colócalo junto a una de tus unidades: el enemigo que caiga en su casilla o pase por encima pierde el turno, suelta cualquier gnomo que llevara encima y recibe 1 punto de daño.",
@@ -610,6 +617,10 @@ const Backpack = {
     }
     const entry = this.inventory.find((it) => it.uid === uid);
     if (!entry) return;
+    if (String(entry.itemId).startsWith("oraculo_")) {
+      if (typeof UiHint !== "undefined") UiHint.show("Es un beneficio pasivo: ya está activo");
+      return;
+    }
     this.closePopup();
     if (entry.itemId === "setarcoiris") this._startPlacingSetarcoiris(uid);
     else if (entry.itemId === "bevida") this._startGivingBevida(uid);

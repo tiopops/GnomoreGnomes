@@ -200,13 +200,13 @@ const Fog = {
   // durante el turno rival asomaba sobre la niebla porque isFogged() devuelve
   // false mientras juega la IA.
   isFoggedReal(row, col) {
-    if (!this.revealedGrid) return false;
+    if (!this.revealedGrid || this._lifted) return false; // _lifted: El Vigilante (js/oracle.js)
     if (row < 0 || col < 0 || row >= this.size || col >= this.size) return false;
     return !this.revealedGrid[row][col];
   },
 
   isFogged(row, col) {
-    if (!this.revealedGrid) return false;
+    if (!this.revealedGrid || this._lifted) return false; // _lifted: El Vigilante (js/oracle.js)
     // La IA no está limitada por la niebla del jugador
     // (si no, quedarían encerrados en su esquina).
     if (typeof Teams !== "undefined" && typeof Turns !== "undefined" && Turns._aiRunning && Turns.activeTeam !== "player") return false;
@@ -222,6 +222,7 @@ const Fog = {
   // activa (debug) se considera todo percibido, igual que hace isFogged
   // devolviendo "no hay niebla" con false.
   isPerceived(row, col) {
+    if (this._lifted) return true; // El Vigilante (js/oracle.js)
     if (typeof Tutorial !== "undefined" && Tutorial.active) return true; // tutorial: todo a la vista
     if (!this.perceivedGrid) return true;
     if (row < 0 || col < 0 || row >= this.size || col >= this.size) return false;
@@ -599,6 +600,14 @@ const Fog = {
         shop.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(shop.row, shop.col));
       });
     }
+    if (typeof Oracle !== "undefined") {
+      Oracle.list.forEach((o) => {
+        if (!o.el) return;
+        const fogged = this.isFogged(o.row, o.col);
+        o.el.classList.toggle("unit--fog-hidden", fogged);
+        o.el.classList.toggle("gg-remembered", !fogged && !this.isPerceived(o.row, o.col));
+      });
+    }
     // Altar de Sacrificios (js/altar.js) — pedido explícito: "el altar
     // tambien debe oscurecerse en la niebla de guerra". Mismo criterio que
     // una Tienda Goblin: oculto si su loseta sigue sin explorar y atenuado
@@ -881,6 +890,12 @@ const Fog = {
       Shops.list.forEach((s) => {
         if (!s.el) return;
         coverFrom(s.row, s.col, s.el);
+      });
+    }
+    if (typeof Oracle !== "undefined") {
+      Oracle.list.forEach((o) => {
+        if (!o.el) return;
+        coverFrom(o.row, o.col, o.el);
       });
     }
     // Setas explosivas (js/mushrooms.js): faltaban aquí y asomaban por la niebla vecina.

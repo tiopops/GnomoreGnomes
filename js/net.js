@@ -339,6 +339,7 @@ const Net = {
     if (r.startsWith("drum-")) return find(Drums.list);
     if (r.startsWith("village-")) return find(Villages.list);
     if (r.startsWith("shop-")) return find(Shops.list);
+    if (r.startsWith("oracle-")) return find(Oracle.list);
     if (r.startsWith("resource-")) return find(Resources.list);
     if (r.startsWith("totemvision-")) return find(TotemVision.list);
     if (r.startsWith("bush-")) return find(Bushes.list);
@@ -466,6 +467,7 @@ const Net = {
     s.ar = byTeam((t) => JSON.stringify(Armory.state[t] || {}));
     s.rc = byTeam((t) => JSON.stringify(Resources.countsFor(t)));
     s.sh = Shops.list.map((x) => x.stock.map((e) => e.uid + e.itemId).join(","));
+    s.or = [Oracle.slotsStr(), ...byTeam((t) => Oracle.teamStr(t))];
     s.mi = [Abilities._mines.length, Backpack.traps.length, TotemVision.list.length, Mushrooms.list.length];
     s.dr = byTeam((t) => (typeof Drums !== "undefined" && Drums.slices ? Drums.slices[t] || 0 : 0));
     s.fr = (Drums.frags || []).map((f) => f.row + "," + f.col).sort();
@@ -481,6 +483,7 @@ const Net = {
       o: Obelisks.list.map((o) => [this.canon(o.team), o.row, o.col]).sort(),
       v: L(Villages.list, (v) => [v.row, v.col]),
       s: L(Shops.list, (v) => [v.row, v.col]),
+      or: L(Oracle.list, (v) => [v.row, v.col]).concat([Oracle.slots.map((x) => x.kind).join("")]),
       r: L(Resources.list, (v) => [v.row, v.col]),
       d: L(Drums.list, (v) => [v.row, v.col]),
       b: L(Bushes.list, (v) => [v.row, v.col]),

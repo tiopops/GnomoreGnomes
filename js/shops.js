@@ -199,7 +199,8 @@ const Shops = {
   },
 
   at(row, col) {
-    return this.list.find((s) => s.row === row && s.col === col) || null;
+    // Casa del Oráculo (js/oracle.js): bloquea su casilla igual que una tienda.
+    return this.list.find((s) => s.row === row && s.col === col) || (typeof Oracle !== "undefined" ? Oracle.at(row, col) : null) || null;
   },
 
   _create(row, col) {
@@ -321,6 +322,7 @@ const Shops = {
       // dejar comprar a través de una tienda ya fuera de alcance.
       if (!adjacent && this._activeShop === shop) this.closePopup();
     });
+    if (typeof Oracle !== "undefined") Oracle.refreshAll();
   },
 
   // ---------- Popup (misma interfaz que la mochila, ver js/backpack.js y

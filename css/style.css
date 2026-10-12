@@ -10448,3 +10448,140 @@ body.tut-on .tut-portrait, body.tut-on .tut-portrait * { pointer-events: none; }
 .shop-vendor__coin img.face { backface-visibility: hidden; }
 .shop-vendor__front { position: absolute; overflow: hidden; }
 .shop-vendor__front img { position: absolute; display: block; max-width: none; }
+
+/* ===================================================================
+   Casa del Oráculo (js/oracle.js) — ventana igual que la Tienda Goblin.
+   Valores aprobados en la demo debug_oraculo_v2 (v3.2).
+   =================================================================== */
+.oracle__sprite { width: 215px; }
+.oracle__lock {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  transform: translate(-50%, -50%);
+  font-size: 46px;
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  text-shadow: 3px 3px 0 #000;
+  transition: opacity 0.4s;
+  z-index: 3;
+}
+.oracle--locked .oracle__sprite,
+.oracle--depleted .oracle__sprite {
+  filter: grayscale(1) brightness(0.55) drop-shadow(0 8px 6px rgba(0, 0, 0, 0.45));
+  transition: filter 0.5s;
+}
+.oracle--locked .oracle__lock,
+.oracle--depleted .oracle__lock { opacity: 1; }
+.oracle--depleted { cursor: var(--cursor-default); }
+body.oracle-fog-lifted .tile__fog { opacity: 0 !important; transition: opacity 0.6s ease; }
+.tile__fog { transition: opacity 0.6s ease; }
+
+.backpack-slot__icon[src*="oraculo/carta"] { object-fit: contain; width: 70%; height: 84%; }
+
+.oracle-overlay .backpack-panel {
+  --pw: min(630px, 92vw);
+  --vend-over: 19.2;
+  margin-top: max(10vh, calc(var(--pw) * var(--vend-over) / 100 * 0.985 + 4px));
+}
+.oracle-panel .or-top { position: relative; z-index: 2; display: flex; justify-content: center; align-items: center; gap: 22px; margin-top: -6px; }
+.or-chip { padding: 8px 22px; min-width: 150px; }
+.or-have { min-width: 150px; }
+.or-cost { position: relative; isolation: isolate; min-width: 0; padding: 8px 22px 8px 18px; filter: drop-shadow(3px 3px 0 rgba(0,0,0,.5)); transform: rotate(-2deg); }
+.or-cost::before, .or-cost::after { content: ""; position: absolute; z-index: -1; clip-path: polygon(4% 0, 100% 6%, 96% 100%, 0 92%); }
+.or-cost::before { inset: 0; background: #000; }
+.or-cost::after { inset: 2.5px; background: #ffcf3f; }
+.or-cost .or-chip__in b { color: #241f28; text-shadow: none; flex-direction: row; }
+.or-cost .or-chip__in b .mn { margin: 0 -6px 0 2px; }
+.or-cost .or-chip__in b img { margin-left: -2px; }
+.or-chip__in { display: flex; flex-direction: column; align-items: center; line-height: 1.05; }
+.or-chip__in b { display: flex; align-items: center; gap: 8px; font-size: 1.7rem; color: #ffcf3f; font-weight: 400; text-shadow: 2px 2px 0 #000; }
+.or-chip__in b img { width: 34px; height: 34px; margin: -4px 0; }
+.or-chip__in b em { font-style: normal; color: #9d94a8; font-size: 1rem; }
+.or-chip.bump .or-chip__in b { animation: or-chipbump .45s; }
+@keyframes or-chipbump { 40% { transform: scale(1.25, .8); } 70% { transform: scale(.95, 1.1); } }
+
+.or-cards { position: relative; z-index: 2; display: grid; justify-content: center; perspective: 1200px; padding: 6px 0;
+  grid-template-columns: repeat(4, calc(var(--pw) * 0.1667));
+  gap: calc(var(--pw) * 0.019) calc(var(--pw) * 0.0222); }
+.or-card { position: relative; aspect-ratio: 420/672; cursor: var(--cursor-default); transform-style: preserve-3d; transition: filter .35s; }
+.or-card .fw { position: absolute; inset: 0; transform-style: preserve-3d; animation: or-cfloat var(--d, 4s) ease-in-out var(--dl, 0s) infinite; }
+.or-card.gray .fw { animation: none; }
+@keyframes or-cfloat { 0%, 100% { translate: 0 0; rotate: -.6deg; } 50% { translate: 0 -4px; rotate: .6deg; } }
+.or-card .in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3, 1.5, .5, 1); }
+.or-card.up .in { transform: rotateY(180deg); }
+.or-card .f { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.or-card .f img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 4px 0 rgba(0,0,0,.5)); pointer-events: none; }
+.or-card .ff { transform: rotateY(180deg); }
+.picking .or-card.can { cursor: var(--cursor-pointer); }
+.picking .or-card.can:not(.up):hover .in { transform: translateY(-8px) rotate(-1.6deg); }
+.or-card.gray .ff img { filter: grayscale(1) brightness(.6) drop-shadow(0 4px 0 rgba(0,0,0,.5)); }
+.or-card .tg { position: absolute; left: -4%; right: -4%; top: 42%; text-align: center; font-size: 12px; letter-spacing: .08em; color: #fff; background: #7a1020cc; padding: 4px 0; transform: rotate(-6deg); opacity: 0; transition: opacity .4s; pointer-events: none; z-index: 3; }
+.or-card.burn .tg { opacity: 1; }
+.or-card.ant .in { animation: or-ant var(--ad, .7s) cubic-bezier(.45, 0, .25, 1) forwards; }
+@keyframes or-ant { 0% { translate: 0 0; scale: 1; } 22% { translate: 0 4px; scale: 1.05 .92; } 70% { translate: 0 -14px; scale: 1.1 1.12; } 100% { translate: 0 -7px; scale: 1.07; } }
+.or-card.ant { animation: or-antglow var(--ad, .7s) ease-in forwards; z-index: 5; }
+@keyframes or-antglow { from { filter: drop-shadow(0 0 0 #ffcf3f); } to { filter: drop-shadow(0 0 16px #ffcf3f) drop-shadow(0 0 30px #ff9d2e); } }
+.or-card.sel .in { translate: 0 -7px; scale: 1.07; }
+.or-card.sel { filter: drop-shadow(0 0 12px rgba(255,207,63,.7)); z-index: 4; }
+.or-card.breath { animation: or-breath .75s ease-in-out infinite alternate; }
+@keyframes or-breath { from { scale: 1; filter: drop-shadow(0 0 8px #ffcf3f); } to { scale: 1.045; filter: drop-shadow(0 0 26px #fff3b0) drop-shadow(0 0 44px #ff9d2e); } }
+.or-cards.focus .or-card:not(.sel) { filter: brightness(.55); }
+.or-card.ant2 .in { animation-name: or-ant2; }
+@keyframes or-ant2 { 0% { translate: 0 0; scale: 1; } 12% { translate: 0 5px; scale: 1.05 .92; } 78% { translate: 0 -18px; scale: 1.15 1.17; } 100% { translate: 0 -7px; scale: 1.07; } }
+.or-card.ant2 { animation-name: or-antglow2; }
+@keyframes or-antglow2 { 0% { filter: drop-shadow(0 0 0 #ffcf3f); } 60% { filter: drop-shadow(0 0 16px #ffcf3f) drop-shadow(0 0 30px #ff9d2e); } 100% { filter: drop-shadow(0 0 26px #fff3b0) drop-shadow(0 0 54px #ff9d2e); } }
+.or-card.win .in { animation: or-winin 1.2s; }
+@keyframes or-winin { 0% { scale: 1; } 25% { scale: 1.2; } 45% { scale: 1.1; } 100% { scale: 1.07; } }
+.or-card.win { animation: or-winc .9s; }
+@keyframes or-winc { 0% { filter: none; } 35% { filter: drop-shadow(0 0 18px #fff) drop-shadow(0 0 34px #ffcf3f) brightness(1.35); transform: scale(1.07); } 100% { filter: none; } }
+.or-card.miss { transition: filter .3s, opacity .3s; filter: brightness(.7) saturate(.7); }
+.or-card.curs { animation: or-cursk .7s forwards; }
+@keyframes or-cursk { 0% { filter: none; } 30% { filter: drop-shadow(0 0 18px #ff2030) brightness(1.3); transform: scale(1.08) rotate(2deg); } 100% { filter: drop-shadow(0 0 10px #7a1020); } }
+.or-hint { position: relative; z-index: 2; text-align: center; font-size: .95rem; color: #f4f2f8; text-shadow: 2px 2px 0 #000; min-height: 1.4em; margin-top: -6px; }
+.or-hint b { color: #ffcf3f; font-weight: 400; }
+.or-pay { padding-left: 30px; padding-right: 30px; }
+.or-pay .p5-banner__label { color: #241f28; text-shadow: none; font-weight: 400; letter-spacing: .03em; }
+.or-pay:disabled .p5-banner__label { color: rgba(244,242,248,.7); }
+.or-pay:disabled::after { background: var(--disabled); }
+.oracle-panel .shop-warning { margin-top: -14px; }
+.oracle-panel.pop { animation: or-ppop .9s; }
+@keyframes or-ppop { 0%, 100% { transform: rotate(-1.2deg) scale(1); } 25% { transform: rotate(-1.2deg) scale(1.03); } 55% { transform: rotate(-1.2deg) scale(.995); } }
+.oracle-panel.shake { animation: or-pshake .5s; }
+@keyframes or-pshake { 20% { transform: rotate(-1.2deg) translateX(-10px); } 40% { transform: rotate(-1.2deg) translateX(10px); } 60% { transform: rotate(-1.2deg) translateX(-6px); } 80% { transform: rotate(-1.2deg) translateX(5px); } }
+/* goblin y bola (posiciones en % del ancho de la ventana) */
+.or-gob { position: absolute; z-index: 3; pointer-events: none;
+  left: calc(var(--pw) * -5.4 / 100); top: calc(var(--pw) * -19.2 / 100); width: calc(var(--pw) * 47.1 / 100); }
+.or-gob img { display: block; width: 100%; }
+.or-ball { position: absolute; z-index: 4; pointer-events: none;
+  left: calc(var(--pw) * 32.2 / 100); top: calc(var(--pw) * -6.4 / 100); width: calc(var(--pw) * 9 / 100); }
+.or-ball-in { position: relative; width: 100%; }
+.or-ball-in img { display: block; width: 100%; position: relative; z-index: 2; }
+.or-halo { position: absolute; left: -40%; top: -40%; width: 180%; height: 180%; border-radius: 50%; z-index: 1; opacity: .7;
+  background: radial-gradient(circle, rgba(200,90,255,.85) 0%, rgba(160,60,255,.35) 38%, rgba(120,30,220,0) 68%); }
+/* efectos globales (fixed) */
+.or-ring { position: fixed; border: 5px solid #fff; border-radius: 50%; z-index: 7050; pointer-events: none; box-shadow: 0 0 22px currentColor; }
+.or-rays { position: fixed; width: 640px; height: 640px; z-index: 7040; pointer-events: none; border-radius: 50%; mix-blend-mode: screen;
+  background: repeating-conic-gradient(rgba(255,226,120,.75) 0 5deg, transparent 5deg 20deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0, transparent 68%); mask-image: radial-gradient(circle, #000 0, transparent 68%); }
+.or-spark { position: fixed; width: 10px; height: 10px; z-index: 7100; pointer-events: none; transform: rotate(45deg); }
+#or-flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 7200; }
+#or-vign { position: fixed; inset: 0; pointer-events: none; z-index: 901; opacity: 0; background: radial-gradient(ellipse at center, transparent 35%, rgba(160,10,30,.65)); transition: opacity .15s; }
+#or-vign.on { opacity: 1; }
+.or-fly { position: fixed; z-index: 7000; pointer-events: none; transform-origin: 50% 50%; }
+.or-fly img { width: 100%; display: block; filter: drop-shadow(0 4px 0 rgba(0,0,0,.5)); }
+.or-toast { position: fixed; left: 50%; top: 60px; z-index: 6000; display: flex; align-items: center; gap: 12px; padding: 16px 30px; max-width: min(760px, 92vw);
+  transform: translate(-50%, -30px) scale(.85); opacity: 0; pointer-events: none; color: #ffcf3f; font-size: 1.1rem;
+  filter: drop-shadow(4px 4px 0 rgba(0,0,0,.55)) drop-shadow(0 0 16px rgba(255,207,63,.4)); }
+.or-toast::before, .or-toast::after { content: ""; position: absolute; clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }
+.or-toast::before { inset: 0; background: #000; z-index: 0; }
+.or-toast::after { inset: 2.5px; background: #2a2410; z-index: 1; }
+.or-toast > * { position: relative; z-index: 2; }
+.or-toast small { display: block; color: #f4f2f8; font-size: .82rem; margin-top: 3px; }
+.or-toast.red { color: #ff6070; filter: drop-shadow(4px 4px 0 rgba(0,0,0,.55)) drop-shadow(0 0 16px rgba(255,40,60,.5)); }
+.or-toast.red::after { background: #2a0c12; }
+.or-toast.on { animation: or-tpop 3.2s cubic-bezier(.22, 1, .36, 1); }
+@keyframes or-tpop { 0% { opacity: 0; transform: translate(-50%, -30px) scale(.85); } 10% { opacity: 1; transform: translate(-50%, 0) scale(1.06); } 16% { transform: translate(-50%, 0) scale(1); } 88% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -14px) scale(.92); } }
+.or-bpbump { animation: or-bpb .55s; }
+@keyframes or-bpb { 30% { transform: scale(1.25, .8); } 60% { transform: scale(.92, 1.15); } }

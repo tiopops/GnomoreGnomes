@@ -1289,6 +1289,16 @@ const Units = {
   // curación u otros mensajes) — se autodestruye solo al acabar su propia
   // animación de subida y desvanecido (ver style.css).
   spawnFloatingText(unit, text, { className = "dmg-popup" } = {}) {
+    // Pedido explícito: "cuando un gnomo suelto pierde puntos...los
+    // indicadores de +x y -x numericos no deben mostrarse a traves de la
+    // niebla" — un gnomo (o quien lo golpea) que el jugador no percibe
+    // ahora mismo no debe delatarse con su número flotante.
+    if (
+      className.indexOf("gnome-points-popup") !== -1 &&
+      unit.team !== "player" &&
+      typeof Fog !== "undefined" &&
+      (Fog.isFogged(unit.row, unit.col) || !Fog.isPerceived(unit.row, unit.col))
+    ) return;
     const { x, y } = getTileCenter(unit.row, unit.col, this.boardSize);
     const popup = document.createElement("div");
     popup.className = className;
@@ -1375,6 +1385,8 @@ const Units = {
     this.list = this.list.filter((u) => u.id !== unit.id);
     if (typeof Skills !== "undefined") Skills.onUnitRemoved();
     if (typeof Relics !== "undefined") Relics.onUnitDied(unit);
+    // El Renacido (js/oracle.js): gloria al morir una unidad propia.
+    if (typeof Oracle !== "undefined") Oracle.onUnitDied(unit);
     // Tienda Goblin (js/shops.js) — si el personaje que acaba de morir era
     // el único que mantenía una tienda accesible, deja de estarlo (y su
     // popup, si estaba abierto, se cierra solo — ver Shops.refreshAll).

@@ -652,7 +652,7 @@ const GamepadCtl = {
     const at = (list) => (list || []).find((o) => o && o.row === row && o.col === col && o.el);
     const u = typeof Units !== "undefined" ? Units.unitAt(row, col) : null;
     if (u && u.el) out.push(u.el);
-    ["Obelisks", "Villages", "Shops", "Altar", "Drums", "Volcano", "Mushrooms"].forEach((n) => {
+    ["Obelisks", "Villages", "Shops", "Oracle", "Altar", "Drums", "Volcano", "Mushrooms"].forEach((n) => {
       const mod = window[n] || (typeof eval === "function" ? (function () { try { return eval(n); } catch (e) { return null; } })() : null);
       const o = mod && at(mod.list);
       if (o) out.push(o.el);
