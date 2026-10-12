@@ -1314,49 +1314,58 @@ const Units = {
   async _playDrown(unit) {
     const sprite = unit.spriteEl, flip = unit.flipEl;
     const { x, y } = getTileCenter(unit.row, unit.col, this.boardSize);
-    const z = (unit.row + unit.col) * 10 + 8;
-    const SINK = 1500;
+    const uz = parseInt(unit.el.style.zIndex, 10) || (unit.row + unit.col) * 10 + 5;
+    const zFront = uz + 2; // las ondas pasan POR DELANTE del personaje: se hunde "dentro" de ellas
+    const SINK = 1900;
+    // Línea de agua FIJA a la altura del centro de la loseta (donde nacen las ondas), 14 px por encima
+    // de la base del sprite. El sprite BAJA y la máscara (clip-path del contenedor, quieta) lo va
+    // consumiendo de abajo hacia arriba. Antes la máscara subía a la vez y la animación en reposo
+    // (respiración) dejaba el sprite quieto: parecía solo una máscara subiendo.
+    const WATER = 14;
     if (sprite) {
-      sprite.style.transformOrigin = "50% 90%";
-      // La respiración en reposo (CSS animation) pisa el transform en línea y dejaba el sprite
-      // quieto mientras solo subía la máscara: se anula para que el sprite SE HUNDA de verdad.
-      sprite.style.animation = "none";
+      sprite.style.transformOrigin = "50% 85%";
+      sprite.style.animation = "none"; // la respiración en reposo pisaría el transform en línea
       sprite.classList.remove("unit__sprite--hop");
     }
     const h = (flip && flip.offsetHeight) || 100;
+    if (flip) flip.style.clipPath = `inset(0 0 ${WATER}px 0)`;
+    const total = h + 10; // hasta que desaparece del todo bajo la línea de agua
+    // La sombra proyectada es un elemento aparte (no baja con el sprite): se desvanece mientras se hunde.
+    if (flip) flip.querySelectorAll(".gg-cast-shadow").forEach((sh) => sh.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SINK * 0.55, fill: "forwards", easing: "ease-in" }));
+    const spawnRing = (big) => { if (typeof Combat !== "undefined") Combat._waterRing(x + (NR() - 0.5) * 12, y + 2, zFront, !!big); };
+    spawnRing(false);
     await new Promise((resolve) => {
       const t0 = performance.now();
-      let lastSplash = 0;
+      let lastSplash = 0, lastRing = 0;
       const f = (now) => {
         if (!unit.el || !unit.el.isConnected) return resolve();
         const t = Math.min(1, (now - t0) / SINK);
-        const sink = Math.pow(t, 1.4) * 62;
-        const flail = Math.sin(now / 55) * (1 - t * 0.5);
-        const bob = Math.sin(now / 170) * 5 * (1 - t);
-        if (sprite) sprite.style.transform = `translateY(${bob + sink}px) rotate(${flail * 14}deg) scale(${1 + Math.sin(now / 55 + 1) * 0.07 * (1 - t * 0.5)}, ${1 - Math.sin(now / 55 + 1) * 0.08 * (1 - t * 0.5)})`;
-        if (flip) flip.style.clipPath = `inset(0 0 ${Math.max(0, ((sink + 14) / h) * 100)}% 0)`;
-        if (now - lastSplash > 150 && t < 0.9) {
+        const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // arranca despacio, acelera, frena
+        const sink = e * total;
+        const wob = (1 - t * 0.7);
+        const flail = Math.sin(now / 60) * wob;
+        const bob = Math.sin(now / 170) * 4 * (1 - t);
+        if (sprite) sprite.style.transform = `translateY(${bob + sink}px) rotate(${flail * 12}deg) scale(${1 + Math.sin(now / 60 + 1) * 0.05 * wob}, ${1 - Math.sin(now / 60 + 1) * 0.06 * wob})`;
+        if (now - lastRing > 230 && t < 0.92) { lastRing = now; spawnRing(false); }
+        if (now - lastSplash > 170 && t < 0.8) {
           lastSplash = now;
           if (typeof SFX !== "undefined" && SFX.drownFlail) SFX.drownFlail();
-          if (typeof Combat !== "undefined") {
-            Combat._waterDrops(x + (NR() - 0.5) * 50, y + 6, z, 3, 0.5);
-            if (NR() < 0.55) Combat._waterRing(x + (NR() - 0.5) * 40, y + 4, z - 2, false);
-          }
+          if (typeof Combat !== "undefined") Combat._waterDrops(x + (NR() - 0.5) * 50, y + 4, zFront + 1, 3, 0.5);
         }
         if (t < 1) requestAnimationFrame(f); else resolve();
       };
       requestAnimationFrame(f);
     });
+    // Ya hundido del todo: burbujas, ondas grandes y plop.
     if (typeof Combat !== "undefined") {
-      Combat._waterBubbles(x, y, z, 10);
-      Combat._waterRing(x, y + 2, z - 2, false);
+      Combat._waterBubbles(x, y, zFront, 10);
+      Combat._waterRing(x, y + 2, zFront, false);
     }
     if (typeof SFX !== "undefined" && SFX.drownBubbles) SFX.drownBubbles();
-    if (unit.el) unit.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 280, fill: "forwards" });
     await new Promise((r) => setTimeout(r, 220));
     if (typeof Combat !== "undefined") {
-      Combat._waterDrops(x, y, z, 6, 0.8);
-      Combat._waterRing(x, y + 2, z - 2, true);
+      Combat._waterDrops(x, y, zFront + 1, 6, 0.8);
+      Combat._waterRing(x, y + 2, zFront, true);
     }
     if (typeof SFX !== "undefined" && SFX.drownPlop) SFX.drownPlop();
     await new Promise((r) => setTimeout(r, 300));
