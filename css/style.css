@@ -10646,3 +10646,21 @@ body.oracle-fog-lifted .tile__fog { opacity: 0 !important; transition: opacity 0
 .obelisk__menu-btn.gp-ob-focus{filter:drop-shadow(0 0 4px #ffd54a) drop-shadow(0 0 10px #ffd54a) !important;transform:scale(1.18) !important;outline:3px solid #ffd54a;outline-offset:2px;border-radius:50%}
 /* Confirmación de abandonar partida online: sin scroll (ni horizontal ni vertical). */
 .mp-panel--small { overflow: visible; max-height: none; }
+
+/* ===== Smartphone: selección de raza/nivel y pestaña Mando ===== */
+@media (max-width: 900px), (max-height: 520px) {
+  /* 100vh en móvil incluye la barra del navegador: el final de la pantalla
+     quedaba tapado/inalcanzable. dvh = alto realmente visible. */
+  .screen { height: 100vh; height: 100dvh; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding-bottom: max(40px, env(safe-area-inset-bottom)); }
+  .screen > :last-child { flex-shrink: 0; }
+  .race-card-list { gap: 22px; padding-bottom: 24px; }
+  .race-card { width: min(300px, 92%); }
+}
+@media (max-width: 640px) {
+  .gp-pane { margin: 0 !important; padding: 8px 6px 18px !important; max-height: 58dvh !important; overflow-y: auto !important; }
+  .gp-map { grid-template-columns: 1fr !important; }
+  .gp-map__row { padding: 8px 22px 8px 16px !important; }
+  .gp-tester { max-width: min(100%, 300px) !important; }
+  .gp-status { padding: 8px 20px !important; }
+  .gp-rescan { min-width: 0; width: 100%; }
+}
