@@ -113,6 +113,8 @@ const Friends = {
   },
 
   close() {
+    // Cerrar la ventana del chat vuelve a la lista: no se queda un chat abierto para la próxima vez.
+    this._chat = null;
     if (this._overlay) this._overlay.classList.remove("settings-overlay--visible");
     clearInterval(this._poll);
     this._poll = null;
@@ -395,7 +397,6 @@ const Friends = {
     })();
     B.innerHTML = `
       <div class="chat-head">
-        <button type="button" class="chat-back" data-act="chatback" aria-label="${I18N.t("fr_chat_back")}"><i class="ph-bold ph-arrow-left"></i></button>
         <span class="friends-dot friends-dot--${on ? "on" : "off"}"></span>
         <div class="friends-row__txt"><span class="friends-row__name">${this._esc(c.name)}</span>
           <span class="friends-row__sub">${on ? I18N.t("fr_online") : I18N.t("fr_offline")}</span></div>
@@ -416,10 +417,6 @@ const Friends = {
         e.preventDefault();
         this._sendChat();
       }
-    });
-    B.querySelector('[data-act="chatback"]').addEventListener("click", () => {
-      if (typeof SFX !== "undefined") SFX.click();
-      this._closeChat();
     });
     B.querySelector('[data-act="chatsend"]').addEventListener("click", () => {
       if (typeof SFX !== "undefined") SFX.click();
