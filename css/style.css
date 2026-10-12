@@ -10664,3 +10664,10 @@ body.oracle-fog-lifted .tile__fog { opacity: 0 !important; transition: opacity 0
   .gp-status { padding: 8px 20px !important; }
   .gp-rescan { min-width: 0; width: 100%; }
 }
+@media (max-width: 480px) {
+  .settings-tabs { gap: 4px; }
+  .settings-tabs .skills-tab { padding: 0 2px; }
+  .settings-tabs .skills-tab__label { font-size: .74rem !important; letter-spacing: 0 !important; overflow: visible !important; display: inline-flex; align-items: center; gap: 3px; }
+  .settings-tabs .settings-tab__icon { font-size: .95em; vertical-align: 0; }
+}
+@media (max-width: 350px) { .settings-tabs .settings-tab__icon { display: none; } }
