@@ -44,4 +44,16 @@ const RACES = [
     available: true,
     gloryIcon: "assets/iconos/gloria_colinas_rockntroll.png",
   },
+  {
+    id: "equipo_surcanubes",
+    nameKey: "race_equipo_surcanubes",
+    flavorKey: "race_equipo_surcanubes_flavor",
+    virtuesKey: "race_equipo_surcanubes_virtues",
+    weaknessesKey: "race_equipo_surcanubes_weaknesses",
+    icon: "ph-cloud",
+    iconImg: "assets/iconos/equipo_surcanubes.png",
+    color: "#7fc8e8",
+    available: true,
+    gloryIcon: "assets/iconos/gloria_surcanubes.png",
+  },
 ];

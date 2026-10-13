@@ -596,7 +596,14 @@ const Shops = {
       if (!affordable) continue;
       if (!Glory.spend(team, affordable.price)) continue;
       shop.stock = shop.stock.filter((it) => it.uid !== affordable.uid);
-      if (team !== "player") this.enemyPurchasedCount++;
+      if (team !== "player") {
+        this.enemyPurchasedCount++;
+        // Equipo SurcaNubes (ManosLargas · Dedos Largos): se apunta lo que compra el rival
+        // para poder robárselo de su "mochila" (ver js/abilities-surcanubes.js).
+        if (typeof Backpack !== "undefined" && Backpack.aiItems) {
+          (Backpack.aiItems[team] = Backpack.aiItems[team] || []).push({ uid: "ai" + this.enemyPurchasedCount + "_" + affordable.uid, itemId: affordable.itemId });
+        }
+      }
       else if (typeof Backpack !== "undefined") Backpack.addItem(affordable.itemId);
       if (this._activeShop === shop) this._renderSlots();
       return true;

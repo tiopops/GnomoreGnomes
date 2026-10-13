@@ -59,6 +59,7 @@ const OBELISK_ATTACK_RANGE = 1; // cuerpo a cuerpo, igual que Combat/Villages
 const OBELISK_SPRITES = {
   mushboom_forest: "assets/edificios/obelisco_mushboom_forest.png",
   colinas_rockntroll: "assets/edificios/obelisco_colinas_rockntroll.png",
+  equipo_surcanubes: "assets/edificios/obelisco_surcanubes.png",
 };
 
 // Iconos de los dos botones que asoman sobre el Obelisco al seleccionarlo

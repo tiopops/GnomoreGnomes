@@ -101,6 +101,7 @@
         <select id="levelSet">
           <option value="mush">Bosque MushBoom (hierba / agua)</option>
           <option value="rock">Colinas Rock'n Troll (tierra+piedra mezcladas / agua 1+2)</option>
+          <option value="hurry">Hurrycrane Village (madera+piedra mezcladas / agua 1+2)</option>
         </select>
       </div>
     </div>
@@ -182,10 +183,15 @@
       grass: ["../assets/niveles/rockntroll/tierra.png", "../assets/niveles/rockntroll/piedra.png"],
       water: ["../assets/niveles/rockntroll/agua_1.png", "../assets/niveles/rockntroll/agua_2.png"],
     };
+    const HURRY_SRC = {
+      grass: ["../assets/niveles/hurrycrane/madera.png", "../assets/niveles/hurrycrane/piedra.png"],
+      water: ["../assets/niveles/hurrycrane/agua_1.png", "../assets/niveles/hurrycrane/agua_2.png"],
+    };
     function srcFor(type, row, col) {
-      if (document.getElementById("levelSet").value !== "rock") return TILE_ART[type].src;
+      const set = document.getElementById("levelSet").value;
+      if (set !== "rock" && set !== "hurry") return TILE_ART[type].src;
       const i = type === "grass" ? ((Math.floor(col / 2) + Math.floor(row / 3)) % 2) : ((row * 3 + col) % 2);
-      return ROCK_SRC[type][i];
+      return (set === "hurry" ? HURRY_SRC : ROCK_SRC)[type][i];
     }
     const GRID_SIZE = 8;
     const DEFAULTS = { scale: 100, offsetX: 0, offsetY: 0 };

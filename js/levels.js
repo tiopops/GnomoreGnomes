@@ -31,6 +31,17 @@ const LEVELS = [
     color: "#8a8f99",
     available: true,
   },
+  {
+    id: "hurrycrane_village",
+    nameKey: "level_hurrycrane_village",
+    flavorKey: "level_hurrycrane_village_flavor",
+    featureKeys: ["level_hurrycrane_village_f1", "level_hurrycrane_village_f2", "level_hurrycrane_village_f3"],
+    featureIcons: ["ph-wind", "ph-cloud", "ph-hourglass"],
+    islandImg: "assets/niveles/isla_hurrycrane_village.png",
+    logoImg: "assets/niveles/logo_hurrycrane_village.png",
+    color: "#7fc8e8",
+    available: true,
+  },
 ];
 
 function getLevel(id) {

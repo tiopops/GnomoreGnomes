@@ -15,6 +15,14 @@ const LevelAssets = {
       bush: "arbusto.png",
       hierbajos: "hierbajos.png",
     },
+    hurrycrane_village: {
+      dir: "assets/niveles/hurrycrane/",
+      grassZones: ["madera.png", "piedra.png"],
+      water: ["agua_1.png", "agua_2.png"],
+      nodes: { roca: "roca.png", pino: "pino.png", mena: "mena.png" },
+      bush: "arbusto.png",
+      hierbajos: "hierbajos.png",
+    },
   },
 
   apply(levelId) {

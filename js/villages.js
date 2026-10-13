@@ -47,6 +47,7 @@ const VILLAGE_SPRITES = {
   neutral: "assets/iconos/poblado_neutral.png",
   mushboom_forest: "assets/iconos/poblado_mushboom_forest.png",
   colinas_rockntroll: "assets/iconos/poblado_colinas_rockntroll.png",
+  equipo_surcanubes: "assets/iconos/poblado_surcanubes.png",
 };
 
 const Villages = {

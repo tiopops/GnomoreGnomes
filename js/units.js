@@ -189,6 +189,48 @@ const UNIT_TYPES = {
     attackRange: 1,
     defaultFacing: "right",
   },
+  manos_largas: {
+    name: "ManosLargas",
+    raceId: "equipo_surcanubes",
+    spriteUrl: "assets/equipos/SurcaNubes/unidad_01.png",
+    // Sin sprites de machaca/pegar todavía (llegarán más adelante): sin
+    // machacaUrl/pegarGnomoUrl el personaje se queda con su sprite normal.
+    aguante: 2,
+    movimiento: 3,
+    fuerza: 1,
+    agilidad: 4,
+    percepcion: 2,
+    attackRange: 1,
+    defaultFacing: "right",
+  },
+  ala_fugaz: {
+    name: "AlaFugaz",
+    raceId: "equipo_surcanubes",
+    spriteUrl: "assets/equipos/SurcaNubes/unidad_02.png",
+    // Sin sprites de machaca/pegar todavía (llegarán más adelante): sin
+    // machacaUrl/pegarGnomoUrl el personaje se queda con su sprite normal.
+    aguante: 2,
+    movimiento: 4,
+    fuerza: 1,
+    agilidad: 4,
+    percepcion: 3,
+    attackRange: 1,
+    defaultFacing: "right",
+  },
+  nidobot: {
+    name: "NidoBot",
+    raceId: "equipo_surcanubes",
+    spriteUrl: "assets/equipos/SurcaNubes/unidad_03.png",
+    // Sin sprites de machaca/pegar todavía (llegarán más adelante): sin
+    // machacaUrl/pegarGnomoUrl el personaje se queda con su sprite normal.
+    aguante: 5,
+    movimiento: 3,
+    fuerza: 2,
+    agilidad: 1,
+    percepcion: 1,
+    attackRange: 1,
+    defaultFacing: "right",
+  },
 };
 
 // Tamaño visual de cada personaje EN EL TABLERO (multiplica el ancho base de
@@ -208,6 +250,9 @@ const SPRITE_SCALES = {
   goblin_lanzador: 1,
   urgamentes: 0.8,
   punoroca: 1.5,
+  manos_largas: 1,
+  ala_fugaz: 1,
+  nidobot: 1,
 };
 
 // Tamaño de las poses "machaca"/"impacto" (ver machacaUrl/machacaImpactUrl
@@ -265,6 +310,9 @@ const RECRUIT_PRICES = {
   goblin_lanzador: 2,
   urgamentes: 3,
   punoroca: 4,
+  manos_largas: 2,
+  ala_fugaz: 3,
+  nidobot: 4,
 };
 
 const Units = {
