@@ -52,6 +52,9 @@ const FACE_OFFSETS = {
   goblin_lanzador: { x: 76, y: 25, zoom: 195 },
   urgamentes: { x: 79, y: 10, zoom: 155 },
   punoroca: { x: 92, y: 14, zoom: 200 },
+  manos_largas: { x: 83, y: 29, zoom: 190 },
+  ala_fugaz: { x: 85, y: 30, zoom: 225 },
+  nidobot: { x: 67, y: 20, zoom: 190 },
   default: { x: 72, y: 14, zoom: 225 },
 };
 

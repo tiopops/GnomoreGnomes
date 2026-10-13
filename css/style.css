@@ -811,7 +811,7 @@ h2 {
    rivales siguen con renderOptionCard/.option-card tal cual, sin tocar. */
 .race-card-list {
   width: 100%;
-  max-width: 720px;
+  max-width: 980px; /* 3 cartas de 300px + huecos en una misma fila (antes 720px: la 3.ª caía abajo) */
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -8583,9 +8583,9 @@ body.backpack-giving--katapum .unit--katapum-target * {
    Misma carta que las razas (.race-card). La isla flota sobre la descripción
    y el rótulo del nivel (sin nombre en texto) flota por encima, en la parte
    baja de la isla, con un ritmo propio distinto al de la isla. */
-#level-list { max-width: 900px; }
+#level-list { max-width: 1080px; }
 .level-card {
-  width: 410px;
+  width: 330px; /* 3 niveles en una misma fila */
 }
 .level-card .race-card__stat,
 .level-card .race-card__flavor { font-size: 0.8rem; line-height: 1.3; }

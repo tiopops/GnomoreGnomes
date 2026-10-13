@@ -195,8 +195,8 @@ const UNIT_TYPES = {
     spriteUrl: "assets/equipos/SurcaNubes/unidad_01.png",
     // Sin sprites de machaca/pegar todavía (llegarán más adelante): sin
     // machacaUrl/pegarGnomoUrl el personaje se queda con su sprite normal.
-    aguante: 2,
-    movimiento: 3,
+    aguante: 1,
+    movimiento: 4,
     fuerza: 1,
     agilidad: 4,
     percepcion: 2,
@@ -209,11 +209,11 @@ const UNIT_TYPES = {
     spriteUrl: "assets/equipos/SurcaNubes/unidad_02.png",
     // Sin sprites de machaca/pegar todavía (llegarán más adelante): sin
     // machacaUrl/pegarGnomoUrl el personaje se queda con su sprite normal.
-    aguante: 2,
-    movimiento: 4,
+    aguante: 3,
+    movimiento: 3,
     fuerza: 1,
-    agilidad: 4,
-    percepcion: 3,
+    agilidad: 3,
+    percepcion: 2,
     attackRange: 1,
     defaultFacing: "right",
   },
@@ -250,9 +250,9 @@ const SPRITE_SCALES = {
   goblin_lanzador: 1,
   urgamentes: 0.8,
   punoroca: 1.5,
-  manos_largas: 1,
-  ala_fugaz: 1,
-  nidobot: 1,
+  manos_largas: 0.8,
+  ala_fugaz: 1.1,
+  nidobot: 1.35,
 };
 
 // Tamaño de las poses "machaca"/"impacto" (ver machacaUrl/machacaImpactUrl

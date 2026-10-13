@@ -155,6 +155,9 @@ const GNOME_ATTACH_OFFSETS = {
   goblin_lanzador: { right: 35, bottom: 61 },
   urgamentes: { right: 55, bottom: 16 },
   punoroca: { right: 86, bottom: 7 },
+  manos_largas: { right: 45, bottom: 7.3 },
+  ala_fugaz: { right: 28, bottom: 6.7 },
+  nidobot: { right: 44, bottom: 8.1 },
 };
 
 // Misma idea que GNOME_ATTACH_OFFSETS de arriba, pero para la pose
@@ -175,6 +178,9 @@ const GNOME_ATTACH_OFFSETS_MACHACA = {
   goblin_lanzador: { right: -14, bottom: 40 },
   urgamentes: { right: 38, bottom: 64.2 },
   punoroca: { right: 22, bottom: 68.3 },
+  manos_largas: { right: -14, bottom: 40 },
+  ala_fugaz: { right: -14, bottom: 40 },
+  nidobot: { right: -14, bottom: 40 },
 };
 
 // Pose "pegar al gnomo" (Gnome.hit): el personaje cambia a su sprite
