@@ -8,7 +8,7 @@
        roba una cosa, que vuela hasta la mochila del jugador.
      - AlaFugaz · Aterrizaje Forzoso: sale disparada hacia arriba y cae desde
        el cielo en una casilla libre a máx. 7 casillas. Siempre se hace 1-3 de
-       daño (nunca la mata) y hace 1 de daño a los rivales adyacentes. Si lleva
+       daño (puede morir) y hace 1 de daño a los rivales adyacentes. Si lleva
        un gnomo, se le cae al aterrizar.
      - NidoBot · Incubar: 1.ª pulsación empieza a incubar; cada turno propio
        acumula carga (más rojo y vibrando más rápido, menos movimiento). 2.ª
@@ -29,7 +29,7 @@ Object.assign(ABILITIES, {
     icon: "ph-airplane-landing",
     iconImg: "assets/iconos/aterrizaje_forzoso.png",
     description:
-      "Sale disparada hacia el cielo y cae sobre una casilla libre a un máximo de 7 casillas. Siempre recibe entre 1 y 3 puntos de daño (nunca la mata) y hace 1 punto de daño a los rivales adyacentes a la casilla de aterrizaje. Si lleva un gnomo, se le cae al aterrizar. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
+      "Sale disparada hacia el cielo y cae sobre una casilla libre a un máximo de 7 casillas. Siempre recibe entre 1 y 3 puntos de daño (puede morir) y hace 1 punto de daño a los rivales adyacentes a la casilla de aterrizaje. Si lleva un gnomo, se le cae al aterrizar. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
   },
   nidobot: {
     name: "Incubar",
@@ -123,15 +123,17 @@ const SurcaNubes = {
       });
   },
 
+  // Contenido de la mochila de un equipo: recursos (pila entera) + objetos. El jugador
+  // local usa su mochila real; los demás (IA o rival online) llevan la cuenta en
+  // Backpack.aiItems (ver Shops.attemptAutoBuy / Shops.purchase).
   rivalEntries(team) {
     const out = [];
     const counts = typeof Resources !== "undefined" ? Resources.countsFor(team) : {};
     Object.keys(typeof RESOURCE_TYPES !== "undefined" ? RESOURCE_TYPES : {}).forEach((id) => {
       if ((counts[id] || 0) > 0) out.push({ uid: `resource-${id}`, kind: "resource", resourceId: id, count: counts[id] });
     });
-    ((typeof Backpack !== "undefined" && Backpack.aiItems && Backpack.aiItems[team]) || []).forEach((it) =>
-      out.push({ uid: `item-${it.uid}`, kind: "item", itemId: it.itemId, itemUid: it.uid })
-    );
+    const items = team === "player" ? Backpack.inventory : (Backpack.aiItems && Backpack.aiItems[team]) || [];
+    items.forEach((it) => out.push({ uid: `item-${it.uid}`, kind: "item", itemId: it.itemId, itemUid: it.uid }));
     return out;
   },
 
@@ -266,31 +268,49 @@ const SurcaNubes = {
     this.steal(entry);
   },
 
-  async steal(entry) {
-    const { unit, target, overlay } = this._popupEl;
+  // Paso 1 (solo quien juega): lee la selección del popup y lanza el robo.
+  steal(entry) {
+    const { unit, target } = this._popupEl;
     const slotEl = [...this._popupEl.slots.querySelectorAll(".backpack-slot")].find((b) => b.classList.contains("backpack-slot--selected"));
-    const from = slotEl ? slotEl.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight / 2, width: 0, height: 0 };
-    const iconSrc = slotEl ? slotEl.querySelector("img").src : "";
-    let label = "";
-    if (entry.kind === "resource") {
-      const counts = Resources.countsFor(target.team);
-      const amount = counts[entry.resourceId] || 0;
-      counts[entry.resourceId] = 0;
-      Resources.counts[entry.resourceId] = (Resources.counts[entry.resourceId] || 0) + amount;
-      label = `+${amount} ${RESOURCE_TYPES[entry.resourceId].name}`;
-    } else {
-      const list = Backpack.aiItems[target.team] || [];
-      Backpack.aiItems[target.team] = list.filter((i) => i.uid !== entry.itemUid);
-      Backpack.addItem(entry.itemId);
-      label = `+${ITEM_TYPES[entry.itemId].name}`;
-    }
+    const from = slotEl ? slotEl.getBoundingClientRect() : null;
+    const iconSrc = slotEl && slotEl.querySelector("img") ? slotEl.querySelector("img").src : "";
     this.closeRivalBackpack(true);
+    return this.stealFrom(unit, target, entry.kind, entry.kind === "resource" ? entry.resourceId : entry.itemId, from, iconSrc);
+  },
+
+  // Paso 2 (hook multijugador "ab.steal"): traspasa el botín de la mochila de `target`
+  // a la de `unit`. kind: "resource" (id = recurso, pila entera) | "item" (id = itemId).
+  async stealFrom(unit, target, kind, id, from, iconSrc) {
+    const tTeam = target.team, uTeam = unit.team;
+    let label = "";
+    if (kind === "resource") {
+      const src = Resources.countsFor(tTeam);
+      const amount = src[id] || 0;
+      src[id] = 0;
+      const dst = Resources.countsFor(uTeam);
+      dst[id] = (dst[id] || 0) + amount;
+      label = `+${amount} ${RESOURCE_TYPES[id].name}`;
+    } else {
+      if (tTeam === "player") {
+        const i = Backpack.inventory.findIndex((it) => it.itemId === id);
+        if (i >= 0) Backpack.inventory.splice(i, 1);
+      } else if (Backpack.aiItems && Backpack.aiItems[tTeam]) {
+        const i = Backpack.aiItems[tTeam].findIndex((it) => it.itemId === id);
+        if (i >= 0) Backpack.aiItems[tTeam].splice(i, 1);
+      }
+      if (uTeam === "player") Backpack.addItem(id);
+      else (Backpack.aiItems[uTeam] = Backpack.aiItems[uTeam] || []).push({ uid: "st" + Date.now() + Math.floor(Math.random() * 1e6), itemId: id });
+      label = `+${ITEM_TYPES[id].name}`;
+    }
     Abilities._consume(unit);
     if (typeof Backpack.refreshResourceBadges === "function") Backpack.refreshResourceBadges();
-    SFX.itemPlace && SFX.itemPlace();
-    await this.flyToBackpack(iconSrc, from);
-    Units.spawnFloatingText(unit, "¡Robado!", { className: "dmg-popup popup--good" });
-    this.floatText(label);
+    if (Backpack._overlayEl && Backpack._renderSlots) Backpack._renderSlots();
+    if (typeof SFX !== "undefined" && SFX.itemPlace) SFX.itemPlace();
+    if (uTeam === "player" && from) {
+      await this.flyToBackpack(iconSrc, from);
+      this.floatText(label);
+    }
+    Units.spawnFloatingText(unit, uTeam === "player" ? "¡Robado!" : "¡Te ha robado!", { className: "dmg-popup popup--good" });
     this.recoil(unit);
     Units.refreshRange(unit);
   },
@@ -438,13 +458,13 @@ const SurcaNubes = {
       held.dropFromStunnedUnit(unit);
     }
     this.settle(unit);
-    // daño a los rivales adyacentes (1) y daño propio aleatorio 1-3 (nunca la mata)
+    // daño a los rivales adyacentes (1) y daño propio aleatorio 1-3
     const near = Units.list.filter((u) => u !== unit && u.team !== unit.team && this.cheb(u, unit) <= 1);
     for (const u of near) await this.hurt(u, 1, unit.team);
-    const self = 1 + Math.floor(NR() * 3);
+    const self = 1 + Math.floor(Math.random() * 3); // azar de reglas: Math.random (GGRand en multijugador), nunca NR
     await this.sleep(150);
-    await this.hurt(unit, self, null, { minHp: 1 });
-    Units.refreshRange(unit);
+    await this.hurt(unit, self, null);
+    if (Units.list.includes(unit)) Units.refreshRange(unit);
   },
 
   // =====================================================================
@@ -463,7 +483,21 @@ const SurcaNubes = {
 
   activateIncubate(unit) {
     if (!unit.incubating) {
-      // 1.ª pulsación: empieza a incubar (gasta la acción, pero NO la habilidad)
+      this.startIncubate(unit);
+      return;
+    }
+    if ((unit.incubTurns || 0) < 1) {
+      Units.spawnFloatingText(unit, "Aún no ha incubado", { className: "dmg-popup" });
+      if (typeof UiHint !== "undefined") UiHint.show("Espera al menos un turno antes de liberar la explosión");
+      setTimeout(() => typeof UiHint !== "undefined" && UiHint.hide(), 2200);
+      return;
+    }
+    this.releaseIncubate(unit);
+  },
+
+  // 1.ª pulsación: empieza a incubar (gasta la acción, pero NO la habilidad).
+  startIncubate(unit) {
+    {
       unit.incubating = true;
       unit.incubTurns = 0;
       this.applyIncubateVisuals(unit);
@@ -476,15 +510,7 @@ const SurcaNubes = {
       if (typeof Turns !== "undefined") Turns.useAction(unit);
       Abilities._refreshButton();
       Units.refreshRange(unit);
-      return;
     }
-    if ((unit.incubTurns || 0) < 1) {
-      Units.spawnFloatingText(unit, "Aún no ha incubado", { className: "dmg-popup" });
-      if (typeof UiHint !== "undefined") UiHint.show("Espera al menos un turno antes de liberar la explosión");
-      setTimeout(() => typeof UiHint !== "undefined" && UiHint.hide(), 2200);
-      return;
-    }
-    this.releaseIncubate(unit);
   },
 
   async releaseIncubate(unit) {

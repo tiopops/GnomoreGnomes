@@ -103,6 +103,22 @@
     (a) => { const g = U(a.g), t = U(a.t); return alive(g, t) ? [g, t, a.r, a.c] : null; });
 
   // ---------- Objetos de la mochila (el rival no tiene tu mochila: solo repite el efecto) ----------
+  // Equipo SurcaNubes (js/abilities-surcanubes.js)
+  if (typeof SurcaNubes !== "undefined") {
+    Net.hook(SurcaNubes, "stealFrom", "ab.steal",
+      (unit, t, kind, id) => ({ u: R(unit), t: R(t), k: kind, i: id }),
+      (a) => { const u = U(a.u), t = U(a.t); return alive(u, t) ? [u, t, a.k, a.i] : null; });
+    Net.hook(SurcaNubes, "resolveForcedLanding", "ab.land",
+      (unit, r, c) => ({ u: R(unit), r, c }),
+      (a) => { const u = U(a.u); return u ? [u, a.r, a.c] : null; });
+    Net.hook(SurcaNubes, "startIncubate", "ab.inc",
+      (unit) => ({ u: R(unit) }),
+      (a) => { const u = U(a.u); return u ? [u] : null; });
+    Net.hook(SurcaNubes, "releaseIncubate", "ab.incr",
+      (unit) => ({ u: R(unit) }),
+      (a) => { const u = U(a.u); return u ? [u] : null; });
+  }
+
   const placeHook = (name, id, withTeam) =>
     Net.hook(Backpack, name, id,
       (uid, r, c) => ({ r, c }),

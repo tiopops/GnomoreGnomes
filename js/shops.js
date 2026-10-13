@@ -568,6 +568,7 @@ const Shops = {
     if (typeof Glory === "undefined" || !Glory.spend(team, this.priceFor(team, entry))) return false;
     // "el objeto pasa a la mochila del jugador que lo compro"
     if (team === "player") Backpack.addItem(entry.itemId);
+    else if (typeof Backpack !== "undefined" && Backpack.aiItems) (Backpack.aiItems[team] = Backpack.aiItems[team] || []).push({ uid: "mp" + entry.uid, itemId: entry.itemId });
     shop.stock = shop.stock.filter((it) => it.uid !== uid);
     if (this._activeShop === shop) this._renderSlots();
     return true;
