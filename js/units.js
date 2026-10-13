@@ -251,7 +251,7 @@ const SPRITE_SCALES = {
   urgamentes: 0.8,
   punoroca: 1.5,
   manos_largas: 0.8,
-  ala_fugaz: 1.1,
+  ala_fugaz: 1.2,
   nidobot: 1.35,
 };
 
