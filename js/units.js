@@ -211,8 +211,8 @@ const UNIT_TYPES = {
     // machacaUrl/pegarGnomoUrl el personaje se queda con su sprite normal.
     aguante: 3,
     movimiento: 3,
-    fuerza: 1,
-    agilidad: 3,
+    fuerza: 2,
+    agilidad: 2,
     percepcion: 2,
     attackRange: 1,
     defaultFacing: "right",
