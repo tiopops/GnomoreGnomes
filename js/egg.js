@@ -7,12 +7,12 @@
        avanza (1 + carga/5). Rebota en los límites del tablero como la bola
        del Arkanoid. Mientras se apunta, un fantasma enseña dónde acabará.
      - Atropella unidades (amigas o enemigas): 1 de daño y las aparta 1
-       casilla de lado. Si choca contra un OBELISCO explota (temblor, destello
-       blanco, daño = carga al obelisco) y reaparece sin carga en el centro
-       al empezar el siguiente turno.
+       casilla de lado. Contra un OBELISCO rebota como la bola de un pinball
+       (le quita 1 de vida, sea amigo o enemigo) y sigue su camino.
      - Con la carga al máximo, EGG_BREAK_HITS golpes más lo rompen (sprites
        agrietado / muy agrietado) y también reaparece en el turno siguiente.
      - La carga se consulta manteniendo pulsado sobre el huevo, como un gnomo.
+   La vista previa dibuja toda la trayectoria con sus rebotes.
    Mientras sea visible, el huevo bloquea su casilla (se engancha a Drums.at). */
 
 const EGG_DIR = "assets/niveles/hurrycrane/";
@@ -259,36 +259,45 @@ const Egg = {
   },
 
   // Simula el vuelo de `dist` casillas desde el huevo en la dirección `dir`
-  // con rebotes en los límites. Devuelve el recorrido paso a paso.
+  // con rebotes en los límites del tablero y en los obeliscos (pinball).
   _simulate(dir, dist, holderTeam, holder) {
     const e = this.egg;
     const size = Units.boardSize;
+    const obAt = (r, c) => (typeof Obelisks !== "undefined" && r >= 0 && c >= 0 && r < size && c < size ? Obelisks.at(r, c) : null);
+    const wall = (r, c) => r < 0 || c < 0 || r >= size || c >= size || !!obAt(r, c);
     let r = e.row, c = e.col, dr = dir[0], dc = dir[1];
     const steps = [];
-    let explode = null;
     for (let i = 0; i < dist; i++) {
       let nr = r + dr, nc = c + dc;
-      let bounced = false;
-      if (nr < 0 || nr >= size) { dr = -dr; nr = r + dr; bounced = true; }
-      if (nc < 0 || nc >= size) { dc = -dc; nc = c + dc; bounced = true; }
-      if (nr < 0 || nr >= size || nc < 0 || nc >= size) break;
+      let bounced = false, ob = null;
+      if (wall(nr, nc)) {
+        bounced = true;
+        ob = obAt(nr, nc);
+        const wr = wall(r + dr, c), wc = wall(r, c + dc);
+        if (dr && dc) {
+          if (wr && !wc) dr = -dr;
+          else if (wc && !wr) dc = -dc;
+          else { dr = -dr; dc = -dc; }
+        } else if (dr) dr = -dr;
+        else dc = -dc;
+        nr = r + dr; nc = c + dc;
+        if (wall(nr, nc)) { nr = r; nc = c; } // atrapado: se queda en su casilla
+      }
       r = nr; c = nc;
-      const step = { row: r, col: c, dr, dc, bounced, unit: null, shove: null };
+      const step = { row: r, col: c, dr, dc, bounced, unit: null, shove: null, ob: ob || null };
       steps.push(step);
-      const ob = typeof Obelisks !== "undefined" ? Obelisks.at(r, c) : null;
-      if (ob) { explode = { kind: "obelisk", ref: ob, row: r, col: c }; break; }
       const u = Units.unitAt(r, c);
-      if (u && u !== holder) step.unit = u;
+      if (u && u !== holder && !(r === e.row && c === e.col)) step.unit = u;
     }
-    if (explode) return { steps, explode, dest: { row: explode.row, col: explode.col }, dir };
     // Posarse: hacia atrás hasta una casilla válida (una unidad atropellada se aparta).
     const avoid = steps.map((s) => ({ row: s.row, col: s.col }));
     for (let k = steps.length - 1; k >= 0; k--) {
       const s = steps[k];
+      const own = s.row === e.row && s.col === e.col;
       if (s.unit) {
         const sh = this._shoveTile(s.unit, s.dr, s.dc, avoid);
         if (!sh || !this._canRest(s.row, s.col, s.unit)) continue;
-      } else if (!this._canRest(s.row, s.col)) continue;
+      } else if (!own && !this._canRest(s.row, s.col)) continue;
       steps.length = k + 1;
       steps.forEach((x) => { if (x.unit) x.shove = this._shoveTile(x.unit, x.dr, x.dc, avoid); });
       return { steps, explode: null, dest: { row: s.row, col: s.col }, dir };
@@ -352,7 +361,7 @@ const Egg = {
   // Fantasma del huevo donde acabará + casillas de paso + avisos, para poder rectificar.
   _addPreview(holder) {
     const plan = this._plan(holder);
-    const hot = plan.explode ? " egg-preview--impact" : "";
+    const hot = "";
     const mk = (row, col, build, zOffset) =>
       Units.addMarker({
         className: "pass-marker egg-preview-marker" + hot,
@@ -369,14 +378,32 @@ const Egg = {
       l.textContent = text;
       m.appendChild(l);
     };
+    // Trayectoria: un punto por casilla (los rebotes, en amarillo; los
+    // atropellos y los golpes a obeliscos, en rojo con su "-1").
+    const marks = new Map();
     plan.steps.forEach((t) => {
-      if (plan.dest && t.row === plan.dest.row && t.col === plan.dest.col) return;
+      const key = t.row + "," + t.col;
+      const m0 = marks.get(key) || { row: t.row, col: t.col, bounce: false, unit: false, ob: false };
+      m0.bounce = m0.bounce || t.bounced;
+      m0.unit = m0.unit || !!t.unit;
+      m0.ob = m0.ob || !!t.ob;
+      marks.set(key, m0);
+    });
+    marks.forEach((t) => {
+      if (plan.dest && t.row === plan.dest.row && t.col === plan.dest.col && !t.ob && !t.unit) return;
       mk(t.row, t.col, (m) => {
         const dot = document.createElement("div");
-        dot.className = "egg-preview__dot" + (t.unit ? " egg-preview__dot--hit" : "") + (t.bounced ? " egg-preview__dot--bounce" : "");
+        dot.className = "egg-preview__dot" + (t.unit || t.ob ? " egg-preview__dot--hit" : "") + (t.bounce ? " egg-preview__dot--bounce" : "");
         m.appendChild(dot);
         if (t.unit) lab(m, "-1");
       }, 6);
+    });
+    // Los obeliscos golpeados se marcan sobre el propio obelisco.
+    const obs = new Set();
+    plan.steps.forEach((t) => {
+      if (!t.ob || obs.has(t.ob)) return;
+      obs.add(t.ob);
+      mk(t.ob.row, t.ob.col, (m) => lab(m, "-1"), 14);
     });
     if (plan.breaks) {
       mk(this.egg.row, this.egg.col, (m) => lab(m, "¡SE ROMPE!", "egg-preview__label--blocked"), 9);
@@ -389,10 +416,9 @@ const Egg = {
         img.className = "egg-preview__ghost";
         img.alt = "";
         img.draggable = false;
-        img.src = EGG_DIR + (plan.explode ? "huevo_muy_agrietado_lowres.png" : "huevo_lowres.png");
+        img.src = EGG_DIR + "huevo_lowres.png";
         m.appendChild(img);
-        if (plan.explode) lab(m, `¡BOOM! -${plan.newCharge}`);
-        else if (plan.steps.length && plan.steps[plan.steps.length - 1].unit) lab(m, "-1");
+        if (plan.steps.length && plan.steps[plan.steps.length - 1].unit) lab(m, "-1");
       }, 9);
     } else {
       mk(this.egg.row, this.egg.col, (m) => lab(m, "Sin sitio", "egg-preview__label--blocked"), 9);
@@ -527,11 +553,11 @@ const Egg = {
       if (s.bounced || s.dr !== prev[0] || s.dc !== prev[1]) this._bounceFx();
       prev = [s.dr, s.dc];
       await new Promise((r) => setTimeout(r, EGG_STEP_MS));
+      if (s.ob) this._hitObelisk(s.ob, holder.team);
       if (s.unit && s.unit.el && s.unit.hp > 0) await this._trample(s, holder.team, avoid);
       if (typeof Fog !== "undefined") Fog.applyVisibility();
     }
     e.el.classList.remove("egg--moving");
-    if (plan.explode) await this._impact(plan.explode, holder.team);
     if (typeof Fog !== "undefined") Fog.applyVisibility();
     this.refreshFog();
   },
@@ -575,21 +601,12 @@ const Egg = {
     setTimeout(() => vp.classList.remove(cls), 420);
   },
 
-  // Choque contra un obelisco: temblor, destello blanco y daño = carga.
-  async _impact(target, causer) {
-    const e = this.egg;
-    const dmg = e.charge;
-    e.exploded = true;
-    this._respawnPending = true;
-    this.hideBadge();
-    this._shake(true);
-    if (typeof Abilities !== "undefined" && Abilities._flashScreen) Abilities._flashScreen();
-    if (typeof SFX !== "undefined") { try { SFX.explosion(); } catch (er) {} }
-    this._shatter();
-    if (typeof Banners !== "undefined") Banners.text("¡El huevo estalla!", 1, causer === "player" ? "yellow" : "red");
-    if (typeof Drums !== "undefined" && Drums._applyDamage && dmg > 0) Drums._applyDamage(target, dmg, causer);
-    await new Promise((r) => setTimeout(r, 500));
-    e.el.style.opacity = "0";
+  // Rebote contra un obelisco: 1 de daño (sea amigo o enemigo), temblor y destello.
+  _hitObelisk(ob, causer) {
+    this._shake(false);
+    this._flash();
+    if (typeof SFX !== "undefined") { try { SFX.rockHit(); } catch (er) {} }
+    if (typeof Drums !== "undefined" && Drums._applyDamage) Drums._applyDamage({ kind: "obelisk", ref: ob, row: ob.row, col: ob.col }, 1, causer);
   },
 
   // Se rompe por exceso de golpes (sin explosión ni daño).
@@ -718,8 +735,7 @@ const Egg = {
 };
 
 // ---------- IA rival ----------
-// Lanza si el golpe estrella el huevo contra un obelisco ENEMIGO o atropella
-// a más enemigos que aliados.
+// Lanza si el golpe rebota en obeliscos ENEMIGOS o atropella a más enemigos que aliados.
 Egg.aiAct = async function (unit) {
   if (!this._live() || this._busy || !unit.el || unit.team === "player") return false;
   if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return false;
@@ -732,7 +748,7 @@ Egg.aiAct = async function (unit) {
   const plan = this._plan(unit);
   if (plan.breaks) return false;
   let score = 0;
-  if (plan.explode) score += plan.explode.ref.team !== unit.team ? 10 + plan.newCharge : -1000;
+  plan.steps.forEach((s) => { if (s.ob) score += s.ob.team !== unit.team ? 4 : -4; });
   plan.steps.forEach((s) => { if (s.unit) score += s.unit.team !== unit.team ? 3 : -3; });
   if (score <= 0) return false;
   await this.throwGnome(unit, held);
