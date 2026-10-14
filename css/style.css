@@ -10910,3 +10910,15 @@ body.gp-active, body.gp-active * { cursor: none !important; }
   width: 84px; height: 84px; border-radius: 50%; border: 5px solid #ff4a3d;
   box-shadow: 0 0 0 3px #000, inset 0 0 0 3px #000; background: rgba(255, 74, 61, 0.2);
 }
+
+/* Guía de lanzamiento del huevo: sin bordes ni contornos negros. */
+.egg-trail__shadow { display: none; }
+.egg-trail__dots { stroke-width: 9; filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.35)); }
+.egg-trail__bounce { stroke: none; fill: rgba(255, 210, 63, 0.55); }
+.egg-preview__ring {
+  border: none; box-shadow: none; animation: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.12) 65%, rgba(255, 255, 255, 0) 72%);
+}
+.egg-preview--impact .egg-preview__ring { background: radial-gradient(circle, rgba(255, 74, 61, 0.5), rgba(255, 74, 61, 0.12) 65%, rgba(255, 74, 61, 0) 72%); }
+.egg-preview__hit { border: none; box-shadow: none; background: radial-gradient(circle, rgba(255, 74, 61, 0.55), rgba(255, 74, 61, 0.12) 65%, rgba(255, 74, 61, 0) 72%); }
+.egg-preview__label { -webkit-text-stroke: 0; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7); }
