@@ -533,7 +533,6 @@ const Fog = {
       // que arbustos/recursos: oculta bajo niebla sin descubrir todavía.
       if (typeof Hierbajos !== "undefined") Hierbajos.refreshFog();
       if (typeof Drums !== "undefined") Drums.refreshFog();
-      if (typeof Egg !== "undefined") Egg.refreshFog();
       if (typeof Volcano !== "undefined") Volcano.refreshFog();
     }
     if (typeof Gnome !== "undefined") {
@@ -938,10 +937,6 @@ const Fog = {
         if (!d.el) return;
         coverFrom(d.row, d.col, d.el);
       });
-    }
-    if (typeof Egg !== "undefined") {
-      if (Egg.egg && Egg.egg.el) coverFrom(Egg.egg.row, Egg.egg.col, Egg.egg.el);
-      Object.values(Egg.nests).forEach((n) => { if (n.el) coverFrom(n.row, n.col, n.el); });
     }
     if (typeof Volcano !== "undefined") {
       Volcano.list.forEach((v) => {

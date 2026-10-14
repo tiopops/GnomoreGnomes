@@ -524,13 +524,6 @@ function spawnTestUnits(size, raceId, opponents, mp) {
     Drums.spawn(size);
   }
 
-  // Huevo de Grulla y nidos (js/egg.js) — solo en Hurrycrane Village. Tras los
-  // tambores y ANTES de arbustos/recursos para que estos esquiven sus casillas.
-  if (typeof Egg !== "undefined") {
-    Egg.resetAll();
-    Egg.spawn(size);
-  }
-
   // Arbustos (js/bushes.js) — pedido explícito: "los arbustos... reparti-
   // dos por el mapa... en zonas cercanas a totems, tiendas goblin y algunos
   // puntos de interes". DESPUÉS de Villages/Shops/Obelisks.spawn (necesita
