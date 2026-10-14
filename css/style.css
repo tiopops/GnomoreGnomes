@@ -10817,27 +10817,6 @@ body.gp-active, body.gp-active * { cursor: none !important; }
 .unit.egg--respawn {
   transition: opacity 1.3s ease, left 0s, top 0s;
 }
-.egg-marker {
-  position: absolute;
-  transform: translate(-50%, 0) scale(0.6);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.5, 0.64, 1);
-}
-.egg-marker--visible { opacity: 1; transform: translate(-50%, 0) scale(1); }
-.egg-marker svg { display: block; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.5)); }
-.egg-plate { fill: #1d1814; stroke: #000; stroke-width: 3; stroke-linejoin: round; }
-.egg-slice { stroke: #000; stroke-width: 2.5; stroke-linejoin: round; }
-.egg-slice--bonus { stroke: #ffd23f; stroke-width: 3.2; }
-.egg-arrow { stroke: #000; stroke-width: 3; stroke-linejoin: round; }
-.egg-count {
-  font-family: "Russo One", sans-serif;
-  font-size: 30px;
-  fill: #fff;
-  stroke: #000;
-  stroke-width: 4px;
-  paint-order: stroke fill;
-}
 .egg-wind {
   position: absolute;
   width: 120px;
@@ -10865,3 +10844,32 @@ body.gp-active, body.gp-active * { cursor: none !important; }
   clip-path: polygon(50% 0, 100% 35%, 80% 100%, 15% 85%, 0 30%);
 }
 .egg-throw-marker--blocked { filter: hue-rotate(-35deg) saturate(1.6) brightness(0.9); }
+
+/* Huevo: carga consultable (mantener pulsado) y vista previa del empujón. */
+.unit.egg { pointer-events: auto; cursor: var(--cursor-pointer); }
+.unit.egg .egg__sprite { pointer-events: none; }
+.egg-points-badge { position: absolute; }
+.egg-preview-marker { pointer-events: none !important; cursor: default; height: 70px; }
+.egg-preview-marker.pass-marker--visible:hover { transform: scale(1); }
+.egg-preview__dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; border: 3px solid #000; opacity: 0.85;
+}
+.egg-preview__ring {
+  position: absolute; width: 120px; height: 120px; border-radius: 50%;
+  border: 4px dashed #fff; box-shadow: 0 0 0 3px #000;
+  top: 50%; left: 50%; transform: translate(-50%, -30%);
+  animation: egg-ring-spin 6s linear infinite;
+}
+.egg-preview--impact .egg-preview__ring { border-color: #ff4a3d; }
+@keyframes egg-ring-spin { to { transform: translate(-50%, -30%) rotate(360deg); } }
+.egg-preview__ghost {
+  position: absolute; width: 100px; opacity: 0.6; top: 50%; left: 50%;
+  transform: translate(-50%, -62%); filter: drop-shadow(0 3px 3px rgba(0,0,0,.5));
+}
+.egg-preview__label {
+  position: absolute; top: -34px; left: 50%; transform: translateX(-50%);
+  white-space: nowrap; font-family: "Russo One", sans-serif; font-size: 22px;
+  color: #ff4a3d; -webkit-text-stroke: 4px #000; paint-order: stroke fill;
+}
+.egg-preview__label--blocked { color: #ddd; }

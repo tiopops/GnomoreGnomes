@@ -720,8 +720,6 @@ function createGnomeInstance() {
       if (typeof Turns !== "undefined") Turns.useAction(unit);
       // Tambores de Guerra (js/drums.js): golpe junto a un tambor.
       if (typeof Drums !== "undefined") Drums.onGnomeHit(unit);
-      // Huevo de Grulla (js/egg.js): golpe junto al huevo = +1 en su balanza.
-      if (typeof Egg !== "undefined") Egg.onGnomeHit(unit);
       // El Eterno (js/oracle.js): +1 de vida por golpe.
       if (typeof Oracle !== "undefined") Oracle.onGnomeHit(unit);
       const dmg =
