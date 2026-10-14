@@ -10898,3 +10898,15 @@ body.gp-active, body.gp-active * { cursor: none !important; }
 }
 .egg-preview__dot--bounce { background: #ffd23f; }
 .egg-preview__dot--hit { background: #ff4a3d; width: 60px; height: 60px; color: #fff; }
+
+/* Guía de trayectoria estilo billar. */
+.egg-trail { width: 0 !important; height: 0 !important; margin: 0 !important; }
+.egg-trail__svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.egg-trail__shadow, .egg-trail__dots { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 0.1 24; }
+.egg-trail__shadow { stroke: #000; stroke-width: 17; opacity: 0.85; }
+.egg-trail__dots { stroke: #fff; stroke-width: 10; }
+.egg-trail__bounce { fill: rgba(255, 210, 63, 0.25); stroke: #ffd23f; stroke-width: 5; }
+.egg-preview__hit {
+  width: 84px; height: 84px; border-radius: 50%; border: 5px solid #ff4a3d;
+  box-shadow: 0 0 0 3px #000, inset 0 0 0 3px #000; background: rgba(255, 74, 61, 0.2);
+}

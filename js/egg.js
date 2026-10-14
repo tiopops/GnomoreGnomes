@@ -4,7 +4,7 @@
      - GNOMAZO: lanzarle un gnomo carga el huevo (+EGG_CHARGE_PER_HIT, máx. 30)
        y lo manda EN LA DIRECCIÓN del golpe (se aleja de quien lo lanza;
        EGG_PUSH_AWAY = -1 lo invierte). Cuanto más cargado, más casillas
-       avanza (1 + carga/5). Rebota en los límites del tablero como la bola
+       avanza (3 + carga/3 casillas). Rebota en los límites del tablero como la bola
        del Arkanoid. Mientras se apunta, un fantasma enseña dónde acabará.
      - Atropella unidades (amigas o enemigas): 1 de daño y las aparta 1
        casilla de lado. Contra un OBELISCO rebota como la bola de un pinball
@@ -19,6 +19,8 @@ const EGG_DIR = "assets/niveles/hurrycrane/";
 const EGG_MAX_CHARGE = 30;
 const EGG_CHARGE_PER_HIT = 5; // carga que suma cada gnomazo
 const EGG_BREAK_HITS = 5; // golpes con la carga al máximo hasta romperse
+const EGG_BASE_DIST = 3; // casillas del vuelo con carga 0..2
+const EGG_DIST_PER = 3; // +1 casilla cada tantos puntos de carga
 const EGG_PUSH_AWAY = 1; // 1 = en la dirección del golpe; -1 = hacia quien lanza
 const EGG_GNOME_POINTS = 5; // puntos que carga el gnomo al estamparse
 const EGG_STEP_MS = 210; // tiempo por casilla durante el vuelo
@@ -240,7 +242,7 @@ const Egg = {
   },
 
   _distFor(charge) {
-    return 1 + Math.floor(charge / EGG_CHARGE_PER_HIT);
+    return EGG_BASE_DIST + Math.floor(charge / EGG_DIST_PER);
   },
 
   // Casilla a la que se aparta una unidad atropellada (perpendicular al vuelo).
@@ -268,10 +270,12 @@ const Egg = {
     let r = e.row, c = e.col, dr = dir[0], dc = dir[1];
     const steps = [];
     for (let i = 0; i < dist; i++) {
+      const step_r0 = r, step_c0 = c;
       let nr = r + dr, nc = c + dc;
-      let bounced = false, ob = null;
+      let bounced = false, ob = null, wallAt = null;
       if (wall(nr, nc)) {
         bounced = true;
+        wallAt = { row: nr, col: nc };
         ob = obAt(nr, nc);
         const wr = wall(r + dr, c), wc = wall(r, c + dc);
         if (dr && dc) {
@@ -284,7 +288,7 @@ const Egg = {
         if (wall(nr, nc)) { nr = r; nc = c; } // atrapado: se queda en su casilla
       }
       r = nr; c = nc;
-      const step = { row: r, col: c, dr, dc, bounced, unit: null, shove: null, ob: ob || null };
+      const step = { row: r, col: c, dr, dc, bounced, unit: null, shove: null, ob: ob || null, wallAt, prev: { row: step_r0, col: step_c0 } };
       steps.push(step);
       const u = Units.unitAt(r, c);
       if (u && u !== holder && !(r === e.row && c === e.col)) step.unit = u;
@@ -378,29 +382,19 @@ const Egg = {
       l.textContent = text;
       m.appendChild(l);
     };
-    // Trayectoria: un punto por casilla (los rebotes, en amarillo; los
-    // atropellos y los golpes a obeliscos, en rojo con su "-1").
-    const marks = new Map();
-    plan.steps.forEach((t, idx) => {
-      const key = t.row + "," + t.col;
-      const m0 = marks.get(key) || { row: t.row, col: t.col, bounce: false, unit: false, ob: false, nums: [] };
-      m0.nums.push(idx + 1);
-      m0.bounce = m0.bounce || t.bounced;
-      m0.unit = m0.unit || !!t.unit;
-      m0.ob = m0.ob || !!t.ob;
-      marks.set(key, m0);
+    // Trayectoria estilo billar: línea de puntos desde el huevo, que se
+    // quiebra en cada rebote, y el huevo fantasma al final.
+    this._addTrail(plan, mk);
+    plan.steps.forEach((t) => {
+      if (t.unit) {
+        mk(t.row, t.col, (m) => {
+          const ring = document.createElement("div");
+          ring.className = "egg-preview__hit";
+          m.appendChild(ring);
+          lab(m, "-1");
+        }, 7);
+      }
     });
-    marks.forEach((t) => {
-      if (plan.dest && t.row === plan.dest.row && t.col === plan.dest.col && !t.ob && !t.unit) return;
-      mk(t.row, t.col, (m) => {
-        const dot = document.createElement("div");
-        dot.className = "egg-preview__dot" + (t.unit || t.ob ? " egg-preview__dot--hit" : "") + (t.bounce ? " egg-preview__dot--bounce" : "");
-        dot.textContent = t.nums.slice(0, 2).join("/");
-        m.appendChild(dot);
-        if (t.unit) lab(m, "-1");
-      }, 6);
-    });
-    // Los obeliscos golpeados se marcan sobre el propio obelisco.
     const obs = new Set();
     plan.steps.forEach((t) => {
       if (!t.ob || obs.has(t.ob)) return;
@@ -425,6 +419,54 @@ const Egg = {
     } else {
       mk(this.egg.row, this.egg.col, (m) => lab(m, "Sin sitio", "egg-preview__label--blocked"), 9);
     }
+  },
+
+  // Línea de puntos (como la guía de las bolas de billar) a lo largo del recorrido.
+  _addTrail(plan, mk) {
+    const e = this.egg;
+    if (!plan.steps.length) return;
+    const size = Units.boardSize;
+    const C = (row, col) => getTileCenter(row, col, size);
+    const o = C(e.row, e.col);
+    const pts = [{ x: 0, y: 0 }];
+    plan.steps.forEach((t) => {
+      if (t.wallAt) {
+        // El quiebro se dibuja a medio camino de la pared contra la que rebota.
+        const a = C(t.prev.row, t.prev.col), w = C(t.wallAt.row, t.wallAt.col);
+        pts.push({ x: (a.x + w.x) / 2 - o.x, y: (a.y + w.y) / 2 - o.y });
+      }
+      const p = C(t.row, t.col);
+      pts.push({ x: p.x - o.x, y: p.y - o.y });
+    });
+    const d = pts.map((p, i) => (i ? "L" : "M") + p.x.toFixed(1) + " " + p.y.toFixed(1)).join(" ");
+    const trail = mk(e.row, e.col, (m) => {
+      const NS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("class", "egg-trail__svg");
+      svg.setAttribute("width", "1");
+      svg.setAttribute("height", "1");
+      svg.style.overflow = "visible";
+      const mkPath = (cls) => {
+        const p = document.createElementNS(NS, "path");
+        p.setAttribute("d", d);
+        p.setAttribute("class", cls);
+        svg.appendChild(p);
+      };
+      mkPath("egg-trail__shadow");
+      mkPath("egg-trail__dots");
+      plan.steps.forEach((t) => {
+        if (!t.wallAt) return;
+        const a = C(t.prev.row, t.prev.col), w = C(t.wallAt.row, t.wallAt.col);
+        const c = document.createElementNS(NS, "circle");
+        c.setAttribute("cx", ((a.x + w.x) / 2 - o.x).toFixed(1));
+        c.setAttribute("cy", ((a.y + w.y) / 2 - o.y).toFixed(1));
+        c.setAttribute("r", "12");
+        c.setAttribute("class", "egg-trail__bounce");
+        svg.appendChild(c);
+      });
+      m.appendChild(svg);
+    }, 4);
+    if (trail && trail.classList) trail.classList.add("egg-trail");
   },
 
   async throwGnome(holder, gnome) {
