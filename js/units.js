@@ -250,9 +250,9 @@ const SPRITE_SCALES = {
   goblin_lanzador: 1,
   urgamentes: 0.8,
   punoroca: 1.5,
-  manos_largas: 0.8,
-  ala_fugaz: 1.2,
-  nidobot: 1.35,
+  manos_largas: 0.9,
+  ala_fugaz: 1.35,
+  nidobot: 1.5,
 };
 
 // Tamaño de las poses "machaca"/"impacto" (ver machacaUrl/machacaImpactUrl
