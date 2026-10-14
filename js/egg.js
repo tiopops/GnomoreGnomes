@@ -344,7 +344,8 @@ const Egg = {
     const dist = this.cheb(unit, e);
     if (dist < 1 || dist > GNOME_THROW_MAX_RANGE) return;
     const blocked = !!this._interceptor(unit);
-    Units.addMarker({
+    this._pv = [];
+    const mk0 = Units.addMarker({
       className: "pass-marker egg-throw-marker" + (blocked ? " egg-throw-marker--blocked" : ""),
       row: e.row,
       col: e.col,
@@ -357,17 +358,38 @@ const Egg = {
         icon.className = "ph ph-paper-plane-tilt pass-marker__icon";
         marker.appendChild(icon);
       },
-      onClick: () => this.throwGnome(unit, gnome),
+      // Ratón: la guía aparece al pasar por encima (ya visible al hacer clic).
+      // Táctil: el primer toque muestra la guía y el segundo lanza.
+      onClick: () => {
+        if (!this._pv || !this._pv.some((m) => m.isConnected)) { this._showPreview(unit); return; }
+        this.throwGnome(unit, gnome);
+      },
     });
-    this._addPreview(unit);
+    if (mk0) {
+      mk0.addEventListener("pointerenter", (ev) => { if (ev.pointerType === "mouse") this._showPreview(unit); });
+      mk0.addEventListener("pointerleave", (ev) => { if (ev.pointerType === "mouse") this._clearPreview(); });
+    }
+  },
+
+  _showPreview(unit) {
+    this._clearPreview();
+    if (this._live()) this._addPreview(unit);
+  },
+
+  _clearPreview() {
+    (this._pv || []).forEach((m) => {
+      m.remove();
+      if (Units.markerEls) { const i = Units.markerEls.indexOf(m); if (i >= 0) Units.markerEls.splice(i, 1); }
+    });
+    this._pv = [];
   },
 
   // Fantasma del huevo donde acabará + casillas de paso + avisos, para poder rectificar.
   _addPreview(holder) {
     const plan = this._plan(holder);
     const hot = "";
-    const mk = (row, col, build, zOffset) =>
-      Units.addMarker({
+    const mk = (row, col, build, zOffset) => {
+      const mm = Units.addMarker({
         className: "pass-marker egg-preview-marker" + hot,
         row, col,
         zOffset: zOffset || 8,
@@ -376,6 +398,9 @@ const Egg = {
         alwaysOnTop: true,
         buildContent: build,
       });
+      if (this._pv) this._pv.push(mm);
+      return mm;
+    };
     const lab = (m, text, cls) => {
       const l = document.createElement("div");
       l.className = "egg-preview__label" + (cls ? " " + cls : "");
@@ -474,6 +499,7 @@ const Egg = {
     if (!this._targetable() || gnome.heldBy !== holder.id || gnome.busy) return;
     if (typeof Turns !== "undefined" && !Turns.canAct(holder)) return;
     if (typeof Turns !== "undefined") Turns.useAction(holder);
+    this._pv = [];
     Units.clearRangeOverlays();
     gnome.passing = false;
     gnome.busy = true;
