@@ -136,14 +136,6 @@ const Egg = {
   _createEgg(row, col) {
     const el = document.createElement("div");
     el.className = "unit egg";
-    const cloud = document.createElement("div");
-    cloud.className = "egg__cloud";
-    for (let i = 0; i < 5; i++) {
-      const p = document.createElement("i");
-      p.className = "egg__puff egg__puff--" + i;
-      cloud.appendChild(p);
-    }
-    el.appendChild(cloud);
     const spriteEl = document.createElement("img");
     spriteEl.className = "egg__sprite";
     spriteEl.decoding = "async";
