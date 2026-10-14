@@ -22,7 +22,7 @@ const EGG_BREAK_HITS = 5; // golpes con la carga al máximo hasta romperse
 const EGG_BASE_DIST = 3; // casillas del vuelo con carga 0..2
 const EGG_DIST_PER = 3; // +1 casilla cada tantos puntos de carga
 const EGG_PUSH_AWAY = 1; // 1 = en la dirección del golpe; -1 = hacia quien lanza
-const EGG_GNOME_POINTS = 5; // puntos que carga el gnomo al estamparse
+const EGG_GNOME_POINTS = 1; // puntos que carga el gnomo al estamparse
 const EGG_STEP_MS = 210; // tiempo por casilla durante el vuelo
 const EGG_PULSE = [4, 2.8, 1.8, 1.05, 0.55]; // segundos por latido según carga
 const EGG_AMP = [0.012, 0.02, 0.03, 0.045, 0.06];
