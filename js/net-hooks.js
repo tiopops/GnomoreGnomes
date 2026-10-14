@@ -34,6 +34,9 @@
   UT(Altar, "approachAndSacrifice", "alt");
   UT(Volcano, "approachAndSmash", "vsm");
   UT(Mushrooms, "catchBy", "mush");
+  if (typeof Egg !== "undefined") Net.hook(Egg, "throwGnome", "egg.throw",
+    (holder, gnome) => ({ u: R(holder), g: R(gnome) }),
+    (a) => { const u = U(a.u), g = U(a.g); return alive(u, g) ? [u, g] : null; });
   Net.hook(Volcano, "throwGnome", "vthrow",
     (unit, gnome, v) => ({ u: R(unit), g: R(gnome), v: R(v) }),
     (a) => { const u = U(a.u), g = U(a.g), v = U(a.v); return alive(u, g, v) ? [u, g, v] : null; });

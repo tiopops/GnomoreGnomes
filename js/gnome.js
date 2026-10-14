@@ -720,6 +720,8 @@ function createGnomeInstance() {
       if (typeof Turns !== "undefined") Turns.useAction(unit);
       // Tambores de Guerra (js/drums.js): golpe junto a un tambor.
       if (typeof Drums !== "undefined") Drums.onGnomeHit(unit);
+      // Huevo de Grulla (js/egg.js): golpe junto al huevo = +1 en su balanza.
+      if (typeof Egg !== "undefined") Egg.onGnomeHit(unit);
       // El Eterno (js/oracle.js): +1 de vida por golpe.
       if (typeof Oracle !== "undefined") Oracle.onGnomeHit(unit);
       const dmg =
@@ -876,6 +878,7 @@ function createGnomeInstance() {
       // fallar (computePassSuccess, "overreach"); un fallo cae siempre
       // dentro del mismo límite de 4 casillas (ver findDropTile).
       if (typeof Volcano !== "undefined") Volcano.addThrowMarker(unit, this); // lanzar al volcán (js/volcano.js)
+      if (typeof Egg !== "undefined") Egg.addThrowMarker(unit, this); // lanzar contra el huevo (js/egg.js)
       const movimiento = Units.moveRangeOf(unit);
       const tiles = this._throwableTiles(unit);
       tiles.forEach((tile, i) => {
@@ -1939,7 +1942,8 @@ const Gnome = {
   // cada uno con su propio popup/temblor/sonido (ver
   // GnomeInstance._loseCooldownPoints), nunca los que estén cogidos ahora
   // mismo (esos ya están "en juego", ganando puntos, no relajándose solos).
-  applyTurnPassDecay(amount = 5) {
+  // Pedido explícito: "con perder 1 punto por turno sea suficiente" (antes 5).
+  applyTurnPassDecay(amount = 1) {
     this.list.forEach((g) => {
       if (!g.heldBy) g._loseCooldownPoints(amount);
     });

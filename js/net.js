@@ -472,6 +472,7 @@ const Net = {
     s.dr = byTeam((t) => (typeof Drums !== "undefined" && Drums.slices ? Drums.slices[t] || 0 : 0));
     s.fr = (Drums.frags || []).map((f) => f.row + "," + f.col).sort();
     s.dp = Drums.list.map((d) => d.row + "," + d.col);
+    s.eg = typeof Egg !== "undefined" && Egg.egg ? [Egg.egg.row, Egg.egg.col, Egg.egg.hits, Egg.egg.broken ? 1 : 0, Egg.delivered || ""] : [];
     s.av = Units.list.map((u) => [u.id, u.abilityUsed ? 1 : 0, u.shielded ? 1 : 0, u.thorny ? 1 : 0]);
     return s;
   },
@@ -490,6 +491,7 @@ const Net = {
       m: L(Mushrooms.list, (v) => [v.row, v.col]),
       a: L(Altar.list, (v) => [v.row, v.col]),
       vo: L(Volcano.list, (v) => [v.row, v.col]),
+      eg: typeof Egg !== "undefined" ? (Egg.egg ? [Egg.egg.row, Egg.egg.col] : []).concat(Object.keys(Egg.nests).sort().map((t) => this.canon(t) + ":" + Egg.nests[t].row + "," + Egg.nests[t].col)) : [],
       sz: Units.boardSize,
     };
     return this.hashOf(w);
