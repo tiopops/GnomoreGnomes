@@ -381,9 +381,10 @@ const Egg = {
     // Trayectoria: un punto por casilla (los rebotes, en amarillo; los
     // atropellos y los golpes a obeliscos, en rojo con su "-1").
     const marks = new Map();
-    plan.steps.forEach((t) => {
+    plan.steps.forEach((t, idx) => {
       const key = t.row + "," + t.col;
-      const m0 = marks.get(key) || { row: t.row, col: t.col, bounce: false, unit: false, ob: false };
+      const m0 = marks.get(key) || { row: t.row, col: t.col, bounce: false, unit: false, ob: false, nums: [] };
+      m0.nums.push(idx + 1);
       m0.bounce = m0.bounce || t.bounced;
       m0.unit = m0.unit || !!t.unit;
       m0.ob = m0.ob || !!t.ob;
@@ -394,6 +395,7 @@ const Egg = {
       mk(t.row, t.col, (m) => {
         const dot = document.createElement("div");
         dot.className = "egg-preview__dot" + (t.unit || t.ob ? " egg-preview__dot--hit" : "") + (t.bounce ? " egg-preview__dot--bounce" : "");
+        dot.textContent = t.nums.slice(0, 2).join("/");
         m.appendChild(dot);
         if (t.unit) lab(m, "-1");
       }, 6);
