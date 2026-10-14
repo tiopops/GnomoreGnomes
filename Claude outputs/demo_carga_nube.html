@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Demo · Carga de la Nube (Hurrycrane Village)</title>
+<style>
+  :root{--bg:#10202c;--ink:#f4f1e6;--blue:#4aa8ff;--red:#ff5a4a;--gold:#ffd24a}
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 700px at 50% -10%,#2c5a74,#10202c);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,sans-serif;min-height:100vh}
+  .wrap{max-width:1040px;margin:0 auto;padding:12px 16px 24px}
+  h1{font-size:18px;margin:6px 0 2px}
+  .sub{opacity:.75;font-size:13px;margin-bottom:8px}
+  .hud{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;margin-bottom:8px}
+  .card{background:rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.18);border-radius:14px;padding:8px 14px;font-size:14px}
+  .score b{font-size:26px;display:block;line-height:1}
+  .score.a b{color:var(--blue)} .score.b b{color:var(--red)}
+  .wind{display:flex;align-items:center;gap:10px}
+  .wind .arrow{font-size:30px;line-height:1}
+  .btn{background:#ffd24a;color:#2a1d00;border:3px solid #fff3c0;border-radius:14px;padding:10px 20px;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 3px 0 #a07c10}
+  .btn:disabled{opacity:.45;cursor:default}
+  .btn.sec{background:#cfe3ee;border-color:#fff;color:#12303f;box-shadow:0 3px 0 #6b8794;font-size:14px;padding:8px 14px}
+  canvas{width:100%;height:auto;display:block;border-radius:18px;border:3px solid rgba(255,255,255,.2);background:#7fc4e6}
+  .log{margin-top:8px;font-size:13px;min-height:42px;opacity:.9}
+  .rules{margin-top:10px;font-size:13px;opacity:.85;line-height:1.5}
+  .rules b{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Carga de la Nube — tira y afloja</h1>
+  <div class="sub">Demo de mecánica (aspecto provisional). Tú eres el equipo azul; el rojo lo juega una IA sencilla.</div>
+  <div class="hud">
+    <div class="card score a">AZUL (gloria)<b id="sa">0</b></div>
+    <div class="card score b">ROJO (gloria)<b id="sb">0</b></div>
+    <div class="card wind"><div>VIENTO<br><small id="wnow">—</small></div><div class="arrow" id="warrow">·</div><div><small>Próximo:</small><br><b id="wnext">—</b></div></div>
+    <div class="card" id="turninfo">Ronda 1</div>
+    <button class="btn" id="end">Terminar turno</button>
+    <button class="btn sec" id="restart">Reiniciar</button>
+  </div>
+  <canvas id="cv" width="1000" height="560"></canvas>
+  <div class="log" id="log"></div>
+  <div class="rules">
+    <b>Cómo funciona:</b> al final de cada ronda cuenta cuántas unidades vivas de cada bando están <b>pegadas a la nube</b> (a 1 casilla). El bando con más la empuja hacia el poblado rival: <b>1 casilla</b> si le saca 1, <b>2</b> si le saca 2 o más. Si hay empate la nube se queda quieta. Además el <b>viento</b> la mueve 1 casilla en su dirección (se anuncia con una ronda de antelación). Cruzar los tramos marcados da <b>2 de gloria</b>; llegar al nido rival da <b>8</b> y reinicia la nube en el centro. Gana quien llegue a <b>12</b>. Cada unidad en su turno puede <b>moverse 3</b> casillas y <b>golpear</b> a un rival adyacente (3 de vida; si cae, reaparece en su nido la ronda siguiente).
+  </div>
+</div>
+<script>
+const COLS=11, ROWS=7, MID=3, TW=84, TH=60, OX=(1000-COLS*TW)/2+TW/2, OY=70;
+const GOAL=12, SECT_A=7, SECT_B=3;
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const $=id=>document.getElementById(id);
+let S;
+function newState(){
+  const mk=(team,c,r,i)=>({id:team+i,team,c,r,x:0,y:0,hp:3,moved:false,acted:false,dead:false,respawn:0});
+  const u=[];
+  [[1,2],[1,4],[2,3]].forEach((p,i)=>u.push(mk('A',p[0],p[1],i)));
+  [[9,2],[9,4],[8,3]].forEach((p,i)=>u.push(mk('B',p[0],p[1],i)));
+  u.forEach(x=>{const p=tileXY(x.c,x.r);x.x=p.x;x.y=p.y;});
+  S={units:u,cloud:5,cx:0,sa:0,sb:0,round:1,turn:'A',sel:null,reach:[],busy:false,
+     wind:0,windLeft:2,nextWind:1,passA:false,passB:false,msg:'',over:false,floats:[],shake:0};
+  S.cx=tileXY(5,MID).x;
+  updateHud(); log('Selecciona una unidad azul y colócala junto a la nube.');
+}
+function tileXY(c,r){return {x:OX+c*TW, y:OY+r*TH};}
+function cheb(a,b){return Math.max(Math.abs(a.c-b.c),Math.abs(a.r-b.r));}
+function occupied(c,r){return S.units.some(u=>!u.dead&&u.c===c&&u.r===r)|| (c===S.cloud&&r===MID);}
+function reachable(u){
+  const out=[];
+  for(let c=Math.max(0,u.c-3);c<=Math.min(COLS-1,u.c+3);c++)for(let r=Math.max(0,u.r-3);r<=Math.min(ROWS-1,u.r+3);r++){
+    if(c===u.c&&r===u.r)continue; if(occupied(c,r))continue; out.push({c,r});
+  } return out;
+}
+function nearCloud(u){return !u.dead && cheb(u,{c:S.cloud,r:MID})<=1;}
+function windTxt(w){return w>0?'hacia el rojo →':w<0?'← hacia el azul':'en calma';}
+function windArrow(w){return w>0?'➜':w<0?'⬅':'·';}
+function updateHud(){
+  $('sa').textContent=S.sa; $('sb').textContent=S.sb;
+  $('wnow').textContent=windTxt(S.wind); $('warrow').textContent=windArrow(S.wind);
+  $('wnext').textContent=(S.windLeft<=1?'¡ahora! ':'en '+S.windLeft+' rondas: ')+windTxt(S.nextWind);
+  $('turninfo').textContent='Ronda '+S.round+(S.over?' · fin':S.turn==='A'?' · tu turno':' · turno rival');
+  $('end').disabled=S.turn!=='A'||S.busy||S.over;
+}
+function log(t){$('log').textContent=t;}
+function addFloat(x,y,t,col){S.floats.push({x,y,t,col,life:1});}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- entrada ---------- */
+cv.addEventListener('click',e=>{
+  if(S.turn!=='A'||S.busy||S.over)return;
+  const b=cv.getBoundingClientRect(), mx=(e.clientX-b.left)*cv.width/b.width, my=(e.clientY-b.top)*cv.height/b.height;
+  let c=Math.round((mx-OX)/TW), r=Math.round((my-OY)/TH);
+  if(c<0||c>=COLS||r<0||r>=ROWS)return;
+  const hit=S.units.find(u=>!u.dead&&u.c===c&&u.r===r);
+  if(hit&&hit.team==='A'){S.sel=hit;S.reach=hit.moved?[]:reachable(hit);return;}
+  if(!S.sel)return;
+  if(hit&&hit.team==='B'){
+    if(!S.sel.acted&&cheb(S.sel,hit)<=1){strike(S.sel,hit);S.sel.acted=true;}
+    else log('Necesitas estar pegado al rival (y no haber golpeado ya).');
+    return;
+  }
+  if(S.reach.some(t=>t.c===c&&t.r===r)){S.sel.c=c;S.sel.r=r;S.sel.moved=true;S.reach=[];}
+});
+$('end').onclick=async()=>{ if(S.turn!=='A'||S.busy)return; S.sel=null;S.reach=[]; await enemyTurn(); await resolveRound(); };
+$('restart').onclick=()=>newState();
+
+/* ---------- combate ---------- */
+function strike(a,t){
+  t.hp--; S.shake=8; addFloat(t.x,t.y-50,'-1','#fff');
+  if(t.hp<=0){t.dead=true;t.respawn=1;addFloat(t.x,t.y-70,'¡Fuera!','#ffd24a');}
+}
+
+/* ---------- IA roja ---------- */
+async function enemyTurn(){
+  S.turn='B';S.busy=true;updateHud();log('Turno rival…');
+  const cloud={c:S.cloud,r:MID};
+  for(const u of S.units.filter(x=>x.team==='B'&&!x.dead)){
+    await sleep(350);
+    const foes=()=>S.units.filter(x=>x.team==='A'&&!x.dead);
+    const adj=()=>foes().filter(f=>cheb(u,f)<=1).sort((a,b)=>a.hp-b.hp);
+    const opts=reachable(u).concat([{c:u.c,r:u.r}]);
+    let best=null,bs=-1e9;
+    for(const t of opts){
+      const d=cheb(t,cloud);
+      let s=-d*3+(d<=1?10:0);
+      const nf=foes().filter(f=>cheb(t,f)<=1).length;
+      s+=nf*2-(nf>=2?3:0);
+      s+=Math.random()*1.5;
+      if(s>bs){bs=s;best=t;}
+    }
+    u.c=best.c;u.r=best.r;u.moved=true;
+    await sleep(300);
+    const a=adj();
+    if(a.length){strike(u,a[0]);await sleep(250);}
+  }
+  S.busy=false;
+}
+
+/* ---------- fin de ronda ---------- */
+async function resolveRound(){
+  S.busy=true;S.turn='R';updateHud();
+  await sleep(200);
+  const nA=S.units.filter(u=>u.team==='A'&&nearCloud(u)).length;
+  const nB=S.units.filter(u=>u.team==='B'&&nearCloud(u)).length;
+  const diff=nA-nB;
+  let push=diff===0?0:Math.sign(diff)*(Math.abs(diff)>=2?2:1);
+  let txt=`Junto a la nube: azul ${nA}, rojo ${nB}. `;
+  txt+= push===0?'Empate: la nube no se mueve por empuje. ':`Empuja ${push>0?'el azul':'el rojo'} (${Math.abs(push)}). `;
+  const total=push+S.wind;
+  if(S.wind!==0)txt+=`El viento la mueve ${Math.abs(S.wind)} ${S.wind>0?'hacia el rojo':'hacia el azul'}. `;
+  log(txt);
+  await sleep(700);
+  let step=Math.sign(total);
+  for(let i=0;i<Math.abs(total);i++){
+    const nc=Math.max(0,Math.min(COLS-1,S.cloud+step));
+    if(nc===S.cloud)break;
+    S.cloud=nc; await sleep(550);
+    if(step>0&&S.cloud>=SECT_A&&!S.passA){S.passA=true;S.sa+=2;addFloat(tileXY(S.cloud,MID).x,150,'+2 azul','#4aa8ff');}
+    if(step<0&&S.cloud<=SECT_B&&!S.passB){S.passB=true;S.sb+=2;addFloat(tileXY(S.cloud,MID).x,150,'+2 rojo','#ff5a4a');}
+    if(S.cloud===COLS-1){S.sa+=8;addFloat(tileXY(S.cloud,MID).x,150,'¡+8 azul!','#4aa8ff');await sleep(800);resetCloud();break;}
+    if(S.cloud===0){S.sb+=8;addFloat(tileXY(S.cloud,MID).x,150,'¡+8 rojo!','#ff5a4a');await sleep(800);resetCloud();break;}
+  }
+  updateHud();
+  if(S.sa>=GOAL||S.sb>=GOAL){S.over=true;log(S.sa>=GOAL?'¡Gana el AZUL!':'Gana el ROJO.');S.busy=false;updateHud();return;}
+  // viento
+  S.windLeft--;
+  if(S.windLeft<=0){S.wind=S.nextWind;S.nextWind=[-1,0,1][Math.floor(Math.random()*3)];S.windLeft=3;}
+  // reaparecer
+  S.units.forEach(u=>{ if(u.dead){ if(u.respawn>0){u.respawn--;}
+      if(u.respawn<=0){const bc=u.team==='A'?0:COLS-1;
+        for(const r of [MID,MID-1,MID+1,MID-2,MID+2]){ if(!occupied(bc,r)){u.c=bc;u.r=r;u.hp=3;u.dead=false;break;} } } } });
+  S.units.forEach(u=>{u.moved=false;u.acted=false;});
+  S.round++;S.turn='A';S.busy=false;updateHud();
+}
+function resetCloud(){S.cloud=5;S.passA=false;S.passB=false;}
+
+/* ---------- dibujo ---------- */
+let t0=0;
+const parts=Array.from({length:40},()=>({x:Math.random()*1000,y:Math.random()*560,s:.6+Math.random()}));
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function draw(ts){
+  const t=ts/1000;
+  const sh=S.shake>0?(Math.random()-.5)*S.shake:0; if(S.shake>0)S.shake-=.6;
+  ctx.setTransform(1,0,0,1,sh,0);
+  // cielo
+  const g=ctx.createLinearGradient(0,0,0,560);g.addColorStop(0,'#8fd2f0');g.addColorStop(1,'#cfeaf6');
+  ctx.fillStyle=g;ctx.fillRect(-20,0,1040,560);
+  // tramos
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
+    const p=tileXY(c,r);
+    const track=r===MID;
+    const stone=(c+r)%2===0;
+    // grosor
+    ctx.fillStyle=stone?'#6f7683':'#8a5a34'; roundRect(p.x-TW/2+2,p.y-TH/2+8,TW-4,TH-2,10);ctx.fill();
+    ctx.fillStyle=stone?'#a9afbb':'#c48a55'; roundRect(p.x-TW/2+2,p.y-TH/2,TW-4,TH-6,10);ctx.fill();
+    if(track){ctx.fillStyle='rgba(255,246,190,.45)';roundRect(p.x-TW/2+2,p.y-TH/2,TW-4,TH-6,10);ctx.fill();}
+  }
+  // marcas de tramo y nidos
+  for(const [c,col,txt] of [[SECT_B,'#ff5a4a','+2'],[SECT_A,'#4aa8ff','+2'],[0,'#4aa8ff','NIDO'],[COLS-1,'#ff5a4a','NIDO']]){
+    const p=tileXY(c,MID);ctx.strokeStyle=col;ctx.lineWidth=4;roundRect(p.x-TW/2+6,p.y-TH/2+4,TW-12,TH-14,8);ctx.stroke();
+    ctx.fillStyle=col;ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText(txt,p.x,p.y+TH/2-8);
+  }
+  // alcance
+  if(S.sel){
+    S.reach.forEach(tl=>{const p=tileXY(tl.c,tl.r);ctx.fillStyle='rgba(74,168,255,.38)';roundRect(p.x-TW/2+6,p.y-TH/2+4,TW-12,TH-14,8);ctx.fill();});
+    const p=tileXY(S.sel.c,S.sel.r);ctx.strokeStyle='#fff';ctx.lineWidth=4;roundRect(p.x-TW/2+4,p.y-TH/2+2,TW-8,TH-10,10);ctx.stroke();
+  }
+  // zona de influencia de la nube
+  const cp=tileXY(S.cloud,MID);
+  ctx.strokeStyle='rgba(255,255,255,.7)';ctx.setLineDash([6,6]);ctx.lineWidth=3;
+  roundRect(cp.x-TW*1.5+4,cp.y-TH*1.5+2,TW*3-8,TH*3-6,16);ctx.stroke();ctx.setLineDash([]);
+  // entidades por fila
+  const ents=S.units.filter(u=>!u.dead).map(u=>({k:'u',u,y:tileXY(u.c,u.r).y}));
+  ents.push({k:'c',y:cp.y+1});
+  ents.sort((a,b)=>a.y-b.y);
+  for(const e of ents){ if(e.k==='u')drawUnit(e.u,t); else drawCloud(t); }
+  // viento (partículas)
+  ctx.globalAlpha=.55;ctx.strokeStyle='#fff';ctx.lineWidth=2;
+  parts.forEach(p=>{
+    p.x+= S.wind*p.s*3.2 + (S.wind===0?.25*p.s:0); if(p.x>1010)p.x=-10; if(p.x<-10)p.x=1010;
+    ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-(S.wind||1)*14*p.s,p.y);ctx.stroke();
+  });ctx.globalAlpha=1;
+  // textos flotantes
+  S.floats=S.floats.filter(f=>f.life>0);
+  S.floats.forEach(f=>{f.y-=.7;f.life-=.012;ctx.globalAlpha=Math.max(0,f.life);ctx.fillStyle=f.col;ctx.strokeStyle='#000';ctx.lineWidth=4;ctx.font='bold 22px system-ui';ctx.textAlign='center';ctx.strokeText(f.t,f.x,f.y);ctx.fillText(f.t,f.x,f.y);ctx.globalAlpha=1;});
+  requestAnimationFrame(draw);
+}
+function drawUnit(u,t){
+  const p=tileXY(u.c,u.r);
+  u.x+=(p.x-u.x)*.22;u.y+=(p.y-u.y)*.22;
+  const bob=Math.sin(t*5+u.c)*1.5, col=u.team==='A'?'#4aa8ff':'#ff5a4a';
+  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(u.x,u.y+16,18,7,0,0,7);ctx.fill();
+  ctx.fillStyle='#e8c9a0';ctx.beginPath();ctx.ellipse(u.x,u.y-2+bob,15,17,0,0,7);ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(u.x,u.y+8+bob,11,9,0,0,7);ctx.fill(); // barba
+  ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(u.x-16,u.y-8+bob);ctx.lineTo(u.x+16,u.y-8+bob);ctx.lineTo(u.x+(u.team==='A'?8:-8),u.y-38+bob);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#222';ctx.fillRect(u.x-7,u.y-4+bob,3,4);ctx.fillRect(u.x+4,u.y-4+bob,3,4);
+  for(let i=0;i<3;i++){ctx.fillStyle=i<u.hp?'#6bd96b':'rgba(0,0,0,.5)';ctx.fillRect(u.x-14+i*10,u.y-48,8,5);}
+  if(u.team==='A'&&!S.over&&S.turn==='A'){ if(!u.moved||!u.acted){ctx.fillStyle='#ffd24a';ctx.beginPath();ctx.arc(u.x+19,u.y-30,4,0,7);ctx.fill();} }
+}
+function drawCloud(t){
+  const tx=tileXY(S.cloud,MID);
+  S.cx+=(tx.x-S.cx)*.12;
+  const x=S.cx,y=tx.y-26+Math.sin(t*2)*5;
+  ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(x,tx.y+14,40,11,0,0,7);ctx.fill();
+  const blob=(dx,dy,r)=>{ctx.beginPath();ctx.arc(x+dx,y+dy,r,0,7);ctx.fill();};
+  ctx.fillStyle='#dfeaf3';blob(-26,8,20);blob(26,8,20);blob(0,10,22);
+  ctx.fillStyle='#fff';blob(-22,2,20);blob(22,2,20);blob(0,-6,26);blob(-8,8,22);blob(10,8,22);
+  // huevo
+  ctx.fillStyle='#f6e9c8';ctx.beginPath();ctx.ellipse(x,y-8,13,17,0,0,7);ctx.fill();
+  ctx.fillStyle='#3b8f7a';[[-4,-14],[5,-6],[-6,-2],[4,-18]].forEach(d=>{ctx.beginPath();ctx.arc(x+d[0],y+d[1],2.2,0,7);ctx.fill();});
+  ctx.strokeStyle='#d6c392';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(x,y-8,13,17,0,0,7);ctx.stroke();
+}
+newState();requestAnimationFrame(draw);
+</script>
+</body>
+</html>
