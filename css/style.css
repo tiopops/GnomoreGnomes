@@ -10752,6 +10752,9 @@ body.gp-active, body.gp-active * { cursor: none !important; }
   filter: sepia(calc(var(--heat, 0) * .95)) saturate(calc(1 + var(--heat, 0) * 3.2)) hue-rotate(calc(var(--heat, 0) * -48deg)) brightness(calc(1 + var(--heat, 0) * .1));
   animation: incubar-vibra calc(.32s - var(--heat, 0) * .2s) steps(2) infinite alternate;
 }
+.unit--incubating.unit--exhausted .unit__flip {
+  filter: sepia(calc(var(--heat, 0) * .95)) saturate(calc(1 + var(--heat, 0) * 3.2)) hue-rotate(calc(var(--heat, 0) * -48deg)) brightness(calc(1 + var(--heat, 0) * .1)) saturate(0.4) brightness(0.8);
+}
 @keyframes incubar-vibra {
   from { translate: calc(-1.5px - var(--heat, 0) * 4px) 0; rotate: -.6deg; }
   to { translate: calc(1.5px + var(--heat, 0) * 4px) calc(var(--heat, 0) * -2px); rotate: .6deg; }
