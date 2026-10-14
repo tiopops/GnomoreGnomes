@@ -577,6 +577,7 @@ const SurcaNubes = {
       this.applyIncubateVisuals(u);
       Units.spawnFloatingText(u, `Incubando: ${u.incubTurns}`, { className: "dmg-popup popup--good" });
     });
+    if (typeof Abilities !== "undefined" && Abilities._refreshButton) Abilities._refreshButton();
   },
 };
 
@@ -616,5 +617,19 @@ const SurcaNubes = {
     const releasing = !!(u && u.typeId === "nidobot" && u.incubating);
     this._btn.classList.toggle("ability-btn--releasing", releasing);
     if (releasing) this._btn.setAttribute("aria-label", "Usar habilidad: Liberar Incubar");
+    // Numerito con el nivel de incubación (1, 2 o 3) sobre el icono.
+    let badge = this._btn.querySelector(".incubar-level");
+    const lvl = releasing ? Math.min(3, u.incubTurns || 0) : 0;
+    if (lvl > 0) {
+      if (!badge) {
+        badge = document.createElement("span");
+        badge.className = "incubar-level";
+        this._btn.appendChild(badge);
+      }
+      badge.textContent = String(lvl);
+      badge.dataset.lvl = String(lvl);
+    } else if (badge) {
+      badge.remove();
+    }
   };
 })();
