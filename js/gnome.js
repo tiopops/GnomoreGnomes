@@ -56,6 +56,9 @@ const GNOME_ASSETS = {
   // zancada rápida que el gnomo en llamas del volcán (ver
   // .gnome__sprite--run en css/style.css).
   corre: "assets/equipos/MushboomForest/gnomo_corre.png",
+  // Pose de caída de culo (al aterrizar tras cualquier caída, antes de
+  // levantarse y salir corriendo).
+  sentado: "assets/equipos/MushboomForest/gnomo_sentado.png",
 };
 
 // Pedido explícito (Señuelo Explosivo, tienda goblin, js/backpack.js): "un
@@ -100,6 +103,7 @@ const GNOME_SIZES = {
   ground: 69,
   flying: 93,
   run: 80, // gnomo corriendo (huida), sprite gnomo_corre
+  sit: 84, // gnomo caído de culo, sprite gnomo_sentado
   held: 85,
 };
 

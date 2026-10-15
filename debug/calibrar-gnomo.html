@@ -126,6 +126,10 @@
     transform: translate(-50%, -100%);
   }
 
+  #stageSit { position: relative; width: 188px; height: 164px; }
+  #stageSit img.tile-ref { position: absolute; left: 0; top: 0; width: 188px; display: block; }
+  #stageSit img.gnome-ref { position: absolute; left: 50%; top: 58%; transform: translate(-50%, -100%); }
+
   #stageRun { position: relative; width: 188px; height: 164px; }
   #stageRun img.tile-ref { position: absolute; left: 0; top: 0; width: 188px; display: block; }
   #stageRun .run-anchor { position: absolute; left: 50%; top: 58%; width: 0; height: 0; }
@@ -236,6 +240,10 @@
       <label for="flyingWidth">Tamaño en vuelo — <span class="value" id="flyingWidthVal">73</span> px</label>
       <input type="range" id="flyingWidth" min="20" max="140" step="1" value="73">
     </div>
+    <div class="control">
+      <label for="sitWidth">Tamaño caído de culo — <span class="value" id="sitWidthVal">84</span> px</label>
+      <input type="range" id="sitWidth" min="20" max="140" step="1" value="84">
+    </div>
   </div>
 
   <div class="stages">
@@ -254,6 +262,15 @@
         <div id="stageFlying">
           <div class="arc-ref"></div>
           <img class="gnome-ref" id="flyingImg" src="../assets/equipos/MushboomForest/gnomo_grita.png" alt="">
+        </div>
+      </div>
+    </div>
+    <div class="stage-col">
+      <div class="stage-col-label">Caído de culo (sobre una loseta real a escala)</div>
+      <div class="stage-wrap">
+        <div id="stageSit">
+          <img class="tile-ref" src="../assets/losetas/hierba_01.png" alt="">
+          <img class="gnome-ref" id="sitImg" src="../assets/equipos/MushboomForest/gnomo_sentado.png" alt="">
         </div>
       </div>
     </div>
@@ -305,8 +322,8 @@
     function loadPositions() { return loadPositionsFrom(POS_STORAGE_KEY); }
     function savePositions(data) { savePositionsTo(POS_STORAGE_KEY, data); }
     function loadSizes() {
-      try { return Object.assign({ ground: 69, flying: 86, run: 69 }, JSON.parse(localStorage.getItem(SIZE_STORAGE_KEY)) || {}); }
-      catch (e) { return { ground: 69, flying: 86, run: 69 }; }
+      try { return Object.assign({ ground: 69, flying: 86, run: 69, sit: 84 }, JSON.parse(localStorage.getItem(SIZE_STORAGE_KEY)) || {}); }
+      catch (e) { return { ground: 69, flying: 86, run: 69, sit: 84 }; }
     }
     function saveSizes(data) {
       try { localStorage.setItem(SIZE_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
@@ -583,6 +600,7 @@
         `  ground: ${sizes.ground},`,
         `  flying: ${sizes.flying},`,
         `  run: ${sizes.run},`,
+        `  sit: ${sizes.sit},`,
         `  held: ${heldWidth},`,
         "};",
         "",
@@ -684,6 +702,19 @@
     runWidth.value = sizes.run;
     runWidth.addEventListener("input", renderRun);
     renderRun();
+    const sitWidth = document.getElementById("sitWidth");
+    const sitWidthVal = document.getElementById("sitWidthVal");
+    const sitImg = document.getElementById("sitImg");
+    function renderSit() {
+      sizes.sit = Number(sitWidth.value);
+      sitWidthVal.textContent = sizes.sit;
+      sitImg.style.width = sizes.sit + "px";
+      saveSizes(sizes);
+      updateOutput();
+    }
+    sitWidth.value = sizes.sit;
+    sitWidth.addEventListener("input", renderSit);
+    renderSit();
     heldWidthInput.value = heldWidth;
     groundWidth.value = sizes.ground;
     flyingWidth.value = sizes.flying;
