@@ -956,6 +956,9 @@ h2 {
   line-height: 1.35;
 }
 
+/* Texto equilibrado entre las tarjetas de raza: mismas alturas mínimas (3 líneas) para descripción y cada rasgo. */
+.race-card:not(.level-card) .race-card__flavor { min-height: 3.4rem; }
+.race-card:not(.level-card) .race-card__stat { min-height: 3.5rem; align-items: center; }
 .race-card__stat-icon {
   flex-shrink: 0;
   font-size: 1.1rem;
