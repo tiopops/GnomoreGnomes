@@ -10474,7 +10474,7 @@ body.tut-on .tut-portrait, body.tut-on .tut-portrait * { pointer-events: none; }
   transition: filter 0.5s;
 }
 .oracle--locked .oracle__lock,
-.oracle--depleted .oracle__lock { opacity: 1; }
+.oracle--depleted .oracle__lock { opacity: 0; } /* sin candado: basta con el edificio oscurecido */
 .oracle--depleted { cursor: var(--cursor-default); }
 body.oracle-fog-lifted .tile__fog { opacity: 0 !important; transition: opacity 0.6s ease; }
 .tile__fog { transition: opacity 0.6s ease; }
