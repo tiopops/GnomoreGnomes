@@ -25,6 +25,8 @@ const PRELOAD_ASSETS = [
  "assets/niveles/logo_colinas_rockntroll.png",
  "assets/niveles/logo_hurrycrane_village.png",
  "assets/niveles/hurrycrane/madera_midres.png",
+ "assets/niveles/hurrycrane/bumper.png",
+ "assets/niveles/hurrycrane/bumper_midres.png",
  "assets/niveles/hurrycrane/piedra_midres.png",
  "assets/niveles/hurrycrane/agua_1_midres.png",
  "assets/niveles/hurrycrane/agua_2_midres.png",

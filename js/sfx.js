@@ -163,6 +163,30 @@ const SFX = {
   // en vez de un impacto.
   gnomeCooldown() { this._pluck("gnome-cooldown", 210, "sine", 0.28, 0.22); },
 
+  // ---------- Pinball del huevo (js/bumpers.js) ----------
+  // Cada carambola suena más aguda: escala pentatónica ascendente (n = golpe 1, 2, 3…).
+  _pinFreq(n) {
+    const sc = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24, 26];
+    return 392 * Math.pow(2, sc[Math.min(Math.max(n - 1, 0), sc.length - 1)] / 12);
+  },
+  bumper(n) {
+    const f = this._pinFreq(n);
+    this._tone(f * 1.6, f, 0.3, "triangle", 0.4);
+    this._tone(f * 2.01, null, 0.2, "sine", 0.2);
+    this._tone(f * 3, f * 2.4, 0.08, "square", 0.08);
+  },
+  comboChime(n) {
+    const f = this._pinFreq(n + 2);
+    [0, 4, 7, 12].forEach((s, i) => this._tone(f * Math.pow(2, s / 12), null, 0.45, "sine", 0.2, i * 0.05));
+  },
+  comboFill(n) {
+    for (let i = 0; i < Math.min(n, 6); i++) this._tone(this._pinFreq(i + 3), null, 0.18, "triangle", 0.3, i * 0.07);
+  },
+  jackpot() {
+    [0, 4, 7, 12, 16, 19, 24, 28, 31, 36].forEach((s, i) => this._tone(392 * Math.pow(2, s / 12), null, 0.45, i % 2 ? "triangle" : "square", 0.18, i * 0.07));
+    for (let k = 0; k < 12; k++) this._tone(1500 + NR() * 1200, null, 0.12, "sine", 0.1, 0.55 + k * 0.06);
+  },
+
   // Easter egg del logotipo del menú (js/menu.js) — pedido explícito: "un
   // sonido de quejido de gnomo se reprodujera" al hacer clic sobre el logo.
   // Mismo "pluck" simple que dropFail (sawtooth cayendo), pero más agudo y

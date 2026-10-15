@@ -481,7 +481,8 @@ function spawnTestUnits(size, raceId, opponents, mp) {
   // libre durante el resto de la partida, esto es solo el reparto inicial.
   if (typeof Gnome !== "undefined") {
     Gnome.resetAll();
-    for (let i = 0; i < 3; i++) {
+    const initialGnomes = typeof LevelAssets !== "undefined" && LevelAssets.current === "hurrycrane_village" ? 7 : 3;
+    for (let i = 0; i < initialGnomes; i++) {
       const row = Math.floor(Math.random() * size);
       const col = Math.floor(Math.random() * size);
       Gnome.spawnNear(row, col);
@@ -527,7 +528,9 @@ function spawnTestUnits(size, raceId, opponents, mp) {
   // Huevo de Grulla y nidos (js/egg.js) — solo en Hurrycrane Village. Tras los
   // tambores y ANTES de arbustos/recursos para que estos esquiven sus casillas.
   if (typeof Egg !== "undefined") {
+    if (typeof Bumpers !== "undefined") Bumpers.resetAll();
     Egg.resetAll();
+    if (typeof Bumpers !== "undefined") Bumpers.spawn(size);
     Egg.spawn(size);
   }
 

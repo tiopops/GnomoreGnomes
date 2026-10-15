@@ -2127,7 +2127,9 @@ const Gnome = {
     if (typeof Units === "undefined" || !Units.boardSize) return;
     const size = Units.boardSize;
     let guard = 0;
-    while (this.list.filter((g) => !g.heldBy && !g.isDecoy).length < this.MIN_LOOSE && guard++ < 6) {
+    // Hurrycrane (pinball): hacen falta más gnomos para lanzar uno al huevo cada turno.
+    const minLoose = typeof LevelAssets !== "undefined" && LevelAssets.current === "hurrycrane_village" ? 5 : this.MIN_LOOSE;
+    while (this.list.filter((g) => !g.heldBy && !g.isDecoy).length < minLoose && guard++ < 8) {
       let spot = null;
       // Multijugador: sorteo propio (según el nº de gnomos creados) para no depender del ritmo de las animaciones.
       const rnd = typeof Net !== "undefined" && Net.active ? GGRand.local(`loose|${Net.seed}|${this._nextGid}`) : Math.random;

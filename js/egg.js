@@ -18,11 +18,12 @@
 const EGG_DIR = "assets/niveles/hurrycrane/";
 const EGG_MAX_CHARGE = 30;
 const EGG_CHARGE_PER_HIT = 5; // carga que suma cada gnomazo
-const EGG_BREAK_HITS = 5; // golpes con la carga al máximo hasta romperse
+const EGG_BREAK_HITS = 3; // golpes con la carga al máximo hasta romperse
 const EGG_BASE_DIST = 3; // casillas del vuelo con carga 0..2
 const EGG_DIST_PER = 3; // +1 casilla cada tantos puntos de carga
 const EGG_PUSH_AWAY = 1; // 1 = en la dirección del golpe; -1 = hacia quien lanza
-const EGG_GNOME_POINTS = 1; // puntos que carga el gnomo al estamparse
+const EGG_GNOME_POINTS = 5; // puntos que carga el gnomo al estamparse
+const EGG_BOUNCE_BONUS_MAX = 8; // tope de casillas extra por rebotes
 const EGG_STEP_MS = 210; // tiempo por casilla durante el vuelo
 const EGG_PULSE = [4, 2.8, 1.8, 1.05, 0.55]; // segundos por latido según carga
 const EGG_AMP = [0.012, 0.02, 0.03, 0.045, 0.06];
@@ -43,6 +44,9 @@ const Egg = {
     if (this.egg) { this.egg.el.remove(); if (this.egg.badgeEl) this.egg.badgeEl.remove(); }
     this.egg = null;
     this._respawnPending = false;
+    this._roundSeen = null;
+    this._idle = 0;
+    this._hitThisRound = false;
     this._busy = false;
     this._pressed = false;
   },
@@ -79,6 +83,7 @@ const Egg = {
   _tileObjectAt(row, col) {
     const mods = [
       typeof Villages !== "undefined" ? Villages : null,
+      typeof Bumpers !== "undefined" ? Bumpers : null,
       typeof Shops !== "undefined" ? Shops : null,
       typeof Obelisks !== "undefined" ? Obelisks : null,
       typeof Altar !== "undefined" ? Altar : null,
@@ -258,21 +263,31 @@ const Egg = {
     const e = this.egg;
     const size = Units.boardSize;
     const obAt = (r, c) => (typeof Obelisks !== "undefined" && r >= 0 && c >= 0 && r < size && c < size ? Obelisks.at(r, c) : null);
-    const wall = (r, c) => r < 0 || c < 0 || r >= size || c >= size || !!obAt(r, c);
+    // Tótems (aldeas, js/villages.js): rebotan igual que los obeliscos, de cualquier equipo.
+    const vAt = (r, c) => (typeof Villages !== "undefined" && r >= 0 && c >= 0 && r < size && c < size ? Villages.at(r, c) : null);
+    const bAt = (r, c) => (typeof Bumpers !== "undefined" && r >= 0 && c >= 0 && r < size && c < size ? Bumpers.at(r, c) : null);
+    const wall = (r, c) => r < 0 || c < 0 || r >= size || c >= size || !!obAt(r, c) || !!vAt(r, c) || !!bAt(r, c);
     let r = e.row, c = e.col, dr = dir[0], dc = dir[1];
     const steps = [];
-    for (let i = 0; i < dist; i++) {
+    // Cada rebote regala 1 casilla más de recorrido (con tope para no ciclar).
+    let total = dist;
+    const maxTotal = dist + EGG_BOUNCE_BONUS_MAX;
+    for (let i = 0; i < total; i++) {
       const step_r0 = r, step_c0 = c;
       let nr = r + dr, nc = c + dc;
-      let bounced = false, ob = null, wallAt = null;
+      let bounced = false, ob = null, wallAt = null, village = null, bumper = null;
       if (wall(nr, nc)) {
         bounced = true;
         wallAt = { row: nr, col: nc };
         ob = obAt(nr, nc);
+        village = ob ? null : vAt(nr, nc);
+        bumper = ob || village ? null : bAt(nr, nc);
+        if (total < maxTotal) total++;
         const wr = wall(r + dr, c), wc = wall(r, c + dc);
         if (dr && dc) {
           if (wr && !wc) dr = -dr;
           else if (wc && !wr) dc = -dc;
+          else if (!wr && !wc) dc = -dc; // esquina de un objeto suelto: rebote en espejo (diagrama)
           else { dr = -dr; dc = -dc; }
         } else if (dr) dr = -dr;
         else dc = -dc;
@@ -280,7 +295,7 @@ const Egg = {
         if (wall(nr, nc)) { nr = r; nc = c; } // atrapado: se queda en su casilla
       }
       r = nr; c = nc;
-      const step = { row: r, col: c, dr, dc, bounced, unit: null, shove: null, ob: ob || null, wallAt, prev: { row: step_r0, col: step_c0 } };
+      const step = { row: r, col: c, dr, dc, bounced, unit: null, shove: null, ob: ob || null, village: village || null, bumper: bumper || null, wallAt, prev: { row: step_r0, col: step_c0 } };
       steps.push(step);
       const u = Units.unitAt(r, c);
       if (u && u !== holder && !(r === e.row && c === e.col)) step.unit = u;
@@ -559,6 +574,7 @@ const Egg = {
         { duration: 300, easing: "ease-out" }
       );
     }
+    this._hitThisRound = true;
     if (e.charge >= EGG_MAX_CHARGE) e.hitsMax++;
     e.charge = plan.newCharge;
     this._applyStage();
@@ -606,6 +622,7 @@ const Egg = {
     const avoid = plan.steps.map((s) => ({ row: s.row, col: s.col }));
     e.el.style.setProperty("--egg-step", `${EGG_STEP_MS}ms`);
     e.el.classList.add("egg--moving");
+    if (typeof Bumpers !== "undefined") Bumpers.beginFlight();
     let prev = plan.dir;
     for (const s of plan.steps) {
       e.row = s.row;
@@ -615,13 +632,16 @@ const Egg = {
       if (s.bounced || s.dr !== prev[0] || s.dc !== prev[1]) this._bounceFx();
       prev = [s.dr, s.dc];
       await new Promise((r) => setTimeout(r, EGG_STEP_MS));
-      if (s.ob) this._hitObelisk(s.ob, holder.team);
-      if (s.unit && s.unit.el && s.unit.hp > 0) await this._trample(s, holder.team, avoid);
+      if (s.ob) { this._hitObelisk(s.ob, holder.team); if (typeof Bumpers !== "undefined") Bumpers.registerHit(); }
+      if (s.village) { this._bumpVillage(s.village); if (typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt(s.village, n); } }
+      if (s.bumper && typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt(s.bumper, n); }
+      if (s.unit && s.unit.el && s.unit.hp > 0) { if (typeof Bumpers !== "undefined") Bumpers.registerHit(); await this._trample(s, holder.team, avoid); }
       if (typeof Fog !== "undefined") Fog.applyVisibility();
     }
     e.el.classList.remove("egg--moving");
     if (typeof Fog !== "undefined") Fog.applyVisibility();
     this.refreshFog();
+    if (typeof Bumpers !== "undefined") await Bumpers.endFlight(holder.team);
   },
 
   // Atropello: 1 de daño y se aparta 1 casilla de lado.
@@ -663,12 +683,21 @@ const Egg = {
     setTimeout(() => vp.classList.remove(cls), 420);
   },
 
+  // Rebote contra un tótem (aldea): solo rebota, sin daño. Pequeño temblor + sonido + estirón del tótem.
+  _bumpVillage(v) {
+    this._shake(false);
+    if (typeof SFX !== "undefined") { try { SFX.rockHit(); } catch (er) {} }
+    if (v && v.el && v.el.animate) {
+      v.el.animate([{ filter: "brightness(1)" }, { filter: "brightness(1.6)" }, { filter: "brightness(1)" }], { duration: 260 });
+    }
+  },
+
   // Rebote contra un obelisco: 1 de daño (sea amigo o enemigo), temblor y destello.
   _hitObelisk(ob, causer) {
     this._shake(false);
     this._flash();
     if (typeof SFX !== "undefined") { try { SFX.rockHit(); } catch (er) {} }
-    if (typeof Drums !== "undefined" && Drums._applyDamage) Drums._applyDamage({ kind: "obelisk", ref: ob, row: ob.row, col: ob.col }, 1, causer);
+    if (typeof Drums !== "undefined" && Drums._applyDamage) Drums._applyDamage({ kind: "obelisk", ref: ob, row: ob.row, col: ob.col }, Math.max(1, (this.egg && this.egg.charge) || 1), causer);
   },
 
   // Se rompe por exceso de golpes (sin explosión ni daño).
@@ -681,6 +710,7 @@ const Egg = {
     if (typeof SFX !== "undefined") { try { SFX.rockHit(); } catch (er) {} }
     this._shatter();
     if (typeof Banners !== "undefined") Banners.text("¡El huevo se ha roto!", 1, "yellow");
+    if (typeof Bumpers !== "undefined") Bumpers.jackpot();
     await new Promise((r) => setTimeout(r, 500));
     e.el.style.opacity = "0";
   },
@@ -753,6 +783,27 @@ const Egg = {
   // ---------- Turnos: reaparición ----------
   onTurnStart() {
     if (this._respawnPending) this._respawn();
+    this._decay();
+  },
+
+  // Pinball: si pasa una ronda sin que le lancen un gnomo no pasa nada; a partir de la
+  // segunda ronda seguida sin golpe pierde 5 de carga cada ronda (mínimo 0).
+  _decay() {
+    const e = this.egg;
+    if (!e || e.exploded || typeof Turns === "undefined") return;
+    const round = Turns.roundNumber;
+    if (this._roundSeen === round) return;
+    if (this._roundSeen != null) {
+      this._idle = this._hitThisRound ? 0 : (this._idle || 0) + 1;
+      if (this._idle >= 2 && e.charge > 0) {
+        e.charge = Math.max(0, e.charge - EGG_CHARGE_PER_HIT);
+        this._applyStage();
+        this._pulseFx();
+        if (!this._hidden()) Units.spawnFloatingText({ row: e.row, col: e.col, team: "player" }, `-${EGG_CHARGE_PER_HIT}`, { className: "dmg-popup" });
+      }
+    }
+    this._roundSeen = round;
+    this._hitThisRound = false;
   },
 
   _respawn() {
@@ -838,7 +889,7 @@ if (typeof Drums !== "undefined" && !Drums._eggPatched) {
   Drums._eggPatched = true;
   const _drumsAt = Drums.at;
   Drums.at = function (row, col) {
-    return _drumsAt.call(this, row, col) || Egg.blocks(row, col);
+    return _drumsAt.call(this, row, col) || Egg.blocks(row, col) || (typeof Bumpers !== "undefined" ? Bumpers.at(row, col) : null);
   };
 }
 
