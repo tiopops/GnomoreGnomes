@@ -44,7 +44,18 @@ const Bumpers = {
     this.resetAll();
     if (typeof Egg === "undefined" || !Egg.isActive()) return;
     const mid = Math.floor((size - 1) / 2);
-    const want = [[mid - 4, mid], [mid + 4, mid], [mid, mid - 4], [mid, mid + 4], [mid + 3, mid - 3], [mid - 3, mid + 3]];
+    // Reparto estratégico por TODO el mapa (proporcional al tamaño): anillo ortogonal,
+    // diagonales y pares laterales, todo simétrico, para encadenar carambolas desde
+    // cualquier zona. Separación mínima entre bumpers para que sean alcanzables.
+    const k = (f) => Math.max(2, Math.round(size * f));
+    const offs = [[k(0.32), 0], [0, k(0.32)], [k(0.2), k(0.2)], [k(0.38), k(0.14)], [k(0.14), k(0.38)]];
+    const want = [];
+    offs.forEach(([dr, dc]) => {
+      [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([sr, sc]) => {
+        const r = mid + sr * dr, c = mid + sc * dc;
+        if (!want.some((w) => w[0] === r && w[1] === c)) want.push([r, c]);
+      });
+    });
     want.forEach(([r, c]) => {
       let spot = null;
       for (let rad = 0; rad <= 2 && !spot; rad++) {
@@ -52,7 +63,7 @@ const Bumpers = {
           if (Math.max(Math.abs(dr), Math.abs(dc)) !== rad) continue;
           const rr = r + dr, cc = c + dc;
           if (rr < 1 || cc < 1 || rr >= size - 1 || cc >= size - 1) continue;
-          if (this.at(rr, cc)) continue;
+          if (this.list.some((o) => Math.max(Math.abs(o.row - rr), Math.abs(o.col - cc)) < 3)) continue;
           if (Egg._free(rr, cc, size, 3)) spot = { row: rr, col: cc };
         }
       }
