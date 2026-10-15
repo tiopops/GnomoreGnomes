@@ -667,7 +667,7 @@ Object.assign(Tutorial, {
       },
       {
         mood: "normal",
-        say: "Pulsa el icono de lanzar y apunta al huevo: pasa el cursor por encima (o mantén pulsado) y verás por dónde saldrá. Cada gnomo que se estampa le da +5 de carga, y el huevo sale disparado en dirección contraria a ti: cuanta más carga, más lejos llega. Tinkle no se hace daño (mucho).",
+        say: "Pulsa el icono de lanzar y apunta al huevo: junto a él aparecen 3 flechas (desvío a un lado, recto o al otro). Pasa el cursor por una (o tócala) y verás por dónde saldrá; pulsa para lanzar. Cada gnomo que se estampa le da +5 de carga, y el huevo sale disparado en dirección contraria a ti: cuanta más carga, más lejos llega. Tinkle no se hace daño (mucho).",
         mission: "Lánzale a Tinkle contra el huevo",
         onStart: () => {
           T._refill();
@@ -680,7 +680,7 @@ Object.assign(Tutorial, {
       },
       {
         mood: "grunon",
-        say: "Ahora lo bueno: los bumpers. Cuando el huevo choca contra un bumper, un tótem, un obelisco o el borde del mapa, rebota como una bola de pinball: de frente vuelve por donde vino y en diagonal sale en espejo. Y cada rebote le regala una casilla más de viaje. Te he puesto dos bumpers en su camino y he cargado el huevo a 15. Lanza otro gnomo y mira la carambola.",
+        say: "Ahora lo bueno: los bumpers. Cuando el huevo choca contra un bumper, un tótem, un obelisco o el borde del mapa, rebota como una bola de pinball: de frente vuelve por donde vino y en diagonal sale en espejo. Y cada rebote le regala una casilla más de viaje. Te he puesto dos bumpers en su camino y he cargado el huevo a 15. Lanza otro gnomo (elige la flecha recta, la del medio) y mira la carambola.",
         mission: "Lanza otro gnomo y provoca una carambola",
         onStart: () => {
           T._refill();

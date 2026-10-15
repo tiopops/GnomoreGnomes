@@ -19,7 +19,7 @@ const EGG_DIR = "assets/niveles/hurrycrane/";
 const EGG_MAX_CHARGE = 30;
 const EGG_CHARGE_PER_HIT = 5; // carga que suma cada gnomazo
 const EGG_BREAK_HITS = 3; // golpes con la carga al máximo hasta romperse
-const EGG_BASE_DIST = 3; // casillas del vuelo con carga 0..2
+const EGG_BASE_DIST = 6; // casillas del vuelo con carga 0..2 (el huevo debe viajar lejos)
 const EGG_DIST_PER = 3; // +1 casilla cada tantos puntos de carga
 const EGG_PUSH_AWAY = 1; // 1 = en la dirección del golpe; -1 = hacia quien lanza
 const EGG_GNOME_POINTS = 5; // puntos que carga el gnomo al estamparse
@@ -232,8 +232,9 @@ const Egg = {
   },
 
   // ---------- Plan del vuelo ----------
-  _dirFrom(holder, e) {
-    const k = Math.round(Math.atan2(e.row - holder.row, e.col - holder.col) / (Math.PI / 4));
+  // k = -1 / 0 / +1: desvío de 45° a un lado, recto o al otro (el jugador elige 1 de las 3).
+  _dirFrom(holder, e, choice) {
+    const k = Math.round(Math.atan2(e.row - holder.row, e.col - holder.col) / (Math.PI / 4)) + (choice || 0);
     const d = EGG_DIRS[((k % 8) + 8) % 8];
     return [d[0] * EGG_PUSH_AWAY, d[1] * EGG_PUSH_AWAY];
   },
@@ -317,14 +318,15 @@ const Egg = {
   },
 
   // Qué pasaría si `holder` le lanzase un gnomo ahora mismo.
-  _plan(holder) {
+  _plan(holder, choice) {
     const e = this.egg;
     const newCharge = Math.min(EGG_MAX_CHARGE, e.charge + EGG_CHARGE_PER_HIT);
     const breaks = e.charge >= EGG_MAX_CHARGE && e.hitsMax + 1 >= EGG_BREAK_HITS;
-    const dir = this._dirFrom(holder, e);
+    const dir = this._dirFrom(holder, e, choice);
     const sim = breaks ? { steps: [], explode: null, dest: null, dir } : this._simulate(dir, this._distFor(newCharge), holder.team, holder);
     sim.newCharge = newCharge;
     sim.breaks = breaks;
+    sim.choice = choice || 0;
     return sim;
   },
 
@@ -345,6 +347,9 @@ const Egg = {
     return null;
   },
 
+  // Elegir 1 de 3 direcciones: flechas sobre las 3 casillas vecinas del huevo
+  // (desvío -45°, recto, +45° respecto a quien lanza). Ratón: pasar = ver el
+  // recorrido, clic = lanzar. Táctil: 1.er toque = ver, 2.º = lanzar.
   addThrowMarker(unit, gnome) {
     if (!this._targetable()) return;
     const e = this.egg;
@@ -352,8 +357,18 @@ const Egg = {
     if (dist < 1 || dist > GNOME_THROW_MAX_RANGE) return;
     const blocked = !!this._interceptor(unit);
     this._pv = [];
+    this._pvK = null;
+    const size = Units.boardSize;
+    const base = Math.round(Math.atan2(e.row - unit.row, e.col - unit.col) / (Math.PI / 4));
+    const fire = (k) => {
+      if (this._pvK !== k || !this._pv || !this._pv.some((m) => m.isConnected)) { this._showPreview(unit, k); return; }
+      this.throwGnome(unit, gnome, k);
+    };
+    const arrows = [];
+    const setHot = (k) => arrows.forEach((a) => a.el && a.el.classList.toggle("egg-arrow--hot", a.k === k));
+    // Marcador central (casilla del huevo): lanza recto; sirve de reserva en los bordes.
     const mk0 = Units.addMarker({
-      className: "pass-marker egg-throw-marker" + (blocked ? " egg-throw-marker--blocked" : ""),
+      className: "pass-marker egg-throw-marker egg-throw-marker--center" + (blocked ? " egg-throw-marker--blocked" : ""),
       row: e.row,
       col: e.col,
       zOffset: 12,
@@ -365,22 +380,58 @@ const Egg = {
         icon.className = "ph ph-paper-plane-tilt pass-marker__icon";
         marker.appendChild(icon);
       },
-      // Ratón: la guía aparece al pasar por encima (ya visible al hacer clic).
-      // Táctil: el primer toque muestra la guía y el segundo lanza.
-      onClick: () => {
-        if (!this._pv || !this._pv.some((m) => m.isConnected)) { this._showPreview(unit); return; }
-        this.throwGnome(unit, gnome);
-      },
+      onClick: () => fire(0),
     });
     if (mk0) {
-      mk0.addEventListener("pointerenter", (ev) => { if (ev.pointerType === "mouse") this._showPreview(unit); });
-      mk0.addEventListener("pointerleave", (ev) => { if (ev.pointerType === "mouse") this._clearPreview(); });
+      mk0.addEventListener("pointerenter", (ev) => { if (ev.pointerType === "mouse") { this._showPreview(unit, 0); setHot(0); } });
+      mk0.addEventListener("pointerleave", (ev) => { if (ev.pointerType === "mouse") { this._clearPreview(); setHot(null); } });
     }
+    [-1, 0, 1].forEach((k) => {
+      const d = EGG_DIRS[(((base + k) % 8) + 8) % 8];
+      const row = e.row + d[0], col = e.col + d[1];
+      if (row < 0 || col < 0 || row >= size || col >= size) return;
+      const mk = Units.addMarker({
+        className: "pass-marker egg-throw-marker egg-arrow-marker" + (blocked ? " egg-throw-marker--blocked" : ""),
+        row, col,
+        zOffset: 13,
+        visibleClass: "pass-marker--visible",
+        owner: "gnome",
+        alwaysOnTop: true,
+        buildContent: (marker) => {
+          // Flecha plana sobre el suelo (proyectada en la perspectiva del tablero).
+          const NS = "http://www.w3.org/2000/svg";
+          const hw = TILE_WIDTH / 2, hh = TILE_TOP_HEIGHT / 2;
+          // Se construye en el plano del suelo (casillas) y se proyecta a la perspectiva del tablero.
+          const len = Math.hypot(d[0], d[1]);
+          const ud = [d[0] / len, d[1] / len], up = [-d[1] / len, d[0] / len];
+          const pt = (a, b2) => {
+            const gr = ud[0] * a + up[0] * b2, gc = ud[1] * a + up[1] * b2;
+            return ((gc - gr) * hw).toFixed(1) + "," + ((gc + gr) * hh).toFixed(1);
+          };
+          const svg = document.createElementNS(NS, "svg");
+          svg.setAttribute("class", "egg-arrow__svg");
+          svg.setAttribute("width", "1");
+          svg.setAttribute("height", "1");
+          svg.style.overflow = "visible";
+          const poly = document.createElementNS(NS, "polygon");
+          poly.setAttribute("points", [pt(0.5, 0), pt(-0.28, 0.4), pt(-0.12, 0), pt(-0.28, -0.4)].join(" "));
+          poly.setAttribute("class", "egg-arrow__poly");
+          svg.appendChild(poly);
+          marker.appendChild(svg);
+        },
+        onClick: () => fire(k),
+      });
+      if (!mk) return;
+      arrows.push({ k, el: mk });
+      mk.addEventListener("pointerenter", (ev) => { if (ev.pointerType === "mouse") { this._showPreview(unit, k); setHot(k); } });
+      mk.addEventListener("pointerleave", (ev) => { if (ev.pointerType === "mouse") { this._clearPreview(); setHot(null); } });
+    });
   },
 
-  _showPreview(unit) {
+  _showPreview(unit, choice) {
     this._clearPreview();
-    if (this._live()) this._addPreview(unit);
+    this._pvK = choice || 0;
+    if (this._live()) this._addPreview(unit, choice || 0);
   },
 
   _clearPreview() {
@@ -392,8 +443,8 @@ const Egg = {
   },
 
   // Fantasma del huevo donde acabará + casillas de paso + avisos, para poder rectificar.
-  _addPreview(holder) {
-    const plan = this._plan(holder);
+  _addPreview(holder, choice) {
+    const plan = this._plan(holder, choice || 0);
     const hot = "";
     const mk = (row, col, build, zOffset) => {
       const mm = Units.addMarker({
@@ -501,7 +552,7 @@ const Egg = {
     if (trail && trail.classList) trail.classList.add("egg-trail");
   },
 
-  async throwGnome(holder, gnome) {
+  async throwGnome(holder, gnome, choice) {
     const e = this.egg;
     if (!this._targetable() || gnome.heldBy !== holder.id || gnome.busy) return;
     if (typeof Turns !== "undefined" && !Turns.canAct(holder)) return;
@@ -549,7 +600,7 @@ const Egg = {
       }
     } else {
       this._busy = true;
-      try { await this._gnomazo(holder, gnome); } finally { this._busy = false; }
+      try { await this._gnomazo(holder, gnome, choice || 0); } finally { this._busy = false; }
     }
 
     gnome.busy = false;
@@ -557,10 +608,10 @@ const Egg = {
     if (gnome._refreshSelectedUnitRange) gnome._refreshSelectedUnitRange();
   },
 
-  async _gnomazo(holder, gnome) {
+  async _gnomazo(holder, gnome, choice) {
     const e = this.egg;
     e.lastTeam = holder.team;
-    const plan = this._plan(holder); // ANTES de que cambie nada
+    const plan = this._plan(holder, choice); // ANTES de que cambie nada
     const from = { row: e.row, col: e.col };
     await gnome.animateThrowTo(holder.row, holder.col, e.row, e.col);
     gnome.row = e.row;
@@ -858,36 +909,43 @@ Egg.aiAct = async function (unit) {
   const dist = this.cheb(unit, e);
   if (dist < 1 || dist > GNOME_THROW_MAX_RANGE) return false;
   if (this._interceptor(unit)) return false;
-  const plan = this._plan(unit);
   const sl = typeof Bumpers !== "undefined" ? Bumpers.slices : { player: 0, enemy: 0 };
   const mine = sl[unit.team] || 0;
   const theirs = Math.max(0, ...Object.keys(sl).filter((t) => t !== unit.team).map((t) => sl[t] || 0));
-  if (plan.breaks) {
-    // JACKPOT: solo rompe el huevo si su ruleta va por delante de la del rival.
-    if (mine - theirs < 2) return false;
-    await this.throwGnome(unit, held);
-    return true;
-  }
-  let score = 0;
-  let hits = 0;
-  plan.steps.forEach((s) => {
-    // Obelisco: el daño es la carga del huevo; matarlo o dañarlo vale mucho (y al revés si es propio).
-    if (s.ob) {
-      const dmg = Math.min(plan.newCharge, s.ob.hp || plan.newCharge);
-      const kill = dmg >= (s.ob.hp || 99) ? 10 : 0;
-      score += (s.ob.team !== unit.team ? 1 : -1) * (dmg * 0.8 + kill);
-      hits++;
+  const evalPlan = (plan) => {
+    if (plan.breaks) {
+      // JACKPOT: solo rompe el huevo si su ruleta va por delante de la del rival.
+      return mine - theirs < 2 ? -Infinity : 100;
     }
-    if (s.unit) { score += s.unit.team !== unit.team ? 3 : -3; hits++; }
-    if (s.village || s.bumper) hits++;
+    let score = 0;
+    let hits = 0;
+    plan.steps.forEach((s) => {
+      // Obelisco: el daño es la carga del huevo; matarlo o dañarlo vale mucho (y al revés si es propio).
+      if (s.ob) {
+        const dmg = Math.min(plan.newCharge, s.ob.hp || plan.newCharge);
+        const kill = dmg >= (s.ob.hp || 99) ? 10 : 0;
+        score += (s.ob.team !== unit.team ? 1 : -1) * (dmg * 0.8 + kill);
+        hits++;
+      }
+      if (s.unit) { score += s.unit.team !== unit.team ? 3 : -3; hits++; }
+      if (s.village || s.bumper) hits++;
+    });
+    // Combo: cada golpe seguido suma a la ruleta (a partir del 2.º); el rival no debe llevarse el jackpot.
+    if (hits >= 2) score += hits * 1.5;
+    else if (hits === 1) score += 0.5;
+    // Si su ruleta ya va por delante y el huevo está cerca de romperse, mejor seguir cargándolo.
+    if (mine > theirs && plan.newCharge >= EGG_MAX_CHARGE) score += 2;
+    return score;
+  };
+  // Elige el mejor de los 3 desvíos (-45°, recto, +45°); a igualdad, recto.
+  let best = null;
+  [0, -1, 1].forEach((k) => {
+    const plan = this._plan(unit, k);
+    const sc = evalPlan(plan);
+    if (!best || sc > best.sc) best = { k, sc };
   });
-  // Combo: cada golpe seguido suma a la ruleta (a partir del 2.º); el rival no debe llevarse el jackpot.
-  if (hits >= 2) score += hits * 1.5;
-  else if (hits === 1) score += 0.5;
-  // Si su ruleta ya va por delante y el huevo está cerca de romperse, mejor seguir cargándolo.
-  if (mine > theirs && plan.newCharge >= EGG_MAX_CHARGE) score += 2;
-  if (score <= 0) return false;
-  await this.throwGnome(unit, held);
+  if (!best || best.sc <= 0) return false;
+  await this.throwGnome(unit, held, best.k);
   return true;
 };
 (function () {

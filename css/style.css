@@ -10843,6 +10843,11 @@ body.gp-active, body.gp-active * { cursor: none !important; }
   border: 2px solid #000;
   clip-path: polygon(50% 0, 100% 35%, 80% 100%, 15% 85%, 0 30%);
 }
+.egg-throw-marker--center { opacity: 0; }
+.egg-arrow__poly { fill: #fff; fill-opacity: 0.55; stroke: #000; stroke-width: 3; stroke-linejoin: round; pointer-events: none; transition: fill .15s; }
+.egg-arrow-marker .pass-marker__icon { display: none; }
+.egg-arrow-marker.egg-arrow--hot .egg-arrow__poly { fill: #ffd23f; fill-opacity: 1; stroke-width: 4; transform-box: fill-box; transform-origin: center; animation: eggArrowPulse .7s ease-in-out infinite; }
+@keyframes eggArrowPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.14); } }
 .egg-throw-marker--blocked { filter: hue-rotate(-35deg) saturate(1.6) brightness(0.9); }
 
 /* Huevo: carga consultable (mantener pulsado) y vista previa del empujón. */
