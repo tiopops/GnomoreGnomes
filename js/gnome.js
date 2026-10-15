@@ -100,10 +100,10 @@ const GNOME_VISION_RADIUS = 3;
 // cualquier gnomo debe verse siempre del mismo tamaño mientras lo llevan,
 // solo cambia dónde se engancha.
 const GNOME_SIZES = {
-  ground: 69,
+  ground: 74,
   flying: 93,
-  run: 80, // gnomo corriendo (huida), sprite gnomo_corre
-  sit: 84, // gnomo caído de culo, sprite gnomo_sentado
+  run: 86, // gnomo corriendo (huida), sprite gnomo_corre
+  sit: 77, // gnomo caído de culo, sprite gnomo_sentado
   held: 85,
 };
 
