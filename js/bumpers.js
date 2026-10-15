@@ -304,7 +304,8 @@ const Bumpers = {
     if (!b) return;
     const el = document.createElement("div");
     el.className = "bumper-roulette";
-    el.innerHTML = `<div>${this._plateSvg(this.slices.player, "#ffd23f")}</div><div>${this._plateSvg(this.slices.enemy, "#e2503f")}</div>`;
+    // Cada jugador ve solo SU ruleta (la del rival no se enseña).
+    el.innerHTML = `<div>${this._plateSvg(this.slices.player, "#ffd23f")}</div>`;
     const { x, y } = getTileCenter(b.row, b.col, Units.boardSize);
     el.style.left = `${x}px`;
     el.style.top = `${y - 230}px`;
