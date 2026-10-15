@@ -859,10 +859,33 @@ Egg.aiAct = async function (unit) {
   if (dist < 1 || dist > GNOME_THROW_MAX_RANGE) return false;
   if (this._interceptor(unit)) return false;
   const plan = this._plan(unit);
-  if (plan.breaks) return false;
+  const sl = typeof Bumpers !== "undefined" ? Bumpers.slices : { player: 0, enemy: 0 };
+  const mine = sl[unit.team] || 0;
+  const theirs = Math.max(0, ...Object.keys(sl).filter((t) => t !== unit.team).map((t) => sl[t] || 0));
+  if (plan.breaks) {
+    // JACKPOT: solo rompe el huevo si su ruleta va por delante de la del rival.
+    if (mine - theirs < 2) return false;
+    await this.throwGnome(unit, held);
+    return true;
+  }
   let score = 0;
-  plan.steps.forEach((s) => { if (s.ob) score += s.ob.team !== unit.team ? 4 : -4; });
-  plan.steps.forEach((s) => { if (s.unit) score += s.unit.team !== unit.team ? 3 : -3; });
+  let hits = 0;
+  plan.steps.forEach((s) => {
+    // Obelisco: el daño es la carga del huevo; matarlo o dañarlo vale mucho (y al revés si es propio).
+    if (s.ob) {
+      const dmg = Math.min(plan.newCharge, s.ob.hp || plan.newCharge);
+      const kill = dmg >= (s.ob.hp || 99) ? 10 : 0;
+      score += (s.ob.team !== unit.team ? 1 : -1) * (dmg * 0.8 + kill);
+      hits++;
+    }
+    if (s.unit) { score += s.unit.team !== unit.team ? 3 : -3; hits++; }
+    if (s.village || s.bumper) hits++;
+  });
+  // Combo: cada golpe seguido suma a la ruleta (a partir del 2.º); el rival no debe llevarse el jackpot.
+  if (hits >= 2) score += hits * 1.5;
+  else if (hits === 1) score += 0.5;
+  // Si su ruleta ya va por delante y el huevo está cerca de romperse, mejor seguir cargándolo.
+  if (mine > theirs && plan.newCharge >= EGG_MAX_CHARGE) score += 2;
   if (score <= 0) return false;
   await this.throwGnome(unit, held);
   return true;
