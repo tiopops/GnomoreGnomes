@@ -1,0 +1,103 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Demo: lanzar al huevo con 3 direcciones</title>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1d1822;--panel:#372e3d;--ink:#f3e9d2;--gold:#ffd23f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Russo One',sans-serif;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px}
+/* marco irregular de doble capa: contorno negro + relleno plano */
+.frame{background:#000;padding:4px;clip-path:polygon(0 6px,5px 0,calc(100% - 9px) 2px,100% 8px,calc(100% - 3px) calc(100% - 7px),calc(100% - 10px) 100%,7px calc(100% - 2px),0 calc(100% - 9px))}
+.frame>.in{background:var(--panel);padding:10px 14px;clip-path:polygon(0 5px,4px 0,calc(100% - 8px) 2px,100% 7px,calc(100% - 3px) calc(100% - 6px),calc(100% - 9px) 100%,6px calc(100% - 2px),0 calc(100% - 8px))}
+h1{font-size:18px;margin:0;font-weight:400;color:var(--gold)}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
+button{font-family:inherit;font-size:14px;color:var(--ink);background:#000;border:0;padding:3px;cursor:pointer;clip-path:polygon(0 4px,4px 0,calc(100% - 6px) 1px,100% 5px,calc(100% - 2px) calc(100% - 5px),calc(100% - 7px) 100%,5px calc(100% - 1px),0 calc(100% - 6px))}
+button span{display:block;background:var(--panel);padding:7px 12px;clip-path:inherit}
+button.on span{background:#6b4fa0}
+button:hover span{background:#4a3f52}
+canvas{max-width:100%;touch-action:none;display:block}
+.hint{font-size:13px;opacity:.9;text-align:center;max-width:640px;line-height:1.4}
+label{font-size:13px}
+input[type=range]{vertical-align:middle}
+</style></head><body>
+<div class="frame"><div class="in"><h1>Lanzar contra el huevo: elige 1 de 3 direcciones</h1></div></div>
+<div class="row" id="tools">
+ <button data-m="thrower" class="on"><span>Mover lanzador</span></button>
+ <button data-m="egg"><span>Mover huevo</span></button>
+ <button id="reset"><span>Reiniciar</span></button>
+</div>
+<div class="frame"><div class="in"><label>Carga del huevo: <input id="ch" type="range" min="0" max="4" value="1"> <b id="chv">1</b></label></div></div>
+<canvas id="c" width="780" height="780"></canvas>
+<div class="frame"><div class="in hint" id="msg">Pulsa sobre una flecha (o tecla 1·2·3) para decidir hacia dónde sale el huevo. Pasa el ratón para ver su recorrido con rebotes.</div></div>
+<script>
+const N=13,T=60,OX=0,OY=0,cv=document.getElementById('c'),g=cv.getContext('2d');
+const DIRS=[[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[-1,1]]; // [dr,dc] (orden por ángulo atan2(dr,dc))
+const mid=6;
+const walls={}; const key=(r,c)=>r+','+c;
+// tótems (T) y obeliscos (O) y bumpers (B)
+const objs=[[1,1,'T'],[11,11,'T'],[1,11,'T'],[11,1,'T'],[6,6,'O']];
+[[2,6],[10,6],[6,2],[6,10],[4,4],[8,8],[4,8],[8,4],[2,3],[10,9],[3,10],[9,2]].forEach(p=>objs.push([p[0],p[1],'B']));
+objs.forEach(([r,c,t])=>walls[key(r,c)]=t);
+let thrower={r:9,c:3},egg={r:7,c:5},mode='thrower',hover=-1,anim=null,combo=0,flash={};
+const COL=['#ff7a59','#ffd23f','#59d7ff'];
+function wall(r,c){return r<0||c<0||r>=N||c>=N||!!walls[key(r,c)]}
+function baseDir(){const k=Math.round(Math.atan2(egg.r-thrower.r,egg.c-thrower.c)/(Math.PI/4));return ((k%8)+8)%8}
+function options(){const b=baseDir();return [(b+7)%8,b,(b+1)%8]} // -45°, recto, +45°
+function dist(){return 4+(+document.getElementById('ch').value)}
+function sim(di){ // mismo criterio que el juego: rebote por ortogonal/diagonal, +1 casilla por rebote
+ let r=egg.r,c=egg.c,[dr,dc]=DIRS[di],total=dist(),max=total+8,steps=[];
+ for(let i=0;i<total;i++){let nr=r+dr,nc=c+dc,b=false,hit=null;
+  if(wall(nr,nc)){b=true;hit={r:nr,c:nc};if(total<max)total++;
+   const wr=wall(r+dr,c),wc=wall(r,c+dc);
+   if(dr&&dc){if(wr&&!wc)dr=-dr;else if(wc&&!wr)dc=-dc;else if(!wr&&!wc)dc=-dc;else{dr=-dr;dc=-dc}}
+   else if(dr)dr=-dr;else dc=-dc;
+   nr=r+dr;nc=c+dc;if(wall(nr,nc)){nr=r;nc=c}}
+  r=nr;c=nc;steps.push({r,c,b,hit,t:hit&&walls[key(hit.r,hit.c)]})}
+ return steps}
+const px=(c)=>OX+c*T+T/2, py=(r)=>OY+r*T+T/2;
+function draw(){
+ g.clearRect(0,0,780,780);
+ for(let r=0;r<N;r++)for(let c=0;c<N;c++){g.fillStyle=(r+c)%2?'#2b2430':'#30283a';g.fillRect(c*T,r*T,T,T)}
+ // zona de lanzamiento: las 3 casillas hacia el huevo
+ objs.forEach(([r,c,t])=>{const x=px(c),y=py(r),f=flash[key(r,c)]||0;
+  g.save();g.translate(x,y);g.scale(1+f*.25,1+f*.25);
+  if(t=='B'){g.fillStyle='#ff4fa0';circ(0,0,17);g.fillStyle='#ffd1ea';circ(-5,-5,5)}
+  if(t=='T'){g.fillStyle='#8a6a3a';g.fillRect(-12,-24,24,48);g.fillStyle='#c79a52';g.fillRect(-12,-24,24,10)}
+  if(t=='O'){g.fillStyle='#59d7ff';g.beginPath();g.moveTo(0,-26);g.lineTo(16,0);g.lineTo(0,26);g.lineTo(-16,0);g.fill()}
+  g.restore();flash[key(r,c)]=Math.max(0,f-.06)});
+ const opts=options();
+ if(!anim){
+  opts.forEach((di,i)=>{const s=sim(di),on=hover===i;
+   g.globalAlpha=on?1:.38;g.strokeStyle=COL[i];g.lineWidth=on?4:2;g.setLineDash([2,9]);g.lineCap='round';
+   g.beginPath();g.moveTo(px(egg.c),py(egg.r));s.forEach(p=>g.lineTo(px(p.c),py(p.r)));g.stroke();g.setLineDash([]);
+   s.forEach((p,k)=>{if(p.b){g.fillStyle=COL[i];circ(px(p.c)-(0),py(p.r),on?6:4)}});
+   const e=s[s.length-1];if(e){g.fillStyle=COL[i];circ(px(e.c),py(e.r),on?9:6)}
+   // flecha de elección junto al huevo
+   const [dr,dc]=DIRS[di],ax=px(egg.c)+dc*T*.62,ay=py(egg.r)+dr*T*.62;
+   g.globalAlpha=1;g.fillStyle=on?COL[i]:'#000';circ(ax,ay,15);g.strokeStyle=COL[i];g.lineWidth=3;g.setLineDash([]);g.stroke();
+   g.fillStyle=on?'#000':COL[i];g.font='16px "Russo One"';g.textAlign='center';g.textBaseline='middle';g.fillText(i+1,ax,ay+1)});
+  g.globalAlpha=1}
+ // lanzador y huevo
+ g.fillStyle='#4aa3ff';circ(px(thrower.c),py(thrower.r),18);g.fillStyle='#fff';g.font='12px "Russo One"';g.textAlign='center';g.textBaseline='middle';g.fillText('TÚ',px(thrower.c),py(thrower.r)+1);
+ const ex=anim?anim.x:px(egg.c),ey=anim?anim.y:py(egg.r);
+ g.fillStyle='#f3e9d2';g.beginPath();g.ellipse(ex,ey,14,18,0,0,7);g.fill();g.strokeStyle='#000';g.lineWidth=3;g.stroke();
+ if(combo>=2){g.fillStyle='#ffd23f';g.strokeStyle='#000';g.lineWidth=5;g.font='28px "Russo One"';g.textAlign='center';g.strokeText('COMBO +'+combo,390,40);g.fillText('COMBO +'+combo,390,40)}
+}
+function circ(x,y,r){g.beginPath();g.arc(x,y,r,0,7);g.fill()}
+function pos(e){const b=cv.getBoundingClientRect();return {x:(e.clientX-b.left)*780/b.width,y:(e.clientY-b.top)*780/b.height}}
+function optAt(p){const o=options();let best=-1,bd=24;o.forEach((di,i)=>{const[dr,dc]=DIRS[di];const d=Math.hypot(p.x-(px(egg.c)+dc*T*.62),p.y-(py(egg.r)+dr*T*.62));if(d<bd){bd=d;best=i}});return best}
+cv.addEventListener('mousemove',e=>{hover=anim?-1:optAt(pos(e));draw()});
+cv.addEventListener('click',e=>{if(anim)return;const p=pos(e),i=optAt(p);if(i>=0)return launch(i);
+ const c=Math.floor(p.x/T),r=Math.floor(p.y/T);if(wall(r,c))return;
+ if(mode=='thrower'){if(!(r==egg.r&&c==egg.c))thrower={r,c}}else{if(!(r==thrower.r&&c==thrower.c))egg={r,c}}draw()});
+addEventListener('keydown',e=>{if('123'.includes(e.key)&&!anim)launch(+e.key-1)});
+document.getElementById('ch').oninput=e=>{document.getElementById('chv').textContent=e.target.value;draw()};
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x==b))});
+document.getElementById('reset').onclick=()=>{thrower={r:9,c:3};egg={r:7,c:5};combo=0;draw()};
+function launch(i){const s=sim(options()[i]);if(!s.length)return;combo=0;let k=0,hits=0;
+ let from={x:px(egg.c),y:py(egg.r)};const msg=document.getElementById('msg');
+ (function step(){if(k>=s.length){egg={r:s[s.length-1].r,c:s[s.length-1].c};anim=null;msg.textContent=hits>=2?`¡Combo de ${hits} golpes! (+${hits} a la ruleta)`:'Huevo parado. Elige otra posición y vuelve a probar.';draw();return}
+  const p=s[k],to={x:px(p.c),y:py(p.r)},t0=performance.now(),dur=p.b?170:120;
+  (function f(now){const u=Math.min(1,(now-t0)/dur);anim={x:from.x+(to.x-from.x)*u,y:from.y+(to.y-from.y)*u};draw();
+   if(u<1)requestAnimationFrame(f);else{if(p.b&&p.t){flash[key(p.hit.r,p.hit.c)]=1;hits++;combo=hits}from=to;k++;step()}})(t0)})()}
+document.fonts.ready.then(draw);draw();
+</script></body></html>
