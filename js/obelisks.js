@@ -369,6 +369,12 @@ const Obelisks = {
     recruitBtn.innerHTML = `<img src="${OBELISK_MENU_ICONS.recruit}" class="obelisk__menu-icon" alt="">`;
     recruitBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      // Pedido explícito: con una unidad pendiente de colocar, pulsar "Reclutar" otra vez cancela la colocación.
+      if (this._pendingRecruit) {
+        this._cancelPlacementMode();
+        if (typeof SFX !== "undefined" && SFX.click) SFX.click();
+        return;
+      }
       this.openRecruitPopup(obelisk);
     });
     // Pedido explícito: "al pasar el raton por los iconos de RECLUTAR,
@@ -1469,3 +1475,19 @@ const Obelisks = {
 
 Units.registerRangeProvider(Obelisks);
 if (typeof Turns !== "undefined") Turns.registerTurnStartListener(Obelisks);
+
+// Pedido explícito: si eliges reclutar una unidad pero, al colocarla, pulsas fuera de su
+// zona de despliegue, la colocación se cancela. En captura: así el clic que la inicia
+// (botón RECLUTAR del popup) no la cancela a sí mismo.
+document.addEventListener(
+  "click",
+  (e) => {
+    if (typeof Obelisks === "undefined" || !Obelisks._pendingRecruit) return;
+    const t = e.target;
+    if (t && t.closest && t.closest(".obelisk-placement-marker, .tut-panel, .tut-skip, [class*='settings']")) return;
+    // El botón Reclutar del Obelisco ya gestiona su propia cancelación.
+    if (t && t.closest && t.closest(".obelisk__menu-btn--recruit")) return;
+    Obelisks._cancelPlacementMode();
+  },
+  true
+);
