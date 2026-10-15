@@ -10924,7 +10924,8 @@ body.gp-active, body.gp-active * { cursor: none !important; }
 .egg-preview__label { -webkit-text-stroke: 0; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7); }
 
 /* ---- Pinball del huevo (js/bumpers.js) ---- */
-.bumper { pointer-events: auto; cursor: pointer; transform: translate(-50%, -92%) translateY(30px); }
+
+.bumper { pointer-events: none; transform: translate(-50%, -92%) translateY(30px); }
 .bumper__sprite { display: block; width: 205px; height: auto; user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)); transform-origin: 50% 90%; }
 .combo-indicator {
   position: fixed; left: 50%; top: 15%; transform: translate(-50%, 0); z-index: 9500; pointer-events: none; opacity: 0;

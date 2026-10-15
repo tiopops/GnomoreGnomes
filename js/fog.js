@@ -534,6 +534,7 @@ const Fog = {
       if (typeof Hierbajos !== "undefined") Hierbajos.refreshFog();
       if (typeof Drums !== "undefined") Drums.refreshFog();
       if (typeof Egg !== "undefined") Egg.refreshFog();
+      if (typeof Bumpers !== "undefined") Bumpers.refreshFog();
       if (typeof Volcano !== "undefined") Volcano.refreshFog();
     }
     if (typeof Gnome !== "undefined") {
@@ -939,6 +940,7 @@ const Fog = {
         coverFrom(d.row, d.col, d.el);
       });
     }
+    if (typeof Bumpers !== "undefined") Bumpers.list.forEach((b) => { if (b.el) coverFrom(b.row, b.col, b.el); });
     if (typeof Egg !== "undefined") {
       if (Egg.egg && Egg.egg.el) coverFrom(Egg.egg.row, Egg.egg.col, Egg.egg.el);
       Object.values(Egg.nests).forEach((n) => { if (n.el) coverFrom(n.row, n.col, n.el); });

@@ -78,10 +78,35 @@ const Bumpers = {
     el.style.top = `${y}px`;
     el.style.zIndex = String((row + col) * 10 + 5);
     const b = { id: `bumper-${this.list.length + 1}`, row, col, el, spriteEl: img };
-    el.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); });
-    el.addEventListener("click", (ev) => { ev.stopPropagation(); this.showRoulette(b); });
     this.list.push(b);
+    this.refreshFog();
     return b;
+  },
+
+  // Niebla de guerra: igual que el resto de objetos del escenario (oculto bajo niebla,
+  // oscurecido si está explorado pero fuera de percepción).
+  refreshFog() {
+    if (typeof Fog === "undefined") return;
+    this.list.forEach((b) => {
+      const fogged = Fog.isFoggedReal(b.row, b.col);
+      b.el.classList.toggle("unit--fog-hidden", fogged);
+      b.el.classList.toggle("gg-remembered", !fogged && !Fog.isPerceived(b.row, b.col));
+    });
+    if (this._rouletteEl && this._rouletteFor && Fog.isFoggedReal(this._rouletteFor.row, this._rouletteFor.col)) this.hideRoulette();
+  },
+
+  // Los bumpers no capturan el ratón (como el resto del escenario: nada se
+  // "levanta" al pasar por encima); al pulsar sobre uno se detecta por su caja.
+  _onPointerDown(ev) {
+    if (!this.list.length || ev.button > 0) return;
+    const hit = this.list.find((b) => {
+      if (b.el.classList.contains("unit--fog-hidden")) return false;
+      const r = b.spriteEl.getBoundingClientRect();
+      const w = r.width * 0.5, h = r.height * 0.6;
+      const cx = r.left + r.width / 2, cy = r.top + r.height * 0.55;
+      return Math.abs(ev.clientX - cx) <= w / 2 && Math.abs(ev.clientY - cy) <= h / 2;
+    });
+    if (hit) this.showRoulette(hit);
   },
 
   // ---------- Golpes y combo ----------
@@ -254,6 +279,8 @@ const Bumpers = {
     el.style.zIndex = "9000";
     Units.container.appendChild(el);
     this._rouletteEl = el;
+    this._rouletteFor = b;
+    if (this._tutHook) this._tutHook();
     clearTimeout(this._rouletteTimer);
     this._rouletteTimer = setTimeout(() => this.hideRoulette(), ms || 2600);
   },
@@ -263,3 +290,10 @@ const Bumpers = {
     if (this._rouletteEl) { this._rouletteEl.remove(); this._rouletteEl = null; }
   },
 };
+
+if (typeof document !== "undefined") {
+  document.addEventListener("pointerdown", (ev) => {
+    const vp = document.getElementById("board-viewport");
+    if (vp && vp.contains(ev.target) && typeof Bumpers !== "undefined") Bumpers._onPointerDown(ev);
+  });
+}
