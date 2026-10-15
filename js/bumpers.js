@@ -71,6 +71,7 @@ const Bumpers = {
     const src = "assets/niveles/hurrycrane/bumper.png";
     if (typeof SpriteQuality !== "undefined") SpriteQuality.register(img, src);
     else img.src = src;
+    img.style.animationDelay = `-${(NR() * 4).toFixed(2)}s`; // respiración desfasada por bumper
     el.appendChild(img);
     Units.container.appendChild(el);
     const { x, y } = getTileCenter(row, col, Units.boardSize);
@@ -93,6 +94,37 @@ const Bumpers = {
       b.el.classList.toggle("gg-remembered", !fogged && !Fog.isPerceived(b.row, b.col));
     });
     if (this._rouletteEl && this._rouletteFor && Fog.isFoggedReal(this._rouletteFor.row, this._rouletteFor.col)) this.hideRoulette();
+  },
+
+  // Sistema de transparencias del escenario (igual que tótems/obeliscos, ver
+  // Villages.refreshOcclusion en js/villages.js): si hay alguien (unidad o zona
+  // seleccionable) detrás y el ratón está sobre el objeto o sobre ese alguien,
+  // el objeto se vuelve semitransparente. Vale para los bumpers y para el huevo.
+  refreshOcclusion(mouseX, mouseY) {
+    if (typeof Villages === "undefined" || !Villages._behindElsFor) return;
+    const mx = typeof mouseX === "number" ? mouseX : Villages._lastMouseX;
+    const my = typeof mouseY === "number" ? mouseY : Villages._lastMouseY;
+    const objs = this.list.map((b) => ({ row: b.row, col: b.col, el: b.el, spriteEl: b.spriteEl }));
+    if (typeof Egg !== "undefined" && Egg.egg && !Egg.egg.exploded) objs.push({ row: Egg.egg.row, col: Egg.egg.col, el: Egg.egg.el, spriteEl: Egg.egg.spriteEl });
+    objs.forEach((o) => {
+      if (!o.el || !o.spriteEl) return;
+      if (o.el.classList.contains("unit--fog-hidden") || mx == null || my == null) {
+        o.el.classList.remove("village--occluding");
+        return;
+      }
+      const behind = Villages._behindElsFor(o).filter((el) => el !== o.el);
+      let occluding = false;
+      if (behind.length) {
+        const r0 = o.spriteEl.getBoundingClientRect();
+        const overObj = mx >= r0.left && mx <= r0.right && my >= r0.top && my <= r0.bottom;
+        const overBehind = behind.some((el) => {
+          const r = el.getBoundingClientRect();
+          return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom;
+        });
+        occluding = overObj || overBehind;
+      }
+      o.el.classList.toggle("village--occluding", occluding);
+    });
   },
 
   // Los bumpers no capturan el ratón (como el resto del escenario: nada se
@@ -285,6 +317,8 @@ const Bumpers = {
     this._rouletteTimer = setTimeout(() => this.hideRoulette(), ms || 2600);
   },
 
+  _tutHook: null,
+
   hideRoulette() {
     clearTimeout(this._rouletteTimer);
     if (this._rouletteEl) { this._rouletteEl.remove(); this._rouletteEl = null; }
@@ -296,4 +330,15 @@ if (typeof document !== "undefined") {
     const vp = document.getElementById("board-viewport");
     if (vp && vp.contains(ev.target) && typeof Bumpers !== "undefined") Bumpers._onPointerDown(ev);
   });
+}
+
+// Se engancha a la actualización de transparencias de los tótems para no depender de otro listener de ratón.
+if (typeof Villages !== "undefined" && Villages.refreshOcclusion && !Villages._bumpersPatched) {
+  Villages._bumpersPatched = true;
+  const _vOcc = Villages.refreshOcclusion;
+  Villages.refreshOcclusion = function (mx, my) {
+    const r = _vOcc.call(this, mx, my);
+    if (typeof Bumpers !== "undefined") Bumpers.refreshOcclusion(mx, my);
+    return r;
+  };
 }

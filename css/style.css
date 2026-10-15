@@ -10926,7 +10926,7 @@ body.gp-active, body.gp-active * { cursor: none !important; }
 /* ---- Pinball del huevo (js/bumpers.js) ---- */
 
 .bumper { pointer-events: none; transform: translate(-50%, -92%) translateY(30px); }
-.bumper__sprite { display: block; width: 205px; height: auto; user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)); transform-origin: 50% 90%; }
+.bumper__sprite { display: block; width: 205px; height: auto; user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)); transform-origin: 50% 90%; animation: unit-idle-breathe 4s ease-in-out infinite; }
 .combo-indicator {
   position: fixed; left: 50%; top: 15%; transform: translate(-50%, 0); z-index: 9500; pointer-events: none; opacity: 0;
   font-family: "Russo One", sans-serif; font-weight: 400; color: #ffd23f; white-space: nowrap;

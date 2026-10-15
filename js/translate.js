@@ -497,6 +497,12 @@ const EN_DICT = {
 "Setas explosivas, Altar de Sacrificios y GnomOgro": "Explosive mushrooms, Sacrifice Altar and GnomOgre",
 "Tutorial Colinas Rock'n Troll": "Rock'n Troll Hills Tutorial",
 "Tambores de Guerra, fragmentos y Volcán": "War Drums, fragments and Volcano",
+"Tutorial Hurrycrane Village": "Hurrycrane Village Tutorial",
+"Huevo de Grulla, bumpers y JACKPOT": "Crane Egg, bumpers and JACKPOT",
+"Las reglas propias de Hurrycrane Village.": "Hurrycrane Village's own rules.",
+"Huevo de Grulla: lánzale gnomos para cargarlo": "Crane Egg: throw gnomes at it to charge it",
+"Bumpers y tótems: rebotes de pinball y carambolas": "Bumpers and totems: pinball bounces and caroms",
+"Combos y JACKPOT: llena tu ruleta y rompe el huevo": "Combos and JACKPOT: fill your wheel and break the egg",
 "Tutorial": "Tutorial",
 };
 

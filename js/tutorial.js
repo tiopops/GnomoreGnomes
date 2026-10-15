@@ -36,7 +36,7 @@ const Tutorial = {
     this._scenario = scenario;
     try {
       if (typeof Preload !== "undefined") await Preload.run();
-      if (typeof LevelAssets !== "undefined") LevelAssets.apply(scenario === "rock" ? "colinas_rockntroll" : "mushboom_forest");
+      if (typeof LevelAssets !== "undefined") LevelAssets.apply(scenario === "rock" ? "colinas_rockntroll" : scenario === "crane" ? "hurrycrane_village" : "mushboom_forest");
       if (typeof Music !== "undefined" && Music._refresh) Music._refresh(); // pista del nivel
       const size = getBoardSize(1);
       const map = generateMap(size, { rivers: false });
@@ -301,6 +301,7 @@ const Tutorial = {
     const T = this;
     if (this._scenario === "mush" && this._stepsMush) return this._stepsMush();
     if (this._scenario === "rock" && this._stepsRock) return this._stepsRock();
+    if (this._scenario === "crane" && this._stepsCrane) return this._stepsCrane();
     return [
       {
         say: `Vaya, otro verdugo. Perdón, «jugador»: así os llamamos antes de que nos aplastéis. Soy ${TUTORIAL_GUIDE_NAME}, llevo media vida dedicándome a ser vuestra pelota en este deporte de majaras. Siempre digo que de algo hay que vivir. Bueno, vivir, vivir... Te enseñaré lo básico para que, al menos, me aplastes con cierta elegancia.`,

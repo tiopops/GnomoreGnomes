@@ -50,6 +50,18 @@ Object.assign(Tutorial, {
         ["ph-fire", "El Volcán: aliméntalo y haz que entre en erupción"],
       ],
     },
+    {
+      id: "crane",
+      name: "Hurrycrane Village",
+      color: "#7fc8e8",
+      island: "assets/niveles/isla_hurrycrane_village.png",
+      flavor: "Las reglas propias de Hurrycrane Village.",
+      feats: [
+        ["ph-egg", "Huevo de Grulla: lánzale gnomos para cargarlo"],
+        ["ph-target", "Bumpers y tótems: rebotes de pinball y carambolas"],
+        ["ph-trophy", "Combos y JACKPOT: llena tu ruleta y rompe el huevo"],
+      ],
+    },
   ],
 
   showMenu() {
@@ -61,6 +73,7 @@ Object.assign(Tutorial, {
       { id: "basic", icon: "ph-graduation-cap", title: "Primeros pasos", sub: "Lo básico: reclutar, mover, gnomos y combate" },
       { id: "mush", icon: "ph-tree", title: "Tutorial Bosque MushBoom", sub: "Setas explosivas, Altar de Sacrificios y GnomOgro" },
       { id: "rock", icon: "ph-mountains", title: "Tutorial Colinas Rock'n Troll", sub: "Tambores de Guerra, fragmentos y Volcán" },
+      { id: "crane", icon: "ph-egg", title: "Tutorial Hurrycrane Village", sub: "Huevo de Grulla, bumpers y JACKPOT" },
     ];
     list.innerHTML = items
       .map(
@@ -97,6 +110,7 @@ Object.assign(Tutorial, {
     this._ctx.unitId = u.id;
     if (typeof Fog !== "undefined") Fog.revealForUnit(u);
     if (this._scenario === "mush") this._buildMushScene();
+    else if (this._scenario === "crane") this._buildCraneScene();
     else this._buildRockScene();
     if (typeof Fog !== "undefined") Fog.applyVisibility();
     this._refill();
@@ -139,6 +153,60 @@ Object.assign(Tutorial, {
     const vs = this._around(u, 3, -3);
     if (vs) this._ctx.volcano = Volcano._create(vs.row, vs.col);
     this._ctx.drumRef = this._ctx.drum;
+  },
+
+  _buildCraneScene() {
+    const u = this._myUnit();
+    if (typeof Drums !== "undefined") Drums.resetAll();
+    if (typeof Volcano !== "undefined") Volcano.resetAll();
+    if (typeof Bumpers !== "undefined") Bumpers.resetAll();
+    Egg.resetAll();
+    // Huevo en línea recta con la unidad (misma fila): el vuelo es ortogonal y rebota de frente contra los bumpers.
+    const es = this._around(u, 0, 2);
+    if (es) {
+      this._ctx.eggDir = [es.row - u.row > 0 ? 1 : -1, es.col - u.col > 0 ? 1 : -1];
+      Egg.egg = Egg._createEgg(es.row, es.col);
+      this._ctx.eggSpot = { row: es.row, col: es.col };
+    }
+  },
+
+  // Entrega a la unidad un gnomo nuevo ya cogido (para repetir lanzamientos sin volver a andar).
+  _giveGnome(unit) {
+    if (!unit) return null;
+    Gnome.spawnNear(unit.row, unit.col);
+    const g = Gnome.list[Gnome.list.length - 1];
+    if (g) {
+      g.attachTo(unit);
+      g.row = unit.row;
+      g.col = unit.col;
+    }
+    return g;
+  },
+
+  // Devuelve el huevo a su sitio de práctica (tras el vuelo del primer lanzamiento).
+  _eggHome() {
+    const e = Egg.egg;
+    const s = this._ctx.eggSpot;
+    if (!e || !s) return;
+    e.row = s.row;
+    e.col = s.col;
+    Egg._place(e.el, s.row, s.col, 6);
+    Egg._placeBadge();
+    if (typeof Fog !== "undefined") Fog.applyVisibility();
+  },
+
+  // Dos bumpers sobre la línea del vuelo (uno por delante del huevo y otro por detrás de la unidad).
+  _placeCraneBumpers() {
+    const e = Egg.egg;
+    const u = this._myUnit();
+    if (!e || !u) return;
+    const d = [e.row - u.row, e.col - u.col];
+    const dr = Math.sign(d[0]), dc = Math.sign(d[1]);
+    Bumpers.resetAll();
+    [[3, 0], [-4, 0]].forEach(([k]) => {
+      const r = e.row + dr * k, c = e.col + dc * k;
+      if (this._tileOk(r, c)) Bumpers._create(r, c);
+    });
   },
 
   // ---------- Utilidades ----------
@@ -548,6 +616,132 @@ Object.assign(Tutorial, {
       {
         mood: "aplaude",
         say: `Y eso es todo de las Colinas Rock'n Troll. Resumen: pega gnomos junto a los tambores para que llueva roca, recoge los fragmentos antes que el rival y úsalos con cabeza: al volcán, a la lava o contra un gnomo en llamas. Cuando alguien llegue a 20 en el volcán, prepárate: o corres, o te agarras a una piedra. ¡Suerte, la vas a necesitar!`,
+        button: "TERMINAR TUTORIAL",
+        final: true,
+      },
+    ];
+  },
+
+  // ---------- Guion: Hurrycrane Village ----------
+  _stepsCrane() {
+    const T = this;
+    const unit = () => T._myUnit();
+    const aimTarget = () => {
+      const u = unit();
+      if (!u) return null;
+      if (Units.selectedId !== u.id) return T._unitEl(u);
+      const g = Gnome.list.find((x) => x.passing);
+      if (g) return T._anyMarker("egg-throw-marker") || T._anyMarker("pass-marker");
+      return Gnome._passBtn || T._unitEl(u);
+    };
+    return [
+      {
+        mood: "grunon",
+        say: "Hurrycrane Village. Un poblado flotando sobre las nubes que lleva siglos esperando a que eclosione un huevo de grulla gigante. Todavía no ha pasado, pero los vecinos ya han apostado qué saldrá, cuánto pesará... y a quién le tocará limpiar el nido.",
+        button: "Qué emoción",
+      },
+      {
+        mood: "normal",
+        say: "Aquí no hay setas ni volcanes: hay un huevo con muy mala leche, unos bumpers y una ruleta de tragaperras. Hoy jugaremos al pinball con el huevo: lanzarle gnomos para cargarlo, hacerlo rebotar y cobrar el JACKPOT. Sí, el huevo es la bola. Y los gnomos, la fuerza motriz.",
+        button: "A jugar",
+      },
+      {
+        mood: "normal",
+        say: "El huevo se carga a golpe de gnomo, y adivina quién es el gnomo. Tinkle viene hacia aquí, con la ilusión de siempre. Cógelo.",
+        mission: "Coge a Tinkle",
+        onStart: () => {
+          T._refill();
+          T._focus(unit(), Egg.egg);
+          if (Units.selectedId) Units.deselect();
+          T._gnomeBeside(unit());
+        },
+        target: () => {
+          const g = T._gnome();
+          const u = unit();
+          if (!g || !u) return null;
+          return T._unitThen(u, () => T._marker("catch-marker", g.row, g.col));
+        },
+        refillFor: () => unit() && unit().id,
+        done: () => Gnome.isHeldBy(unit().id),
+        ok: "Tinkle, hoy vuelas. Y mejor no preguntes dónde aterrizas.",
+      },
+      {
+        mood: "normal",
+        say: "Pulsa el icono de lanzar y apunta al huevo: pasa el cursor por encima (o mantén pulsado) y verás por dónde saldrá. Cada gnomo que se estampa le da +5 de carga, y el huevo sale disparado en dirección contraria a ti: cuanta más carga, más lejos llega. Tinkle no se hace daño (mucho).",
+        mission: "Lánzale a Tinkle contra el huevo",
+        onStart: () => {
+          T._refill();
+          T._focus(unit(), Egg.egg);
+        },
+        target: aimTarget,
+        refillFor: () => unit() && unit().id,
+        done: () => !!Egg.egg && Egg.egg.charge >= 5 && !Egg._busy,
+        ok: "¡Zas! Carga 5. El huevo sale despedido y Tinkle, tras caerse de culo, se levanta y se va corriendo. Todo un profesional.",
+      },
+      {
+        mood: "grunon",
+        say: "Ahora lo bueno: los bumpers. Cuando el huevo choca contra un bumper, un tótem, un obelisco o el borde del mapa, rebota como una bola de pinball: de frente vuelve por donde vino y en diagonal sale en espejo. Y cada rebote le regala una casilla más de viaje. Te he puesto dos bumpers en su camino y he cargado el huevo a 15. Lanza otro gnomo y mira la carambola.",
+        mission: "Lanza otro gnomo y provoca una carambola",
+        onStart: () => {
+          T._refill();
+          T._eggHome();
+          T._placeCraneBumpers();
+          if (Egg.egg) {
+            Egg.egg.charge = 15;
+            Egg._applyStage();
+          }
+          T._giveGnome(unit());
+          T._focus(unit(), Egg.egg, ...Bumpers.list);
+          if (typeof Fog !== "undefined") Fog.applyVisibility();
+        },
+        target: aimTarget,
+        refillFor: () => unit() && unit().id,
+        done: () => Bumpers.slices.player >= 2 && !Egg._busy,
+        ok: "¡Carambola! Y fíjate cómo suena cada golpe más agudo que el anterior. Como una discoteca, pero con más daño.",
+      },
+      {
+        mood: "normal",
+        say: "Esos golpes seguidos son un COMBO: a partir del segundo, cada golpe sube el contador (X2, X3...) y, cuando el huevo se para, ese número se suma de una vez a tu ruleta, la de los tambores de toda la vida. Pulsa sobre un bumper para ver cuántas porciones llevas tú y cuántas el rival.",
+        mission: "Pulsa un bumper para ver tu ruleta",
+        onStart: () => {
+          T._ctx.rouletteSeen = false;
+          Bumpers._tutHook = () => { T._ctx.rouletteSeen = true; };
+          T._focus(unit(), Egg.egg, ...Bumpers.list);
+        },
+        target: () => {
+          const b = Bumpers.list.slice().sort((x, y) => Math.hypot(x.row - Egg.egg.row, x.col - Egg.egg.col) - Math.hypot(y.row - Egg.egg.row, y.col - Egg.egg.col))[0];
+          return b ? b.spriteEl : null;
+        },
+        allow: () => Bumpers.list.map((b) => b.spriteEl),
+        done: () => !!T._ctx.rouletteSeen,
+        ok: "Ahí están. Tu ruleta, la del rival... todo muy transparente, qué raro en este juego.",
+      },
+      {
+        mood: "grunon",
+        say: "Cuando el huevo se rompe, cobras el JACKPOT: cada jugador recibe tantos puntos de Gloria como porciones tenga en su ruleta, y todo se reinicia. Con la carga al máximo (30) aguanta 3 golpes más antes de romperse. Lo he dejado listo: carga 30 y ya aguantó dos. Lanza el último gnomo.",
+        mission: "Rompe el huevo y cobra el JACKPOT",
+        onStart: () => {
+          Bumpers._tutHook = null;
+          T._refill();
+          Bumpers.hideRoulette();
+          T._eggHome();
+          Bumpers.slices.player = Math.max(Bumpers.slices.player, 7);
+          if (Egg.egg) {
+            Egg.egg.charge = 30;
+            Egg.egg.hitsMax = 2;
+            Egg._applyStage();
+          }
+          T._giveGnome(unit());
+          T._focus(unit(), Egg.egg);
+        },
+        target: aimTarget,
+        refillFor: () => unit() && unit().id,
+        done: () => !!Egg.egg && (Egg.egg.exploded || Egg._respawnPending),
+        ok: "¡JACKPOT! Monedas, luces y un huevo hecho añicos. Si esto fuera una tragaperras, tú también acabarías arruinado.",
+      },
+      {
+        mood: "aplaude",
+        say: "Y eso es todo de Hurrycrane Village. Resumen: lánzale gnomos al huevo para cargarlo, haz que rebote en bumpers, tótems y obeliscos para encadenar combos, y rómpelo cuando tu ruleta esté bien llena. Si no lo golpea nadie en dos rondas, se va descargando, así que no lo dejes enfriar. ¡Suerte, la vas a necesitar!",
         button: "TERMINAR TUTORIAL",
         final: true,
       },

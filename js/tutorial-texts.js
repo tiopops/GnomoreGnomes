@@ -459,5 +459,89 @@ const TUTORIAL_TEXTS = {
     "button": "FINISH TUTORIAL"
    }
   }
+ ],
+ "crane": [
+  {
+   "say": "Hurrycrane Village. Un poblado flotando sobre las nubes que lleva siglos esperando a que eclosione un huevo de grulla gigante. Todavía no ha pasado, pero los vecinos ya han apostado qué saldrá, cuánto pesará... y a quién le tocará limpiar el nido.",
+   "button": "Qué emoción",
+   "mood": "grunon",
+   "en": {
+    "say": "Hurrycrane Village. A village floating above the clouds that has spent centuries waiting for a giant crane egg to hatch. It hasn't happened yet, but the neighbours have already bet on what will come out, how much it will weigh... and who gets to clean the nest.",
+    "button": "How exciting"
+   }
+  },
+  {
+   "say": "Aquí no hay setas ni volcanes: hay un huevo con muy mala leche, unos bumpers y una ruleta de tragaperras. Hoy jugaremos al pinball con el huevo: lanzarle gnomos para cargarlo, hacerlo rebotar y cobrar el JACKPOT. Sí, el huevo es la bola. Y los gnomos, la fuerza motriz.",
+   "button": "A jugar",
+   "mood": "normal",
+   "en": {
+    "say": "There are no mushrooms or volcanoes here: there's a very ill-tempered egg, some bumpers and a slot-machine wheel. Today we'll play pinball with the egg: throw gnomes at it to charge it, make it bounce and collect the JACKPOT. Yes, the egg is the ball. And the gnomes are the flippers.",
+    "button": "Let's play"
+   }
+  },
+  {
+   "say": "El huevo se carga a golpe de gnomo, y adivina quién es el gnomo. Tinkle viene hacia aquí, con la ilusión de siempre. Cógelo.",
+   "mission": "Coge a Tinkle",
+   "ok": "Tinkle, hoy vuelas. Y mejor no preguntes dónde aterrizas.",
+   "mood": "normal",
+   "en": {
+    "say": "The egg charges up with gnome hits, and guess who the gnome is. Tinkle is coming this way, as hopeful as ever. Pick him up.",
+    "mission": "Pick up Tinkle",
+    "ok": "Tinkle, today you fly. And better not ask where you land."
+   }
+  },
+  {
+   "say": "Pulsa el icono de lanzar y apunta al huevo: pasa el cursor por encima (o mantén pulsado) y verás por dónde saldrá. Cada gnomo que se estampa le da +5 de carga, y el huevo sale disparado en dirección contraria a ti: cuanta más carga, más lejos llega. Tinkle no se hace daño (mucho).",
+   "mission": "Lánzale a Tinkle contra el huevo",
+   "ok": "¡Zas! Carga 5. El huevo sale despedido y Tinkle, tras caerse de culo, se levanta y se va corriendo. Todo un profesional.",
+   "mood": "normal",
+   "en": {
+    "say": "Press the throw icon and aim at the egg: hover over it (or hold) and you'll see where it will go. Every gnome that smashes into it gives it +5 charge, and the egg shoots off away from you: the more charge, the farther it goes. Tinkle doesn't get hurt (much).",
+    "mission": "Throw Tinkle at the egg",
+    "ok": "Zap! Charge 5. The egg flies off and Tinkle, after landing on his bottom, gets up and runs away. A true professional."
+   }
+  },
+  {
+   "say": "Ahora lo bueno: los bumpers. Cuando el huevo choca contra un bumper, un tótem, un obelisco o el borde del mapa, rebota como una bola de pinball: de frente vuelve por donde vino y en diagonal sale en espejo. Y cada rebote le regala una casilla más de viaje. Te he puesto dos bumpers en su camino y he cargado el huevo a 15. Lanza otro gnomo y mira la carambola.",
+   "mission": "Lanza otro gnomo y provoca una carambola",
+   "ok": "¡Carambola! Y fíjate cómo suena cada golpe más agudo que el anterior. Como una discoteca, pero con más daño.",
+   "mood": "grunon",
+   "en": {
+    "say": "Now the good part: the bumpers. When the egg hits a bumper, a totem, an obelisk or the edge of the map, it bounces like a pinball: head-on it comes back the way it came and diagonally it leaves like a mirror. And every bounce gives it one more tile of travel. I've put two bumpers in its way and charged the egg to 15. Throw another gnome and watch the carom.",
+    "mission": "Throw another gnome and make a carom",
+    "ok": "Carom! And notice how every hit sounds higher than the last. Like a nightclub, but with more damage."
+   }
+  },
+  {
+   "say": "Esos golpes seguidos son un COMBO: a partir del segundo, cada golpe sube el contador (X2, X3...) y, cuando el huevo se para, ese número se suma de una vez a tu ruleta, la de los tambores de toda la vida. Pulsa sobre un bumper para ver cuántas porciones llevas tú y cuántas el rival.",
+   "mission": "Pulsa un bumper para ver tu ruleta",
+   "ok": "Ahí están. Tu ruleta, la del rival... todo muy transparente, qué raro en este juego.",
+   "mood": "normal",
+   "en": {
+    "say": "Those hits in a row are a COMBO: from the second one, each hit raises the counter (X2, X3...) and, when the egg stops, that number is added all at once to your wheel, the same kind as the drums. Tap a bumper to see how many slices you have and how many the rival has.",
+    "mission": "Tap a bumper to see your wheel",
+    "ok": "There they are. Your wheel, the rival's... all very transparent, how unusual in this game."
+   }
+  },
+  {
+   "say": "Cuando el huevo se rompe, cobras el JACKPOT: cada jugador recibe tantos puntos de Gloria como porciones tenga en su ruleta, y todo se reinicia. Con la carga al máximo (30) aguanta 3 golpes más antes de romperse. Lo he dejado listo: carga 30 y ya aguantó dos. Lanza el último gnomo.",
+   "mission": "Rompe el huevo y cobra el JACKPOT",
+   "ok": "¡JACKPOT! Monedas, luces y un huevo hecho añicos. Si esto fuera una tragaperras, tú también acabarías arruinado.",
+   "mood": "grunon",
+   "en": {
+    "say": "When the egg breaks, you collect the JACKPOT: every player receives as many Glory points as slices they have on their wheel, and everything resets. With the charge at maximum (30) it takes 3 more hits before breaking. I've set it up: charge 30 and it already took two. Throw the last gnome.",
+    "mission": "Break the egg and collect the JACKPOT",
+    "ok": "JACKPOT! Coins, lights and a shattered egg. If this were a slot machine, you'd end up broke too."
+   }
+  },
+  {
+   "say": "Y eso es todo de Hurrycrane Village. Resumen: lánzale gnomos al huevo para cargarlo, haz que rebote en bumpers, tótems y obeliscos para encadenar combos, y rómpelo cuando tu ruleta esté bien llena. Si no lo golpea nadie en dos rondas, se va descargando, así que no lo dejes enfriar. ¡Suerte, la vas a necesitar!",
+   "button": "TERMINAR TUTORIAL",
+   "mood": "aplaude",
+   "en": {
+    "say": "And that's all for Hurrycrane Village. Summary: throw gnomes at the egg to charge it, make it bounce off bumpers, totems and obelisks to chain combos, and break it when your wheel is nice and full. If nobody hits it for two rounds it starts losing charge, so don't let it cool down. Good luck, you'll need it!",
+    "button": "FINISH TUTORIAL"
+   }
+  }
  ]
 };
