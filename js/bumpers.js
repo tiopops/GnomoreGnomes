@@ -331,6 +331,41 @@ const Bumpers = {
 
   _tutHook: null,
 
+  // Hover de los bumpers y del huevo: se amplían un poco al pasar el ratón por encima y
+  // vuelven a su tamaño al salir, como el resto de elementos. Se detecta por la caja del
+  // sprite (no por :hover) para que no reaccione el hueco transparente ni la nube del huevo.
+  _hoverEl: null,
+  _hoverAt(ev) {
+    const cands = this.list.map((b) => ({ el: b.el, spriteEl: b.spriteEl, w: 0.5, h: 0.6, cy: 0.55 }));
+    const e = typeof Egg !== "undefined" ? Egg.egg : null;
+    if (e && !e.exploded && e.spriteEl) cands.push({ el: e.el, spriteEl: e.spriteEl, w: 0.34, h: 0.6, cy: 0.5 });
+    let best = null;
+    cands.forEach((c) => {
+      if (!c.el || !c.el.isConnected || c.el.classList.contains("unit--fog-hidden")) return;
+      const r = c.spriteEl.getBoundingClientRect();
+      const w = r.width * c.w, h = r.height * c.h;
+      const cx = r.left + r.width / 2, cy = r.top + r.height * c.cy;
+      if (Math.abs(ev.clientX - cx) <= w / 2 && Math.abs(ev.clientY - cy) <= h / 2) {
+        const z = parseInt(c.el.style.zIndex, 10) || 0;
+        if (!best || z > best.z) best = { sp: c.spriteEl, z };
+      }
+    });
+    return best ? best.sp : null;
+  },
+  _onPointerMove(ev) {
+    const sp = ev && ev.target && ev.target.closest && !ev.target.closest("#board-viewport") ? null : this._hoverAt(ev);
+    if (sp === this._hoverEl) return;
+    if (this._hoverEl) this._hoverEl.classList.remove("gg-hover");
+    this._hoverEl = sp;
+    if (sp) sp.classList.add("gg-hover");
+    document.body.classList.toggle("gg-pinball-hover", !!sp);
+  },
+  clearHover() {
+    if (this._hoverEl) this._hoverEl.classList.remove("gg-hover");
+    this._hoverEl = null;
+    document.body.classList.remove("gg-pinball-hover");
+  },
+
   hideRoulette() {
     clearTimeout(this._rouletteTimer);
     if (this._rouletteEl) { this._rouletteEl.remove(); this._rouletteEl = null; }
@@ -338,6 +373,10 @@ const Bumpers = {
 };
 
 if (typeof document !== "undefined") {
+  document.addEventListener("pointermove", (ev) => {
+    if (ev.pointerType && ev.pointerType !== "mouse") return;
+    if (typeof Bumpers !== "undefined") Bumpers._onPointerMove(ev);
+  });
   document.addEventListener("pointerdown", (ev) => {
     const vp = document.getElementById("board-viewport");
     if (vp && vp.contains(ev.target) && typeof Bumpers !== "undefined") Bumpers._onPointerDown(ev);

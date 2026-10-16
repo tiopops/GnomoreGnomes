@@ -10960,3 +10960,13 @@ body.gp-active, body.gp-active * { cursor: none !important; }
   100% { opacity: 0; transform: translate(-50%, -70%) scale(1.05); }
 }
 .jackpot-coin { position: fixed; width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6b0, #ffc926 55%, #b87500); border: 3px solid #7a4a00; pointer-events: none; z-index: 9550; }
+
+/* Hover de bumpers y huevo (js/bumpers.js): ampliación sutil y vuelta a su tamaño al salir.
+   Se usa la propiedad `scale` para no chocar con la respiración/pulso (transform) ni con las
+   reacciones al golpe. El .unit:hover genérico levantaría el huevo entero (nube incluida) y
+   perdería su desplazamiento, así que aquí se anula. */
+.bumper__sprite, .egg__sprite { transition: scale 0.15s ease, filter 0.15s ease; }
+.bumper__sprite.gg-hover, .egg__sprite.gg-hover { scale: 1.06; filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)) brightness(1.12); }
+.unit.egg:hover { transform: translate(-50%, -92%) translateY(30px); }
+.unit.egg:hover:not(.gg-remembered) { filter: none; }
+body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !important; }

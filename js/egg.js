@@ -263,7 +263,12 @@ const Egg = {
   _simulate(dir, dist, holderTeam, holder) {
     const e = this.egg;
     const size = Units.boardSize;
-    const obAt = (r, c) => (typeof Obelisks !== "undefined" && r >= 0 && c >= 0 && r < size && c < size ? Obelisks.at(r, c) : null);
+    // Para el huevo el obelisco ocupa 4 losetas (la suya y las 3 de "detrás", donde se alza el sprite):
+    // si no, es muy difícil que impacte y visualmente ya parece que las ocupe.
+    const obAt = (r, c) => {
+      if (typeof Obelisks === "undefined" || r < 0 || c < 0 || r >= size || c >= size) return null;
+      return Obelisks.at(r, c) || Obelisks.at(r + 1, c) || Obelisks.at(r, c + 1) || Obelisks.at(r + 1, c + 1) || null;
+    };
     // Tótems (aldeas, js/villages.js): rebotan igual que los obeliscos, de cualquier equipo.
     const vAt = (r, c) => (typeof Villages !== "undefined" && r >= 0 && c >= 0 && r < size && c < size ? Villages.at(r, c) : null);
     const bAt = (r, c) => (typeof Bumpers !== "undefined" && r >= 0 && c >= 0 && r < size && c < size ? Bumpers.at(r, c) : null);
