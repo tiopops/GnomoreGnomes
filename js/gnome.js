@@ -1607,13 +1607,17 @@ function createGnomeInstance() {
       const frame = (t) => {
         if (!this._dizzy || !this.el || !this.el.isConnected) { this._dizzyStop(); return; }
         const c = getTileCenter(this.row, this.col, Units.boardSize);
+        const z = parseInt(this.el.style.zIndex, 10) || 100;
+        const gone = this.el.classList.contains("unit--fog-hidden");
         stars.forEach((o) => {
-          const a = o.ph + (t - t0) / 380;
-          const x = Math.cos(a) * 44, y = Math.sin(a) * 13;
+          const a = o.ph + (t - t0) / 420; // vueltas en bucle
+          const sn = Math.sin(a), x = Math.cos(a) * 44, y = sn * 16; // elipse = círculo en perspectiva
           o.e.style.left = `${c.x + x}px`;
           o.e.style.top = `${c.y - 62 + y}px`;
-          o.e.style.zIndex = y > 0 ? "2950" : "1";
-          o.e.style.transform = `translate(-50%,-50%) rotate(${o.rot + (t - t0) / 3}deg) scale(${0.85 + 0.2 * Math.sin(a)})`;
+          // delante de la cabeza (sn>0) por encima del gnomo; detrás (sn<0) por debajo de su sprite
+          o.e.style.zIndex = String(sn > 0 ? z + 2 : z - 1);
+          o.e.style.opacity = gone ? "0" : String(0.78 + 0.22 * sn);
+          o.e.style.transform = `translate(-50%,-50%) rotate(${o.rot + (t - t0) / 3}deg) scale(${0.82 + 0.28 * sn})`;
         });
         this._dizzyRaf = requestAnimationFrame(frame);
       };

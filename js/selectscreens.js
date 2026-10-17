@@ -148,6 +148,7 @@ const SelectScreens = {
       pips.appendChild(p);
     });
     root.querySelector("#sel-emblem").addEventListener("click", () => {
+      if (typeof SFX !== "undefined" && SFX.click) { try { SFX.click(); } catch (er) {} }
       if (S.selU === null) return;
       S.selU = null;
       this.renderInfo();

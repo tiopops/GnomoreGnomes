@@ -11111,7 +11111,7 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   gap: clamp(6px, 5vw, 70px);
   padding: 6px 10px 0;
 }
-.sel-emblem { cursor: pointer;
+.sel-emblem { cursor: var(--cursor-pointer);
   height: 100%;
   aspect-ratio: 1;
   display: flex;
@@ -11404,6 +11404,11 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
 
 /* Panel de equipo/unidad: altura fija por franja de ancho (el texto se parte distinto, pero nunca cambia al elegir raza o unidad) */
 @media (min-width: 721px) and (max-width: 1000px) and (min-height: 561px) { .sel-info2 { height: 266px; } }
-@media (max-width: 420px) { .sel-info2 { height: 410px; } }
-@media (max-width: 340px) { .sel-info2 { height: 450px; } }
-@media (max-width: 340px) { .sel-info2 { height: 450px; } }
+@media (max-width: 420px) { .sel-info2 { height: 440px; } }
+@media (max-width: 340px) { .sel-info2 { height: 490px; } }
+@media (max-width: 340px) { .sel-info2 { height: 490px; } }
+
+/* Pulso sutil del puntero al cambiar de color (js/attackcursor.js): copia del puntero que crece y vuelve. */
+.cursor-pulse { position: fixed; left: 0; top: 0; width: 30px; height: 30px; pointer-events: none; z-index: 2147483647; transform-origin: 4px 2px; animation: cursor-pulse 0.26s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+@keyframes cursor-pulse { 0% { transform: scale(1); } 45% { transform: scale(1.4); } 100% { transform: scale(1); } }
+body.perf-mode .cursor-pulse { display: none; }
