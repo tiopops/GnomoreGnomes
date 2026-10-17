@@ -147,6 +147,12 @@ const SelectScreens = {
       p.addEventListener("click", () => this.setRace(i, true));
       pips.appendChild(p);
     });
+    root.querySelector("#sel-emblem").addEventListener("click", () => {
+      if (S.selU === null) return;
+      S.selU = null;
+      this.renderInfo();
+      this.markTeam();
+    });
     this._swipe(root.querySelector(".sel-hero"), (d) => this.setRace(S.ri + d, true));
     root.querySelector("#sel-aL").addEventListener("click", () => this.setRace(S.ri - 1, true));
     root.querySelector("#sel-aR").addEventListener("click", () => this.setRace(S.ri + 1, true));

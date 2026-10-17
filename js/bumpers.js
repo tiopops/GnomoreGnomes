@@ -150,7 +150,14 @@ const Bumpers = {
       const cx = r.left + r.width / 2, cy = r.top + r.height * 0.55;
       return Math.abs(ev.clientX - cx) <= w / 2 && Math.abs(ev.clientY - cy) <= h / 2;
     });
-    if (hit) this.showRoulette(hit);
+    if (hit) this.showRoulette(this._rouletteBumper(hit));
+  },
+
+  // La ruleta sale en el último bumper golpeado que siga visible (si no hay, en el indicado).
+  _rouletteBumper(fallback) {
+    const l = this._lastHit;
+    if (l && this.list.includes(l) && !(typeof Fog !== "undefined" && Fog.isFoggedReal(l.row, l.col))) return l;
+    return fallback || this.list.find((x) => !(typeof Fog !== "undefined" && Fog.isFoggedReal(x.row, x.col))) || this.list[0];
   },
 
   // ---------- Golpes y combo ----------
@@ -179,6 +186,7 @@ const Bumpers = {
   markLit(b, team) {
     if (!b || !b.el) return;
     if (!this.lit) this.lit = new Set();
+    if (!(typeof Fog !== "undefined" && Fog.isFoggedReal(b.row, b.col))) this._lastHit = b;
     if (this.lit.has(b)) return;
     this.lit.add(b);
     b.el.classList.add("bumper--lit");
@@ -194,7 +202,7 @@ const Bumpers = {
     if (typeof Egg !== "undefined" && Egg._flash) Egg._flash();
     vis.forEach((x) => this.reactAt(x, 1));
     const hidden = typeof Egg !== "undefined" && Egg._hidden && Egg._hidden();
-    if (!hidden && t === "player") this.showRoulette(vis[0], 2200);
+    if (!hidden && t === "player") this.showRoulette(this._rouletteBumper(vis[0]), 2200);
     setTimeout(() => this.resetLit(), 700);
   },
 
@@ -365,7 +373,8 @@ const Bumpers = {
     this.resetLit();
     const n = this.combo;
     this.combo = 0;
-    if (n < 2) { this._hideCombo(); return; }
+    const hid0 = typeof Egg !== "undefined" && Egg._hidden && Egg._hidden();
+    if (n < 2) { this._hideCombo(); if (n >= 1 && !hid0 && team !== "enemy" && this.list.length) this.showRoulette(this._rouletteBumper(), 1600); return; }
     const t = team === "enemy" ? "enemy" : "player";
     const before = this.slices[t];
     this.slices[t] = Math.min(BUMPER_SLICES_MAX, before + n);
@@ -373,7 +382,7 @@ const Bumpers = {
     if (hidden) { this._hideCombo(); return; }
     await this._flyComboToRoulette(n);
     if (typeof SFX !== "undefined" && SFX.comboFill) { try { SFX.comboFill(n); } catch (er) {} }
-    if (this.list.length) this.showRoulette(this.list[0], 1600);
+    if (this.list.length) this.showRoulette(this._rouletteBumper(), 1600);
   },
 
   // ---------- JACKPOT ----------
