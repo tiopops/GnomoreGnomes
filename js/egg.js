@@ -863,11 +863,10 @@ const Egg = {
       v.el.animate([{ filter: "brightness(1)" }, { filter: "brightness(1.6)" }, { filter: "brightness(1)" }], { duration: 260 });
     }
     // El huevo también le quita vida al tótem (tanta como su carga, igual que al obelisco).
-    // Si llega a 0 lo captura el equipo que lanzó; un tótem propio nunca baja de 1.
-    if (v && typeof Villages !== "undefined" && v.hp > 0) {
+    // Si llega a 0 lo captura el equipo que lanzó; un tótem propio no recibe daño.
+    if (v && typeof Villages !== "undefined" && v.hp > 0 && v.owner !== causer) {
       const dmg = Math.max(1, (this.egg && this.egg.charge) || 1);
-      const own = v.owner === causer;
-      v.hp = own ? Math.max(1, v.hp - dmg) : Math.max(0, v.hp - dmg);
+      v.hp = Math.max(0, v.hp - dmg);
       if (Villages._isLive(v)) {
         Units.updateHpBar(v);
         Units.spawnFloatingText(v, `-${dmg}`, { className: "dmg-popup" });
