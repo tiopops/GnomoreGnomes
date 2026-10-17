@@ -27,6 +27,7 @@ const EGG_BOUNCE_BONUS_MAX = 8; // tope de casillas extra por rebotes
 const EGG_STEP_MS = 210; // tiempo por casilla durante el vuelo
 const EGG_TURBO_BONUS = 2; // casillas extra por golpear un bumper (turbo)
 const EGG_TURBO_STEP_MS = 120; // tiempo por casilla tras el primer bumper
+const EGG_ASSIST_TOL = 1.25; // desvío lateral (casillas) que la ayuda de puntería perdona
 const EGG_HOMING_RANGE = 4; // alcance (casillas) del teledirigido entre bumpers
 const EGG_PULSE = [2.6, 2.2, 1.7, 1.05, 0.55]; // segundos por latido según carga (con carga 0 respira como el resto del escenario)
 const EGG_AMP = [0.03, 0.035, 0.042, 0.052, 0.065];
@@ -306,6 +307,30 @@ const Egg = {
       });
       return best;
     };
+    // Ayuda de puntería (permisiva, un poco de "trampa"): si un bumper visible queda casi en la
+    // línea del tiro (hasta ~1 casilla de desvío lateral) y el camino está despejado, el huevo se
+    // corrige hacia él. Así apuntar a un bumper no es un tedio de milímetros.
+    const assist = (fr, fc, dr0, dc0, rem) => {
+      if (typeof Bumpers === "undefined") return null;
+      const dl = Math.hypot(dr0, dc0) || 1;
+      let best = null, bs = Infinity;
+      Bumpers.list.forEach((b) => {
+        if (seen.has(b) || blocked.has(b)) return;
+        if (typeof Fog !== "undefined" && Fog.isFoggedReal(b.row, b.col)) return;
+        const ar = b.row - fr, ac = b.col - fc, st = Math.max(Math.abs(ar), Math.abs(ac));
+        if (st < 2 || st > rem) return;
+        const fwd = (ar * dr0 + ac * dc0) / dl, cross = Math.abs(ar * dc0 - ac * dr0) / dl;
+        if (fwd < 1.5 || cross > EGG_ASSIST_TOL || cross < 0.01) return;
+        for (let j = 1; j < st; j++) {
+          const lr = fr + Math.round(ar * j / st), lc = fc + Math.round(ac * j / st);
+          if (wall(lr, lc)) return;
+          if (typeof Fog !== "undefined" && Fog.isFoggedReal(lr, lc)) return;
+        }
+        const sc = cross * 10 + st;
+        if (sc < bs) { bs = sc; best = b; }
+      });
+      return best;
+    };
     let r = e.row, c = e.col, dr = dir[0], dc = dir[1];
     const steps = [];
     // Cada rebote regala 1 casilla más de recorrido (con tope para no ciclar); los bumpers dan +2 (turbo).
@@ -314,6 +339,7 @@ const Egg = {
     let target = null, fast = false;
     for (let i = 0; i < total; i++) {
       const step_r0 = r, step_c0 = c;
+      if (!target && i === 0) target = assist(r, c, dr, dc, total - i);
       let nr, nc;
       if (target) { [nr, nc] = lineNext(r, c, target); dr = nr - r; dc = nc - c; }
       else { nr = r + dr; nc = c + dc; }
@@ -363,6 +389,8 @@ const Egg = {
         } else {
           if (total < maxTotal) total++;
           reflect();
+          const at = (nr !== r || nc !== c) ? assist(nr, nc, dr, dc, total - i - 1) : null;
+          if (at) target = at;
         }
       }
       r = nr; c = nc;
@@ -517,7 +545,7 @@ const Egg = {
           svg.setAttribute("height", "1");
           svg.style.overflow = "visible";
           const poly = document.createElementNS(NS, "polygon");
-          poly.setAttribute("points", [pt(0.5, 0), pt(-0.28, 0.4), pt(-0.12, 0), pt(-0.28, -0.4)].join(" "));
+          poly.setAttribute("points", [pt(0.3, 0), pt(-0.17, 0.24), pt(-0.07, 0), pt(-0.17, -0.24)].join(" "));
           poly.setAttribute("class", "egg-arrow__poly");
           svg.appendChild(poly);
           marker.appendChild(svg);
