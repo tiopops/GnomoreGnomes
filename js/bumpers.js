@@ -373,38 +373,54 @@ const Bumpers = {
     this.resetLit();
     const n = this.combo;
     this.combo = 0;
-    const hid0 = typeof Egg !== "undefined" && Egg._hidden && Egg._hidden();
-    if (n < 2) { this._hideCombo(); if (n >= 1 && !hid0 && team !== "enemy" && this.list.length) this.showRoulette(this._rouletteBumper(), 1600); return; }
     const t = team === "enemy" ? "enemy" : "player";
-    const before = this.slices[t];
-    this.slices[t] = Math.min(BUMPER_SLICES_MAX, before + n);
     const hidden = typeof Egg !== "undefined" && Egg._hidden && Egg._hidden();
-    if (hidden) { this._hideCombo(); return; }
-    await this._flyComboToRoulette(n);
-    if (typeof SFX !== "undefined" && SFX.comboFill) { try { SFX.comboFill(n); } catch (er) {} }
-    if (this.list.length) this.showRoulette(this._rouletteBumper(), 1600);
+    if (n < 2) {
+      this._hideCombo();
+      if (n >= 1 && !hidden && t === "player" && this.list.length) this.showRoulette(this._rouletteBumper(), 1600);
+    } else {
+      const before = this.slices[t];
+      this.slices[t] = Math.min(BUMPER_SLICES_MAX, before + n);
+      if (hidden) this._hideCombo();
+      else {
+        await this._flyComboToRoulette(n);
+        if (typeof SFX !== "undefined" && SFX.comboFill) { try { SFX.comboFill(n); } catch (er) {} }
+        if (this.list.length) this.showRoulette(this._rouletteBumper(), 1600);
+      }
+    }
+    // 10 de ruleta antes de que se rompa el huevo: se llevan los 10 puntos, solo quien los alcanza.
+    const w = this._winner(t);
+    if (w) await this._win(w);
   },
 
-  // ---------- JACKPOT ----------
-  async jackpot() {
-    const gains = { player: this.slices.player, enemy: this.slices.enemy };
+  _winner(pref) {
+    const a = this.slices.player >= BUMPER_SLICES_MAX, b = this.slices.enemy >= BUMPER_SLICES_MAX;
+    if (a && b) return pref;
+    return a ? "player" : b ? "enemy" : null;
+  },
+
+  // Premio de 10: reinicia todas las ruletas y la puntuación del huevo; el resto no recibe nada.
+  async _win(t) {
     this.resetRoulettes();
     this.hideRoulette();
-    const total = gains.player + gains.enemy;
-    ["player", "enemy"].forEach((t) => {
-      const g = gains[t];
-      if (g > 0 && typeof Glory !== "undefined" && t in Glory.points) {
-        const room = Math.max(0, (typeof GLORY_CAP !== "undefined" ? GLORY_CAP : 999) - Glory.points[t]);
-        const add = Math.min(g, room);
-        Glory.points[t] += add;
-        Glory._render(t, { bump: add > 0, gained: add });
-      }
-    });
-    if (total <= 0) return;
+    this._grant(t, BUMPER_SLICES_MAX);
+    if (typeof Egg !== "undefined" && Egg.resetScore) Egg.resetScore();
+    await this._pop(t === "player" ? BUMPER_SLICES_MAX : 0);
+  },
+
+  _grant(t, g) {
+    if (g > 0 && typeof Glory !== "undefined" && t in Glory.points) {
+      const room = Math.max(0, (typeof GLORY_CAP !== "undefined" ? GLORY_CAP : 999) - Glory.points[t]);
+      const add = Math.min(g, room);
+      Glory.points[t] += add;
+      Glory._render(t, { bump: add > 0, gained: add });
+    }
+  },
+
+  async _pop(mine) {
     const hidden = typeof Egg !== "undefined" && Egg._hidden && Egg._hidden();
     if (hidden) return;
     if (typeof SFX !== "undefined" && SFX.jackpot) { try { SFX.jackpot(); } catch (er) {} }
-    const mine = gains.player;
     const el = document.createElement("div");
     el.className = "jackpot-pop";
     el.innerHTML = `<b>JACKPOT</b><span>+${mine}!</span>`;
@@ -412,6 +428,19 @@ const Bumpers = {
     this._coins();
     await new Promise((r) => setTimeout(r, 2200));
     el.remove();
+  },
+
+  // ---------- JACKPOT ----------
+  async jackpot() {
+    const w = this._winner("player");
+    if (w) { await this._win(w); return; }
+    const gains = { player: this.slices.player, enemy: this.slices.enemy };
+    this.resetRoulettes();
+    this.hideRoulette();
+    const total = gains.player + gains.enemy;
+    ["player", "enemy"].forEach((t) => this._grant(t, gains[t]));
+    if (total <= 0) return;
+    await this._pop(gains.player);
   },
 
   _coins() {

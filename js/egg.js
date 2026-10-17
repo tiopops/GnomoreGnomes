@@ -991,6 +991,16 @@ const Egg = {
     this._hitThisRound = false;
   },
 
+  // Puntuación del huevo a cero (tras un premio de 10 de ruleta); el huevo sigue donde está.
+  resetScore() {
+    const e = this.egg;
+    if (!e || e.exploded) return;
+    e.charge = 0;
+    e.hitsMax = 0;
+    e._stage = null;
+    this._applyStage();
+  },
+
   _respawn() {
     const e = this.egg;
     this._respawnPending = false;
