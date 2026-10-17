@@ -11322,3 +11322,72 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
 .sel-rival__tx { display: block; font-size: 12px; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.7); }
 .sel-rival--sel::after { background: color-mix(in srgb, var(--acc) 40%, var(--sel-panel)); }
 .sel-rival--sel .sel-rival__num { color: #ffd23f; }
+
+/* ---------- Móvil / pantallas pequeñas: contenido desplazable, botón principal fijo abajo, gestos ---------- */
+.sel-hero, .sel-orbit, .sel-rivs { touch-action: pan-y; }
+.sel-un__sp { height: calc(var(--h) * var(--us, 1)); }
+@media (max-width: 720px), (max-height: 560px) {
+  .sel-root { overflow-y: auto; overflow-x: hidden; justify-content: flex-start; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .sel-root > * { flex-shrink: 0; }
+  .sel-root > .sel-btn { position: sticky; bottom: 10px; margin-top: auto; z-index: 20; padding: 14px 40px; font-size: 17px; }
+  .sel-hero { flex: 0 0 auto; height: 150px; gap: clamp(10px, 6vw, 40px); }
+  .sel-emblem { height: 150px; }
+  .sel-arrow { width: 40px; height: 62px; }
+  .sel-rname { font-size: 26px; }
+  .sel-rflav { display: block; font-size: 12.5px; margin: 2px 0 8px; }
+  .sel-info2 { width: calc(100vw - 24px); min-height: 0; padding: 12px 16px 14px; }
+  .sel-col p, .sel-ud p { font-size: 13px; }
+  .sel-team { --us: 0.72; margin-top: 98px; gap: 8px; padding: 0 6px 4px; }
+  .sel-un { width: 98px; }
+  .sel-un__box { height: 42px; }
+  .sel-un__sp { bottom: 20px; }
+  .sel-un__nm { font-size: 10px; bottom: 6px; }
+  .sel-un--sel .sel-un__sp { transform: translateX(-50%) scale(1.16) !important; }
+  .sel-hintu { margin: 4px 0 10px; padding: 0 12px; }
+  .sel-orbit { flex: 0 0 auto; height: min(44vh, 320px); }
+  .sel-arrow--nav { width: 38px; height: 58px; top: 34%; }
+  .sel-isl__lbl { font-size: 16px; margin-top: 12px; }
+  .sel-info { width: calc(100vw - 24px); padding: 14px 16px 16px; margin: 6px 0 12px; }
+  .sel-ft { font-size: 13px; }
+  .sel-chip { position: relative !important; left: auto; top: auto; margin-top: 8px; padding: 4px 16px 4px 8px; transform: none; z-index: 2; }
+  .sel-chip img { width: 34px; }
+  .sel-rivs { flex: 0 0 auto; flex-wrap: nowrap; gap: 8px; padding: 18px 12px; margin: auto 0; }
+  .sel-rival { width: calc((100vw - 40px) / 3); min-width: 0; padding: 12px 4px; }
+  .sel-rival__em { height: 58px; }
+  .sel-rival__em img { width: 46px; margin: 0 -6px; }
+  .sel-rival__num { font-size: 34px; }
+  .sel-rival__tx { font-size: 10px; letter-spacing: 0.08em; }
+  .sel-summ { padding: 0 12px; }
+}
+/* Vertical estrecho: la barra de pasos baja a su propia fila (no choca con Volver ni con los botones de perfil/ajustes) */
+@media (max-width: 720px) {
+  .sel-root > .sel-steps { position: relative; left: auto; top: auto; transform: none; margin-top: 64px; gap: 4px; }
+  .sel-step { padding: 7px 11px; font-size: 11px; letter-spacing: 0.04em; }
+  .sel-step b { margin-right: 5px; }
+  .sel-title { margin-top: 12px; font-size: 12px; letter-spacing: 0.22em; }
+}
+/* Apaisado de móvil: poca altura, así que se compacta */
+@media (max-height: 560px) and (min-width: 721px) {
+  .sel-title { display: none; }
+  .sel-hero, .sel-emblem { height: 118px; }
+  .sel-rflav { display: none; }
+  .sel-team { margin-top: 92px; }
+  .sel-orbit { height: 210px; }
+  .sel-root { padding-top: 60px; }
+  .sel-chip { display: none !important; }
+  .sel-team { --us: 0.62; margin-top: 84px; }
+  .sel-root > .sel-btn { bottom: 6px; padding: 9px 34px; font-size: 15px; }
+  .sel-info2, .sel-info { width: min(900px, calc(100vw - 32px)); }
+  .sel-rivs { padding: 8px 12px; }
+  .sel-rival { width: 150px; }
+  .sel-rival__em { height: 60px; }
+}
+@media (max-height: 560px) and (max-width: 720px) {
+  .sel-title { display: none; }
+  .sel-chip { display: none !important; }
+  .sel-hero, .sel-emblem { height: 118px; }
+  .sel-rflav { display: none; }
+  .sel-team { --us: 0.62; margin-top: 84px; }
+  .sel-orbit { height: 210px; }
+  .sel-root > .sel-btn { bottom: 6px; padding: 9px 34px; font-size: 15px; }
+}

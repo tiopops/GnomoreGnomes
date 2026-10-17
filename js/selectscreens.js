@@ -56,6 +56,23 @@ const SelectScreens = {
     const el = document.getElementById(id);
     return !!(el && el.classList.contains("screen--active"));
   },
+  // Deslizar con el dedo (móvil): izquierda/derecha cambia de opción sin molestar al scroll vertical.
+  _swipe(el, fn) {
+    if (!el || el._swipeOn) return;
+    el._swipeOn = true;
+    let x0 = 0, y0 = 0, on = false;
+    el.addEventListener("touchstart", (e) => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; on = true; }, { passive: true });
+    el.addEventListener("touchend", (e) => {
+      if (!on) return;
+      on = false;
+      const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+        this._swAt = performance.now();
+        this._sfx("click");
+        fn(dx < 0 ? 1 : -1);
+      }
+    }, { passive: true });
+  },
   _sfx(name) { try { if (typeof SFX !== "undefined" && SFX[name]) SFX[name](); } catch (e) {} },
 
   // ---------- piezas comunes ----------
@@ -130,6 +147,7 @@ const SelectScreens = {
       p.addEventListener("click", () => this.setRace(i, true));
       pips.appendChild(p);
     });
+    this._swipe(root.querySelector(".sel-hero"), (d) => this.setRace(S.ri + d, true));
     root.querySelector("#sel-aL").addEventListener("click", () => this.setRace(S.ri - 1, true));
     root.querySelector("#sel-aR").addEventListener("click", () => this.setRace(S.ri + 1, true));
     root.querySelector("#sel-bRace").addEventListener("click", () => {
@@ -245,10 +263,11 @@ const SelectScreens = {
       d.style.setProperty("--d", `-${(NR() * 5).toFixed(2)}s`);
       d.setAttribute("aria-label", this.t(l.nameKey));
       d.innerHTML = `<span class="sel-isl__sh"></span><img class="sel-isl__im" src="${l.islandImg}" alt=""><span class="sel-isl__lbl">${this.t(l.nameKey)}</span>`;
-      d.addEventListener("click", () => this.rotate(i));
+      d.addEventListener("click", () => { if (performance.now() - (this._swAt || 0) < 350) return; this.rotate(i); });
       orbit.appendChild(d);
       return d;
     });
+    this._swipe(orbit, (d) => this.rotate(S.front + d));
     root.querySelector("#sel-nL").addEventListener("click", () => this.rotate(S.front - 1));
     root.querySelector("#sel-nR").addEventListener("click", () => this.rotate(S.front + 1));
     root.querySelector("#sel-bLvl").addEventListener("click", () => {
@@ -286,8 +305,9 @@ const SelectScreens = {
     const W = o.clientWidth, H = o.clientHeight, N = LEVELS.length;
     if (!W || !H) return;
     const ang = this._ang;
-    const base = Math.min(H * 0.8, W * 0.44, 470);
-    const cx = W / 2, rx = Math.min(W * 0.33, H * 1.05 + 60);
+    const narrow = W < 640;
+    const base = Math.min(H * 0.8, W * (narrow ? 0.6 : 0.44), 470);
+    const cx = W / 2, rx = narrow ? W * 0.36 : Math.min(W * 0.33, H * 1.05 + 60);
     this._isl.forEach((el, i) => {
       let t = (((i - ang) % N) + N) % N;
       if (t > N / 2) t -= N;
@@ -342,6 +362,7 @@ const SelectScreens = {
       matchDraft.opponents = OPPONENT_OPTIONS[Math.max(0, Math.min(OPPONENT_OPTIONS.length - 1, this.ST.nr - 1))] || 1;
       startMatch(matchDraft);
     });
+    this._swipe(root.querySelector("#sel-rivs"), (d) => this.setRivals(this.ST.nr + d));
     this.setRivals(this.ST.nr, false);
   },
 
