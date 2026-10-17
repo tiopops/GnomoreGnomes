@@ -150,7 +150,7 @@ const Bumpers = {
       const cx = r.left + r.width / 2, cy = r.top + r.height * 0.55;
       return Math.abs(ev.clientX - cx) <= w / 2 && Math.abs(ev.clientY - cy) <= h / 2;
     });
-    if (hit) this.showRoulette(this._rouletteBumper(hit));
+    if (hit) this.showRoulette(hit);
   },
 
   // La ruleta sale en el último bumper golpeado que siga visible (si no hay, en el indicado).
