@@ -175,6 +175,14 @@ const SFX = {
     this._tone(f * 2.01, null, 0.2, "sine", 0.2);
     this._tone(f * 3, f * 2.4, 0.08, "square", 0.08);
   },
+  // Bumper que se enciende (campanita) y tablero encendido (arpegio ascendente).
+  bumperLit() {
+    this._tone(988, null, 0.35, "sine", 0.28);
+    this._tone(1480, null, 0.4, "sine", 0.14, 0.04);
+  },
+  boardLit() {
+    [0, 4, 7, 12, 16].forEach((s, i) => this._tone(523 * Math.pow(2, s / 12), null, 0.3, "triangle", 0.3, i * 0.09));
+  },
   comboChime(n) {
     const f = this._pinFreq(n + 2);
     [0, 4, 7, 12].forEach((s, i) => this._tone(f * Math.pow(2, s / 12), null, 0.45, "sine", 0.2, i * 0.05));

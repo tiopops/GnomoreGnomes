@@ -626,6 +626,7 @@ function createGnomeInstance() {
     },
 
     attachTo(unit) {
+      if (this._clearDizzy) this._clearDizzy();
       this.heldBy = unit.id;
       this.el.style.display = "none";
       this.spriteEl.src = GNOME_ASSETS.grita;
@@ -881,6 +882,7 @@ function createGnomeInstance() {
       // dentro del mismo límite de 4 casillas (ver findDropTile).
       if (typeof Volcano !== "undefined") Volcano.addThrowMarker(unit, this); // lanzar al volcán (js/volcano.js)
       if (typeof Egg !== "undefined") Egg.addThrowMarker(unit, this); // lanzar contra el huevo (js/egg.js)
+      if (typeof Bumpers !== "undefined") Bumpers.addThrowMarker(unit, this); // rebote de billar contra un bumper (js/bumpers.js)
       const movimiento = Units.moveRangeOf(unit);
       const tiles = this._throwableTiles(unit);
       tiles.forEach((tile, i) => {
@@ -1578,6 +1580,60 @@ function createGnomeInstance() {
       this._setPoints(this.points + n);
     },
 
+    // Mareado (rebote en un bumper): sentado, con estrellas de cómic orbitando su cabeza
+    // (las mismas que las de Puñoroca) hasta que acabe el turno.
+    setDizzy() {
+      this._dizzy = true;
+      if (this.spriteEl) this.spriteEl.src = GNOME_ASSETS.sentado;
+      this._dizzyStop();
+      if (!Units.container) return;
+      const stars = [];
+      for (let i = 0; i < 4; i++) {
+        const sz = 30 + NR() * 8;
+        const pts = [];
+        for (let k = 0; k < 10; k++) {
+          const ang = (k / 10) * Math.PI * 2 - Math.PI / 2 + (NR() - 0.5) * 0.25;
+          const r = (k % 2 ? 4.2 : 10) * (0.8 + NR() * 0.4);
+          pts.push(`${(12 + Math.cos(ang) * r).toFixed(1)},${(12 + Math.sin(ang) * r).toFixed(1)}`);
+        }
+        const e = document.createElement("div");
+        e.className = "punch-star";
+        e.innerHTML = `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24"><polygon points="${pts.join(" ")}" fill="#fbbf24"/></svg>`;
+        Units.container.appendChild(e);
+        stars.push({ e, ph: (i / 4) * Math.PI * 2, rot: NR() * 360 });
+      }
+      this._dizzyStars = stars;
+      const t0 = performance.now();
+      const frame = (t) => {
+        if (!this._dizzy || !this.el || !this.el.isConnected) { this._dizzyStop(); return; }
+        const c = getTileCenter(this.row, this.col, Units.boardSize);
+        stars.forEach((o) => {
+          const a = o.ph + (t - t0) / 380;
+          const x = Math.cos(a) * 44, y = Math.sin(a) * 13;
+          o.e.style.left = `${c.x + x}px`;
+          o.e.style.top = `${c.y - 62 + y}px`;
+          o.e.style.zIndex = y > 0 ? "2950" : "1";
+          o.e.style.transform = `translate(-50%,-50%) rotate(${o.rot + (t - t0) / 3}deg) scale(${0.85 + 0.2 * Math.sin(a)})`;
+        });
+        this._dizzyRaf = requestAnimationFrame(frame);
+      };
+      this._dizzyRaf = requestAnimationFrame(frame);
+    },
+
+    _dizzyStop() {
+      if (this._dizzyRaf) cancelAnimationFrame(this._dizzyRaf);
+      this._dizzyRaf = null;
+      (this._dizzyStars || []).forEach((o) => o.e.remove());
+      this._dizzyStars = [];
+    },
+
+    _clearDizzy() {
+      if (!this._dizzy) return;
+      this._dizzy = false;
+      this._dizzyStop();
+      if (!this.heldBy && !this.busy && this.spriteEl) this.spriteEl.src = GNOME_ASSETS.idle;
+    },
+
     // Pedido explícito: "los gnomos que están sueltos sin ser cogidos
     // pierden 5 puntos cada vez que alguien pulsa el botón PASAR TURNO...
     // un -5 deberá salir de sus sprites como cuando se les pega... si
@@ -1946,6 +2002,7 @@ const Gnome = {
   // mismo (esos ya están "en juego", ganando puntos, no relajándose solos).
   // Pedido explícito: "con perder 1 punto por turno sea suficiente" (antes 5).
   applyTurnPassDecay(amount = 1) {
+    this.list.forEach((g) => { if (g._clearDizzy) g._clearDizzy(); });
     this.list.forEach((g) => {
       if (!g.heldBy) g._loseCooldownPoints(amount);
     });

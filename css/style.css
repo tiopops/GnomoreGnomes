@@ -11390,3 +11390,12 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   .sel-root > .sel-btn { bottom: 6px; padding: 9px 34px; font-size: 15px; }
 }
 #sel-rpips { margin: 4px 0 22px; }
+
+/* ---- Bumpers: luces, turbo y teledirigido ---- */
+.bumper::before { content: ""; position: absolute; left: 50%; top: 82%; width: 230px; height: 92px; transform: translate(-50%, -50%); border-radius: 50%; border: 5px solid #ff7a2b; box-shadow: 0 0 22px 5px #ff7a2b, inset 0 0 16px #ff7a2b; pointer-events: none; animation: bumper-ring 1.2s ease-out infinite; z-index: -1; }
+@keyframes bumper-ring { 0% { transform: translate(-50%, -50%) scale(0.7); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.25); opacity: 0; } }
+.bumper__sprite { transition: filter 0.25s; }
+.bumper:not(.bumper--lit) .bumper__sprite { filter: brightness(0.8) saturate(0.5) drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)); }
+.bumper--lit .bumper__sprite { filter: drop-shadow(0 0 18px #ffd23f) drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)); }
+.bumper--lock::after { content: ""; position: absolute; left: 50%; top: 82%; width: 230px; height: 92px; transform: translate(-50%, -50%); border-radius: 50%; border: 5px solid #fff; box-shadow: 0 0 20px 4px #9fe8ff; pointer-events: none; animation: bumper-ring 0.5s ease-out infinite; z-index: 5; }
+.egg-ghost { pointer-events: none; opacity: 0.5; transition: opacity 0.3s linear !important; filter: hue-rotate(-30deg) saturate(2) brightness(1.3); }

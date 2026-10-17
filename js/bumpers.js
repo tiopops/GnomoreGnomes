@@ -10,6 +10,7 @@
    Cómo rebota el huevo lo decide js/egg.js (_simulate); aquí solo se pinta. */
 
 const BUMPER_SLICES_MAX = 10;
+const GNOME_BUMP_POINTS = 5; // puntos que se carga el gnomo al rebotar en un bumper
 const BUMPER_SPRITE_W = 205;
 const BUMPER_SCALE = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24, 26];
 
@@ -156,6 +157,181 @@ const Bumpers = {
   beginFlight() {
     this.combo = 0;
     this._hideCombo();
+    this.resetLit();
+  },
+
+  // ---------- Bumpers con luces y teledirigido ----------
+  // Cada bumper se enciende al golpearlo en el vuelo; si se encienden todos los visibles
+  // (sin niebla), +3 porciones a la ruleta del equipo (NO suman al número del combo).
+  resetLit() {
+    (this.lit || new Set()).forEach((b) => b.el && b.el.classList.remove("bumper--lit"));
+    this.lit = new Set();
+    this.setLock(null);
+  },
+
+  setLock(b) {
+    if (this._lock === (b || null)) return;
+    if (this._lock && this._lock.el) this._lock.el.classList.remove("bumper--lock");
+    this._lock = b || null;
+    if (b && b.el) b.el.classList.add("bumper--lock");
+  },
+
+  markLit(b, team) {
+    if (!b || !b.el) return;
+    if (!this.lit) this.lit = new Set();
+    if (this.lit.has(b)) return;
+    this.lit.add(b);
+    b.el.classList.add("bumper--lit");
+    if (typeof SFX !== "undefined" && SFX.bumperLit) { try { SFX.bumperLit(); } catch (er) {} }
+    const vis = this.list.filter((x) => !(typeof Fog !== "undefined" && Fog.isFoggedReal(x.row, x.col)));
+    if (vis.length >= 2 && vis.every((x) => this.lit.has(x))) this._boardLit(team, vis);
+  },
+
+  _boardLit(team, vis) {
+    const t = team === "enemy" ? "enemy" : "player";
+    this.slices[t] = Math.min(BUMPER_SLICES_MAX, this.slices[t] + 3);
+    if (typeof SFX !== "undefined" && SFX.boardLit) { try { SFX.boardLit(); } catch (er) {} }
+    if (typeof Egg !== "undefined" && Egg._flash) Egg._flash();
+    vis.forEach((x) => this.reactAt(x, 1));
+    const hidden = typeof Egg !== "undefined" && Egg._hidden && Egg._hidden();
+    if (!hidden && t === "player") this.showRoulette(vis[0], 2200);
+    setTimeout(() => this.resetLit(), 700);
+  },
+
+
+  // ---------- Lanzar un gnomo contra un bumper (rebote de billar) ----------
+  // Si el huevo está a la vista y el camino bumper -> huevo está libre, el gnomo rebota
+  // en línea recta hasta quedar junto al huevo y lo golpea. Si no, cae sentado a 2 casillas
+  // del bumper. En todos los casos el gnomo se carga +5 y queda mareado hasta acabar el turno.
+  _free(r, c, b) {
+    const size = Units.boardSize;
+    if (r < 0 || c < 0 || r >= size || c >= size) return false;
+    if (typeof Egg !== "undefined" && Egg.egg && !Egg.egg.exploded && Egg.egg.row === r && Egg.egg.col === c) return false;
+    return Egg._canRest(r, c) && !(b && b.row === r && b.col === c);
+  },
+
+  // Casilla libre al azar (determinista por semilla, para que el multijugador coincida) a 1 o 2 de distancia.
+  _landCell(b, holder) {
+    this._throwN = (this._throwN || 0) + 1;
+    let sd = ((b.row * 73856093) ^ (b.col * 19349663) ^ (holder.row * 83492791) ^ (holder.col * 2654435) ^ (this._throwN * 1013)) >>> 0;
+    const rng = () => { sd = (sd + 0x6d2b79f5) >>> 0; let x = sd; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+    const cands = [];
+    for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
+      if (!dr && !dc) continue;
+      const r = b.row + dr, c = b.col + dc;
+      if (this._free(r, c, b)) { cands.push({ row: r, col: c }); continue; }
+      // Si cae sobre una unidad, esa unidad coge al gnomo directamente.
+      const u = r >= 0 && c >= 0 && r < Units.boardSize && c < Units.boardSize ? Units.unitAt(r, c) : null;
+      if (u && !Gnome.isHeldBy(u.id) && !(b.row === r && b.col === c) && !Egg._tileObjectAt(r, c)
+        && !(Egg.egg && !Egg.egg.exploded && Egg.egg.row === r && Egg.egg.col === c)) cands.push({ row: r, col: c, unit: u });
+    }
+    if (cands.length) return cands[Math.floor(rng() * cands.length)];
+    return { row: holder.row, col: holder.col };
+  },
+
+  _outcome(b, holder) {
+    const e = typeof Egg !== "undefined" && Egg._live() && !Egg._hidden() ? Egg.egg : null;
+    if (e) {
+      const d = Math.max(Math.abs(e.row - b.row), Math.abs(e.col - b.col));
+      const cells = [];
+      for (let i = 1; i < d; i++) cells.push({ row: b.row + Math.round(((e.row - b.row) * i) / d), col: b.col + Math.round(((e.col - b.col) * i) / d) });
+      const bad = cells.findIndex((q) => !this._free(q.row, q.col, b));
+      if (bad < 0 && cells.length) {
+        const last = cells[cells.length - 1];
+        return { kind: "egg", cell: last, dir: [Math.sign(e.row - last.row), Math.sign(e.col - last.col)] };
+      }
+      if (bad > 0) return { kind: "blocked", cell: cells[bad - 1], blocker: cells[bad] };
+    }
+    return { kind: "sit", cell: this._landCell(b, holder) };
+  },
+
+  addThrowMarker(unit, gnome) {
+    if (!this.list.length || typeof Egg === "undefined" || !Egg.isActive()) return;
+    this.list.forEach((b) => {
+      if (typeof Fog !== "undefined" && Fog.isFoggedReal(b.row, b.col)) return;
+      const dist = Math.max(Math.abs(b.row - unit.row), Math.abs(b.col - unit.col));
+      if (dist < 1 || dist > GNOME_THROW_MAX_RANGE) return;
+      Units.addMarker({
+        className: "pass-marker bumper-throw-marker",
+        row: b.row, col: b.col, zOffset: 12,
+        visibleClass: "pass-marker--visible",
+        owner: "gnome", alwaysOnTop: true,
+        buildContent: (marker) => {
+          const icon = document.createElement("i");
+          icon.className = "ph ph-paper-plane-tilt pass-marker__icon";
+          marker.appendChild(icon);
+        },
+        onClick: () => this.throwGnome(unit, gnome, b),
+      });
+    });
+  },
+
+  async throwGnome(holder, gnome, b) {
+    if (!b || !this.list.includes(b) || gnome.heldBy !== holder.id || gnome.busy) return;
+    if (typeof Egg === "undefined" || !Egg.isActive() || Egg._busy) return;
+    if (typeof Turns !== "undefined" && !Turns.canAct(holder)) return;
+    if (typeof Turns !== "undefined") Turns.useAction(holder);
+    Units.clearRangeOverlays();
+    gnome.passing = false;
+    gnome.busy = true;
+    gnome.hideBadge();
+    Egg._busy = true;
+    try {
+      const out = this._outcome(b, holder);
+      Units.faceTowardsTile(holder, b.row, b.col);
+      gnome.row = holder.row;
+      gnome.col = holder.col;
+      Units.faceTowardsTile(gnome, b.row, b.col);
+      if (holder.el) {
+        holder.el.classList.remove("unit--throwing");
+        void holder.spriteEl.offsetWidth;
+        holder.el.classList.add("unit--throwing");
+        setTimeout(() => holder.el && holder.el.classList.remove("unit--throwing"), 380);
+      }
+      gnome.detachFrom();
+      gnome.spriteEl.src = GNOME_ASSETS.grita;
+      await gnome.animateThrowTo(holder.row, holder.col, b.row, b.col);
+      // Impacto en el bumper: golpe de combo, se enciende.
+      this.beginFlight();
+      const n = this.registerHit();
+      this.reactAt(b, n);
+      this.markLit(b, holder.team);
+      await new Promise((r) => setTimeout(r, 160));
+      // Rebote hacia su casilla (junto al huevo, junto al obstáculo o a 2 casillas del bumper).
+      await gnome.animateThrowTo(b.row, b.col, out.cell.row, out.cell.col);
+      const catcher = out.cell.unit && Units.list.includes(out.cell.unit) && !Gnome.isHeldBy(out.cell.unit.id) ? out.cell.unit : null;
+      if (catcher) {
+        // Cae en los brazos de una unidad: la coge directamente (sin mareo).
+        gnome.row = catcher.row;
+        gnome.col = catcher.col;
+        gnome.attachTo(catcher);
+        gnome._addPoints(GNOME_BUMP_POINTS);
+        Units.spawnFloatingText(catcher, `+${GNOME_BUMP_POINTS}`, { className: "dmg-popup gnome-points-popup" });
+        if (typeof SFX !== "undefined" && SFX.passSuccess) SFX.passSuccess();
+      } else {
+        await gnome.landAt(out.cell, { sound: () => { if (typeof SFX !== "undefined") SFX.gnomeLandSoft(); } });
+        gnome._addPoints(GNOME_BUMP_POINTS);
+        Units.spawnFloatingText(gnome, `+${GNOME_BUMP_POINTS}`, { className: "dmg-popup gnome-points-popup" });
+        gnome.setDizzy();
+      }
+      let flight = null;
+      if (out.kind === "egg") {
+        this._keepCombo = true;
+        flight = Egg._ricochetHit(holder, out.dir);
+      } else {
+        if (out.kind === "blocked" && Units.unitAt(out.blocker.row, out.blocker.col)) {
+          const u = Units.unitAt(out.blocker.row, out.blocker.col);
+          if (typeof Units.playShake === "function") Units.playShake(u);
+        }
+        flight = this.endFlight(holder.team);
+      }
+      await flight;
+    } finally {
+      Egg._busy = false;
+      this._keepCombo = false;
+      gnome.busy = false;
+      if (holder.el) Units.refreshRange(holder);
+    }
   },
 
   // Registra un golpe (bumper, tótem, obelisco o unidad). Devuelve el nº de golpes del vuelo.
@@ -186,6 +362,7 @@ const Bumpers = {
 
   // Fin del vuelo: el COMBO se suma UNA vez a la ruleta del equipo que golpeó.
   async endFlight(team) {
+    this.resetLit();
     const n = this.combo;
     this.combo = 0;
     if (n < 2) { this._hideCombo(); return; }

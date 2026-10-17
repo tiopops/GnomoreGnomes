@@ -25,6 +25,9 @@ const EGG_PUSH_AWAY = 1; // 1 = en la dirección del golpe; -1 = hacia quien lan
 const EGG_GNOME_POINTS = 5; // puntos que carga el gnomo al estamparse
 const EGG_BOUNCE_BONUS_MAX = 8; // tope de casillas extra por rebotes
 const EGG_STEP_MS = 210; // tiempo por casilla durante el vuelo
+const EGG_TURBO_BONUS = 2; // casillas extra por golpear un bumper (turbo)
+const EGG_TURBO_STEP_MS = 120; // tiempo por casilla tras el primer bumper
+const EGG_HOMING_RANGE = 4; // alcance (casillas) del teledirigido entre bumpers
 const EGG_PULSE = [2.6, 2.2, 1.7, 1.05, 0.55]; // segundos por latido según carga (con carga 0 respira como el resto del escenario)
 const EGG_AMP = [0.03, 0.035, 0.042, 0.052, 0.065];
 const EGG_DIRS = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]];
@@ -272,23 +275,55 @@ const Egg = {
     // Tótems (aldeas, js/villages.js): rebotan igual que los obeliscos, de cualquier equipo.
     const vAt = (r, c) => (typeof Villages !== "undefined" && r >= 0 && c >= 0 && r < size && c < size ? Villages.at(r, c) : null);
     const bAt = (r, c) => (typeof Bumpers !== "undefined" && r >= 0 && c >= 0 && r < size && c < size ? Bumpers.at(r, c) : null);
-    const wall = (r, c) => r < 0 || c < 0 || r >= size || c >= size || !!obAt(r, c) || !!vAt(r, c) || !!bAt(r, c);
+    // Bumpers ya golpeados en este vuelo: el huevo los atraviesa sin efecto.
+    const seen = new Set(typeof Bumpers !== "undefined" && Bumpers.lit ? Bumpers.lit : []), blocked = new Set();
+    const bLive = (r, c) => { const b = bAt(r, c); return b && !seen.has(b) ? b : null; };
+    const wall = (r, c) => r < 0 || c < 0 || r >= size || c >= size || !!obAt(r, c) || !!vAt(r, c) || !!bLive(r, c);
+    // Aleatorio determinista (misma vista previa y vuelo real).
+    let sd = ((e.row * 73856093) ^ (e.col * 19349663) ^ (dir[0] * 83492791 + dir[1] * 2654435) ^ (e.charge * 1013)) >>> 0;
+    const rng = () => { sd = (sd + 0x6d2b79f5) >>> 0; let x = sd; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+    const lineNext = (fr, fc, t) => {
+      const ar = t.row - fr, ac = t.col - fc, st = Math.max(Math.abs(ar), Math.abs(ac)) || 1;
+      return [fr + Math.round(ar / st), fc + Math.round(ac / st)];
+    };
+    // Bumper al que teledirigirse: a la vista (sin niebla), sin golpear aún y a poca distancia.
+    const pickTarget = (fr, fc, cur, clear) => {
+      if (typeof Bumpers === "undefined") return null;
+      let best = null, bs = Infinity;
+      Bumpers.list.forEach((b) => {
+        if (b === cur || seen.has(b) || blocked.has(b)) return;
+        if (typeof Fog !== "undefined" && Fog.isFoggedReal(b.row, b.col)) return;
+        const ar = b.row - fr, ac = b.col - fc, st = Math.max(Math.abs(ar), Math.abs(ac));
+        if (!st || st > EGG_HOMING_RANGE) return;
+        // La trayectoria no puede atravesar niebla de guerra: si hay niebla de por medio, no se teledirige.
+        for (let j = 1; j < st; j++) {
+          const lr = fr + Math.round(ar * j / st), lc = fc + Math.round(ac * j / st);
+          if (typeof Fog !== "undefined" && Fog.isFoggedReal(lr, lc)) return;
+          if (clear && wall(lr, lc)) return;
+        }
+        const sc = st * 10 + Math.abs(ar) + Math.abs(ac);
+        if (sc < bs) { bs = sc; best = b; }
+      });
+      return best;
+    };
     let r = e.row, c = e.col, dr = dir[0], dc = dir[1];
     const steps = [];
-    // Cada rebote regala 1 casilla más de recorrido (con tope para no ciclar).
+    // Cada rebote regala 1 casilla más de recorrido (con tope para no ciclar); los bumpers dan +2 (turbo).
     let total = dist;
     const maxTotal = dist + EGG_BOUNCE_BONUS_MAX;
+    let target = null, fast = false;
     for (let i = 0; i < total; i++) {
       const step_r0 = r, step_c0 = c;
-      let nr = r + dr, nc = c + dc;
+      let nr, nc;
+      if (target) { [nr, nc] = lineNext(r, c, target); dr = nr - r; dc = nc - c; }
+      else { nr = r + dr; nc = c + dc; }
+      const lock = target;
       let bounced = false, ob = null, wallAt = null, village = null, bumper = null;
-      if (wall(nr, nc)) {
-        bounced = true;
-        wallAt = { row: nr, col: nc };
-        ob = obAt(nr, nc);
-        village = ob ? null : vAt(nr, nc);
-        bumper = ob || village ? null : bAt(nr, nc);
-        if (total < maxTotal) total++;
+      const aim = (t) => { // pone rumbo (recto) hacia el bumper t; si está pegado a un obstáculo, se queda
+        [nr, nc] = lineNext(r, c, t); dr = nr - r; dc = nc - c;
+        if (wall(nr, nc)) { nr = r; nc = c; }
+      };
+      const reflect = () => {
         const wr = wall(r + dr, c), wc = wall(r, c + dc);
         if (dr && dc) {
           if (wr && !wc) dr = -dr;
@@ -299,9 +334,39 @@ const Egg = {
         else dc = -dc;
         nr = r + dr; nc = c + dc;
         if (wall(nr, nc)) { nr = r; nc = c; } // atrapado: se queda en su casilla
+      };
+      if (wall(nr, nc)) {
+        bounced = true;
+        wallAt = { row: nr, col: nc };
+        ob = obAt(nr, nc);
+        village = ob ? null : vAt(nr, nc);
+        bumper = ob || village ? null : bLive(nr, nc);
+        if (bumper) {
+          // Golpe de bumper: +2 casillas, turbo y teledirigido hacia el siguiente bumper visible.
+          seen.add(bumper);
+          total += EGG_TURBO_BONUS;
+          fast = true;
+          target = pickTarget(r, c, bumper, false);
+          if (target) aim(target); else reflect();
+        } else if (target) {
+          // Algo se interpone yendo hacia un bumper: otro bumper libre de obstáculos o rebote al azar.
+          blocked.add(target);
+          if (total < maxTotal) total++;
+          target = pickTarget(r, c, null, true);
+          if (target) aim(target);
+          else {
+            const ok = EGG_DIRS.filter((d) => !wall(r + d[0], c + d[1]));
+            const d = ok.length ? ok[Math.floor(rng() * ok.length)] : [-dr, -dc];
+            dr = d[0]; dc = d[1]; nr = r + dr; nc = c + dc;
+            if (wall(nr, nc)) { nr = r; nc = c; }
+          }
+        } else {
+          if (total < maxTotal) total++;
+          reflect();
+        }
       }
       r = nr; c = nc;
-      const step = { row: r, col: c, dr, dc, bounced, unit: null, shove: null, ob: ob || null, village: village || null, bumper: bumper || null, wallAt, prev: { row: step_r0, col: step_c0 } };
+      const step = { row: r, col: c, dr, dc, bounced, unit: null, shove: null, ob: ob || null, village: village || null, bumper: bumper || null, wallAt, prev: { row: step_r0, col: step_c0 }, lock: lock || null, fast };
       steps.push(step);
       const u = Units.unitAt(r, c);
       if (u && u !== holder && !(r === e.row && c === e.col)) step.unit = u;
@@ -320,6 +385,39 @@ const Egg = {
       return { steps, explode: null, dest: { row: s.row, col: s.col }, dir };
     }
     return { steps: [], explode: null, dest: null, dir };
+  },
+
+  // Plan del vuelo cuando un gnomo rebota en un bumper y golpea el huevo desde una casilla vecina:
+  // la dirección la marca el rebote (dir), no la posición de quien lanza.
+  _planDir(dir) {
+    const e = this.egg;
+    const newCharge = Math.min(EGG_MAX_CHARGE, e.charge + EGG_CHARGE_PER_HIT);
+    const breaks = e.charge >= EGG_MAX_CHARGE && e.hitsMax + 1 >= EGG_BREAK_HITS;
+    const d = [dir[0] * EGG_PUSH_AWAY, dir[1] * EGG_PUSH_AWAY];
+    const sim = breaks ? { steps: [], explode: null, dest: null, dir: d } : this._simulate(d, this._distFor(newCharge), "player", null);
+    sim.newCharge = newCharge;
+    sim.breaks = breaks;
+    return sim;
+  },
+
+  // Golpe del gnomo (tras rebotar en un bumper) contra el huevo: mismo efecto que un gnomazo.
+  async _ricochetHit(holder, dir) {
+    const e = this.egg;
+    if (!e || e.exploded) { if (typeof Bumpers !== "undefined") await Bumpers.endFlight(holder.team); return; }
+    e.lastTeam = holder.team;
+    const plan = this._planDir(dir);
+    if (typeof SFX !== "undefined") { try { SFX.hit(); if (SFX.rockHit) SFX.rockHit(); } catch (er) {} }
+    if (typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt({ row: e.row, col: e.col, spriteEl: e.spriteEl }, n); }
+    this._hitThisRound = true;
+    if (e.charge >= EGG_MAX_CHARGE) e.hitsMax++;
+    e.charge = plan.newCharge;
+    this._applyStage();
+    this._pulseFx();
+    this._flash();
+    Units.spawnFloatingText({ row: e.row, col: e.col, team: "player" }, `Carga ${e.charge}`, { className: "dmg-popup popup--good" });
+    await new Promise((r) => setTimeout(r, 280));
+    if (plan.breaks) await this._break();
+    else await this._fly(plan, holder);
   },
 
   // Qué pasaría si `holder` le lanzase un gnomo ahora mismo.
@@ -678,19 +776,23 @@ const Egg = {
     const avoid = plan.steps.map((s) => ({ row: s.row, col: s.col }));
     e.el.style.setProperty("--egg-step", `${EGG_STEP_MS}ms`);
     e.el.classList.add("egg--moving");
-    if (typeof Bumpers !== "undefined") Bumpers.beginFlight();
+    if (typeof Bumpers !== "undefined") { if (!Bumpers._keepCombo) Bumpers.beginFlight(); Bumpers._keepCombo = false; }
     let prev = plan.dir;
     for (const s of plan.steps) {
+      const ms = s.fast ? EGG_TURBO_STEP_MS : EGG_STEP_MS;
+      e.el.style.setProperty("--egg-step", `${ms}ms`);
+      if (s.fast) this._ghost(e.el);
+      if (typeof Bumpers !== "undefined") Bumpers.setLock(s.lock);
       e.row = s.row;
       e.col = s.col;
       this._place(e.el, s.row, s.col, 6);
       this._placeBadge();
-      if (s.bounced || s.dr !== prev[0] || s.dc !== prev[1]) this._bounceFx();
+      if (s.bounced || (!s.lock && (s.dr !== prev[0] || s.dc !== prev[1]))) this._bounceFx();
       prev = [s.dr, s.dc];
-      await new Promise((r) => setTimeout(r, EGG_STEP_MS));
+      await new Promise((r) => setTimeout(r, ms));
       if (s.ob) { this._hitObelisk(s.ob, holder.team); if (typeof Bumpers !== "undefined") Bumpers.registerHit(); }
-      if (s.village) { this._bumpVillage(s.village); if (typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt(s.village, n); } }
-      if (s.bumper && typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt(s.bumper, n); }
+      if (s.village) { this._bumpVillage(s.village, holder.team); if (typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt(s.village, n); } }
+      if (s.bumper && typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt(s.bumper, n); Bumpers.markLit(s.bumper, holder.team); }
       // Rebote contra los límites de la fase: también suma al combo (con su onda y sonido).
       if (s.bounced && !s.ob && !s.village && !s.bumper && typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt({ row: s.row, col: s.col }, n); this._shake(false); }
       if (s.unit && s.unit.el && s.unit.hp > 0) { if (typeof Bumpers !== "undefined") Bumpers.registerHit(); await this._trample(s, holder.team, avoid); }
@@ -731,6 +833,18 @@ const Egg = {
     if (typeof Units !== "undefined" && Units.refreshUnitOcclusion) Units.refreshUnitOcclusion();
   },
 
+  // Estela del vuelo turbo: copia fantasma del huevo que se desvanece.
+  _ghost(el) {
+    if (!el || !el.parentNode) return;
+    const g = el.cloneNode(true);
+    g.classList.remove("egg--moving");
+    g.classList.add("egg-ghost");
+    g.style.zIndex = String((parseInt(el.style.zIndex, 10) || 6) - 1);
+    el.parentNode.appendChild(g);
+    requestAnimationFrame(() => { g.style.opacity = "0"; });
+    setTimeout(() => g.remove(), 320);
+  },
+
   _shake(big) {
     const vp = document.getElementById("board-viewport");
     if (!vp) return;
@@ -742,11 +856,24 @@ const Egg = {
   },
 
   // Rebote contra un tótem (aldea): solo rebota, sin daño. Pequeño temblor + sonido + estirón del tótem.
-  _bumpVillage(v) {
+  _bumpVillage(v, causer) {
     this._shake(false);
     if (typeof SFX !== "undefined") { try { SFX.rockHit(); } catch (er) {} }
     if (v && v.el && v.el.animate) {
       v.el.animate([{ filter: "brightness(1)" }, { filter: "brightness(1.6)" }, { filter: "brightness(1)" }], { duration: 260 });
+    }
+    // El huevo también le quita vida al tótem (tanta como su carga, igual que al obelisco).
+    // Si llega a 0 lo captura el equipo que lanzó; un tótem propio nunca baja de 1.
+    if (v && typeof Villages !== "undefined" && v.hp > 0) {
+      const dmg = Math.max(1, (this.egg && this.egg.charge) || 1);
+      const own = v.owner === causer;
+      v.hp = own ? Math.max(1, v.hp - dmg) : Math.max(0, v.hp - dmg);
+      if (Villages._isLive(v)) {
+        Units.updateHpBar(v);
+        Units.spawnFloatingText(v, `-${dmg}`, { className: "dmg-popup" });
+        Units.playShake(v);
+      } else v._visualDirty = true;
+      if (v.hp <= 0) Villages._capture(v, causer, 1);
     }
   },
 

@@ -337,6 +337,7 @@ const Net = {
     const find = (list) => (list || []).find((x) => x.id === r) || null;
     if (r.startsWith("unit-")) return find(Units.list);
     if (r.startsWith("drum-")) return find(Drums.list);
+    if (r.startsWith("bumper-")) return find(typeof Bumpers !== "undefined" ? Bumpers.list : []);
     if (r.startsWith("village-")) return find(Villages.list);
     if (r.startsWith("shop-")) return find(Shops.list);
     if (r.startsWith("oracle-")) return find(Oracle.list);
