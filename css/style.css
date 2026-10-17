@@ -11407,8 +11407,3 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
 @media (max-width: 420px) { .sel-info2 { height: 440px; } }
 @media (max-width: 340px) { .sel-info2 { height: 490px; } }
 @media (max-width: 340px) { .sel-info2 { height: 490px; } }
-
-/* Pulso sutil del puntero al cambiar de color (js/attackcursor.js): copia del puntero que crece y vuelve. */
-.cursor-pulse { display: none; position: fixed; left: 0; top: 0; width: 30px; height: 30px; pointer-events: none; z-index: 2147483647; transform-origin: 4px 2px; animation: cursor-pulse 0.26s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
-@keyframes cursor-pulse { 0% { transform: scale(1); } 45% { transform: scale(1.4); } 100% { transform: scale(1); } }
-body.perf-mode .cursor-pulse { display: none; }
