@@ -11307,26 +11307,23 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
 .sel-ft__ib i { font-size: 26px; }
 
 /* ===== RIVALES ===== */
-.sel-summ { margin: 12px 0 0; font-size: 13px; color: rgba(255, 255, 255, 0.85); text-shadow: 2px 2px 0 #000; letter-spacing: 0.06em; text-align: center; padding: 0 12px; }
+.sel-summ { margin: 12px 0 0; font-size: 15px; color: rgba(255, 255, 255, 0.85); text-shadow: 2px 2px 0 #000; letter-spacing: 0.06em; text-align: center; padding: 0 12px; }
 .sel-summ b { color: var(--acc); font-weight: 400; }
-.sel-rivs { flex: 1 1 0; min-height: 0; display: flex; align-items: center; justify-content: center; gap: clamp(12px, 3vw, 40px); padding: 0 12px; flex-wrap: wrap; }
-.sel-rival {
-  width: clamp(150px, 22vw, 250px);
-  padding: 18px 12px 16px;
-  text-align: center;
-  cursor: var(--cursor-pointer);
-  transition: transform 0.2s cubic-bezier(0.3, 1.5, 0.5, 1);
-}
-.sel-rival:hover { transform: translateY(-6px) scale(1.04); }
-.sel-rival__em { display: flex; justify-content: center; height: 96px; align-items: center; }
-.sel-rival__em img { width: 78px; margin: 0 -10px; filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.5)); }
-.sel-rival__num { display: block; font-size: clamp(34px, 5vh, 52px); color: #fff; text-shadow: 3px 3px 0 #000; margin-top: 6px; }
-.sel-rival__tx { display: block; font-size: 12px; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.7); }
-.sel-rival--sel::after { background: color-mix(in srgb, var(--acc) 40%, var(--sel-panel)); }
-.sel-rival--sel .sel-rival__num { color: #ffd23f; }
+.sel-rivrow { flex: 1 1 0; min-height: 0; display: flex; align-items: center; justify-content: center; gap: clamp(14px, 4vw, 60px); touch-action: pan-y; }
+.sel-rivbox { width: min(440px, 62vw); padding: 26px 20px 24px; text-align: center; transform: rotate(-1deg); }
+.sel-rivbox__fig { display: flex; justify-content: center; align-items: flex-end; gap: 6px; height: 96px; }
+.sel-rivbox__fig i { font-size: 84px; color: #ff8a7a; filter: drop-shadow(3px 4px 0 #000); animation: sel-pop 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both; animation-delay: calc(var(--i) * 0.09s); }
+.sel-rivbox__fig i:nth-child(2) { color: #ffb36b; }
+.sel-rivbox__fig i:nth-child(3) { color: #ffd23f; }
+@keyframes sel-pop { 0% { transform: scale(0) translateY(20px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.sel-rivbox__num { font-size: clamp(64px, 12vh, 110px); line-height: 1; color: #ffd23f; text-shadow: 4px 5px 0 #000; margin-top: 8px; }
+.sel-rivbox__tx { font-size: 16px; letter-spacing: 0.22em; color: rgba(255, 255, 255, 0.85); text-shadow: 2px 2px 0 #000; margin-top: 4px; }
+.sel-arrow--off { opacity: 0.25; pointer-events: none; }
+.sel-btn i { font-size: 22px; margin-right: 10px; vertical-align: -3px; position: relative; }
+
 
 /* ---------- Móvil / pantallas pequeñas: contenido desplazable, botón principal fijo abajo, gestos ---------- */
-.sel-hero, .sel-orbit, .sel-rivs { touch-action: pan-y; }
+.sel-hero, .sel-orbit { touch-action: pan-y; }
 .sel-un__sp { height: calc(var(--h) * var(--us, 1)); }
 @media (max-width: 720px), (max-height: 560px) {
   .sel-root { overflow-y: auto; overflow-x: hidden; justify-content: flex-start; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
@@ -11356,12 +11353,11 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   .sel-ft { font-size: 13px; }
   .sel-chip { position: relative !important; left: auto; top: auto; margin-top: 8px; padding: 4px 16px 4px 8px; transform: none; z-index: 2; }
   .sel-chip img { width: 34px; }
-  .sel-rivs { flex: 0 0 auto; flex-wrap: nowrap; gap: 8px; padding: 18px 12px; margin: auto 0; }
-  .sel-rival { width: calc((100vw - 40px) / 3); min-width: 0; padding: 12px 4px; }
-  .sel-rival__em { height: 58px; }
-  .sel-rival__em img { width: 46px; margin: 0 -6px; }
-  .sel-rival__num { font-size: 34px; }
-  .sel-rival__tx { font-size: 10px; letter-spacing: 0.08em; }
+  .sel-rivrow { flex: 0 0 auto; padding: 26px 0; margin: auto 0; }
+  .sel-rivbox { width: min(300px, calc(100vw - 150px)); padding: 18px 10px 16px; }
+  .sel-rivbox__fig i { font-size: 60px; }
+  .sel-rivbox__fig { height: 70px; }
+  .sel-rivbox__num { font-size: 64px; }
   .sel-summ { padding: 0 12px; }
 }
 /* Vertical estrecho: la barra de pasos baja a su propia fila (no choca con Volver ni con los botones de perfil/ajustes) */
@@ -11383,9 +11379,6 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   .sel-team { --us: 0.62; margin-top: 84px; }
   .sel-root > .sel-btn { bottom: 6px; padding: 9px 34px; font-size: 15px; }
   .sel-info2, .sel-info { width: min(900px, calc(100vw - 32px)); }
-  .sel-rivs { padding: 8px 12px; }
-  .sel-rival { width: 150px; }
-  .sel-rival__em { height: 60px; }
 }
 @media (max-height: 560px) and (max-width: 720px) {
   .sel-title { display: none; }
@@ -11396,3 +11389,4 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   .sel-orbit { height: 210px; }
   .sel-root > .sel-btn { bottom: 6px; padding: 9px 34px; font-size: 15px; }
 }
+#sel-rpips { margin: 4px 0 22px; }

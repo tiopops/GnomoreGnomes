@@ -345,7 +345,7 @@ const SelectScreens = {
     this._raf = requestAnimationFrame(step);
   },
 
-  // ---------- 3. RIVALES ----------
+  // ---------- 3. RIVALES: selector con flechas, silueta de cada rival y número grande ----------
   renderRivals() {
     this._bind();
     this._prepScreen("screen-opponent-select");
@@ -355,41 +355,51 @@ const SelectScreens = {
       ${this.stepsHtml(3)}
       <div class="sel-title">${this.t("sel_title_rivals")}</div>
       <div class="sel-summ" id="sel-summ"></div>
-      <div class="sel-rivs" id="sel-rivs"></div>
-      <button type="button" class="sel-fr sel-btn" id="sel-bPlay" data-primary><span>${this.t("sel_btn_play")}</span></button>`;
+      <div class="sel-rivrow" id="sel-rivrow">
+        <button type="button" class="sel-arrow" id="sel-rL" aria-label="‹">${this.chev(-1)}</button>
+        <div class="sel-fr sel-rivbox" id="sel-rivbox"><div class="sel-rivbox__fig" id="sel-rfig"></div><div class="sel-rivbox__num" id="sel-rnum"></div><div class="sel-rivbox__tx" id="sel-rtx"></div></div>
+        <button type="button" class="sel-arrow" id="sel-rR" aria-label="›">${this.chev(1)}</button>
+      </div>
+      <div class="sel-pips" id="sel-rpips"></div>
+      <button type="button" class="sel-fr sel-btn" id="sel-bPlay" data-primary><i class="ph-fill ph-sword"></i><span>${this.t("sel_btn_play")}</span></button>`;
     this._bindSteps(root);
+    const pips = root.querySelector("#sel-rpips");
+    OPPONENT_OPTIONS.forEach((n, i) => {
+      const pp = document.createElement("div");
+      pp.className = "sel-pip";
+      pp.addEventListener("click", () => this.setRivals(i + 1));
+      pips.appendChild(pp);
+    });
+    root.querySelector("#sel-rL").addEventListener("click", () => this.setRivals(this.ST.nr - 1));
+    root.querySelector("#sel-rR").addEventListener("click", () => this.setRivals(this.ST.nr + 1));
+    this._swipe(root.querySelector("#sel-rivrow"), (d) => this.setRivals(this.ST.nr + d));
     root.querySelector("#sel-bPlay").addEventListener("click", () => {
       matchDraft.opponents = OPPONENT_OPTIONS[Math.max(0, Math.min(OPPONENT_OPTIONS.length - 1, this.ST.nr - 1))] || 1;
       startMatch(matchDraft);
     });
-    this._swipe(root.querySelector("#sel-rivs"), (d) => this.setRivals(this.ST.nr + d));
     this.setRivals(this.ST.nr, false);
-  },
-
-  // Razas que te tocarán (misma regla que spawnTestUnits: rival 1 = otra raza,
-  // rival 2 = la tuya, rival 3 = la del rival 1).
-  rivalRaces() {
-    const mine = RACES.find((r) => r.id === matchDraft.raceId) || this.races()[0];
-    const other = this.races().find((r) => r.id !== mine.id) || mine;
-    return [other, mine, other];
   },
 
   setRivals(n, anim = true) {
     const opts = OPPONENT_OPTIONS, S = this.ST;
+    const old = S.nr;
     S.nr = Math.max(1, Math.min(opts.length, n));
-    const rivs = document.getElementById("sel-rivs");
-    if (!rivs) return;
-    const rr = this.rivalRaces();
-    rivs.innerHTML = opts
-      .map((cnt, i) => {
-        const n1 = i + 1;
-        return `<button type="button" class="sel-fr sel-rival${n1 === S.nr ? " sel-rival--sel" : ""}" data-n="${n1}"><span class="sel-rival__em">${rr.slice(0, cnt).map((r) => `<img src="${r.iconImg}" alt="">`).join("")}</span><span class="sel-rival__num">${cnt}</span><span class="sel-rival__tx">${this.t(cnt === 1 ? "sel_rival_one" : "sel_rival_many")}</span></button>`;
-      })
-      .join("");
-    [...rivs.children].forEach((e) => e.addEventListener("click", () => this.setRivals(+e.dataset.n)));
+    const cnt = opts[S.nr - 1];
+    const root = document.getElementById("opponent-list");
+    if (!root || !root.querySelector("#sel-rfig")) return;
+    root.querySelector("#sel-rfig").innerHTML = Array.from({ length: cnt }, (_, i) => `<i class="ph-fill ph-user" style="--i:${i}"></i>`).join("");
+    root.querySelector("#sel-rnum").textContent = cnt;
+    root.querySelector("#sel-rtx").textContent = this.t(cnt === 1 ? "sel_rival_one" : "sel_rival_many");
+    [...root.querySelector("#sel-rpips").children].forEach((p, k) => p.classList.toggle("sel-pip--on", k === S.nr - 1));
+    root.querySelector("#sel-rL").classList.toggle("sel-arrow--off", S.nr === 1);
+    root.querySelector("#sel-rR").classList.toggle("sel-arrow--off", S.nr === opts.length);
     const race = RACES.find((r) => r.id === matchDraft.raceId), lv = LEVELS.find((l) => l.id === matchDraft.levelId);
-    const sm = document.getElementById("sel-summ");
+    const sm = root.querySelector("#sel-summ");
     if (race && lv) sm.innerHTML = `<b>${this.t(race.nameKey)}</b> · <b>${this.t(lv.nameKey)}</b>`;
     if (race) this._setAcc(document.getElementById("screen-opponent-select"), this.accent(race));
+    if (anim && old !== S.nr) {
+      const b = root.querySelector("#sel-rivbox");
+      b.classList.remove("sel-swap"); void b.offsetWidth; b.classList.add("sel-swap");
+    }
   },
 };
