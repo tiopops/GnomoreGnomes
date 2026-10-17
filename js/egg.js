@@ -25,8 +25,8 @@ const EGG_PUSH_AWAY = 1; // 1 = en la dirección del golpe; -1 = hacia quien lan
 const EGG_GNOME_POINTS = 5; // puntos que carga el gnomo al estamparse
 const EGG_BOUNCE_BONUS_MAX = 8; // tope de casillas extra por rebotes
 const EGG_STEP_MS = 210; // tiempo por casilla durante el vuelo
-const EGG_PULSE = [4, 2.8, 1.8, 1.05, 0.55]; // segundos por latido según carga
-const EGG_AMP = [0.012, 0.02, 0.03, 0.045, 0.06];
+const EGG_PULSE = [2.6, 2.2, 1.7, 1.05, 0.55]; // segundos por latido según carga (con carga 0 respira como el resto del escenario)
+const EGG_AMP = [0.03, 0.035, 0.042, 0.052, 0.065];
 const EGG_DIRS = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]];
 
 const Egg = {

@@ -10812,7 +10812,7 @@ body.gp-active, body.gp-active * { cursor: none !important; }
 }
 @keyframes egg-pulse {
   0%, 100% { transform: scale(1, 1); }
-  50% { transform: scale(calc(1 + var(--egg-amp, 0.01) * 0.6), calc(1 - var(--egg-amp, 0.01))); }
+  50% { transform: scale(calc(1 - var(--egg-amp, 0.03) * 0.6), calc(1 + var(--egg-amp, 0.03))); }
 }
 .unit.egg--moving {
   transition: left var(--egg-step, 0.21s) linear, top var(--egg-step, 0.21s) linear, opacity 0.4s ease;
@@ -10934,7 +10934,7 @@ body.gp-active, body.gp-active * { cursor: none !important; }
 /* ---- Pinball del huevo (js/bumpers.js) ---- */
 
 .bumper { pointer-events: none; transform: translate(-50%, -92%) translateY(30px); }
-.bumper__sprite { display: block; width: 205px; height: auto; user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)); transform-origin: 50% 90%; animation: unit-idle-breathe 4s ease-in-out infinite; }
+.bumper__sprite { display: block; width: 205px; height: auto; user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4)); transform-origin: 50% 90%; animation: unit-idle-breathe 2.6s ease-in-out infinite; }
 .combo-indicator {
   position: fixed; left: 50%; top: 15%; transform: translate(-50%, 0); z-index: 9500; pointer-events: none; opacity: 0;
   font-family: "Russo One", sans-serif; font-weight: 400; color: #ffd23f; white-space: nowrap;
