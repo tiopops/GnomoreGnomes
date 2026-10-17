@@ -691,6 +691,8 @@ const Egg = {
       if (s.ob) { this._hitObelisk(s.ob, holder.team); if (typeof Bumpers !== "undefined") Bumpers.registerHit(); }
       if (s.village) { this._bumpVillage(s.village); if (typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt(s.village, n); } }
       if (s.bumper && typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt(s.bumper, n); }
+      // Rebote contra los límites de la fase: también suma al combo (con su onda y sonido).
+      if (s.bounced && !s.ob && !s.village && !s.bumper && typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt({ row: s.row, col: s.col }, n); this._shake(false); }
       if (s.unit && s.unit.el && s.unit.hp > 0) { if (typeof Bumpers !== "undefined") Bumpers.registerHit(); await this._trample(s, holder.team, avoid); }
       if (typeof Fog !== "undefined") Fog.applyVisibility();
     }
@@ -934,6 +936,7 @@ Egg.aiAct = async function (unit) {
       }
       if (s.unit) { score += s.unit.team !== unit.team ? 3 : -3; hits++; }
       if (s.village || s.bumper) hits++;
+      if (s.bounced && !s.ob && !s.village && !s.bumper) hits++; // rebote en los límites: también combo
     });
     // Combo: cada golpe seguido suma a la ruleta (a partir del 2.º); el rival no debe llevarse el jackpot.
     if (hits >= 2) score += hits * 1.5;
