@@ -11173,14 +11173,14 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   justify-content: center;
   gap: clamp(12px, 3vw, 40px);
   --us: 1.4; /* escala de las unidades en escritorio */
-  margin-top: calc(var(--us) * 142px - 14px);
+  margin-top: calc(var(--us) * 142px + 6px);
   padding-bottom: 6px;
 }
 @media (max-height: 900px) { .sel-team { --us: 1.05; } .sel-hintu { display: none; } .sel-title { margin-top: 56px; } .sel-rflav { display: none; } }
 @media (min-height: 1000px) { .sel-team { --us: 1.6; } }
 .sel-un {
   position: relative;
-  width: calc(112px * var(--us, 1) * 0.85 + 20px);
+  width: max(132px, calc(112px * var(--us, 1) * 0.85 + 20px));
   padding: 0;
   background: none;
   border: none;
@@ -11189,11 +11189,11 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   cursor: var(--cursor-pointer);
   transition: transform 0.18s cubic-bezier(0.3, 1.5, 0.5, 1);
 }
-.sel-un__box { display: block; height: 46px; }
+.sel-un__box { display: block; height: 56px; }
 .sel-un__sp {
   position: absolute;
   left: 50%;
-  bottom: 22px;
+  bottom: 42px;
   height: var(--h);
   width: auto;
   transform: translateX(-50%);
@@ -11203,8 +11203,8 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   -webkit-user-drag: none;
 }
 .sel-un__nm {
-  position: absolute; left: 0; right: 0; bottom: 7px; text-align: center;
-  font-size: 11px; color: rgba(255, 255, 255, 0.85); white-space: nowrap; text-shadow: 1px 1px 0 #000;
+  position: absolute; left: 0; right: 0; bottom: 14px; text-align: center;
+  font-size: 14px; color: rgba(255, 255, 255, 0.85); white-space: nowrap; text-shadow: 1px 1px 0 #000;
 }
 .sel-un:hover { transform: translateY(-5px); }
 .sel-un:hover .sel-un__sp { transform: translateX(-50%) scale(1.07); }
@@ -11339,11 +11339,11 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   .sel-ud__n { font-size: 22px; }
   .sel-stats { font-size: 12px; }
   .sel-seg i { width: 16px; height: 9px; }
-  .sel-team { --us: 0.72; margin-top: 98px; gap: 8px; padding: 0 6px 4px; }
-  .sel-un { width: 98px; }
-  .sel-un__box { height: 42px; }
-  .sel-un__sp { bottom: 20px; }
-  .sel-un__nm { font-size: 10px; bottom: 6px; }
+  .sel-team { --us: 0.72; margin-top: 114px; gap: 8px; padding: 0 6px 4px; }
+  .sel-un { width: 106px; }
+  .sel-un__box { height: 48px; }
+  .sel-un__sp { bottom: 36px; }
+  .sel-un__nm { font-size: 12px; bottom: 11px; }
   .sel-un--sel .sel-un__sp { transform: translateX(-50%) scale(1.16) !important; }
   .sel-hintu { margin: 4px 0 10px; padding: 0 12px; }
   .sel-orbit { flex: 0 0 auto; height: min(44vh, 320px); }
@@ -11372,11 +11372,11 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   .sel-title { display: none; }
   .sel-hero, .sel-emblem { height: 118px; }
   .sel-rflav { display: none; }
-  .sel-team { margin-top: 92px; }
+  .sel-team { margin-top: 108px; }
   .sel-orbit { height: 210px; }
   .sel-root { padding-top: 60px; }
   .sel-chip { display: none !important; }
-  .sel-team { --us: 0.62; margin-top: 84px; }
+  .sel-team { --us: 0.62; margin-top: 100px; }
   .sel-root > .sel-btn { bottom: 6px; padding: 9px 34px; font-size: 15px; }
   .sel-info2, .sel-info { width: min(900px, calc(100vw - 32px)); }
 }
@@ -11385,7 +11385,7 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   .sel-chip { display: none !important; }
   .sel-hero, .sel-emblem { height: 118px; }
   .sel-rflav { display: none; }
-  .sel-team { --us: 0.62; margin-top: 84px; }
+  .sel-team { --us: 0.62; margin-top: 100px; }
   .sel-orbit { height: 210px; }
   .sel-root > .sel-btn { bottom: 6px; padding: 9px 34px; font-size: 15px; }
 }
