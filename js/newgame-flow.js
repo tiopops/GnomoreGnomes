@@ -56,46 +56,6 @@ function renderOptionCard({ icon, iconImg, title, desc, onClick, color }) {
   return card;
 }
 
-// Pedido explícito (segunda pasada, tras ver la primera versión con
-// .option-card): "enserio? te dije que ahora queria CARTAS!!! formato
-// carta de juego de rol donde aparezca en grande el logo de cada raza y
-// exppliucacion detallada de cad una de ellas con el estilo visual..." —
-// tarjeta VERTICAL propia solo para razas (mode/rivales siguen usando
-// renderOptionCard tal cual, no se han tocado): ilustración de la mascota
-// grande arriba, nombre en banderín, y la explicación separada en 3
-// bloques (ambientación/virtudes/desventajas, ver flavorKey/virtuesKey/
-// weaknessesKey en js/races.js) en vez de una sola frase corrida — mismo
-// lenguaje visual .p5-banner/doble-capa que el resto del juego.
-function renderRaceCard({ iconImg, title, flavor, virtues, weaknesses, onClick, color, titleColor }) {
-  const card = document.createElement("button");
-  card.className = "race-card";
-  if (color) card.style.setProperty("--card-accent", color);
-  // Pedido explícito: "las tarjetas de raza...deben flotar, cada una por su
-  // cuenta, que no vayan al compas" — delay negativo aleatorio (mismo truco
-  // que la niebla, ver mapgen.js) para desincronizar la animación
-  // race-card-float (style.css) de cada tarjeta entre sí.
-  card.style.setProperty("--float-delay", `-${(NR() * 4.2).toFixed(2)}s`);
-  card.innerHTML = `
-    <span class="race-card__art-wrap">
-      <img src="${iconImg}" alt="" class="race-card__art" />
-    </span>
-    <span class="race-card__title"${titleColor ? ` style="color:${titleColor}"` : ""}>${title}</span>
-    <span class="race-card__body">
-      ${flavor ? `<span class="race-card__flavor">${flavor}</span>` : ""}
-      <span class="race-card__stat race-card__stat--virtue">
-        <i class="ph ph-check-circle race-card__stat-icon"></i>
-        <span>${virtues}</span>
-      </span>
-      <span class="race-card__stat race-card__stat--weakness">
-        <i class="ph ph-x-circle race-card__stat-icon"></i>
-        <span>${weaknesses}</span>
-      </span>
-    </span>
-  `;
-  card.addEventListener("click", onClick);
-  return card;
-}
-
 function populateModeSelect() {
   const list = document.getElementById("mode-list");
   list.innerHTML = "";
@@ -115,126 +75,11 @@ function populateModeSelect() {
   });
 }
 
-function populateRaceSelect() {
-  const list = document.getElementById("race-list");
-  list.innerHTML = "";
-  RACES.filter((r) => r.available).forEach((race) => {
-    list.appendChild(
-      renderRaceCard({
-        iconImg: race.iconImg,
-        title: I18N.t(race.nameKey),
-        flavor: I18N.t(race.flavorKey),
-        virtues: I18N.t(race.virtuesKey),
-        weaknesses: I18N.t(race.weaknessesKey),
-        color: race.color,
-        titleColor: race.titleColor,
-        onClick: () => {
-          matchDraft.raceId = race.id;
-          populateLevelSelect();
-          goToScreen("screen-level-select");
-        },
-      })
-    );
-  });
-}
-
-// Selección de nivel (fase) — después de la raza. Mismo diseño de carta que
-// las razas (renderRaceCard); un nivel no disponible se pinta bloqueado
-// ("Próximamente") y no se puede elegir.
-function renderLevelCard(level) {
-  const card = document.createElement("button");
-  card.className = "race-card level-card" + (level.available ? "" : " level-card--locked");
-  card.style.setProperty("--card-accent", level.color);
-  // Isla y rótulo flotan cada uno por su cuenta (ritmos y desfases distintos).
-  card.style.setProperty("--float-delay", `-${(NR() * 5).toFixed(2)}s`);
-  card.style.setProperty("--logo-delay", `-${(NR() * 3.4).toFixed(2)}s`);
-  const name = I18N.t(level.nameKey);
-  const feats = (level.featureKeys || [])
-    .map(
-      (k, i) => `
-      <span class="race-card__stat race-card__stat--virtue">
-        <i class="ph ${level.featureIcons[i] || "ph-check-circle"} race-card__stat-icon"></i>
-        <span>${(() => {
-          // "Nombre: explicación" -> el nombre en negrita (lectura rápida).
-          const txt = I18N.t(k), at = txt.indexOf(": ");
-          return at > 0 ? `<b>${txt.slice(0, at)}</b>${txt.slice(at)}` : txt;
-        })()}</span>
-      </span>`
-    )
-    .join("");
-  card.setAttribute("aria-label", name);
-  card.innerHTML = `
-    <span class="level-card__stage">
-      <img src="${level.islandImg}" alt="" class="level-card__island" />
-      ${level.available ? "" : '<i class="ph-fill ph-lock level-card__lock"></i>'}
-      <span class="level-card__name">${name}</span>
-    </span>
-    <span class="race-card__body level-card__body">
-      <span class="race-card__flavor">${I18N.t(level.flavorKey)}</span>
-      ${feats}
-      ${level.available ? "" : `<span class="level-card__soon">${I18N.t("level_coming_soon")}</span>`}
-    </span>
-  `;
-  if (level.available) {
-    card.addEventListener("click", () => {
-      matchDraft.levelId = level.id;
-      populateOpponentSelect();
-      goToScreen("screen-opponent-select");
-    });
-  } else {
-    card.setAttribute("aria-disabled", "true");
-    card.tabIndex = -1;
-  }
-  return card;
-}
-
-function populateLevelSelect() {
-  const list = document.getElementById("level-list");
-  list.innerHTML = "";
-  LEVELS.forEach((level) => list.appendChild(renderLevelCard(level)));
-}
-
-function populateOpponentSelect() {
-  const list = document.getElementById("opponent-list");
-  list.innerHTML = "";
-  const opts = OPPONENT_OPTIONS;
-  let idx = Math.max(0, opts.indexOf(matchDraft.opponents));
-  const root = document.createElement("div");
-  root.className = "opp-stepper";
-  root.innerHTML =
-    '<div class="opp-stepper__row">' +
-    '<button type="button" class="p5-banner p5-banner--action opp-stepper__arrow" data-dir="-1" aria-label="-"><i class="ph-fill ph-caret-left"></i></button>' +
-    '<div class="p5-banner opp-stepper__value"><div class="opp-stepper__icons"></div><div class="opp-stepper__label p5-banner__label"></div></div>' +
-    '<button type="button" class="p5-banner p5-banner--action opp-stepper__arrow" data-dir="1" aria-label="+"><i class="ph-fill ph-caret-right"></i></button>' +
-    "</div>" +
-    '<button type="button" class="p5-banner p5-banner--action opp-stepper__go"><i class="ph-fill ph-sword"></i><span class="p5-banner__label">' + I18N.t("start_match") + "</span></button>";
-  const iconsEl = root.querySelector(".opp-stepper__icons");
-  const labelEl = root.querySelector(".opp-stepper__label");
-  const arrows = root.querySelectorAll(".opp-stepper__arrow");
-  const paint = () => {
-    const n = opts[idx];
-    iconsEl.innerHTML = '<i class="ph-fill ph-user"></i>'.repeat(n);
-    labelEl.textContent = I18N.t(n === 1 ? "opponents_label" : "opponents_label_plural", { n });
-    arrows[0].classList.toggle("opp-stepper__arrow--off", idx === 0);
-    arrows[1].classList.toggle("opp-stepper__arrow--off", idx === opts.length - 1);
-  };
-  arrows.forEach((btn) =>
-    btn.addEventListener("click", () => {
-      const next = idx + Number(btn.dataset.dir);
-      if (next < 0 || next >= opts.length) return;
-      if (typeof SFX !== "undefined") SFX.click();
-      idx = next;
-      paint();
-    })
-  );
-  root.querySelector(".opp-stepper__go").addEventListener("click", () => {
-    if (typeof SFX !== "undefined") SFX.click();
-    matchDraft.opponents = opts[idx];
-    startMatch(matchDraft);
-  });
-  paint();
-  list.appendChild(root);
-}
+// Las 3 pantallas de selección (raza -> escenario -> rivales) se pintan en
+// js/selectscreens.js; aquí solo se conservan los puntos de entrada de siempre.
+function populateRaceSelect() { SelectScreens.renderRace(); }
+function populateLevelSelect() { SelectScreens.renderLevel(); }
+function populateOpponentSelect() { SelectScreens.renderRivals(); }
 
 async function startMatch({ modeId, raceId, levelId, opponents, mp }) {
   // Bug reportado: "el juego no se abre....se queda asi" — al pulsar "1
@@ -696,6 +541,8 @@ function initNewGameFlow() {
     // primer modo disponible (GnomeSmash). populateModeSelect y la pantalla
     // #screen-mode-select se conservan por si vuelve a hacer falta — para
     // reactivarlo basta con cambiar SKIP_MODE_SELECT a false.
+    matchDraft.raceId = null; matchDraft.levelId = null; matchDraft.opponents = null;
+    SelectScreens.reset(); // por defecto: Guardabosques, Bosque Mushboom, 1 rival
     if (SKIP_MODE_SELECT) {
       const defaultMode = GAME_MODES.find((m) => m.available) || GAME_MODES[0];
       matchDraft.modeId = defaultMode.id;
