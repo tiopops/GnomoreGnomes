@@ -141,11 +141,13 @@ const SurcaNubes = {
     if (this._popupEl) return;
     Units.clearRangeOverlays();
     Units.faceTowardsTile(unit, target.row, target.col);
-    this.stretchToward(unit, target);
     if (this.rivalEntries(target.team).length === 0) {
+      // Sin nada que robar: no se estira ni se gasta — se queda en su sprite de reposo.
       Units.spawnFloatingText(target, "¡Mochila vacía!", { className: "dmg-popup" });
+      if (unit.spriteEl) unit.spriteEl.getAnimations().forEach((x) => x.cancel());
       return; // no se gasta
     }
+    this.stretchToward(unit, target);
     SFX.click();
     this._popupSelUid = null;
     const overlay = document.createElement("div");
