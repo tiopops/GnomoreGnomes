@@ -307,7 +307,7 @@ const SelectScreens = {
     const ang = this._ang;
     const narrow = W < 640;
     const base = Math.min(H * 0.8, W * (narrow ? 0.6 : 0.44), 470);
-    const cx = W / 2, rx = narrow ? W * 0.36 : Math.min(W * 0.33, H * 1.05 + 60);
+    const cx = W / 2, rx = narrow ? W * 0.36 : Math.min(W * 0.37, base * 1.05 + 120);
     this._isl.forEach((el, i) => {
       let t = (((i - ang) % N) + N) % N;
       if (t > N / 2) t -= N;

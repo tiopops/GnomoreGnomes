@@ -11256,7 +11256,7 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
 .sel-chip img { width: 42px; }
 .sel-chip__t { display: block; font-size: 10px; color: rgba(255, 255, 255, 0.6); letter-spacing: 0.14em; }
 .sel-chip__n { display: block; font-size: 15px; }
-.sel-orbit { flex: 1 1 0; min-height: 0; width: 100%; }
+.sel-orbit { flex: 1 1 0; min-height: 0; width: min(1080px, 100%); } /* islas y flechas agrupadas y centradas, también en pantallas enormes */
 .sel-isl {
   position: absolute !important;
   left: 0;
@@ -11285,8 +11285,8 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
 }
 .sel-isl:not(.sel-isl--front):hover .sel-isl__im { filter: drop-shadow(0 18px 12px rgba(0, 0, 0, 0.5)) brightness(1.15); }
 .sel-arrow--nav { position: absolute !important; top: 40%; z-index: 100; }
-.sel-arrow--l { left: max(12px, 3vw); }
-.sel-arrow--r { right: max(12px, 3vw); }
+.sel-arrow--l { left: 6px; }
+.sel-arrow--r { right: 6px; }
 .sel-info {
   flex: 0 0 auto;
   width: min(1040px, 95vw);
