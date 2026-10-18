@@ -792,7 +792,24 @@ const Fog = {
       // Al encenderse por primera vez arranca en la fase 0 (idéntica a la
       // pose estática): el delay negativo aleatorio de mapgen la hacía
       // saltar de golpe a mitad de ciclo ("chisporroteo").
-      if (on && !was) el.style.animationDelay = (Math.random() * 6).toFixed(2) + "s"; // positivo: espera quieta y arranca en fase 0, sin salto
+      if (on && !was) {
+        // Primero se le da su capa de GPU (will-change) y se deja que se
+        // rasterice; la animación solo se añade 2 frames después. Si capa y
+        // animación aparecían en el mismo frame, Chrome rasterizaba la nube
+        // dos veces (a escala 1 y luego a la de la animación) = parpadeo.
+        el.style.animationDelay = (Math.random() * 6).toFixed(2) + "s"; // positivo: espera quieta y arranca en fase 0, sin salto
+        if (!el._idleWait) {
+          el._idleWait = true;
+          el.style.willChange = "transform";
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            el._idleWait = false;
+            el.style.willChange = "";
+            if (!el.classList.contains("tile__fog--revealed") && this.animEnabled && !this.revealedGrid[+el.dataset.row][+el.dataset.col]) el.classList.add("tile__fog--idle");
+          }));
+        }
+        return;
+      }
+      if (!on && el._idleWait) return;
       el.classList.toggle("tile__fog--idle", on);
     });
   },
