@@ -75,6 +75,9 @@ const OBELISK_MENU_ICONS = {
   armory: "assets/iconos/armeria.png",
 };
 
+// Escala del icono en el popup de reclutar cuando debe diferir de SPRITE_SCALES (tamaño en partida).
+const RECRUIT_ICON_SCALES = { urgamentes: 1.2 };
+
 const Obelisks = {
   list: [],
   _raceIds: { player: null, enemy: null },
@@ -1177,7 +1180,7 @@ const Obelisks = {
       const slotEl = document.createElement("button");
       slotEl.className = "backpack-slot";
       slotEl.innerHTML =
-        `<img src="${def.spriteUrl}" class="backpack-slot__icon backpack-slot__icon--unit" style="width:${Math.round(70 * (typeof SPRITE_SCALES !== "undefined" ? SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default : 1))}%;height:${Math.round(70 * (typeof SPRITE_SCALES !== "undefined" ? SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default : 1))}%" alt="${def.name}">` +
+        `<img src="${def.spriteUrl}" class="backpack-slot__icon backpack-slot__icon--unit" style="width:${this._recruitIconPct(typeId)}%;height:${this._recruitIconPct(typeId)}%" alt="${def.name}">` +
         `<span class="shop-slot__price"><span class="shop-slot__price__num">${price}</span></span>`;
       slotEl.classList.toggle("backpack-slot--selected", typeId === this._selectedTypeId);
       // Tutorial (js/tutorial.js): solo TruenoEspora se puede elegir; el
@@ -1195,6 +1198,14 @@ const Obelisks = {
       this._slotsEl.appendChild(slotEl);
     });
     this._updateRecruitDescAndButton();
+  },
+
+  // Tamaño (%) del icono en la casilla: proporcional a la escala del personaje
+  // en partida (SPRITE_SCALES), salvo override en RECRUIT_ICON_SCALES.
+  _recruitIconPct(typeId) {
+    if (typeof SPRITE_SCALES === "undefined") return 70;
+    const sc = (RECRUIT_ICON_SCALES && RECRUIT_ICON_SCALES[typeId]) || SPRITE_SCALES[typeId] || SPRITE_SCALES.default;
+    return Math.round(70 * sc);
   },
 
   _onRecruitSlotClick(typeId) {
