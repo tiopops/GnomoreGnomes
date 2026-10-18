@@ -369,6 +369,7 @@ const Bumpers = {
     const cands = this.list.map((b) => ({ el: b.el, spriteEl: b.spriteEl, w: 0.5, h: 0.6, cy: 0.55 }));
     const e = typeof Egg !== "undefined" ? Egg.egg : null;
     if (e && !e.exploded && e.spriteEl) cands.push({ el: e.el, spriteEl: e.spriteEl, w: 0.34, h: 0.6, cy: 0.5 });
+    if (typeof Crane !== "undefined" && Crane.el && Crane.imgEl && Crane.landed()) cands.push({ el: Crane.el, spriteEl: Crane.imgEl, w: 0.5, h: 0.6, cy: 0.55 });
     let best = null;
     cands.forEach((c) => {
       if (!c.el || !c.el.isConnected || c.el.classList.contains("unit--fog-hidden")) return;

@@ -2,7 +2,7 @@
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
      - Aparecer cuando el huevo explota (Egg._explode → Crane.arrive) para EQUILIBRAR la partida:
        se posa en el obelisco del equipo que más puntos ganó con el huevo (desempate: quien vaya
-       mejor en la partida, y si siguen igual, al azar) y se queda CRANE_STAY_ROUNDS turnos.
+       mejor en la partida, y si siguen igual, al azar) y se queda CRANE_STAY_TURNS turnos COMPLETOS del equipo al que bloquea.
        Mientras está posada, ese obelisco no puede reclutar, ni mejorar habilidades, ni usar la herrería.
      - Si un jugador le LANZA UN GNOMO, se asusta y vuela al siguiente obelisco (otros 2 turnos), y así
        hasta haberlos visitado todos; entonces se va y el huevo reaparece en el centro.
@@ -16,7 +16,7 @@
 const CRANE_DIR = "assets/niveles/hurrycrane/";
 const CRANE_SRC = { fly: CRANE_DIR + "grulla_vuelo.png", fold: CRANE_DIR + "grulla_plegada.png", perch: CRANE_DIR + "grulla_posada.png" };
 const CRANE_W = 250; // ancho del sprite sobre el tablero (px)
-const CRANE_STAY_ROUNDS = 2; // turnos que se queda en cada obelisco
+const CRANE_STAY_TURNS = 2; // turnos completos del dueño del obelisco que se queda posada (se va al empezar el siguiente)
 const CRANE_H = { fly: 466 / 640, fold: 428 / 640, perch: 585 / 640 }; // alto relativo de cada sprite
 const CRANE_FEET = { x: 0.63, y: 0.93 }; // dónde están las patas en el sprite posado
 const CRANE_BODY = { x: 0.5, y: 0.5 }; // centro del cuerpo (los sprites de vuelo se anclan aquí)
@@ -55,7 +55,7 @@ const Crane = {
   },
 
   syncStr() {
-    return this.st ? [this.st.team, this.st.until, (this.st.queue || []).join(".")].join("|") : "";
+    return this.st ? [this.st.team, this.st.left, (this.st.queue || []).join(".")].join("|") : "";
   },
 
   _ob(team) {
@@ -89,15 +89,16 @@ const Crane = {
     const glory = (t) => (typeof Glory !== "undefined" && Glory.points[t]) || 0;
     // Más puntos con el huevo → mejor en la partida (Gloria) → azar.
     const order = teams.slice().sort((a, b) => (bn[b] || 0) - (bn[a] || 0) || glory(b) - glory(a) || rnd[a] - rnd[b]);
-    this.st = { team: null, until: 0, queue: order, landed: false };
+    this.st = { team: null, left: 0, queue: order, landed: false };
     await this._goTo(order.shift());
   },
 
   // ---------- Turnos ----------
-  onTurnStart() {
-    if (!this.st || !this.st.landed || this._busy) return null;
-    if (typeof Turns !== "undefined" && Turns.roundNumber >= this.st.until) return this._next();
-    return null;
+  onTurnStart(team) {
+    if (!this.st || !this.st.landed || this._busy || team !== this.st.team) return null;
+    // Cada inicio de turno del dueño gasta uno de sus turnos de bloqueo; cuando no quedan, se va.
+    if (this.st.left > 0) { this.st.left--; return null; }
+    return this._next();
   },
 
   // Pasa al siguiente obelisco o, si ya los visitó todos, se va (y el huevo reaparece).
@@ -117,7 +118,7 @@ const Crane = {
     const ob = this._ob(team);
     if (!ob) { this.st.team = null; await this._leave(null); return; }
     this.st.team = team;
-    this.st.until = (typeof Turns !== "undefined" ? Turns.roundNumber : 0) + CRANE_STAY_ROUNDS;
+    this.st.left = CRANE_STAY_TURNS;
     this.st.landed = false;
     this._busy = true;
     try {

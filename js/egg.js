@@ -1016,6 +1016,8 @@ const Egg = {
       this._flash();
       this._shatter();
     }
+    let eggPos = null;
+    try { const r = e.spriteEl.getBoundingClientRect(); if (!hidden && r.width) eggPos = { x: r.left + r.width / 2, y: r.top + r.height * 0.5 }; } catch (er) {}
     e.el.style.opacity = "0";
     const bn = Object.assign({}, e.bn);
     e.bn = {};
@@ -1023,9 +1025,15 @@ const Egg = {
     // Gloria por rebotes.
     await new Promise((r) => setTimeout(r, hidden ? 50 : 450));
     let coin = 0;
+    const me = this._myTeam();
     for (const t of Teams.all) {
       const n = bn[t] || 0;
       if (n <= 0) continue;
+      if (t === me && typeof EggPrize !== "undefined" && !document.hidden) {
+        // Premio a pantalla completa: las monedas suben al marcador una a una.
+        await EggPrize.play({ team: t, n, from: eggPos, grant: (k) => this._grantGlory(t, k) });
+        continue;
+      }
       this._grantGlory(t, n);
       const ob = typeof Obelisks !== "undefined" ? Obelisks.byTeam(t) : null;
       if (!hidden && ob) {
