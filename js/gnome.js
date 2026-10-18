@@ -2110,7 +2110,25 @@ const Gnome = {
     this._ensureHoldingButtons();
     this._hitBtn.classList.add("gnome-action-btn--visible");
     const hasAllies = Units.list.some((u) => u.team === "player" && u.id !== unit.id);
-    this._passBtn.classList.toggle("gnome-action-btn--visible", hasAllies);
+    this._passBtn.classList.toggle("gnome-action-btn--visible", hasAllies || this._hasSceneThrowTarget(unit));
+  },
+
+  // Lanzar también vale contra el huevo, el volcán o un bumper (no solo a un aliado):
+  // con una sola unidad (p. ej. el tutorial de Hurrycrane) el icono debe verse igual.
+  _hasSceneThrowTarget(unit) {
+    const inRange = (o) => {
+      const d = Math.max(Math.abs(o.row - unit.row), Math.abs(o.col - unit.col));
+      return d >= 1 && d <= GNOME_THROW_MAX_RANGE;
+    };
+    if (typeof Egg !== "undefined" && Egg.egg && Egg._targetable && Egg._targetable() && inRange(Egg.egg)) return true;
+    if (typeof Volcano !== "undefined" && Volcano.current) {
+      const v = Volcano.current();
+      if (v && Volcano._accepts(v) && !(typeof Fog !== "undefined" && Fog.isFogged(v.row, v.col)) && inRange(v)) return true;
+    }
+    if (typeof Bumpers !== "undefined" && Bumpers.list && Bumpers.list.length && typeof Egg !== "undefined" && Egg.isActive && Egg.isActive()) {
+      if (Bumpers.list.some((b) => !(typeof Fog !== "undefined" && Fog.isFoggedReal(b.row, b.col)) && inRange(b))) return true;
+    }
+    return false;
   },
 
   _hideHoldingActions() {
