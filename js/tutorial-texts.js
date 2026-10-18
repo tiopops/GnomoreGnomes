@@ -86,7 +86,7 @@ const TUTORIAL_TEXTS = {
   },
   {
    "say": "Uno solo se aburre, y yo me aburro con él. Recluta otro igual: Obelisco, Reclutar, unidad, RECLUTAR y casilla. Necesitarás a alguien a quien lanzar cosas (sí, cosas: yo soy una de ellas).",
-   "mission": "Recluta un segunda unidad",
+   "mission": "Recluta una segunda unidad",
    "ok": "Dos pardillos mejor que uno. Así la culpa y los remordimientos se repartirán.",
    "mood": "grunon",
    "en": {
@@ -186,7 +186,7 @@ const TUTORIAL_TEXTS = {
   {
    "say": "Por si no te parecía suficientemente satisfactorio reventar gnomos... ¿ves ese cofre escondido en un rincón? En las partidas de verdad hay un buen puñado repartidos por el mapa. Se abren haciendo clic sobre ellos y esconden reliquias, de las que dan ventajas de las buenas… Cuando las consigas, cada vez que muera una unidad tuya, perderán durabilidad, y cuando se les acabe se rompen. Como la clavícula de mi tío Klink.",
    "mission": "Abre el cofre de reliquias",
-   "ok": "¡Reliquia en la mochila! Son las Botas TrotaMontes: más Movimiento para todas tus unidades. Fíjate en su marcador, el que tiene al lado: esa es su durabilidad. Cuida de tus unidades o las botas se gastarán antes de tiempo. Y no, no guardo el ticket de compra, así que olvídate de la garantía.",
+   "ok": "¡Reliquia en la mochila! Son las Botas TrotaMontes: más Movimiento para todas tus unidades. Fíjate en el marcador que tiene al lado: indica su durabilidad. Cuida de tus unidades o las botas se gastarán antes de tiempo. Y no, no guardo el ticket de compra, así que olvídate de la garantía.",
    "mood": "normal",
    "en": {
     "say": "In case bursting gnomes wasn't satisfying enough for you... see that chest hidden in a corner? In real matches there are quite a few scattered around the map. You open them by clicking on them, and they hide relics, the kind that give really good advantages… Once you get them, every time one of your units dies they lose durability, and when it runs out they break. Like my uncle Klink's collarbone.",

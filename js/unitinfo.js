@@ -70,12 +70,12 @@ const FACE_OFFSETS = {
 // simplemente no muestra ningún párrafo de descripción en el popup.
 const UNIT_DESCRIPTIONS = {
   hombre_arbol: "Nunca tuvo prisa por llegar a ningún sitio, hasta que le preguntaron si quería unirse al equipo para aplastar Gnomos.",
-  surcabosques: "Se desliza entre los árboles más rápido de lo que nadie puede seguirle la pista. Las piernas más fuertes y la vista mas aguda del bosque.",
+  surcabosques: "Se desliza entre los árboles más rápido de lo que nadie puede seguirle la pista. Las piernas más fuertes y la vista más aguda del bosque.",
   seta_artificiero: "Experimenta con esporas explosivas y, milagrosamente, casi nunca se hace daño a sí mismo. Tiene un par de dedos menos.",
-  goblin_lanzador: "Tiene un tirachinas tallado por el mismo en madera de sauce milenario. Nadie lanza un Gnomo mas lejos ni con tanta mala leche como el.",
-  urgamentes: "Iba a escribir una descripción original, pero me esta obligando a pulsar teclas asl azarar kaskopkdmk klamsdd asdf",
+  goblin_lanzador: "Tiene un LanzaGnomos y sabe cómo usarlo. Nadie lanza un Gnomo más lejos que él ni con tanta mala leche.",
+  urgamentes: "Iba a escribir una descripción original, pero me está obligando a pulsar teclas asl azarar kaskopkdmk klamsdd asdf",
   punoroca: "Sus puños son más duros que la piedra de la que sacó el nombre. Si estás en su camino, formarás parte del camino.",
-  manos_largas: "Dicen que nunca ha robado nada... son las cosas las que se le pegan a los dedos. Difícil de creer cuando ocurre rodos los días.",
+  manos_largas: "Dicen que nunca ha robado nada... son las cosas las que se le pegan a los dedos. Difícil de creer cuando ocurre todos los días.",
   ala_fugaz: "Aterriza siempre donde quiere, aunque casi nunca como quiere. Necesita unos ajustes aquí y allá... o una buena colchoneta donde aterrizar.",
   nidobot: "Robot Incubador AlaTech 2.0. Modelo de última generación. Algunos clientes reportan que es algo inestable. Pero en el manual lo pone bien claro.",
 };

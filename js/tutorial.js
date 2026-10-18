@@ -374,7 +374,7 @@ const Tutorial = {
       },
       {
         say: `Uno solo se aburre, y yo me aburro con él. Recluta otro igual: Obelisco, Reclutar, unidad, RECLUTAR y casilla. Necesitarás a alguien a quien lanzar cosas (sí, cosas: yo soy una de ellas).`,
-        mission: "Recluta un segunda unidad",
+        mission: "Recluta una segunda unidad",
         target: () => {
           if (Obelisks._pendingRecruit) return T._placeMarker();
           if (Obelisks._overlayEl) {
