@@ -172,10 +172,16 @@ const Egg = {
     spriteEl.append(imgEl, flashEl, tintEl);
     shakeEl.appendChild(spriteEl);
     el.append(glowEl, shakeEl);
+    // Píldora de carga (se muestra al mantener pulsado el huevo): escudo + tus rebotes | 10 marcas de carga.
+    const pillEl = document.createElement("div");
+    pillEl.className = "egg-pill";
+    pillEl.innerHTML = '<div class="egg-pill__in"><div class="egg-pill__bn"><img class="egg-pill__crest" alt="" draggable="false"><b class="egg-pill__n">0</b></div><div class="egg-pill__vs"></div><div class="egg-pill__pips">' + '<i class="egg-pill__pip"></i>'.repeat(EGG_LEVELS) + "</div></div>";
+    el.appendChild(pillEl);
+    el.addEventListener("pointerdown", (ev) => { if (ev.button === 0 || ev.pointerType === "touch") this.showBadge(); });
     Units.container.appendChild(el);
     this._place(el, row, col, 6);
     el.addEventListener("contextmenu", (ev) => ev.preventDefault());
-    this.egg = { id: "egg-1", row, col, el, spriteEl, imgEl, shakeEl, glowEl, flashEl, tintEl, charge: 0, bn: {}, exploded: false, lastTeam: null };
+    this.egg = { id: "egg-1", row, col, el, spriteEl, imgEl, shakeEl, glowEl, flashEl, tintEl, charge: 0, bn: {}, exploded: false, lastTeam: null, pillEl };
     this._applyStage();
     this.refreshFog();
     return this.egg;
@@ -209,6 +215,8 @@ const Egg = {
     // Nivel 6+: tiembla cada vez más y se tiñe de rojo.
     e.shakeEl.className = "egg__shake" + (L >= 6 ? ` egg__shake--l${L}` : "");
     e.tintEl.style.opacity = L >= 6 ? String(Math.min(0.8, (L - 5) * 0.17)) : "0";
+    this._pillUpdate(!!e._grow);
+    e._grow = false;
     if (L > 0 && this.isActive()) this._startLoop();
     else this._stopLoop(true);
   },
@@ -256,8 +264,40 @@ const Egg = {
 
   // Ya no hay contador de carga (se sustituye por el destello): se dejan vacíos por compatibilidad.
   _placeBadge() {},
-  showBadge() {},
-  hideBadge() { this._pressed = false; },
+  // Píldora de carga: una sola vez cada dato (marcas = carga X/10, número = tus rebotes).
+  _myTeam() { return typeof Net !== "undefined" && Net.myTeam ? Net.myTeam : "player"; },
+  _pillUpdate(grow) {
+    const e = this.egg;
+    if (!e || !e.pillEl) return;
+    const pl = e.pillEl, team = this._myTeam();
+    const crest = pl.querySelector(".egg-pill__crest");
+    if (!crest.src) {
+      const race = typeof RACES !== "undefined" && typeof Teams !== "undefined" ? RACES.find((r) => r.id === Teams.raceIds[team]) : null;
+      if (race && race.iconImg) crest.src = race.iconImg;
+    }
+    const n = pl.querySelector(".egg-pill__n"), v = String(e.bn[team] || 0);
+    if (n.textContent !== v) { n.textContent = v; if (grow) { n.classList.remove("pop"); void n.offsetWidth; n.classList.add("pop"); } }
+    pl.querySelectorAll(".egg-pill__pip").forEach((p, i) => {
+      const on = i < e.charge;
+      p.classList.toggle("f", on);
+      p.style.setProperty("--c", on ? EGG_FLASH[i + 1][0] : "");
+      p.classList.remove("last");
+      if (grow && on && i === e.charge - 1) { void p.offsetWidth; p.classList.add("last"); }
+    });
+    pl.classList.toggle("egg-pill--hot", e.charge >= 6);
+    pl.classList.toggle("egg-pill--max", e.charge >= EGG_LEVELS);
+  },
+  showBadge() {
+    const e = this.egg;
+    if (!e || !e.pillEl || e.exploded || this._hidden()) return;
+    this._pressed = true;
+    this._pillUpdate(false);
+    e.pillEl.classList.add("egg-pill--on");
+  },
+  hideBadge() {
+    this._pressed = false;
+    if (this.egg && this.egg.pillEl) this.egg.pillEl.classList.remove("egg-pill--on");
+  },
 
   _live() {
     return this.isActive() && this.egg && !this.egg.exploded;
@@ -872,6 +912,7 @@ const Egg = {
     e.charge = Math.min(EGG_LEVELS, e.charge + 1);
     e.bn[team] = (e.bn[team] || 0) + 1;
     this._bouncedThisRound = true;
+    e._grow = true;
     this._applyStage();
     this._bounceFx(!!(s.ob || s.village));
     this._ring();

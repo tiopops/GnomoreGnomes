@@ -11582,3 +11582,35 @@ body.tut-on .settings-gear-btn--update { display: none; }
   position: fixed; z-index: 2000; transform: translateX(-50%); padding: 2px 9px; border-radius: 4px;
   background: rgba(0, 0, 0, 0.62); font: 700 13px/1.3 "Russo One", monospace; color: #9f9; pointer-events: none; white-space: nowrap;
 }
+
+/* Píldora de carga del huevo (js/egg.js): se muestra al mantener pulsado el huevo. */
+.egg-pill {
+  position: absolute; left: 50%; bottom: calc(100% - 2px); z-index: 30; pointer-events: none; opacity: 0;
+  transform: translate(-50%, 0) scale(.5); transform-origin: 50% 100%;
+  transition: transform .36s cubic-bezier(.34, 1.6, .64, 1), opacity .15s ease;
+  filter: drop-shadow(3px 4px 0 rgba(0, 0, 0, .45));
+}
+.egg-pill--on { opacity: 1; transform: translate(-50%, 0) scale(1) rotate(-2deg); }
+.egg-pill__in { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 14px 6px 8px; white-space: nowrap; }
+.egg-pill__in::before, .egg-pill__in::after { content: ""; position: absolute; clip-path: polygon(1.5% 0, 100% 5%, 98.5% 100%, 0 95%); }
+.egg-pill__in::before { inset: 0; background: #000; }
+.egg-pill__in::after { inset: 2.5px; background: #372e3d; transition: background .25s; }
+.egg-pill__in > * { position: relative; z-index: 1; }
+.egg-pill--hot .egg-pill__in::after { animation: eggPillHot .5s ease-in-out infinite alternate; }
+@keyframes eggPillHot { from { background: #372e3d; } to { background: #6a2a2a; } }
+.egg-pill--max .egg-pill__in { animation: eggTr10 .09s infinite; }
+.egg-pill__bn { display: flex; align-items: center; gap: 6px; }
+.egg-pill__crest { width: 28px; height: 28px; object-fit: contain; }
+.egg-pill__n { font-weight: 400; font-size: 22px; color: #ffd23f; text-shadow: 2px 2px 0 #000; font-style: italic; min-width: 14px; }
+.egg-pill__n.pop { animation: eggPillPop .36s cubic-bezier(.34, 1.7, .64, 1); }
+@keyframes eggPillPop { 0% { transform: scale(1.6) rotate(-8deg); } 100% { transform: scale(1) rotate(0); } }
+.egg-pill__vs { width: 3px; height: 26px; background: #000; opacity: .6; transform: skewX(-14deg); }
+.egg-pill__pips { display: flex; gap: 3px; }
+.egg-pill__pip { display: block; width: 10px; height: 20px; position: relative; transform: skewX(-14deg); }
+.egg-pill__pip::before { content: ""; position: absolute; inset: 0; background: #000; }
+.egg-pill__pip::after { content: ""; position: absolute; inset: 2px; background: #241f28; transition: background .2s; }
+.egg-pill__pip.f::after { background: var(--c); }
+.egg-pill__pip.last { animation: eggPipPop .4s cubic-bezier(.34, 1.8, .64, 1); }
+@keyframes eggPipPop { 0% { transform: skewX(-14deg) scale(1.7, 1.9); } 100% { transform: skewX(-14deg) scale(1); } }
+.egg-pill--hot .egg-pill__pip.f { animation: eggPipHot .5s ease-in-out infinite alternate; }
+@keyframes eggPipHot { to { filter: brightness(1.4); } }
