@@ -255,7 +255,7 @@ const SPRITE_SCALES = {
   punoroca: 1.5,
   manos_largas: 0.9,
   ala_fugaz: 1.35,
-  nidobot: 1.5,
+  nidobot: 1.7,
 };
 
 // Tamaño de las poses "machaca"/"impacto" (ver machacaUrl/machacaImpactUrl
@@ -278,7 +278,7 @@ const SPRITE_SCALES_MACHACA = {
   punoroca: 1.75,
   manos_largas: 1,
   ala_fugaz: 1.7,
-  nidobot: 1.9,
+  nidobot: 2.15,
 };
 const SPRITE_SCALES_IMPACT = {
   hombre_arbol: 1.5,
@@ -289,7 +289,7 @@ const SPRITE_SCALES_IMPACT = {
   punoroca: 1.8,
   manos_largas: 1,
   ala_fugaz: 1.55,
-  nidobot: 2.1,
+  nidobot: 2.4,
 };
 // Tamaño de la pose "pegar al gnomo" (pegarGnomoUrl). Sin entrada = mismo
 // tamaño que iddle (Units.pegarGnomoScaleFor).
@@ -302,7 +302,7 @@ const SPRITE_SCALES_PEGAR = {
   punoroca: 1.5,
   manos_largas: 0.85,
   ala_fugaz: 1.35,
-  nidobot: 1.9,
+  nidobot: 2.15,
 };
 
 // Precio de reclutar cada tipo de personaje desde el Obelisco Ancestral de
