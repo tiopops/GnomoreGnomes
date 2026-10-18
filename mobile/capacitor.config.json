@@ -1,0 +1,17 @@
+{
+  "appId": "com.gnomoregnomes.app",
+  "appName": "Gnomore Gnomes",
+  "webDir": "www",
+  "backgroundColor": "#14161f",
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "CapacitorUpdater": {
+      "autoUpdate": false
+    },
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}

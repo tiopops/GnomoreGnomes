@@ -1,0 +1,54 @@
+# Cada push a main: genera el paquete de actualización del juego (bundle.zip + version.json)
+# y la APK de Android, y los publica en la Release "mobile-latest" (se reemplazan en cada push).
+# La app instalada descarga bundle.zip desde el botón del menú principal (js/appupdate.js).
+name: Mobile (APK + paquete de actualizacion)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Copiar el juego a mobile/www
+        run: bash mobile/build-www.sh "$GITHUB_WORKSPACE"
+
+      - name: Paquete de actualizacion
+        run: |
+          cd mobile/www
+          zip -qr ../bundle.zip .
+
+      - name: Construir la APK
+        run: |
+          cd mobile
+          npm ci
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Publicar en la Release mobile-latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view mobile-latest >/dev/null 2>&1 || gh release create mobile-latest --prerelease --title "Android (ultima version)" --notes "APK y paquete de actualizacion. Se regenera solo en cada push."
+          cp mobile/android/app/build/outputs/apk/release/app-release.apk GnomoreGnomes.apk
+          gh release upload mobile-latest mobile/bundle.zip --clobber
+          gh release upload mobile-latest mobile/www/version.json --clobber
+          gh release upload mobile-latest GnomoreGnomes.apk --clobber

@@ -11476,3 +11476,13 @@ body.perf-mode.oracle-fog-lifted .tile--unexplored { visibility: visible; }
 .backpack-overlay--visible .backpack-panel--fit {
   transform: rotate(-1.2deg) scale(var(--fit));
 }
+
+/* Botón "Actualizar juego" (solo dentro de la APK, ver js/appupdate.js). */
+.settings-gear-btn.settings-gear-btn.settings-gear-btn--update.settings-gear-btn--update { right: 172px; }
+.settings-gear-btn--update[hidden] { display: none; }
+@media (max-width: 480px) {
+  .settings-gear-btn.settings-gear-btn.settings-gear-btn--update.settings-gear-btn--update.settings-gear-btn--update { right: 118px; }
+}
+body.tut-on .settings-gear-btn--update { display: none; }
+.app-update-spin { animation: app-update-spin 0.9s linear infinite; }
+@keyframes app-update-spin { to { transform: rotate(360deg); } }
