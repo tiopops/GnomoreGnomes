@@ -301,8 +301,8 @@ const SelectScreens = {
     root.className = "sel-root";
     root.innerHTML = `
       ${this.stepsHtml(2)}
-      <button type="button" class="sel-fr sel-chip" id="sel-chip"><img src="${race.iconImg}" alt=""><span><span class="sel-chip__t">${this.t("sel_your_team")}</span><span class="sel-chip__n" style="color:${this.accent(race)}">${this.t(race.nameKey)}</span></span></button>
       <div class="sel-title">${this.t("sel_title_level")}</div>
+      <div class="sel-summ"><b>${this.t(race.nameKey)}</b></div>
       <div class="sel-orbit" id="sel-orbit">
         <button type="button" class="sel-arrow sel-arrow--nav sel-arrow--l" id="sel-nL" aria-label="‹">${this.chev(-1)}</button>
         <button type="button" class="sel-arrow sel-arrow--nav sel-arrow--r" id="sel-nR" aria-label="›">${this.chev(1)}</button>
@@ -311,7 +311,6 @@ const SelectScreens = {
       <button type="button" class="sel-fr sel-btn" id="sel-bLvl" data-primary><span>${this.t("sel_btn_level")}</span></button>`;
     this._bindSteps(root);
     this._setAcc(document.getElementById("screen-level-select"), this.accent(race));
-    root.querySelector("#sel-chip").addEventListener("click", () => this.goStep(1));
     const orbit = root.querySelector("#sel-orbit");
     this._isl = LEVELS.map((l, i) => {
       const d = document.createElement("button");

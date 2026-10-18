@@ -11201,9 +11201,9 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
 @media (max-height: 760px) { .sel-rflav { display: none; } }
 .sel-info2 {
   flex: 0 0 auto;
-  width: min(720px, 94vw);
+  width: min(760px, 94vw);
   padding: 16px 26px 18px;
-  height: 222px; /* fijo: mismo tamaño para virtudes/debilidades y para cualquier unidad */
+  height: 242px; /* fijo: mismo tamaño para virtudes/debilidades y para cualquier unidad */
   overflow: hidden;
   box-sizing: border-box;
   transform: rotate(-0.4deg);
@@ -11214,7 +11214,7 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
 .sel-col h3 { font-size: 14px; letter-spacing: 0.2em; margin-bottom: 5px; display: flex; gap: 7px; align-items: center; font-weight: 400; }
 .sel-col--v h3 { color: #7ee08a; }
 .sel-col--w h3 { color: #ff8a7a; }
-.sel-col p { font-size: 16.5px; line-height: 1.4; color: rgba(255, 255, 255, 0.92); }
+.sel-col p { font-size: 15px; line-height: 1.35; color: rgba(255, 255, 255, 0.92); }
 
 /* Unidades: el sprite sobresale del recuadro; la elegida crece y brilla */
 .sel-team {
