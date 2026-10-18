@@ -107,6 +107,56 @@ const SelectScreens = {
   },
   _setAcc(el, color) { el.style.setProperty("--acc", color); },
 
+  // ---------- Ajuste sin scroll en móvil ----------
+  // Pedido explícito: "que las interfaces de equipo y escenario se muestren
+  // completas sin necesidad de hacer scroll". En pantallas pequeñas la CSS deja
+  // el contenido desplazable; aquí se mide cuánto sobra y, si no cabe, se
+  // reduce todo el conjunto (transform) lo justo para que entre en pantalla.
+  // El hueco superior (Volver / ajustes) no se reduce. No toca pantallas donde
+  // el contenido ya cabe (ordenador).
+  _FIT_MQ: "(max-width: 720px), (max-height: 560px)",
+  _fitInit(root) {
+    if (!root || root._fitInit) return;
+    root._fitInit = true;
+    const run = () => { root._fitRaf = 0; this._fit(root); };
+    const soon = () => { if (!root._fitRaf) root._fitRaf = requestAnimationFrame(run); };
+    new MutationObserver(soon).observe(root, { childList: true, subtree: true, characterData: true });
+    window.addEventListener("resize", soon);
+    const scr = root.closest(".screen");
+    if (scr) new MutationObserver(soon).observe(scr, { attributes: true, attributeFilter: ["class"] });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(soon);
+    soon();
+  },
+  _fit(root) {
+    ["width", "height", "left", "right", "bottom", "top", "transform", "transform-origin", "--f", "--clear", "--vw100"]
+      .forEach((k) => root.style.removeProperty(k));
+    root.removeAttribute("data-fit");
+    if (!window.matchMedia(this._FIT_MQ).matches) return;
+    const H = root.clientHeight, W = root.clientWidth;
+    if (!H || !W) return; // pantalla oculta
+    const natural = root.scrollHeight;
+    if (natural <= H + 1) return;
+    const steps = root.querySelector(".sel-steps");
+    const stepsRel = steps && getComputedStyle(steps).position === "relative";
+    const clear = stepsRel ? parseFloat(getComputedStyle(steps).marginTop) || 0 : parseFloat(getComputedStyle(root).paddingTop) || 0;
+    const hc = natural - clear;
+    const f = Math.max(0.5, Math.min(1, ((H - clear) / hc) * 0.99));
+    if (f >= 1) return;
+    root.setAttribute("data-fit", stepsRel ? "steps" : "pad");
+    root.style.setProperty("--f", f.toFixed(4));
+    root.style.setProperty("--clear", clear + "px");
+    root.style.setProperty("--vw100", (W / f).toFixed(1) + "px");
+    root.style.top = "0";
+    root.style.left = "50%";
+    root.style.right = "auto";
+    root.style.bottom = "auto";
+    root.style.width = (W / f).toFixed(1) + "px";
+    root.style.height = (H / f).toFixed(1) + "px";
+    root.style.transformOrigin = "50% 0";
+    root.style.transform = `translateX(-50%) scale(${f.toFixed(4)})`;
+    if (this._place) this._place();
+  },
+
   // ---------- 1. RAZA ----------
   units(race) {
     const list = Object.keys(UNIT_TYPES)
@@ -162,6 +212,7 @@ const SelectScreens = {
       this.goStep(2);
     });
     this.setRace(S.ri, false);
+    this._fitInit(root);
   },
 
   setRace(i, anim) {
@@ -287,6 +338,7 @@ const SelectScreens = {
     this._ang = S.front;
     this._place();
     requestAnimationFrame(() => this._place()); // por si el tamaño final llega tras el fade
+    this._fitInit(root);
   },
 
   _showLevelInfo() {

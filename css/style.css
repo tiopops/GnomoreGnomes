@@ -11350,7 +11350,7 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   .sel-arrow { width: 40px; height: 62px; }
   .sel-rname { font-size: 26px; }
   .sel-rflav { display: block; font-size: 12.5px; margin: 2px 0 8px; }
-  .sel-info2 { width: calc(100vw - 24px); height: 372px; min-height: 0; padding: 12px 16px 14px; }
+  .sel-info2 { width: calc(var(--vw100, 100vw) - 24px); height: 372px; min-height: 0; padding: 12px 16px 14px; }
   .sel-col p, .sel-ud p { font-size: 14.5px; }
   .sel-ud__n { font-size: 22px; }
   .sel-stats { font-size: 12px; }
@@ -11365,12 +11365,12 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   .sel-orbit { flex: 0 0 auto; height: min(44vh, 320px); }
   .sel-arrow--nav { width: 38px; height: 58px; top: 34%; }
   .sel-isl__lbl { font-size: 16px; margin-top: 12px; }
-  .sel-info { width: calc(100vw - 24px); padding: 14px 16px 16px; margin: 6px 0 12px; }
+  .sel-info { width: calc(var(--vw100, 100vw) - 24px); padding: 14px 16px 16px; margin: 6px 0 12px; }
   .sel-ft { font-size: 13px; }
   .sel-chip { position: relative !important; left: auto; top: auto; margin-top: 8px; padding: 4px 16px 4px 8px; transform: none; z-index: 2; }
   .sel-chip img { width: 34px; }
   .sel-rivrow { flex: 0 0 auto; padding: 26px 0; margin: auto 0; }
-  .sel-rivbox { width: min(300px, calc(100vw - 150px)); padding: 18px 10px 16px; }
+  .sel-rivbox { width: min(300px, calc(var(--vw100, 100vw) - 150px)); padding: 18px 10px 16px; }
   .sel-rivbox__fig i { font-size: 60px; }
   .sel-rivbox__fig { height: 70px; }
   .sel-rivbox__num { font-size: 64px; }
@@ -11394,7 +11394,7 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   .sel-chip { display: none !important; }
   .sel-team { --us: 0.62; margin-top: 100px; }
   .sel-root > .sel-btn { bottom: 6px; padding: 9px 34px; font-size: 15px; }
-  .sel-info2, .sel-info { width: min(900px, calc(100vw - 32px)); }
+  .sel-info2, .sel-info { width: min(900px, calc(var(--vw100, 100vw) - 32px)); }
 }
 @media (max-height: 560px) and (max-width: 720px) {
   .sel-title { display: none; }
@@ -11491,3 +11491,53 @@ body.tut-on .settings-gear-btn--update { display: none; }
 .app-promo__slots { display: flex; justify-content: center; align-items: center; }
 .app-promo__img { height: 150px; width: auto; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,.55)); }
 .app-promo__btn { text-decoration: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* Ajuste sin scroll (js/selectscreens.js, _fit): el hueco superior no se reduce con el zoom. */
+.sel-root[data-fit="pad"] { padding-top: calc(var(--clear) / var(--f)); }
+.sel-root[data-fit="steps"] > .sel-steps { margin-top: calc(var(--clear) / var(--f)); }
+
+/* Apaisado de móvil, pantalla de EQUIPO: dos columnas (emblema/nombre/botón a la
+   izquierda, descripción y unidades a la derecha) para que todo quepa sin scroll. */
+@media (max-height: 560px) and (min-width: 721px) {
+  #race-list.sel-root {
+    display: grid;
+    grid-template-columns: minmax(220px, 34%) 1fr;
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 10px;
+    justify-items: center;
+    align-items: start;
+    align-content: start;
+    padding: 84px 14px 6px;
+  }
+  #race-list.sel-root[data-fit="pad"] { padding-top: calc(var(--clear) / var(--f)); }
+  #race-list.sel-root > .sel-title, #race-list.sel-root > .sel-rflav { display: none; }
+  #race-list.sel-root > .sel-hero { grid-column: 1; grid-row: 1; margin-top: 0; }
+  #race-list.sel-root > .sel-pips { grid-column: 1; grid-row: 2; }
+  #race-list.sel-root > .sel-rname { grid-column: 1; grid-row: 3; }
+  #race-list.sel-root > .sel-btn { grid-column: 1; grid-row: 4; position: relative; bottom: auto; margin-top: 14px; align-self: start; }
+  #race-list.sel-root > .sel-info2 { grid-column: 2; grid-row: 1 / span 2; width: 100%; height: 168px; padding: 8px 14px 8px; }
+  #race-list.sel-root > .sel-info2 .sel-col p, #race-list.sel-root > .sel-info2 .sel-ud p { font-size: 12.5px; line-height: 1.25; }
+  #race-list.sel-root > .sel-team { grid-column: 2; grid-row: 3 / span 2; margin-top: 76px; }
+  #race-list.sel-root > .sel-hintu { grid-column: 2; grid-row: 4; align-self: end; margin: 0 0 4px; }
+}
+
+/* Apaisado de móvil, pantalla de ESCENARIO: islas a la izquierda, descripción a la derecha. */
+@media (max-height: 560px) and (min-width: 721px) {
+  #level-list.sel-root {
+    display: grid;
+    grid-template-columns: 50% 1fr;
+    grid-template-rows: 1fr auto;
+    column-gap: 10px;
+    justify-items: center;
+    align-items: start;
+    align-content: start;
+    padding: 84px 14px 6px;
+  }
+  #level-list.sel-root[data-fit="pad"] { padding-top: calc(var(--clear) / var(--f)); }
+  #level-list.sel-root > .sel-title, #level-list.sel-root > .sel-chip { display: none; }
+  #level-list.sel-root > .sel-orbit { grid-column: 1; grid-row: 1 / span 2; width: 100%; height: 230px; }
+  #level-list.sel-root > .sel-info { grid-column: 2; grid-row: 1; width: 100%; margin: 0; }
+  #level-list.sel-root .sel-feat { grid-template-columns: 1fr; gap: 6px; }
+  #level-list.sel-root > .sel-info .sel-ft { font-size: 12.5px; }
+  #level-list.sel-root > .sel-btn { grid-column: 2; grid-row: 2; position: relative; bottom: auto; margin-top: 12px; align-self: start; }
+}
