@@ -754,7 +754,11 @@ const Fog = {
       const i = key.indexOf(",");
       const r = +key.slice(0, i), c = +key.slice(i + 1);
       let on = false;
-      if (this.animEnabled && count < 28 && !this.revealedGrid[r][c] && (r + c) % 2 === 0) {
+      const was = el.classList.contains("tile__fog--idle");
+      // Una nube que ya respira sigue respirando (sin apagarla a mitad de
+      // ciclo: eso la devolvía de golpe a su pose estática = parpadeo).
+      if (was && this.animEnabled && !this.revealedGrid[r][c] && count < 28) on = true;
+      else if (this.animEnabled && count < 28 && !this.revealedGrid[r][c] && (r + c) % 2 === 0) {
         outer: for (let dr = -2; dr <= 2; dr++) {
           const rr = r + dr;
           if (rr < 0 || rr >= n) continue;
@@ -765,6 +769,10 @@ const Fog = {
         }
       }
       if (on) count++;
+      // Al encenderse por primera vez arranca en la fase 0 (idéntica a la
+      // pose estática): el delay negativo aleatorio de mapgen la hacía
+      // saltar de golpe a mitad de ciclo ("chisporroteo").
+      if (on && !was) el.style.animationDelay = (Math.random() * 6).toFixed(2) + "s"; // positivo: espera quieta y arranca en fase 0, sin salto
       el.classList.toggle("tile__fog--idle", on);
     });
   },
