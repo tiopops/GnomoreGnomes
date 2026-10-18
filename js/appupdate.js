@@ -96,13 +96,17 @@ const AppUpdate = {
     desc.innerHTML = '<p class="backpack-desc__text">Para una mejor experiencia descarga la app de Gnomore Gnomes en tu móvil</p>';
     bg.appendChild(desc);
 
-    const btn = document.createElement("button");
-    btn.className = "p5-banner p5-banner--action shop-buy-btn";
+    // Enlace de verdad (no window.location): en el móvil un toque sobre un
+    // <a href> es la forma más fiable de que el navegador empiece la descarga.
+    const btn = document.createElement("a");
+    btn.className = "p5-banner p5-banner--action shop-buy-btn app-promo__btn";
+    btn.href = this.APK_URL;
+    btn.setAttribute("download", "GnomoreGnomes.apk");
+    btn.rel = "noopener";
     btn.innerHTML = '<span class="p5-banner__label">DESCARGAR APK</span>';
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      window.location.href = this.APK_URL;
-      close();
+      setTimeout(close, 400);
     });
     bg.appendChild(btn);
 

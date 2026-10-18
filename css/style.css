@@ -11490,3 +11490,4 @@ body.tut-on .settings-gear-btn--update { display: none; }
 /* Popup "DESCARGAR APP" (solo navegador móvil Android, ver js/appupdate.js). */
 .app-promo__slots { display: flex; justify-content: center; align-items: center; }
 .app-promo__img { height: 150px; width: auto; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,.55)); }
+.app-promo__btn { text-decoration: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
