@@ -152,6 +152,8 @@ const PRELOAD_ASSETS = [
  "assets/iconos/resorte_goblin.png",
  "assets/iconos/seta_trampa.png",
  "assets/iconos/seta_trampa_midres.png",
+ "assets/iconos/seta_suelta.png",
+ "assets/iconos/seta_suelta_midres.png",
  "assets/iconos/setarcoiris.png",
  "assets/iconos/setarcoiris_midres.png",
  "assets/iconos/totemvision_midres.png",

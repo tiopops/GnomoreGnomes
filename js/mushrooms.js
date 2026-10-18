@@ -23,7 +23,7 @@ const MUSHROOM_RELOCATE_EVERY = 4; // rondas que una seta suelta permanece en su
 const MUSHROOM_FUSE = 3;
 const MUSHROOM_DAMAGE = 5;
 const MUSHROOM_MIN_BASE_DIST = 6;
-const MUSHROOM_SPRITE = "assets/iconos/seta_trampa.png";
+const MUSHROOM_SPRITE = "assets/iconos/seta_suelta.png";
 const MUSHROOM_GROUND_SIZE = 90;
 
 const Mushrooms = {
