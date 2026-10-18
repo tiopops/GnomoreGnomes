@@ -885,6 +885,7 @@ function createGnomeInstance() {
       // dentro del mismo límite de 4 casillas (ver findDropTile).
       if (typeof Volcano !== "undefined") Volcano.addThrowMarker(unit, this); // lanzar al volcán (js/volcano.js)
       if (typeof Egg !== "undefined") Egg.addThrowMarker(unit, this); // lanzar contra el huevo (js/egg.js)
+      if (typeof Crane !== "undefined") Crane.addThrowMarker(unit, this); // espantar a la grulla (js/crane.js)
       if (typeof Bumpers !== "undefined") Bumpers.addThrowMarker(unit, this); // rebote de billar contra un bumper (js/bumpers.js)
       const movimiento = Units.moveRangeOf(unit);
       const tiles = this._throwableTiles(unit);
@@ -2124,6 +2125,10 @@ const Gnome = {
     if (typeof Volcano !== "undefined" && Volcano.current) {
       const v = Volcano.current();
       if (v && Volcano._accepts(v) && !(typeof Fog !== "undefined" && Fog.isFogged(v.row, v.col)) && inRange(v)) return true;
+    }
+    if (typeof Crane !== "undefined" && Crane.landed() && !Crane._busy) {
+      const ob = Crane._ob(Crane.st.team);
+      if (ob && !Crane._hiddenAt(ob) && inRange(ob)) return true;
     }
     if (typeof Bumpers !== "undefined" && Bumpers.list && Bumpers.list.length && typeof Egg !== "undefined" && Egg.isActive && Egg.isActive()) {
       if (Bumpers.list.some((b) => !(typeof Fog !== "undefined" && Fog.isFoggedReal(b.row, b.col)) && inRange(b))) return true;

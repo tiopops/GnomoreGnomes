@@ -473,8 +473,8 @@ const Net = {
     s.dr = byTeam((t) => (typeof Drums !== "undefined" && Drums.slices ? Drums.slices[t] || 0 : 0));
     s.fr = (Drums.frags || []).map((f) => f.row + "," + f.col).sort();
     s.dp = Drums.list.map((d) => d.row + "," + d.col);
-    s.bm = typeof Bumpers !== "undefined" ? [Bumpers.slices.player, Bumpers.slices.enemy, Bumpers.list.length] : [];
-    s.eg = typeof Egg !== "undefined" && Egg.egg ? [Egg.egg.row, Egg.egg.col, Egg.egg.charge, Egg.egg.exploded ? 1 : 0] : [];
+    s.bm = typeof Bumpers !== "undefined" ? [Bumpers.list.length, typeof Crane !== "undefined" ? Crane.syncStr() : ""] : [];
+    s.eg = typeof Egg !== "undefined" && Egg.egg ? [Egg.egg.row, Egg.egg.col, Egg.egg.charge, Egg.egg.exploded ? 1 : 0, JSON.stringify(Egg.egg.bn || {})] : [];
     s.av = Units.list.map((u) => [u.id, u.abilityUsed ? 1 : 0, u.shielded ? 1 : 0, u.thorny ? 1 : 0]);
     return s;
   },

@@ -5,35 +5,30 @@
      - Reaccionar cuando el huevo los golpea (rebote elástico + onda en
        perspectiva + sonido que sube de tono con cada carambola).
      - El COMBO de cada vuelo del huevo (a partir del 2.º golpe seguido contra
-       bumpers/tótems/obeliscos/unidades), la RULETA de cada equipo (10
-       porciones, estética de los tambores) y el JACKPOT al romperse el huevo.
+       bumpers/tótems/obeliscos/unidades) y qué bumpers ya rebotaron en este turno
+       (un bumper solo rebota una vez por turno).
    Cómo rebota el huevo lo decide js/egg.js (_simulate); aquí solo se pinta. */
 
-const BUMPER_SLICES_MAX = 10;
 const GNOME_BUMP_POINTS = 5; // puntos que se carga el gnomo al rebotar en un bumper
 const BUMPER_SPRITE_W = 205;
 const BUMPER_SCALE = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24, 26];
 
 const Bumpers = {
   list: [],
-  slices: { player: 0, enemy: 0 },
+  used: new Set(), // bumpers que ya rebotaron en este turno (no vuelven a rebotar)
   combo: 0, // golpes seguidos en el vuelo actual
   _comboEl: null,
-  _rouletteEl: null,
-  _rouletteTimer: null,
 
   resetAll() {
     this.list.forEach((b) => b.el && b.el.remove());
     this.list = [];
-    this.resetRoulettes();
+    this.used = new Set();
     this.combo = 0;
     this._hideCombo();
-    this.hideRoulette();
   },
 
-  resetRoulettes() {
-    this.slices = { player: 0, enemy: 0 };
-  },
+  markUsed(b) { if (b) this.used.add(b); },
+  resetUsed() { this.used = new Set(); },
 
   at(row, col) {
     return this.list.find((b) => b.row === row && b.col === col) || null;
@@ -105,7 +100,6 @@ const Bumpers = {
       b.el.classList.toggle("unit--fog-hidden", fogged);
       b.el.classList.toggle("gg-remembered", !fogged && !Fog.isPerceived(b.row, b.col));
     });
-    if (this._rouletteEl && this._rouletteFor && Fog.isFoggedReal(this._rouletteFor.row, this._rouletteFor.col)) this.hideRoulette();
   },
 
   // Sistema de transparencias del escenario (igual que tótems/obeliscos, ver
@@ -118,6 +112,7 @@ const Bumpers = {
     const my = typeof mouseY === "number" ? mouseY : Villages._lastMouseY;
     const objs = this.list.map((b) => ({ row: b.row, col: b.col, el: b.el, spriteEl: b.spriteEl }));
     if (typeof Egg !== "undefined" && Egg.egg && !Egg.egg.exploded) objs.push({ row: Egg.egg.row, col: Egg.egg.col, el: Egg.egg.el, spriteEl: Egg.egg.spriteEl });
+    if (typeof Crane !== "undefined" && Crane.occlusionObj) { const co = Crane.occlusionObj(); if (co) objs.push(co); }
     objs.forEach((o) => {
       if (!o.el || !o.spriteEl) return;
       if (o.el.classList.contains("unit--fog-hidden") || mx == null || my == null) {
@@ -139,26 +134,8 @@ const Bumpers = {
     });
   },
 
-  // Los bumpers no capturan el ratón (como el resto del escenario: nada se
-  // "levanta" al pasar por encima); al pulsar sobre uno se detecta por su caja.
-  _onPointerDown(ev) {
-    if (!this.list.length || ev.button > 0) return;
-    const hit = this.list.find((b) => {
-      if (b.el.classList.contains("unit--fog-hidden")) return false;
-      const r = b.spriteEl.getBoundingClientRect();
-      const w = r.width * 0.5, h = r.height * 0.6;
-      const cx = r.left + r.width / 2, cy = r.top + r.height * 0.55;
-      return Math.abs(ev.clientX - cx) <= w / 2 && Math.abs(ev.clientY - cy) <= h / 2;
-    });
-    if (hit) this.showRoulette(hit);
-  },
-
-  // La ruleta sale en el último bumper golpeado que siga visible (si no hay, en el indicado).
-  _rouletteBumper(fallback) {
-    const l = this._lastHit;
-    if (l && this.list.includes(l) && !(typeof Fog !== "undefined" && Fog.isFoggedReal(l.row, l.col))) return l;
-    return fallback || this.list.find((x) => !(typeof Fog !== "undefined" && Fog.isFoggedReal(x.row, x.col))) || this.list[0];
-  },
+  // Los bumpers no capturan el ratón (como el resto del escenario). Ya no hay ruleta que abrir.
+  _onPointerDown() {},
 
   // ---------- Golpes y combo ----------
   beginFlight() {
@@ -186,24 +163,10 @@ const Bumpers = {
   markLit(b, team) {
     if (!b || !b.el) return;
     if (!this.lit) this.lit = new Set();
-    if (!(typeof Fog !== "undefined" && Fog.isFoggedReal(b.row, b.col))) this._lastHit = b;
     if (this.lit.has(b)) return;
     this.lit.add(b);
     b.el.classList.add("bumper--lit");
     if (typeof SFX !== "undefined" && SFX.bumperLit) { try { SFX.bumperLit(); } catch (er) {} }
-    const vis = this.list.filter((x) => !(typeof Fog !== "undefined" && Fog.isFoggedReal(x.row, x.col)));
-    if (vis.length >= 2 && vis.every((x) => this.lit.has(x))) this._boardLit(team, vis);
-  },
-
-  _boardLit(team, vis) {
-    const t = team === "enemy" ? "enemy" : "player";
-    this.slices[t] = Math.min(BUMPER_SLICES_MAX, this.slices[t] + 3);
-    if (typeof SFX !== "undefined" && SFX.boardLit) { try { SFX.boardLit(); } catch (er) {} }
-    if (typeof Egg !== "undefined" && Egg._flash) Egg._flash();
-    vis.forEach((x) => this.reactAt(x, 1));
-    const hidden = typeof Egg !== "undefined" && Egg._hidden && Egg._hidden();
-    if (!hidden && t === "player") this.showRoulette(this._rouletteBumper(vis[0]), 2200);
-    setTimeout(() => this.resetLit(), 700);
   },
 
 
@@ -368,101 +331,12 @@ const Bumpers = {
     if (typeof SFX !== "undefined" && SFX.bumper) { try { SFX.bumper(n); } catch (er) {} }
   },
 
-  // Fin del vuelo: el COMBO se suma UNA vez a la ruleta del equipo que golpeó.
+  // Fin del vuelo: el COMBO se apaga (ya no alimenta ninguna ruleta: la carga la dan los rebotes del huevo).
   async endFlight(team) {
     this.resetLit();
-    const n = this.combo;
     this.combo = 0;
-    const t = team === "enemy" ? "enemy" : "player";
-    const hidden = typeof Egg !== "undefined" && Egg._hidden && Egg._hidden();
-    if (n < 2) {
-      this._hideCombo();
-      if (n >= 1 && !hidden && t === "player" && this.list.length) this.showRoulette(this._rouletteBumper(), 1600);
-    } else {
-      const before = this.slices[t];
-      this.slices[t] = Math.min(BUMPER_SLICES_MAX, before + n);
-      if (hidden) this._hideCombo();
-      else {
-        await this._flyComboToRoulette(n);
-        if (typeof SFX !== "undefined" && SFX.comboFill) { try { SFX.comboFill(n); } catch (er) {} }
-        if (this.list.length) this.showRoulette(this._rouletteBumper(), 1600);
-      }
-    }
-    // 10 de ruleta antes de que se rompa el huevo: se llevan los 10 puntos, solo quien los alcanza.
-    const w = this._winner(t);
-    if (w) await this._win(w);
-  },
-
-  _winner(pref) {
-    const a = this.slices.player >= BUMPER_SLICES_MAX, b = this.slices.enemy >= BUMPER_SLICES_MAX;
-    if (a && b) return pref;
-    return a ? "player" : b ? "enemy" : null;
-  },
-
-  // Premio de 10: reinicia todas las ruletas y la puntuación del huevo; el resto no recibe nada.
-  async _win(t) {
-    this.resetRoulettes();
-    this.hideRoulette();
-    this._grant(t, BUMPER_SLICES_MAX);
-    if (typeof Egg !== "undefined" && Egg.resetScore) Egg.resetScore();
-    await this._pop(t === "player" ? BUMPER_SLICES_MAX : 0);
-  },
-
-  _grant(t, g) {
-    if (g > 0 && typeof Glory !== "undefined" && t in Glory.points) {
-      const room = Math.max(0, (typeof GLORY_CAP !== "undefined" ? GLORY_CAP : 999) - Glory.points[t]);
-      const add = Math.min(g, room);
-      Glory.points[t] += add;
-      Glory._render(t, { bump: add > 0, gained: add });
-    }
-  },
-
-  async _pop(mine) {
-    const hidden = typeof Egg !== "undefined" && Egg._hidden && Egg._hidden();
-    if (hidden) return;
-    if (typeof SFX !== "undefined" && SFX.jackpot) { try { SFX.jackpot(); } catch (er) {} }
-    const el = document.createElement("div");
-    el.className = "jackpot-pop";
-    el.innerHTML = `<b>JACKPOT</b><span>+${mine}!</span>`;
-    document.body.appendChild(el);
-    this._coins();
-    await new Promise((r) => setTimeout(r, 2200));
-    el.remove();
-  },
-
-  // ---------- JACKPOT ----------
-  async jackpot() {
-    const w = this._winner("player");
-    if (w) { await this._win(w); return; }
-    const gains = { player: this.slices.player, enemy: this.slices.enemy };
-    this.resetRoulettes();
-    this.hideRoulette();
-    const total = gains.player + gains.enemy;
-    ["player", "enemy"].forEach((t) => this._grant(t, gains[t]));
-    if (total <= 0) return;
-    await this._pop(gains.player);
-  },
-
-  _coins() {
-    for (let i = 0; i < 30; i++) {
-      const c = document.createElement("div");
-      c.className = "jackpot-coin";
-      c.style.left = "50%";
-      c.style.top = "40%";
-      document.body.appendChild(c);
-      const a = NR() * Math.PI * 2;
-      const d = 200 + NR() * 360;
-      const dx = Math.cos(a) * d, dy = Math.sin(a) * d * 0.6 - 100;
-      const an = c.animate(
-        [
-          { transform: "translate(-50%,-50%)", opacity: 1 },
-          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`, opacity: 1, offset: 0.55 },
-          { transform: `translate(calc(-50% + ${dx * 1.1}px), calc(-50% + ${dy + 240}px)) scale(.7)`, opacity: 0 },
-        ],
-        { duration: 1300 + NR() * 600, delay: NR() * 200, easing: "cubic-bezier(.2,.7,.4,1)" }
-      );
-      an.onfinish = () => c.remove();
-    }
+    await new Promise((r) => setTimeout(r, 500));
+    this._hideCombo();
   },
 
   // ---------- Indicador COMBO (se queda hasta que el huevo para) ----------
@@ -486,65 +360,6 @@ const Bumpers = {
   _hideCombo() {
     if (this._comboEl) { this._comboEl.remove(); this._comboEl = null; }
   },
-
-  async _flyComboToRoulette(n) {
-    const el = this._comboEl;
-    const b = this.list[0];
-    if (!el || !b) { this._hideCombo(); return; }
-    const vp = document.getElementById("board-viewport");
-    const er = el.getBoundingClientRect();
-    let tx = er.left + er.width / 2, ty = er.top + 200;
-    const be = b.el.getBoundingClientRect();
-    tx = be.left + be.width / 2;
-    ty = be.top - 40;
-    const dx = tx - (er.left + er.width / 2), dy = ty - er.top;
-    el.classList.remove("combo-indicator--hit");
-    try {
-      await el.animate(
-        [
-          { transform: "translate(-50%,0) scale(1)", opacity: 1 },
-          { transform: `translate(calc(-50% + ${dx}px), ${dy}px) scale(.3)`, opacity: 1 },
-        ],
-        { duration: 520, easing: "cubic-bezier(.5,0,.8,.4)", fill: "forwards" }
-      ).finished;
-    } catch (er2) {}
-    this._hideCombo();
-  },
-
-  // ---------- Ruleta (estética de los tambores) ----------
-  _plateSvg(have, color) {
-    const R = 46, cx = 50, cy = 50, N = BUMPER_SLICES_MAX;
-    let s = "";
-    for (let i = 0; i < N; i++) {
-      const a0 = -Math.PI / 2 + (i * 2 * Math.PI) / N + 0.03;
-      const a1 = -Math.PI / 2 + ((i + 1) * 2 * Math.PI) / N - 0.03;
-      const x0 = cx + R * Math.cos(a0), y0 = cy + R * Math.sin(a0);
-      const x1 = cx + R * Math.cos(a1), y1 = cy + R * Math.sin(a1);
-      s += `<path d="M${cx} ${cy} L${x0} ${y0} A${R} ${R} 0 0 1 ${x1} ${y1} Z" fill="${i < have ? color : "#4a3f52"}" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>`;
-    }
-    return `<svg width="104" height="104" viewBox="0 0 100 100"><circle cx="50" cy="50" r="49" fill="#1d1814" stroke="#000" stroke-width="3"/>${s}<circle cx="50" cy="50" r="13" fill="#1d1814" stroke="#000" stroke-width="2.5"/><text x="50" y="58" text-anchor="middle" font-family="Russo One, sans-serif" font-size="22" fill="#fff" stroke="#000" stroke-width="3" paint-order="stroke">${have}</text></svg>`;
-  },
-
-  showRoulette(b, ms) {
-    this.hideRoulette();
-    if (!b) return;
-    const el = document.createElement("div");
-    el.className = "bumper-roulette";
-    // Cada jugador ve solo SU ruleta (la del rival no se enseña).
-    el.innerHTML = `<div>${this._plateSvg(this.slices.player, "#ffd23f")}</div>`;
-    const { x, y } = getTileCenter(b.row, b.col, Units.boardSize);
-    el.style.left = `${x}px`;
-    el.style.top = `${y - 230}px`;
-    el.style.zIndex = "9000";
-    Units.container.appendChild(el);
-    this._rouletteEl = el;
-    this._rouletteFor = b;
-    if (this._tutHook) this._tutHook();
-    clearTimeout(this._rouletteTimer);
-    this._rouletteTimer = setTimeout(() => this.hideRoulette(), ms || 2600);
-  },
-
-  _tutHook: null,
 
   // Hover de los bumpers y del huevo: se amplían un poco al pasar el ratón por encima y
   // vuelven a su tamaño al salir, como el resto de elementos. Se detecta por la caja del
@@ -581,10 +396,6 @@ const Bumpers = {
     document.body.classList.remove("gg-pinball-hover");
   },
 
-  hideRoulette() {
-    clearTimeout(this._rouletteTimer);
-    if (this._rouletteEl) { this._rouletteEl.remove(); this._rouletteEl = null; }
-  },
 };
 
 if (typeof document !== "undefined") {

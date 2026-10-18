@@ -1,26 +1,25 @@
 /* Gnomore Gnomes — Huevo de Grulla (nivel Hurrycrane Village).
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
      - Colocar un huevo sobre una NUBE en el centro del mapa (solo en ese nivel).
-     - GNOMAZO: lanzarle un gnomo carga el huevo (+EGG_CHARGE_PER_HIT, máx. 30)
-       y lo manda EN LA DIRECCIÓN del golpe (se aleja de quien lo lanza;
-       EGG_PUSH_AWAY = -1 lo invierte). Cuanto más cargado, más casillas
-       avanza (3 + carga/3 casillas). Rebota en los límites del tablero como la bola
-       del Arkanoid. Mientras se apunta, un fantasma enseña dónde acabará.
-     - Atropella unidades (amigas o enemigas): 1 de daño y las aparta 1
-       casilla de lado. Contra un OBELISCO rebota como la bola de un pinball
-       (le quita 1 de vida, sea amigo o enemigo) y sigue su camino.
-     - Con la carga al máximo, EGG_BREAK_HITS golpes más lo rompen (sprites
-       agrietado / muy agrietado) y también reaparece en el turno siguiente.
-     - La carga se consulta manteniendo pulsado sobre el huevo, como un gnomo.
+     - GNOMAZO: lanzarle un gnomo lo manda EN LA DIRECCIÓN del golpe (se aleja de
+       quien lo lanza). Rebota en los límites del tablero como la bola del Arkanoid.
+       Mientras se apunta, un fantasma enseña dónde acabará.
+     - CARGA ESTILO STRIKERS: cada rebote (bumper, tótem, obelisco o borde) sube 1
+       nivel (máx. EGG_LEVELS = 10). No hay contador: el huevo destella cambiando de
+       color, cada rebote suena más agudo y, a partir del nivel 6, tiembla, se tiñe
+       de rojo y late como a punto de explotar. Cada turno sin rebotar pierde 1 nivel.
+     - Un rebote más con el nivel al máximo lo hace EXPLOTAR: cada equipo recibe tantos
+       puntos de Gloria como rebotes hizo y aparece la Grulla (js/crane.js) para
+       equilibrar la partida; cuando se va, el huevo reaparece en el centro.
+     - Contra un OBELISCO o un TÓTEM rebota y le quita 2, 5 o 10 de vida según la carga.
+     - Atropella unidades (amigas o enemigas): 1 de daño y las aparta 1 casilla.
    La vista previa dibuja toda la trayectoria con sus rebotes.
    Mientras sea visible, el huevo bloquea su casilla (se engancha a Drums.at). */
 
 const EGG_DIR = "assets/niveles/hurrycrane/";
-const EGG_MAX_CHARGE = 30;
-const EGG_CHARGE_PER_HIT = 5; // carga que suma cada gnomazo
-const EGG_BREAK_HITS = 3; // golpes con la carga al máximo hasta romperse
-const EGG_BASE_DIST = 6; // casillas del vuelo con carga 0..2 (el huevo debe viajar lejos)
-const EGG_DIST_PER = 3; // +1 casilla cada tantos puntos de carga
+const EGG_LEVELS = 10; // niveles de carga (máx.)
+const EGG_BASE_DIST = 6; // casillas del vuelo con carga 0
+const EGG_DIST_PER_LEVEL = 0.6; // casillas extra del gnomazo por nivel de carga
 const EGG_PUSH_AWAY = 1; // 1 = en la dirección del golpe; -1 = hacia quien lanza
 const EGG_GNOME_POINTS = 5; // puntos que carga el gnomo al estamparse
 const EGG_BOUNCE_BONUS_MAX = 8; // tope de casillas extra por rebotes
@@ -31,10 +30,15 @@ const EGG_ASSIST_TOL = 1.25; // desvío lateral (casillas) que la ayuda de punte
 const EGG_HOMING_RANGE = 4; // alcance (casillas) del teledirigido entre bumpers
 const EGG_PULSE = [2.6, 2.2, 1.7, 1.05, 0.55]; // segundos por latido según carga (con carga 0 respira como el resto del escenario)
 const EGG_AMP = [0.03, 0.035, 0.042, 0.052, 0.065];
+// Daño a obeliscos y tótems según el nivel de carga del huevo al chocar.
+function eggImpactDamage(level) { return level >= 8 ? 10 : level >= 4 ? 5 : 2; }
+// Pareja de colores del destello por nivel (0 = sin carga): el destello oscila entre los dos.
+const EGG_FLASH = [null, ["#ffffff", "#bfe9ff"], ["#7fe8ff", "#ffffff"], ["#6cff9c", "#bfffe0"], ["#c6ff4a", "#6cff9c"], ["#ffe95a", "#c6ff4a"],
+  ["#ffb23a", "#ffe95a"], ["#ff7a2a", "#ffb23a"], ["#ff3a2a", "#ff7a2a"], ["#ff1c1c", "#ff6a3a"], ["#ff1010", "#ffffff"]];
 const EGG_DIRS = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]];
 
 const Egg = {
-  egg: null, // { id,row,col,el,spriteEl,badgeEl,badgeValueEl,charge,hitsMax,exploded,... }
+  egg: null, // { id,row,col,el,spriteEl(envoltorio animado),imgEl,charge(0..10),bn(rebotes por equipo),exploded,... }
   nests: {}, // sin uso (compatibilidad con fog.js / net.js)
   _respawnPending: false,
   _busy: false,
@@ -45,12 +49,15 @@ const Egg = {
   },
 
   resetAll() {
-    if (this.egg) { this.egg.el.remove(); if (this.egg.badgeEl) this.egg.badgeEl.remove(); }
+    this._stopLoop();
+    if (this.egg) this.egg.el.remove();
     this.egg = null;
+    if (typeof Crane !== "undefined") Crane.resetAll();
     this._respawnPending = false;
     this._roundSeen = null;
     this._idle = 0;
     this._hitThisRound = false;
+    this._bouncedThisRound = false;
     this._busy = false;
     this._pressed = false;
   },
@@ -145,85 +152,112 @@ const Egg = {
   _createEgg(row, col) {
     const el = document.createElement("div");
     el.className = "unit egg";
-    const spriteEl = document.createElement("img");
+    // Estructura: halo (destello) + envoltorio que tiembla + cuerpo animado (latido/rebote) con la
+    // imagen y dos capas con la silueta del huevo: el destello de color y el tinte rojo.
+    const glowEl = document.createElement("div");
+    glowEl.className = "egg__glow";
+    const shakeEl = document.createElement("div");
+    shakeEl.className = "egg__shake";
+    const spriteEl = document.createElement("div");
     spriteEl.className = "egg__sprite";
-    spriteEl.decoding = "async";
-    spriteEl.alt = "";
-    spriteEl.draggable = false;
-    el.appendChild(spriteEl);
+    const imgEl = document.createElement("img");
+    imgEl.className = "egg__img";
+    imgEl.decoding = "async";
+    imgEl.alt = "";
+    imgEl.draggable = false;
+    const flashEl = document.createElement("div");
+    flashEl.className = "egg__flash";
+    const tintEl = document.createElement("div");
+    tintEl.className = "egg__tint";
+    spriteEl.append(imgEl, flashEl, tintEl);
+    shakeEl.appendChild(spriteEl);
+    el.append(glowEl, shakeEl);
     Units.container.appendChild(el);
     this._place(el, row, col, 6);
-
-    // Mantener pulsado sobre el huevo -> muestra su carga (igual que un gnomo).
-    el.addEventListener("pointerdown", (ev) => {
-      ev.stopPropagation();
-      ev.preventDefault();
-      this.showBadge();
-    });
     el.addEventListener("contextmenu", (ev) => ev.preventDefault());
-
-    this.egg = { id: "egg-1", row, col, el, spriteEl, badgeEl: null, badgeValueEl: null, charge: 0, hitsMax: 0, exploded: false, lastTeam: null };
+    this.egg = { id: "egg-1", row, col, el, spriteEl, imgEl, shakeEl, glowEl, flashEl, tintEl, charge: 0, bn: {}, exploded: false, lastTeam: null };
     this._applyStage();
     this.refreshFog();
     return this.egg;
   },
 
-  // ---------- Carga: sprite, latido y contador ----------
-  _stageFile(hitsMax) {
-    return hitsMax >= 3 ? "huevo_muy_agrietado.png" : hitsMax >= 1 ? "huevo_agrietado.png" : "huevo.png";
+  // ---------- Carga: sprite, temblor, tinte y destello ----------
+  _stageFile(level) {
+    return level >= 9 ? "huevo_muy_agrietado.png" : level >= 7 ? "huevo_agrietado.png" : "huevo.png";
+  },
+
+  _setImg(file) {
+    const e = this.egg;
+    if (!e) return;
+    this._setSprite(e.imgEl, file);
+    e.spriteEl.style.setProperty("--egg-mask", `url("${new URL(EGG_DIR + file, document.baseURI).href}")`);
   },
 
   _applyStage() {
     const e = this.egg;
     if (!e) return;
-    const f = this._stageFile(e.hitsMax);
+    const f = this._stageFile(e.charge);
     if (e._stage !== f) {
       e._stage = f;
-      this._setSprite(e.spriteEl, f);
+      this._setImg(f);
     }
-    const h = Math.min(EGG_PULSE.length - 1, Math.floor(e.charge / 6));
+    const L = e.charge;
+    // Latido de respiración (como antes, más rápido cuanto más cargado).
+    const h = Math.min(EGG_PULSE.length - 1, Math.floor(L / 2));
     e.spriteEl.style.setProperty("--egg-pulse", `${EGG_PULSE[h]}s`);
     e.spriteEl.style.setProperty("--egg-amp", String(EGG_AMP[h]));
-    if (e.badgeValueEl) e.badgeValueEl.textContent = String(e.charge);
+    // Nivel 6+: tiembla cada vez más y se tiñe de rojo.
+    e.shakeEl.className = "egg__shake" + (L >= 6 ? ` egg__shake--l${L}` : "");
+    e.tintEl.style.opacity = L >= 6 ? String(Math.min(0.8, (L - 5) * 0.17)) : "0";
+    if (L > 0 && this.isActive()) this._startLoop();
+    else this._stopLoop(true);
   },
 
-  _ensureBadge() {
+  // Bucle del destello: oscila entre los dos colores del nivel, más rápido cuanto más cargado,
+  // y a partir del 6 añade el latido sonoro de "a punto de explotar".
+  _startLoop() {
+    if (this._raf) return;
+    const mix = (a, b, t) => {
+      const A = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+      const B = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+      return "rgb(" + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",") + ")";
+    };
+    const tick = (t) => {
+      const e = this.egg;
+      if (!e || e.exploded || e.charge <= 0) { this._raf = 0; this._clearFlash(); return; }
+      const L = e.charge, pair = EGG_FLASH[Math.min(L, 10)];
+      const ph = Math.sin((t / 1000) * Math.PI * 2 * (0.9 + L * 0.55)) * 0.5 + 0.5;
+      const col = mix(pair[0], pair[1], ph);
+      const hidden = this._hidden();
+      e.el.style.setProperty("--fc", col);
+      e.flashEl.style.opacity = hidden ? "0" : String(0.18 + ph * (0.25 + L * 0.045));
+      e.glowEl.style.opacity = hidden ? "0" : String(0.12 + ph * (0.1 + L * 0.045));
+      if (L >= 6 && !hidden && !this._busy && t - (this._tickT || 0) > 900 - (L - 6) * 190) {
+        this._tickT = t;
+        if (typeof SFX !== "undefined" && SFX.eggTick) { try { SFX.eggTick(L); } catch (er) {} }
+      }
+      this._raf = requestAnimationFrame(tick);
+    };
+    this._raf = requestAnimationFrame(tick);
+  },
+
+  _stopLoop(clear) {
+    if (this._raf) cancelAnimationFrame(this._raf);
+    this._raf = 0;
+    if (clear) this._clearFlash();
+  },
+
+  _clearFlash() {
     const e = this.egg;
-    if (!e || e.badgeEl) return;
-    const badge = document.createElement("div");
-    badge.className = "gnome-points-badge egg-points-badge";
-    badge.addEventListener("click", (ev) => ev.stopPropagation());
-    const value = document.createElement("span");
-    value.className = "gnome-points-badge__value";
-    value.textContent = String(e.charge);
-    badge.appendChild(value);
-    Units.container.appendChild(badge);
-    e.badgeEl = badge;
-    e.badgeValueEl = value;
+    if (!e) return;
+    e.flashEl.style.opacity = "0";
+    e.glowEl.style.opacity = "0";
   },
 
-  _placeBadge() {
-    const e = this.egg;
-    if (!e || !e.badgeEl) return;
-    const { x, y } = getTileCenter(e.row, e.col, Units.boardSize);
-    e.badgeEl.style.left = `${x}px`;
-    e.badgeEl.style.top = `${y - 215}px`;
-    e.badgeEl.style.zIndex = String((e.row + e.col) * 10 + 20);
-  },
-
-  showBadge() {
-    const e = this.egg;
-    if (!e || e.exploded || this._hidden()) return;
-    this._ensureBadge();
-    this._placeBadge();
-    this._pressed = true;
-    e.badgeEl.classList.add("gnome-points-badge--visible");
-  },
-
-  hideBadge() {
-    this._pressed = false;
-    if (this.egg && this.egg.badgeEl) this.egg.badgeEl.classList.remove("gnome-points-badge--visible");
-  },
+  // Ya no hay contador de carga (se sustituye por el destello): se dejan vacíos por compatibilidad.
+  _placeBadge() {},
+  showBadge() {},
+  hideBadge() { this._pressed = false; },
 
   _live() {
     return this.isActive() && this.egg && !this.egg.exploded;
@@ -244,7 +278,7 @@ const Egg = {
   },
 
   _distFor(charge) {
-    return EGG_BASE_DIST + Math.floor(charge / EGG_DIST_PER);
+    return EGG_BASE_DIST + Math.round(charge * EGG_DIST_PER_LEVEL);
   },
 
   // Casilla a la que se aparta una unidad atropellada (perpendicular al vuelo).
@@ -277,7 +311,8 @@ const Egg = {
     const vAt = (r, c) => (typeof Villages !== "undefined" && r >= 0 && c >= 0 && r < size && c < size ? Villages.at(r, c) : null);
     const bAt = (r, c) => (typeof Bumpers !== "undefined" && r >= 0 && c >= 0 && r < size && c < size ? Bumpers.at(r, c) : null);
     // Bumpers ya golpeados en este vuelo: el huevo los atraviesa sin efecto.
-    const seen = new Set(typeof Bumpers !== "undefined" && Bumpers.lit ? Bumpers.lit : []), blocked = new Set();
+    // Y los que ya rebotaron en este turno (Bumpers.used): un bumper solo rebota una vez por turno.
+    const seen = new Set([...(typeof Bumpers !== "undefined" && Bumpers.lit ? Bumpers.lit : []), ...(typeof Bumpers !== "undefined" && Bumpers.used ? Bumpers.used : [])]), blocked = new Set();
     const bLive = (r, c) => { const b = bAt(r, c); return b && !seen.has(b) ? b : null; };
     const wall = (r, c) => r < 0 || c < 0 || r >= size || c >= size || !!obAt(r, c) || !!vAt(r, c) || !!bLive(r, c);
     // Aleatorio determinista (misma vista previa y vuelo real).
@@ -337,6 +372,7 @@ const Egg = {
     let total = dist;
     const maxTotal = dist + EGG_BOUNCE_BONUS_MAX;
     let target = null, fast = false;
+    let lv = e.charge, explode = false;
     for (let i = 0; i < total; i++) {
       const step_r0 = r, step_c0 = c;
       if (!target && i === 0) target = assist(r, c, dr, dc, total - i);
@@ -393,12 +429,22 @@ const Egg = {
           if (at) target = at;
         }
       }
+      // Cada rebote sube un nivel de carga; con el nivel al máximo, el siguiente rebote lo hace explotar.
+      let level = lv, dmg = 0;
+      if (bounced) {
+        if (lv >= EGG_LEVELS) { explode = true; nr = step_r0; nc = step_c0; }
+        else { lv++; level = lv; }
+        if (ob || village) dmg = eggImpactDamage(Math.max(1, level));
+      }
       r = nr; c = nc;
-      const step = { row: r, col: c, dr, dc, bounced, unit: null, shove: null, ob: ob || null, village: village || null, bumper: bumper || null, wallAt, prev: { row: step_r0, col: step_c0 }, lock: lock || null, fast };
+      const step = { row: r, col: c, dr, dc, bounced, unit: null, shove: null, ob: ob || null, village: village || null, bumper: bumper || null, wallAt, prev: { row: step_r0, col: step_c0 }, lock: lock || null, fast, level, dmg, explode };
       steps.push(step);
+      if (explode) break;
       const u = Units.unitAt(r, c);
       if (u && u !== holder && !(r === e.row && c === e.col)) step.unit = u;
     }
+    // Explota en el último rebote: no se posa, revienta donde está.
+    if (explode) return { steps, explode: true, dest: { row: r, col: c }, dir, endLevel: lv };
     // Posarse: hacia atrás hasta una casilla válida (una unidad atropellada se aparta).
     const avoid = steps.map((s) => ({ row: s.row, col: s.col }));
     for (let k = steps.length - 1; k >= 0; k--) {
@@ -410,22 +456,19 @@ const Egg = {
       } else if (!own && !this._canRest(s.row, s.col)) continue;
       steps.length = k + 1;
       steps.forEach((x) => { if (x.unit) x.shove = this._shoveTile(x.unit, x.dr, x.dc, avoid); });
-      return { steps, explode: null, dest: { row: s.row, col: s.col }, dir };
+      // El nivel final es el del último rebote que se conserva.
+      let end = e.charge;
+      steps.forEach((x) => { if (x.bounced) end = x.level; });
+      return { steps, explode: null, dest: { row: s.row, col: s.col }, dir, endLevel: end };
     }
-    return { steps: [], explode: null, dest: null, dir };
+    return { steps: [], explode: null, dest: null, dir, endLevel: e.charge };
   },
 
   // Plan del vuelo cuando un gnomo rebota en un bumper y golpea el huevo desde una casilla vecina:
   // la dirección la marca el rebote (dir), no la posición de quien lanza.
   _planDir(dir) {
-    const e = this.egg;
-    const newCharge = Math.min(EGG_MAX_CHARGE, e.charge + EGG_CHARGE_PER_HIT);
-    const breaks = e.charge >= EGG_MAX_CHARGE && e.hitsMax + 1 >= EGG_BREAK_HITS;
     const d = [dir[0] * EGG_PUSH_AWAY, dir[1] * EGG_PUSH_AWAY];
-    const sim = breaks ? { steps: [], explode: null, dest: null, dir: d } : this._simulate(d, this._distFor(newCharge), "player", null);
-    sim.newCharge = newCharge;
-    sim.breaks = breaks;
-    return sim;
+    return this._simulate(d, this._distFor(this.egg.charge), "player", null);
   },
 
   // Golpe del gnomo (tras rebotar en un bumper) contra el huevo: mismo efecto que un gnomazo.
@@ -436,27 +479,17 @@ const Egg = {
     const plan = this._planDir(dir);
     if (typeof SFX !== "undefined") { try { SFX.hit(); if (SFX.rockHit) SFX.rockHit(); } catch (er) {} }
     if (typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt({ row: e.row, col: e.col, spriteEl: e.spriteEl }, n); }
-    this._hitThisRound = true;
-    if (e.charge >= EGG_MAX_CHARGE) e.hitsMax++;
-    e.charge = plan.newCharge;
-    this._applyStage();
     this._pulseFx();
     this._flash();
-    Units.spawnFloatingText({ row: e.row, col: e.col, team: "player" }, `Carga ${e.charge}`, { className: "dmg-popup popup--good" });
     await new Promise((r) => setTimeout(r, 280));
-    if (plan.breaks) await this._break();
-    else await this._fly(plan, holder);
+    await this._fly(plan, holder);
   },
 
   // Qué pasaría si `holder` le lanzase un gnomo ahora mismo.
   _plan(holder, choice) {
     const e = this.egg;
-    const newCharge = Math.min(EGG_MAX_CHARGE, e.charge + EGG_CHARGE_PER_HIT);
-    const breaks = e.charge >= EGG_MAX_CHARGE && e.hitsMax + 1 >= EGG_BREAK_HITS;
     const dir = this._dirFrom(holder, e, choice);
-    const sim = breaks ? { steps: [], explode: null, dest: null, dir } : this._simulate(dir, this._distFor(newCharge), holder.team, holder);
-    sim.newCharge = newCharge;
-    sim.breaks = breaks;
+    const sim = this._simulate(dir, this._distFor(e.charge), holder.team, holder);
     sim.choice = choice || 0;
     return sim;
   },
@@ -613,10 +646,10 @@ const Egg = {
     plan.steps.forEach((t) => {
       if (!t.ob || obs.has(t.ob)) return;
       obs.add(t.ob);
-      mk(t.ob.row, t.ob.col, (m) => lab(m, "-1"), 14);
+      mk(t.ob.row, t.ob.col, (m) => lab(m, "-" + t.dmg), 14);
     });
-    if (plan.breaks) {
-      mk(this.egg.row, this.egg.col, (m) => lab(m, "¡SE ROMPE!", "egg-preview__label--blocked"), 9);
+    if (plan.explode && plan.dest) {
+      mk(plan.dest.row, plan.dest.col, (m) => lab(m, "¡EXPLOTA!", "egg-preview__label--blocked"), 9);
     } else if (plan.dest) {
       mk(plan.dest.row, plan.dest.col, (m) => {
         const ring = document.createElement("div");
@@ -756,16 +789,11 @@ const Egg = {
         { duration: 300, easing: "ease-out" }
       );
     }
-    this._hitThisRound = true;
-    if (e.charge >= EGG_MAX_CHARGE) e.hitsMax++;
-    e.charge = plan.newCharge;
-    this._applyStage();
     this._pulseFx();
     this._flash();
-    Units.spawnFloatingText({ row: e.row, col: e.col, team: "player" }, `Carga ${e.charge}`, { className: "dmg-popup popup--good" });
     await new Promise((r) => setTimeout(r, 280));
 
-    const eggFlight = plan.breaks ? this._break() : this._fly(plan, holder);
+    const eggFlight = this._fly(plan, holder);
     const tile = this._bounceTile(from, holder, gnome, plan);
     if (tile) {
       await gnome.animateThrowTo(from.row, from.col, tile.row, tile.col);
@@ -804,8 +832,10 @@ const Egg = {
     const avoid = plan.steps.map((s) => ({ row: s.row, col: s.col }));
     e.el.style.setProperty("--egg-step", `${EGG_STEP_MS}ms`);
     e.el.classList.add("egg--moving");
+    e.lastTeam = holder.team;
     if (typeof Bumpers !== "undefined") { if (!Bumpers._keepCombo) Bumpers.beginFlight(); Bumpers._keepCombo = false; }
     let prev = plan.dir;
+    let exploded = false;
     for (const s of plan.steps) {
       const ms = s.fast ? EGG_TURBO_STEP_MS : EGG_STEP_MS;
       e.el.style.setProperty("--egg-step", `${ms}ms`);
@@ -814,15 +844,17 @@ const Egg = {
       e.row = s.row;
       e.col = s.col;
       this._place(e.el, s.row, s.col, 6);
-      this._placeBadge();
-      if (s.bounced || (!s.lock && (s.dr !== prev[0] || s.dc !== prev[1]))) this._bounceFx();
       prev = [s.dr, s.dc];
       await new Promise((r) => setTimeout(r, ms));
-      if (s.ob) { this._hitObelisk(s.ob, holder.team); if (typeof Bumpers !== "undefined") Bumpers.registerHit(); }
-      if (s.village) { this._bumpVillage(s.village, holder.team); if (typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt(s.village, n); } }
-      if (s.bumper && typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt(s.bumper, n); Bumpers.markLit(s.bumper, holder.team); }
-      // Rebote contra los límites de la fase: también suma al combo (con su onda y sonido).
-      if (s.bounced && !s.ob && !s.village && !s.bumper && typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt({ row: s.row, col: s.col }, n); this._shake(false); }
+      if (s.bounced) {
+        // Efecto del objeto golpeado (daño, onda, luces) y luego la carga del huevo.
+        if (s.ob) { this._hitObelisk(s.ob, holder.team, s.dmg); if (typeof Bumpers !== "undefined") Bumpers.registerHit(); }
+        if (s.village) { this._bumpVillage(s.village, holder.team, s.dmg); if (typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt(s.village, n); } }
+        if (s.bumper && typeof Bumpers !== "undefined") { const n = Bumpers.registerHit(); Bumpers.reactAt(s.bumper, n); Bumpers.markLit(s.bumper, holder.team); Bumpers.markUsed(s.bumper); }
+        if (!s.ob && !s.village && !s.bumper && typeof Bumpers !== "undefined") { Bumpers.registerHit(); Bumpers.reactAt({ row: s.row, col: s.col }, Bumpers.combo); this._shake(false); }
+        if (s.explode) { exploded = true; break; }
+        this._bounced(s, holder.team);
+      }
       if (s.unit && s.unit.el && s.unit.hp > 0) { if (typeof Bumpers !== "undefined") Bumpers.registerHit(); await this._trample(s, holder.team, avoid); }
       if (typeof Fog !== "undefined") Fog.applyVisibility();
     }
@@ -830,6 +862,19 @@ const Egg = {
     if (typeof Fog !== "undefined") Fog.applyVisibility();
     this.refreshFog();
     if (typeof Bumpers !== "undefined") await Bumpers.endFlight(holder.team);
+    if (exploded) await this._explode(holder.team);
+  },
+
+  // Rebote: sube 1 nivel de carga y suma 1 rebote al equipo que lanzó (cada uno cobra los suyos al explotar).
+  _bounced(s, team) {
+    const e = this.egg;
+    if (!e || e.exploded) return;
+    e.charge = Math.min(EGG_LEVELS, e.charge + 1);
+    e.bn[team] = (e.bn[team] || 0) + 1;
+    this._bouncedThisRound = true;
+    this._applyStage();
+    this._bounceFx(!!(s.ob || s.village));
+    this._ring();
   },
 
   // Atropello: 1 de daño y se aparta 1 casilla de lado.
@@ -884,16 +929,15 @@ const Egg = {
   },
 
   // Rebote contra un tótem (aldea): solo rebota, sin daño. Pequeño temblor + sonido + estirón del tótem.
-  _bumpVillage(v, causer) {
+  _bumpVillage(v, causer, dmgIn) {
     this._shake(false);
-    if (typeof SFX !== "undefined") { try { SFX.rockHit(); } catch (er) {} }
     if (v && v.el && v.el.animate) {
       v.el.animate([{ filter: "brightness(1)" }, { filter: "brightness(1.6)" }, { filter: "brightness(1)" }], { duration: 260 });
     }
-    // El huevo también le quita vida al tótem (tanta como su carga, igual que al obelisco).
+    // El huevo también le quita vida al tótem (2, 5 o 10 según su carga, igual que al obelisco).
     // Si llega a 0 lo captura el equipo que lanzó; un tótem propio no recibe daño.
     if (v && typeof Villages !== "undefined" && v.hp > 0 && v.owner !== causer) {
-      const dmg = Math.max(1, (this.egg && this.egg.charge) || 1);
+      const dmg = dmgIn || eggImpactDamage(Math.max(1, (this.egg && this.egg.charge) || 1));
       v.hp = Math.max(0, v.hp - dmg);
       if (Villages._isLive(v)) {
         Units.updateHpBar(v);
@@ -905,26 +949,63 @@ const Egg = {
   },
 
   // Rebote contra un obelisco: 1 de daño (sea amigo o enemigo), temblor y destello.
-  _hitObelisk(ob, causer) {
+  _hitObelisk(ob, causer, dmgIn) {
     this._shake(false);
     this._flash();
-    if (typeof SFX !== "undefined") { try { SFX.rockHit(); } catch (er) {} }
-    if (typeof Drums !== "undefined" && Drums._applyDamage) Drums._applyDamage({ kind: "obelisk", ref: ob, row: ob.row, col: ob.col }, Math.max(1, (this.egg && this.egg.charge) || 1), causer);
+    const dmg = dmgIn || eggImpactDamage(Math.max(1, (this.egg && this.egg.charge) || 1));
+    if (typeof Drums !== "undefined" && Drums._applyDamage) Drums._applyDamage({ kind: "obelisk", ref: ob, row: ob.row, col: ob.col }, dmg, causer);
   },
 
-  // Se rompe por exceso de golpes (sin explosión ni daño).
-  async _break() {
+  // El huevo explota (un rebote más con la carga al máximo): cada equipo cobra tantos puntos
+  // de Gloria como rebotes hizo, y la Grulla aparece para equilibrar la partida.
+  async _explode(team) {
     const e = this.egg;
+    if (!e || e.exploded) return;
     e.exploded = true;
-    this._respawnPending = true;
-    this.hideBadge();
-    this._shake(false);
-    if (typeof SFX !== "undefined") { try { SFX.rockHit(); } catch (er) {} }
-    this._shatter();
-    if (typeof Banners !== "undefined") Banners.text("¡El huevo se ha roto!", 1, "yellow");
-    if (typeof Bumpers !== "undefined") Bumpers.jackpot();
-    await new Promise((r) => setTimeout(r, 500));
+    this._stopLoop(true);
+    this._busy = true;
+    const hidden = this._hidden();
+    if (!hidden && e.spriteEl.animate) {
+      e.shakeEl.animate([{ transform: "scale(1)" }, { transform: "scale(1.2,.85)", offset: 0.5 }, { transform: "scale(1.45,1.45)" }], { duration: 380, easing: "ease-in" });
+      await new Promise((r) => setTimeout(r, 360));
+    }
+    if (!hidden) {
+      if (typeof SFX !== "undefined" && SFX.eggBoom) { try { SFX.eggBoom(); } catch (er) {} }
+      this._shake(true);
+      this._flash();
+      this._shatter();
+    }
     e.el.style.opacity = "0";
+    const bn = Object.assign({}, e.bn);
+    e.bn = {};
+    e.charge = 0;
+    // Gloria por rebotes.
+    await new Promise((r) => setTimeout(r, hidden ? 50 : 450));
+    let coin = 0;
+    for (const t of Teams.all) {
+      const n = bn[t] || 0;
+      if (n <= 0) continue;
+      this._grantGlory(t, n);
+      const ob = typeof Obelisks !== "undefined" ? Obelisks.byTeam(t) : null;
+      if (!hidden && ob) {
+        for (let k = 0; k < Math.min(n, 12); k++) setTimeout(() => { if (typeof SFX !== "undefined" && SFX.gloryCoin) { try { SFX.gloryCoin(coin++); } catch (er) {} } }, k * 70);
+        Units.spawnFloatingText({ row: ob.row, col: ob.col, team: t }, `+${n}`, { className: "dmg-popup popup--good" });
+        await new Promise((r) => setTimeout(r, 380));
+      }
+    }
+    // La Grulla equilibra la partida.
+    if (typeof Crane !== "undefined") await Crane.arrive(bn);
+    else this._respawn();
+    this._busy = false;
+  },
+
+  _grantGlory(t, g) {
+    if (g > 0 && typeof Glory !== "undefined" && t in Glory.points) {
+      const room = Math.max(0, (typeof GLORY_CAP !== "undefined" ? GLORY_CAP : 999) - Glory.points[t]);
+      const add = Math.min(g, room);
+      Glory.points[t] += add;
+      Glory._render(t, { bump: add > 0, gained: add });
+    }
   },
 
   _shatter() {
@@ -957,14 +1038,37 @@ const Egg = {
   },
 
   // ---------- Efectos ----------
-  _bounceFx() {
+  _bounceFx(heavy) {
     const e = this.egg;
     if (!e || !e.spriteEl.animate) return;
-    if (typeof SFX !== "undefined") { try { SFX.rockHit(); } catch (er) {} }
+    if (!this._hidden() && typeof SFX !== "undefined") {
+      try {
+        SFX.eggBounce(Math.max(1, e.charge), heavy);
+        if (e.charge >= 3) SFX.eggSparkle(e.charge);
+      } catch (er) {}
+    }
     e.spriteEl.animate(
-      [{ scale: "1 1" }, { scale: "1.25 0.78", offset: 0.3 }, { scale: "0.9 1.12", offset: 0.65 }, { scale: "1 1" }],
-      { duration: 240, easing: "ease-out" }
+      [{ scale: "1 1" }, { scale: "1.28 0.74", offset: 0.28 }, { scale: "0.9 1.14", offset: 0.62 }, { scale: "1 1" }],
+      { duration: 260, easing: "ease-out" }
     );
+  },
+
+  // Onda de color del nivel alrededor del huevo en cada rebote.
+  _ring() {
+    const e = this.egg;
+    if (!e || this._hidden()) return;
+    const { x, y } = getTileCenter(e.row, e.col, Units.boardSize);
+    const r = document.createElement("div");
+    r.className = "egg-ring";
+    r.style.left = `${x}px`;
+    r.style.top = `${y - 60}px`;
+    r.style.zIndex = String((e.row + e.col) * 10 + 19);
+    r.style.borderColor = e.el.style.getPropertyValue("--fc") || "#fff";
+    Units.container.appendChild(r);
+    r.animate(
+      [{ transform: "translate(-50%,-50%) scale(.25)", opacity: 0.95 }, { transform: "translate(-50%,-50%) scale(1.5)", opacity: 0 }],
+      { duration: 420, easing: "ease-out" }
+    ).onfinish = () => r.remove();
   },
 
   _pulseFx() {
@@ -992,42 +1096,30 @@ const Egg = {
     ).onfinish = () => f.remove();
   },
 
-  // ---------- Turnos: reaparición ----------
-  onTurnStart() {
-    if (this._respawnPending) this._respawn();
+  // ---------- Turnos ----------
+  onTurnStart(team) {
+    // Un bumper solo rebota una vez por turno.
+    if (typeof Bumpers !== "undefined" && Bumpers.resetUsed) Bumpers.resetUsed();
     this._decay();
   },
 
-  // Pinball: si pasa una ronda sin que le lancen un gnomo no pasa nada; a partir de la
-  // segunda ronda seguida sin golpe pierde 5 de carga cada ronda (mínimo 0).
+  // Cada turno (ronda) sin ningún rebote le resta 1 nivel de carga.
   _decay() {
     const e = this.egg;
     if (!e || e.exploded || typeof Turns === "undefined") return;
     const round = Turns.roundNumber;
     if (this._roundSeen === round) return;
-    if (this._roundSeen != null) {
-      this._idle = this._hitThisRound ? 0 : (this._idle || 0) + 1;
-      if (this._idle >= 2 && e.charge > 0) {
-        e.charge = Math.max(0, e.charge - EGG_CHARGE_PER_HIT);
-        this._applyStage();
-        this._pulseFx();
-        if (!this._hidden()) Units.spawnFloatingText({ row: e.row, col: e.col, team: "player" }, `-${EGG_CHARGE_PER_HIT}`, { className: "dmg-popup" });
-      }
+    if (this._roundSeen != null && !this._bouncedThisRound && e.charge > 0) {
+      e.charge = Math.max(0, e.charge - 1);
+      this._applyStage();
+      this._pulseFx();
+      if (!this._hidden()) Units.spawnFloatingText({ row: e.row, col: e.col, team: "player" }, "-1", { className: "dmg-popup" });
     }
     this._roundSeen = round;
-    this._hitThisRound = false;
+    this._bouncedThisRound = false;
   },
 
-  // Puntuación del huevo a cero (tras un premio de 10 de ruleta); el huevo sigue donde está.
-  resetScore() {
-    const e = this.egg;
-    if (!e || e.exploded) return;
-    e.charge = 0;
-    e.hitsMax = 0;
-    e._stage = null;
-    this._applyStage();
-  },
-
+  // Reaparece en el centro (cuando la Grulla se va) con la carga y los rebotes a cero.
   _respawn() {
     const e = this.egg;
     this._respawnPending = false;
@@ -1036,14 +1128,15 @@ const Egg = {
     e.row = best.row;
     e.col = best.col;
     e.charge = 0;
-    e.hitsMax = 0;
+    e.bn = {};
     e.exploded = false;
     e._stage = null;
+    this._bouncedThisRound = false;
+    this._busy = false;
     e.el.classList.add("egg--respawn");
     e.el.style.opacity = "0";
     if (e.spriteEl.getAnimations) e.spriteEl.getAnimations().forEach((a) => { if (!a.animationName) a.cancel(); });
     this._place(e.el, e.row, e.col, 6);
-    this._placeBadge();
     this._applyStage();
     void e.el.offsetWidth;
     e.el.style.opacity = "1";
@@ -1052,7 +1145,7 @@ const Egg = {
     this.refreshFog();
     if (!this._hidden()) {
       this._flash();
-      if (typeof Banners !== "undefined") Banners.text("¡El huevo reaparece!", 1, "yellow");
+      if (typeof SFX !== "undefined" && SFX.eggPop) { try { SFX.eggPop(); } catch (er) {} }
     }
   },
 
@@ -1080,33 +1173,26 @@ Egg.aiAct = async function (unit) {
   const dist = this.cheb(unit, e);
   if (dist < 1 || dist > GNOME_THROW_MAX_RANGE) return false;
   if (this._interceptor(unit)) return false;
-  const sl = typeof Bumpers !== "undefined" ? Bumpers.slices : { player: 0, enemy: 0 };
-  const mine = sl[unit.team] || 0;
-  const theirs = Math.max(0, ...Object.keys(sl).filter((t) => t !== unit.team).map((t) => sl[t] || 0));
+  const bn = (this.egg && this.egg.bn) || {};
+  const mine = bn[unit.team] || 0;
+  const theirs = Math.max(0, ...Teams.all.filter((t) => t !== unit.team).map((t) => bn[t] || 0));
   const evalPlan = (plan) => {
-    if (plan.breaks) {
-      // JACKPOT: solo rompe el huevo si su ruleta va por delante de la del rival.
-      return mine - theirs < 2 ? -Infinity : 100;
-    }
     let score = 0;
-    let hits = 0;
+    let bounces = 0;
     plan.steps.forEach((s) => {
-      // Obelisco: el daño es la carga del huevo; matarlo o dañarlo vale mucho (y al revés si es propio).
+      // Obelisco/tótem: el daño depende de la carga; dañar uno enemigo vale mucho (y al revés si es propio).
       if (s.ob) {
-        const dmg = Math.min(plan.newCharge, s.ob.hp || plan.newCharge);
+        const dmg = Math.min(s.dmg, s.ob.hp || s.dmg);
         const kill = dmg >= (s.ob.hp || 99) ? 10 : 0;
         score += (s.ob.team !== unit.team ? 1 : -1) * (dmg * 0.8 + kill);
-        hits++;
       }
-      if (s.unit) { score += s.unit.team !== unit.team ? 3 : -3; hits++; }
-      if (s.village || s.bumper) hits++;
-      if (s.bounced && !s.ob && !s.village && !s.bumper) hits++; // rebote en los límites: también combo
+      if (s.unit) score += s.unit.team !== unit.team ? 3 : -3;
+      if (s.bounced && !s.explode) bounces++;
     });
-    // Combo: cada golpe seguido suma a la ruleta (a partir del 2.º); el rival no debe llevarse el jackpot.
-    if (hits >= 2) score += hits * 1.5;
-    else if (hits === 1) score += 0.5;
-    // Si su ruleta ya va por delante y el huevo está cerca de romperse, mejor seguir cargándolo.
-    if (mine > theirs && plan.newCharge >= EGG_MAX_CHARGE) score += 2;
+    // Cada rebote es 1 punto de Gloria para quien lanza, y ponerse por delante de los demás...
+    score += bounces * 1.2;
+    // ...pero si explota, la Grulla se posa sobre el obelisco del que va primero: solo conviene si NO soy yo.
+    if (plan.explode) score += mine + bounces > theirs ? -6 : 4;
     return score;
   };
   // Elige el mejor de los 3 desvíos (-45°, recto, +45°); a igualdad, recto.

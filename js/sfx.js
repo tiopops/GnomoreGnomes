@@ -195,6 +195,65 @@ const SFX = {
     for (let k = 0; k < 12; k++) this._tone(1500 + NR() * 1200, null, 0.12, "sine", 0.1, 0.55 + k * 0.06);
   },
 
+  // ---------- Huevo cargado estilo Strikers + Grulla (js/egg.js, js/crane.js) ----------
+  // Cada rebote sube un nivel (1..10): la nota sube por una pentatónica brillante.
+  _eggFreq(l) {
+    const sc = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24];
+    return 523.25 * Math.pow(2, sc[Math.min(Math.max(l, 0), 10)] / 12);
+  },
+  eggBounce(level, heavy) {
+    const f = this._eggFreq(level - 1);
+    this._tone(f * 1.06, f, 0.32, "triangle", 0.34);
+    this._tone(f * 2, null, 0.18, "sine", 0.1);
+    this._tone(f / 2, null, 0.12, "sine", 0.16);
+    this._noiseBurst(0.05, "bandpass", 3000, 900, heavy ? 0.16 : 0.09);
+    if (heavy) this._tone(95, 55, 0.22, "sine", 0.45);
+    if (level >= 6) {
+      this._tone(f * 1.5, null, 0.2, "sine", 0.09, 0.05);
+      this._tone(f * 2, null, 0.22, "sine", 0.08, 0.1);
+    }
+  },
+  eggSparkle(level) {
+    const f = this._eggFreq(level - 1);
+    [2, 2.5, 3].forEach((m, i) => this._tone(f * m, null, 0.16, "sine", 0.06, i * 0.04));
+  },
+  // Latido de un huevo a punto de explotar (nivel 6+): más rápido y más grave-agudo cuanto más carga.
+  eggTick(level) {
+    this._tone(70 + level * 6, null, 0.12, "sine", 0.34);
+    this._tone(60 + level * 5, null, 0.14, "sine", 0.24, 0.11);
+  },
+  eggBoom() {
+    this._noiseBurst(0.9, "lowpass", 2400, 60, 0.6);
+    this._tone(70, 35, 0.7, "sine", 0.7);
+    [0, 1, 2, 3].forEach((i) => this._tone(1568 * (1 + i * 0.25), null, 0.5, "sine", 0.08, 0.1 + i * 0.06));
+  },
+  eggPop() {
+    this._tone(400, 800, 0.1, "sine", 0.3);
+    this._tone(800, null, 0.3, "triangle", 0.2, 0.06);
+    this._tone(1200, null, 0.35, "triangle", 0.14, 0.14);
+  },
+  gloryCoin(i) {
+    const f = this._eggFreq(i % 11);
+    this._tone(f, null, 0.18, "square", 0.06);
+    this._tone(f * 2, null, 0.3, "triangle", 0.12, 0.05);
+  },
+  craneFlap() { this._noiseBurst(0.16, "bandpass", 300, 1100, 0.07); },
+  craneLand() {
+    this._tone(110, 60, 0.14, "sine", 0.4);
+    this._noiseBurst(0.1, "bandpass", 900, 200, 0.1);
+    this._tone(784, null, 0.35, "triangle", 0.14, 0.12);
+    this._tone(1175, null, 0.4, "triangle", 0.12, 0.2);
+  },
+  craneChirp() {
+    this._tone(1400, 1700, 0.12, "sine", 0.07);
+    this._tone(1900, 1500, 0.1, "sine", 0.05, 0.14);
+  },
+  craneScare() {
+    this._tone(2200, 1100, 0.16, "sawtooth", 0.06);
+    this._tone(1700, 900, 0.2, "sawtooth", 0.05, 0.12);
+    this._noiseBurst(0.3, "bandpass", 3000, 900, 0.1);
+  },
+
   // Easter egg del logotipo del menú (js/menu.js) — pedido explícito: "un
   // sonido de quejido de gnomo se reprodujera" al hacer clic sobre el logo.
   // Mismo "pluck" simple que dropFail (sawtooth cayendo), pero más agudo y

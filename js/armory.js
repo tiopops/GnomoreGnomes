@@ -102,6 +102,7 @@ const Armory = {
 
   // ---------- Popup ----------
   openPopup(obelisk) {
+    if (typeof Crane !== "undefined" && Crane.blocks(obelisk)) { Crane.deny(obelisk); return; }
     if (this._overlayEl) return;
     if (typeof Turns !== "undefined" && Turns.activeTeam !== obelisk.team) return;
     SFX.click();

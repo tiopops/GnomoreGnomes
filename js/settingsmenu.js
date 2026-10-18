@@ -379,6 +379,24 @@ const SettingsMenu = {
     // adaptativa mientras esté activo) sigue intacta, esos otros botones
     // siguen en colVisual.
     colVisual.appendChild(perfModeBtn);
+
+    // «Mostrar FPS»: contador encima de la mochila (js/fpsmeter.js). Desactivado por defecto.
+    const fpsBtn = document.createElement("button");
+    fpsBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
+    const fpsChecked = typeof FpsMeter !== "undefined" ? FpsMeter.enabled : false;
+    fpsBtn.innerHTML =
+      '<span class="settings-panel__option-main">' +
+      '<i class="ph ph-speedometer settings-panel__option-icon"></i>' +
+      '<span class="p5-banner__label">' + I18N.t("settings_fps") + '</span>' +
+      "</span>" +
+      `<span class="settings-toggle" data-checked="${fpsChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
+    fpsBtn.addEventListener("click", () => {
+      SFX.click();
+      const next = typeof FpsMeter !== "undefined" ? !FpsMeter.enabled : false;
+      if (typeof FpsMeter !== "undefined") FpsMeter.setEnabled(next);
+      fpsBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+    });
+    colVisual.appendChild(fpsBtn);
     this._shadowsBtn = shadowsBtn;
     this._fogAnimBtn = fogAnimBtn;
     this._vegetationBtn = vegetationBtn;

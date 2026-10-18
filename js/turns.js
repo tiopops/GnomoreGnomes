@@ -738,6 +738,7 @@ const Turns = {
   // de ningún popup real (la IA no "abre" ninguna interfaz), ver
   // Armory.attemptAutoUpgrade/Shops.attemptAutoBuy.
   _aiRunEconomyPhase(team = "enemy") {
+    if (typeof Crane !== "undefined" && Crane.st && Crane.st.team === team) return; // la grulla bloquea su obelisco
     if (typeof Armory !== "undefined") {
       let bought = true;
       while (bought) bought = Armory.attemptAutoUpgrade(team);

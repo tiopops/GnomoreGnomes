@@ -10805,15 +10805,49 @@ body.gp-active, body.gp-active * { cursor: none !important; }
   transform: translate(-50%, -92%) translateY(30px);
 }
 .egg__sprite {
+  position: relative;
   display: block;
   width: 235px;
-  height: auto;
   user-select: none;
   -webkit-user-drag: none;
   filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4));
   transform-origin: 50% 90%;
   animation: egg-pulse var(--egg-pulse, 4s) ease-in-out infinite;
 }
+.egg__img { display: block; width: 100%; height: auto; pointer-events: none; -webkit-user-drag: none; }
+.egg__flash, .egg__tint {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  -webkit-mask: var(--egg-mask) center / 100% 100% no-repeat; mask: var(--egg-mask) center / 100% 100% no-repeat;
+}
+.egg__flash { background: var(--fc, #fff); mix-blend-mode: screen; }
+.egg__tint { background: #ff1e00; mix-blend-mode: multiply; }
+.egg__glow {
+  position: absolute; left: 50%; top: 46%; width: 330px; height: 330px; margin: -165px 0 0 -165px; border-radius: 50%;
+  background: radial-gradient(circle, var(--fc, #fff) 0, transparent 62%); opacity: 0; mix-blend-mode: screen; pointer-events: none;
+}
+.egg__shake { position: relative; }
+@keyframes eggTr6 { 0%,100% { transform: translate(0,0); } 25% { transform: translate(-1px,0) rotate(-.6deg); } 75% { transform: translate(1px,0) rotate(.6deg); } }
+@keyframes eggTr8 { 0%,100% { transform: translate(0,0); } 20% { transform: translate(-2px,1px) rotate(-1.2deg); } 40% { transform: translate(2px,-1px) rotate(1.2deg); } 60% { transform: translate(-2px,0) rotate(-1deg); } 80% { transform: translate(2px,1px) rotate(1deg); } }
+@keyframes eggTr10 { 0%,100% { transform: translate(0,0); } 15% { transform: translate(-4px,2px) rotate(-2.4deg); } 30% { transform: translate(4px,-2px) rotate(2.4deg); } 45% { transform: translate(-4px,-1px) rotate(-2deg); } 60% { transform: translate(4px,2px) rotate(2deg); } 80% { transform: translate(-3px,0) rotate(-1.6deg); } }
+.egg__shake--l6 { animation: eggTr6 .22s infinite; }
+.egg__shake--l7 { animation: eggTr6 .15s infinite; }
+.egg__shake--l8 { animation: eggTr8 .16s infinite; }
+.egg__shake--l9 { animation: eggTr8 .1s infinite; }
+.egg__shake--l10 { animation: eggTr10 .08s infinite; }
+.egg-ring { position: absolute; width: 150px; height: 150px; border-radius: 50%; border: 6px solid #fff; pointer-events: none; transform: translate(-50%,-50%) scale(.25); opacity: 0; }
+
+/* ---------- Grulla (js/crane.js) ---------- */
+.crane { position: absolute; pointer-events: none; transform-origin: 50% 50%; z-index: 9000; }
+.crane__img img { display: block; width: 100%; height: auto; pointer-events: none; -webkit-user-drag: none; }
+.crane__img { display: block; width: 100%; height: auto; pointer-events: none; -webkit-user-drag: none; filter: drop-shadow(0 6px 5px rgba(0,0,0,.4)); transform-origin: 50% 90%; }
+.crane--perched .crane__img { animation: craneIdle 3.6s ease-in-out infinite; }
+@keyframes craneIdle { 0%,100% { transform: scale(1,1); } 50% { transform: scale(.985,1.02); } }
+.crane.village--occluding { opacity: .45; }
+.crane-puff { position: absolute; width: 36px; height: 24px; border-radius: 50%; background: rgba(255,255,255,.8); pointer-events: none; }
+.crane-flash { position: absolute; width: 150px; height: 150px; border-radius: 50%; pointer-events: none; z-index: 9100; background: radial-gradient(circle, #fff, rgba(255,255,255,0) 68%); }
+.crane-feather { position: absolute; pointer-events: none; z-index: 9100; will-change: transform, opacity; }
+.obelisk--perched .obelisk__menu-btn { opacity: .38; filter: grayscale(1); cursor: not-allowed; }
+
 .egg-nest__sprite {
   display: block;
   width: 250px;
@@ -11540,4 +11574,11 @@ body.tut-on .settings-gear-btn--update { display: none; }
   #level-list.sel-root .sel-feat { grid-template-columns: 1fr; gap: 6px; }
   #level-list.sel-root > .sel-info .sel-ft { font-size: 12.5px; }
   #level-list.sel-root > .sel-btn { grid-column: 2; grid-row: 2; position: relative; bottom: auto; margin-top: 12px; align-self: start; }
+}
+.crane.unit--fog-hidden { display: none; }
+
+/* Contador de FPS (js/fpsmeter.js): encima del botón de la mochila. */
+.fps-meter {
+  position: fixed; z-index: 2000; transform: translateX(-50%); padding: 2px 9px; border-radius: 4px;
+  background: rgba(0, 0, 0, 0.62); font: 700 13px/1.3 "Russo One", monospace; color: #9f9; pointer-events: none; white-space: nowrap;
 }

@@ -848,6 +848,9 @@ const GamepadCtl = {
       if (b && !b.classList.contains("end-turn-btn--thinking")) this._clickNow(b);
       return;
     }
+    // Con objetivos a la vista (lanzar al huevo/bumper/gruya, pasar el gnomo, atacar...): LB/RB los recorren
+    // y la cámara se centra en cada uno. Sin objetivos, LB/RB cambian de unidad como siempre.
+    if ((act === "prevUnit" || act === "nextUnit") && this._cycleTarget(act === "nextUnit" ? 1 : -1)) return;
     if (act === "prevUnit") { this._cycleUnit(-1); return; }
     if (act === "nextUnit") { this._cycleUnit(1); return; }
     if (act === "center") { if (this._ensureCursor()) this._follow(true); return; }
@@ -887,6 +890,38 @@ const GamepadCtl = {
     if (typeof Obelisks !== "undefined") Obelisks.deselect();
     if (typeof Villages !== "undefined") Villages.deselect();
     if (typeof Gnome !== "undefined" && Gnome.hideAllBadges) Gnome.hideAllBadges();
+  },
+  // Marcadores de OBJETIVO visibles (no los de movimiento): flechas del huevo, bumpers, gruya, aliados a los que
+  // pasar, enemigos a los que atacar, objetivos de habilidades...
+  _targetMarkers() {
+    const sel = ".board-marker.pass-marker:not(.egg-preview-marker):not(.egg-throw-marker--center), .board-marker.attack-marker, .board-marker.catch-marker, .board-marker.ability-pick-marker";
+    const out = Array.from(document.querySelectorAll(sel)).filter((m) => this._isVisible(m) && m.dataset.row !== undefined);
+    // Un solo marcador por loseta (los apilados cuentan una vez).
+    const seen = new Set();
+    return out.filter((m) => { const k = m.dataset.row + "," + m.dataset.col; if (seen.has(k)) return false; seen.add(k); return true; });
+  },
+  _cycleTarget(dir) {
+    const list = this._targetMarkers();
+    if (!list.length || !this._ensureCursor()) return false;
+    // Orden estable: por ángulo alrededor de la unidad seleccionada (o del cursor) en pantalla.
+    const sel = typeof Units !== "undefined" && Units.selectedId ? Units.list.find((u) => u.id === Units.selectedId) : null;
+    const base = this._tileClient(sel ? sel.row : this._tile.row, sel ? sel.col : this._tile.col, false);
+    const ang = (m) => { const r = m.getBoundingClientRect(); return Math.atan2(r.top + r.height / 2 - base.y, r.left + r.width / 2 - base.x); };
+    list.sort((a, b) => ang(a) - ang(b));
+    let i = list.findIndex((m) => +m.dataset.row === this._tile.row && +m.dataset.col === this._tile.col);
+    i = i < 0 ? (dir > 0 ? 0 : list.length - 1) : (i + dir + list.length) % list.length;
+    const m = list[i];
+    if (this._focusMarker && this._focusMarker !== m && this._focusMarker.isConnected) {
+      try { this._focusMarker.dispatchEvent(new PointerEvent("pointerleave", { pointerType: "mouse", bubbles: false })); } catch (e) {}
+    }
+    this._focusMarker = m;
+    this._tile = { row: +m.dataset.row, col: +m.dataset.col };
+    this._placeCursor();
+    this._follow(true);
+    // Ver el resultado antes de decidir: el mismo "pasar el ratón" que da el vista previa de la trayectoria del huevo.
+    try { m.dispatchEvent(new PointerEvent("pointerenter", { pointerType: "mouse", bubbles: false })); } catch (e) {}
+    if (typeof SFX !== "undefined" && SFX.hover) { try { SFX.hover(); } catch (e) {} }
+    return true;
   },
   _cycleUnit(dir) {
     if (typeof Units === "undefined") return;
@@ -1184,7 +1219,9 @@ const GamepadCtl = {
       items = obOpen
         ? [["confirm", "Elegir"], ["back", "Cancelar"], ["prevUnit", "◂ Opción"], ["nextUnit", "Opción ▸"], ["endTurn", "Fin de turno"]]
         : sel
-        ? [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"]]
+        ? (this._targetMarkers().length
+          ? [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Objetivo"], ["nextUnit", "Objetivo ▸"]]
+          : [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"]])
         : [["confirm", "Seleccionar"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["endTurn", "Fin de turno"], ["settings", "Ajustes"]];
     }
     const key = items.map((x) => x[0] + this.map[x[0]] + x[1]).join("|") + I18N.currentLang + mode.type;

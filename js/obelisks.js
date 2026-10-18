@@ -1080,6 +1080,7 @@ const Obelisks = {
   // ---------- Popup de reclutar (mismas clases .backpack-* que Shops) ----------
 
   openRecruitPopup(obelisk) {
+    if (typeof Crane !== "undefined" && Crane.blocks(obelisk)) { Crane.deny(obelisk); return; }
     if (this.gameOver || this._overlayEl) return;
     if (typeof Turns !== "undefined" && Turns.activeTeam !== obelisk.team) return;
     SFX.click();
@@ -1454,6 +1455,7 @@ const Obelisks = {
   // solo un aviso de "Próximamente", mismo lenguaje visual que el resto de
   // popups (.p5-banner) pero sin ninguna interacción real todavía.
   openAbilitiesPopup(obelisk) {
+    if (typeof Crane !== "undefined" && Crane.blocks(obelisk)) { Crane.deny(obelisk); return; }
     if (this.gameOver || this._abilitiesOverlayEl) return;
     if (typeof Turns !== "undefined" && Turns.activeTeam !== obelisk.team) return;
     SFX.click();

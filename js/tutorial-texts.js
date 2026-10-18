@@ -471,75 +471,93 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Aquí no hay setas ni volcanes: hay un huevo con muy mala leche, unos bumpers y una ruleta de tragaperras. Hoy jugaremos al pinball con el huevo: lanzarle gnomos para cargarlo, hacerlo rebotar y cobrar el JACKPOT. Sí, el huevo es la bola. Y los gnomos, la fuerza motriz.",
+   "say": "Aquí no hay setas ni volcanes: hay un huevo con muy mala leche y unos bumpers. Hoy jugaremos al pinball con el huevo, como en aquel deporte de balón explosivo: cada rebote lo CARGA (sin números: tú lo notarás en el destello, que va cambiando de color, y en que cada rebote suena más agudo). Sí, el huevo es la bola. Y los gnomos, la fuerza motriz.",
    "button": "A jugar",
    "mood": "normal",
    "en": {
-    "say": "There are no mushrooms or volcanoes here: there's a very ill-tempered egg, some bumpers and a slot-machine wheel. Today we'll play pinball with the egg: throw gnomes at it to charge it, make it bounce and collect the JACKPOT. Yes, the egg is the ball. And the gnomes are the flippers.",
+    "say": "No mushrooms or volcanoes here: just an extremely cranky egg and some bumpers. Today we play egg pinball, like that explosive-ball sport: every bounce CHARGES it (no numbers: you'll notice it in the flash that keeps changing colour, and in each bounce sounding higher). Yes, the egg is the ball. And the gnomes are the engine.",
     "button": "Let's play"
    }
   },
   {
-   "say": "El huevo se carga a golpe de gnomo, y adivina quién es el gnomo. Tinkle viene hacia aquí, con la ilusión de siempre. Cógelo.",
+   "say": "Al huevo se le da con un gnomo, y adivina quién es el gnomo. Tinkle viene hacia aquí, con la ilusión de siempre. Cógelo.",
    "mission": "Coge a Tinkle",
    "ok": "Tinkle, hoy vuelas. Y mejor no preguntes dónde aterrizas.",
    "mood": "normal",
    "en": {
-    "say": "The egg charges up with gnome hits, and guess who the gnome is. Tinkle is coming this way, as hopeful as ever. Pick him up.",
+    "say": "You hit the egg with a gnome, and guess who the gnome is. Tinkle is coming over, with his usual enthusiasm. Pick him up.",
     "mission": "Pick up Tinkle",
     "ok": "Tinkle, today you fly. And better not ask where you land."
    }
   },
   {
-   "say": "Pulsa el icono de lanzar y apunta al huevo: pasa el cursor por encima (o mantén pulsado) y verás por dónde saldrá. Cada gnomo que se estampa le da carga, y el huevo sale disparado en dirección contraria a ti: cuanta más carga, más lejos llega. Tinkle no se hace daño (mucho).",
+   "say": "Pulsa el icono de lanzar y apunta al huevo: verás varias flechas, y alguna se ayuda sola hacia un bumper cercano para que no tengas que ser Robin Hood. El gnomo estampado empuja el huevo en la dirección elegida. Con el mando, elige la flecha con la cruceta.",
    "mission": "Lánzale a Tinkle contra el huevo",
    "ok": "¡Zas! El huevo sale despedido y Tinkle, tras caerse de culo, se levanta y se va corriendo. Todo un profesional.",
    "mood": "normal",
    "en": {
-    "say": "Press the throw icon and aim at the egg: hover over it (or hold) and you'll see where it will go. Every gnome that smashes into it gives it charge, and the egg shoots off away from you: the more charge, the farther it goes. Tinkle doesn't get hurt (much).",
+    "say": "Tap the throw icon and aim at the egg: you'll see several arrows, and one helps itself towards a nearby bumper so you don't need to be Robin Hood. The smashed gnome pushes the egg in the chosen direction. With a gamepad, pick the arrow with the D-pad.",
     "mission": "Throw Tinkle at the egg",
     "ok": "Zap! The egg flies off and Tinkle, after landing on his bottom, gets up and runs away. A true professional."
    }
   },
   {
-   "say": "Ahora lo bueno: los bumpers. Cuando el huevo choca contra un bumper, un tótem, un obelisco o el borde del mapa, rebota como una bola de pinball, y con cada rebote llega más lejos. Te he puesto dos bumpers en su camino y he cargado el huevo. Lanza otro gnomo y mira la carambola.",
+   "say": "Ahora lo bueno: los bumpers. El huevo salta de un bumper a otro si están cerca y el camino está despejado (sin niebla), pero cada bumper solo rebota UNA vez por turno: nada de ping-pong. Cada rebote lo carga un nivel y hasta el borde del mapa cuenta. Te he puesto dos bumpers. Lanza otro gnomo y mira la carambola.",
    "mission": "Lanza otro gnomo y provoca una carambola",
    "ok": "¡Carambola! Y fíjate cómo suena cada golpe más agudo que el anterior. Como una discoteca, pero con más daño.",
    "mood": "grunon",
    "en": {
-    "say": "Now the good part: the bumpers. When the egg hits a bumper, a totem, an obelisk or the edge of the map, it bounces like a pinball, and every bounce sends it farther. I've put two bumpers in its way and charged the egg. Throw another gnome and watch the carom.",
-    "mission": "Throw another gnome and make a carom",
-    "ok": "Carom! And notice how every hit sounds higher than the last. Like a nightclub, but with more damage."
+    "say": "Now the good part: bumpers. The egg jumps from one bumper to another if they're close and the path is clear (no fog), but each bumper only bounces ONCE per turn: no ping-pong. Every bounce charges it one level, and even the map edge counts. I've placed two bumpers. Throw another gnome and watch the carom.",
+    "mission": "Throw another gnome and cause a carom",
+    "ok": "Carom! And notice how every hit sounds higher than the last. Like a disco, but with more damage."
    }
   },
   {
-   "say": "Esos golpes seguidos son un COMBO: a partir del segundo, cada golpe sube el contador (X2, X3...) y, cuando el huevo se para, ese número se suma de una vez a tu ruleta, la de los tambores de toda la vida. Pulsa sobre un bumper para ver cuántas porciones llevas tú y cuántas el rival. Ojo: quien llene antes su ruleta se lleva 10 puntos de Gloria, sin esperar a que el huevo se rompa.",
-   "mission": "Pulsa un bumper para ver tu ruleta",
-   "ok": "Ahí están. Tu ruleta, la del rival... todo muy transparente, qué raro en este juego.",
+   "say": "Los obeliscos y los tótems también hacen rebotar al huevo, pero ellos lo pagan: según la carga, el golpe quita 2, 5 o 10 de vida. Y ojo con la carga: cada turno sin rebotar le resta un nivel, así que no lo dejes enfriar. Desde el nivel 6 tiembla y se tiñe de rojo; con el 9 se le ven hasta las grietas.",
+   "button": "Entendido",
    "mood": "normal",
    "en": {
-    "say": "Those hits in a row are a COMBO: from the second one, each hit raises the counter (X2, X3...) and, when the egg stops, that number is added all at once to your wheel, the same kind as the drums. Tap a bumper to see how many slices you have and how many the rival has. Careful: whoever fills their wheel first takes 10 Glory points, without waiting for the egg to break.",
-    "mission": "Tap a bumper to see your wheel",
-    "ok": "There they are. Your wheel, the rival's... all very transparent, how unusual in this game."
+    "say": "Obelisks and totems also bounce the egg, but they pay for it: depending on the charge, the hit takes 2, 5 or 10 health. And mind the charge: every turn without a bounce it loses one level, so don't let it cool down. From level 6 it trembles and turns red; at 9 you can even see the cracks.",
+    "button": "Got it"
    }
   },
   {
-   "say": "Cuando el huevo se rompe, cobras el JACKPOT: cada jugador recibe tantos puntos de Gloria como porciones tenga en su ruleta, y todo se reinicia. Cuanto más cargado está, más golpes aguanta antes de romperse. Lo he dejado listo: a tope de carga y casi roto. Lanza el último gnomo.",
-   "mission": "Rompe el huevo y cobra el JACKPOT",
-   "ok": "¡JACKPOT! Monedas, luces y un huevo hecho añicos. Si esto fuera una tragaperras, tú también acabarías arruinado.",
+   "say": "Si lo rebotas con la carga al máximo, EXPLOTA. Cada equipo recibe tanta Gloria como rebotes haya dado. Lo he dejado listo: casi al máximo y con tus rebotes de ventaja. Lanza el último gnomo y que sea lo que Dios quiera.",
+   "mission": "Haz estallar el huevo",
+   "ok": "¡BOOM! Plumas, luces y un huevo hecho añicos. Y mira quién viene a poner orden...",
    "mood": "grunon",
    "en": {
-    "say": "When the egg breaks, you collect the JACKPOT: every player receives as many Glory points as slices they have on their wheel, and everything resets. The more charged it is, the more hits it takes before breaking. I've set it up: fully charged and almost broken. Throw the last gnome.",
-    "mission": "Break the egg and collect the JACKPOT",
-    "ok": "JACKPOT! Coins, lights and a shattered egg. If this were a slot machine, you'd end up broke too."
+    "say": "If you bounce it at full charge, it EXPLODES. Each team receives as much Glory as bounces it made. I've left it ready: almost maxed and with your bounces in the lead. Throw the last gnome and let fate decide.",
+    "mission": "Make the egg explode",
+    "ok": "BOOM! Feathers, lights and a shattered egg. And look who's coming to restore order..."
    }
   },
   {
-   "say": "Y eso es todo de Hurrycrane Village. Resumen: lánzale gnomos al huevo para cargarlo, haz que rebote en bumpers, tótems y obeliscos para encadenar combos (a los obeliscos y tótems enemigos les quita vida, y a las unidades que atropella también), y rómpelo cuando tu ruleta esté bien llena, o llénala antes que el rival para llevarte los 10 puntos de Gloria. Si nadie lo toca durante un rato, se va descargando, así que no lo dejes enfriar. ¡Suerte, la vas a necesitar!",
+   "say": "La gruya aparece para equilibrar la partida: se posa en el obelisco del que más puntos ganó con el huevo y se queda dos turnos. Mientras tanto, ese obelisco no puede reclutar, ni mejorar habilidades, ni usar la herrería. Si quedas el último, te tocará a ti. Y como es un objeto del escenario, se vuelve transparente si te tapa.",
+   "button": "Vaya con la gruya",
+   "mood": "normal",
+   "en": {
+    "say": "The crane shows up to balance the game: it lands on the obelisk of whoever won the most points with the egg and stays two turns. Meanwhile, that obelisk can't recruit, upgrade abilities or use the armory. If you're last, it'll be your turn. And since it's a scenery object, it turns transparent when it covers you.",
+    "button": "Wow, the crane"
+   }
+  },
+  {
+   "say": "¿Tu obelisco bloqueado? Solución clásica: lánzale un gnomo a la gruya. Se asusta, se contrae y vuela al siguiente obelisco (el del siguiente que más puntos ganó), y así hasta visitarlos todos. Entonces se va y el huevo vuelve a nacer en el centro. Dale un gnomazo.",
+   "mission": "Espanta a la gruya con un gnomo",
+   "ok": "¡Plumas por todas partes! Dos turnos en cada obelisco, a menos que alguien le dé un susto.",
+   "mood": "grunon",
+   "en": {
+    "say": "Obelisk blocked? Classic fix: throw a gnome at the crane. It gets scared, flinches and flies to the next obelisk (whoever won the next most points), and so on until it has visited them all. Then it leaves and the egg is reborn in the centre. Give it a good gnome smash.",
+    "mission": "Scare the crane away with a gnome",
+    "ok": "Feathers everywhere! Two turns on each obelisk, unless somebody scares it."
+   }
+  },
+  {
+   "say": "Y eso es todo de Hurrycrane Village. Resumen: cada rebote carga el huevo; obeliscos y tótems pagan el golpe según la carga; con la carga al máximo, explota; entonces la gruya se posa donde más puntos se ganaron y bloquea ese obelisco hasta que se vaya. ¡Suerte, la vas a necesitar!",
    "button": "TERMINAR TUTORIAL",
    "mood": "aplaude",
    "en": {
-    "say": "And that's all for Hurrycrane Village. Summary: throw gnomes at the egg to charge it, make it bounce off bumpers, totems and obelisks to chain combos (it hurts enemy obelisks and totems, and the units it runs over too), and break it when your wheel is nice and full, or fill it before the rival to take the 10 Glory points. If nobody touches it for a while it starts losing charge, so don't let it cool down. Good luck, you'll need it!",
+    "say": "And that's all for Hurrycrane Village. Summary: every bounce charges the egg; obelisks and totems pay for the hit depending on the charge; at full charge it explodes; then the crane lands where the most points were won and blocks that obelisk until it leaves. Good luck, you'll need it!",
     "button": "FINISH TUTORIAL"
    }
   }

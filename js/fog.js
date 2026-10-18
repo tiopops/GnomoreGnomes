@@ -634,6 +634,7 @@ const Fog = {
       if (typeof Hierbajos !== "undefined") Hierbajos.refreshFog();
       if (typeof Drums !== "undefined") Drums.refreshFog();
       if (typeof Egg !== "undefined") Egg.refreshFog();
+      if (typeof Crane !== "undefined") Crane.refreshFog();
       if (typeof Bumpers !== "undefined") Bumpers.refreshFog();
       if (typeof Volcano !== "undefined") Volcano.refreshFog();
     }
