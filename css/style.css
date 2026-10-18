@@ -11407,3 +11407,29 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
 @media (max-width: 420px) { .sel-info2 { height: 440px; } }
 @media (max-width: 340px) { .sel-info2 { height: 490px; } }
 @media (max-width: 340px) { .sel-info2 { height: 490px; } }
+
+/* Modo rendimiento ampliado: sin animaciones infinitas de adorno (respiración de recursos, arbustos,
+   tótems, bumpers, unidades y obeliscos, y el aro del bumper) y sin sombras proyectadas decorativas
+   del escenario. No toca filtros con significado de estado (agotado, seleccionado, etc.). */
+body.perf-mode .resource-node__sprite,
+body.perf-mode .bush__sprite,
+body.perf-mode .village__sprite,
+body.perf-mode .bumper__sprite,
+body.perf-mode .hierbajo__sprite,
+body.perf-mode .unit__sprite,
+body.perf-mode .obelisk__sprite,
+body.perf-mode .bumper::before { animation: none !important; }
+body.perf-mode .resource-node__sprite,
+body.perf-mode .bush__sprite,
+body.perf-mode .village__sprite,
+body.perf-mode .hierbajo__sprite,
+body.perf-mode .obelisk__menu-icon { filter: none !important; }
+body.perf-mode .bumper:not(.bumper--lit) .bumper__sprite { filter: brightness(0.8) saturate(0.5) !important; }
+body.perf-mode .bumper--lit .bumper__sprite { filter: drop-shadow(0 0 12px #ffd23f) !important; }
+
+/* Modo rendimiento: ocultar lo que está bajo la niebla. Lo fuera de pantalla ya se oculta siempre
+   (TerrainMap/Fog/EntityCulling). Aquí: entidades bajo niebla fuera del flujo (sin pintar ni animar)
+   y terreno sin explorar sin vecinas exploradas (la niebla lo tapa de todas formas). */
+body.perf-mode .unit--fog-hidden { display: none !important; }
+body.perf-mode .tile--unexplored { visibility: hidden; }
+body.perf-mode.oracle-fog-lifted .tile--unexplored { visibility: visible; }
