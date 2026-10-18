@@ -146,17 +146,46 @@ const Resources = {
   // repartidos por el escenario" a secas) — losetas al azar, con tolerancia
   // de separación entre ellas para que no se amontonen todas juntas.
   spawn(boardSize) {
+    // Mapas grandes = más recursos (la cantidad base está pensada para el mapa de 1 rival, 23x23).
+    const factor = Math.max(1, (boardSize * boardSize) / (23 * 23));
+    const want = {};
     Object.keys(RESOURCE_NODE_TYPES).forEach((kind) => {
-      const def = RESOURCE_NODE_TYPES[kind];
-      let placed = 0;
+      const base = RESOURCE_NODE_TYPES[kind].count;
+      want[kind] = kind === "mena" ? Math.round(base * Math.sqrt(factor)) : Math.round(base * factor);
+    });
+    const placed = {};
+    Object.keys(want).forEach((k) => (placed[k] = 0));
+    // Cada base arranca con algo de madera y roca a mano (no hace falta ir lejos a por lo básico).
+    if (typeof Obelisks !== "undefined") {
+      Obelisks.list.forEach((o) => {
+        ["pino", "roca"].forEach((kind) => {
+          for (let n = 0; n < 2; n++) {
+            let done = false;
+            for (let maxD = 5; maxD <= 8 && !done; maxD++) {
+              for (let attempts = 0; attempts < 120 && !done; attempts++) {
+                const row = o.row + Math.floor(Math.random() * (2 * maxD + 1)) - maxD;
+                const col = o.col + Math.floor(Math.random() * (2 * maxD + 1)) - maxD;
+                const d = Math.max(Math.abs(row - o.row), Math.abs(col - o.col));
+                if (d < 3 || d > maxD) continue;
+                if (!this._tileFree(row, col, boardSize)) continue;
+                this._create(kind, row, col);
+                placed[kind]++;
+                done = true;
+              }
+            }
+          }
+        });
+      });
+    }
+    Object.keys(RESOURCE_NODE_TYPES).forEach((kind) => {
       let attempts = 0;
-      while (placed < def.count && attempts < 3000) {
+      while (placed[kind] < want[kind] && attempts < 3000) {
         attempts++;
         const row = Math.floor(Math.random() * boardSize);
         const col = Math.floor(Math.random() * boardSize);
         if (!this._tileFree(row, col, boardSize)) continue;
         this._create(kind, row, col);
-        placed++;
+        placed[kind]++;
       }
     });
     this._spawnChests(boardSize);

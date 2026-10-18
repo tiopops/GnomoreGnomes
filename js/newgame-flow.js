@@ -4,7 +4,7 @@
 
 const screenHistory = ["main-menu"];
 
-function showScreen(id) {
+function _swapScreen(id) {
   // Limpieza al salir del tablero (js/matchcleanup.js) / permiso de sonido de juego al entrar.
   if (typeof MatchCleanup !== "undefined") {
     const board = document.getElementById("screen-board");
@@ -19,6 +19,49 @@ function showScreen(id) {
   if (id !== "screen-board" && typeof UnitInfo !== "undefined" && UnitInfo.onDeselect) {
     try { UnitInfo.onDeselect(); } catch (e) {}
   }
+}
+
+// Transición suave entre escenas: el telón oscuro se cierra sobre la escena actual, se cambia de
+// pantalla por detrás y se abre sobre la nueva (más lento al entrar/salir de una partida).
+let _sceneCurtain = null, _sceneSwapTimer = null;
+function _ensureCurtain() {
+  if (_sceneCurtain) return _sceneCurtain;
+  const c = document.createElement("div");
+  c.id = "scene-curtain";
+  c.style.cssText = "position:fixed;inset:0;background:#14121a;opacity:0;pointer-events:none;z-index:2147483000;";
+  document.body.appendChild(c);
+  _sceneCurtain = c;
+  return c;
+}
+
+function showScreen(id) {
+  const cur = document.querySelector(".screen.screen--active");
+  clearTimeout(_sceneSwapTimer);
+  _sceneSwapTimer = null;
+  if (!cur || cur.id === id || typeof document.body.animate !== "function") {
+    _swapScreen(id);
+    if (_sceneCurtain && _sceneCurtain.style.opacity !== "0") {
+      _sceneCurtain.style.transition = "opacity 0.3s ease";
+      _sceneCurtain.style.opacity = "0";
+      _sceneCurtain.style.pointerEvents = "none";
+    }
+    return;
+  }
+  // El permiso de sonido de partida debe estar listo ya, antes del cambio real.
+  if (id === "screen-board" && typeof MatchCleanup !== "undefined") MatchCleanup.enter();
+  const toBoard = id === "screen-board" || cur.id === "screen-board";
+  const out = toBoard ? 260 : 150, inn = toBoard ? 480 : 260;
+  const c = _ensureCurtain();
+  c.style.pointerEvents = "auto"; // sin clics dobles mientras se cierra el telón
+  c.style.transition = `opacity ${out}ms ease`;
+  c.style.opacity = "1";
+  _sceneSwapTimer = setTimeout(() => {
+    _sceneSwapTimer = null;
+    _swapScreen(id);
+    c.style.pointerEvents = "none";
+    c.style.transition = `opacity ${inn}ms ease`;
+    c.style.opacity = "0";
+  }, out + 20);
 }
 
 function goToScreen(id) {
