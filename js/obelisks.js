@@ -1177,7 +1177,7 @@ const Obelisks = {
       const slotEl = document.createElement("button");
       slotEl.className = "backpack-slot";
       slotEl.innerHTML =
-        `<img src="${def.spriteUrl}" class="backpack-slot__icon" alt="${def.name}">` +
+        `<img src="${def.spriteUrl}" class="backpack-slot__icon backpack-slot__icon--unit" style="width:${Math.round(70 * (typeof SPRITE_SCALES !== "undefined" ? SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default : 1))}%;height:${Math.round(70 * (typeof SPRITE_SCALES !== "undefined" ? SPRITE_SCALES[typeId] ?? SPRITE_SCALES.default : 1))}%" alt="${def.name}">` +
         `<span class="shop-slot__price"><span class="shop-slot__price__num">${price}</span></span>`;
       slotEl.classList.toggle("backpack-slot--selected", typeId === this._selectedTypeId);
       // Tutorial (js/tutorial.js): solo TruenoEspora se puede elegir; el
