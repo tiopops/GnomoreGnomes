@@ -71,7 +71,7 @@ const TILE_TYPES = {
 // en el futuro solo necesita el archivo normal + su pareja "_lowres" — no
 // hace falta tocar ni esta función ni renderMap.
 function lowResTileSrc(originalSrc) {
-  return originalSrc.replace(/(\.[a-zA-Z0-9]+)$/, "_lowres$1");
+  return originalSrc.replace(/(\.[a-zA-Z0-9]+)(\?.*)?$/, "_lowres$1$2");
 }
 
 // RETIRADO (pedido explícito, pasada posterior): "las losetas de terreno,

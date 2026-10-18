@@ -166,7 +166,7 @@ const SpriteQuality = {
   _srcForTier(originalSrc, tier, shift) {
     const suffix = this._TIER_SUFFIX[Math.min(tier + (shift || 0), this._TIER_SUFFIX.length - 1)];
     if (!suffix) return originalSrc;
-    return originalSrc.replace(/(\.[a-zA-Z0-9]+)$/, `${suffix}$1`);
+    return originalSrc.replace(/(\.[a-zA-Z0-9]+)(\?.*)?$/, `${suffix}$1$2`);
   },
 
   // Punto de entrada único (ver cabecera) — cualquier mecánica que cree un

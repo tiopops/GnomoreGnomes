@@ -74,7 +74,7 @@ const UNIT_TYPES = {
     // personajes todavía no lo tienen): Units.machacaSpriteFor es la única
     // función que sabe hacer el relleno "usa el normal de iddle" cuando
     // falta, así que este campo puede quedar sin definir sin más.
-    machacaUrl: "assets/equipos/MushboomForest/machacagnomos_hombre_arbol.png",
+    machacaUrl: "assets/equipos/MushboomForest/machacagnomos_hombre_arbol.png?v=cm1",
     // Sprite opcional para el INSTANTE del impacto contra el suelo, dentro
     // de esa misma animación (ver Villages._playEpicSmash) — pedido
     // explícito: pose distinta a la de "machaca" (el salto/windup) justo en
@@ -82,14 +82,14 @@ const UNIT_TYPES = {
     // de opcional que machacaUrl: Units.impactSpriteFor rellena con el de
     // machaca (y ese a su vez con el de iddle) cuando un personaje no lo
     // tiene todavía.
-    machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_hombre_arbol_impacto.png",
+    machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_hombre_arbol_impacto.png?v=cm1",
     // Sprite de la transformación "Golem de Espinas" (habilidad
     // Abilities._activateThorns, ver js/abilities.js) — pedido explícito:
     // "ahora no hace falta que se vuelva de color gris, solo cambia el
     // sprite, pero anima el personaje cuando se transforme para que quede
     // epico". Sustituye por completo al sprite normal (spriteUrl) mientras
     // dura la partida, sin recolor por CSS.
-    espinasUrl: "assets/equipos/MushboomForest/golem_espinas_hombre_arbol.png",
+    espinasUrl: "assets/equipos/MushboomForest/golem_espinas_hombre_arbol.png?v=cm1",
     // Sprite opcional para el INSTANTE de golpear al gnomo (habilidad común
     // "pegar gnomo", ver Gnome.hit en js/gnome.js) — pedido explícito: "debe
     // cambiarse en el instante que se usa la habilidad pegar gnomo para
@@ -97,7 +97,7 @@ const UNIT_TYPES = {
     // ponemos al golemcorteza". Mismo criterio opcional que machacaUrl/
     // espinasUrl: un personaje sin esta entrada simplemente se queda con su
     // sprite normal durante el golpe (ver Units.pegarGnomoSpriteFor).
-    pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_hombre_arbol.png?v=2",
+    pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_hombre_arbol.png?v=cm1",
     aguante: 4,
     movimiento: 2,
     fuerza: 4,
@@ -114,9 +114,9 @@ const UNIT_TYPES = {
     name: "SurcaBosques",
     raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_02.png",
-    machacaUrl: "assets/equipos/MushboomForest/machacagnomos_surcabosques.png",
-    machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_surcabosques_impacto.png",
-    pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_surcabosques.png",
+    machacaUrl: "assets/equipos/MushboomForest/machacagnomos_surcabosques.png?v=cm1",
+    machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_surcabosques_impacto.png?v=cm1",
+    pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_surcabosques.png?v=cm1",
     aguante: 1,
     movimiento: 3,
     fuerza: 1,
@@ -129,9 +129,9 @@ const UNIT_TYPES = {
     name: "TruenoEspora",
     raceId: "mushboom_forest",
     spriteUrl: "assets/equipos/MushboomForest/unidad_03.png",
-    machacaUrl: "assets/equipos/MushboomForest/machacagnomos_seta_artificiero.png",
-    machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_seta_artificiero_impacto.png",
-    pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_seta_artificiero.png",
+    machacaUrl: "assets/equipos/MushboomForest/machacagnomos_seta_artificiero.png?v=cm1",
+    machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_seta_artificiero_impacto.png?v=cm1",
+    pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_seta_artificiero.png?v=cm1",
     aguante: 2,
     movimiento: 3,
     fuerza: 2,
@@ -144,9 +144,9 @@ const UNIT_TYPES = {
     name: "LanzaGnomos",
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_01.png",
-    machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_goblin_lanzador.png",
-    machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_goblin_lanzador_impacto.png",
-    pegarGnomoUrl: "assets/equipos/ColinasRockNTroll/pegargnomo_goblin_lanzador.png",
+    machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_goblin_lanzador.png?v=cm1",
+    machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_goblin_lanzador_impacto.png?v=cm1",
+    pegarGnomoUrl: "assets/equipos/ColinasRockNTroll/pegargnomo_goblin_lanzador.png?v=cm1",
     aguante: 2,
     movimiento: 3,
     fuerza: 1,
@@ -159,9 +159,9 @@ const UNIT_TYPES = {
     name: "UrgaMentes",
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_02.png",
-    machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_urgamentes.png",
-    machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_urgamentes_impacto.png",
-    pegarGnomoUrl: "assets/equipos/ColinasRockNTroll/pegargnomo_urgamentes.png",
+    machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_urgamentes.png?v=cm1",
+    machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_urgamentes_impacto.png?v=cm1",
+    pegarGnomoUrl: "assets/equipos/ColinasRockNTroll/pegargnomo_urgamentes.png?v=cm1",
     aguante: 2,
     movimiento: 3,
     fuerza: 2,
@@ -178,9 +178,9 @@ const UNIT_TYPES = {
     name: "PuñoRroca",
     raceId: "colinas_rockntroll",
     spriteUrl: "assets/equipos/ColinasRockNTroll/unidad_03.png",
-    machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca.png",
-    machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca_impacto.png",
-    pegarGnomoUrl: "assets/equipos/ColinasRockNTroll/pegargnomo_punoroca.png",
+    machacaUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca.png?v=cm1",
+    machacaImpactUrl: "assets/equipos/ColinasRockNTroll/machacagnomos_punoroca_impacto.png?v=cm1",
+    pegarGnomoUrl: "assets/equipos/ColinasRockNTroll/pegargnomo_punoroca.png?v=cm1",
     aguante: 4,
     movimiento: 3,
     fuerza: 3,
@@ -193,9 +193,9 @@ const UNIT_TYPES = {
     name: "ManosLargas",
     raceId: "equipo_surcanubes",
     spriteUrl: "assets/equipos/SurcaNubes/unidad_01.png",
-    machacaUrl: "assets/equipos/SurcaNubes/machacagnomos_manos_largas.png",
-    machacaImpactUrl: "assets/equipos/SurcaNubes/machacagnomos_manos_largas_impacto.png",
-    pegarGnomoUrl: "assets/equipos/SurcaNubes/pegargnomo_manos_largas.png",
+    machacaUrl: "assets/equipos/SurcaNubes/machacagnomos_manos_largas.png?v=cm1",
+    machacaImpactUrl: "assets/equipos/SurcaNubes/machacagnomos_manos_largas_impacto.png?v=cm1",
+    pegarGnomoUrl: "assets/equipos/SurcaNubes/pegargnomo_manos_largas.png?v=cm1",
     aguante: 1,
     movimiento: 4,
     fuerza: 1,
@@ -208,9 +208,9 @@ const UNIT_TYPES = {
     name: "AlaFugaz",
     raceId: "equipo_surcanubes",
     spriteUrl: "assets/equipos/SurcaNubes/unidad_02.png",
-    machacaUrl: "assets/equipos/SurcaNubes/machacagnomos_ala_fugaz.png",
-    machacaImpactUrl: "assets/equipos/SurcaNubes/machacagnomos_ala_fugaz_impacto.png",
-    pegarGnomoUrl: "assets/equipos/SurcaNubes/pegargnomo_ala_fugaz.png",
+    machacaUrl: "assets/equipos/SurcaNubes/machacagnomos_ala_fugaz.png?v=cm1",
+    machacaImpactUrl: "assets/equipos/SurcaNubes/machacagnomos_ala_fugaz_impacto.png?v=cm1",
+    pegarGnomoUrl: "assets/equipos/SurcaNubes/pegargnomo_ala_fugaz.png?v=cm1",
     aguante: 3,
     movimiento: 3,
     fuerza: 2,
@@ -223,9 +223,9 @@ const UNIT_TYPES = {
     name: "NidoBot",
     raceId: "equipo_surcanubes",
     spriteUrl: "assets/equipos/SurcaNubes/unidad_03.png",
-    machacaUrl: "assets/equipos/SurcaNubes/machacagnomos_nidobot.png",
-    machacaImpactUrl: "assets/equipos/SurcaNubes/machacagnomos_nidobot_impacto.png",
-    pegarGnomoUrl: "assets/equipos/SurcaNubes/pegargnomo_nidobot.png",
+    machacaUrl: "assets/equipos/SurcaNubes/machacagnomos_nidobot.png?v=cm1",
+    machacaImpactUrl: "assets/equipos/SurcaNubes/machacagnomos_nidobot_impacto.png?v=cm1",
+    pegarGnomoUrl: "assets/equipos/SurcaNubes/pegargnomo_nidobot.png?v=cm1",
     aguante: 5,
     movimiento: 3,
     fuerza: 2,
