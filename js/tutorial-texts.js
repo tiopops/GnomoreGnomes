@@ -491,23 +491,23 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Pulsa el icono de lanzar y apunta al huevo: junto a él aparecen 3 flechas (desvío a un lado, recto o al otro). Pasa el cursor por una (o tócala) y verás por dónde saldrá; pulsa para lanzar. Cada gnomo que se estampa le da +5 de carga, y el huevo sale disparado en dirección contraria a ti: cuanta más carga, más lejos llega. Tinkle no se hace daño (mucho).",
+   "say": "Pulsa el icono de lanzar y apunta al huevo: pasa el cursor por encima (o mantén pulsado) y verás por dónde saldrá. Cada gnomo que se estampa le da +5 de carga, y el huevo sale disparado en dirección contraria a ti: cuanta más carga, más lejos llega. Tinkle no se hace daño (mucho).",
    "mission": "Lánzale a Tinkle contra el huevo",
    "ok": "¡Zas! Carga 5. El huevo sale despedido y Tinkle, tras caerse de culo, se levanta y se va corriendo. Todo un profesional.",
    "mood": "normal",
    "en": {
-    "say": "Press the throw icon and aim at the egg: 3 arrows appear next to it (swerve one way, straight, or the other way). Hover over one (or tap it) to see where it will go; click to throw. Every gnome that smashes into it gives it +5 charge, and the egg shoots off away from you: the more charge, the farther it goes. Tinkle doesn't get hurt (much).",
+    "say": "Press the throw icon and aim at the egg: hover over it (or hold) and you'll see where it will go. Every gnome that smashes into it gives it +5 charge, and the egg shoots off away from you: the more charge, the farther it goes. Tinkle doesn't get hurt (much).",
     "mission": "Throw Tinkle at the egg",
     "ok": "Zap! Charge 5. The egg flies off and Tinkle, after landing on his bottom, gets up and runs away. A true professional."
    }
   },
   {
-   "say": "Ahora lo bueno: los bumpers. Cuando el huevo choca contra un bumper, un tótem, un obelisco o el borde del mapa, rebota como una bola de pinball: de frente vuelve por donde vino y en diagonal sale en espejo. Y cada rebote le regala una casilla más de viaje. Te he puesto dos bumpers en su camino y he cargado el huevo a 15. Lanza otro gnomo (elige la flecha recta, la del medio) y mira la carambola.",
+   "say": "Ahora lo bueno: los bumpers. Cuando el huevo choca contra un bumper, un tótem, un obelisco o el borde del mapa, rebota como una bola de pinball: de frente vuelve por donde vino y en diagonal sale en espejo. Cada rebote le regala casillas extra de viaje, y al chocar con un bumper el huevo se pone en modo turbo: +2 casillas y va más rápido. Si hay otro bumper cerca, se siente atraído y tiende a ir hacia él. Te he puesto dos bumpers en su camino y he cargado el huevo a 15. Lanza otro gnomo y mira la carambola.",
    "mission": "Lanza otro gnomo y provoca una carambola",
    "ok": "¡Carambola! Y fíjate cómo suena cada golpe más agudo que el anterior. Como una discoteca, pero con más daño.",
    "mood": "grunon",
    "en": {
-    "say": "Now the good part: the bumpers. When the egg hits a bumper, a totem, an obelisk or the edge of the map, it bounces like a pinball: head-on it comes back the way it came and diagonally it leaves like a mirror. And every bounce gives it one more tile of travel. I've put two bumpers in its way and charged the egg to 15. Throw another gnome (pick the straight arrow, the middle one) and watch the carom.",
+    "say": "Now the good part: the bumpers. When the egg hits a bumper, a totem, an obelisk or the edge of the map, it bounces like a pinball: head-on it comes back the way it came and diagonally it leaves like a mirror. Every bounce gives it extra tiles of travel, and hitting a bumper puts the egg in turbo mode: +2 tiles and faster. If another bumper is nearby, it gets drawn towards it. I've put two bumpers in its way and charged the egg to 15. Throw another gnome and watch the carom.",
     "mission": "Throw another gnome and make a carom",
     "ok": "Carom! And notice how every hit sounds higher than the last. Like a nightclub, but with more damage."
    }
@@ -535,11 +535,11 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Y eso es todo de Hurrycrane Village. Resumen: lánzale gnomos al huevo para cargarlo, haz que rebote en bumpers, tótems y obeliscos para encadenar combos, y rómpelo cuando tu ruleta esté bien llena. Si no lo golpea nadie en dos rondas, se va descargando, así que no lo dejes enfriar. ¡Suerte, la vas a necesitar!",
+   "say": "Y eso es todo de Hurrycrane Village. Resumen: lánzale gnomos al huevo para cargarlo, haz que rebote en bumpers, tótems y obeliscos para encadenar combos (a obeliscos y tótems enemigos les quita tanta vida como carga lleve, y a las unidades que atropella, 1), y rómpelo cuando tu ruleta esté bien llena. Si no lo golpea nadie en dos rondas, se va descargando, así que no lo dejes enfriar. ¡Suerte, la vas a necesitar!",
    "button": "TERMINAR TUTORIAL",
    "mood": "aplaude",
    "en": {
-    "say": "And that's all for Hurrycrane Village. Summary: throw gnomes at the egg to charge it, make it bounce off bumpers, totems and obelisks to chain combos, and break it when your wheel is nice and full. If nobody hits it for two rounds it starts losing charge, so don't let it cool down. Good luck, you'll need it!",
+    "say": "And that's all for Hurrycrane Village. Summary: throw gnomes at the egg to charge it, make it bounce off bumpers, totems and obelisks to chain combos (it takes as much health from enemy obelisks and totems as the charge it carries, and 1 from units it runs over), and break it when your wheel is nice and full. If nobody hits it for two rounds it starts losing charge, so don't let it cool down. Good luck, you'll need it!",
     "button": "FINISH TUTORIAL"
    }
   }
