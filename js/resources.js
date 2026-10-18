@@ -229,7 +229,7 @@ const Resources = {
       }
       return n; // 8 = campo abierto; pocos = rincón, orilla o borde del mapa
     };
-    const minPath = Math.max(CHEST_MIN_OBELISK_DIST, Math.round(boardSize * 0.45));
+    const minPath = Math.max(CHEST_MIN_OBELISK_DIST, Math.round(boardSize * 0.38));
     for (let i = 0; i < count; i++) {
       let best = null;
       for (let relax = 0; relax <= 4 && !best; relax++) {
@@ -243,8 +243,14 @@ const Resources = {
           if (d < needPath) continue; // -1 (inalcanzable) también se descarta
           const cd = (o) => Math.max(Math.abs(o.row - row), Math.abs(o.col - col));
           if (this.list.some((n) => n.kind === "cofre" && cd(n) < minCh)) continue;
-          // Más puntos = más escondido: lejos de las bases, en rincones/orillas.
-          const score = d + (8 - openNeighbours(row, col)) * 1.5 + Math.random() * 3;
+          // Más puntos = más escondido: lejos de las bases, en rincones/orillas. Además se reparten:
+          // se penaliza compartir cuadrante del mapa con otro cofre y se premia estar lejos de ellos.
+          const mid = (boardSize - 1) / 2;
+          const quad = (o) => (o.row > mid ? 2 : 0) + (o.col > mid ? 1 : 0);
+          const chests = this.list.filter((n) => n.kind === "cofre");
+          const sameQuad = chests.filter((n) => quad(n) === quad({ row, col })).length;
+          const nearest = chests.length ? Math.min(...chests.map(cd)) : 12;
+          const score = d + (8 - openNeighbours(row, col)) * 1.5 + Math.random() * 3 - sameQuad * 10 + Math.min(nearest, 14) * 0.6;
           if (!best || score > best.score) best = { row, col, score };
         }
       }

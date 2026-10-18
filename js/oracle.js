@@ -108,40 +108,35 @@ const Oracle = {
       try { mod = eval(n); } catch (e) { mod = null; }
       if (mod && mod.list) mod.list.forEach((b) => important.push({ row: b.row, col: b.col }));
     });
-    let minImp = 5;
-    let maxImbalance = 0;
-    let minDist = Math.max(2, Math.floor(boardSize / 6));
-    const minShop0 = Math.max(5, Math.floor(boardSize / 3));
-    let minShop = minShop0;
-    let attempts = 0;
-    while (this.list.length < 1 && attempts < 4000) {
-      attempts++;
-      if (attempts % 150 === 0) maxImbalance++;
-      if (attempts % 300 === 0) minDist = Math.max(1, minDist - 1);
-      if (attempts % 800 === 0) minShop = Math.max(4, minShop - 1); // nunca por debajo de 4
-      if (attempts % 1000 === 0) minImp = Math.max(3, minImp - 1); // nunca por debajo de 3
-      const row = Math.floor(Math.random() * boardSize);
-      const col = Math.floor(Math.random() * boardSize);
-      if (obeliskSpots.length) {
-        const dists = obeliskSpots.map((o) => Math.max(Math.abs(row - o.row), Math.abs(col - o.col)));
-        if (Math.max(...dists) - Math.min(...dists) > maxImbalance) continue;
-        if (Math.min(...dists) < minDist) continue;
-      }
-      if (shopSpots.some((s) => Math.max(Math.abs(row - s.row), Math.abs(col - s.col)) < minShop)) continue;
-      // Pedido explícito: "la casa del oraculo no puede aparecer en el centro
-      // junto a otros edificios importantes como el altar de sacrificios" —
-      // separación mínima respecto a Altar, Volcán, tótems y Obeliscos.
-      if (important.some((b) => Math.max(Math.abs(row - b.row), Math.abs(col - b.col)) < minImp)) continue;
-      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
-      if (typeof Units !== "undefined" && Units.unitAt(row, col)) continue;
-      if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
-      if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
-      if (typeof Obelisks !== "undefined" && (Obelisks.at(row, col) || Obelisks.isAdjacent(row, col))) continue;
-      if (typeof Altar !== "undefined" && Altar.isNear(row, col)) continue;
-      if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) continue;
-      if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
-      this._create(row, col);
-    }
+    const chb = (a, b) => Math.max(Math.abs(a.row - b.row), Math.abs(a.col - b.col));
+    // Lo más equidistante posible de todas las bases. Las separaciones "ideales" de la Tienda y de los
+    // edificios importantes cuestan puntos si no se cumplen, pero la equidad pesa más (con mínimos duros).
+    const minDist = Math.max(2, Math.floor(boardSize / 6));
+    const idealShop = Math.max(5, Math.floor(boardSize / 3)), hardShop = 4;
+    const idealImp = 5, hardImp = 3;
+    const nearest = (arr, row, col) => (arr.length ? Math.min(...arr.map((o) => chb(o, { row, col }))) : 99);
+    const valid = (row, col) => {
+      if (nearest(obeliskSpots, row, col) < minDist) return false;
+      if (nearest(shopSpots, row, col) < hardShop) return false;
+      if (nearest(important, row, col) < hardImp) return false;
+      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) return false;
+      if (typeof Units !== "undefined" && Units.unitAt(row, col)) return false;
+      if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) return false;
+      if (typeof Villages !== "undefined" && Villages.at(row, col)) return false;
+      if (typeof Obelisks !== "undefined" && (Obelisks.at(row, col) || Obelisks.isAdjacent(row, col))) return false;
+      if (typeof Altar !== "undefined" && Altar.isNear(row, col)) return false;
+      if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) return false;
+      if (typeof Shops !== "undefined" && Shops.at(row, col)) return false;
+      return true;
+    };
+    const penalty = (row, col) => {
+      let p = 0;
+      if (nearest(shopSpots, row, col) < idealShop) p += 12;
+      if (nearest(important, row, col) < idealImp) p += 12;
+      return p;
+    };
+    const spot = pickFairSpot(boardSize, valid, obeliskSpots, [], penalty);
+    if (spot) this._create(spot.row, spot.col);
     if (this.list.length) {
       // Mismo orden para todos los jugadores: se baraja con el Math.random
       // sembrado (js/rand.js), idéntico en ambos clientes.

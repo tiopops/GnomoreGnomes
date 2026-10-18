@@ -44,7 +44,7 @@
    partida y hace falta repartirlas de otra forma ("ya lo decidire",
    pedido explícito). */
 
-const SHOP_COUNT = 1; // "en un principio solo habra una"
+const SHOP_COUNT = 1; // "en un principio solo habra una" (con 3 rivales o más, 2: ver Shops.spawn)
 // Pedido explícito: "la tienda goblin pasa a tener 8 objetos en vez de 4".
 const SHOP_SLOT_COUNT = 8;
 const SHOP_SPRITE = "assets/edificios/tienda_goblin.png";
@@ -163,38 +163,30 @@ const Shops = {
   // diferencia entre "el jugador más cerca" y "el más lejos" en vez de no
   // colocar ninguna tienda.
   spawn(boardSize) {
-    const obeliskSpots = typeof Obelisks !== "undefined" ? Obelisks.list.map((o) => ({ row: o.row, col: o.col })) : [];
-    let maxImbalance = 0; // diferencia tolerada entre la distancia al jugador más cerca y al más lejos
-    let minDist = Math.max(2, Math.floor(boardSize / 6)); // no pegada a ningún jugador
-    let attempts = 0;
-    while (this.list.length < SHOP_COUNT && attempts < 1500) {
-      attempts++;
-      // Cada 150/300 intentos sin suerte se relaja un poco cada exigencia
-      // en vez de rendirse — un mapa pequeño puede no tener ninguna loseta
-      // perfectamente equidistante Y libre.
-      if (attempts % 150 === 0) maxImbalance++;
-      if (attempts % 300 === 0) minDist = Math.max(1, minDist - 1);
-      const row = Math.floor(Math.random() * boardSize);
-      const col = Math.floor(Math.random() * boardSize);
-      if (obeliskSpots.length) {
-        const dists = obeliskSpots.map((o) => Math.max(Math.abs(row - o.row), Math.abs(col - o.col)));
-        const imbalance = Math.max(...dists) - Math.min(...dists);
-        if (imbalance > maxImbalance) continue;
-        if (Math.min(...dists) < minDist) continue;
+    const bases = typeof Obelisks !== "undefined" ? Obelisks.list.map((o) => ({ row: o.row, col: o.col })) : [];
+    const count = typeof Teams !== "undefined" && Teams.rivalCount >= 3 ? 2 : SHOP_COUNT;
+    const chb = (a, b) => Math.max(Math.abs(a.row - b.row), Math.abs(a.col - b.col));
+    for (let n = 0; n < count; n++) {
+      // Relaja poco a poco las exigencias si el mapa está muy lleno.
+      for (let relax = 0; relax <= 3; relax++) {
+        const minDist = Math.max(1, Math.max(2, Math.floor(boardSize / 6)) - relax);
+        const minShop = Math.max(3, Math.floor(boardSize / 3) - relax * 2);
+        const valid = (row, col) => {
+          if (bases.some((o) => chb(o, { row, col }) < minDist)) return false;
+          if (this.list.some((s) => chb(s, { row, col }) < minShop)) return false;
+          if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) return false;
+          if (typeof Units !== "undefined" && Units.unitAt(row, col)) return false;
+          if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) return false;
+          if (typeof Villages !== "undefined" && Villages.at(row, col)) return false;
+          if (typeof Obelisks !== "undefined" && (Obelisks.at(row, col) || Obelisks.isAdjacent(row, col))) return false; // el anillo del Obelisco debe quedar libre para reclutar
+          if (typeof Altar !== "undefined" && Altar.isNear(row, col)) return false; // Altar de Sacrificios (js/altar.js)
+          if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) return false;
+          if (this.at(row, col)) return false;
+          return true;
+        };
+        const spot = pickFairSpot(boardSize, valid, bases, this.list);
+        if (spot) { this._create(spot.row, spot.col); break; }
       }
-      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
-      if (typeof Units !== "undefined" && Units.unitAt(row, col)) continue;
-      if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
-      if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
-      if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue; // Obelisco Ancestral (js/obelisks.js)
-      if (typeof Obelisks !== "undefined" && Obelisks.isAdjacent(row, col)) continue; // el anillo del Obelisco debe quedar libre para reclutar
-      // Altar.isNear (no solo Altar.at) — mismo motivo que en Villages.spawn
-      // (ver la nota larga en Altar.isNear, js/altar.js): el GnomOgro que
-      // sale del Altar es mucho más alto que una Tienda Goblin normal.
-      if (typeof Altar !== "undefined" && Altar.isNear(row, col)) continue; // Altar de Sacrificios (js/altar.js)
-      if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) continue; // Recursos de escenario (js/resources.js)
-      if (this.at(row, col)) continue;
-      this._create(row, col);
     }
   },
 

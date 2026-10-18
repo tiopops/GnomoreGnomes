@@ -71,9 +71,11 @@ const Bushes = {
     if (typeof Obelisks !== "undefined") Obelisks.list.forEach((o) => pois.push({ row: o.row, col: o.col }));
     if (pois.length === 0) return;
 
+    // Mapas grandes = más arbustos (la cantidad base es la del mapa de 1 rival, 23x23).
+    const bushTotal = Math.round(BUSH_COUNT * Math.max(1, (boardSize * boardSize) / (23 * 23)));
     let radius = BUSH_POI_RADIUS_START;
     let attempts = 0;
-    while (this.list.length < BUSH_COUNT && attempts < 1200) {
+    while (this.list.length < bushTotal && attempts < 1200 * Math.ceil(bushTotal / BUSH_COUNT)) {
       attempts++;
       if (attempts % 150 === 0) radius = Math.min(BUSH_POI_RADIUS_MAX, radius + 1);
       const poi = pois[Math.floor(Math.random() * pois.length)];
@@ -99,6 +101,31 @@ const Bushes = {
       );
       if (tooClose) continue;
       this._create(row, col);
+    }
+    // Cada base tiene al menos un arbusto cerca (3 a 6 casillas), para que nadie se quede sin cobertura.
+    if (typeof Obelisks !== "undefined") {
+      Obelisks.list.forEach((o) => {
+        if (this.list.some((b) => Math.max(Math.abs(b.row - o.row), Math.abs(b.col - o.col)) <= 6)) return;
+        for (let attempts = 0; attempts < 300; attempts++) {
+          const row = o.row + Math.floor(Math.random() * 13) - 6;
+          const col = o.col + Math.floor(Math.random() * 13) - 6;
+          const d = Math.max(Math.abs(row - o.row), Math.abs(col - o.col));
+          if (d < 3 || d > 6 || row < 0 || col < 0 || row >= boardSize || col >= boardSize) continue;
+          if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+          if (typeof Units !== "undefined" && Units.unitAt(row, col)) continue;
+          if (typeof Gnome !== "undefined" && Gnome.isAt(row, col)) continue;
+          if (typeof Villages !== "undefined" && Villages.at(row, col)) continue;
+          if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
+          if (typeof Obelisks !== "undefined" && (Obelisks.at(row, col) || Obelisks.isAdjacent(row, col))) continue;
+          if (typeof Altar !== "undefined" && Altar.at(row, col)) continue;
+          if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue;
+          if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) continue;
+          if (this.at(row, col)) continue;
+          if (this.list.some((b) => Math.max(Math.abs(b.row - row), Math.abs(b.col - col)) < BUSH_MIN_SEPARATION)) continue;
+          this._create(row, col);
+          break;
+        }
+      });
     }
   },
 

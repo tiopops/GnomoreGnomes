@@ -24,3 +24,27 @@ function getBoardSize(numOpponents) {
   // Fórmula de reserva por si se añaden opciones sin tamaño definido a mano.
   return 13 + (numOpponents - 1) * 3;
 }
+
+
+// Elige la loseta más EQUITATIVA para un punto de interés compartido (tienda, oráculo...):
+// la que deja la distancia al "punto útil más cercano" lo más parecida posible para todas las bases.
+// `valid(row, col)` filtra las losetas permitidas; `providers` son puntos ya colocados del mismo tipo
+// (la distancia de cada base cuenta al más cercano). Entre las mejores se elige una al azar.
+function pickFairSpot(boardSize, valid, bases, providers, penalty) {
+  const ch = (a, b) => Math.max(Math.abs(a.row - b.row), Math.abs(a.col - b.col));
+  const cands = [];
+  for (let row = 0; row < boardSize; row++) {
+    for (let col = 0; col < boardSize; col++) {
+      if (!valid(row, col)) continue;
+      const pts = (providers || []).concat([{ row, col }]);
+      const d = bases.map((b) => Math.min(...pts.map((p) => ch(b, p))));
+      const imb = Math.max(...d) - Math.min(...d);
+      const mean = d.reduce((x, y) => x + y, 0) / (d.length || 1);
+      cands.push({ row, col, score: imb * 10 + mean * 0.4 + (penalty ? penalty(row, col) : 0) });
+    }
+  }
+  if (!cands.length) return null;
+  cands.sort((a, b) => a.score - b.score);
+  const top = cands.filter((c) => c.score <= cands[0].score + 6).slice(0, 6);
+  return top[Math.floor(Math.random() * top.length)];
+}
