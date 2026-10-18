@@ -76,6 +76,9 @@ const OBELISK_MENU_ICONS = {
 };
 
 // Escala del icono en el popup de reclutar cuando debe diferir de SPRITE_SCALES (tamaño en partida).
+// Alto máximo común (px CSS) de los popups de reclutar, habilidades y armería.
+const POPUP_MAX_H = 880;
+
 const RECRUIT_ICON_SCALES = { urgamentes: 1.1, seta_artificiero: 1.1 };
 // Subida (% de la casilla) del icono en el popup de reclutar.
 const RECRUIT_ICON_LIFT = { nidobot: 7 };
@@ -1084,11 +1087,11 @@ const Obelisks = {
     this._selectedTypeId = null;
 
     const overlay = document.createElement("div");
-    overlay.className = "backpack-overlay";
+    overlay.className = "backpack-overlay backpack-overlay--recruit";
     overlay.addEventListener("click", () => this.closeRecruitPopup());
 
     const panel = document.createElement("div");
-    panel.className = "backpack-panel";
+    panel.className = "backpack-panel backpack-panel--recruit";
     panel.addEventListener("click", (e) => e.stopPropagation());
 
     const panelBg = document.createElement("div");
@@ -1147,7 +1150,56 @@ const Obelisks = {
     this._overlayEl = overlay;
 
     this._renderRecruitSlots();
+    // Tamaño fijo + ajuste a pantalla (sin scroll en móvil).
+    this._fitRecruit();
     requestAnimationFrame(() => overlay.classList.add("backpack-overlay--visible"));
+  },
+
+  // Ajuste a pantalla común a reclutar / habilidades / armería: el panel nunca
+  // pasa de POPUP_MAX_H px de alto (misma altura en los tres) ni de la
+  // pantalla (móvil), reduciéndolo con transform --fit; sin scroll.
+  _fitGeneric(overlay, panel) {
+    if (!overlay || !panel) return;
+    overlay.classList.add("backpack-overlay--fit");
+    panel.classList.add("backpack-panel--fit");
+    const apply = () => {
+      panel.style.setProperty("--fit", "1");
+      const W = panel.offsetWidth, H = panel.offsetHeight;
+      if (!W || !H) return;
+      const topPad = window.innerHeight * 0.015;
+      const fit = Math.min(1, POPUP_MAX_H / H, (window.innerHeight * 0.97 - topPad) / H, (window.innerWidth * 0.96) / W);
+      panel.style.setProperty("--fit", fit.toFixed(3));
+    };
+    apply();
+    const onResize = () => { if (!panel.isConnected) { window.removeEventListener("resize", onResize); return; } apply(); };
+    window.addEventListener("resize", onResize);
+  },
+
+  // Reserva el alto de la descripción más larga del roster (así el popup mide
+  // SIEMPRE lo mismo, haya o no unidad seleccionada) y reduce el conjunto con
+  // transform si no cabe en la pantalla (móvil), de modo que nunca haga falta
+  // scroll.
+  _fitRecruit() {
+    const ov = this._overlayEl;
+    if (!ov || !this._descEl || !this._activeRecruitObelisk) return;
+    const panel = ov.querySelector(".backpack-panel");
+    const desc = this._descEl.parentElement;
+    if (!panel || !desc) return;
+    const saved = this._selectedTypeId;
+    const raceId = this._activeRecruitObelisk.raceId;
+    desc.style.minHeight = "";
+    let max = 0;
+    Object.keys(UNIT_TYPES)
+      .filter((t) => UNIT_TYPES[t].raceId === raceId)
+      .forEach((t) => {
+        this._selectedTypeId = t;
+        this._updateRecruitDescAndButton();
+        max = Math.max(max, desc.offsetHeight);
+      });
+    this._selectedTypeId = saved;
+    this._updateRecruitDescAndButton();
+    if (max > 0) desc.style.minHeight = max + "px";
+    this._fitGeneric(ov, panel);
   },
 
   closeRecruitPopup() {
@@ -1402,6 +1454,7 @@ const Obelisks = {
       this._abilitiesOverlayEl = skillsOverlay;
       requestAnimationFrame(() => skillsOverlay.classList.add("backpack-overlay--visible"));
       SkillsUI.afterMount();
+      this._fitGeneric(skillsOverlay, skillsOverlay.querySelector(".backpack-panel"));
       return;
     }
 

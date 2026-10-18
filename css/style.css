@@ -11458,3 +11458,21 @@ body.perf-mode.oracle-fog-lifted .tile--unexplored { visibility: visible; }
   max-width: none;
   max-height: none;
 }
+
+/* Reclutar / habilidades / armería: misma altura máxima y ajuste a pantalla con
+   --fit (ver Obelisks._fitGeneric), sin scroll en móvil. Al final del archivo
+   para ganar los empates. */
+.backpack-overlay--fit {
+  overflow: hidden;
+  padding: 0 !important;
+  align-items: flex-start;
+}
+.backpack-panel--fit {
+  --fit: 1;
+  margin-top: 1.5vh !important;
+  transform-origin: 50% 0;
+  transform: rotate(-1.2deg) scale(calc(0.88 * var(--fit)));
+}
+.backpack-overlay--visible .backpack-panel--fit {
+  transform: rotate(-1.2deg) scale(var(--fit));
+}
