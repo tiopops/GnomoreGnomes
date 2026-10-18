@@ -193,8 +193,9 @@ const UNIT_TYPES = {
     name: "ManosLargas",
     raceId: "equipo_surcanubes",
     spriteUrl: "assets/equipos/SurcaNubes/unidad_01.png",
-    // Sin sprites de machaca/pegar todavía (llegarán más adelante): sin
-    // machacaUrl/pegarGnomoUrl el personaje se queda con su sprite normal.
+    machacaUrl: "assets/equipos/SurcaNubes/machacagnomos_manos_largas.png",
+    machacaImpactUrl: "assets/equipos/SurcaNubes/machacagnomos_manos_largas_impacto.png",
+    pegarGnomoUrl: "assets/equipos/SurcaNubes/pegargnomo_manos_largas.png",
     aguante: 1,
     movimiento: 4,
     fuerza: 1,
@@ -207,8 +208,9 @@ const UNIT_TYPES = {
     name: "AlaFugaz",
     raceId: "equipo_surcanubes",
     spriteUrl: "assets/equipos/SurcaNubes/unidad_02.png",
-    // Sin sprites de machaca/pegar todavía (llegarán más adelante): sin
-    // machacaUrl/pegarGnomoUrl el personaje se queda con su sprite normal.
+    machacaUrl: "assets/equipos/SurcaNubes/machacagnomos_ala_fugaz.png",
+    machacaImpactUrl: "assets/equipos/SurcaNubes/machacagnomos_ala_fugaz_impacto.png",
+    pegarGnomoUrl: "assets/equipos/SurcaNubes/pegargnomo_ala_fugaz.png",
     aguante: 3,
     movimiento: 3,
     fuerza: 2,
@@ -221,8 +223,9 @@ const UNIT_TYPES = {
     name: "NidoBot",
     raceId: "equipo_surcanubes",
     spriteUrl: "assets/equipos/SurcaNubes/unidad_03.png",
-    // Sin sprites de machaca/pegar todavía (llegarán más adelante): sin
-    // machacaUrl/pegarGnomoUrl el personaje se queda con su sprite normal.
+    machacaUrl: "assets/equipos/SurcaNubes/machacagnomos_nidobot.png",
+    machacaImpactUrl: "assets/equipos/SurcaNubes/machacagnomos_nidobot_impacto.png",
+    pegarGnomoUrl: "assets/equipos/SurcaNubes/pegargnomo_nidobot.png",
     aguante: 5,
     movimiento: 3,
     fuerza: 2,
@@ -273,6 +276,9 @@ const SPRITE_SCALES_MACHACA = {
   goblin_lanzador: 1.05,
   urgamentes: 1.1,
   punoroca: 1.75,
+  manos_largas: 1,
+  ala_fugaz: 1.6,
+  nidobot: 1.8,
 };
 const SPRITE_SCALES_IMPACT = {
   hombre_arbol: 1.5,
@@ -281,6 +287,9 @@ const SPRITE_SCALES_IMPACT = {
   goblin_lanzador: 1.25,
   urgamentes: 1.4,
   punoroca: 1.8,
+  manos_largas: 1.05,
+  ala_fugaz: 1.6,
+  nidobot: 1.8,
 };
 // Tamaño de la pose "pegar al gnomo" (pegarGnomoUrl). Sin entrada = mismo
 // tamaño que iddle (Units.pegarGnomoScaleFor).
@@ -291,6 +300,9 @@ const SPRITE_SCALES_PEGAR = {
   goblin_lanzador: 1,
   urgamentes: 0.9,
   punoroca: 1.5,
+  manos_largas: 0.95,
+  ala_fugaz: 1.6,
+  nidobot: 1.8,
 };
 
 // Precio de reclutar cada tipo de personaje desde el Obelisco Ancestral de
