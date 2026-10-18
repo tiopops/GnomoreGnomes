@@ -451,6 +451,7 @@ const Oracle = {
     document.body.classList.toggle("oracle-fog-lifted", on);
     if (typeof TerrainMap !== "undefined" && TerrainMap.liftUnrevealed) TerrainMap.liftUnrevealed(on, Fog.revealedGrid);
     if (typeof TerrainCanvas !== "undefined") TerrainCanvas.refresh();
+    if (typeof Fog !== "undefined" && Fog._onLiftChanged) Fog._onLiftChanged(on);
     Fog.applyVisibility();
   },
 

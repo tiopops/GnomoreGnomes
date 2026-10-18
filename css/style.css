@@ -1267,6 +1267,9 @@ body.gg-fog-anim-off .tile__fog--idle:not(.tile__fog--revealed) {
    golpe todo el rango de la cámara en una sola ráfaga de eventos
    táctiles): con un margen más ajustado (1.5 losetas) se veía un hueco en
    ese caso límite, con este no. */
+/* Nube que vuelve a ser "profunda" tras el oráculo: la pinta el canvas del suelo. */
+.tile__fog--deep { display: none !important; }
+
 .tile__fog--culled {
   display: none;
 }

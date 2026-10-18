@@ -184,12 +184,16 @@ const Fog = {
     // cada movimiento cuando, sobre todo al principio de la partida, la
     // inmensa mayoría siguen sin descubrir.
     this._revealedPositions = [];
-    // .tile__fog ya no vive DENTRO de su .tile (ver comentario de FOG_SRC en
-    // mapgen.js) — es un elemento hermano con su propio data-row/data-col,
-    // así que se busca directamente en vez de a través de la loseta.
-    container.querySelectorAll(".tile__fog").forEach((fogEl) => {
-      this._fogEls.set(`${fogEl.dataset.row},${fogEl.dataset.col}`, fogEl);
-    });
+    // Niebla en dos capas: las nubes LEJOS de lo explorado (>= FOG_DEEP_RADIUS
+    // casillas de cualquier loseta revelada) no existen como elemento del DOM:
+    // las pinta TerrainCanvas en el canvas del suelo (js/terraincanvas.js). Las
+    // cercanas a lo explorado (frontera: se animan, se disipan, se mezclan en
+    // z-index con unidades y objetos) siguen siendo <img> y se crean bajo
+    // demanda en _enterDom. Al empezar todo es profundo; cada revelado
+    // convierte a DOM las nubes de su entorno.
+    this._container = container;
+    this._deep = new Uint8Array(size * size).fill(1);
+    if (typeof TerrainMap !== "undefined") TerrainMap.setAllFogDeep(true);
     // Modo rendimiento: el terreno de losetas sin explorar (y sin vecinas exploradas) no se pinta
     // debajo de la niebla (ver "tile--unexplored" en style.css; solo actúa con body.perf-mode).
     if (typeof TerrainMap !== "undefined") TerrainMap.markAllUnexplored();
@@ -356,9 +360,79 @@ const Fog = {
     this.applyVisibility();
   },
 
+  // ---------- Niebla profunda (canvas) vs niebla de frontera (DOM) ----------
+  FOG_DEEP_RADIUS: 6, // casillas (Chebyshev) de margen alrededor de lo revelado
+
+  // Pasa a DOM la nube de (r,c) si aún era "profunda": crea su <img> (con los
+  // mismos atributos que siempre) y deja de pintarla el canvas.
+  _enterDom(r, c) {
+    const i = r * this.size + c;
+    if (!this._deep || !this._deep[i]) return;
+    this._deep[i] = 0;
+    if (typeof TerrainMap !== "undefined") TerrainMap.setFogDeep(r, c, false);
+    const key = `${r},${c}`;
+    let el = this._fogEls.get(key);
+    if (!el) {
+      el = createFogEl(r, c, this.size);
+      this._container.appendChild(el);
+      this._fogEls.set(key, el);
+    } else {
+      el.classList.remove("tile__fog--deep");
+    }
+  },
+
+  // Una loseta se acaba de revelar: todas las nubes a menos de FOG_DEEP_RADIUS
+  // pasan a DOM (la suya, que se va a disipar, y las vecinas que pueden
+  // tapar/ser tapadas por unidades y objetos).
+  _densify(row, col) {
+    const R = this.FOG_DEEP_RADIUS;
+    for (let dr = -R; dr <= R; dr++) {
+      const r = row + dr;
+      if (r < 0 || r >= this.size) continue;
+      for (let dc = -R; dc <= R; dc++) {
+        const c = col + dc;
+        if (c < 0 || c >= this.size) continue;
+        this._enterDom(r, c);
+      }
+    }
+  },
+
+  // El Vigilante (oráculo) levanta la niebla: con los objetos visibles bajo
+  // ella hay que respetar el orden de profundidad de TODAS las nubes -> todas
+  // a DOM mientras dure. Al terminar, vuelven a ser profundas las que toque.
+  _onLiftChanged(on) {
+    if (!this._deep) return;
+    const n = this.size;
+    if (on) {
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (!this.revealedGrid[r][c]) this._enterDom(r, c);
+      return;
+    }
+    const R = this.FOG_DEEP_RADIUS;
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (this.revealedGrid[r][c] || this._deep[r * n + c]) continue;
+        let near = false;
+        outer: for (let dr = -R; dr <= R; dr++) {
+          const rr = r + dr;
+          if (rr < 0 || rr >= n) continue;
+          for (let dc = -R; dc <= R; dc++) {
+            const cc = c + dc;
+            if (cc >= 0 && cc < n && this.revealedGrid[rr][cc]) { near = true; break outer; }
+          }
+        }
+        if (near) continue;
+        this._deep[r * n + c] = 1;
+        const el = this._fogEls.get(`${r},${c}`);
+        if (el) el.classList.add("tile__fog--deep");
+        if (typeof TerrainMap !== "undefined") TerrainMap.setFogDeep(r, c, true);
+      }
+    }
+  },
+
   _reveal(row, col, instant) {
     if (this.revealedGrid[row][col]) return;
     this.revealedGrid[row][col] = true;
+    this._densify(row, col);
     this._revealedPositions.push({ row, col });
     if (typeof TerrainMap !== "undefined") {
       for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) TerrainMap.markExplored(row + dr, col + dc);

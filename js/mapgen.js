@@ -166,6 +166,13 @@ const TerrainMap = {
 
   // Modo rendimiento: las losetas sin explorar no se pintan (ver
   // TerrainCanvas.render). Fog las marca como exploradas al revelarse.
+  setFogDeep(row, col, on) {
+    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.setFogDeep(row, col, on);
+  },
+  setAllFogDeep(on) {
+    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.setAllFogDeep(on);
+  },
+
   markAllUnexplored() {
     if (typeof TerrainCanvas !== "undefined") TerrainCanvas.setAllUnexplored(true);
   },
@@ -578,60 +585,12 @@ function generateMap(size, options) {
   return { size, tiles };
 }
 
-function renderMap(map, container) {
-  container.innerHTML = "";
-
-  const boardWidth = map.size * TILE_WIDTH;
-  const boardHeight = map.size * TILE_TOP_HEIGHT + (TILE_RENDER_HEIGHT - TILE_TOP_HEIGHT);
-  container.style.width = `${boardWidth}px`;
-  container.style.height = `${boardHeight}px`;
-
-  const fragment = document.createDocumentFragment();
-
-  // SUELO: ya no son elementos del DOM — js/terraincanvas.js lo pinta todo
-  // en un único <canvas> (ver su cabecera). Aquí solo se calcula, por loseta,
-  // exactamente lo mismo que antes se aplicaba a los <img>: base SIEMPRE de
-  // hierba (pedido explícito: "inicialmente bajo la niebla todas son de
-  // hierba hasta que se revelan") + overlay con la textura real, oculto
-  // hasta que TerrainMap.revealTile lo haga aparecer.
-  const grassAdjust = {
-    scale: TILE_TYPES.grass.scale != null ? TILE_TYPES.grass.scale : TILE_DEFAULT_ADJUST.scale,
-    offsetX: TILE_TYPES.grass.offsetX != null ? TILE_TYPES.grass.offsetX : TILE_DEFAULT_ADJUST.offsetX,
-    offsetY: TILE_TYPES.grass.offsetY != null ? TILE_TYPES.grass.offsetY : TILE_DEFAULT_ADJUST.offsetY,
-  };
-  // img.width/height como atributos truncan a entero (igual que hacía el <img>)
-  const baseRect = {
-    ox: grassAdjust.offsetX,
-    oy: grassAdjust.offsetY,
-    w: Math.floor(TILE_WIDTH * grassAdjust.scale),
-    h: Math.floor(TILE_RENDER_HEIGHT * grassAdjust.scale),
-  };
-  const tileDefs = [];
-
-  map.tiles.forEach((t) => {
-    const baseSrc = t.type === "grass" ? t.src : pickVariant(TILE_TYPES.grass, t.row, t.col);
-    let reveal = null;
-    if (t.type !== "grass") {
-      const typeInfo = TILE_TYPES[t.type];
-      const nativeW = typeInfo.nativeWidth || TILE_NATIVE_WIDTH;
-      const nativeH = typeInfo.nativeHeight || TILE_NATIVE_HEIGHT;
-      const adjust = {
-        scale: typeInfo.scale != null ? typeInfo.scale : TILE_DEFAULT_ADJUST.scale,
-        offsetX: typeInfo.offsetX != null ? typeInfo.offsetX : TILE_DEFAULT_ADJUST.offsetX,
-        offsetY: typeInfo.offsetY != null ? typeInfo.offsetY : TILE_DEFAULT_ADJUST.offsetY,
-      };
-      const renderWidth = TILE_WIDTH * adjust.scale;
-      reveal = {
-        src: t.src,
-        ox: adjust.offsetX,
-        oy: adjust.offsetY,
-        w: Math.floor(renderWidth),
-        h: Math.floor(Math.round((renderWidth * nativeH) / nativeW)),
-      };
-    }
-    const { x, y } = getTileTopLeft(t.row, t.col, map.size);
-    tileDefs.push({ row: t.row, col: t.col, x, y, baseSrc, reveal });
-
+// Nube de niebla de UNA loseta (<img class="tile__fog">). Antes se creaban las
+// de todo el tablero en renderMap; ahora la niebla "profunda" (lejos de lo
+// explorado) la pinta TerrainCanvas en el canvas del suelo, y solo las nubes
+// cercanas a lo explorado existen como elemento del DOM — Fog las crea bajo
+// demanda con esto (ver Fog._enterDom en js/fog.js).
+function createFogEl(row, col, size) {
     // Capa de niebla (ver comentario de FOG_SRC arriba) — visible por
     // defecto en TODAS las losetas; js/fog.js la oculta loseta a loseta
     // según se va revelando el mapa. Elemento HERMANO de .tile (no hijo:
@@ -719,15 +678,15 @@ function renderMap(map, container) {
       fogImg.dataset.srcOrig = FOG_SRC;
       fogImg.src = FOG_SRC;
     }
-    fogImg.style.zIndex = String((t.row + t.col) * 10 + 6);
+    fogImg.style.zIndex = String((row + col) * 10 + 6);
     fogImg.draggable = false;
     fogImg.alt = "";
-    fogImg.dataset.row = String(t.row);
-    fogImg.dataset.col = String(t.col);
+    fogImg.dataset.row = String(row);
+    fogImg.dataset.col = String(col);
     const fogWidth = Math.round(TILE_WIDTH * FOG_OVERHANG);
     fogImg.width = fogWidth;
     fogImg.height = Math.round((fogWidth * FOG_NATIVE_HEIGHT) / FOG_NATIVE_WIDTH);
-    const center = getTileCenter(t.row, t.col, map.size);
+    const center = getTileCenter(row, col, size);
     fogImg.style.left = `${center.x}px`;
     fogImg.style.top = `${center.y}px`;
     // Fase de la animación de reposo (ver @keyframes fog-idle-drift en
@@ -737,7 +696,63 @@ function renderMap(map, container) {
     // de verdad. Negativo para que arranque ya a mitad de ciclo en vez de
     // hacer esperar a la primera loseta hasta que empiece su turno.
     fogImg.style.animationDelay = `-${(NR() * 9).toFixed(2)}s`;
-    fragment.appendChild(fogImg);
+  return fogImg;
+}
+
+function renderMap(map, container) {
+  container.innerHTML = "";
+
+  const boardWidth = map.size * TILE_WIDTH;
+  const boardHeight = map.size * TILE_TOP_HEIGHT + (TILE_RENDER_HEIGHT - TILE_TOP_HEIGHT);
+  container.style.width = `${boardWidth}px`;
+  container.style.height = `${boardHeight}px`;
+
+  const fragment = document.createDocumentFragment();
+
+  // SUELO: ya no son elementos del DOM — js/terraincanvas.js lo pinta todo
+  // en un único <canvas> (ver su cabecera). Aquí solo se calcula, por loseta,
+  // exactamente lo mismo que antes se aplicaba a los <img>: base SIEMPRE de
+  // hierba (pedido explícito: "inicialmente bajo la niebla todas son de
+  // hierba hasta que se revelan") + overlay con la textura real, oculto
+  // hasta que TerrainMap.revealTile lo haga aparecer.
+  const grassAdjust = {
+    scale: TILE_TYPES.grass.scale != null ? TILE_TYPES.grass.scale : TILE_DEFAULT_ADJUST.scale,
+    offsetX: TILE_TYPES.grass.offsetX != null ? TILE_TYPES.grass.offsetX : TILE_DEFAULT_ADJUST.offsetX,
+    offsetY: TILE_TYPES.grass.offsetY != null ? TILE_TYPES.grass.offsetY : TILE_DEFAULT_ADJUST.offsetY,
+  };
+  // img.width/height como atributos truncan a entero (igual que hacía el <img>)
+  const baseRect = {
+    ox: grassAdjust.offsetX,
+    oy: grassAdjust.offsetY,
+    w: Math.floor(TILE_WIDTH * grassAdjust.scale),
+    h: Math.floor(TILE_RENDER_HEIGHT * grassAdjust.scale),
+  };
+  const tileDefs = [];
+
+  map.tiles.forEach((t) => {
+    const baseSrc = t.type === "grass" ? t.src : pickVariant(TILE_TYPES.grass, t.row, t.col);
+    let reveal = null;
+    if (t.type !== "grass") {
+      const typeInfo = TILE_TYPES[t.type];
+      const nativeW = typeInfo.nativeWidth || TILE_NATIVE_WIDTH;
+      const nativeH = typeInfo.nativeHeight || TILE_NATIVE_HEIGHT;
+      const adjust = {
+        scale: typeInfo.scale != null ? typeInfo.scale : TILE_DEFAULT_ADJUST.scale,
+        offsetX: typeInfo.offsetX != null ? typeInfo.offsetX : TILE_DEFAULT_ADJUST.offsetX,
+        offsetY: typeInfo.offsetY != null ? typeInfo.offsetY : TILE_DEFAULT_ADJUST.offsetY,
+      };
+      const renderWidth = TILE_WIDTH * adjust.scale;
+      reveal = {
+        src: t.src,
+        ox: adjust.offsetX,
+        oy: adjust.offsetY,
+        w: Math.floor(renderWidth),
+        h: Math.floor(Math.round((renderWidth * nativeH) / nativeW)),
+      };
+    }
+    const { x, y } = getTileTopLeft(t.row, t.col, map.size);
+    tileDefs.push({ row: t.row, col: t.col, x, y, baseSrc, reveal });
+
   });
 
   container.appendChild(fragment);
