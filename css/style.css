@@ -11447,3 +11447,14 @@ body.perf-mode .bumper--lit .bumper__sprite { filter: drop-shadow(0 0 12px #ffd2
 body.perf-mode .unit--fog-hidden { display: none !important; }
 body.perf-mode .tile--unexplored { visibility: hidden; }
 body.perf-mode.oracle-fog-lifted .tile--unexplored { visibility: visible; }
+
+/* Reclutar: el icono de la unidad se coloca en absoluto y centrado para que
+   un sprite más grande que la viñeta SOBRESALGA sin agrandar la casilla. */
+.backpack-slot__icon--unit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: none;
+  max-height: none;
+}
