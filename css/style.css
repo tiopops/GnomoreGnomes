@@ -11201,7 +11201,7 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
 @media (max-height: 760px) { .sel-rflav { display: none; } }
 .sel-info2 {
   flex: 0 0 auto;
-  width: min(940px, 94vw);
+  width: min(780px, 94vw);
   padding: 16px 26px 18px;
   height: 222px; /* fijo: mismo tamaño para virtudes/debilidades y para cualquier unidad */
   overflow: hidden;
@@ -11428,7 +11428,7 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   .sel-chip { display: none !important; }
   .sel-team { --us: 0.62; margin-top: 100px; }
   .sel-root > .sel-btn { bottom: 6px; padding: 9px 34px; font-size: 15px; }
-  .sel-info2, .sel-info { width: min(900px, calc(var(--vw100, 100vw) - 32px)); }
+  .sel-info2, .sel-info { width: min(780px, calc(var(--vw100, 100vw) - 32px)); }
 }
 @media (max-height: 560px) and (max-width: 720px) {
   .sel-title { display: none; }
