@@ -103,7 +103,7 @@ const GNOME_SIZES = {
   ground: 74,
   flying: 93,
   run: 86, // gnomo corriendo (huida), sprite gnomo_corre
-  sit: 77, // gnomo caído de culo, sprite gnomo_sentado
+  sit: 78, // gnomo caído de culo, sprite gnomo_sentado
   held: 85,
 };
 
@@ -161,7 +161,7 @@ const GNOME_ATTACH_OFFSETS = {
   punoroca: { right: 86, bottom: 7 },
   manos_largas: { right: 45, bottom: 7.3 },
   ala_fugaz: { right: 28, bottom: 6.7 },
-  nidobot: { right: 44, bottom: 8.1 },
+  nidobot: { right: 76, bottom: 18.4 },
 };
 
 // Misma idea que GNOME_ATTACH_OFFSETS de arriba, pero para la pose
@@ -182,9 +182,9 @@ const GNOME_ATTACH_OFFSETS_MACHACA = {
   goblin_lanzador: { right: -14, bottom: 40 },
   urgamentes: { right: 38, bottom: 64.2 },
   punoroca: { right: 22, bottom: 68.3 },
-  manos_largas: { right: -14, bottom: 40 },
-  ala_fugaz: { right: -14, bottom: 40 },
-  nidobot: { right: -14, bottom: 40 },
+  manos_largas: { right: 64, bottom: 68.4 },
+  ala_fugaz: { right: 89, bottom: 56.7 },
+  nidobot: { right: -11, bottom: 77.9 },
 };
 
 // Pose "pegar al gnomo" (Gnome.hit): el personaje cambia a su sprite
@@ -199,6 +199,9 @@ const GNOME_ATTACH_OFFSETS_PEGAR = {
   goblin_lanzador: { right: -40, bottom: -6.5 },
   urgamentes: { right: 4, bottom: 0.4 },
   punoroca: { right: -26, bottom: 36.6 },
+  manos_largas: { right: -35, bottom: 14.1 },
+  ala_fugaz: { right: 30, bottom: 28.6 },
+  nidobot: { right: 54, bottom: 31.7 },
 };
 
 // ---------- Cada gnomo individual ----------

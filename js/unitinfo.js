@@ -75,9 +75,9 @@ const UNIT_DESCRIPTIONS = {
   goblin_lanzador: "El mejor brazo de las Colinas Rock'n Troll — nadie lanza un gnomo más lejos ni más certero.",
   urgamentes: "Piensa cada jugada tres veces antes de moverse, lo cual explica por qué siempre llega tarde.",
   punoroca: "Sus puños son más duros que la piedra de la que sacó el nombre.",
-  manos_largas: "Dicen que nunca ha robado nada: es que las cosas se le pegan a los dedos.",
-  ala_fugaz: "Aterriza siempre donde quiere, aunque casi nunca como quiere.",
-  nidobot: "Incuba algo muy grande y muy caliente. Mejor no estar cerca cuando eclosione.",
+  manos_largas: "Dicen que nunca ha robado nada... son las cosas las que se le pegan a los dedos. Todos los días.",
+  ala_fugaz: "Aterriza siempre donde quiere, aunque casi nunca como quiere. Necesita unos ajustes aquí y allá.",
+  nidobot: "Robot Incubador AlaTech 2.0. Modelo de última generación. Algunos clientes reportan que es algo inestable.",
 };
 
 const UnitInfo = {
