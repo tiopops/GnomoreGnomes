@@ -271,7 +271,7 @@ async function craneLeave(){
  await glide(b0,lift,260,st.craneFlip,0);
  if(next!==undefined){const o=OBS[next],q=perchPos(o);const flip=q.x<tp.x,bt=bodyTarget(q,flip),hi={x:bt.x,y:bt.y-90};
   await glide(lift,hi,1300,flip,110);await glide(hi,bt,520,flip,0,true);
-  st.cranePos=tp;await landAt(next,1,flip,q)}
+  st.cranePos=tp;await landAt(next,2,flip,q)}
  else{const flip=tp.x<CX?true:false;await glide(lift,{x:flip?-300:1500,y:-200},1700,flip,100);d.remove();st.crane=null;st.cranePos=null;st.phase="play";await respawn()}
 }
 async function landAt(ti,turns,flip,tp){const o=OBS[ti],d=st.crane;setCranePos(tp.x,tp.y,flip,IMG.cPos);d.firstChild.style.transform="";d.style.zIndex=1000;d.classList.add("perched");S.land();
