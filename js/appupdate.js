@@ -21,7 +21,7 @@ const AppUpdate = {
   },
 
   async init() {
-    if (!this.isNative()) return;
+    if (!this.isNative()) { this._initPromo(); return; }
     const up = this._updater();
     // Obligatorio en cada arranque: si no, el plugin da por mala la versión
     // descargada y vuelve a la anterior.
@@ -34,6 +34,83 @@ const AppUpdate = {
     // (se salta con datos móviles; ahí queda el botón manual).
     const net = navigator.connection;
     if (!(net && net.type === "cellular")) setTimeout(() => this.run(true), 1200);
+  },
+
+  // Popup "DESCARGAR APP": solo en el navegador de un móvil Android (nunca en
+  // ordenador ni dentro de la propia APK). Sale una vez al entrar al menú
+  // principal; la APK la publica el workflow en la release "mobile-latest".
+  APK_URL: "https://github.com/tiopops/GnomoreGnomes/releases/download/mobile-latest/GnomoreGnomes.apk",
+
+  _initPromo() {
+    if (!/Android/i.test(navigator.userAgent || "")) return;
+    const menu = document.getElementById("main-menu");
+    if (!menu) return;
+    const check = () => {
+      if (!menu.classList.contains("screen--active")) return false;
+      this._showPromo();
+      return true;
+    };
+    if (check()) return;
+    const mo = new MutationObserver(() => { if (check()) mo.disconnect(); });
+    mo.observe(menu, { attributes: true, attributeFilter: ["class"] });
+  },
+
+  _showPromo() {
+    if (this._promoShown) return;
+    this._promoShown = true;
+    const overlay = document.createElement("div");
+    overlay.className = "backpack-overlay";
+    const close = () => {
+      overlay.classList.remove("backpack-overlay--visible");
+      setTimeout(() => overlay.remove(), 220);
+    };
+    overlay.addEventListener("click", close);
+
+    const panel = document.createElement("div");
+    panel.className = "backpack-panel";
+    panel.addEventListener("click", (e) => e.stopPropagation());
+
+    const bg = document.createElement("div");
+    bg.className = "p5-banner backpack-panel__bg";
+    panel.appendChild(bg);
+
+    const x = document.createElement("button");
+    x.className = "backpack-close-btn";
+    x.setAttribute("aria-label", "Cerrar");
+    x.innerHTML = '<i class="ph ph-x backpack-close-btn__icon"></i>';
+    x.addEventListener("click", (e) => { e.stopPropagation(); close(); });
+    panel.appendChild(x);
+
+    const title = document.createElement("div");
+    title.className = "p5-banner__label backpack-panel__title";
+    title.textContent = "DESCARGAR APP";
+    bg.appendChild(title);
+
+    const slots = document.createElement("div");
+    slots.className = "backpack-slots app-promo__slots";
+    slots.innerHTML = '<img class="app-promo__img" src="assets/tutorial/nizak_normal.png" alt="">';
+    bg.appendChild(slots);
+
+    const desc = document.createElement("div");
+    desc.className = "backpack-desc";
+    desc.innerHTML = '<p class="backpack-desc__text">Para una mejor experiencia descarga la app de Gnomore Gnomes en tu móvil</p>';
+    bg.appendChild(desc);
+
+    const btn = document.createElement("button");
+    btn.className = "p5-banner p5-banner--action shop-buy-btn";
+    btn.innerHTML = '<span class="p5-banner__label">DESCARGAR APK</span>';
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      window.location.href = this.APK_URL;
+      close();
+    });
+    bg.appendChild(btn);
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    if (typeof Obelisks !== "undefined" && Obelisks._fitGeneric) Obelisks._fitGeneric(overlay, panel);
+    else panel.style.marginTop = "12vh";
+    requestAnimationFrame(() => overlay.classList.add("backpack-overlay--visible"));
   },
 
   // Botón redondo junto a perfil/ajustes (solo en el menú principal y solo en
