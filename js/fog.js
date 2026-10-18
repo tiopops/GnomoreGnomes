@@ -369,16 +369,35 @@ const Fog = {
     const i = r * this.size + c;
     if (!this._deep || !this._deep[i]) return;
     this._deep[i] = 0;
-    if (typeof TerrainMap !== "undefined") TerrainMap.setFogDeep(r, c, false);
     const key = `${r},${c}`;
     let el = this._fogEls.get(key);
     if (!el) {
       el = createFogEl(r, c, this.size);
+      // La nube de canvas se mantiene dibujada hasta que la imagen DOM esté
+      // cargada Y decodificada: si se quitaba antes, había uno o dos frames
+      // sin nube (o con la textura a medias) = el parpadeo al descubrir zona.
+      el.style.visibility = "hidden";
+      el._pend = true;
       this._container.appendChild(el);
       this._fogEls.set(key, el);
+      const done = () => this._finishEnter(r, c, el);
+      const go = () => (el.decode ? el.decode().then(done, done) : done());
+      if (el.complete && el.naturalWidth > 0) go();
+      else {
+        el.addEventListener("load", go, { once: true });
+        el.addEventListener("error", done, { once: true });
+      }
     } else {
       el.classList.remove("tile__fog--deep");
+      if (typeof TerrainMap !== "undefined") TerrainMap.setFogDeep(r, c, false);
     }
+  },
+
+  _finishEnter(r, c, el) {
+    if (!el._pend) return;
+    el._pend = false;
+    el.style.visibility = "";
+    if (typeof TerrainMap !== "undefined") TerrainMap.setFogDeep(r, c, false);
   },
 
   // Una loseta se acaba de revelar: todas las nubes a menos de FOG_DEEP_RADIUS
@@ -439,6 +458,7 @@ const Fog = {
     }
     const fogEl = this._fogEls.get(`${row},${col}`);
     if (!fogEl) return;
+    this._finishEnter(row, col, fogEl);
     if (instant) {
       fogEl.classList.add("tile__fog--revealed");
       fogEl.style.display = "none";
