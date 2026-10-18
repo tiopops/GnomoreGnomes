@@ -34,11 +34,11 @@ html,body{margin:0;height:100%;background:#1c2b22;overflow:hidden;font-family:"R
 .hpbar{position:absolute;width:84px;height:10px;background:#0008;border:2px solid #000;border-radius:6px;overflow:hidden;pointer-events:none}
 .hpbar i{display:block;height:100%;background:linear-gradient(#ff7a6a,#d6322a);transition:width .25s}
 /* gruya */
-#crane{position:absolute;pointer-events:auto;cursor:pointer;transition:opacity .22s,transform .3s ease-in-out}
+#crane{position:absolute;pointer-events:auto;cursor:pointer;transition:opacity .22s}
 #crane.hover{opacity:.4}
 #crane img{display:block;width:100%;transform-origin:63% 94%}
 #crane.perched img{animation:idle 6s ease-in-out infinite}
-@keyframes idle{0%,100%{transform:scale(1,1) rotate(0)}18%{transform:scale(1.012,1.02) rotate(-.7deg)}36%{transform:scale(1,1) rotate(.5deg)}58%{transform:scale(1,1) rotate(0)}62%{transform:scale(1,.985) rotate(3.2deg)}68%{transform:scale(1,1) rotate(-.4deg)}74%{transform:scale(1,1) rotate(2.4deg)}82%{transform:scale(1,1) rotate(0)}}
+@keyframes idle{0%,100%{transform:scale(1,1)}18%{transform:scale(1.012,1.022)}36%{transform:scale(1,1)}58%{transform:scale(1,1)}64%{transform:scale(1.015,.975)}72%{transform:scale(1,1)}80%{transform:scale(1.01,1.012)}90%{transform:scale(1,1)}}
 .fly{position:absolute;pointer-events:none;width:40px;height:20px;border-radius:50% 0 50% 0;background:#2e63c9;border:2px solid #1a1633}
 .fly.c{background:#f1e6cc}
 .puff{position:absolute;width:30px;height:30px;border-radius:50%;background:radial-gradient(#fff,#ffffff00 70%);pointer-events:none}
@@ -246,7 +246,7 @@ async function glide(from,to,D,flip,arc,endFold){
   if(endFold&&k>.75)phase=1;
   const bob=Math.sin(t/110)*5;
   setCranePos(x,y+bob,flip,phase?IMG.cPle:IMG.cVue);d.style.zIndex=999;
-  d.firstChild.style.transform=`rotate(${(to.y-from.y)/(Math.abs(to.x-from.x)+1)*8*(flip?-1:1)}deg)`;
+  {const w=Math.cos((t-t0)/270*Math.PI*2);d.firstChild.style.transform=`scale(${1+.045*w},${1-.045*w})`}
   k<1?requestAnimationFrame(f):res()})(t0)});
 }
 function perchPos(o){return{x:o.top.x,y:o.top.y+14}}
@@ -284,7 +284,7 @@ async function scare(){
  await new Promise(res=>{const t0=performance.now(),D=520;(function f(t){const k=Math.min(1,(t-t0)/D),x=p0.x+(tp.x-p0.x)*k,y=p0.y-40+(tp.y-60-p0.y+40)*k-Math.sin(k*Math.PI)*120;g.style.left=x-31+"px";g.style.top=y-40+"px";g.style.transform=`rotate(${k*600}deg)`;k<1?requestAnimationFrame(f):res()})(t0)});
  g.remove();S.scare();S.hit();
  featherBurst(tp.x,tp.y-70);
- st.crane.firstChild.animate([{transform:"scale(1,1)"},{transform:"scale(1.2,.8) rotate(-8deg)",offset:.25},{transform:"scale(.9,1.2) rotate(6deg)",offset:.6}],{duration:340});
+ st.crane.firstChild.animate([{transform:"scale(1,1)"},{transform:"scale(1.14,.8)",offset:.28},{transform:"scale(.95,1.06)",offset:.62},{transform:"scale(1,1)"}],{duration:300,easing:"ease-out"});
  await sleep(300);await craneLeave();st.busy=false}
 const FEATHER=c=>`<svg viewBox="0 0 24 64" width="12" height="32"><path d="M12 62 C11 40 12 22 12 3 C4 14 2 30 6 44 C8 52 11 57 12 62Z" fill="${c[0]}"/><path d="M12 3 C19 12 22 28 18 42 C16 50 13 57 12 62Z" fill="${c[1]}"/></svg>`;
 const FCOL=[["#2e63c9","#4a86ee"],["#f1e6cc","#fff8e6"],["#1f47a0","#2e63c9"],["#e0c98f","#f1e6cc"]];
