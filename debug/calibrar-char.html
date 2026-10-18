@@ -315,6 +315,8 @@
   <script src="../js/i18n.js"></script>
   <script src="../js/races.js"></script>
   <script src="../js/units.js"></script>
+  <script src="../js/unitinfo.js"></script>
+  <script src="../js/uiconfig.js"></script>
   <script>
     // v4: vuelta atrás — pedido explícito: "El recorte de la cara debe ser
     // individual para cada pesrsonaje en calibrar char". La v3 (un único
@@ -327,10 +329,11 @@
     const BTN_LAYOUT_STORAGE_KEY = "gnomore-botones-layout-v1";
     const ABIL_BTN_STORAGE_KEY = "gnomore-boton-habilidad-layout-v1";
 
-    const FACE_DEFAULT = { x: 72, y: 14, zoom: 225 };
-    const CIRCLE_SIZE_DEFAULT = 110;
-    const BTN_LAYOUT_DEFAULT = { radius: 86, startAngle: -34, endAngle: 11, hitSize: 51, passSize: 51 };
-    const ABIL_BTN_DEFAULT = { radius: 92, angle: -55, size: 64 };
+    // Valores de partida = los REALES del juego (js/unitinfo.js FACE_OFFSETS y js/uiconfig.js UI_LAYOUT), no copias a mano que se quedan viejas.
+    const FACE_DEFAULT = Object.assign({ x: 72, y: 14, zoom: 225 }, (typeof FACE_OFFSETS !== "undefined" && FACE_OFFSETS.default) || {});
+    const CIRCLE_SIZE_DEFAULT = (typeof UI_LAYOUT !== "undefined" && UI_LAYOUT.infoCircle.size) || 110;
+    const BTN_LAYOUT_DEFAULT = Object.assign({ radius: 86, startAngle: -34, endAngle: 11, hitSize: 51, passSize: 51 }, (typeof UI_LAYOUT !== "undefined" && UI_LAYOUT.actionButtons) || {});
+    const ABIL_BTN_DEFAULT = Object.assign({ radius: 92, angle: -55, size: 64 }, (typeof UI_LAYOUT !== "undefined" && UI_LAYOUT.abilityButton) || {});
 
     // Mapa typeId -> { x, y, zoom }; cualquier typeId sin entrada propia
     // todavía cae a FACE_DEFAULT (ver getFaceFor más abajo).
@@ -342,7 +345,7 @@
       try { localStorage.setItem(FACE_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
     }
     function getFaceFor(typeId) {
-      return Object.assign({}, FACE_DEFAULT, faceOffsets[typeId] || {});
+      return Object.assign({}, FACE_DEFAULT, (typeof FACE_OFFSETS !== "undefined" && FACE_OFFSETS[typeId]) || {}, faceOffsets[typeId] || {});
     }
     function loadCircleSize() {
       try {

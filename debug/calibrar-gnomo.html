@@ -303,15 +303,17 @@
   <script src="../js/i18n.js"></script>
   <script src="../js/races.js"></script>
   <script src="../js/units.js"></script>
+  <script src="../js/gnome.js"></script>
   <script>
     const POS_STORAGE_KEY = "gnomore-gnomo-posicion-v1"; // mismo formato que usa js/gnomecalib.js dentro del juego
     const POS_STORAGE_KEY_MACHACA = "gnomore-gnomo-posicion-machaca-v1"; // mismo formato/clave que GNOME_CALIB_STORAGE_KEY_MACHACA en js/gnomecalib.js — así ambas herramientas comparten la misma calibración
     const SIZE_STORAGE_KEY = "gnomore-gnomo-tamano-v1";
     const HELD_WIDTH_STORAGE_KEY = "gnomore-gnomo-tamano-cogido-v1"; // mismo formato que usa js/gnomecalib.js
-    const POS_DEFAULTS = { right: -14, bottom: 6 };
-    const POS_DEFAULTS_MACHACA = { right: -14, bottom: 40 }; // igual que GNOME_ATTACH_OFFSETS_MACHACA.default en js/gnome.js
+    // Valores de partida = los REALES del juego (js/gnome.js), no copias a mano que se quedan viejas.
+    const POS_DEFAULTS = Object.assign({ right: -14, bottom: 6 }, (typeof GNOME_ATTACH_OFFSETS !== "undefined" && GNOME_ATTACH_OFFSETS.default) || {});
+    const POS_DEFAULTS_MACHACA = Object.assign({ right: -14, bottom: 40 }, (typeof GNOME_ATTACH_OFFSETS_MACHACA !== "undefined" && GNOME_ATTACH_OFFSETS_MACHACA.default) || {}); // igual que GNOME_ATTACH_OFFSETS_MACHACA.default en js/gnome.js
     const POS_STORAGE_KEY_PEGAR = "gnomore-gnomo-posicion-pegar-v1"; // pose "pegar al gnomo" — misma clave que GNOME_CALIB_STORAGE_KEY_PEGAR en js/gnomecalib.js
-    const HELD_WIDTH_DEFAULT = 85; // igual que GNOME_SIZES.held en js/gnome.js
+    const HELD_WIDTH_DEFAULT = (typeof GNOME_SIZES !== "undefined" && GNOME_SIZES.held) || 85; // igual que GNOME_SIZES.held en js/gnome.js
 
     function loadPositionsFrom(key) {
       try { return JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { return {}; }
@@ -322,8 +324,10 @@
     function loadPositions() { return loadPositionsFrom(POS_STORAGE_KEY); }
     function savePositions(data) { savePositionsTo(POS_STORAGE_KEY, data); }
     function loadSizes() {
-      try { return Object.assign({ ground: 69, flying: 86, run: 69, sit: 84 }, JSON.parse(localStorage.getItem(SIZE_STORAGE_KEY)) || {}); }
-      catch (e) { return { ground: 69, flying: 86, run: 69, sit: 84 }; }
+      const base = Object.assign({ ground: 69, flying: 86, run: 69, sit: 84 }, (typeof GNOME_SIZES !== "undefined" && GNOME_SIZES) || {});
+      delete base.held;
+      try { return Object.assign(base, JSON.parse(localStorage.getItem(SIZE_STORAGE_KEY)) || {}); }
+      catch (e) { return base; }
     }
     function saveSizes(data) {
       try { localStorage.setItem(SIZE_STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
@@ -338,9 +342,16 @@
       try { localStorage.setItem(HELD_WIDTH_STORAGE_KEY, String(value)); } catch (e) {}
     }
 
-    let tuned = loadPositions();
-    let tunedMachaca = loadPositionsFrom(POS_STORAGE_KEY_MACHACA);
-    let tunedPegar = loadPositionsFrom(POS_STORAGE_KEY_PEGAR);
+    // Las tablas por personaje arrancan de lo calibrado en el juego real (js/gnome.js) y,
+    // encima, lo guardado localmente — así nunca se exporta un valor viejo por faltar en este navegador.
+    function seedFromGame(table) {
+      const out = {};
+      if (typeof table !== "undefined" && table) Object.keys(table).forEach((k) => { if (k !== "default") out[k] = Object.assign({}, table[k]); });
+      return out;
+    }
+    let tuned = Object.assign(seedFromGame(typeof GNOME_ATTACH_OFFSETS !== "undefined" ? GNOME_ATTACH_OFFSETS : null), loadPositions());
+    let tunedMachaca = Object.assign(seedFromGame(typeof GNOME_ATTACH_OFFSETS_MACHACA !== "undefined" ? GNOME_ATTACH_OFFSETS_MACHACA : null), loadPositionsFrom(POS_STORAGE_KEY_MACHACA));
+    let tunedPegar = Object.assign(seedFromGame(typeof GNOME_ATTACH_OFFSETS_PEGAR !== "undefined" ? GNOME_ATTACH_OFFSETS_PEGAR : null), loadPositionsFrom(POS_STORAGE_KEY_PEGAR));
     let sizes = loadSizes();
     let heldWidth = loadHeldWidth();
     let facingLeft = false;
