@@ -698,6 +698,7 @@ const Units = {
   },
 
   _placeInstant(unit) {
+    this._hideIfFogged(unit);
     const { x, y } = getTileCenter(unit.row, unit.col, this.boardSize);
     unit.el.style.left = `${x}px`;
     unit.el.style.top = `${y}px`;
@@ -1235,6 +1236,14 @@ const Units = {
     return UNIT_TYPES[unit.typeId].movimiento + (typeof Relics !== "undefined" ? Relics.moveBonus(unit.team) : 0);
   },
 
+  // La niebla profunda se dibuja en el canvas del suelo (debajo de las unidades),
+  // así que ya no tapa a una unidad rival que entra en ella: se oculta aquí al
+  // instante, sin esperar al Fog.applyVisibility del final del paso.
+  _hideIfFogged(unit) {
+    if (!unit || !unit.el || unit.team === "player" || typeof Fog === "undefined") return;
+    if (Fog.isFoggedReal(unit.row, unit.col) || (Fog.isPerceived && !Fog.isPerceived(unit.row, unit.col))) unit.el.classList.add("unit--fog-hidden");
+  },
+
   hopTo(unit, row, col) {
     this.faceTowardsTile(unit, row, col);
 
@@ -1243,6 +1252,7 @@ const Units = {
 
     unit.row = row;
     unit.col = col;
+    this._hideIfFogged(unit);
     const { x, y } = getTileCenter(row, col, this.boardSize);
     unit.el.style.left = `${x}px`;
     unit.el.style.top = `${y}px`;

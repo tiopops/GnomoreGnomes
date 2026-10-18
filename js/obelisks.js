@@ -1149,6 +1149,15 @@ const Obelisks = {
     document.body.appendChild(overlay);
     this._overlayEl = overlay;
 
+    // Por defecto viene seleccionada la primera unidad (la de la izquierda;
+    // en el tutorial, la única elegible).
+    {
+      const first = Object.keys(UNIT_TYPES)
+        .filter((t) => UNIT_TYPES[t].raceId === obelisk.raceId)
+        .sort((a, b) => Units.recruitPriceFor(a) - Units.recruitPriceFor(b))
+        .find((t) => !(typeof Tutorial !== "undefined" && Tutorial.active && t !== "seta_artificiero"));
+      this._selectedTypeId = first || null;
+    }
     this._renderRecruitSlots();
     // Tamaño fijo + ajuste a pantalla (sin scroll en móvil).
     this._fitRecruit();
@@ -1169,6 +1178,9 @@ const Obelisks = {
       const topPad = window.innerHeight * 0.015;
       const fit = Math.min(1, POPUP_MAX_H / H, (window.innerHeight * 0.97 - topPad) / H, (window.innerWidth * 0.96) / W);
       panel.style.setProperty("--fit", fit.toFixed(3));
+      // Centrado vertical del panel ya reducido.
+      const top = Math.max(0, (window.innerHeight - H * fit) / 2);
+      panel.style.setProperty("--top", top.toFixed(1) + "px");
     };
     apply();
     const onResize = () => { if (!panel.isConnected) { window.removeEventListener("resize", onResize); return; } apply(); };
@@ -1264,7 +1276,7 @@ const Obelisks = {
 
   _onRecruitSlotClick(typeId) {
     SFX.click();
-    this._selectedTypeId = this._selectedTypeId === typeId ? null : typeId;
+    this._selectedTypeId = typeId; // siempre hay una seleccionada (tamaño fijo)
     this._renderRecruitSlots();
   },
 

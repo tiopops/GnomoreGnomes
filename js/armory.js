@@ -204,10 +204,10 @@ const Armory = {
 
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
-    if (typeof Obelisks !== "undefined" && Obelisks._fitGeneric) Obelisks._fitGeneric(overlay, overlay.querySelector(".backpack-panel"));
     this._overlayEl = overlay;
 
     this._renderTracks();
+    if (typeof Obelisks !== "undefined" && Obelisks._fitGeneric) Obelisks._fitGeneric(overlay, overlay.querySelector(".backpack-panel"));
     requestAnimationFrame(() => overlay.classList.add("backpack-overlay--visible"));
   },
 

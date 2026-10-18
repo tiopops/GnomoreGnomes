@@ -11469,7 +11469,7 @@ body.perf-mode.oracle-fog-lifted .tile--unexplored { visibility: visible; }
 }
 .backpack-panel--fit {
   --fit: 1;
-  margin-top: 1.5vh !important;
+  margin-top: var(--top, 1.5vh) !important;
   transform-origin: 50% 0;
   transform: rotate(-1.2deg) scale(calc(0.88 * var(--fit)));
 }
