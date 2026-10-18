@@ -80,6 +80,7 @@ const PerfMode = {
 
   _applyGlobalToggle() {
     document.body.classList.toggle("perf-mode", this.enabled);
+    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.refresh(); // las losetas sin explorar se pintan o no según este modo
   },
 };
 

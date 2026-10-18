@@ -98,8 +98,6 @@ function lowResTileSrc(originalSrc) {
 const TerrainMap = {
   size: 0,
   grid: null, // grid[row][col] = "grass" | "water" (tipo REAL, no el visual bajo niebla)
-  _revealEls: null, // Map "row,col" -> <img class="tile__terrain-reveal"> de esa loseta (si no es hierba)
-  _tileEls: null, // Map "row,col" -> <div class="tile"> de esa loseta (ver updateCulling más abajo)
   // Última "ventana" (rango de filas/columnas) que se dejó SIN cull, o null
   // si todavía no se ha calculado ninguna (ver updateCulling). Se usa para
   // solo tener que tocar las losetas que CAMBIAN de estado entre un frame y
@@ -114,14 +112,6 @@ const TerrainMap = {
     this.grid = Array.from({ length: map.size }, () => new Array(map.size).fill("grass"));
     map.tiles.forEach((t) => {
       this.grid[t.row][t.col] = t.type;
-    });
-    this._revealEls = new Map();
-    document.querySelectorAll(".tile__terrain-reveal").forEach((el) => {
-      this._revealEls.set(`${el.dataset.row},${el.dataset.col}`, el);
-    });
-    this._tileEls = new Map();
-    document.querySelectorAll(".tile").forEach((el) => {
-      this._tileEls.set(`${el.dataset.row},${el.dataset.col}`, el);
     });
     // null: la primera llamada a updateCulling todavía no tiene "ventana
     // anterior" con la que comparar — ver ahí mismo cómo se trata ese caso.
@@ -157,15 +147,30 @@ const TerrainMap = {
   // .tile__terrain-reveal no se nota) — deja de existir una loseta de
   // hierba de verdad bajo el agua ya descubierta.
   revealTile(row, col) {
-    if (!this._revealEls) return;
-    const el = this._revealEls.get(`${row},${col}`);
-    if (!el) return; // loseta de hierba de verdad: no tiene overlay, nada que ocultar debajo
-    el.classList.add("tile__terrain-reveal--visible");
-    const tileEl = this._tileEls && this._tileEls.get(`${row},${col}`);
-    if (tileEl) {
-      const baseImg = tileEl.querySelector("img:not(.tile__terrain-reveal)");
-      if (baseImg) baseImg.style.display = "none";
+    // El suelo vive en js/terraincanvas.js: fundido de 0.9s del overlay y
+    // la hierba de base se quita en el acto (ver el comentario de arriba).
+    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.setRevealed(row, col, true);
+  },
+
+  // Oráculo (js/oracle.js): levanta/devuelve la niebla enseñando la textura
+  // real de TODAS las losetas aún sin revelar. `revealedGrid` = Fog.revealedGrid.
+  liftUnrevealed(on, revealedGrid) {
+    if (typeof TerrainCanvas === "undefined") return;
+    for (let r = 0; r < this.size; r++) {
+      for (let c = 0; c < this.size; c++) {
+        if (revealedGrid[r][c]) continue;
+        TerrainCanvas.setRevealed(r, c, on);
+      }
     }
+  },
+
+  // Modo rendimiento: las losetas sin explorar no se pintan (ver
+  // TerrainCanvas.render). Fog las marca como exploradas al revelarse.
+  markAllUnexplored() {
+    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.setAllUnexplored(true);
+  },
+  markExplored(row, col) {
+    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.setUnexplored(row, col, false);
   },
 
   // Pedido explícito: "el color de las losetas del terreno que esten
@@ -181,9 +186,7 @@ const TerrainMap = {
   // unidad compuesta). Lo llama Fog.applyVisibility, nunca por su cuenta:
   // este archivo solo sabe de terreno, no de percepción (regla de oro).
   setRemembered(row, col, remembered) {
-    if (!this._tileEls) return;
-    const el = this._tileEls.get(`${row},${col}`);
-    if (el) el.classList.toggle("gg-remembered", remembered);
+    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.setRemembered(row, col, remembered);
   },
 
   // ---------- Virtualización del tablero (culling de losetas) ----------
@@ -224,44 +227,12 @@ const TerrainMap = {
   // trabajo por frame queda acotado por cuántas losetas caben en pantalla
   // (siempre más o menos constante), nunca por el tamaño total del mapa.
   updateCulling(panX, panY, scale, viewportW, viewportH) {
-    if (!this._tileEls) return;
-    const range = getVisibleTileRange(panX, panY, scale, viewportW, viewportH, this.size);
-    const prev = this._cullRange;
-    // null solo en la primerísima llamada tras TerrainMap.init (todavía no
-    // hay "ventana anterior" con la que comparar) — se trata como "todo el
-    // mapa estaba fuera", una única pasada completa (igual de barata que el
-    // propio renderMap, que ya recorre el mapa entero una vez al cargar) en
-    // vez de asumir sin comprobar que ya estaba todo bien oculto.
-    const prevRange = prev || { minRow: 0, maxRow: this.size - 1, minCol: 0, maxCol: this.size - 1 };
-    const insideNew = (r, c) => r >= range.minRow && r <= range.maxRow && c >= range.minCol && c <= range.maxCol;
-    const insidePrev = (r, c) => r >= prevRange.minRow && r <= prevRange.maxRow && c >= prevRange.minCol && c <= prevRange.maxCol;
-    // Oculta lo que estaba dentro de la ventana anterior y ha dejado de
-    // estar en la nueva.
-    for (let r = prevRange.minRow; r <= prevRange.maxRow; r++) {
-      for (let c = prevRange.minCol; c <= prevRange.maxCol; c++) {
-        if (insideNew(r, c)) continue;
-        const el = this._tileEls.get(`${r},${c}`);
-        if (el) el.classList.add("tile--culled");
-      }
-    }
-    // Muestra lo que entra nuevo en la ventana actual.
-    for (let r = range.minRow; r <= range.maxRow; r++) {
-      for (let c = range.minCol; c <= range.maxCol; c++) {
-        if (prev && insidePrev(r, c)) continue;
-        const el = this._tileEls.get(`${r},${c}`);
-        if (el) el.classList.remove("tile--culled");
-      }
-    }
-    this._cullRange = range;
+    // El canvas solo pinta las losetas dentro del viewport + margen: se
+    // repinta aquí, en el mismo frame que mueve la cámara.
+    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.render(panX, panY, scale);
   },
 
-  // Vuelve a mostrar el mapa entero (p.ej. al desactivar por completo el
-  // culling, o como limpieza defensiva) — mismo patrón que Fog.clearCulling.
-  clearCulling() {
-    if (!this._tileEls) return;
-    this._tileEls.forEach((el) => el.classList.remove("tile--culled"));
-    this._cullRange = { minRow: 0, maxRow: this.size - 1, minCol: 0, maxCol: this.size - 1 };
-  },
+  clearCulling() {},
 };
 
 // Rango de filas/columnas (inclusive, ya acotado a los límites del mapa)
@@ -617,59 +588,29 @@ function renderMap(map, container) {
 
   const fragment = document.createDocumentFragment();
 
+  // SUELO: ya no son elementos del DOM — js/terraincanvas.js lo pinta todo
+  // en un único <canvas> (ver su cabecera). Aquí solo se calcula, por loseta,
+  // exactamente lo mismo que antes se aplicaba a los <img>: base SIEMPRE de
+  // hierba (pedido explícito: "inicialmente bajo la niebla todas son de
+  // hierba hasta que se revelan") + overlay con la textura real, oculto
+  // hasta que TerrainMap.revealTile lo haga aparecer.
+  const grassAdjust = {
+    scale: TILE_TYPES.grass.scale != null ? TILE_TYPES.grass.scale : TILE_DEFAULT_ADJUST.scale,
+    offsetX: TILE_TYPES.grass.offsetX != null ? TILE_TYPES.grass.offsetX : TILE_DEFAULT_ADJUST.offsetX,
+    offsetY: TILE_TYPES.grass.offsetY != null ? TILE_TYPES.grass.offsetY : TILE_DEFAULT_ADJUST.offsetY,
+  };
+  // img.width/height como atributos truncan a entero (igual que hacía el <img>)
+  const baseRect = {
+    ox: grassAdjust.offsetX,
+    oy: grassAdjust.offsetY,
+    w: Math.floor(TILE_WIDTH * grassAdjust.scale),
+    h: Math.floor(TILE_RENDER_HEIGHT * grassAdjust.scale),
+  };
+  const tileDefs = [];
+
   map.tiles.forEach((t) => {
-    const el = document.createElement("div");
-    el.className = "tile";
-
-    // Base SIEMPRE hierba (pedido explícito: "la loseta de agua sustituye a
-    // las de hierba, pero inicialmente bajo la niebla todas son de hierba
-    // hasta que se revelan") — sea cual sea el tipo REAL de esta loseta
-    // (t.type, ya decidido por generateMap y usado para la lógica de juego
-    // vía TerrainMap), lo que se pinta de entrada es siempre la textura de
-    // hierba; el tipo real solo aparece con el overlay de abajo, al
-    // revelarse.
     const baseSrc = t.type === "grass" ? t.src : pickVariant(TILE_TYPES.grass, t.row, t.col);
-    // Ajuste fino propio de la hierba (ver TILE_DEFAULT_ADJUST más arriba) —
-    // se aplica aquí SIEMPRE, tanto si esta loseta es realmente hierba como
-    // si de momento solo está ENSEÑANDO hierba a la espera de revelarse
-    // (agua bajo niebla): lo que se ve es hierba, así que lleva el ajuste
-    // de hierba.
-    const grassAdjust = {
-      scale: TILE_TYPES.grass.scale != null ? TILE_TYPES.grass.scale : TILE_DEFAULT_ADJUST.scale,
-      offsetX: TILE_TYPES.grass.offsetX != null ? TILE_TYPES.grass.offsetX : TILE_DEFAULT_ADJUST.offsetX,
-      offsetY: TILE_TYPES.grass.offsetY != null ? TILE_TYPES.grass.offsetY : TILE_DEFAULT_ADJUST.offsetY,
-    };
-    const img = document.createElement("img");
-    img.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
-    if (typeof SpriteQuality !== "undefined") {
-      SpriteQuality.register(img, baseSrc, { shift: 1 });
-    } else {
-      img.dataset.srcOrig = baseSrc;
-      img.src = baseSrc;
-    }
-    img.width = TILE_WIDTH * grassAdjust.scale;
-    img.height = TILE_RENDER_HEIGHT * grassAdjust.scale;
-    img.style.left = `${grassAdjust.offsetX}px`;
-    img.style.top = `${grassAdjust.offsetY}px`;
-    img.draggable = false;
-    img.alt = "";
-    if (TILE_OVERLAP > 0) {
-      el.style.transform = `scale(${1 + TILE_OVERLAP / 100})`;
-      el.style.transformOrigin = "center center";
-    }
-    if (TILE_FEATHER > 0) {
-      img.style.filter = `blur(${TILE_FEATHER}px)`;
-    }
-    el.appendChild(img);
-
-    // Overlay con la textura REAL, oculto (opacity 0, ver
-    // .tile__terrain-reveal en style.css) hasta que TerrainMap.revealTile
-    // lo active — lo llama js/fog.js en el mismo instante en que esa loseta
-    // empieza a disiparse, para que el cambio de hierba a agua quede
-    // disimulado detrás de la propia niebla en vez de dar un salto brusco.
-    // Solo se crea para losetas que NO sean hierba (para no duplicar de
-    // más el DOM en un tablero grande sin necesidad — una de hierba ya
-    // enseña su textura real desde el principio, no le hace falta overlay).
+    let reveal = null;
     if (t.type !== "grass") {
       const typeInfo = TILE_TYPES[t.type];
       const nativeW = typeInfo.nativeWidth || TILE_NATIVE_WIDTH;
@@ -680,38 +621,16 @@ function renderMap(map, container) {
         offsetY: typeInfo.offsetY != null ? typeInfo.offsetY : TILE_DEFAULT_ADJUST.offsetY,
       };
       const renderWidth = TILE_WIDTH * adjust.scale;
-      const revealImg = document.createElement("img");
-      revealImg.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
-      revealImg.className = "tile__terrain-reveal";
-      if (typeof SpriteQuality !== "undefined") {
-        SpriteQuality.register(revealImg, t.src, { shift: 1 });
-      } else {
-        revealImg.dataset.srcOrig = t.src;
-        revealImg.src = t.src;
-      }
-      revealImg.width = renderWidth;
-      revealImg.height = Math.round((renderWidth * nativeH) / nativeW);
-      revealImg.style.left = `${adjust.offsetX}px`;
-      revealImg.style.top = `${adjust.offsetY}px`;
-      revealImg.draggable = false;
-      revealImg.alt = "";
-      revealImg.dataset.row = String(t.row);
-      revealImg.dataset.col = String(t.col);
-      el.appendChild(revealImg);
+      reveal = {
+        src: t.src,
+        ox: adjust.offsetX,
+        oy: adjust.offsetY,
+        w: Math.floor(renderWidth),
+        h: Math.floor(Math.round((renderWidth * nativeH) / nativeW)),
+      };
     }
-
     const { x, y } = getTileTopLeft(t.row, t.col, map.size);
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
-    el.dataset.row = String(t.row);
-    el.dataset.col = String(t.col);
-
-    // Orden de dibujado estable: las losetas "más cercanas" a la cámara
-    // (mayor fila+columna) siempre se pintan encima de las que tienen detrás,
-    // sin depender del orden en el que se insertaron en el DOM.
-    el.style.zIndex = String(t.row + t.col);
-
-    fragment.appendChild(el);
+    tileDefs.push({ row: t.row, col: t.col, x, y, baseSrc, reveal });
 
     // Capa de niebla (ver comentario de FOG_SRC arriba) — visible por
     // defecto en TODAS las losetas; js/fog.js la oculta loseta a loseta
@@ -822,4 +741,7 @@ function renderMap(map, container) {
   });
 
   container.appendChild(fragment);
+  if (typeof TerrainCanvas !== "undefined") {
+    TerrainCanvas.setup(tileDefs, baseRect, map.size, document.getElementById("board-viewport"), document.getElementById("board-camera"));
+  }
 }

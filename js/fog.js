@@ -192,7 +192,7 @@ const Fog = {
     });
     // Modo rendimiento: el terreno de losetas sin explorar (y sin vecinas exploradas) no se pinta
     // debajo de la niebla (ver "tile--unexplored" en style.css; solo actúa con body.perf-mode).
-    if (typeof TerrainMap !== "undefined" && TerrainMap._tileEls) TerrainMap._tileEls.forEach((el) => el.classList.add("tile--unexplored"));
+    if (typeof TerrainMap !== "undefined") TerrainMap.markAllUnexplored();
   },
 
   // false si no hay niebla activa todavía (p.ej. una herramienta de debug
@@ -360,11 +360,8 @@ const Fog = {
     if (this.revealedGrid[row][col]) return;
     this.revealedGrid[row][col] = true;
     this._revealedPositions.push({ row, col });
-    if (typeof TerrainMap !== "undefined" && TerrainMap._tileEls) {
-      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
-        const te = TerrainMap._tileEls.get(`${row + dr},${col + dc}`);
-        if (te) te.classList.remove("tile--unexplored");
-      }
+    if (typeof TerrainMap !== "undefined") {
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) TerrainMap.markExplored(row + dr, col + dc);
     }
     const fogEl = this._fogEls.get(`${row},${col}`);
     if (!fogEl) return;

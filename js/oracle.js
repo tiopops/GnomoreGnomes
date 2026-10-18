@@ -449,30 +449,8 @@ const Oracle = {
   _setFogLifted(on) {
     Fog._lifted = on;
     document.body.classList.toggle("oracle-fog-lifted", on);
-    if (typeof TerrainMap !== "undefined" && TerrainMap._revealEls) {
-      if (on) {
-        this._liftedTiles = [];
-        for (let r = 0; r < Fog.size; r++) {
-          for (let c = 0; c < Fog.size; c++) {
-            if (Fog.revealedGrid[r][c]) continue;
-            const el = TerrainMap._revealEls.get(`${r},${c}`);
-            const tileEl = TerrainMap._tileEls && TerrainMap._tileEls.get(`${r},${c}`);
-            const base = tileEl ? tileEl.querySelector("img:not(.tile__terrain-reveal)") : null;
-            if (el) {
-              el.classList.add("tile__terrain-reveal--visible");
-              if (base) base.style.display = "none";
-              this._liftedTiles.push({ el, base });
-            }
-          }
-        }
-      } else {
-        this._liftedTiles.forEach(({ el, base }) => {
-          el.classList.remove("tile__terrain-reveal--visible");
-          if (base) base.style.display = "";
-        });
-        this._liftedTiles = [];
-      }
-    }
+    if (typeof TerrainMap !== "undefined" && TerrainMap.liftUnrevealed) TerrainMap.liftUnrevealed(on, Fog.revealedGrid);
+    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.refresh();
     Fog.applyVisibility();
   },
 

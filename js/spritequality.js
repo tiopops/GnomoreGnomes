@@ -110,6 +110,7 @@ const SpriteQuality = {
       this._aboveMid = true;
       if (this.tier !== 0) {
         this.tier = 0;
+        if (typeof TerrainCanvas !== "undefined") TerrainCanvas.refresh();
         this._sprites.forEach((imgEl) => {
           if (!imgEl.isConnected) {
             this._sprites.delete(imgEl);
@@ -224,6 +225,7 @@ const SpriteQuality = {
   _setTierBatched(tier) {
     if (this.tier === tier || !this.enabled) return;
     this.tier = tier;
+    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.refresh(); // el suelo ya no son <img>: se repinta con la nueva calidad
     const list = Array.from(this._sprites);
     const run = () => {
       if (this.tier !== tier) return; // llegó otro cambio: ese lo reemplaza
@@ -240,6 +242,7 @@ const SpriteQuality = {
   _setTier(tier) {
     if (this.tier === tier) return;
     this.tier = tier;
+    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.refresh();
     this._sprites.forEach((imgEl) => {
       // Poda de sprites ya destruidos (un recurso consumido, una unidad
       // muerta...) en vez de llevar aparte un "unregister" que cada
