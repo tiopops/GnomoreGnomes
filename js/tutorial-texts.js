@@ -107,12 +107,12 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Esos círculos del suelo te indican las zonas a donde puede moverse. Pulsa el que parpadea y se moverá. Ojo: andar gasta una de sus 2 acciones por turno; aquí hasta caminar tiene precio, como en la vida.",
+   "say": "Esos círculos del suelo te indican las zonas a donde puede moverse. Pulsa el que parpadea y se moverá. Ojo: andar gasta una de sus acciones por turno; aquí hasta caminar tiene precio, como en la vida.",
    "mission": "Mueve la unidad hasta la zona marcada.",
    "ok": "¡Está andando! Un milagro de la ingeniería orgánica, y sin tropezarse. Bueno, casi.",
    "mood": "grunon",
    "en": {
-    "say": "Those circles on the ground show where it can move. Tap the blinking one and off it goes. Heads up: walking costs one of its 2 actions per turn. Even walking has a price here, just like in life.",
+    "say": "Those circles on the ground show where it can move. Tap the blinking one and off it goes. Heads up: walking costs one of its actions each turn. Even walking has a price here, just like in life.",
     "mission": "Move the unit to the marked spot.",
     "ok": "It's walking! A miracle of organic engineering, and without tripping. Well, almost."
    }
@@ -173,34 +173,34 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "¿Ves ese pino? Y las rocas, y la mena de hierro: también se golpean. Tienen 2 puntos de resistencia y, al romperse, sueltan un recurso que vuela solito hasta tu mochila (abajo a la izquierda). Selecciona a tu unidad libre y pulsa el pino. Ojalá salga todo bien, toquemos madera.",
+   "say": "¿Ves ese pino? Y las rocas, y la mena de hierro: también se golpean. Al romperse, sueltan un recurso que vuela solito hasta tu mochila (abajo a la izquierda). Selecciona a tu unidad libre y pulsa el pino. Ojalá salga todo bien, toquemos madera.",
    "mission": "Tala el pino (2 golpes)",
    "ok": "¡Madera conseguida! Ya puedes fabricarme un ataúd... o una mejora de armadura, que queda más elegante. En la armería de tu obelisco tienes las mejoras de equipo.",
    "mood": "normal",
    "en": {
-    "say": "See that pine? And the rocks, and the iron ore: you can hit those too. They have 2 points of toughness and, when they break, they drop a resource that flies by itself to your backpack (bottom left). Select your free unit and tap the pine. Hopefully it all goes well, knock on wood.",
+    "say": "See that pine? And the rocks, and the iron ore: you can hit those too. When they break, they drop a resource that flies by itself to your backpack (bottom left). Select your free unit and tap the pine. Hopefully it all goes well, knock on wood.",
     "mission": "Chop down the pine (2 hits)",
     "ok": "Wood acquired! Now you can build me a coffin... or an armor upgrade, which is classier. Gear upgrades are in your obelisk's armory."
    }
   },
   {
-   "say": "Por si no te parecía suficientemente satisfactorio reventar gnomos... ¿ves ese cofre escondido en un rincón? En las partidas de verdad hay un buen puñado repartidos por el mapa. Se abren haciendo clic sobre ellos y esconden reliquias, de las que dan ventajas de las buenas… Cuando las consigas, cada vez que muera una unidad tuya, perderán 1 punto de durabilidad, y cuando lleguen a 0 se rompen. Como la clavícula de mi tío Klink.",
+   "say": "Por si no te parecía suficientemente satisfactorio reventar gnomos... ¿ves ese cofre escondido en un rincón? En las partidas de verdad hay un buen puñado repartidos por el mapa. Se abren haciendo clic sobre ellos y esconden reliquias, de las que dan ventajas de las buenas… Cuando las consigas, cada vez que muera una unidad tuya, perderán durabilidad, y cuando se les acabe se rompen. Como la clavícula de mi tío Klink.",
    "mission": "Abre el cofre de reliquias",
-   "ok": "¡Reliquia en la mochila! Son las Botas TrotaMontes: +1 de Movimiento para todas tus unidades. Fíjate en su marcador, ese 5/5 que tiene al lado: esa es su durabilidad. Cuida de tus unidades o las botas se gastarán antes de tiempo. Y no, no guardo el ticket de compra, así que olvídate de la garantía.",
+   "ok": "¡Reliquia en la mochila! Son las Botas TrotaMontes: más Movimiento para todas tus unidades. Fíjate en su marcador, el que tiene al lado: esa es su durabilidad. Cuida de tus unidades o las botas se gastarán antes de tiempo. Y no, no guardo el ticket de compra, así que olvídate de la garantía.",
    "mood": "normal",
    "en": {
-    "say": "In case bursting gnomes wasn't satisfying enough for you... see that chest hidden in a corner? In real matches there are quite a few scattered around the map. You open them by clicking on them, and they hide relics, the kind that give really good advantages… Once you get them, every time one of your units dies they lose 1 durability point, and when they hit 0 they break. Like my uncle Klink's collarbone.",
+    "say": "In case bursting gnomes wasn't satisfying enough for you... see that chest hidden in a corner? In real matches there are quite a few scattered around the map. You open them by clicking on them, and they hide relics, the kind that give really good advantages… Once you get them, every time one of your units dies they lose durability, and when it runs out they break. Like my uncle Klink's collarbone.",
     "mission": "Open the relic chest",
-    "ok": "Relic in the backpack! These are the TrotaMontes Boots: +1 Movement for all your units. Look at the 5/5 marker next to it: that's their durability. Look after your units or the boots will wear out early. And no, I didn't keep the receipt, so forget about the warranty."
+    "ok": "Relic in the backpack! These are the TrotaMontes Boots: extra Movement for all your units. Look at the marker next to it: that's their durability. Look after your units or the boots will wear out early. And no, I didn't keep the receipt, so forget about the warranty."
    }
   },
   {
-   "say": "No hay nada mejor que conquistar un tótem con un gnomo cargado de puntos. Tu unidad lo estampa contra él y le resta tanta vida como puntos lleve. Si se queda sin puntos, el tótem es tuyo y te da +2 Puntos de Gloria cada turno. Siempre dos, se capture como se capture. Sí, dos, ya puedes ir pensando en la jubilación. ¿Por qué me miras a mí y al tótem de esa manera? Acércate con quien lleva el gnomo y pulsa la diana. Lo que la gente del gremio conoce como “estampada”.",
+   "say": "No hay nada mejor que conquistar un tótem con un gnomo cargado de puntos. Tu unidad lo estampa contra él y le resta tanta vida como puntos lleve. Si se queda sin puntos, el tótem es tuyo y te da Puntos de Gloria cada turno, se capture como se capture. Ya puedes ir pensando en la jubilación. ¿Por qué me miras a mí y al tótem de esa manera? Acércate con quien lleva el gnomo y pulsa la diana. Lo que la gente del gremio conoce como “estampada”.",
    "mission": "Haz una “estampada” con el gnomo contra el tótem",
    "ok": "¡Un tótem conquistado! ¿Tinkle? ¿Alguien puede llamar a emergencias? O a una funeraria... Y un truco: si una de tus unidades empieza el turno pegada a un tótem tuyo, recarga su habilidad especial. Capturar tótems también sirve para eso.",
    "mood": "grunon",
    "en": {
-    "say": "There's nothing better than conquering a totem with a gnome loaded with points. Your unit slams him against it and takes off as much health as the points he carries. If it runs out of points, the totem is yours and gives you +2 Glory Points every turn. Always two, however you capture it. Yes, two, you can start thinking about retirement. Why are you looking at me and the totem like that? Walk up with whoever is carrying the gnome and tap the target. What guild folk call a \"slam\".",
+    "say": "There's nothing better than conquering a totem with a gnome loaded with points. Your unit slams him against it and takes off as much health as the points he carries. If it runs out of points, the totem is yours and gives you Glory Points every turn, however you capture it. You can start thinking about retirement. Why are you looking at me and the totem like that? Walk up with whoever is carrying the gnome and tap the target. What guild folk call a \"slam\".",
     "mission": "Slam the gnome into the totem",
     "ok": "A totem conquered! Tinkle? Can someone call an ambulance? Or an undertaker... And a trick: if one of your units starts its turn right next to a totem of yours, its special ability recharges. Capturing totems is good for that too."
    }
@@ -217,12 +217,12 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Y por último, la Armería: aquí gastas esa madera, roca y metal en subir el Arma y la Armadura de todas tus unidades, nivel a nivel (el 1 cuesta una madera y una roca). Es el único sitio de este juego donde la madera sirve para algo bueno. Ábrela y ciérrala.",
+   "say": "Y por último, la Armería: aquí gastas esa madera, roca y metal en subir el Arma y la Armadura de todas tus unidades, nivel a nivel. Es el único sitio de este juego donde la madera sirve para algo bueno. Ábrela y ciérrala.",
    "mission": "Abre la Armería y ciérrala",
    "ok": "Ahora sabes dónde gastar los restos de la deforestación.",
    "mood": "normal",
    "en": {
-    "say": "And finally, the Armory: here you spend that wood, rock and metal to upgrade the Weapon and Armor of all your units, level by level (level 1 costs one wood and one rock). It's the only place in this game where wood is good for something. Open it and close it.",
+    "say": "And finally, the Armory: here you spend that wood, rock and metal to upgrade the Weapon and Armor of all your units, level by level. It's the only place in this game where wood is good for something. Open it and close it.",
     "mission": "Open the Armory and close it",
     "ok": "Now you know where to spend the leftovers of deforestation."
    }
@@ -268,36 +268,36 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Primera atracción: las setas explosivas. Aparecen sueltas por el bosque y se cogen igual que un gnomo, con la manita (coger no gasta acción). Pero ojo: en cuanto la llevas encima empieza una cuenta atrás, y al llegar a 0 explota, con 5 de daño para quien la lleva y para todo lo que tenga alrededor. Te he dejado una cerquita de tu unidad. ¡Cógela!",
+   "say": "Primera atracción: las setas explosivas. Aparecen sueltas por el bosque y se cogen igual que un gnomo, con la manita (coger no gasta acción). Pero ojo: en cuanto la llevas encima empieza una cuenta atrás, y al llegar a 0 explota, haciendo daño a quien la lleva y a todo lo que tenga alrededor. Te he dejado una cerquita de tu unidad. ¡Cógela!",
    "mission": "Coge la seta explosiva",
    "ok": "¡Ya la tienes! Fíjate en el número que lleva encima: son los turnos que le quedan antes de estallar. Sí, la has cogido tú. Yo no me hago responsable.",
    "mood": "normal",
    "en": {
-    "say": "First attraction: explosive mushrooms. They show up loose around the forest and you pick them up just like a gnome, with the little hand (picking up costs no action). But careful: as soon as you carry one, a countdown starts, and at 0 it explodes, dealing 5 damage to whoever carries it and to everything around. I've left one right next to your unit. Grab it!",
+    "say": "First attraction: explosive mushrooms. They show up loose around the forest and you pick them up just like a gnome, with the little hand (picking up costs no action). But careful: as soon as you carry one, a countdown starts, and at 0 it explodes, hurting whoever carries it and everything around. I've left one right next to your unit. Grab it!",
     "mission": "Pick up the explosive mushroom",
     "ok": "You've got it! Look at the number it carries: those are the turns left before it blows. Yes, you picked it up. I take no responsibility."
    }
   },
   {
-   "say": "Ese número baja en uno cada vez que TÚ terminas tu turno (empieza en 3). Si llega a 0, adiós seta y adiós portador. Pulsa PASAR TURNO y compruébalo: tranquilo, aún te queda margen. Mientras no te lo pienses demasiado...",
+   "say": "Ese número baja en uno cada vez que TÚ terminas tu turno. Si llega a 0, adiós seta y adiós portador. Pulsa PASAR TURNO y compruébalo: tranquilo, aún te queda margen. Mientras no te lo pienses demasiado...",
    "mission": "Pasa turno y mira la cuenta atrás",
-   "ok": "Ahora le quedan 2 turnos. Si fueras listo, ya estarías pensando en cómo deshacerte de ella. Tranquilo, que te lo cuento.",
+   "ok": "Un turno menos para que estalle. Si fueras listo, ya estarías pensando en cómo deshacerte de ella. Tranquilo, que te lo cuento.",
    "mood": "grunon",
    "en": {
-    "say": "That number drops by one every time YOU end your turn (it starts at 3). At 0, goodbye mushroom and goodbye carrier. Press END TURN and see for yourself: don't worry, you still have some margin. As long as you don't think about it too much...",
+    "say": "That number drops by one every time YOU end your turn. At 0, goodbye mushroom and goodbye carrier. Press END TURN and see for yourself: don't worry, you still have some margin. As long as you don't think about it too much...",
     "mission": "End turn and watch the countdown",
-    "ok": "It now has 2 turns left. If you were smart, you'd already be thinking about how to get rid of it. Relax, I'll tell you how."
+    "ok": "One turn less before it blows. If you were smart, you'd already be thinking about how to get rid of it. Relax, I'll tell you how."
    }
   },
   {
-   "say": "¿Ves ese altar tan acogedor? Es el Altar de Sacrificios y siempre tiene hambre: su barra tiene 30 espacios y, en vez de vaciarse, se llena con ofrendas. Una seta explosiva le da 10 puntos y, además, se desactiva sin explotar. Basta con que tu unidad con la seta acabe junto al altar, o con que pulses su diana, para ofrecérsela.",
+   "say": "¿Ves ese altar tan acogedor? Es el Altar de Sacrificios y siempre tiene hambre: su barra, en vez de vaciarse, se llena con ofrendas. Una seta explosiva le da puntos y, además, se desactiva sin explotar. Basta con que tu unidad con la seta acabe junto al altar, o con que pulses su diana, para ofrecérsela.",
    "mission": "Ofrece la seta al altar",
-   "ok": "Diez puntos para el altar y cero heridos. Es el trato más justo que ha hecho nadie en este bosque.",
+   "ok": "Puntos para el altar y cero heridos. Es el trato más justo que ha hecho nadie en este bosque.",
    "mood": "normal",
    "en": {
-    "say": "See that cozy altar? It's the Sacrifice Altar and it's always hungry: its bar has 30 slots and, instead of emptying, it fills up with offerings. An explosive mushroom gives it 10 points and is also defused without exploding. It's enough for your unit carrying the mushroom to end up next to the altar, or to press its target icon, to offer it.",
+    "say": "See that cozy altar? It's the Sacrifice Altar and it's always hungry: its bar, instead of emptying, fills up with offerings. An explosive mushroom gives it points and is also defused without exploding. It's enough for your unit carrying the mushroom to end up next to the altar, or to press its target icon, to offer it.",
     "mission": "Offer the mushroom to the altar",
-    "ok": "Ten points for the altar and zero casualties. The fairest deal anyone has made in this forest."
+    "ok": "Points for the altar and zero casualties. The fairest deal anyone has made in this forest."
    }
   },
   {
@@ -312,23 +312,23 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Tinkle se ha puesto muy nervioso y ya acumula 20 puntos. No me preguntes cómo: hay cosas que es mejor no saber. Con los 10 de la seta, 20 más dejan el altar en 30: lleno del todo. Selecciona a tu unidad y pulsa la diana del altar. Y ruega por su alma.",
+   "say": "Tinkle se ha puesto muy nervioso y trae puntos de sobra. No me preguntes cómo: hay cosas que es mejor no saber. Sumados a los de la seta, dejan el altar lleno del todo. Selecciona a tu unidad y pulsa la diana del altar. Y ruega por su alma.",
    "mission": "Estampa a Tinkle contra el altar",
    "ok": "¡Altar lleno! Ha desaparecido en medio de un temblor. ¿Has oído eso? Sí, ese crujido. Corre. Bueno, corre tú, que yo ya soy mayor.",
    "mood": "normal",
    "en": {
-    "say": "Tinkle has gotten very nervous and now has 20 points. Don't ask me how: some things are better left unknown. With the mushroom's 10, 20 more leaves the altar at 30: completely full. Select your unit and press the altar's target icon. And pray for his soul.",
+    "say": "Tinkle has gotten very nervous and is carrying plenty of points. Don't ask me how: some things are better left unknown. Added to the mushroom's, they leave the altar completely full. Select your unit and press the altar's target icon. And pray for his soul.",
     "mission": "Smash Tinkle against the altar",
     "ok": "Altar full! It has vanished in a tremor. Did you hear that? Yes, that crunch. Run. Well, you run, I'm old."
    }
   },
   {
-   "say": "Ese es el GnomOgro: un gigante que no obedece a nadie. Es del bando de quien llenó el altar (tú), pero va por su cuenta: al principio de CADA turno da un paso hacia el Obelisco rival y, si tiene a un enemigo al lado, lo mata de un golpe en vez de andar. Tiene 30 de vida, y si llega a la base rival la destruye de un solo golpe y se acaba la partida. Pasa turno y míralo caminar.",
+   "say": "Ese es el GnomOgro: un gigante que no obedece a nadie. Es del bando de quien llenó el altar (tú), pero va por su cuenta: al principio de CADA turno da un paso hacia el Obelisco rival y, si tiene a un enemigo al lado, lo mata de un golpe en vez de andar. Aguanta lo que le echen, y si llega a la base rival la destruye de un solo golpe y se acaba la partida. Pasa turno y míralo caminar.",
    "mission": "Pasa turno y mira al GnomOgro",
    "ok": "Un paso más cerca de la victoria. Y fíjate qué temblor al caminar: da gusto verlo, mientras no vaya a por ti.",
    "mood": "grunon",
    "en": {
-    "say": "That's the GnomOgre: a giant who obeys no one. It belongs to whoever filled the altar (you), but it does its own thing: at the start of EVERY turn it takes a step toward the rival Obelisk and, if an enemy is next to it, it kills it in one blow instead of walking. It has 30 health, and if it reaches the rival base it destroys it in a single hit and the game ends. End your turn and watch it walk.",
+    "say": "That's the GnomOgre: a giant who obeys no one. It belongs to whoever filled the altar (you), but it does its own thing: at the start of EVERY turn it takes a step toward the rival Obelisk and, if an enemy is next to it, it kills it in one blow instead of walking. It takes whatever you throw at it, and if it reaches the rival base it destroys it in a single hit and the game ends. End your turn and watch it walk.",
     "mission": "End turn and watch the GnomOgre",
     "ok": "One step closer to victory. And look at that tremor as it walks: a joy to watch, as long as it isn't coming for you."
    }
@@ -398,12 +398,12 @@ const TUTORIAL_TEXTS = {
   {
    "say": "Para no hacerte esperar, he dejado tu ruleta casi llena: con la porción del tambor y la del golpe, al acabar el turno se completa. También he puesto a un rival ahí cerquita, para que vea el espectáculo de cerca. Pulsa PASAR TURNO.",
    "mission": "Pasa turno y mira la lluvia de rocas",
-   "ok": "¡Lluvia de rocas! La primera hace 2 de daño y sube 1 cada vez que la consigues. Y fíjate: los tambores, avergonzados, se han mudado a otro sitio.",
+   "ok": "¡Lluvia de rocas! Cada lluvia pega más fuerte que la anterior. Y fíjate: los tambores, avergonzados, se han mudado a otro sitio.",
    "mood": "normal",
    "en": {
     "say": "So you don't have to wait, I've left your wheel almost full: with the drum's slice and the hit's slice, it completes at the end of the turn. I've also put a rival right nearby, so he can see the show up close. Press END TURN.",
     "mission": "End turn and watch the rock rain",
-    "ok": "Rock rain! The first one deals 2 damage and goes up by 1 each time you pull it off. And look: the drums, embarrassed, have moved somewhere else."
+    "ok": "Rock rain! Every rain hits harder than the last. And look: the drums, embarrassed, have moved somewhere else."
    }
   },
   {
@@ -418,44 +418,44 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Las piedras valen para tres cosas, y NUNCA contra unidades rivales: alimentar al volcán (+1), apagar una casilla de lava y quitar un gnomo en llamas agarrado a una de tus unidades. Puedes lanzar todas las que tengas, sin límite por turno. Abre la mochila, pulsa el fragmento dos veces (una elige, otra lo usa) y apunta al volcán, el de ahí enfrente.",
+   "say": "Las piedras valen para tres cosas, y NUNCA contra unidades rivales: alimentar al volcán, apagar una casilla de lava y quitar un gnomo en llamas agarrado a una de tus unidades. Puedes lanzar todas las que tengas, sin límite por turno. Abre la mochila, pulsa el fragmento dos veces (una elige, otra lo usa) y apunta al volcán, el de ahí enfrente.",
    "mission": "Lanza el fragmento al volcán",
-   "ok": "El volcán ha subido a 10 y se ha encendido. Desde 10 está «encendido»; a 20, entra en erupción. No hace falta que lo mires con esa cara de interés.",
+   "ok": "El volcán se ha encendido. Cuanto más lo alimentes, más cerca estará de entrar en erupción. No hace falta que lo mires con esa cara de interés.",
    "mood": "grunon",
    "en": {
-    "say": "Stones are good for three things, and NEVER against enemy units: feeding the volcano (+1), putting out a lava tile, and removing a burning gnome clinging to one of your units. You can throw as many as you have, no limit per turn. Open the backpack, press the fragment twice (once to pick, once to use it) and aim at the volcano, the one right there.",
+    "say": "Stones are good for three things, and NEVER against enemy units: feeding the volcano, putting out a lava tile, and removing a burning gnome clinging to one of your units. You can throw as many as you have, no limit per turn. Open the backpack, press the fragment twice (once to pick, once to use it) and aim at the volcano, the one right there.",
     "mission": "Throw the fragment at the volcano",
-    "ok": "The volcano rose to 10 and lit up. From 10 it's «lit»; at 20, it erupts. No need to look so interested."
+    "ok": "The volcano has lit up. The more you feed it, the closer it gets to erupting. No need to look so interested."
    }
   },
   {
-   "say": "El volcán también se alimenta de gnomos, estampados o lanzados: suman sus puntos. Al llegar a 20 entra en erupción y suelta un gnomo en llamas por cada unidad rival, que corre hasta ella y se le agarra. Al acabar tu turno el gnomo explota: -1 de vida y lava en las casillas de alrededor. Tinkle ya trae 10 puntos de casa. Estámpalo contra el volcán. Y de paso, tienes a un rival justo para la ocasión.",
+   "say": "El volcán también se alimenta de gnomos, estampados o lanzados: suman sus puntos. Cuando se llena entra en erupción y suelta un gnomo en llamas por cada unidad rival, que corre hasta ella y se le agarra. Al acabar tu turno el gnomo explota: daño y lava en las casillas de alrededor. Tinkle ya trae puntos de casa. Estámpalo contra el volcán. Y de paso, tienes a un rival justo para la ocasión.",
    "mission": "Estampa a Tinkle contra el volcán",
    "ok": "¡Erupción! Mira cómo corre ese gnomo en llamas hacia el pobre desgraciado. La vida del rival es dura.",
    "mood": "normal",
    "en": {
-    "say": "The volcano also feeds on gnomes, smashed or thrown: they add their points. At 20 it erupts and releases a burning gnome for every enemy unit, which runs to it and clings on. At the end of your turn the gnome explodes: -1 health and lava on the surrounding tiles. Tinkle already brings 10 points from home. Smash him against the volcano. And by the way, there's a rival right there for the occasion.",
+    "say": "The volcano also feeds on gnomes, smashed or thrown: they add their points. When it fills up it erupts and releases a burning gnome for every enemy unit, which runs to it and clings on. At the end of your turn the gnome explodes: damage and lava on the surrounding tiles. Tinkle already brings points from home. Smash him against the volcano. And by the way, there's a rival right there for the occasion.",
     "mission": "Smash Tinkle against the volcano",
     "ok": "Eruption! Look at that burning gnome run toward the poor wretch. A rival's life is hard."
    }
   },
   {
-   "say": "Pasa turno: el gnomo en llamas explotará y dejará lava, que quita 1 de vida por pisada hasta que desaparece. Una piedra puede apagar una casilla antes, o librar a una de tus unidades del gnomo en llamas antes de que estalle.",
+   "say": "Pasa turno: el gnomo en llamas explotará y dejará lava, que hace daño a quien la pise hasta que desaparece. Una piedra puede apagar una casilla antes, o librar a una de tus unidades del gnomo en llamas antes de que estalle.",
    "mission": "Pasa turno y mira la explosión",
    "ok": "Lava por todas partes. Hogar, dulce hogar... de los trols.",
    "mood": "grunon",
    "en": {
-    "say": "End your turn: the burning gnome will explode and leave lava, which takes 1 health per step until it disappears. A stone can put out a tile earlier, or free one of your units from the burning gnome before it blows.",
+    "say": "End your turn: the burning gnome will explode and leave lava, which hurts anyone who steps on it until it disappears. A stone can put out a tile earlier, or free one of your units from the burning gnome before it blows.",
     "mission": "End turn and watch the explosion",
     "ok": "Lava everywhere. Home, sweet home... of the trolls."
    }
   },
   {
-   "say": "Y eso es todo de las Colinas Rock'n Troll. Resumen: pega gnomos junto a los tambores para que llueva roca, recoge los fragmentos antes que el rival y úsalos con cabeza: al volcán, a la lava o contra un gnomo en llamas. Cuando alguien llegue a 20 en el volcán, prepárate: o corres, o te agarras a una piedra. ¡Suerte, la vas a necesitar!",
+   "say": "Y eso es todo de las Colinas Rock'n Troll. Resumen: pega gnomos junto a los tambores para que llueva roca, recoge los fragmentos antes que el rival y úsalos con cabeza: al volcán, a la lava o contra un gnomo en llamas. Cuando alguien llene el volcán, prepárate: o corres, o te agarras a una piedra. ¡Suerte, la vas a necesitar!",
    "button": "TERMINAR TUTORIAL",
    "mood": "aplaude",
    "en": {
-    "say": "And that's all for the Rock'n Troll Hills. Summary: hit gnomes next to the drums to make rocks rain, collect the fragments before the rival does and use them wisely: on the volcano, on lava or against a burning gnome. When someone reaches 20 on the volcano, get ready: either you run, or you grab a stone. Good luck, you'll need it!",
+    "say": "And that's all for the Rock'n Troll Hills. Summary: hit gnomes next to the drums to make rocks rain, collect the fragments before the rival does and use them wisely: on the volcano, on lava or against a burning gnome. When someone fills the volcano, get ready: either you run, or you grab a stone. Good luck, you'll need it!",
     "button": "FINISH TUTORIAL"
    }
   }
@@ -491,23 +491,23 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Pulsa el icono de lanzar y apunta al huevo: pasa el cursor por encima (o mantén pulsado) y verás por dónde saldrá. Cada gnomo que se estampa le da +5 de carga, y el huevo sale disparado en dirección contraria a ti: cuanta más carga, más lejos llega. Tinkle no se hace daño (mucho).",
+   "say": "Pulsa el icono de lanzar y apunta al huevo: pasa el cursor por encima (o mantén pulsado) y verás por dónde saldrá. Cada gnomo que se estampa le da carga, y el huevo sale disparado en dirección contraria a ti: cuanta más carga, más lejos llega. Tinkle no se hace daño (mucho).",
    "mission": "Lánzale a Tinkle contra el huevo",
-   "ok": "¡Zas! Carga 5. El huevo sale despedido y Tinkle, tras caerse de culo, se levanta y se va corriendo. Todo un profesional.",
+   "ok": "¡Zas! El huevo sale despedido y Tinkle, tras caerse de culo, se levanta y se va corriendo. Todo un profesional.",
    "mood": "normal",
    "en": {
-    "say": "Press the throw icon and aim at the egg: hover over it (or hold) and you'll see where it will go. Every gnome that smashes into it gives it +5 charge, and the egg shoots off away from you: the more charge, the farther it goes. Tinkle doesn't get hurt (much).",
+    "say": "Press the throw icon and aim at the egg: hover over it (or hold) and you'll see where it will go. Every gnome that smashes into it gives it charge, and the egg shoots off away from you: the more charge, the farther it goes. Tinkle doesn't get hurt (much).",
     "mission": "Throw Tinkle at the egg",
-    "ok": "Zap! Charge 5. The egg flies off and Tinkle, after landing on his bottom, gets up and runs away. A true professional."
+    "ok": "Zap! The egg flies off and Tinkle, after landing on his bottom, gets up and runs away. A true professional."
    }
   },
   {
-   "say": "Ahora lo bueno: los bumpers. Cuando el huevo choca contra un bumper, un tótem, un obelisco o el borde del mapa, rebota como una bola de pinball: de frente vuelve por donde vino y en diagonal sale en espejo. Cada rebote le regala casillas extra de viaje, y al chocar con un bumper el huevo se pone en modo turbo: +2 casillas y va más rápido. Si hay otro bumper cerca, se siente atraído y tiende a ir hacia él. Te he puesto dos bumpers en su camino y he cargado el huevo a 15. Lanza otro gnomo y mira la carambola.",
+   "say": "Ahora lo bueno: los bumpers. Cuando el huevo choca contra un bumper, un tótem, un obelisco o el borde del mapa, rebota como una bola de pinball, y con cada rebote llega más lejos. Te he puesto dos bumpers en su camino y he cargado el huevo. Lanza otro gnomo y mira la carambola.",
    "mission": "Lanza otro gnomo y provoca una carambola",
    "ok": "¡Carambola! Y fíjate cómo suena cada golpe más agudo que el anterior. Como una discoteca, pero con más daño.",
    "mood": "grunon",
    "en": {
-    "say": "Now the good part: the bumpers. When the egg hits a bumper, a totem, an obelisk or the edge of the map, it bounces like a pinball: head-on it comes back the way it came and diagonally it leaves like a mirror. Every bounce gives it extra tiles of travel, and hitting a bumper puts the egg in turbo mode: +2 tiles and faster. If another bumper is nearby, it gets drawn towards it. I've put two bumpers in its way and charged the egg to 15. Throw another gnome and watch the carom.",
+    "say": "Now the good part: the bumpers. When the egg hits a bumper, a totem, an obelisk or the edge of the map, it bounces like a pinball, and every bounce sends it farther. I've put two bumpers in its way and charged the egg. Throw another gnome and watch the carom.",
     "mission": "Throw another gnome and make a carom",
     "ok": "Carom! And notice how every hit sounds higher than the last. Like a nightclub, but with more damage."
    }
@@ -524,22 +524,22 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Cuando el huevo se rompe, cobras el JACKPOT: cada jugador recibe tantos puntos de Gloria como porciones tenga en su ruleta, y todo se reinicia. Con la carga al máximo (30) aguanta 3 golpes más antes de romperse. Lo he dejado listo: carga 30 y ya aguantó dos. Lanza el último gnomo.",
+   "say": "Cuando el huevo se rompe, cobras el JACKPOT: cada jugador recibe tantos puntos de Gloria como porciones tenga en su ruleta, y todo se reinicia. Cuanto más cargado está, más golpes aguanta antes de romperse. Lo he dejado listo: a tope de carga y casi roto. Lanza el último gnomo.",
    "mission": "Rompe el huevo y cobra el JACKPOT",
    "ok": "¡JACKPOT! Monedas, luces y un huevo hecho añicos. Si esto fuera una tragaperras, tú también acabarías arruinado.",
    "mood": "grunon",
    "en": {
-    "say": "When the egg breaks, you collect the JACKPOT: every player receives as many Glory points as slices they have on their wheel, and everything resets. With the charge at maximum (30) it takes 3 more hits before breaking. I've set it up: charge 30 and it already took two. Throw the last gnome.",
+    "say": "When the egg breaks, you collect the JACKPOT: every player receives as many Glory points as slices they have on their wheel, and everything resets. The more charged it is, the more hits it takes before breaking. I've set it up: fully charged and almost broken. Throw the last gnome.",
     "mission": "Break the egg and collect the JACKPOT",
     "ok": "JACKPOT! Coins, lights and a shattered egg. If this were a slot machine, you'd end up broke too."
    }
   },
   {
-   "say": "Y eso es todo de Hurrycrane Village. Resumen: lánzale gnomos al huevo para cargarlo, haz que rebote en bumpers, tótems y obeliscos para encadenar combos (a obeliscos y tótems enemigos les quita tanta vida como carga lleve, y a las unidades que atropella, 1), y rómpelo cuando tu ruleta esté bien llena. Si no lo golpea nadie en dos rondas, se va descargando, así que no lo dejes enfriar. ¡Suerte, la vas a necesitar!",
+   "say": "Y eso es todo de Hurrycrane Village. Resumen: lánzale gnomos al huevo para cargarlo, haz que rebote en bumpers, tótems y obeliscos para encadenar combos (a los obeliscos y tótems enemigos les quita vida, y a las unidades que atropella también), y rómpelo cuando tu ruleta esté bien llena. Si nadie lo toca durante un rato, se va descargando, así que no lo dejes enfriar. ¡Suerte, la vas a necesitar!",
    "button": "TERMINAR TUTORIAL",
    "mood": "aplaude",
    "en": {
-    "say": "And that's all for Hurrycrane Village. Summary: throw gnomes at the egg to charge it, make it bounce off bumpers, totems and obelisks to chain combos (it takes as much health from enemy obelisks and totems as the charge it carries, and 1 from units it runs over), and break it when your wheel is nice and full. If nobody hits it for two rounds it starts losing charge, so don't let it cool down. Good luck, you'll need it!",
+    "say": "And that's all for Hurrycrane Village. Summary: throw gnomes at the egg to charge it, make it bounce off bumpers, totems and obelisks to chain combos (it hurts enemy obelisks and totems, and the units it runs over too), and break it when your wheel is nice and full. If nobody touches it for a while it starts losing charge, so don't let it cool down. Good luck, you'll need it!",
     "button": "FINISH TUTORIAL"
    }
   }

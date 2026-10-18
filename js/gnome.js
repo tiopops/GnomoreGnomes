@@ -2120,7 +2120,7 @@ const Gnome = {
       const d = Math.max(Math.abs(o.row - unit.row), Math.abs(o.col - unit.col));
       return d >= 1 && d <= GNOME_THROW_MAX_RANGE;
     };
-    if (typeof Egg !== "undefined" && Egg.egg && Egg._targetable && Egg._targetable() && inRange(Egg.egg)) return true;
+    if (typeof Egg !== "undefined" && Egg.egg && Egg._live && Egg._live() && !Egg._hidden() && inRange(Egg.egg)) return true;
     if (typeof Volcano !== "undefined" && Volcano.current) {
       const v = Volcano.current();
       if (v && Volcano._accepts(v) && !(typeof Fog !== "undefined" && Fog.isFogged(v.row, v.col)) && inRange(v)) return true;
