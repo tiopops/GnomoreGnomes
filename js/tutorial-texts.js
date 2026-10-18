@@ -513,12 +513,12 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Esos golpes seguidos son un COMBO: a partir del segundo, cada golpe sube el contador (X2, X3...) y, cuando el huevo se para, ese número se suma de una vez a tu ruleta, la de los tambores de toda la vida. Pulsa sobre un bumper para ver cuántas porciones llevas tú y cuántas el rival.",
+   "say": "Esos golpes seguidos son un COMBO: a partir del segundo, cada golpe sube el contador (X2, X3...) y, cuando el huevo se para, ese número se suma de una vez a tu ruleta, la de los tambores de toda la vida. Pulsa sobre un bumper para ver cuántas porciones llevas tú y cuántas el rival. Ojo: quien llene antes su ruleta se lleva 10 puntos de Gloria, sin esperar a que el huevo se rompa.",
    "mission": "Pulsa un bumper para ver tu ruleta",
    "ok": "Ahí están. Tu ruleta, la del rival... todo muy transparente, qué raro en este juego.",
    "mood": "normal",
    "en": {
-    "say": "Those hits in a row are a COMBO: from the second one, each hit raises the counter (X2, X3...) and, when the egg stops, that number is added all at once to your wheel, the same kind as the drums. Tap a bumper to see how many slices you have and how many the rival has.",
+    "say": "Those hits in a row are a COMBO: from the second one, each hit raises the counter (X2, X3...) and, when the egg stops, that number is added all at once to your wheel, the same kind as the drums. Tap a bumper to see how many slices you have and how many the rival has. Careful: whoever fills their wheel first takes 10 Glory points, without waiting for the egg to break.",
     "mission": "Tap a bumper to see your wheel",
     "ok": "There they are. Your wheel, the rival's... all very transparent, how unusual in this game."
    }
@@ -535,11 +535,11 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Y eso es todo de Hurrycrane Village. Resumen: lánzale gnomos al huevo para cargarlo, haz que rebote en bumpers, tótems y obeliscos para encadenar combos (a los obeliscos y tótems enemigos les quita vida, y a las unidades que atropella también), y rómpelo cuando tu ruleta esté bien llena. Si nadie lo toca durante un rato, se va descargando, así que no lo dejes enfriar. ¡Suerte, la vas a necesitar!",
+   "say": "Y eso es todo de Hurrycrane Village. Resumen: lánzale gnomos al huevo para cargarlo, haz que rebote en bumpers, tótems y obeliscos para encadenar combos (a los obeliscos y tótems enemigos les quita vida, y a las unidades que atropella también), y rómpelo cuando tu ruleta esté bien llena, o llénala antes que el rival para llevarte los 10 puntos de Gloria. Si nadie lo toca durante un rato, se va descargando, así que no lo dejes enfriar. ¡Suerte, la vas a necesitar!",
    "button": "TERMINAR TUTORIAL",
    "mood": "aplaude",
    "en": {
-    "say": "And that's all for Hurrycrane Village. Summary: throw gnomes at the egg to charge it, make it bounce off bumpers, totems and obelisks to chain combos (it hurts enemy obelisks and totems, and the units it runs over too), and break it when your wheel is nice and full. If nobody touches it for a while it starts losing charge, so don't let it cool down. Good luck, you'll need it!",
+    "say": "And that's all for Hurrycrane Village. Summary: throw gnomes at the egg to charge it, make it bounce off bumpers, totems and obelisks to chain combos (it hurts enemy obelisks and totems, and the units it runs over too), and break it when your wheel is nice and full, or fill it before the rival to take the 10 Glory points. If nobody touches it for a while it starts losing charge, so don't let it cool down. Good luck, you'll need it!",
     "button": "FINISH TUTORIAL"
    }
   }
