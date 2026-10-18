@@ -34,7 +34,7 @@ html,body{margin:0;height:100%;background:#1c2b22;overflow:hidden;font-family:"R
 .hpbar{position:absolute;width:84px;height:10px;background:#0008;border:2px solid #000;border-radius:6px;overflow:hidden;pointer-events:none}
 .hpbar i{display:block;height:100%;background:linear-gradient(#ff7a6a,#d6322a);transition:width .25s}
 /* gruya */
-#crane{position:absolute;pointer-events:auto;cursor:pointer;transition:opacity .22s}
+#crane{position:absolute;pointer-events:auto;cursor:pointer;transition:opacity .22s,transform .3s ease-in-out}
 #crane.hover{opacity:.4}
 #crane img{display:block;width:100%;transform-origin:63% 94%}
 #crane.perched img{animation:idle 6s ease-in-out infinite}
@@ -60,7 +60,7 @@ html,body{margin:0;height:100%;background:#1c2b22;overflow:hidden;font-family:"R
   <button data-t="2" style="--tc:#ff9a3c">Equipo naranja</button>
   <button id="bTurn">Pasar turno</button>
   <button id="bMax">Cargar a 9</button>
-  <button id="bFog">Niebla: sí</button>
+  <button id="bFog">Niebla: no</button>
   <button id="bReset">Reiniciar</button>
   <span class="demotag">Clic en una casilla = gnomazo (el huevo sale en dirección contraria)</span>
 </div>
@@ -100,7 +100,7 @@ const S={
  pop(){const t=au().currentTime;tone(400,t,.1,"sine",.3,1);tone(800,t+.06,.3,"triangle",.2);tone(1200,t+.14,.35,"triangle",.14)}
 };
 /* ---------- estado ---------- */
-const FOGBTN=()=>$("#bFog");let FOGON=true;const fogged=(r,c)=>FOGON&&r<=1&&c<=1;
+const FOGBTN=()=>$("#bFog");let FOGON=false;const fogged=(r,c)=>FOGON&&r<=1&&c<=1;
 let st;function fresh(){st={usedB:new Set(),charge:0,bn:[0,0,0],glory:st?st.glory:[0,0,0],team:0,hp:[20,20,20],turn:1,bumpedTurn:false,phase:"play",busy:false,crane:null}}
 st=null;fresh();
 /* ---------- escena ---------- */
@@ -172,25 +172,27 @@ async function gnomazo(r,c){
 }
 function obAt(r,c){return OBS.find(o=>o.r===r&&o.c===c)}
 function bumpAt(r,c){return BUMPERS.find(o=>o.r===r&&o.c===c)}
-const HOMING=4;
-// Teledirigido: solo hacia bumpers cercanos, sin usar este turno, con todo el camino revelado (sin niebla) y despejado.
+const HOMING=5;
+const kingStep=(f,t)=>[Math.sign(t.r-f.r),Math.sign(t.c-f.c)];
+// Teledirigido: bumpers cercanos, sin usar este turno, con el camino revelado (sin niebla) y despejado de obeliscos.
 function homing(from){let best=null;
- BUMPERS.forEach(b=>{if(b===from||st.usedB.has(b))return;const dr=b.r-from.r,dc=b.c-from.c,dist=Math.max(Math.abs(dr),Math.abs(dc));
-  if(dist>HOMING||!(dr===0||dc===0||Math.abs(dr)===Math.abs(dc)))return;const sr=Math.sign(dr),sc=Math.sign(dc);
-  for(let k=1;k<=dist;k++){const r=from.r+sr*k,c=from.c+sc*k;if(fogged(r,c))return;if(k<dist&&(obAt(r,c)||(bumpAt(r,c)&&!st.usedB.has(bumpAt(r,c)))))return}
-  if(!best||dist<best.dist)best={dir:[sr,sc],dist,b}});return best}
+ BUMPERS.forEach(b=>{if(b===from||st.usedB.has(b))return;const dist=Math.max(Math.abs(b.r-from.r),Math.abs(b.c-from.c));if(dist>HOMING)return;
+  let p={r:from.r,c:from.c};
+  for(let k=0;k<dist;k++){const[dr,dc]=kingStep(p,b);p={r:p.r+dr,c:p.c+dc};if(fogged(p.r,p.c))return;if(!(p.r===b.r&&p.c===b.c)&&obAt(p.r,p.c))return}
+  if(fogged(b.r,b.c))return;if(!best||dist<best.dist)best={dist,b}});return best}
 async function fly(d){
- let [dr,dc]=d,left=3+Math.max(1,st.charge);
+ let [dr,dc]=d,left=3+Math.max(1,st.charge),tgt=null;
  while(left>0&&st.phase==="play"){
+  if(tgt){[dr,dc]=kingStep(eggPos,tgt)}
   let nr=eggPos.r+dr,nc=eggPos.c+dc,kind=null,obj=null;
-  if(nr<0||nc<0||nr>=N||nc>=N){kind="edge";if(nr<0||nr>=N)dr=-dr;if(nc<0||nc>=N)dc=-dc;nr=eggPos.r;nc=eggPos.c}
-  else if(obj=obAt(nr,nc))kind="ob";
+  if(nr<0||nc<0||nr>=N||nc>=N){kind="edge";tgt=null;if(nr<0||nr>=N)dr=-dr;if(nc<0||nc>=N)dc=-dc;nr=eggPos.r;nc=eggPos.c}
+  else if(obj=obAt(nr,nc)){kind="ob";tgt=null}
   else if((obj=bumpAt(nr,nc))&&!st.usedB.has(obj))kind="bump";
   if(!kind){placeEgg(nr,nc);left--;await sleep(st.charge>=5?105:150);continue}
   if(kind!=="edge")await moveHalf(nr,nc);
-  if(kind==="bump"){st.usedB.add(obj);placeEgg(nr,nc)}
+  if(kind==="bump"){st.usedB.add(obj);placeEgg(nr,nc);tgt=null}
   const ok=await bounce(kind,obj);if(!ok)return;
-  if(kind==="bump"){const h=homing(obj);if(h){[dr,dc]=h.dir;left=Math.max(left,h.dist)}else{[dr,dc]=[-dc,dr];left=Math.min(left,2)}}
+  if(kind==="bump"){const h=homing(obj);if(h){tgt=h.b;left=Math.max(left,h.dist+1)}else{[dr,dc]=[-dc,dr];left=Math.min(left,2)}}
   else if(kind==="ob"){dr=-dr;dc=-dc}
   left=Math.max(left-1,0)+(kind==="edge"?0:1)-(kind==="bump"?1:0);await sleep(60);
  }
@@ -265,12 +267,12 @@ async function craneArrive(ti,turns){
 async function craneLeave(){
  // pasa al siguiente que más puntos ganó, o se va
  clearInterval(st.chirpI);const d=st.crane;d.classList.remove("perched","hover");d.style.opacity=1;
- const tp=st.cranePos,next=st.craneQ.shift();
- await glide(tp,{x:tp.x,y:tp.y-70},300,st.craneFlip,30);
+ const tp=st.cranePos,next=st.craneQ.shift(),b0=bodyTarget(tp,st.craneFlip),lift={x:b0.x,y:b0.y-60};
+ await glide(b0,lift,260,st.craneFlip,0);
  if(next!==undefined){const o=OBS[next],q=perchPos(o);const flip=q.x<tp.x,bt=bodyTarget(q,flip),hi={x:bt.x,y:bt.y-90};
-  await glide({x:tp.x,y:tp.y-70},hi,1300,flip,110);await glide(hi,bt,520,flip,0,true);
+  await glide(lift,hi,1300,flip,110);await glide(hi,bt,520,flip,0,true);
   st.cranePos=tp;await landAt(next,1,flip,q)}
- else{const flip=tp.x>CX;await glide({x:tp.x,y:tp.y-70},{x:flip?-300:1500,y:-200},1700,flip?false:true,100);d.remove();st.crane=null;st.cranePos=null;st.phase="play";await respawn()}
+ else{const flip=tp.x<CX?true:false;await glide(lift,{x:flip?-300:1500,y:-200},1700,flip,100);d.remove();st.crane=null;st.cranePos=null;st.phase="play";await respawn()}
 }
 async function landAt(ti,turns,flip,tp){const o=OBS[ti],d=st.crane;setCranePos(tp.x,tp.y,flip,IMG.cPos);d.firstChild.style.transform="";d.style.zIndex=1000;d.classList.add("perched");S.land();
  d.firstChild.animate([{transform:"scale(1.08,.88)"},{transform:"scale(.97,1.05)",offset:.5},{transform:"scale(1)"}],{duration:380,easing:"ease-out"});
@@ -284,14 +286,14 @@ async function scare(){
  featherBurst(tp.x,tp.y-70);
  st.crane.firstChild.animate([{transform:"scale(1,1)"},{transform:"scale(1.2,.8) rotate(-8deg)",offset:.25},{transform:"scale(.9,1.2) rotate(6deg)",offset:.6}],{duration:340});
  await sleep(300);await craneLeave();st.busy=false}
-const FEATHER=c=>`<svg viewBox="0 0 24 64" width="22" height="58"><path d="M12 62 C11 40 12 22 12 3 C4 14 2 30 6 44 C8 52 11 57 12 62Z" fill="${c[0]}" stroke="#1a1633" stroke-width="2" stroke-linejoin="round"/><path d="M12 3 C19 12 22 28 18 42 C16 50 13 57 12 62Z" fill="${c[1]}" stroke="#1a1633" stroke-width="2" stroke-linejoin="round"/><path d="M12 62 L12 6" stroke="#1a1633" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+const FEATHER=c=>`<svg viewBox="0 0 24 64" width="12" height="32"><path d="M12 62 C11 40 12 22 12 3 C4 14 2 30 6 44 C8 52 11 57 12 62Z" fill="${c[0]}"/><path d="M12 3 C19 12 22 28 18 42 C16 50 13 57 12 62Z" fill="${c[1]}"/></svg>`;
 const FCOL=[["#2e63c9","#4a86ee"],["#f1e6cc","#fff8e6"],["#1f47a0","#2e63c9"],["#e0c98f","#f1e6cc"]];
 function featherBurst(x,y){
  const fl=addAt("ring",x,y,"",996);fl.style.width=fl.style.height="120px";fl.style.border="none";fl.style.background="radial-gradient(#fff,#fff0 68%)";
  fl.animate([{transform:"translate(-50%,-50%) scale(.2)",opacity:1},{transform:"translate(-50%,-50%) scale(1.5)",opacity:0}],{duration:300,easing:"ease-out"}).onfinish=()=>fl.remove();
  for(let i=0;i<11;i++){
   const el=addAt("float",x,y,FEATHER(FCOL[i%4]),997);el.style.fontSize="0";el.style.transform="none";
-  const ang=-Math.PI/2+(Math.random()-.5)*2.6,sp=140+Math.random()*190,vx0=Math.cos(ang)*sp,vy0=Math.sin(ang)*sp*.9-60,rot0=Math.random()*360,rs=(Math.random()-.5)*540,sw=1.5+Math.random()*2,ph=Math.random()*6.3,life=1700+Math.random()*900,sc=.7+Math.random()*.6,t0=performance.now();
+  const ang=-Math.PI/2+(Math.random()-.5)*2.6,sp=140+Math.random()*190,vx0=Math.cos(ang)*sp,vy0=Math.sin(ang)*sp*.9-60,rot0=Math.random()*360,rs=(Math.random()-.5)*540,sw=1.5+Math.random()*2,ph=Math.random()*6.3,life=1700+Math.random()*900,sc=.6+Math.random()*.5,t0=performance.now();
   (function f(t){const k=(t-t0)/1000,d=(t-t0)/life;if(d>=1){el.remove();return}
    // sube con impulso, el aire lo frena y cae planeando de lado a lado como una pluma de verdad
    const drag=Math.exp(-2.6*k),px_=vx0*(1-drag)/2.6+Math.sin(k*sw+ph)*26*Math.min(1,k),py_=vy0*(1-drag)/2.6+Math.max(0,k-.15)*70*Math.min(1,k);
