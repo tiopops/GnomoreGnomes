@@ -118,9 +118,9 @@ const UNIT_TYPES = {
     machacaImpactUrl: "assets/equipos/MushboomForest/machacagnomos_surcabosques_impacto.png?v=cm1",
     pegarGnomoUrl: "assets/equipos/MushboomForest/pegargnomo_surcabosques.png?v=cm1",
     aguante: 1,
-    movimiento: 3,
+    movimiento: 4,
     fuerza: 1,
-    agilidad: 4,
+    agilidad: 3,
     percepcion: 3,
     attackRange: 1,
     defaultFacing: "right",
@@ -255,7 +255,7 @@ const SPRITE_SCALES = {
   punoroca: 1.5,
   manos_largas: 0.9,
   ala_fugaz: 1.35,
-  nidobot: 1.7,
+  nidobot: 1.5,
 };
 
 // Tamaño de las poses "machaca"/"impacto" (ver machacaUrl/machacaImpactUrl
@@ -278,7 +278,7 @@ const SPRITE_SCALES_MACHACA = {
   punoroca: 1.75,
   manos_largas: 1,
   ala_fugaz: 1.7,
-  nidobot: 2.15,
+  nidobot: 1.9,
 };
 const SPRITE_SCALES_IMPACT = {
   hombre_arbol: 1.5,
@@ -289,7 +289,7 @@ const SPRITE_SCALES_IMPACT = {
   punoroca: 1.8,
   manos_largas: 1,
   ala_fugaz: 1.55,
-  nidobot: 2.4,
+  nidobot: 2.1,
 };
 // Tamaño de la pose "pegar al gnomo" (pegarGnomoUrl). Sin entrada = mismo
 // tamaño que iddle (Units.pegarGnomoScaleFor).
@@ -302,7 +302,7 @@ const SPRITE_SCALES_PEGAR = {
   punoroca: 1.5,
   manos_largas: 0.85,
   ala_fugaz: 1.35,
-  nidobot: 2.15,
+  nidobot: 1.9,
 };
 
 // Precio de reclutar cada tipo de personaje desde el Obelisco Ancestral de

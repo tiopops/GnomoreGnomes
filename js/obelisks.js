@@ -79,7 +79,7 @@ const OBELISK_MENU_ICONS = {
 // Alto máximo común (px CSS) de los popups de reclutar, habilidades y armería.
 const POPUP_MAX_H = 880;
 
-const RECRUIT_ICON_SCALES = { urgamentes: 1.1, seta_artificiero: 1.1 };
+const RECRUIT_ICON_SCALES = { urgamentes: 1.1, seta_artificiero: 1.1, nidobot: 1.7 };
 // Subida (% de la casilla) del icono en el popup de reclutar.
 const RECRUIT_ICON_LIFT = { nidobot: 7 };
 
