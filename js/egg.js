@@ -24,10 +24,11 @@ const EGG_PUSH_AWAY = 1; // 1 = en la dirección del golpe; -1 = hacia quien lan
 const EGG_GNOME_POINTS = 5; // puntos que carga el gnomo al estamparse
 const EGG_BOUNCE_BONUS_MAX = 8; // tope de casillas extra por rebotes
 const EGG_STEP_MS = 210; // tiempo por casilla durante el vuelo
+const EGG_BRAKE = [1.35, 1.8, 2.5]; // factor de duración de las últimas casillas del vuelo: frena suavemente al pararse
 const EGG_TURBO_BONUS = 2; // casillas extra por golpear un bumper (turbo)
 const EGG_TURBO_STEP_MS = 120; // tiempo por casilla tras el primer bumper
 const EGG_ASSIST_TOL = 1.25; // desvío lateral (casillas) que la ayuda de puntería perdona
-const EGG_HOMING_RANGE = 4; // alcance (casillas) del teledirigido entre bumpers
+const EGG_HOMING_RANGE = 6; // alcance (casillas) del teledirigido entre bumpers
 const EGG_PULSE = [2.6, 2.2, 1.7, 1.05, 0.55]; // segundos por latido según carga (con carga 0 respira como el resto del escenario)
 const EGG_AMP = [0.03, 0.035, 0.042, 0.052, 0.065];
 // Daño a obeliscos y tótems según el nivel de carga del huevo al chocar.
@@ -362,6 +363,7 @@ const Egg = {
       const ar = t.row - fr, ac = t.col - fc, st = Math.max(Math.abs(ar), Math.abs(ac)) || 1;
       return [fr + Math.round(ar / st), fc + Math.round(ac / st)];
     };
+    const reach = (fr, fc, t) => Math.max(Math.abs(t.row - fr), Math.abs(t.col - fc)); // casillas hasta el bumper t
     // Bumper al que teledirigirse: a la vista (sin niebla), sin golpear aún y a poca distancia.
     const pickTarget = (fr, fc, cur, clear) => {
       if (typeof Bumpers === "undefined") return null;
@@ -449,13 +451,13 @@ const Egg = {
           total += EGG_TURBO_BONUS;
           fast = true;
           target = pickTarget(r, c, bumper, false);
-          if (target) aim(target); else reflect();
+          if (target) { total = Math.max(total, i + reach(r, c, target) + 1); aim(target); } else reflect();
         } else if (target) {
           // Algo se interpone yendo hacia un bumper: otro bumper libre de obstáculos o rebote al azar.
           blocked.add(target);
           if (total < maxTotal) total++;
           target = pickTarget(r, c, null, true);
-          if (target) aim(target);
+          if (target) { total = Math.max(total, i + reach(r, c, target) + 1); aim(target); }
           else {
             const ok = EGG_DIRS.filter((d) => !wall(r + d[0], c + d[1]));
             const d = ok.length ? ok[Math.floor(rng() * ok.length)] : [-dr, -dc];
@@ -876,8 +878,14 @@ const Egg = {
     if (typeof Bumpers !== "undefined") { if (!Bumpers._keepCombo) Bumpers.beginFlight(); Bumpers._keepCombo = false; }
     let prev = plan.dir;
     let exploded = false;
-    for (const s of plan.steps) {
-      const ms = s.fast ? EGG_TURBO_STEP_MS : EGG_STEP_MS;
+    const nSteps = plan.steps.length;
+    for (let si = 0; si < nSteps; si++) {
+      const s = plan.steps[si];
+      let ms = s.fast ? EGG_TURBO_STEP_MS : EGG_STEP_MS;
+      // Al pararse, las últimas casillas van cada vez más lentas (decelera) y la última con ease-out.
+      const left = nSteps - 1 - si;
+      if (!plan.explode && left < EGG_BRAKE.length) ms = Math.round(ms * EGG_BRAKE[EGG_BRAKE.length - 1 - left]);
+      e.el.style.transitionTimingFunction = !plan.explode && left === 0 ? "ease-out" : "";
       e.el.style.setProperty("--egg-step", `${ms}ms`);
       if (s.fast) this._ghost(e.el);
       if (typeof Bumpers !== "undefined") Bumpers.setLock(s.lock);
@@ -898,6 +906,7 @@ const Egg = {
       if (s.unit && s.unit.el && s.unit.hp > 0) { if (typeof Bumpers !== "undefined") Bumpers.registerHit(); await this._trample(s, holder.team, avoid); }
       if (typeof Fog !== "undefined") Fog.applyVisibility();
     }
+    e.el.style.transitionTimingFunction = "";
     e.el.classList.remove("egg--moving");
     if (typeof Fog !== "undefined") Fog.applyVisibility();
     this.refreshFog();
