@@ -30,6 +30,10 @@ const AppUpdate = {
       this._cleanup(up);
     }
     this._ensureButton();
+    // Al abrir la app: comprueba y, si hay versión nueva, la instala sola
+    // (se salta con datos móviles; ahí queda el botón manual).
+    const net = navigator.connection;
+    if (!(net && net.type === "cellular")) setTimeout(() => this.run(true), 1200);
   },
 
   // Botón redondo junto a perfil/ajustes (solo en el menú principal y solo en
@@ -78,7 +82,7 @@ const AppUpdate = {
     return r.json();
   },
 
-  async run() {
+  async run(auto) {
     if (this._busy) return;
     this._busy = true;
     const idle = "download-simple";
@@ -87,8 +91,10 @@ const AppUpdate = {
       const local = await (await fetch("version.json?_=" + Date.now(), { cache: "no-store" })).json();
       const remote = await this._getJson(this.RELEASE_BASE + "version.json?_=" + Date.now());
       if (!remote || !remote.version || remote.version === local.version) {
-        this._icon("check");
-        setTimeout(() => this._icon(idle), 2500);
+        if (!auto) {
+          this._icon("check");
+          setTimeout(() => this._icon(idle), 2500);
+        } else this._icon(idle);
         return;
       }
       this._icon("circle-notch");
@@ -96,8 +102,11 @@ const AppUpdate = {
       const bundle = await up.download({ url: this.RELEASE_BASE + "bundle.zip", version: remote.version });
             await up.set(bundle); // reinicia la app con la versión nueva
     } catch (e) {
-      this._icon("warning");
-      setTimeout(() => this._icon(idle), 3000);
+      if (auto) this._icon(idle); // sin avisos en el arranque; queda el botón manual
+      else {
+        this._icon("warning");
+        setTimeout(() => this._icon(idle), 3000);
+      }
     } finally {
       this._busy = false;
     }
