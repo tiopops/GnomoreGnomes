@@ -459,6 +459,47 @@ const SFX = {
     setTimeout(() => this._pluck("rdy-2", 1319, "sine", 0.3, 0.08), 110);
   },
 
+  // ---------- Retención: búsqueda de partida, escenario, XP y misiones ----------
+  // Ping de sonar mientras se busca rival (js/matchmaking.js): suave, con eco.
+  radarPing() {
+    this._pluck("radar-1", 988, "sine", 0.45, 0.13);
+    setTimeout(() => this._pluck("radar-2", 988, "sine", 0.4, 0.05), 190);
+  },
+  // Rival encontrado: golpe grave + arpegio ascendente, remate brillante.
+  matchFound() {
+    this._pluck("mf-thud", 110, "square", 0.18, 0.4);
+    setTimeout(() => this._pluck("mf-1", 440, "triangle", 0.14, 0.26), 70);
+    setTimeout(() => this._pluck("mf-2", 587, "triangle", 0.14, 0.26), 140);
+    setTimeout(() => this._pluck("mf-3", 740, "triangle", 0.16, 0.28), 210);
+    setTimeout(() => this._pluck("mf-4", 1175, "sine", 0.45, 0.3), 290);
+  },
+  // Ruleta de escenarios: tic de cada carta (sube un poco de tono) y golpe final.
+  scenarioTick(i) { this._pluck("sc-tick", 520 + (i % 5) * 70, "square", 0.05, 0.1); },
+  scenarioLock() {
+    this._pluck("sc-thud", 96, "square", 0.22, 0.45);
+    setTimeout(() => this._pluck("sc-1", 784, "triangle", 0.16, 0.26), 60);
+    setTimeout(() => this._pluck("sc-2", 1175, "triangle", 0.4, 0.28), 150);
+  },
+  // Cuenta atrás del reloj de turno (js/turntimer.js).
+  turnWarn(sec) { this._pluck("tt-warn", sec <= 5 ? 1318 : 988, "square", 0.09, sec <= 5 ? 0.2 : 0.14); },
+  // Misión completada: dos "ding" ascendentes.
+  missionDone() {
+    this._pluck("ms-1", 784, "triangle", 0.14, 0.24);
+    setTimeout(() => this._pluck("ms-2", 1175, "triangle", 0.32, 0.26), 100);
+  },
+  // Barra de XP que se llena.
+  xpFill() {
+    this._pluck("xp-1", 440, "sine", 0.12, 0.14);
+    setTimeout(() => this._pluck("xp-2", 554, "sine", 0.12, 0.14), 90);
+    setTimeout(() => this._pluck("xp-3", 659, "sine", 0.2, 0.16), 180);
+  },
+  // Subida de nivel: fanfarria corta.
+  levelUp() {
+    this._pluck("lu-thud", 120, "square", 0.2, 0.4);
+    [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => this._pluck("lu-" + i, f, "triangle", 0.2, 0.3), 70 + i * 90));
+    setTimeout(() => this._pluck("lu-top", 1568, "sine", 0.6, 0.3), 450);
+  },
+
   // Mochila (js/backpack.js) — colocar un objeto sobre el tablero: un
   // "plop" corto y limpio, distinto del click de menú/UI para que se lea
   // como una acción sobre el propio tablero, no como navegación.

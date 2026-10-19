@@ -75,10 +75,12 @@ const PROGRESS_SK_MIN = 100;
 const PROGRESS_SK_LEVELUP = 10; // el SK sube un poco con cada nivel (el progreso también cuenta)
 const PROGRESS_MISSIONS_PER_DAY = 4;
 const PROGRESS_ALL_BONUS_XP = 100;
-const PROGRESS_XP_WIN = 100;
-const PROGRESS_XP_DRAW = 50;
-const PROGRESS_XP_LOSS = 40;
-const PROGRESS_XP_ONLINE = 25;
+const PROGRESS_VERSION = 2; // al subirla, todas las cuentas empiezan de cero (nivel, XP, SK y misiones)
+const PROGRESS_MIN_ROUNDS = 6; // partidas más cortas no dan nada (evita abusar de rendiciones)
+const PROGRESS_XP_WIN = 60;
+const PROGRESS_XP_DRAW = 30;
+const PROGRESS_XP_LOSS = 25;
+const PROGRESS_XP_ONLINE = 15;
 
 // Plantillas de misión. metric: qué contador de partida las hace avanzar; param: raza/nivel concreto.
 const PROGRESS_POOL = [
@@ -111,7 +113,7 @@ const Progress = {
 
   // ---------- Sesión y almacenamiento ----------
   _blank() {
-    return { xp: 0, sk: PROGRESS_SK_START, day: "", prog: {}, done: {}, bonus: 0, streak: 0, lastDay: "" };
+    return { v: PROGRESS_VERSION, xp: 0, sk: PROGRESS_SK_START, day: "", prog: {}, done: {}, bonus: 0, streak: 0, lastDay: "" };
   },
 
   _normalize(d) {
@@ -123,8 +125,9 @@ const Progress = {
     };
     const b = this._blank();
     d = d || {};
+    if (d.v !== PROGRESS_VERSION) return b; // datos de una versión anterior: se reinician
     return {
-      xp: n(d.xp, 0), sk: Math.max(PROGRESS_SK_MIN, n(d.sk, b.sk)),
+      v: PROGRESS_VERSION, xp: n(d.xp, 0), sk: Math.max(PROGRESS_SK_MIN, n(d.sk, b.sk)),
       day: typeof d.day === "string" ? d.day : "", prog: map(d.prog), done: map(d.done),
       bonus: d.bonus ? 1 : 0, streak: n(d.streak, 0), lastDay: typeof d.lastDay === "string" ? d.lastDay : "",
     };
@@ -186,7 +189,7 @@ const Progress = {
   },
 
   // ---------- Nivel ----------
-  need(level) { return 100 + 30 * level; }, // XP para pasar de `level` al siguiente
+  need(level) { return 200 + 50 * level; }, // XP para pasar de `level` al siguiente
   info(xp) {
     let level = 1, rem = Math.max(0, xp | 0);
     while (level < PROGRESS_LEVEL_CAP && rem >= this.need(level)) { rem -= this.need(level); level++; }
@@ -276,10 +279,15 @@ const Progress = {
     const skBefore = s.sk;
     const win = m.result === "win";
     const gained = { base: 0, missions: [], bonus: 0 };
+    // Partida demasiado corta (rendición temprana, etc.): no da XP, ni misiones, ni SK.
+    if (typeof m.rounds === "number" && m.rounds < PROGRESS_MIN_ROUNDS) {
+      this.lastSummary = { before, after: before, gained, total: 0, skDelta: 0 };
+      return this.lastSummary;
+    }
 
     // XP de la partida
     let base = win ? PROGRESS_XP_WIN : m.result === "draw" ? PROGRESS_XP_DRAW : PROGRESS_XP_LOSS;
-    base += Math.min(10, m.kills || 0) * 2 + Math.min(5, m.totems || 0) * 5;
+    base += Math.min(10, m.kills || 0) + Math.min(5, m.totems || 0) * 3;
     if (m.online) base += PROGRESS_XP_ONLINE;
     gained.base = base;
     s.xp += base;
@@ -393,7 +401,7 @@ const Progress = {
   // ---------- Vista: pantalla final ----------
   endHtml() {
     const r = this.lastSummary;
-    if (!r) return "";
+    if (!r || !r.total) return "";
     const g = r.gained;
     const chips = g.missions.map((m) => `<span class="pxp__chip"><i class="ph-bold ph-check"></i>${Account._esc(m.title)}<b>+${m.xp}</b></span>`).join("")
       + (g.bonus ? `<span class="pxp__chip pxp__chip--bonus"><i class="ph-fill ph-gift"></i>${this.t("pg_bonus")}<b>+${g.bonus}</b></span>` : "");
@@ -416,6 +424,8 @@ const Progress = {
     const bar = el.querySelector(".pxp__bar i"), lv = el.querySelector(".pxp__lv b");
     const ok = () => el.isConnected;
     el.classList.add("pxp--in");
+    if (typeof SFX !== "undefined") { try { SFX.xpFill(); } catch (e) {} }
+    el.querySelectorAll(".pxp__chip").forEach((c, i) => setTimeout(() => { if (ok() && typeof SFX !== "undefined") { try { SFX.missionDone(); } catch (e) {} } }, 900 + i * 260));
     await sleep(700);
     let level = r.before.level;
     const pctOf = (into, need) => Math.round((100 * into) / need);
@@ -427,7 +437,7 @@ const Progress = {
       level++;
       lv.textContent = level;
       el.classList.remove("pxp--up"); void el.offsetWidth; el.classList.add("pxp--up");
-      if (typeof SFX !== "undefined") { try { SFX.glory && SFX.glory(); SFX.gloryCoin && SFX.gloryCoin(9); } catch (e) {} }
+      if (typeof SFX !== "undefined") { try { SFX.levelUp(); } catch (e) {} }
       bar.style.transition = "none";
       bar.style.width = "0%";
       void bar.offsetWidth;

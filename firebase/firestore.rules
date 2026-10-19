@@ -208,7 +208,7 @@ service cloud.firestore {
     match /progress/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['xp', 'sk', 'day', 'prog', 'done', 'bonus', 'streak', 'lastDay'])
+        && request.resource.data.keys().hasOnly(['v', 'xp', 'sk', 'day', 'prog', 'done', 'bonus', 'streak', 'lastDay'])
         && request.resource.data.xp is number && request.resource.data.xp >= 0
         && request.resource.data.sk is number && request.resource.data.sk >= 0 && request.resource.data.sk <= 10000
         && request.resource.data.day is string && request.resource.data.day.size() <= 10

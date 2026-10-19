@@ -63,6 +63,7 @@ const PlayerStats = {
       try {
         Progress.onMatch(Object.assign({}, m, {
           level: typeof LevelAssets !== "undefined" ? LevelAssets.current : null,
+          rounds: typeof Turns !== "undefined" ? Turns.roundNumber : undefined,
           rivals: typeof Teams !== "undefined" ? Teams.rivalCount : 1,
           mmOppSk: m.online && typeof Net !== "undefined" && Net.mm && typeof Net.oppSk === "number" ? Net.oppSk : undefined,
         }));

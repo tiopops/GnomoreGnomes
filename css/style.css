@@ -11915,3 +11915,23 @@ body.tut-on .settings-gear-btn--update { display: none; }
 .account-panel:has(.pf) .account-body, .settings-pane--acct .account-body { gap: 14px; }
 .pf .pmis { gap: 9px; }
 .pf .pmis__row { padding: 9px 16px; }
+
+/* Partida Rápida: escenario misterioso en la sala y ruleta de escenarios */
+.mp-level--mystery { min-width: 150px; justify-content: center; }
+.mp-level--mystery > i { font-size: 2.6rem; color: #ffcf3d; filter: drop-shadow(2px 2px 0 #000); animation: srWob 1.6s ease-in-out infinite; }
+@keyframes srWob { 0%, 100% { transform: rotate(-6deg) scale(1); } 50% { transform: rotate(6deg) scale(1.12); } }
+.sr-overlay { z-index: 100000; }
+.sr-panel { padding: 30px 34px 34px; }
+.sr-card { position: relative; isolation: isolate; width: min(280px, 70vw); margin: 18px auto 4px; padding: 20px 16px 16px; display: flex; justify-content: center; filter: drop-shadow(4px 4px 0 rgba(0,0,0,.6)); }
+.sr-card::before, .sr-card::after { content: ""; position: absolute; z-index: -1; clip-path: polygon(2% 0, 100% 2%, 98% 100%, 0 98%); }
+.sr-card::before { inset: 0; background: #000; }
+.sr-card::after { inset: 3px; background: #241d2e; transition: background .25s; }
+.sr-card--lock::after { background: #4a3d52; }
+.sr-card--lock::before { background: #ffcf3d; }
+.sr-card__in { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.sr-card__in img { width: 190px; max-width: 100%; height: 130px; object-fit: contain; filter: drop-shadow(3px 3px 0 rgba(0,0,0,.6)); }
+.sr-card__in span { font-weight: 900; font-size: 1.1rem; letter-spacing: .04em; text-transform: uppercase; color: #fff; text-shadow: 2px 2px 0 #000; text-align: center; }
+.sr-card--flip .sr-card__in { animation: srFlip .12s ease-out; }
+.sr-card--lock { animation: srLock .5s cubic-bezier(.3,1.8,.5,1); }
+@keyframes srFlip { from { transform: translateY(-14px) scaleY(.8); opacity: .4; } to { transform: none; opacity: 1; } }
+@keyframes srLock { 0% { transform: scale(.88) rotate(-2deg); } 100% { transform: scale(1) rotate(0); } }

@@ -402,7 +402,7 @@ const MPLobby = {
       </div>
       <div class="mp-section">
         <div class="mp-section__title">${d.mm ? this.t("mm_random_level") : this._isHost ? this.t("mp_pick_level") : this._esc(this.t("mp_level_by", { name: d.hostName }))}</div>
-        <div class="mp-levels">${this._isHost && !d.mm ? levelCards : `<div class="mp-level mp-level--on mp-level--static"><img src="${lvl ? lvl.islandImg : ""}" alt="" draggable="false"><span>${lvl ? this._esc(this.t(lvl.nameKey)) : ""}</span></div>`}</div>
+        <div class="mp-levels">${d.mm ? `<div class="mp-level mp-level--on mp-level--static mp-level--mystery"><i class="ph-fill ph-question"></i></div>` : this._isHost ? levelCards : `<div class="mp-level mp-level--on mp-level--static"><img src="${lvl ? lvl.islandImg : ""}" alt="" draggable="false"><span>${lvl ? this._esc(this.t(lvl.nameKey)) : ""}</span></div>`}</div>
       </div>
       <div class="mp-actions">
         ${readyBtn}${startBtn}
@@ -432,13 +432,19 @@ const MPLobby = {
   async _start() {
     const d = this._data;
     if (!this._isHost || !d || !(d.hostReady && d.guestReady && d.guestJoined && d.hostRace && d.guestRace)) return;
-    await this._upd({ status: "playing", seed: 1 + Math.floor(Math.random() * 2147483000), startedAt: Date.now() });
+    const patch = { status: "playing", seed: 1 + Math.floor(Math.random() * 2147483000), startedAt: Date.now() };
+    if (d.mm) { // Partida Rápida: el escenario se sortea ahora (se enseña en la ruleta, js/scenarioroulette.js)
+      const lv = this._levels();
+      if (lv.length) patch.level = lv[Math.floor(Math.random() * lv.length)].id;
+    }
+    await this._upd(patch);
   },
 
   // ---------- Lanzar la partida ----------
   async _launch(d) {
     const host = this._isHost;
     const other = host ? d.guestName : d.hostName;
+    if (d.mm && typeof ScenarioRoulette !== "undefined") { try { await ScenarioRoulette.play(d.level); } catch (e) {} }
     if (this._overlay) this._overlay.classList.remove("mp-overlay--visible");
     // Al empezar la partida no debe quedar NINGUNA interfaz multijugador abierta (amigos, invitación, chat).
     this._hideInvite();
@@ -466,6 +472,7 @@ const MPLobby = {
       console.error(e);
       this._toast(this.t("mp_err"));
     }
+    if (typeof ScenarioRoulette !== "undefined") ScenarioRoulette.hide();
   },
 
   _onNetStatus(s) {

@@ -83,6 +83,8 @@ const Matchmaking = {
     );
     this._beat = setInterval(() => { if (!this._handled) this._ref.update({ ts: Date.now() }).catch(() => {}); }, MM_BEAT_MS);
     this._poll = setInterval(() => this._seek(), MM_SEEK_MS);
+    this._ping = setInterval(() => { if (this._active && !this._handled && typeof SFX !== "undefined") { try { SFX.radarPing(); } catch (e) {} } }, 2500);
+    try { SFX.radarPing(); } catch (e) {}
     this._seek();
   },
 
@@ -105,8 +107,8 @@ const Matchmaking = {
   },
 
   _stopTimers() {
-    clearInterval(this._poll); clearInterval(this._beat); clearInterval(this._clock);
-    this._poll = this._beat = this._clock = null;
+    clearInterval(this._poll); clearInterval(this._beat); clearInterval(this._clock); clearInterval(this._ping);
+    this._poll = this._beat = this._clock = this._ping = null;
     if (this._unsub) { this._unsub(); this._unsub = null; }
   },
 
@@ -169,7 +171,7 @@ const Matchmaking = {
       const host = d.hostUid === this._info.uid;
       const other = host ? d.guestName : d.hostName;
       this._foundUi(other);
-      if (typeof SFX !== "undefined" && SFX.captureVillage) { try { SFX.captureVillage(); } catch (e) {} }
+      if (typeof SFX !== "undefined" && SFX.matchFound) { try { SFX.matchFound(); } catch (e) {} }
       await new Promise((r) => setTimeout(r, 1500));
       if (!this._active) return; // cancelado justo ahora
       if (ref) ref.delete().catch(() => {});

@@ -56,7 +56,7 @@ const TurnTimer = {
     if (sec !== this._lastSec) {
       this._lastSec = sec;
       el.innerHTML = '<i class="ph-bold ph-hourglass-medium"></i>' + Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
-      if (mine && warn && sec > 0 && typeof SFX !== "undefined" && SFX.hover) { try { SFX.hover(); } catch (e) {} }
+      if (mine && warn && sec > 0 && typeof SFX !== "undefined" && SFX.turnWarn) { try { SFX.turnWarn(sec); } catch (e) {} }
     }
     if (mine && left <= 0 && !Turns._aiRunning) Net.localEndTurn();
   },
