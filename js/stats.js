@@ -6,7 +6,7 @@
      - Pintar el bloque de estadísticas dentro del menú de usuario (auth.js).
    No cuenta el tutorial ni las partidas sin sesión iniciada. Si falla la red,
    la partida queda pendiente en el navegador y se reenvía al volver a entrar.
-   Rango (siempre 0 por ahora), desbloqueos y misión diaria: DESACTIVADOS. */
+   Nivel, XP y misiones diarias: js/progress.js. Desbloqueos: DESACTIVADOS ("Próximamente"). */
 
 const PlayerStats = {
   _matchDone: false,
@@ -30,6 +30,7 @@ const PlayerStats = {
   startMatch() {
     this._matchDone = false;
     this._captures = 0;
+    if (typeof Progress !== "undefined") Progress.lastSummary = null;
   },
 
   // Obelisks._endGame -> resultado de la partida.
@@ -57,6 +58,16 @@ const PlayerStats = {
       totems: this._captures,
       kills,
     };
+    // Progreso de la cuenta (nivel, XP, SK, misiones): js/progress.js.
+    if (typeof Progress !== "undefined") {
+      try {
+        Progress.onMatch(Object.assign({}, m, {
+          level: typeof LevelAssets !== "undefined" ? LevelAssets.current : null,
+          rivals: typeof Teams !== "undefined" ? Teams.rivalCount : 1,
+          mmOppSk: m.online && typeof Net !== "undefined" && Net.mm && typeof Net.oppSk === "number" ? Net.oppSk : undefined,
+        }));
+      } catch (e) { console.warn("progress:", e); }
+    }
     this._send(uid, [m]);
   },
 
@@ -153,10 +164,7 @@ const PlayerStats = {
       })
       .join("");
     return `
-      <div class="pstat-rank">
-        <div class="pstat-rank__badge">0</div>
-        <div class="pstat-rank__t">Rango<em>Nivel 0</em></div>
-      </div>
+      ${typeof Progress !== "undefined" ? Progress.profileHtml() : ""}
       <div class="pstat-tabs">
         <span class="pstat-tab pstat-tab--on">Estadísticas</span>
         <span class="pstat-tab pstat-off"><i class="ph-fill ph-lock"></i> Desbloqueos</span>
@@ -180,16 +188,20 @@ const PlayerStats = {
       </div>
       <div class="pstat-sec">Razas</div>
       <div class="pstat-races">${raceRows}</div>
-      <div class="pstat-sec">Misión del día</div>
-      <div class="pstat-mission pstat-off"><i class="ph-fill ph-calendar-check"></i><div>Próximamente<em>Misiones y rachas diarias</em></div></div>`;
+      `;
   },
 
-  // Rellena el contenedor del menú de usuario (auth.js) con las estadísticas.
+  // Rellena el contenedor del menú de usuario (auth.js) con nivel, misiones y estadísticas.
   async mount(el) {
     if (!el) return;
-    el.innerHTML = this.html(this._cache || this._normalize({}));
-    const s = await this.load();
-    if (el.isConnected) el.innerHTML = this.html(s);
+    const paint = (st) => {
+      el.innerHTML = this.html(st);
+      if (typeof Progress !== "undefined") Progress.watch(el, () => { if (el.isConnected) paint(this._cache || st); });
+    };
+    paint(this._cache || this._normalize({}));
+    const wait = typeof Progress !== "undefined" && Progress._uid && !Progress._loaded ? Progress.load() : null;
+    const [st] = await Promise.all([this.load(), wait]);
+    if (el.isConnected) paint(st);
   },
 };
 document.addEventListener("DOMContentLoaded", () => PlayerStats.init());

@@ -153,10 +153,19 @@ service cloud.firestore {
         && request.resource.data.guestUid != request.auth.uid
         && request.resource.data.status == 'lobby'
         && request.resource.data.keys().hasOnly(['hostUid', 'hostName', 'guestUid', 'guestName', 'status', 'level',
-             'hostRace', 'guestRace', 'hostReady', 'guestReady', 'guestJoined', 'guestDeclined', 'createdAt'])
-        && get(/databases/$(database)/documents/friends/$(request.resource.data.hostUid < request.resource.data.guestUid
-             ? request.resource.data.hostUid + '_' + request.resource.data.guestUid
-             : request.resource.data.guestUid + '_' + request.resource.data.hostUid)).data.status == 'accepted';
+             'hostRace', 'guestRace', 'hostReady', 'guestReady', 'guestJoined', 'guestDeclined', 'createdAt',
+             'mm', 'hostSk', 'guestSk'])
+        && (
+          // Sala entre amigos: la pareja debe ser amiga aceptada.
+          (request.resource.data.get('mm', false) != true
+            && get(/databases/$(database)/documents/friends/$(request.resource.data.hostUid < request.resource.data.guestUid
+                 ? request.resource.data.hostUid + '_' + request.resource.data.guestUid
+                 : request.resource.data.guestUid + '_' + request.resource.data.hostUid)).data.status == 'accepted')
+          // Partida Rápida: los dos deben estar en la cola de búsqueda en este momento.
+          || (request.resource.data.get('mm', false) == true
+            && exists(/databases/$(database)/documents/mmQueue/$(request.resource.data.hostUid))
+            && exists(/databases/$(database)/documents/mmQueue/$(request.resource.data.guestUid)))
+        );
       allow update: if request.auth != null
         && ((resource.data.hostUid == request.auth.uid
               && request.resource.data.diff(resource.data).affectedKeys()
@@ -192,6 +201,45 @@ service cloud.firestore {
         && request.resource.data.totems is number && request.resource.data.kills is number
         && request.resource.data.races is map;
       allow delete: if false;
+    }
+
+    // Progreso de la cuenta (js/progress.js): XP total, SK (Skill Rating), misiones del día y racha.
+    // Solo su dueño lo lee y lo escribe; solo números, textos cortos y mapas.
+    match /progress/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['xp', 'sk', 'day', 'prog', 'done', 'bonus', 'streak', 'lastDay'])
+        && request.resource.data.xp is number && request.resource.data.xp >= 0
+        && request.resource.data.sk is number && request.resource.data.sk >= 0 && request.resource.data.sk <= 10000
+        && request.resource.data.day is string && request.resource.data.day.size() <= 10
+        && request.resource.data.prog is map && request.resource.data.done is map
+        && request.resource.data.bonus is number && request.resource.data.streak is number
+        && request.resource.data.lastDay is string && request.resource.data.lastDay.size() <= 10;
+      allow delete: if false;
+    }
+
+    // Cola de la Partida Rápida (js/matchmaking.js): un ticket por jugador buscando rival.
+    //   - Cualquier jugador con sesión puede LEER los tickets (para buscar rival por SK).
+    //   - Solo el dueño crea / refresca / borra el suyo.
+    //   - Otro jugador solo puede pasarlo de 'searching' a 'matched' enlazándolo a una sala
+    //     donde ese jugador es el invitado y quien lo hace es el anfitrión.
+    match /mmQueue/{uid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'sk', 'ts', 'status', 'roomId'])
+        && request.resource.data.uid == uid
+        && request.resource.data.status == 'searching'
+        && request.resource.data.sk is number && request.resource.data.ts is number
+        && request.resource.data.name is string && request.resource.data.name.size() <= 16;
+      allow update: if request.auth != null
+        && ((request.auth.uid == uid
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ts', 'status', 'roomId']))
+            || (resource.data.status == 'searching'
+              && request.resource.data.status == 'matched'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'roomId'])
+              && getAfter(/databases/$(database)/documents/rooms/$(request.resource.data.roomId)).data.guestUid == uid
+              && getAfter(/databases/$(database)/documents/rooms/$(request.resource.data.roomId)).data.hostUid == request.auth.uid));
+      allow delete: if request.auth != null && request.auth.uid == uid;
     }
   }
 }

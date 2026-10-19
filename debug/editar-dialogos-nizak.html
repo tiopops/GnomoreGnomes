@@ -61,7 +61,7 @@
     Elige el tutorial arriba y edita lo que quieras (español e inglés). Todo se guarda solo como borrador en este navegador.
     Marca «Usar mis cambios en el juego» para probar los textos al instante abriendo el juego en este mismo navegador
     (los jugadores no lo ven). Cuando te guste, pulsa «Copiar archivo» o «Descargar» y pásame el contenido (o sustituye
-    <code>js/tutorial-texts.js</code>). Si cambias el orden de los pasos en el código, este orden manda.
+    <code>js/tutorial-texts.js</code>). Si cambias el orden de los pasos en el código, este orden manda. Tutorial ligero: los contadores se ponen en rojo cuando un diálogo se pasa de largo; mejor frases cortas y directas, con su toque de humor.
   </div>
   <div id="list"></div>
 </main>
@@ -155,15 +155,20 @@
           ${f.area ? "<textarea></textarea>" : '<input type="text">'}</div>`).join("");
         const ctrls = wrap.querySelectorAll("textarea, input");
         const smalls = wrap.querySelectorAll("small");
+        const LIMIT = f.k === "say" ? 230 : f.k === "ok" ? 140 : 0; // ligero: se lee de un vistazo
+        const count = (n) => {
+          const len = ctrls[n].value.length;
+          smalls[n].textContent = " " + len + " car." + (LIMIT && len > LIMIT ? " · largo (ideal ≤ " + LIMIT + ")" : "");
+          smalls[n].style.color = LIMIT && len > LIMIT ? "#ff7a7a" : "";
+        };
         const setVal = () => {
           ctrls[0].value = st[f.k] || "";
           ctrls[1].value = (st.en && st.en[f.k]) || "";
-          smalls[0].textContent = ctrls[0].value.length + " car.";
-          smalls[1].textContent = ctrls[1].value.length + " car.";
+          count(0); count(1);
         };
         setVal();
-        ctrls[0].addEventListener("input", () => { st[f.k] = ctrls[0].value; smalls[0].textContent = ctrls[0].value.length + " car."; touched(); });
-        ctrls[1].addEventListener("input", () => { st.en = st.en || {}; st.en[f.k] = ctrls[1].value; smalls[1].textContent = ctrls[1].value.length + " car."; touched(); });
+        ctrls[0].addEventListener("input", () => { st[f.k] = ctrls[0].value; count(0); touched(); });
+        ctrls[1].addEventListener("input", () => { st.en = st.en || {}; st.en[f.k] = ctrls[1].value; count(1); touched(); });
         wrap._set = setVal;
         body.appendChild(wrap);
         wrap.style.marginBottom = "4px";

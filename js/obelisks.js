@@ -924,7 +924,7 @@ const Obelisks = {
   // verdad, es un EMPATE de verdad (winnerTeam = null, ver _showGameOverOverlay).
   checkTurnLimit(roundNumber) {
     if (this.gameOver) return;
-    if (roundNumber <= TURNS_MAX_ROUNDS) return;
+    if (roundNumber <= Turns.maxRounds()) return;
 
     const hpOf = (team) => {
       const o = this.byTeam(team);
@@ -1007,8 +1007,8 @@ const Obelisks = {
     let msg;
     if (reason === "turnLimit") {
       msg = draw
-        ? `Se acabaron los ${TURNS_MAX_ROUNDS} turnos y todo sigue exactamente igualado.`
-        : `Se acabaron los ${TURNS_MAX_ROUNDS} turnos — gana quien más resistió.`;
+        ? `Se acabaron los ${Turns.maxRounds()} turnos y todo sigue exactamente igualado.`
+        : `Se acabaron los ${Turns.maxRounds()} turnos — gana quien más resistió.`;
     } else if (reason === "resigned") {
       msg = I18N.t("mp_resigned");
     } else {
@@ -1047,6 +1047,7 @@ const Obelisks = {
           </div>
           ${this._statsRowsHtml()}
         </div>
+        ${typeof Progress !== "undefined" ? Progress.endHtml() : ""}
         <button type="button" class="p5-banner p5-banner--action obelisk-gameover-panel__btn">
           <span class="p5-banner__label">VOLVER AL MENÚ</span>
         </button>
@@ -1068,6 +1069,7 @@ const Obelisks = {
     document.body.appendChild(overlay);
     this._gameOverEl = overlay;
     requestAnimationFrame(() => overlay.classList.add("obelisk-gameover-overlay--visible"));
+    if (typeof Progress !== "undefined") setTimeout(() => Progress.animateEnd(overlay), 500);
   },
 
   _hideGameOverOverlay() {

@@ -80,6 +80,8 @@ const Net = {
   seed: 1,
   roomId: null,
   levelId: null,
+  mm: false,
+  oppSk: null,
   _tp: null,
   _me: null,
   _nOut: 0,
@@ -119,6 +121,8 @@ const Net = {
     this.seed = cfg.seed;
     this.roomId = cfg.roomId;
     this.levelId = cfg.levelId;
+    this.mm = !!cfg.mm; // Partida Rápida (emparejamiento por SK): 30 rondas y reloj por turno
+    this.oppSk = typeof cfg.oppSk === "number" ? cfg.oppSk : null;
     this._me = cfg.me;
     this._tp = cfg.transport;
     this._nOut = 0;

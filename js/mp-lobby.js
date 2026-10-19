@@ -129,6 +129,7 @@ const MPLobby = {
               if (ch.type === "removed") { if (this._invEl && this._invEl.dataset.id === ch.doc.id) this._hideInvite(); return; }
               const d = ch.doc.data();
               if (!d || d.guestJoined || d.guestDeclined) { if (this._invEl && this._invEl.dataset.id === ch.doc.id) this._hideInvite(); return; }
+              if (d.mm) return; // Partida Rápida: no es una invitación, entra solo (js/matchmaking.js)
               if (Date.now() - (d.createdAt || 0) > MP_INVITE_TTL_MS) return;
               if (this._roomId || this._inMatch()) return; // ya estás en una sala / partida
               if (this._seenInv[ch.doc.id]) return;
@@ -203,6 +204,19 @@ const MPLobby = {
     }
   },
 
+  // Partida Rápida (js/matchmaking.js): la sala ya la creó quien encontró al rival.
+  async joinMatched(id, isHost) {
+    if (this._roomId || this._inMatch()) return;
+    try {
+      if (!isHost) await this._db.collection("rooms").doc(id).update({ guestJoined: true });
+      if (typeof Friends !== "undefined") Friends.close();
+      this._enter(id, isHost);
+    } catch (e) {
+      console.warn(e);
+      this._toast(this.t("mp_err"));
+    }
+  },
+
   // ---------- Invitar (anfitrión) ----------
   async invite(friendUid, friendName) {
     if (!this._uid || this._roomId || this._inMatch()) return;
@@ -241,6 +255,10 @@ const MPLobby = {
     this._ensureOverlay();
     this._renderLobby();
     this._overlay.classList.add("mp-overlay--visible");
+    clearTimeout(this._mmTimer);
+    this._mmTimer = setTimeout(() => {
+      if (this._roomId === id && !this._launched && this._data && this._data.mm) { this._toast(this.t("mm_afk")); this.leave(); }
+    }, 75000); // Partida Rápida: quien no confirma equipo a tiempo cierra la sala
     this._unsubRoom = this._db.collection("rooms").doc(id).onSnapshot(
       (snap) => this._onRoom(snap),
       (e) => { console.warn("room:", e && e.code); this._toast(this.t("mp_err")); this._closeRoomLocal(); }
@@ -257,7 +275,7 @@ const MPLobby = {
     const prev = this._data;
     this._data = d;
     if (d.guestDeclined && this._isHost && !this._launched) {
-      this._toast(this.t("mp_declined", { name: d.guestName }));
+      this._toast(this.t(d.mm ? "mp_guest_left" : "mp_declined", { name: d.guestName }));
       this.leave();
       return;
     }
@@ -270,6 +288,11 @@ const MPLobby = {
       return;
     }
     if (!this._launched) this._renderLobby();
+    // Partida Rápida: empieza sola cuando los dos han confirmado equipo.
+    if (d.mm && this._isHost && !this._launched && !this._autoStart && d.hostReady && d.guestReady && d.guestJoined && d.hostRace && d.guestRace) {
+      this._autoStart = true;
+      setTimeout(() => { this._autoStart = false; if (this._roomId) this._start(); }, 900);
+    }
   },
 
   async _upd(patch) {
@@ -281,17 +304,20 @@ const MPLobby = {
     const id = this._roomId;
     const host = this._isHost;
     const wasLaunched = this._launched;
+    this._lastMm = !!(this._data && this._data.mm);
     this._closeRoomLocal();
     if (!id || wasLaunched) return;
     try {
       const ref = this._db.collection("rooms").doc(id);
       if (host) await ref.delete();
+      else if (this._lastMm) await ref.update({ guestDeclined: true });
       else await ref.update({ guestJoined: false, guestReady: false, guestRace: null });
     } catch (e) {}
   },
 
   _closeRoomLocal() {
     if (this._unsubRoom) { this._unsubRoom(); this._unsubRoom = null; }
+    clearTimeout(this._mmTimer);
     this._roomId = null;
     this._data = null;
     if (this._overlay) {
@@ -355,16 +381,16 @@ const MPLobby = {
       </button>`).join("");
     const lvl = this._levels().find((l) => l.id === d.level) || this._levels()[0];
     const levelCards = this._levels().map((l) => `
-      <button type="button" class="mp-level ${d.level === l.id ? "mp-level--on" : ""}" data-level="${l.id}" ${this._isHost && !d.hostReady && !d.guestReady ? "" : "disabled"}>
+      <button type="button" class="mp-level ${d.level === l.id ? "mp-level--on" : ""}" data-level="${l.id}" ${this._isHost && !d.mm && !d.hostReady && !d.guestReady ? "" : "disabled"}>
         <img src="${l.islandImg}" alt="" draggable="false"><span>${this._esc(this.t(l.nameKey))}</span>
       </button>`).join("");
     const bothReady = d.hostReady && d.guestReady && d.guestJoined && d.hostRace && d.guestRace;
     const readyBtn = `<button type="button" class="p5-banner p5-banner--action mp-btn" data-act="ready" ${meRace && otherJoined ? "" : "disabled"} style="--p5-tone:${meReady ? "#4a3d52" : "#1f6b34"}"><span class="p5-banner__label">${this.t(meReady ? "mp_cancel_ready" : "mp_im_ready")}</span></button>`;
-    const startBtn = this._isHost
+    const startBtn = this._isHost && !d.mm
       ? `<button type="button" class="p5-banner p5-banner--action mp-btn mp-btn--go ${bothReady ? "" : "mp-btn--off"}" data-act="start" ${bothReady ? "" : "disabled"} style="--p5-tone:#ffcf3d"><span class="p5-banner__label">${this.t("mp_start")}</span></button>`
       : "";
     this._body.innerHTML = `
-      <div class="p5-banner__label settings-panel__title">${this.t("mp_title")}</div>
+      <div class="p5-banner__label settings-panel__title">${this.t(d.mm ? "mm_title" : "mp_title")}</div>
       <div class="mp-slots">
         ${this._slotHtml("host")}
         <div class="mp-vs">VS</div>
@@ -375,14 +401,14 @@ const MPLobby = {
         <div class="mp-races">${raceCards}</div>
       </div>
       <div class="mp-section">
-        <div class="mp-section__title">${this._isHost ? this.t("mp_pick_level") : this._esc(this.t("mp_level_by", { name: d.hostName }))}</div>
-        <div class="mp-levels">${this._isHost ? levelCards : `<div class="mp-level mp-level--on mp-level--static"><img src="${lvl ? lvl.islandImg : ""}" alt="" draggable="false"><span>${lvl ? this._esc(this.t(lvl.nameKey)) : ""}</span></div>`}</div>
+        <div class="mp-section__title">${d.mm ? this.t("mm_random_level") : this._isHost ? this.t("mp_pick_level") : this._esc(this.t("mp_level_by", { name: d.hostName }))}</div>
+        <div class="mp-levels">${this._isHost && !d.mm ? levelCards : `<div class="mp-level mp-level--on mp-level--static"><img src="${lvl ? lvl.islandImg : ""}" alt="" draggable="false"><span>${lvl ? this._esc(this.t(lvl.nameKey)) : ""}</span></div>`}</div>
       </div>
       <div class="mp-actions">
         ${readyBtn}${startBtn}
         <button type="button" class="p5-banner p5-banner--action mp-btn" data-act="leave" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">${this.t("mp_leave")}</span></button>
       </div>
-      ${this._isHost && !bothReady ? `<div class="mp-hint">${this.t("mp_start_wait")}</div>` : ""}`;
+      ${this._isHost && !d.mm && !bothReady ? `<div class="mp-hint">${this.t("mp_start_wait")}</div>` : ""}`;
     this._body.querySelectorAll("[data-race]").forEach((b) =>
       b.addEventListener("click", () => {
         if (typeof SFX !== "undefined") SFX.click();
@@ -420,6 +446,7 @@ const MPLobby = {
     if (this._unsubRoom) { this._unsubRoom(); this._unsubRoom = null; }
     const roomId = this._roomId;
     Net.onStatus = (s) => this._onNetStatus(s);
+    if (d.mm && typeof TurnTimer !== "undefined") TurnTimer.start();
     try {
       await Net.launch({
         role: host ? "host" : "guest",
@@ -431,6 +458,8 @@ const MPLobby = {
         me: this._uid,
         myName: host ? d.hostName : d.guestName,
         otherName: other,
+        mm: !!d.mm,
+        oppSk: d.mm ? (host ? d.guestSk : d.hostSk) : null,
         transport: NetFirestoreTransport(this._db, roomId, this._uid),
       });
     } catch (e) {
@@ -542,6 +571,7 @@ const MPLobby = {
     const host = Net.role === "host";
     if (resign && !Net.ended) Net.resign();
     this._clearToast();
+    if (typeof TurnTimer !== "undefined") TurnTimer.stop();
     const roomId = this._roomId || id;
     Net.end(true);
     this._roomId = null;

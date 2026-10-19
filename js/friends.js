@@ -258,6 +258,7 @@ const Friends = {
     const msg = this._msg ? `<div class="account-msg account-msg--${this._msg.kind}">${this._esc(this._msg.text)}</div>` : "";
     B.innerHTML = `
       <div class="p5-banner__label settings-panel__title">${I18N.t("fr_title")}</div>
+      <button type="button" class="p5-banner p5-banner--action mm-quick" data-act="quick"><i class="ph-fill ph-lightning"></i><span class="p5-banner__label">${I18N.t("mm_quick")}</span></button>
       <div class="friends-add">
         <label class="account-field"><span class="account-field__label">${I18N.t("fr_add_title")}</span>
           <input id="fr-name" type="text" placeholder="${I18N.t("fr_ph")}" maxlength="64" autocomplete="off" spellcheck="false" autocapitalize="none"></label>
@@ -281,6 +282,7 @@ const Friends = {
         if (typeof SFX !== "undefined") SFX.click();
         const a = b.dataset.act;
         if (a === "send") this._send();
+        else if (a === "quick") { this.close(); if (typeof Matchmaking !== "undefined") Matchmaking.start(); }
         else if (a === "chat") this._openChat(b.dataset.id);
         else if (a === "invite") {
           const f = this._friendByPair(b.dataset.id);

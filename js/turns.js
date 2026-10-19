@@ -32,6 +32,8 @@ const TURNS_MAX_ACTIONS = 2;
 // onRoundEnd (ver su comentario más abajo), así el contador que se muestra
 // sobre el botón cuenta lo mismo que ya cuentan los oyentes existentes.
 const TURNS_MAX_ROUNDS = 50;
+// Partida Rápida online (emparejamiento por SK): partidas más cortas, con reloj por turno (js/turntimer.js).
+const TURNS_QUICK_ROUNDS = 30;
 
 // Pedido explícito (original, en pruebas): "de momento para hacer pruebas,
 // que los enemigos no ataquen estamos en modo sandbox" — la IA rival
@@ -51,6 +53,8 @@ const TURNS_MAX_ROUNDS = 50;
 const TURNS_SANDBOX_NO_ENEMY_ATTACK = false;
 
 const Turns = {
+  // Rondas máximas de la partida actual (la Partida Rápida online es más corta).
+  maxRounds() { return typeof Net !== "undefined" && Net.active && Net.mm ? TURNS_QUICK_ROUNDS : TURNS_MAX_ROUNDS; },
   activeTeam: "player", // "player" | "enemy"
   actionsUsed: {}, // unitId -> nº de acciones gastadas en SU turno actual
   _btn: null,
@@ -367,7 +371,7 @@ const Turns = {
   _updateButtonState() {
     if (!this._btn) return;
     this._btn.classList.add("end-turn-btn--visible");
-    if (this._turnCounterEl) this._turnCounterEl.textContent = `Turno ${this.roundNumber} / ${TURNS_MAX_ROUNDS}`;
+    if (this._turnCounterEl) this._turnCounterEl.textContent = `Turno ${this.roundNumber} / ${this.maxRounds()}`;
     const isPlayerTurn = this.activeTeam === "player" && !this._aiRunning;
     this._btn.disabled = !isPlayerTurn;
     this._btn.classList.toggle("end-turn-btn--thinking", !isPlayerTurn);
@@ -602,7 +606,7 @@ const Turns = {
     const theirs = power(target);
     const myUnits = Units.list.filter((u) => u.team === team).length;
     const hpFrac = tObelisk.hp / tObelisk.maxHp;
-    const lateness = Math.min(1, this.roundNumber / (typeof TURNS_MAX_ROUNDS !== "undefined" ? TURNS_MAX_ROUNDS : 60));
+    const lateness = Math.min(1, this.roundNumber / this.maxRounds());
 
     const assault =
       0.6 * Math.min(3, mine / (theirs + 1)) + 1.5 * (1 - hpFrac) + 1.5 * lateness + (myUnits >= 3 ? 0.3 : -0.6);
