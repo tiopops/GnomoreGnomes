@@ -848,7 +848,7 @@ const GamepadCtl = {
       if (b && !b.classList.contains("end-turn-btn--thinking")) this._clickNow(b);
       return;
     }
-    // Con objetivos a la vista (lanzar al huevo/bumper/gruya, pasar el gnomo, atacar...): LB/RB los recorren
+    // Con objetivos a la vista (lanzar al huevo/bumper/grulla, pasar el gnomo, atacar...): LB/RB los recorren
     // y la cámara se centra en cada uno. Sin objetivos, LB/RB cambian de unidad como siempre.
     if ((act === "prevUnit" || act === "nextUnit") && this._cycleTarget(act === "nextUnit" ? 1 : -1)) return;
     if (act === "prevUnit") { this._cycleUnit(-1); return; }
@@ -891,7 +891,7 @@ const GamepadCtl = {
     if (typeof Villages !== "undefined") Villages.deselect();
     if (typeof Gnome !== "undefined" && Gnome.hideAllBadges) Gnome.hideAllBadges();
   },
-  // Marcadores de OBJETIVO visibles (no los de movimiento): flechas del huevo, bumpers, gruya, aliados a los que
+  // Marcadores de OBJETIVO visibles (no los de movimiento): flechas del huevo, bumpers, grulla, aliados a los que
   // pasar, enemigos a los que atacar, objetivos de habilidades...
   _targetMarkers() {
     const sel = ".board-marker.pass-marker:not(.egg-preview-marker):not(.egg-throw-marker--center), .board-marker.attack-marker, .board-marker.catch-marker, .board-marker.ability-pick-marker";

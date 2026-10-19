@@ -471,11 +471,11 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Aquí no hay setas ni volcanes: hay un huevo con muy mala leche y unos bumpers. Hoy jugaremos al pinball con el huevo, como en aquel deporte de balón explosivo: cada rebote lo CARGA (sin números: tú lo notarás en el destello, que va cambiando de color, y en que cada rebote suena más agudo). Sí, el huevo es la bola. Y los gnomos, la fuerza motriz.",
+   "say": "Aquí no hay setas ni volcanes: hay un huevo con muy mala leche y unos bumpers. Hoy jugaremos al pinball con el huevo, como en aquel deporte de balón explosivo: cada rebote lo CARGA (lo notarás en el destello, que va cambiando de color, y en que cada rebote suena más agudo; y si mantienes pulsado el huevo, una pastilla te dice tus rebotes y la carga X/10). Sí, el huevo es la bola. Y los gnomos, la fuerza motriz.",
    "button": "A jugar",
    "mood": "normal",
    "en": {
-    "say": "No mushrooms or volcanoes here: just an extremely cranky egg and some bumpers. Today we play egg pinball, like that explosive-ball sport: every bounce CHARGES it (no numbers: you'll notice it in the flash that keeps changing colour, and in each bounce sounding higher). Yes, the egg is the ball. And the gnomes are the engine.",
+    "say": "No mushrooms or volcanoes here: just an extremely cranky egg and some bumpers. Today we play egg pinball, like that explosive-ball sport: every bounce CHARGES it (you'll notice it in the flash that keeps changing colour and in each bounce sounding higher; and if you hold the egg, a little pill shows your bounces and the charge X/10). Yes, the egg is the ball. And the gnomes are the engine.",
     "button": "Let's play"
    }
   },
@@ -502,12 +502,12 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Ahora lo bueno: los bumpers. El huevo salta de un bumper a otro si están cerca y el camino está despejado (sin niebla), pero cada bumper solo rebota UNA vez por turno: nada de ping-pong. Cada rebote lo carga un nivel y hasta el borde del mapa cuenta. Te he puesto dos bumpers. Lanza otro gnomo y mira la carambola.",
+   "say": "Ahora lo bueno: los bumpers. El huevo salta de un bumper a otro si están cerca y el camino está despejado (sin niebla), pero cada bumper solo rebota UNA vez por turno: nada de ping-pong. Cada rebote lo carga un nivel y hasta el borde del mapa cuenta. Mientras haya bumpers cerca a la vista, el huevo seguirá rebotando de uno a otro, y al final frena suavemente. Te he puesto dos bumpers. Lanza otro gnomo y mira la carambola.",
    "mission": "Lanza otro gnomo y provoca una carambola",
    "ok": "¡Carambola! Y fíjate cómo suena cada golpe más agudo que el anterior. Como una discoteca, pero con más daño.",
    "mood": "grunon",
    "en": {
-    "say": "Now the good part: bumpers. The egg jumps from one bumper to another if they're close and the path is clear (no fog), but each bumper only bounces ONCE per turn: no ping-pong. Every bounce charges it one level, and even the map edge counts. I've placed two bumpers. Throw another gnome and watch the carom.",
+    "say": "Now the good part: bumpers. The egg jumps from one bumper to another if they're close and the path is clear (no fog), but each bumper only bounces ONCE per turn: no ping-pong. Every bounce charges it one level, and even the map edge counts. While there are visible bumpers nearby, the egg keeps bouncing from one to the next, and slows down smoothly at the end. I've placed two bumpers. Throw another gnome and watch the carom.",
     "mission": "Throw another gnome and cause a carom",
     "ok": "Carom! And notice how every hit sounds higher than the last. Like a disco, but with more damage."
    }
@@ -522,28 +522,28 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Si lo rebotas con la carga al máximo, EXPLOTA. Cada equipo recibe tanta Gloria como rebotes haya dado. Lo he dejado listo: casi al máximo y con tus rebotes de ventaja. Lanza el último gnomo y que sea lo que Dios quiera.",
+   "say": "Si lo rebotas con la carga al máximo, EXPLOTA. Cada equipo cobra tanta Gloria como rebotes haya dado, con lluvia de monedas y hasta 3 estrellas de premio según la cantidad. Lo he dejado listo: casi al máximo y con tus rebotes de ventaja. Lanza el último gnomo y que sea lo que Dios quiera.",
    "mission": "Haz estallar el huevo",
    "ok": "¡BOOM! Plumas, luces y un huevo hecho añicos. Y mira quién viene a poner orden...",
    "mood": "grunon",
    "en": {
-    "say": "If you bounce it at full charge, it EXPLODES. Each team receives as much Glory as bounces it made. I've left it ready: almost maxed and with your bounces in the lead. Throw the last gnome and let fate decide.",
+    "say": "If you bounce it at full charge, it EXPLODES. Each team collects as much Glory as bounces it made, with a shower of coins and up to 3 prize stars depending on the amount. I've left it ready: almost maxed and with your bounces in the lead. Throw the last gnome and let fate decide.",
     "mission": "Make the egg explode",
     "ok": "BOOM! Feathers, lights and a shattered egg. And look who's coming to restore order..."
    }
   },
   {
-   "say": "La gruya aparece para equilibrar la partida: se posa en el obelisco del que más puntos ganó con el huevo y se queda dos turnos. Mientras tanto, ese obelisco no puede reclutar, ni mejorar habilidades, ni usar la herrería. Si quedas el último, te tocará a ti. Y como es un objeto del escenario, se vuelve transparente si te tapa.",
-   "button": "Vaya con la gruya",
+   "say": "La grulla aparece para equilibrar la partida: se posa en el obelisco del que más puntos ganó con el huevo y se queda dos turnos completos de su dueño. Mientras tanto, ese obelisco no puede reclutar, ni mejorar habilidades, ni usar la herrería. Si quedas el último, te tocará a ti. Y como es un objeto del escenario, se vuelve transparente si te tapa.",
+   "button": "Vaya con la grulla",
    "mood": "normal",
    "en": {
-    "say": "The crane shows up to balance the game: it lands on the obelisk of whoever won the most points with the egg and stays two turns. Meanwhile, that obelisk can't recruit, upgrade abilities or use the armory. If you're last, it'll be your turn. And since it's a scenery object, it turns transparent when it covers you.",
+    "say": "The crane shows up to balance the game: it lands on the obelisk of whoever won the most points with the egg and stays for two full turns of its owner. Meanwhile, that obelisk can't recruit, upgrade abilities or use the armory. If you're last, it'll be your turn. And since it's a scenery object, it turns transparent when it covers you.",
     "button": "Wow, the crane"
    }
   },
   {
-   "say": "¿Tu obelisco bloqueado? Solución clásica: lánzale un gnomo a la gruya. Se asusta, se contrae y vuela al siguiente obelisco (el del siguiente que más puntos ganó), y así hasta visitarlos todos. Entonces se va y el huevo vuelve a nacer en el centro. Dale un gnomazo.",
-   "mission": "Espanta a la gruya con un gnomo",
+   "say": "¿Tu obelisco bloqueado? Solución clásica: lánzale un gnomo a la grulla. Se asusta, se contrae y vuela al siguiente obelisco (el del siguiente que más puntos ganó), y así hasta visitarlos todos. Entonces se va y el huevo vuelve a nacer en el centro. Dale un gnomazo.",
+   "mission": "Espanta a la grulla con un gnomo",
    "ok": "¡Plumas por todas partes! Dos turnos en cada obelisco, a menos que alguien le dé un susto.",
    "mood": "grunon",
    "en": {
@@ -553,7 +553,7 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Y eso es todo de Hurrycrane Village. Resumen: cada rebote carga el huevo; obeliscos y tótems pagan el golpe según la carga; con la carga al máximo, explota; entonces la gruya se posa donde más puntos se ganaron y bloquea ese obelisco hasta que se vaya. ¡Suerte, la vas a necesitar!",
+   "say": "Y eso es todo de Hurrycrane Village. Resumen: cada rebote carga el huevo; obeliscos y tótems pagan el golpe según la carga; con la carga al máximo, explota; entonces la grulla se posa donde más puntos se ganaron y bloquea ese obelisco hasta que se vaya. ¡Suerte, la vas a necesitar!",
    "button": "TERMINAR TUTORIAL",
    "mood": "aplaude",
    "en": {

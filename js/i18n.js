@@ -44,9 +44,9 @@ const STRINGS = {
     level_colinas_rockntroll_f3: "Volcán: aliméntalo con gnomos o piedras y soltará gnomos en llamas contra el rival.",
     level_hurrycrane_village: "Hurrycrane Village",
     level_hurrycrane_village_flavor: "Un poblado sobre las nubes, azotado por vientos que nunca descansan.",
-    level_hurrycrane_village_f1: "Huevo de Grulla: se carga (10 niveles) con cada rebote, como un balón de Strikers; si nadie lo golpea, se enfría.",
+    level_hurrycrane_village_f1: "Huevo de Grulla: se carga (10 niveles) con cada rebote, como un balón de Strikers; encadena bumpers cercanos y, si nadie lo golpea, se enfría. Mantén pulsado para ver tus rebotes.",
     level_hurrycrane_village_f2: "Bumpers, tótems y obeliscos: rebotes de pinball; los tótems y obeliscos pierden 2, 5 o 10 de vida según la carga.",
-    level_hurrycrane_village_f3: "La Gruya: si el huevo explota, se posa en un obelisco 2 turnos y lo bloquea; un gnomazo la espanta.",
+    level_hurrycrane_village_f3: "La Grulla: si el huevo explota, cada equipo cobra Gloria según sus rebotes; luego se posa 2 turnos en un obelisco y lo bloquea; un gnomazo la espanta.",
     level_coming_soon: "Próximamente",
 
     choose_opponents: "Elige el número de rivales",
@@ -229,9 +229,9 @@ const STRINGS = {
     level_colinas_rockntroll_f3: "Volcano: feed it gnomes or stones and it will unleash burning gnomes on your rival.",
     level_hurrycrane_village: "Hurrycrane Village",
     level_hurrycrane_village_flavor: "A village above the clouds, battered by winds that never rest.",
-    level_hurrycrane_village_f1: "Crane Egg: charges up (10 levels) with every bounce, Strikers-ball style; if nobody hits it, it cools down.",
+    level_hurrycrane_village_f1: "Crane Egg: charges up (10 levels) with every bounce, Strikers-ball style; it chains nearby bumpers and, if nobody hits it, it cools down. Hold it to see your bounces.",
     level_hurrycrane_village_f2: "Bumpers, totems and obelisks: pinball bounces; totems and obelisks lose 2, 5 or 10 health depending on the charge.",
-    level_hurrycrane_village_f3: "The Crane: if the egg explodes, it lands on an obelisk for 2 turns and blocks it; a gnome smash scares it off.",
+    level_hurrycrane_village_f3: "The Crane: if the egg explodes, each team earns Glory per bounce; then it lands on an obelisk for 2 turns and blocks it; a gnome smash scares it off.",
     level_coming_soon: "Coming soon",
 
     choose_opponents: "Choose number of opponents",

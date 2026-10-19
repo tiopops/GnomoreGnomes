@@ -59,7 +59,7 @@ Object.assign(Tutorial, {
       feats: [
         ["ph-egg", "Huevo de Grulla: cada rebote lo carga hasta explotar"],
         ["ph-target", "Bumpers, tótems y obeliscos: rebotes de pinball y carambolas"],
-        ["ph-trophy", "La Gruya: equilibra la partida y bloquea un obelisco"],
+        ["ph-trophy", "La Grulla: equilibra la partida y bloquea un obelisco"],
       ],
     },
   ],
@@ -73,7 +73,7 @@ Object.assign(Tutorial, {
       { id: "basic", icon: "ph-graduation-cap", title: "Primeros pasos", sub: "Lo básico: reclutar, mover, gnomos y combate" },
       { id: "mush", icon: "ph-tree", title: "Tutorial Bosque MushBoom", sub: "Setas explosivas, Altar de Sacrificios y GnomOgro" },
       { id: "rock", icon: "ph-mountains", title: "Tutorial Colinas Rock'n Troll", sub: "Tambores de Guerra, fragmentos y Volcán" },
-      { id: "crane", icon: "ph-egg", title: "Tutorial Hurrycrane Village", sub: "Huevo de Grulla, bumpers y la Gruya" },
+      { id: "crane", icon: "ph-egg", title: "Tutorial Hurrycrane Village", sub: "Huevo de Grulla, bumpers y la Grulla" },
     ];
     list.innerHTML = items
       .map(
@@ -644,7 +644,7 @@ Object.assign(Tutorial, {
       },
       {
         mood: "normal",
-        say: "Aquí no hay setas ni volcanes: hay un huevo con muy mala leche y unos bumpers. Hoy jugaremos al pinball con el huevo, como en aquel deporte de balón explosivo: cada rebote lo CARGA (sin números: tú lo notarás en el destello, que va cambiando de color, y en que cada rebote suena más agudo). Sí, el huevo es la bola. Y los gnomos, la fuerza motriz.",
+        say: "Aquí no hay setas ni volcanes: hay un huevo con muy mala leche y unos bumpers. Hoy jugaremos al pinball con el huevo, como en aquel deporte de balón explosivo: cada rebote lo CARGA (lo notarás en el destello, que va cambiando de color, y en que cada rebote suena más agudo; y si mantienes pulsado el huevo, una pastilla te dice tus rebotes y la carga X/10). Sí, el huevo es la bola. Y los gnomos, la fuerza motriz.",
         button: "A jugar",
       },
       {
@@ -682,7 +682,7 @@ Object.assign(Tutorial, {
       },
       {
         mood: "grunon",
-        say: "Ahora lo bueno: los bumpers. El huevo salta de un bumper a otro si están cerca y el camino está despejado (sin niebla), pero cada bumper solo rebota UNA vez por turno: nada de ping-pong. Cada rebote lo carga un nivel y hasta el borde del mapa cuenta. Te he puesto dos bumpers. Lanza otro gnomo y mira la carambola.",
+        say: "Ahora lo bueno: los bumpers. El huevo salta de un bumper a otro si están cerca y el camino está despejado (sin niebla), pero cada bumper solo rebota UNA vez por turno: nada de ping-pong. Cada rebote lo carga un nivel y hasta el borde del mapa cuenta. Mientras haya bumpers cerca a la vista, el huevo seguirá rebotando de uno a otro, y al final frena suavemente. Te he puesto dos bumpers. Lanza otro gnomo y mira la carambola.",
         mission: "Lanza otro gnomo y provoca una carambola",
         onStart: () => {
           T._refill();
@@ -711,7 +711,7 @@ Object.assign(Tutorial, {
       },
       {
         mood: "grunon",
-        say: "Si lo rebotas con la carga al máximo, EXPLOTA. Cada equipo recibe tanta Gloria como rebotes haya dado. Lo he dejado listo: casi al máximo y con tus rebotes de ventaja. Lanza el último gnomo y que sea lo que Dios quiera.",
+        say: "Si lo rebotas con la carga al máximo, EXPLOTA. Cada equipo cobra tanta Gloria como rebotes haya dado, con lluvia de monedas y hasta 3 estrellas de premio según la cantidad. Lo he dejado listo: casi al máximo y con tus rebotes de ventaja. Lanza el último gnomo y que sea lo que Dios quiera.",
         mission: "Haz estallar el huevo",
         onStart: () => {
           T._refill();
@@ -732,16 +732,16 @@ Object.assign(Tutorial, {
       },
       {
         mood: "normal",
-        say: "La gruya aparece para equilibrar la partida: se posa en el obelisco del que más puntos ganó con el huevo y se queda dos turnos. Mientras tanto, ese obelisco no puede reclutar, ni mejorar habilidades, ni usar la herrería. Si quedas el último, te tocará a ti. Y como es un objeto del escenario, se vuelve transparente si te tapa.",
-        button: "Vaya con la gruya",
+        say: "La grulla aparece para equilibrar la partida: se posa en el obelisco del que más puntos ganó con el huevo y se queda dos turnos completos de su dueño. Mientras tanto, ese obelisco no puede reclutar, ni mejorar habilidades, ni usar la herrería. Si quedas el último, te tocará a ti. Y como es un objeto del escenario, se vuelve transparente si te tapa.",
+        button: "Vaya con la grulla",
         onStart: () => {
           T._focus(unit(), Crane.landed() ? { row: Obelisks.byTeam(Crane.st.team).row, col: Obelisks.byTeam(Crane.st.team).col } : null);
         },
       },
       {
         mood: "grunon",
-        say: "¿Tu obelisco bloqueado? Solución clásica: lánzale un gnomo a la gruya. Se asusta, se contrae y vuela al siguiente obelisco (el del siguiente que más puntos ganó), y así hasta visitarlos todos. Entonces se va y el huevo vuelve a nacer en el centro. Dale un gnomazo.",
-        mission: "Espanta a la gruya con un gnomo",
+        say: "¿Tu obelisco bloqueado? Solución clásica: lánzale un gnomo a la grulla. Se asusta, se contrae y vuela al siguiente obelisco (el del siguiente que más puntos ganó), y así hasta visitarlos todos. Entonces se va y el huevo vuelve a nacer en el centro. Dale un gnomazo.",
+        mission: "Espanta a la grulla con un gnomo",
         onStart: () => {
           T._refill();
           T._giveGnome(unit());
@@ -762,7 +762,7 @@ Object.assign(Tutorial, {
       },
       {
         mood: "aplaude",
-        say: "Y eso es todo de Hurrycrane Village. Resumen: cada rebote carga el huevo; obeliscos y tótems pagan el golpe según la carga; con la carga al máximo, explota; entonces la gruya se posa donde más puntos se ganaron y bloquea ese obelisco hasta que se vaya. ¡Suerte, la vas a necesitar!",
+        say: "Y eso es todo de Hurrycrane Village. Resumen: cada rebote carga el huevo; obeliscos y tótems pagan el golpe según la carga; con la carga al máximo, explota; entonces la grulla se posa donde más puntos se ganaron y bloquea ese obelisco hasta que se vaya. ¡Suerte, la vas a necesitar!",
         button: "TERMINAR TUTORIAL",
         final: true,
       },
