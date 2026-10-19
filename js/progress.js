@@ -16,6 +16,9 @@ Object.assign(STRINGS.es, {
   pg_level: "NIVEL",
   pg_lv_short: "NIV",
   pg_missions: "Misiones diarias",
+  pg_tab_missions: "MISIONES",
+  pg_tab_stats: "ESTADÍSTICAS",
+  pg_tab_unlocks: "PREMIOS",
   pg_bonus: "Completa todas",
   pg_streak: "Racha diaria",
   pg_days: "{n} días",
@@ -41,6 +44,9 @@ Object.assign(STRINGS.en, {
   pg_level: "LEVEL",
   pg_lv_short: "LVL",
   pg_missions: "Daily missions",
+  pg_tab_missions: "MISSIONS",
+  pg_tab_stats: "STATS",
+  pg_tab_unlocks: "REWARDS",
   pg_bonus: "Complete them all",
   pg_streak: "Daily streak",
   pg_days: "{n} days",
@@ -334,11 +340,22 @@ const Progress = {
     return this._pad(Math.floor(t / 3600)) + ":" + this._pad(Math.floor((t % 3600) / 60)) + ":" + this._pad(t % 60);
   },
 
-  profileHtml() {
+  // Barra de nivel del perfil (va dentro de la tarjeta del jugador).
+  heroXpHtml() {
     const s = this.s;
     this._ensureDay();
     const inf = this.info(s.xp);
     const pct = Math.max(0, Math.min(100, Math.round((100 * inf.into) / inf.need)));
+    return `<div class="pf-xp__top"><span>${this.t("pg_level")} ${inf.level}</span><em>${inf.into} / ${inf.need} XP</em></div>
+      <div class="pf-xp__bar"><i style="width:${pct}%"></i></div>`;
+  },
+
+  levelNow() { return this.info(this.s.xp).level; },
+
+  // Pestaña de misiones diarias.
+  missionsHtml() {
+    const s = this.s;
+    this._ensureDay();
     const rows = this.missions(s.day).map((m) => {
       const done = !!s.done[m.i];
       const p = Math.min(m.target, s.prog[m.i] || 0);
@@ -350,19 +367,8 @@ const Progress = {
         <span class="pmis__chk"><i class="ph-bold ph-check"></i></span>
       </div>`;
     }).join("");
-    const streak = s.streak
-      ? `<div class="pmis__streak"><i class="ph-fill ph-fire"></i>${this.t("pg_streak")}<b>${this.t(s.streak === 1 ? "pg_day" : "pg_days", { n: s.streak })}</b></div>`
-      : "";
-    return `
-      <div class="plv">
-        <div class="plv__badge"><small>${this.t("pg_lv_short")}</small><b>${inf.level}</b></div>
-        <div class="plv__main">
-          <div class="plv__top"><span>${this.t("pg_level")} ${inf.level}</span><em>${inf.into} / ${inf.need} XP</em></div>
-          <div class="plv__bar"><i style="width:${pct}%"></i></div>
-        </div>
-      </div>
-      <div class="pstat-sec">${this.t("pg_missions")}</div>
-      <div class="pmis">${rows}
+    const streak = `<div class="pmis__streak"><i class="ph-fill ph-fire"></i>${this.t("pg_streak")}<b>${this.t(s.streak === 1 ? "pg_day" : "pg_days", { n: s.streak })}</b></div>`;
+    return `<div class="pmis">${rows}
         <div class="pmis__row pmis__row--bonus${s.bonus ? " pmis__row--done" : ""}">
           <i class="ph-fill ph-gift pmis__icon"></i>
           <div class="pmis__t"><span>${this.t("pg_bonus")}</span></div>

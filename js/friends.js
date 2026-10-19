@@ -14,6 +14,9 @@
    y desaparece al cerrar o recargar el navegador.
    Los duelos / partidas entre amigos NO están aquí (multijugador pospuesto). */
 
+Object.assign(STRINGS.es, { fr_title: "MULTIJUGADOR", fr_tab_friends: "AMIGOS", fr_tab_req: "SOLICITUDES", fr_empty_req: "Sin solicitudes pendientes" });
+Object.assign(STRINGS.en, { fr_title: "MULTIPLAYER", fr_tab_friends: "FRIENDS", fr_tab_req: "REQUESTS", fr_empty_req: "No pending requests" });
+
 const CHAT_MAX_LEN = 200;
 
 const FRIENDS_ONLINE_MS = 150000; // "en línea" = latido en los últimos 2,5 min
@@ -212,29 +215,34 @@ const Friends = {
     return Account._esc(s);
   },
 
+  _pbtn(act, id, tone, label) {
+    return `<button type="button" class="p5-banner p5-banner--action friends-btn" data-act="${act}"${id ? ` data-id="${id}"` : ""} style="--p5-tone:${tone}"><span class="p5-banner__label">${label}</span></button>`;
+  },
+
   _row(v, kind) {
+    const T = (k) => I18N.t(k);
     const on = kind === "friend" && this._isOn(v.otherUid);
-    const sub = kind === "friend" ? (on ? I18N.t("fr_online") : I18N.t("fr_offline")) : kind === "out" ? I18N.t("fr_pending") : "";
-    let actions = "";
-    if (kind === "in")
-      actions = `<button type="button" class="p5-banner p5-banner--action friends-btn" data-act="accept" data-id="${v.id}" style="--p5-tone:#1f6b34"><span class="p5-banner__label">${I18N.t("fr_accept")}</span></button>
-        <button type="button" class="p5-banner p5-banner--action friends-btn" data-act="del" data-id="${v.id}" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">${I18N.t("fr_reject")}</span></button>`;
-    else if (kind === "out") actions = `<button type="button" class="p5-banner p5-banner--action friends-btn" data-act="del" data-id="${v.id}" style="--p5-tone:#2b2733"><span class="p5-banner__label">${I18N.t("fr_cancel")}</span></button>`;
-    else actions = `${on && typeof MPLobby !== "undefined" ? `<button type="button" class="friends-chatbtn friends-invitebtn" data-act="invite" data-id="${v.id}" title="${I18N.t("mp_invite")}" aria-label="${I18N.t("mp_invite")}"><i class="ph-fill ph-sword"></i></button>` : ""}
-        <button type="button" class="friends-chatbtn" data-act="chat" data-id="${v.id}" title="${I18N.t("fr_chat")}" aria-label="${I18N.t("fr_chat")}"><i class="ph-fill ph-chat-circle-dots"></i>${this._unread[v.id] ? `<span class="friends-chatbtn__n">${this._unread[v.id] > 9 ? "9+" : this._unread[v.id]}</span>` : ""}</button>
-        <button type="button" class="friends-trash" data-act="ask" data-id="${v.id}" title="${I18N.t("fr_remove")}" aria-label="${I18N.t("fr_remove")}"><i class="ph ph-trash"></i></button>`;
     if (kind === "friend" && this._confirm === v.id) {
-      return `<div class="friends-row friends-row--confirm">
-        <div class="friends-row__txt">${this._esc(I18N.t("fr_confirm").replace("{0}", v.otherName))}</div>
-        <div class="friends-row__act">
-          <button type="button" class="p5-banner p5-banner--action friends-btn" data-act="del" data-id="${v.id}" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">${I18N.t("fr_yes")}</span></button>
-          <button type="button" class="p5-banner p5-banner--action friends-btn" data-act="back" style="--p5-tone:#2b2733"><span class="p5-banner__label">${I18N.t("fr_no")}</span></button>
-        </div></div>`;
+      return `<div class="fr-row fr-row--confirm">
+        <div class="fr-row__ask">${this._esc(T("fr_confirm").replace("{0}", v.otherName))}</div>
+        <div class="fr-row__btns">${this._pbtn("del", v.id, "#5a1d1d", T("fr_yes"))}${this._pbtn("back", "", "#2b2733", T("fr_no"))}</div></div>`;
     }
-    return `<div class="friends-row">
-      ${kind === "friend" ? `<span class="friends-dot friends-dot--${on ? "on" : "off"}"></span>` : ""}
-      <div class="friends-row__txt"><span class="friends-row__name">${this._esc(v.otherName)}</span>${sub ? `<span class="friends-row__sub">${sub}</span>` : ""}</div>
-      <div class="friends-row__act">${actions}</div></div>`;
+    const sub = kind === "friend" ? (on ? T("fr_online") : T("fr_offline")) : kind === "out" ? T("fr_pending") : "";
+    const ib = (act, icon, cls, label, extra = "") => `<button type="button" class="fr-ib ${cls}" data-act="${act}" data-id="${v.id}" title="${label}" aria-label="${label}"><i class="${icon}"></i>${extra}</button>`;
+    let actions = "";
+    if (kind === "in") actions = this._pbtn("accept", v.id, "#1f6b34", T("fr_accept")) + this._pbtn("del", v.id, "#5a1d1d", T("fr_reject"));
+    else if (kind === "out") actions = this._pbtn("del", v.id, "#2b2733", T("fr_cancel"));
+    else {
+      const n = this._unread[v.id];
+      actions =
+        (on && typeof MPLobby !== "undefined" ? ib("invite", "ph-fill ph-sword", "fr-ib--go", T("mp_invite")) : "") +
+        ib("chat", "ph-fill ph-chat-circle-dots", "fr-ib--chat", T("fr_chat"), n ? `<span class="fr-ib__n">${n > 9 ? "9+" : n}</span>` : "") +
+        ib("ask", "ph ph-trash", "fr-ib--del", T("fr_remove"));
+    }
+    return `<div class="fr-row${kind === "friend" && !on ? " fr-row--off" : ""}">
+      <div class="fr-av${on ? " fr-av--on" : ""}"><i class="ph-fill ph-user"></i>${kind === "friend" ? `<span class="fr-av__dot"></span>` : ""}</div>
+      <div class="fr-row__txt"><span class="fr-row__name">${this._esc(v.otherName)}</span>${sub ? `<span class="fr-row__sub${on ? " fr-row__sub--on" : ""}">${sub}</span>` : ""}</div>
+      <div class="fr-row__act">${actions}</div></div>`;
   },
 
   _section(title, rows) {
@@ -252,36 +260,44 @@ const Friends = {
     const keep = document.getElementById("fr-name");
     const typed = keep ? keep.value : "";
     const hadFocus = keep && document.activeElement === keep;
-    const inc = this._incoming().map((v) => this._row(v, "in")).join("");
-    const out = this._outgoing().map((v) => this._row(v, "out")).join("");
-    const fr = this._accepted().map((v) => this._row(v, "friend")).join("");
+    const tab = this._tab === "req" ? "req" : "friends";
+    const incV = this._incoming(), outV = this._outgoing(), frV = this._accepted();
+    const inc = incV.map((v) => this._row(v, "in")).join("");
+    const out = outV.map((v) => this._row(v, "out")).join("");
+    const fr = frV.map((v) => this._row(v, "friend")).join("");
     const msg = this._msg ? `<div class="account-msg account-msg--${this._msg.kind}">${this._esc(this._msg.text)}</div>` : "";
+    const tabBtn = (id, label, n, red) => `<button type="button" class="fr-tab${tab === id ? " fr-tab--on" : ""}" data-act="tab" data-tab="${id}"><span>${label}</span>${n ? `<em class="${red ? "fr-tab__n fr-tab__n--red" : "fr-tab__n"}">${n}</em>` : ""}</button>`;
+    const empty = (icon, txt) => `<div class="fr-empty"><i class="ph-fill ph-${icon}"></i><span>${txt}</span></div>`;
+    const listHtml = tab === "friends"
+      ? `<div class="fr-add"><label class="account-field fr-add__field"><input id="fr-name" type="text" placeholder="${I18N.t("fr_ph")}" maxlength="64" autocomplete="off" spellcheck="false" autocapitalize="none" aria-label="${I18N.t("fr_add_title")}"></label>
+          <button type="button" class="fr-add__btn" data-act="send" title="${I18N.t("fr_add_btn")}" aria-label="${I18N.t("fr_add_btn")}"><i class="ph-bold ph-user-plus"></i></button></div>
+         ${msg}
+         <div class="fr-list">${fr || empty("users-three", I18N.t("fr_none"))}</div>`
+      : `${msg}<div class="fr-list">${inc}${out ? `<div class="fr-sep">${I18N.t("fr_sent")}</div>${out}` : ""}${!inc && !out ? empty("envelope-simple", I18N.t("fr_empty_req")) : ""}</div>`;
     B.innerHTML = `
       <div class="p5-banner__label settings-panel__title">${I18N.t("fr_title")}</div>
-      <button type="button" class="p5-banner p5-banner--action mm-quick" data-act="quick"><i class="ph-fill ph-lightning"></i><span class="p5-banner__label">${I18N.t("mm_quick")}</span></button>
-      <div class="friends-add">
-        <label class="account-field"><span class="account-field__label">${I18N.t("fr_add_title")}</span>
-          <input id="fr-name" type="text" placeholder="${I18N.t("fr_ph")}" maxlength="64" autocomplete="off" spellcheck="false" autocapitalize="none"></label>
-        <button type="button" class="p5-banner p5-banner--action friends-send" data-act="send"><span class="p5-banner__label">${I18N.t("fr_add_btn")}</span></button>
+      <div class="fr-top">
+        <button type="button" class="p5-banner p5-banner--action mm-quick" data-act="quick"><i class="ph-fill ph-lightning"></i><span class="p5-banner__label">${I18N.t("mm_quick")}</span></button>
+        <div class="fr-tabs">${tabBtn("friends", I18N.t("fr_tab_friends"), frV.length, false)}${tabBtn("req", I18N.t("fr_tab_req"), incV.length, true)}</div>
       </div>
-      ${msg}
-      ${this._section(I18N.t("fr_requests"), inc)}
-      ${this._section(I18N.t("fr_list"), fr || `<div class="friends-empty">${I18N.t("fr_none")}</div>`)}
-      ${this._section(I18N.t("fr_sent"), out)}`;
+      <div class="fr-scroll">${listHtml}</div>`;
     const input = document.getElementById("fr-name");
-    input.value = typed;
-    if (hadFocus) input.focus();
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        this._send();
-      }
-    });
+    if (input) {
+      input.value = typed;
+      if (hadFocus) input.focus();
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          this._send();
+        }
+      });
+    }
     B.querySelectorAll("[data-act]").forEach((b) =>
       b.addEventListener("click", () => {
         if (typeof SFX !== "undefined") SFX.click();
         const a = b.dataset.act;
         if (a === "send") this._send();
+        else if (a === "tab") { this._tab = b.dataset.tab; this._msg = null; this._confirm = null; this._render(); }
         else if (a === "quick") { this.close(); if (typeof Matchmaking !== "undefined") Matchmaking.start(); }
         else if (a === "chat") this._openChat(b.dataset.id);
         else if (a === "invite") {

@@ -128,27 +128,28 @@ const Account = {
       const verified = this._user.emailVerified;
       B.innerHTML = `
         <div class="p5-banner__label settings-panel__title">${I18N.t("acc_my")}</div>
-        <div class="account-card">
-          <i class="ph-fill ph-user account-card__icon"></i>
-          ${
-            this._editingName
-              ? `<label class="account-field account-field--rename"><input id="acc-newnick" type="text" value="${this._esc(nick)}" maxlength="16" autocomplete="off" spellcheck="false" autocapitalize="none"></label>
-                 <div class="account-rename-btns">
-                   <button type="button" class="p5-banner p5-banner--action friends-btn" data-act="rename-save" style="--p5-tone:#1f6b34"><span class="p5-banner__label">${I18N.t("acc_rename_save")}</span></button>
-                   <button type="button" class="p5-banner p5-banner--action friends-btn" data-act="rename-cancel" style="--p5-tone:#2b2733"><span class="p5-banner__label">${I18N.t("acc_rename_cancel")}</span></button>
-                 </div>`
-              : `<div class="account-card__nick">${this._esc(nick)}<button type="button" class="account-edit" data-act="rename" title="${I18N.t("acc_rename")}" aria-label="${I18N.t("acc_rename")}"><i class="ph-fill ph-pencil-simple"></i></button></div>`
-          }
-          <div class="account-card__mail">${this._esc(this._user.email || "")}</div>
-          <div class="account-card__state account-card__state--${verified ? "ok" : "pending"}">
-            ${verified ? I18N.t("acc_verified") : I18N.t("acc_unverified")}
+        <div class="pf-hero">
+          <button type="button" class="pf-logout" data-act="logout" title="${I18N.t("acc_logout")}" aria-label="${I18N.t("acc_logout")}"><i class="ph-bold ph-sign-out"></i></button>
+          <div class="pf-hero__row">
+            <div class="pf-av"><i class="ph-fill ph-user"></i><span class="pf-av__lv"><small>${typeof Progress !== "undefined" ? Progress.t("pg_lv_short") : "NIV"}</small><b id="acc-lv">1</b></span></div>
+            <div class="pf-id">
+              ${
+                this._editingName
+                  ? `<label class="account-field account-field--rename"><input id="acc-newnick" type="text" value="${this._esc(nick)}" maxlength="16" autocomplete="off" spellcheck="false" autocapitalize="none"></label>
+                     <div class="account-rename-btns">
+                       <button type="button" class="p5-banner p5-banner--action friends-btn" data-act="rename-save" style="--p5-tone:#1f6b34"><span class="p5-banner__label">${I18N.t("acc_rename_save")}</span></button>
+                       <button type="button" class="p5-banner p5-banner--action friends-btn" data-act="rename-cancel" style="--p5-tone:#2b2733"><span class="p5-banner__label">${I18N.t("acc_rename_cancel")}</span></button>
+                     </div>`
+                  : `<div class="pf-id__nick"><span>${this._esc(nick)}</span><button type="button" class="account-edit" data-act="rename" title="${I18N.t("acc_rename")}" aria-label="${I18N.t("acc_rename")}"><i class="ph-fill ph-pencil-simple"></i></button></div>`
+              }
+              <div class="pf-id__mail">${this._esc(this._user.email || "")}</div>
+              <div class="pf-id__state pf-id__state--${verified ? "ok" : "pending"}"><i class="ph-fill ph-${verified ? "seal-check" : "warning-circle"}"></i>${verified ? I18N.t("acc_verified") : I18N.t("acc_unverified")}</div>
+            </div>
           </div>
+          <div class="pf-xp" id="acc-xp"></div>
         </div>
         ${note}
-        <div class="pstat" id="acc-stats"></div>
-        <button type="button" class="p5-banner p5-banner--action account-submit" data-act="logout" style="--p5-tone:#5a1d1d">
-          <span class="p5-banner__label">${I18N.t("acc_logout")}</span>
-        </button>`;
+        <div class="pf" id="acc-stats"></div>`;
       B.querySelector("[data-act=logout]").addEventListener("click", () => this.logout());
       const bind = (act, fn) => { const el = B.querySelector(`[data-act=${act}]`); if (el) el.addEventListener("click", fn); };
       bind("rename", () => {
@@ -238,7 +239,7 @@ const Account = {
     let el = this._body.querySelector(".account-msg");
     if (!el) {
       el = document.createElement("div");
-      const btn = this._body.querySelector("[data-act=submit]") || this._body.querySelector(".pstat");
+      const btn = this._body.querySelector("[data-act=submit]") || this._body.querySelector(".pf");
       if (btn) btn.parentNode.insertBefore(el, btn);
       else this._body.appendChild(el);
     }

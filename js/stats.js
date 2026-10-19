@@ -154,48 +154,52 @@ const PlayerStats = {
     return `<div class="pstat-cell"><i class="ph-fill ph-${icon}"></i><div><b>${value}</b><span>${label}</span></div></div>`;
   },
   _pct(w, g) { return g ? Math.round((100 * w) / g) + "%" : "—"; },
+  _tab: "missions",
 
-  html(s) {
+  statsHtml(s) {
     const races = (typeof RACES !== "undefined" ? RACES : []).filter((r) => r.available);
     const raceRows = races
       .map((r) => {
         const x = s.races[r.id] || { g: 0, w: 0 };
-        return `<div class="pstat-race"><img src="${r.iconImg}" alt="" draggable="false"><div class="pstat-race__t">${I18N.t(r.nameKey)}<em>${x.g} ${x.g === 1 ? "partida" : "partidas"}</em></div><div class="pstat-race__v">${this._pct(x.w, x.g)}</div></div>`;
+        const pct = x.g ? Math.round((100 * x.w) / x.g) : 0;
+        return `<div class="pstat-race"><img src="${r.iconImg}" alt="" draggable="false"><div class="pstat-race__t">${I18N.t(r.nameKey)}<em>${x.g} ${x.g === 1 ? "partida" : "partidas"}</em></div><div class="pstat-race__v">${this._pct(x.w, x.g)}<i style="width:${pct}%"></i></div></div>`;
       })
       .join("");
-    return `
-      ${typeof Progress !== "undefined" ? Progress.profileHtml() : ""}
-      <div class="pstat-tabs">
-        <span class="pstat-tab pstat-tab--on">Estadísticas</span>
-        <span class="pstat-tab pstat-off"><i class="ph-fill ph-lock"></i> Desbloqueos</span>
-      </div>
-      <div class="pstat-sec">Partidas</div>
-      <div class="pstat-grid">
+    return `<div class="pstat-grid">
         ${this._cell("game-controller", s.games, "Jugadas")}
         ${this._cell("trophy", s.wins, "Victorias")}
-        ${this._cell("percent", this._pct(s.wins, s.games), "Ratio de victorias")}
+        ${this._cell("percent", this._pct(s.wins, s.games), "% victorias")}
         ${this._cell("fire", s.bestStreak, "Mejor racha")}
+        ${this._cell("users", `${s.onlineWins}/${s.onlineGames}`, "Online")}
+        ${this._cell("target", `${s.aiWins}/${s.aiGames}`, "Contra la IA")}
+        ${this._cell("flag-banner", s.totems, "Tótems")}
+        ${this._cell("sword", s.kills, "Bajas")}
       </div>
-      <div class="pstat-sec">Online y contra la IA</div>
-      <div class="pstat-grid">
-        ${this._cell("users", `${s.onlineWins} / ${s.onlineGames}`, "Online ganadas")}
-        ${this._cell("target", `${s.aiWins} / ${s.aiGames}`, "Contra la IA")}
-      </div>
-      <div class="pstat-sec">Récords</div>
-      <div class="pstat-grid">
-        ${this._cell("flag-banner", s.totems, "Tótems capturados")}
-        ${this._cell("sword", s.kills, "Bajas enemigas")}
-      </div>
-      <div class="pstat-sec">Razas</div>
-      <div class="pstat-races">${raceRows}</div>
-      `;
+      <div class="pstat-races">${raceRows}</div>`;
+  },
+
+  html(s) {
+    const T = (k) => (typeof Progress !== "undefined" ? Progress.t(k) : k);
+    const tab = this._tab === "stats" ? "stats" : "missions";
+    const tb = (id, label) => `<button type="button" class="pf-tab${tab === id ? " pf-tab--on" : ""}" data-pftab="${id}"><span>${label}</span></button>`;
+    return `<div class="pf-tabs">${tb("missions", T("pg_tab_missions"))}${tb("stats", T("pg_tab_stats"))}<span class="pf-tab pf-tab--off"><span><i class="ph-fill ph-lock"></i>${T("pg_tab_unlocks")}</span></span></div>
+      <div class="pf-body">${tab === "missions" && typeof Progress !== "undefined" ? Progress.missionsHtml() : this.statsHtml(s)}</div>`;
   },
 
   // Rellena el contenedor del menú de usuario (auth.js) con nivel, misiones y estadísticas.
   async mount(el) {
     if (!el) return;
+    const xp = el.parentNode && el.parentNode.querySelector("#acc-xp");
+    const lv = el.parentNode && el.parentNode.querySelector("#acc-lv");
     const paint = (st) => {
+      if (xp && typeof Progress !== "undefined") xp.innerHTML = Progress.heroXpHtml();
+      if (lv && typeof Progress !== "undefined") lv.textContent = Progress.levelNow();
       el.innerHTML = this.html(st);
+      el.querySelectorAll("[data-pftab]").forEach((b) => b.addEventListener("click", () => {
+        if (typeof SFX !== "undefined") SFX.click();
+        this._tab = b.dataset.pftab;
+        paint(this._cache || st);
+      }));
       if (typeof Progress !== "undefined") Progress.watch(el, () => { if (el.isConnected) paint(this._cache || st); });
     };
     paint(this._cache || this._normalize({}));
