@@ -54,8 +54,20 @@ const Friends = {
     if (mp)
       mp.addEventListener("click", () => {
         if (typeof SFX !== "undefined") SFX.click();
-        if (this._uid) this.open();
-        else Account.open();
+        // Antes de decidir hay que saber si hay sesión: si Firebase aún está arrancando o la
+        // sesión se está recuperando, se espera (antes se abría el perfil/entrar por error).
+        const go = () => {
+          if (Account._user) {
+            if (!this._uid) this._onAuth(Account._user, Account._profile);
+            this.open();
+          } else Account.open();
+        };
+        const hasCfg = typeof GG_FIREBASE_CONFIG !== "undefined" && GG_FIREBASE_CONFIG;
+        if (Account._authKnown || !hasCfg) go();
+        else {
+          const t = new Promise((r) => setTimeout(r, 4000));
+          Promise.race([Account._ensureFirebase().then(() => Account._whenKnown()), t]).catch(() => {}).then(go);
+        }
       });
     document.addEventListener("gg:authchange", (e) => this._onAuth(e.detail && e.detail.user, e.detail && e.detail.profile));
     document.addEventListener("visibilitychange", () => {

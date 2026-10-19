@@ -76,7 +76,6 @@ const PROGRESS_SK_LEVELUP = 10; // el SK sube un poco con cada nivel (el progres
 const PROGRESS_MISSIONS_PER_DAY = 4;
 const PROGRESS_ALL_BONUS_XP = 100;
 const PROGRESS_VERSION = 2; // al subirla, todas las cuentas empiezan de cero (nivel, XP, SK y misiones)
-const PROGRESS_MIN_ROUNDS = 6; // partidas más cortas no dan nada (evita abusar de rendiciones)
 const PROGRESS_XP_WIN = 60;
 const PROGRESS_XP_DRAW = 30;
 const PROGRESS_XP_LOSS = 25;
@@ -189,7 +188,7 @@ const Progress = {
   },
 
   // ---------- Nivel ----------
-  need(level) { return 200 + 50 * level; }, // XP para pasar de `level` al siguiente
+  need(level) { return 500 + 100 * level; }, // XP para pasar de `level` al siguiente
   info(xp) {
     let level = 1, rem = Math.max(0, xp | 0);
     while (level < PROGRESS_LEVEL_CAP && rem >= this.need(level)) { rem -= this.need(level); level++; }
@@ -279,12 +278,6 @@ const Progress = {
     const skBefore = s.sk;
     const win = m.result === "win";
     const gained = { base: 0, missions: [], bonus: 0 };
-    // Partida demasiado corta (rendición temprana, etc.): no da XP, ni misiones, ni SK.
-    if (typeof m.rounds === "number" && m.rounds < PROGRESS_MIN_ROUNDS) {
-      this.lastSummary = { before, after: before, gained, total: 0, skDelta: 0 };
-      return this.lastSummary;
-    }
-
     // XP de la partida
     let base = win ? PROGRESS_XP_WIN : m.result === "draw" ? PROGRESS_XP_DRAW : PROGRESS_XP_LOSS;
     base += Math.min(10, m.kills || 0) + Math.min(5, m.totems || 0) * 3;

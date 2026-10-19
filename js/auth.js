@@ -29,6 +29,9 @@ const Account = {
   _sdkPromise: null,
   _busy: false,
   _editingName: false,
+  _authKnown: false, // ya se sabe si hay sesión o no (primer aviso de Firebase)
+  _knownWaiters: [],
+  _whenKnown() { return this._authKnown ? Promise.resolve() : new Promise((r) => this._knownWaiters.push(r)); },
 
   init() {
     this._ensureButton();
@@ -289,6 +292,8 @@ const Account = {
         if (user && this._profile) this._indexEmail(user, this._profile.username); // cuentas anteriores al buscador por correo
         this._btn.classList.toggle("settings-gear-btn--logged", !!user);
         document.dispatchEvent(new CustomEvent("gg:authchange", { detail: { user, profile: this._profile } }));
+        this._authKnown = true;
+        this._knownWaiters.splice(0).forEach((r) => r());
         if (this._overlay.classList.contains("settings-overlay--visible") && !this._busy) this._render();
       });
     })().catch((e) => {
