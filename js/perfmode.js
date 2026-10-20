@@ -56,6 +56,19 @@ const PerfMode = {
     const saved = localStorage.getItem(this._STORAGE_KEY);
     this.enabled = saved === "1";
     this._applyGlobalToggle();
+    // Pedido explícito (APK): el móvil debe aprovechar las mejoras de
+    // rendimiento. En un teléfono el modo rendimiento arranca ACTIVADO la
+    // primera vez (sin preferencia guardada); el jugador lo puede apagar en
+    // Ajustes > Gráficos y su elección se respeta a partir de ahí.
+    if (saved === null && this._isPhone()) this.setEnabled(true);
+  },
+
+  _isPhone() {
+    try {
+      const C = window.Capacitor;
+      if (C && C.isNativePlatform && C.isNativePlatform()) return true;
+      return window.matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) <= 820;
+    } catch (e) { return false; }
   },
 
   setEnabled(enabled) {

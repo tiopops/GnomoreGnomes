@@ -265,7 +265,7 @@ body {
    display:block/width:100% dentro de él). */
 .main-logo-wrap {
   position: relative;
-  max-width: min(840px, 92vw);
+  max-width: min(840px, 92vw, 36vh * 1.776);
   margin: 0 auto 22px;
   /* Pedido explícito: "al poner el raton sobre el logo debe ser el puntero
      del juego de color blanco" — reposo en TODO el logo salvo la zona
@@ -518,6 +518,44 @@ h2 {
 .menu-btn:disabled::after {
   background: #2b2731;
 }
+
+/* Botones del menú principal (aprobado en demo_botones_menu_simple): rectángulo
+   irregular de doble capa + cinta de color a la izquierda con el icono directo
+   sobre ella. Solo #main-menu: el resto de .menu-btn del juego no cambia.
+   Tamaños vía variables para que mobile.css los ajuste sin pelear especificidad. */
+.main-menu .menu-btn {
+  --c: #8f7bb8; --c2: #4b3a66;
+  height: var(--mb-h, 62px);
+  padding: 0 24px 0 calc(var(--mb-rib, 66px) + 18px);
+  justify-content: flex-start;
+  white-space: nowrap;
+  font-size: var(--mb-fs, 0.95rem);
+  letter-spacing: 0.03em;
+}
+.main-menu .menu-btn::before,
+.main-menu .menu-btn::after { clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }
+.main-menu .menu-btn::after {
+  inset: var(--gg-frame-outline-width);
+  background: linear-gradient(100deg, var(--c2) 0%, #352c3f 45%, #2c2435 100%);
+}
+.main-menu .menu-btn i {
+  position: absolute;
+  left: var(--gg-frame-outline-width); top: var(--gg-frame-outline-width); bottom: var(--gg-frame-outline-width);
+  width: var(--mb-rib, 66px); height: auto;
+  background: var(--c); border: none; transform: none;
+  clip-path: polygon(18% 0, 100% 0, 84% 100%, 0 100%);
+  font-size: calc(var(--mb-fs, 0.95rem) * 1.7);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
+  z-index: 2;
+}
+.main-menu .menu-btn i::before { transform: none; }
+.main-menu .menu-btn > span { position: relative; z-index: 3; }
+#btn-new-game { --c: #f0a21a; --c2: #8a4a12; --mb-h: 70px; font-size: calc(var(--mb-fs, 0.95rem) * 1.15); }
+#btn-tutorial { --c: #4fb3a0; --c2: #1f5a52; }
+#btn-resume-game { --c: #5d93e0; --c2: #274d82; }
+#btn-multiplayer { --c: #d9566b; --c2: #7a2a3a; }
+.main-menu .menu-btn:disabled { --c: #4a4352; --c2: #2b2731; }
+.main-menu .menu-btn:disabled::after { background: #2b2731; }
 
 .menu-footer {
   margin-top: 30px;
@@ -11950,3 +11988,9 @@ body.tut-on .settings-gear-btn--update { display: none; }
 .au-pct { font-weight: 900; font-size: 1rem; color: #ffcf3d; text-shadow: 2px 2px 0 #000; font-variant-numeric: tabular-nums; }
 .au-skip { margin-top: 6px; padding: 8px 22px; border: none; background: #2b2733; color: #fff; font-family: inherit; font-weight: 900; font-size: .8rem; letter-spacing: .08em; cursor: pointer; clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }
 .au-overlay--check .au-title, .au-overlay--check .au-bar, .au-overlay--check .au-pct { visibility: hidden; }
+
+/* Escritorio: el menú principal no debe hacer scroll (pedido explícito). */
+@media (min-width: 721px) and (min-height: 561px) {
+  #main-menu { overflow: hidden; }
+}
+@media (min-width: 721px) { .main-menu .menu-buttons { width: min(430px, 100%); align-self: center; } }

@@ -21,6 +21,7 @@ const Music = {
   _duckGoal: 1,
   _duckTimer: null,
   _target: null,
+  _bg: false, // true mientras la app está en segundo plano / pantalla apagada
   _unlocked: false,
   _timer: null,
   _last: 0,
@@ -49,7 +50,53 @@ const Music = {
     ["pointerdown", "keydown", "touchstart"].forEach((ev) => document.addEventListener(ev, unlock, true));
     const board = document.getElementById("screen-board");
     if (board) new MutationObserver(() => this._refresh()).observe(board, { attributes: true, attributeFilter: ["class"] });
+    this._bindBackground();
     this._refresh();
+  },
+
+  // Pedido explícito (APK): "la musica siga sonando cuando la apk esta en
+  // segundo plano o dejo el smartphone en standby". Un <audio> en un WebView
+  // de Android sigue sonando aunque la app no esté visible, así que se pausa
+  // a mano al pasar a segundo plano (y también el AudioContext de los
+  // efectos) y se reanuda al volver. Se escuchan TODAS las señales posibles
+  // porque cada versión de WebView/Android dispara una distinta:
+  // visibilitychange, pagehide/pageshow, freeze/resume y, si está instalado
+  // el plugin nativo App de Capacitor, appStateChange.
+  _bindBackground() {
+    const hide = () => this._setBackground(true);
+    const show = () => this._setBackground(false);
+    document.addEventListener("visibilitychange", () => (document.hidden ? hide() : show()));
+    window.addEventListener("pagehide", hide);
+    window.addEventListener("pageshow", () => { if (!document.hidden) show(); });
+    document.addEventListener("freeze", hide);
+    document.addEventListener("resume", () => { if (!document.hidden) show(); });
+    try {
+      const A = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+      if (A && A.addListener) {
+        A.addListener("appStateChange", (st) => (st && st.isActive ? show() : hide()));
+        A.addListener("pause", hide);
+        A.addListener("resume", show);
+      }
+    } catch (e) {}
+    if (document.hidden) hide();
+  },
+
+  _setBackground(bg) {
+    bg = !!bg;
+    if (bg === this._bg) return;
+    this._bg = bg;
+    if (bg) {
+      for (const k of Object.keys(this._els)) {
+        const a = this._els[k];
+        if (!a.paused) { a._bgResume = true; a.pause(); }
+      }
+      try { if (typeof SFX !== "undefined" && SFX.ctx && SFX.ctx.state === "running") SFX.ctx.suspend(); } catch (e) {}
+    } else {
+      try { if (typeof SFX !== "undefined" && SFX.ctx && SFX.ctx.state === "suspended") SFX.ctx.resume(); } catch (e) {}
+      for (const k of Object.keys(this._els)) this._els[k]._bgResume = false;
+      this._last = performance.now();
+      this._refresh();
+    }
   },
 
   _wanted() {
@@ -61,7 +108,7 @@ const Music = {
   },
 
   _refresh() {
-    if (!this._unlocked) return;
+    if (!this._unlocked || this._bg) return;
     this._target = this._wanted();
     for (const k of Object.keys(this._els)) {
       if (k === this._target && this._els[k].paused) {

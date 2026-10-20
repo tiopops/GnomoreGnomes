@@ -1,0 +1,268 @@
+/* ==========================================================================
+   Gnomore Gnomes — capa MÓVIL (APK / pantallas pequeñas)
+   Se carga DESPUÉS de style.css. Todo vive dentro de @media de móvil, así que
+   el modo escritorio no cambia nada. Criterio: cada pantalla se diseña para
+   CABER sin encoger (nada de scale() para meter el contenido), con textos que
+   nunca se salen de su botón y zonas táctiles de al menos 44px.
+   ========================================================================== */
+
+:root { --m-top: max(10px, env(safe-area-inset-top, 0px)); }
+
+/* ---------- Botones de arriba (perfil / ajustes) y Volver ---------- */
+@media (max-width: 720px), (max-height: 560px) {
+  .settings-gear-btn { top: calc(var(--m-top) + 2px); width: 48px; height: 48px; }
+  .settings-gear-btn.settings-gear-btn:not(.settings-gear-btn--account) { right: 12px; }
+  .settings-gear-btn--account.settings-gear-btn--account { right: 68px; }
+  .settings-gear-btn i, .settings-gear-btn svg { font-size: 24px; }
+  .back-btn { font-size: 0.85rem; padding: 8px 18px 8px 12px; margin-bottom: 10px; }
+}
+
+/* ---------- Menú principal ---------- */
+@media (max-width: 720px) and (orientation: portrait) {
+  .main-logo-wrap { max-width: min(106vw, 44vh * 1.776); margin-bottom: 10px; }
+  .menu-buttons { gap: 12px; }
+  .main-menu .menu-btn { --mb-h: 58px; --mb-rib: 60px; --mb-fs: 0.95rem; }
+  #btn-new-game { --mb-h: 66px; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .main-menu {
+    display: grid; grid-template-columns: 1.1fr 1fr; grid-template-rows: 1fr auto 1fr;
+    align-items: center; justify-items: center; column-gap: 3vw;
+    padding: 8px 4vw;
+  }
+  .main-menu > * { max-width: none; width: auto; }
+  .main-logo-wrap { grid-column: 1; grid-row: 1 / span 3; width: 100%; max-width: 100%; margin: 0; }
+  .main-menu .menu-buttons { grid-column: 2; grid-row: 2; width: min(380px, 100%); gap: 8px; }
+  .main-menu .menu-btn { --mb-h: 44px; --mb-rib: 52px; --mb-fs: 0.85rem; }
+  #btn-new-game { --mb-h: 50px; }
+  .main-menu .menu-footer { grid-column: 2; grid-row: 3; align-self: start; margin: 8px 0 0; font-size: 0.7rem; }
+}
+
+/* ---------- Login / registro: tarjeta compacta que se ajusta al contenido ---------- */
+@media (max-width: 720px), (max-height: 560px) {
+  .account-overlay { align-items: center; padding: 12px 0; }
+  .account-panel.account-panel, .settings-panel.account-panel {
+    width: min(400px, 92vw); height: auto; max-height: calc(100dvh - 24px);
+    padding: 22px 22px 24px; gap: 12px; overflow-y: auto; overflow-x: hidden;
+  }
+  .account-panel .settings-panel__title { font-size: 1.35rem; margin: 0 0 2px; }
+  .account-body { gap: 12px; }
+  .account-form { gap: 10px; }
+  .account-tab { padding: 8px 14px; }
+  .account-field input { font-size: 16px; }
+  .account-submit { padding: 11px 30px; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .account-panel.account-panel { width: min(560px, 80vw); padding: 14px 22px 16px; }
+  .account-panel .settings-panel__title { display: none; }
+}
+
+/* ---------- Selección (equipo / escenario / rivales): VERTICAL ---------- */
+@media (max-width: 720px) and (orientation: portrait) {
+  .sel-root > .sel-steps { margin-top: calc(var(--m-top) + 56px); gap: 5px; }
+  .sel-step { padding: 8px 12px; font-size: 12px; letter-spacing: 0.03em; }
+  .sel-title { margin-top: 10px; font-size: 11px; }
+
+  /* EQUIPO */
+  #race-list.sel-root { padding-bottom: 8px; }
+  #race-list .sel-title { display: none; }
+  #race-list .sel-hero { height: clamp(120px, 17dvh, 170px); gap: clamp(8px, 4vw, 28px); padding-top: 8px; }
+  #race-list .sel-emblem { height: 100%; }
+  #race-list .sel-arrow { width: 44px; height: 70px; }
+  #race-list .sel-pips { display: none; }
+  #race-list .sel-rname { font-size: clamp(20px, 6vw, 26px); margin: 4px 0 6px; padding: 0 8px; text-align: center; }
+  #race-list .sel-rflav { display: none; }
+  #race-list .sel-info2 {
+    width: calc(100% - 20px); height: clamp(236px, 34dvh, 284px); min-height: 0;
+    padding: 12px 16px 12px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  #race-list .sel-cols { display: flex; flex-direction: column; gap: 10px; }
+  #race-list .sel-col, #race-list .sel-col p { margin: 0; }
+  #race-list .sel-col h3 { font-size: 13px; margin-bottom: 3px; }
+  #race-list .sel-col p, #race-list .sel-ud p { font-size: 13px; line-height: 1.3; }
+  #race-list .sel-team { --us: 0.88; margin-top: 106px; gap: 6px; width: 100%; padding: 0 8px 4px; box-sizing: border-box; }
+  #race-list .sel-un { width: calc((100% - 12px) / 3); max-width: 128px; }
+  #race-list .sel-un__box { height: 44px; }
+  #race-list .sel-un__sp { bottom: 34px; }
+  #race-list .sel-un__nm { font-size: 13px; bottom: 11px; }
+  #race-list .sel-hintu { display: none; }
+  #race-list.sel-root > .sel-btn { padding: 14px 46px; font-size: 18px; bottom: 8px; }
+}
+@media (max-width: 720px) and (orientation: portrait) and (max-height: 700px) {
+  #race-list .sel-hero { height: 100px; }
+  #race-list .sel-info2 { height: 240px; }
+  #race-list .sel-team { --us: 0.75; margin-top: 92px; }
+  #race-list .sel-col p, #race-list .sel-ud p { font-size: 12.5px; }
+}
+
+/* EQUIPO en horizontal (móvil apaisado) */
+@media (max-height: 560px) and (min-width: 721px) {
+  #race-list.sel-root { grid-template-columns: minmax(230px, 33%) 1fr; padding: calc(var(--m-top) + 56px) 14px 6px; }
+  #race-list.sel-root > .sel-pips { display: none; }
+  #race-list.sel-root > .sel-hero { height: 150px; }
+  #race-list.sel-root > .sel-rname { font-size: 19px; grid-row: 2; margin-top: 4px; }
+  #race-list.sel-root > .sel-info2 { grid-row: 1 / span 1; height: 176px; padding: 10px 16px; }
+  #race-list.sel-root > .sel-team { grid-row: 2 / span 3; margin-top: 70px; }
+  #race-list.sel-root > .sel-btn { grid-row: 3; margin-top: 6px; padding: 10px 26px; font-size: 15px; }
+}
+
+/* ---------- Mi cuenta (perfil): pestañas y tarjetas que caben siempre ---------- */
+@media (max-width: 720px), (max-height: 560px) {
+  .pf-tabs { gap: 6px; padding: 0; }
+  .pf-tab { padding: 10px 3px; max-width: none; }
+  .pf-tab span { font-size: clamp(0.6rem, 3.1vw, 0.78rem); letter-spacing: 0.01em; gap: 4px; }
+  .pf-tab span i { font-size: 0.9em; }
+  .pf-body { gap: 10px; }
+}
+@media (max-width: 380px) { .pf-tab--off span i { display: none; } }
+@media (max-height: 520px) and (orientation: landscape) {
+  .account-panel.account-panel:has(.pf) { width: min(820px, 94vw); padding: 14px 18px 16px; max-height: calc(100dvh - 44px); overflow: visible; }
+  .account-panel:has(.pf) .account-body { flex-direction: row; align-items: flex-start; gap: 14px; }
+  .account-panel:has(.pf) .account-body > .pf-hero { flex: 0 0 38%; }
+  .account-panel:has(.pf) .account-body > .pf { flex: 1 1 0; min-width: 0; }
+  .account-panel:has(.pf) .pf-body { max-height: calc(100dvh - 160px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+}
+
+/* ---------- Ficha de unidad (al tocar una unidad en EQUIPO) ---------- */
+@media (max-width: 720px) and (orientation: portrait) {
+  #race-list.sel-root:has(.sel-ud) .sel-hero { height: 84px; }
+  #race-list.sel-root:has(.sel-ud) .sel-rname { display: none; }
+  #race-list.sel-root:has(.sel-ud) .sel-info2 { height: clamp(300px, 47dvh, 400px); }
+  #race-list .sel-ud { gap: 4px 12px; }
+  #race-list .sel-ud__n { font-size: 20px; }
+  #race-list .sel-ud__a { font-size: 12px; }
+  #race-list .sel-ud__hd img { width: 42px; height: 42px; }
+  #race-list .sel-stats { font-size: 12px; gap: 3px 12px; }
+  #race-list .sel-ud__x { padding: 6px 10px; }
+}
+
+/* ---------- Multijugador (amigos): horizontal compacto ---------- */
+@media (max-height: 520px) and (orientation: landscape) {
+  .friends-panel.settings-panel { width: min(640px, 92vw); max-height: calc(100dvh - 24px); padding: 12px 22px 14px; }
+  .friends-panel .settings-panel__title { display: none; }
+  .friends-panel .friends-body { gap: 8px; }
+  .fr-top { flex-direction: row; align-items: stretch; gap: 10px; }
+  .fr-top .mm-quick { flex: 1 1 45%; width: auto; padding: 10px 14px; font-size: 0.95rem; }
+  .fr-top .fr-tabs { flex: 1 1 55%; }
+}
+@media (max-width: 720px) {
+  .friends-panel.settings-panel { padding: 24px 18px 22px; }
+}
+
+/* ---------- Ajustes ---------- */
+@media (max-width: 720px), (max-height: 560px) {
+  .settings-panel:not(.account-panel):not(.friends-panel) { padding: 22px 20px 24px; }
+  .settings-tab { font-size: 13px; padding: 9px 12px; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .settings-panel:not(.account-panel):not(.friends-panel) { width: min(760px, 94vw); height: calc(100dvh - 20px); padding: 10px 22px 12px; gap: 8px; }
+  .settings-panel:not(.account-panel):not(.friends-panel) .settings-panel__title { display: none; }
+}
+
+/* ---------- Lista de tutoriales ---------- */
+@media (max-height: 520px) and (orientation: landscape) {
+  .tut-menu__list.menu-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; width: min(900px, 94vw); max-width: none; }
+  #screen-tutorial-select h2 { margin-top: 0; }
+}
+
+/* ---------- Mochila ---------- */
+@media (max-width: 720px), (max-height: 560px) {
+  .backpack-panel:not(.skills-panel):not(.backpack-panel--fit) { width: min(630px, 88vw, calc((100dvh - 24px) * 1.2)); margin-top: 3dvh; }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .backpack-panel--recruit .backpack-slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .backpack-panel:not(.skills-panel):not(.backpack-panel--fit) { width: min(560px, calc((100dvh - 16px) * 1.05)); margin-top: 6px; }
+  /* Reclutar / Armería / Tiendas: dos columnas para que quepan SIN encoger */
+  .backpack-panel--recruit.backpack-panel--fit { width: min(780px, 94vw); }
+  .backpack-panel--recruit.backpack-panel--fit .backpack-panel__bg {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr; column-gap: 16px; row-gap: 8px; padding: 14px 20px 14px; align-items: start;
+  }
+  .backpack-panel--recruit.backpack-panel--fit .backpack-panel__bg > .backpack-panel__title { grid-column: 1 / -1; grid-row: 1; justify-self: center; }
+  .backpack-panel--recruit.backpack-panel--fit .backpack-panel__bg > .backpack-slots { grid-column: 1; grid-row: 2; }
+  .backpack-panel--recruit.backpack-panel--fit .backpack-panel__bg > .backpack-desc { grid-column: 2; grid-row: 2 / span 2; height: auto; min-height: 0; }
+  .backpack-panel--recruit.backpack-panel--fit .backpack-panel__bg > .shop-buy-btn { grid-column: 1; grid-row: 3; align-self: start; justify-self: center; margin-top: 4px; }
+  .backpack-panel--recruit.backpack-panel--fit .backpack-panel__bg > .shop-warning { grid-column: 1; grid-row: 3; }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  /* Armería en horizontal: pistas a la izquierda, recursos + descripción + botón a la derecha */
+  .armory-panel.backpack-panel--fit { width: min(780px, 94vw); }
+  .armory-panel .backpack-panel__bg {
+    display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    grid-template-rows: auto auto 1fr auto auto; column-gap: 18px; row-gap: 8px; padding: 14px 20px 14px; align-items: start;
+  }
+  .armory-panel .backpack-panel__bg > .backpack-panel__title { grid-column: 1 / -1; grid-row: 1; justify-self: center; }
+  .armory-panel .backpack-panel__bg > .armory-tracks { grid-column: 1; grid-row: 2 / span 4; }
+  .armory-panel .backpack-panel__bg > .armory-resource-row { grid-column: 2; grid-row: 2; justify-self: center; }
+  .armory-panel .backpack-panel__bg > .armory-desc-wrap { grid-column: 2; grid-row: 3; min-height: 0; align-self: stretch; }
+  .armory-panel .backpack-panel__bg > .shop-buy-btn { grid-column: 2; grid-row: 4; justify-self: center; }
+  .armory-panel .backpack-panel__bg > .shop-warning { grid-column: 2; grid-row: 5; }
+}
+
+/* ---------- Salas online (lobby), búsqueda de partida rápida y ruleta ---------- */
+@media (max-width: 720px), (max-height: 560px) {
+  .mp-overlay { align-items: center; }
+  .mp-panel:not(.mp-panel--small) { width: min(620px, 95vw); max-height: calc(100dvh - 16px); padding: 24px 14px 18px; }
+  .mp-panel:not(.mp-panel--small) .mp-body { gap: 12px; }
+  .mp-slots { gap: 8px; padding: 0; }
+  .mp-slot { padding: 10px 8px; min-width: 0; flex: 1 1 0; }
+  .mp-slot__art { width: 58px; height: 58px; }
+  .mp-slot__name { font-size: 0.95rem; }
+  .mp-vs { font-size: 1.3rem; }
+  .mp-races, .mp-levels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
+  .mp-race, .mp-level { flex-direction: column; justify-content: center; gap: 4px; padding: 8px 4px; min-height: 88px; text-align: center; }
+  .mp-race img { width: 44px; height: 44px; }
+  .mp-level img { width: 66px; height: 42px; }
+  .mp-race span, .mp-level span { font-size: 0.7rem; text-align: center; line-height: 1.12; }
+  .mp-btn { padding: 11px 26px; }
+  .mp-section { width: 100%; gap: 6px; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .mp-panel:not(.mp-panel--small) { width: min(900px, 96vw); padding: 12px 20px 12px; }
+  .mp-panel:not(.mp-panel--small) .mp-body {
+    display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); column-gap: 18px; row-gap: 8px; align-items: start;
+  }
+  .mp-body > .settings-panel__title { grid-column: 1 / -1; font-size: 1.15rem; margin: 0; justify-self: center; }
+  .mp-body > .mp-slots { grid-column: 1; grid-row: 2; }
+  .mp-body > .mp-actions { grid-column: 1; grid-row: 3; }
+  .mp-body > .mp-hint { grid-column: 1; grid-row: 4; }
+  .mp-body > .mp-section { grid-column: 2; }
+  .mp-body > .mp-section:nth-of-type(1) { grid-row: 2; }
+  .mp-body > .mp-section:nth-of-type(2) { grid-row: 3 / span 2; }
+  .mp-race, .mp-level { min-height: 68px; padding: 5px 3px; }
+  .mp-race img { width: 34px; height: 34px; }
+  .mp-level img { width: 52px; height: 32px; }
+  .mp-slot__art { width: 46px; height: 46px; }
+  /* búsqueda / ruleta: caben en poca altura */
+  .mp-panel--small { width: min(520px, 90vw); padding: 12px 22px 14px; }
+  .mp-panel--small .mp-body { gap: 6px; }
+  .mm-radar { width: 104px; height: 104px; margin: 0 auto; }
+}
+
+/* ---------- Fin de partida en horizontal: dos columnas, el botón siempre a la vista ---------- */
+@media (max-height: 520px) and (orientation: landscape) {
+  .obelisk-gameover-overlay { padding-top: 6px; }
+  .obelisk-gameover-panel.obelisk-gameover-panel {
+    --go-logo: min(110px, 30vh);
+    width: min(880px, 96vw); max-width: none;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); column-gap: 22px; row-gap: 4px;
+    align-items: center; justify-items: center;
+    padding: calc(var(--go-logo) * 0.5 + 4px) 26px 14px;
+  }
+  .obelisk-gameover-panel > .obelisk-gameover-panel__icon { display: none; }
+  .obelisk-gameover-panel > .obelisk-gameover-kicker { grid-column: 1; grid-row: 1; }
+  .obelisk-gameover-panel > .obelisk-gameover-panel__title { grid-column: 1; grid-row: 2; }
+  .obelisk-gameover-panel > .obelisk-gameover-panel__msg { grid-column: 1; grid-row: 3; font-size: 0.85rem; }
+  .obelisk-gameover-panel > .obelisk-gameover-stats { grid-column: 2; grid-row: 1 / span 4; width: 100%; }
+  .obelisk-gameover-panel > .pxp { grid-column: 1; grid-row: 4; width: 100%; }
+  .obelisk-gameover-panel > .obelisk-gameover-panel__btn { grid-column: 1 / -1; grid-row: 5; margin-top: 6px; }
+  .obelisk-gameover-panel .gameover-team { font-size: clamp(1.3rem, 7.5vh, 2rem); -webkit-text-stroke-width: 2px; }
+  .obelisk-gameover-panel__title { gap: 2px; }
+  .obelisk-gameover-panel__title small { font-size: 0.8rem; letter-spacing: 0.2em; }
+  .obelisk-gameover-stats { padding: 6px 10px; }
+  .obelisk-gameover-stats__row { gap: 6px; font-size: 0.78rem; }
+  .obelisk-gameover-stats__value { font-size: 0.95rem; }
+  .obelisk-gameover-panel__btn { padding: 8px 30px; }
+}

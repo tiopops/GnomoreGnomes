@@ -92,6 +92,9 @@ const BoardView = {
     this.cameraEl = document.getElementById("board-camera");
     if (!this.viewportEl || !this.cameraEl) return;
     this._keysPressed = new Set();
+    this._updateScaleLimits();
+    window.addEventListener("resize", () => this._updateScaleLimits());
+    window.addEventListener("orientationchange", () => setTimeout(() => this._updateScaleLimits(), 300));
     this._bindEvents();
     this._bindKeyboard();
   },
@@ -159,6 +162,28 @@ const BoardView = {
     this.targetPanY = this.viewportEl.clientHeight / 2 - contentY * this.targetScale;
     this._clampTargetPan();
     this._startLoop();
+  },
+
+  // Pedido explícito (smartphone): "apenas se puede alejar el zoom...
+  // deberia alejarse tanto como en el modo escritorio". El 0.6 de minScale
+  // está pensado para una ventana de escritorio (~1280x720): en un móvil
+  // (390x780) ese mismo 0.6 enseña MUCHÍSIMO menos mapa. Se escala el
+  // mínimo según el ÁREA visible respecto a la de referencia de escritorio
+  // (media geométrica de ancho y alto), de forma que en cualquier pantalla
+  // se vea aproximadamente la misma porción de tablero al alejar del todo.
+  // En escritorio (área >= referencia) el valor es exactamente 0.6, igual
+  // que antes.
+  _updateScaleLimits() {
+    const vp = this.viewportEl;
+    if (!vp) return;
+    const w = vp.clientWidth || window.innerWidth;
+    const h = vp.clientHeight || window.innerHeight;
+    if (!w || !h) return;
+    const area = Math.sqrt((w * h) / (1280 * 720));
+    const min = Math.max(0.2, Math.min(0.6, 0.6 * area));
+    if (Math.abs(min - this.minScale) < 0.001) return;
+    this.minScale = min;
+    if (this.targetScale < min) this.targetScale = min;
   },
 
   _clampScale(scale) {
@@ -437,6 +462,7 @@ const BoardView = {
     // ---- Arrastrar con el ratón (clic y arrastrar) ----
     vp.addEventListener("mousedown", (e) => {
       if (e.button !== 0) return;
+      this._dragMoved = false;
       // BUG encontrado y corregido: "este error grafico aparece a veces,
       // es como si estuvieran seleccionados como texto" — sin esto, un
       // clic-y-arrastre normal para mover la cámara TAMBIÉN disparaba el
@@ -540,6 +566,14 @@ const BoardView = {
       (e) => {
         if (e.touches.length === 1) {
           const t = e.touches[0];
+          // CAUSA REAL del "tengo que tocar dos veces" (pedido explícito):
+          // tras arrastrar la cámara con el dedo (touchmove con
+          // preventDefault) el navegador NO emite ningún "click", así que la
+          // bandera _dragMoved —que solo se borraba dentro de ese click—
+          // se quedaba en true y el guardia de arriba se tragaba el click del
+          // SIGUIENTE toque de verdad (p.ej. elegir casilla de destino). Cada
+          // toque nuevo empieza con la bandera limpia.
+          this._dragMoved = false;
           this._touchState = { mode: "pan", lastX: t.clientX, lastY: t.clientY, startX: t.clientX, startY: t.clientY };
         } else if (e.touches.length === 2) {
           const [t1, t2] = e.touches;
