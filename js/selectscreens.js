@@ -307,7 +307,7 @@ const SelectScreens = {
         <button type="button" class="sel-arrow sel-arrow--nav sel-arrow--l" id="sel-nL" aria-label="‹">${this.chev(-1)}</button>
         <button type="button" class="sel-arrow sel-arrow--nav sel-arrow--r" id="sel-nR" aria-label="›">${this.chev(1)}</button>
       </div>
-      <div class="sel-fr sel-info" id="sel-info"><h2 id="sel-iname"></h2><div class="sel-fl" id="sel-ifl"></div><div class="sel-feat" id="sel-feat"></div></div>
+      <div class="sel-fr sel-info" id="sel-info"><div class="sel-info__live"><h2 id="sel-iname"></h2><div class="sel-fl" id="sel-ifl"></div><div class="sel-feat" id="sel-feat"></div></div>${this._levelGhosts()}</div>
       <button type="button" class="sel-fr sel-btn" id="sel-bLvl" data-primary><span>${this.t("sel_btn_level")}</span></button>`;
     this._bindSteps(root);
     this._setAcc(document.getElementById("screen-level-select"), this.accent(race));
@@ -340,19 +340,32 @@ const SelectScreens = {
     this._fitInit(root);
   },
 
-  _showLevelInfo() {
-    const l = LEVELS[this.ST.front];
-    const inf = document.getElementById("sel-info");
-    inf.style.setProperty("--c", this.LEVEL_TEXT_COLOR[l.id] || l.color);
-    document.getElementById("sel-iname").textContent = this.t(l.nameKey);
-    document.getElementById("sel-ifl").textContent = this.t(l.flavorKey);
-    document.getElementById("sel-feat").innerHTML = (l.featureKeys || [])
+  // Contenido de TODOS los niveles, invisible y apilado en la misma celda que el texto real:
+  // así el recuadro siempre mide lo que el más largo y es idéntico en los tres niveles,
+  // sea cual sea el ancho de pantalla (el texto se acopla dentro).
+  _featHtml(l) {
+    return (l.featureKeys || [])
       .map((k, i) => {
         const txt = this.t(k), at = txt.indexOf(": ");
         const body = at > 0 ? `<b>${txt.slice(0, at)}</b>${txt.slice(at)}` : txt;
         return `<div class="sel-ft"><span class="sel-ft__ib"><i class="ph-fill ${l.featureIcons[i] || "ph-check-circle"}"></i></span><div>${body}</div></div>`;
       })
       .join("");
+  },
+
+  _levelGhosts() {
+    return LEVELS.map((l) =>
+      `<div class="sel-info__ghost" aria-hidden="true"><h2>${this.t(l.nameKey)}</h2><div class="sel-fl">${this.t(l.flavorKey)}</div><div class="sel-feat">${this._featHtml(l)}</div></div>`
+    ).join("");
+  },
+
+  _showLevelInfo() {
+    const l = LEVELS[this.ST.front];
+    const inf = document.getElementById("sel-info");
+    inf.style.setProperty("--c", this.LEVEL_TEXT_COLOR[l.id] || l.color);
+    document.getElementById("sel-iname").textContent = this.t(l.nameKey);
+    document.getElementById("sel-ifl").textContent = this.t(l.flavorKey);
+    document.getElementById("sel-feat").innerHTML = this._featHtml(l);
     const go = document.getElementById("sel-bLvl");
     if (go) go.disabled = !l.available;
   },

@@ -17,7 +17,8 @@ const GG_CHANGELOG = [
     "La música se pausa al salir de la app y el modo rendimiento se activa solo en móviles",
     "Iconos incluidos en la app, sin necesidad de conexión",
     "Reanudar partida retirado: abandonar cuenta como rendirse",
-    "HurryCrane Village pasa a llamarse Poblado HurryCrane",
+    "HurryCrane Village pasa a llamarse Poblado HurryCrane, con colores de recursos más integrados",
+    "Recuadro de información de escenario con el mismo tamaño en los tres niveles",
   ] },
   { v: "v.001500", date: "19/10/2026", title: "Progreso y partidas online", items: [
     "Nivel y experiencia de cuenta, y misiones diarias con racha",
