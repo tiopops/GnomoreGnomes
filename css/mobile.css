@@ -96,7 +96,7 @@
 }
 
 /* EQUIPO en horizontal (móvil apaisado) */
-@media (max-height: 560px) and (min-width: 721px) {
+@media (max-height: 560px) and (orientation: landscape) {
   #race-list.sel-root { grid-template-columns: minmax(230px, 33%) 1fr; padding: calc(var(--m-top) + 56px) 14px 6px; }
   #race-list.sel-root > .sel-pips { display: none; }
   #race-list.sel-root > .sel-hero { height: 150px; }
@@ -268,4 +268,77 @@
   .obelisk-gameover-stats__row { gap: 6px; font-size: 0.78rem; }
   .obelisk-gameover-stats__value { font-size: 0.95rem; }
   .obelisk-gameover-panel__btn { padding: 8px 30px; }
+}
+
+/* X de cerrar de Ajustes y del historial de versiones: dentro de pantalla en móvil */
+@media (max-width: 720px), (max-height: 560px) {
+  .settings-close-x, .version-panel > .backpack-close-btn { top: -14px; right: -8px; width: 50px; height: 50px; }
+  .settings-close-x .backpack-close-btn__icon, .version-panel > .backpack-close-btn .backpack-close-btn__icon { font-size: 1.4rem; }
+  .version-overlay { padding: 28px 0; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .settings-overlay { padding: 30px 0 14px; }
+  .settings-panel { height: calc(100dvh - 54px); }
+}
+
+/* EQUIPO en horizontal: unidades más grandes, sin tapar el texto; vale también para móviles de menos de 721px de ancho */
+@media (max-height: 560px) and (orientation: landscape) {
+  #race-list.sel-root > .sel-info2 { height: 160px; padding: 8px 14px; }
+  #race-list.sel-root > .sel-team { --us: 0.78; margin-top: 104px; gap: 8px; }
+  #race-list.sel-root > .sel-team .sel-un { width: 108px; }
+  #race-list.sel-root > .sel-steps { position: absolute !important; top: calc(var(--m-top) + 6px); left: 50%; transform: translateX(-50%); margin: 0 !important; }
+}
+@media (max-width: 720px) and (max-height: 560px) {
+  #race-list.sel-root { grid-template-columns: minmax(170px, 28%) 1fr; }
+  #race-list.sel-root > .sel-hero { height: 110px; }
+  #race-list.sel-root > .sel-rname { font-size: 15px; }
+  #race-list.sel-root > .sel-info2 .sel-col p, #race-list.sel-root > .sel-info2 .sel-ud p { font-size: 11px; line-height: 1.2; }
+  #race-list.sel-root > .sel-info2 .sel-col h3 { font-size: 12px; }
+}
+@media (max-width: 720px) and (max-height: 560px) { #race-list.sel-root > .sel-btn { white-space: nowrap; padding: 8px 16px; font-size: 13px; } }
+
+/* ---------- Horizontal (móvil apaisado): ventanas que no deben cortarse ---------- */
+@media (max-height: 520px) and (orientation: landscape) {
+  /* Mochila y Tienda: 8 huecos en una sola fila y panel ajustado a la altura */
+  .backpack-overlay .backpack-panel:not(.backpack-panel--fit) { margin-top: 4vh; zoom: 0.72; }
+  .backpack-overlay .backpack-panel:has(.shop-buy-btn) { margin-top: 14vh; zoom: 0.62; }
+  .glory-popup-card { zoom: 0.84; }
+  /* Ajustes: panel más compacto para que la lista tenga más sitio */
+  .settings-panel { padding: 16px 28px 12px; gap: 8px; }
+  .settings-panel > .settings-panel__option--centered { padding-top: 6px; padding-bottom: 6px; }
+  .settings-panel .settings-panel__option { padding-top: 5px; padding-bottom: 5px; }
+  .settings-panel .settings-slider { padding-bottom: 0; }
+}
+
+/* Horizontal en pantallas estrechas (<721px de ancho, p. ej. 640–667): perfil y amigos compactos */
+@media (max-width: 720px) and (max-height: 520px) and (orientation: landscape) {
+  .account-panel:has(.pf) .account-body > .pf-hero { flex: 0 0 31%; }
+  .pf-tabs { gap: 4px; }
+  .pf-tab { padding: 8px 2px; }
+  .pf-tab span { font-size: 0.58rem; letter-spacing: 0; gap: 3px; }
+  .pf-tab span i { display: none; }
+  .pstat-cell { padding: 6px 8px; gap: 6px; }
+  .pstat-cell > i { font-size: 1.1rem; }
+  .pstat-grid { gap: 6px; }
+  .pstat-mission { padding: 6px 8px; }
+  .fr-top .fr-tabs { padding-right: 30px; }
+  .fr-top .mm-quick { font-size: 0.85rem; }
+}
+
+/* La X de la ventana de amigos sobresale del panel: que ninguna regla de scroll la recorte */
+.friends-panel.settings-panel { overflow: visible; }
+@media (max-width: 720px) and (max-height: 520px) and (orientation: landscape) {
+  .pf-tab { min-width: 0; flex: 1 1 0; }
+  .pf-tab span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .account-panel:has(.pf) .account-body > .pf { padding-right: 8px; box-sizing: border-box; }
+}
+@media (max-width: 720px) and (max-height: 520px) and (orientation: landscape) {
+  .account-panel:has(.pf) .account-body > .pf-hero { flex: 0 0 28%; }
+  .pstat-cell span { font-size: 0.5rem; letter-spacing: 0; white-space: nowrap; }
+  .pstat-cell b { font-size: 1rem; }
+  .pstat-mission { font-size: 0.7rem; gap: 6px; }
+  .pstat-mission > i { font-size: 1.2rem; }
+}
+@media (max-width: 720px) and (max-height: 520px) and (orientation: landscape) {
+  .mp-panel:not(.mp-panel--small) { zoom: 0.8; width: calc(96vw / 0.8); max-height: calc((100dvh - 12px) / 0.8); }
 }

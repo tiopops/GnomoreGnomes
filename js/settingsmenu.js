@@ -61,6 +61,15 @@ const SettingsMenu = {
     // Que el clic DENTRO del panel no burbujee hasta el overlay y lo cierre.
     panel.addEventListener("click", (e) => e.stopPropagation());
 
+    // X de cerrar en la esquina, igual que el resto de ventanas.
+    const closeX = document.createElement("button");
+    closeX.type = "button";
+    closeX.className = "backpack-close-btn settings-close-x";
+    closeX.setAttribute("aria-label", "Cerrar");
+    closeX.innerHTML = '<i class="ph ph-x backpack-close-btn__icon"></i>';
+    closeX.addEventListener("click", (e) => { e.stopPropagation(); this.close(); });
+    panel.appendChild(closeX);
+
     const title = document.createElement("div");
     title.className = "p5-banner__label settings-panel__title";
     title.textContent = I18N.t("settings_title");

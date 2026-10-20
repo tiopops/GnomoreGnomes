@@ -327,20 +327,23 @@ body {
 }
 
 @keyframes main-logo-punch {
-  0% { transform: scale(1) rotate(0deg) translateX(0); }
+  /* Propiedades individuales (scale/rotate/translate) en vez de transform: así el
+     golpe se SUMA a la flotación (que anima transform) en vez de pisarla, y al
+     terminar el logo sigue en su flotación sin ningún salto. */
+  0% { scale: 1 1; rotate: 0deg; translate: 0 0; }
   20% {
-    transform: scale(var(--punch-sx1, 0.92), var(--punch-sy1, 1.08)) rotate(var(--punch-rot1, -4deg))
-      translateX(var(--punch-tx1, -10px));
+    scale: var(--punch-sx1, 0.92) var(--punch-sy1, 1.08); rotate: var(--punch-rot1, -4deg);
+    translate: var(--punch-tx1, -10px) 0;
   }
   50% {
-    transform: scale(var(--punch-sx2, 1.06), var(--punch-sy2, 0.94)) rotate(var(--punch-rot2, 3deg))
-      translateX(var(--punch-tx2, 6px));
+    scale: var(--punch-sx2, 1.06) var(--punch-sy2, 0.94); rotate: var(--punch-rot2, 3deg);
+    translate: var(--punch-tx2, 6px) 0;
   }
   75% {
-    transform: scale(var(--punch-sx3, 0.98), var(--punch-sy3, 1.02)) rotate(var(--punch-rot3, -1deg))
-      translateX(var(--punch-tx3, -2px));
+    scale: var(--punch-sx3, 0.98) var(--punch-sy3, 1.02); rotate: var(--punch-rot3, -1deg);
+    translate: var(--punch-tx3, -2px) 0;
   }
-  100% { transform: scale(1) rotate(0deg) translateX(0); }
+  100% { scale: 1 1; rotate: 0deg; translate: 0 0; }
 }
 
 /* Pedido explícito: "puedes hacer que el clic solo tenga efecto sobre la
@@ -11456,14 +11459,14 @@ body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !
   .sel-summ { padding: 0 12px; }
 }
 /* Vertical estrecho: la barra de pasos baja a su propia fila (no choca con Volver ni con los botones de perfil/ajustes) */
-@media (max-width: 720px) {
+@media (max-width: 720px) and (orientation: portrait) {
   .sel-root > .sel-steps { position: relative; left: auto; top: auto; transform: none; margin-top: 64px; gap: 4px; }
   .sel-step { padding: 7px 11px; font-size: 11px; letter-spacing: 0.04em; }
   .sel-step b { margin-right: 5px; }
   .sel-title { margin-top: 12px; font-size: 12px; letter-spacing: 0.22em; }
 }
 /* Apaisado de móvil: poca altura, así que se compacta */
-@media (max-height: 560px) and (min-width: 721px) {
+@media (max-height: 560px) and (orientation: landscape) {
   .sel-title { display: none; }
   .sel-hero, .sel-emblem { height: 118px; }
   .sel-rflav { display: none; }
@@ -11577,7 +11580,7 @@ body.tut-on .settings-gear-btn--update { display: none; }
 
 /* Apaisado de móvil, pantalla de EQUIPO: dos columnas (emblema/nombre/botón a la
    izquierda, descripción y unidades a la derecha) para que todo quepa sin scroll. */
-@media (max-height: 560px) and (min-width: 721px) {
+@media (max-height: 560px) and (orientation: landscape) {
   #race-list.sel-root {
     display: grid;
     grid-template-columns: minmax(220px, 34%) 1fr;
@@ -11601,7 +11604,7 @@ body.tut-on .settings-gear-btn--update { display: none; }
 }
 
 /* Apaisado de móvil, pantalla de ESCENARIO: islas a la izquierda, descripción a la derecha. */
-@media (max-height: 560px) and (min-width: 721px) {
+@media (max-height: 560px) and (orientation: landscape) {
   #level-list.sel-root {
     display: grid;
     grid-template-columns: 50% 1fr;
@@ -12016,3 +12019,28 @@ body.tut-on .settings-gear-btn--update { display: none; }
 .tut-menu__list .menu-btn { height: auto; min-height: var(--mb-h, 66px); padding-top: 8px; padding-bottom: 8px; white-space: normal; }
 .tut-menu__list .tut-menu__name { line-height: 1.1; }
 @media (max-width: 720px) { .tut-menu__list .tut-menu__name { font-size: 0.82rem; } .tut-menu__list .menu-btn { --mb-rib: 56px; } }
+
+/* Número de versión del menú principal (js/version.js) y su historial. */
+.menu-version {
+  background: none; border: none; font: inherit; font-size: 0.85rem; font-style: italic;
+  padding: 10px 18px; cursor: var(--cursor-pointer); color: var(--muted);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6); transition: color 0.15s, transform 0.15s;
+}
+.menu-version:hover { color: #ffd23f; transform: translateY(-2px); }
+.version-panel {
+  display: flex; flex-direction: column; align-items: stretch; gap: 14px;
+  padding: 30px 30px 26px; width: min(520px, 92vw); box-sizing: border-box;
+  transform: rotate(-1deg) scale(0.9); transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.settings-overlay--visible .version-panel { transform: rotate(-1deg) scale(1); }
+.version-panel > * { position: relative; z-index: 2; }
+.version-panel > .backpack-close-btn { position: absolute; z-index: 6; }
+.version-list { max-height: min(56dvh, 440px); overflow-y: auto; overflow-x: hidden; padding: 4px 8px 4px 2px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 16px; }
+.version-entry__head { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 6px; }
+.version-entry__tag { background: #4b3a66; color: #fff; padding: 3px 16px 3px 10px; font-size: 0.85rem; clip-path: polygon(0 0, 100% 0, 88% 100%, 0 100%); text-shadow: 1px 1px 0 rgba(0,0,0,.5); }
+.version-entry--current .version-entry__tag { background: #f0a21a; color: #1d1522; text-shadow: none; }
+.version-entry__title { font-size: 0.95rem; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,.6); }
+.version-entry__date { margin-left: auto; font-size: 0.72rem; color: var(--muted); }
+.version-entry ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+.version-entry li { font-size: 0.8rem; line-height: 1.3; font-family: inherit; color: rgba(255,255,255,.9); }
+@media (max-height: 520px) and (orientation: landscape) { .version-list { max-height: calc(100dvh - 130px); } .version-panel { padding: 22px 26px 18px; gap: 8px; } }

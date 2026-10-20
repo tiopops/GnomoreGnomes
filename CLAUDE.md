@@ -90,3 +90,10 @@ arquitectura de forma significativa (como el cambio a "proveedores de rango" de 
 actualiza `Claude outputs/documento_diseno_juego.pdf` (el script fuente está en
 `gnomeball-doc/build_pdf.py` en el entorno de Claude) y este archivo si el cambio afecta a cómo se
 trabaja, no solo a qué se ha construido.
+
+## Número de versión
+
+El menú principal muestra la versión (formato `v.AABBCC`) y al pulsarla abre el historial de cambios.
+Vive en `js/version.js` (`GG_VERSION` + `GG_CHANGELOG`). Con cada mejora, contenido o corrección:
+subir `GG_VERSION` y añadir arriba una entrada (o ampliar la actual) con lo más relevante, y subir el
+`?v=` de `js/version.js` en `index.html`.
