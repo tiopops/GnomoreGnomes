@@ -413,7 +413,7 @@ function spawnTestUnits(size, raceId, opponents, mp) {
     Drums.spawn(size);
   }
 
-  // Huevo de Grulla y nidos (js/egg.js) — solo en Hurrycrane Village. Tras los
+  // Huevo de Grulla y nidos (js/egg.js) — solo en Poblado HurryCrane. Tras los
   // tambores y ANTES de arbustos/recursos para que estos esquiven sus casillas.
   if (typeof Egg !== "undefined") {
     if (typeof Bumpers !== "undefined") Bumpers.resetAll();

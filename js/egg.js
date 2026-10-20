@@ -1,4 +1,4 @@
-/* Gnomore Gnomes — Huevo de Grulla (nivel Hurrycrane Village).
+/* Gnomore Gnomes — Huevo de Grulla (nivel Poblado HurryCrane).
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
      - Colocar un huevo sobre una NUBE en el centro del mapa (solo en ese nivel).
      - GNOMAZO: lanzarle un gnomo lo manda EN LA DIRECCIÓN del golpe (se aleja de

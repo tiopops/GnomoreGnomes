@@ -161,8 +161,11 @@
 
 /* ---------- Lista de tutoriales ---------- */
 @media (max-height: 520px) and (orientation: landscape) {
-  .tut-menu__list.menu-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; width: min(900px, 94vw); max-width: none; }
+  .tut-menu__list.menu-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; width: min(980px, 96vw); max-width: none; }
   #screen-tutorial-select h2 { margin-top: 0; }
+  .tut-menu__list .menu-btn { width: 100%; --mb-h: 58px; --mb-rib: 50px; }
+  .tut-menu__list .tut-menu__sub { font-size: 0.6rem; }
+  .tut-menu__list .tut-menu__name { font-size: 0.7rem; }
 }
 
 /* ---------- Mochila ---------- */

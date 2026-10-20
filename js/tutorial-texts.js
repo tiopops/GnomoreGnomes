@@ -462,11 +462,11 @@ const TUTORIAL_TEXTS = {
  ],
  "crane": [
   {
-   "say": "Hurrycrane Village: un poblado en las nubes que espera a que eclosione un huevo de grulla gigante. Los vecinos ya apostaron qué saldrá… y a quién le tocará limpiar el nido.",
+   "say": "Poblado HurryCrane: un pueblo en las nubes que espera a que eclosione un huevo de grulla gigante. Los vecinos ya apostaron qué saldrá… y a quién le tocará limpiar el nido.",
    "button": "Qué emoción",
    "mood": "grunon",
    "en": {
-    "say": "Hurrycrane Village: a cloud town waiting for a giant crane egg to hatch. The neighbors already bet on what comes out… and who cleans the nest.",
+    "say": "HurryCrane Village: a cloud town waiting for a giant crane egg to hatch. The neighbors already bet on what comes out… and who cleans the nest.",
     "button": "How exciting"
    }
   },

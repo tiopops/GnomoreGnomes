@@ -11,7 +11,7 @@ const Music = {
     menu: "assets/musica/MainTheme.mp3",
     match: "assets/musica/MushBoomForestMainTheme.mp3",
     rock: "assets/musica/RocknTrollaMainTheme.mp3", // Colinas Rock'n Troll
-    crane: "assets/musica/HurryCraneVillageMainTheme.mp3", // Hurrycrane Village
+    crane: "assets/musica/HurryCraneVillageMainTheme.mp3", // Poblado HurryCrane
   },
   enabled: true,
   volume: 0.2,

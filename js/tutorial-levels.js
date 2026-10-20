@@ -52,10 +52,10 @@ Object.assign(Tutorial, {
     },
     {
       id: "crane",
-      name: "Hurrycrane Village",
+      name: "Poblado HurryCrane",
       color: "#7fc8e8",
       island: "assets/niveles/isla_hurrycrane_village.png",
-      flavor: "Las reglas propias de Hurrycrane Village.",
+      flavor: "Las reglas propias del Poblado HurryCrane.",
       feats: [
         ["ph-egg", "Huevo de Grulla: cada rebote lo carga hasta explotar"],
         ["ph-target", "Bumpers, tótems y obeliscos: rebotes de pinball y carambolas"],
@@ -73,7 +73,7 @@ Object.assign(Tutorial, {
       { id: "basic", icon: "ph-graduation-cap", title: "Primeros pasos", sub: "Lo básico: reclutar, mover, gnomos y combate" },
       { id: "mush", icon: "ph-tree", title: "Tutorial Bosque MushBoom", sub: "Setas explosivas, Altar de Sacrificios y GnomOgro" },
       { id: "rock", icon: "ph-mountains", title: "Tutorial Colinas Rock'n Troll", sub: "Tambores de Guerra, fragmentos y Volcán" },
-      { id: "crane", icon: "ph-egg", title: "Tutorial Hurrycrane Village", sub: "Huevo de Grulla, bumpers y la Grulla" },
+      { id: "crane", icon: "ph-egg", title: "Tutorial Poblado HurryCrane", sub: "Huevo de Grulla, bumpers y la Grulla" },
     ];
     list.innerHTML = items
       .map(
@@ -624,7 +624,7 @@ Object.assign(Tutorial, {
     ];
   },
 
-  // ---------- Guion: Hurrycrane Village ----------
+  // ---------- Guion: Poblado HurryCrane ----------
   _stepsCrane() {
     const T = this;
     const unit = () => T._myUnit();
@@ -639,7 +639,7 @@ Object.assign(Tutorial, {
     return [
       {
         mood: "grunon",
-        say: "Hurrycrane Village. Un poblado flotando sobre las nubes que lleva siglos esperando a que eclosione un huevo de grulla gigante. Todavía no ha pasado, pero los vecinos ya han apostado qué saldrá, cuánto pesará... y a quién le tocará limpiar el nido.",
+        say: "Poblado HurryCrane. Un lugar flotando sobre las nubes que lleva siglos esperando a que eclosione un huevo de grulla gigante. Todavía no ha pasado, pero los vecinos ya han apostado qué saldrá, cuánto pesará... y a quién le tocará limpiar el nido.",
         button: "Qué emoción",
       },
       {
@@ -762,7 +762,7 @@ Object.assign(Tutorial, {
       },
       {
         mood: "aplaude",
-        say: "Y eso es todo de Hurrycrane Village. Resumen: cada rebote carga el huevo; obeliscos y tótems pagan el golpe según la carga; con la carga al máximo, explota; entonces la grulla se posa donde más puntos se ganaron y bloquea ese obelisco hasta que se vaya. ¡Suerte, la vas a necesitar!",
+        say: "Y eso es todo del Poblado HurryCrane. Resumen: cada rebote carga el huevo; obeliscos y tótems pagan el golpe según la carga; con la carga al máximo, explota; entonces la grulla se posa donde más puntos se ganaron y bloquea ese obelisco hasta que se vaya. ¡Suerte, la vas a necesitar!",
         button: "TERMINAR TUTORIAL",
         final: true,
       },

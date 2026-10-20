@@ -523,7 +523,8 @@ h2 {
    irregular de doble capa + cinta de color a la izquierda con el icono directo
    sobre ella. Solo #main-menu: el resto de .menu-btn del juego no cambia.
    Tamaños vía variables para que mobile.css los ajuste sin pelear especificidad. */
-.main-menu .menu-btn {
+.main-menu .menu-btn,
+.tut-menu__list .menu-btn {
   --c: #8f7bb8; --c2: #4b3a66;
   height: var(--mb-h, 62px);
   padding: 0 24px 0 calc(var(--mb-rib, 66px) + 18px);
@@ -533,12 +534,16 @@ h2 {
   letter-spacing: 0.03em;
 }
 .main-menu .menu-btn::before,
-.main-menu .menu-btn::after { clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }
-.main-menu .menu-btn::after {
+.tut-menu__list .menu-btn::before,
+.main-menu .menu-btn::after,
+.tut-menu__list .menu-btn::after { clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }
+.main-menu .menu-btn::after,
+.tut-menu__list .menu-btn::after {
   inset: var(--gg-frame-outline-width);
   background: linear-gradient(100deg, var(--c2) 0%, #352c3f 45%, #2c2435 100%);
 }
-.main-menu .menu-btn i {
+.main-menu .menu-btn i,
+.tut-menu__list .menu-btn i {
   position: absolute;
   left: var(--gg-frame-outline-width); top: var(--gg-frame-outline-width); bottom: var(--gg-frame-outline-width);
   width: var(--mb-rib, 66px); height: auto;
@@ -548,8 +553,10 @@ h2 {
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
   z-index: 2;
 }
-.main-menu .menu-btn i::before { transform: none; }
-.main-menu .menu-btn > span { position: relative; z-index: 3; }
+.main-menu .menu-btn i::before,
+.tut-menu__list .menu-btn i::before { transform: none; }
+.main-menu .menu-btn > span,
+.tut-menu__list .menu-btn > span { position: relative; z-index: 3; }
 #btn-new-game { --c: #f0a21a; --c2: #8a4a12; --mb-h: 70px; font-size: calc(var(--mb-fs, 0.95rem) * 1.15); }
 #btn-tutorial { --c: #5d93e0; --c2: #274d82; }
 #btn-resume-game { --c: #5d93e0; --c2: #274d82; }
@@ -11996,3 +12003,16 @@ body.tut-on .settings-gear-btn--update { display: none; }
 /* Botones del menú más estrechos (aprobado en demo). */
 .main-menu .menu-buttons { width: min(300px, 76vw); align-self: center; }
 @media (min-width: 721px) { .main-menu .menu-buttons { width: 340px; } }
+
+/* Lista de tutoriales: mismo estilo de cinta (dos líneas de texto). */
+.tut-menu__list .menu-btn { --mb-h: 66px; --mb-rib: 66px; width: min(420px, 90vw); align-self: center; padding-right: 30px; }
+.tut-menu__list .menu-btn > i { font-size: 1.6rem; }
+.tut-menu__list .tut-menu__name { font-size: 0.95rem; }
+.tut-menu__list .tut-menu__sub { font-size: 0.68rem; white-space: normal; line-height: 1.15; }
+.tut-menu__list .menu-btn[data-scenario="basic"] { --c: #f0a21a; --c2: #8a4a12; }
+.tut-menu__list .menu-btn[data-scenario="mush"] { --c: #5fa84a; --c2: #2d5a22; }
+.tut-menu__list .menu-btn[data-scenario="rock"] { --c: #d9703a; --c2: #7a3a18; }
+.tut-menu__list .menu-btn[data-scenario="crane"] { --c: #5d93e0; --c2: #274d82; }
+.tut-menu__list .menu-btn { height: auto; min-height: var(--mb-h, 66px); padding-top: 8px; padding-bottom: 8px; white-space: normal; }
+.tut-menu__list .tut-menu__name { line-height: 1.1; }
+@media (max-width: 720px) { .tut-menu__list .tut-menu__name { font-size: 0.82rem; } .tut-menu__list .menu-btn { --mb-rib: 56px; } }

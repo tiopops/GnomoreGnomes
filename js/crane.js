@@ -1,4 +1,4 @@
-/* Gnomore Gnomes — La Grulla (nivel Hurrycrane Village).
+/* Gnomore Gnomes — La Grulla (nivel Poblado HurryCrane).
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
      - Aparecer cuando el huevo explota (Egg._explode → Crane.arrive) para EQUILIBRAR la partida:
        se posa en el obelisco del equipo que más puntos ganó con el huevo (desempate: quien vaya

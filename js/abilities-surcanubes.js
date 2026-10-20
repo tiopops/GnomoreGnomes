@@ -1,4 +1,4 @@
-/* Gnomore Gnomes — habilidades del Equipo SurcaNubes (Hurrycrane Village).
+/* Gnomore Gnomes — habilidades del Equipo SurcaNubes (Poblado HurryCrane).
    Regla de oro: un archivo por mecánica. Se carga DESPUÉS de js/abilities.js y
    se engancha a él sin tocar su lógica: añade las 3 entradas a ABILITIES y
    envuelve Abilities._activate / onTurnStart / _refreshButton y
@@ -141,13 +141,11 @@ const SurcaNubes = {
     if (this._popupEl) return;
     Units.clearRangeOverlays();
     Units.faceTowardsTile(unit, target.row, target.col);
+    this.stretchToward(unit, target);
     if (this.rivalEntries(target.team).length === 0) {
-      // Sin nada que robar: no se estira ni se gasta — se queda en su sprite de reposo.
       Units.spawnFloatingText(target, "¡Mochila vacía!", { className: "dmg-popup" });
-      if (unit.spriteEl) unit.spriteEl.getAnimations().forEach((x) => x.cancel());
       return; // no se gasta
     }
-    this.stretchToward(unit, target);
     SFX.click();
     this._popupSelUid = null;
     const overlay = document.createElement("div");

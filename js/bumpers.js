@@ -1,4 +1,4 @@
-/* Gnomore Gnomes — Bumpers del pinball (nivel Hurrycrane Village).
+/* Gnomore Gnomes — Bumpers del pinball (nivel Poblado HurryCrane).
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
      - Colocar los bumpers del tablero (posiciones fijas y simétricas, sin
        azar, para que los dos clientes online coincidan) y bloquear su casilla.
