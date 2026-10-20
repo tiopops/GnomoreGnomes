@@ -12050,3 +12050,4 @@ body.tut-on .settings-gear-btn--update { display: none; }
 .sel-info { display: grid; }
 .sel-info > * { grid-area: 1 / 1; min-width: 0; }
 .sel-info__ghost { visibility: hidden; pointer-events: none; }
+.version-build { font-size: 0.62rem; color: var(--muted); text-align: center; letter-spacing: 0.02em; opacity: 0.8; }

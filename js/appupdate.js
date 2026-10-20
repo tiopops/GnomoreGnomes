@@ -198,6 +198,31 @@ const AppUpdate = {
     return r.json();
   },
 
+  // Estado de la última comprobación (se muestra en el historial de versiones, dentro de la APK).
+  _setStatus(txt) {
+    this.status = txt;
+    try { localStorage.setItem("gg_update_status", Date.now() + "|" + txt); } catch (e) {}
+  },
+
+  // Pide la versión publicada con reintentos: en el móvil la primera petición a GitHub
+  // (redirección a su CDN) a veces tarda más de 6 s o falla, y antes eso dejaba la
+  // comprobación en silencio sin actualizar.
+  async _getRemote() {
+    let lastErr = null;
+    for (let i = 0; i < 3; i++) {
+      try {
+        return await Promise.race([
+          this._getJson(this.RELEASE_BASE + "version.json?_=" + Date.now()),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("tiempo agotado")), 12000)),
+        ]);
+      } catch (e) {
+        lastErr = e;
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+    }
+    throw lastErr || new Error("sin respuesta");
+  },
+
   async run(auto) {
     if (this._busy) return;
     this._busy = true;
@@ -206,19 +231,21 @@ const AppUpdate = {
     try {
       this._icon("circle-notch");
       const local = await (await fetch("version.json?_=" + Date.now(), { cache: "no-store" })).json();
-      const remote = await Promise.race([
-        this._getJson(this.RELEASE_BASE + "version.json?_=" + Date.now()),
-        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 6000)),
-      ]);
-      if (!remote || !remote.version || remote.version === local.version) {
+      this.localVersion = local && local.version;
+      const remote = await this._getRemote();
+      if (!remote || !remote.version) throw new Error("respuesta vacía");
+      if (remote.version === local.version) {
+        this._setStatus("al día (" + local.version + ")");
         if (!auto) {
           this._icon("check");
           setTimeout(() => this._icon(idle), 2500);
         } else this._icon(idle);
         return;
       }
+      this._setStatus("descargando " + remote.version);
       this._icon("circle-notch");
       const up = this._updater();
+      if (!up) throw new Error("sin plugin de actualización");
       if (this._gate) this._gate.classList.remove("au-overlay--check");
       let h = null;
       try { h = await up.addListener("download", (e) => this._gateProgress(e && e.percent)); } catch (e) {}
@@ -228,15 +255,15 @@ const AppUpdate = {
       } finally {
         try { if (h && h.remove) h.remove(); } catch (e) {}
       }
-      if (this._skipped) return; // el jugador decidió entrar con la versión actual
+      if (this._skipped) { this._setStatus("omitida por el jugador"); return; } // entra con la versión actual
       this._gateProgress(100);
+      this._setStatus("instalando " + remote.version);
       await up.set(bundle); // reinicia la app con la versión nueva
     } catch (e) {
-      if (auto) this._icon(idle); // sin avisos en el arranque; queda el botón manual
-      else {
-        this._icon("warning");
-        setTimeout(() => this._icon(idle), 3000);
-      }
+      this._setStatus("error: " + ((e && (e.message || e.errorMessage)) || e));
+      // Sin avisos en el arranque; el botón del menú queda con el aviso hasta la próxima comprobación buena.
+      this._icon("warning");
+      if (!auto) setTimeout(() => this._icon(idle), 3000);
     } finally {
       this._busy = false;
       if (auto) this._gateHide();

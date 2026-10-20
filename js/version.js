@@ -7,9 +7,14 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001501";
+const GG_VERSION = "v.001502";
 
 const GG_CHANGELOG = [
+  { v: "v.001502", date: "21/10/2026", title: "Actualización de la APK", items: [
+    "La comprobación de versión al abrir la app reintenta si GitHub tarda en responder",
+    "El historial de versiones muestra, dentro de la APK, el paquete instalado y el resultado de la última comprobación",
+    "Recuadro de información de escenario con el mismo tamaño en los tres niveles",
+  ] },
   { v: "v.001501", date: "20/10/2026", title: "Móvil y APK", items: [
     "Menú principal nuevo: botones con cinta de color, logo más grande en móvil y sin scroll en escritorio",
     "Interfaz del móvil revisada en vertical y horizontal: ventanas, selección de equipo, perfil, amigos y ajustes",
@@ -18,7 +23,6 @@ const GG_CHANGELOG = [
     "Iconos incluidos en la app, sin necesidad de conexión",
     "Reanudar partida retirado: abandonar cuenta como rendirse",
     "HurryCrane Village pasa a llamarse Poblado HurryCrane, con colores de recursos más integrados",
-    "Recuadro de información de escenario con el mismo tamaño en los tres niveles",
   ] },
   { v: "v.001500", date: "19/10/2026", title: "Progreso y partidas online", items: [
     "Nivel y experiencia de cuenta, y misiones diarias con racha",
@@ -104,6 +108,15 @@ const VersionInfo = {
         "<ul>" + e.items.map((t) => "<li>" + t + "</li>").join("") + "</ul></section>"
     ).join("");
     panel.appendChild(list);
+    // Dentro de la APK: versión del paquete instalado y resultado de la última comprobación.
+    if (typeof AppUpdate !== "undefined" && AppUpdate.isNative()) {
+      const dbg = document.createElement("div");
+      dbg.className = "version-build";
+      let st = AppUpdate.status || "";
+      if (!st) { try { st = (localStorage.getItem("gg_update_status") || "").split("|").slice(1).join("|"); } catch (e) {} }
+      dbg.textContent = "Paquete " + (AppUpdate.localVersion || "?") + " · " + (st || "sin comprobar");
+      panel.appendChild(dbg);
+    }
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
     this._overlay = overlay;
