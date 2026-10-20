@@ -11935,3 +11935,18 @@ body.tut-on .settings-gear-btn--update { display: none; }
 .sr-card--lock { animation: srLock .5s cubic-bezier(.3,1.8,.5,1); }
 @keyframes srFlip { from { transform: translateY(-14px) scaleY(.8); opacity: .4; } to { transform: none; opacity: 1; } }
 @keyframes srLock { 0% { transform: scale(.88) rotate(-2deg); } 100% { transform: scale(1) rotate(0); } }
+
+/* Pantalla de actualización al arrancar la APK (js/appupdate.js) */
+.au-overlay { position: fixed; inset: 0; z-index: 200000; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 40%, #2a2238 0%, #14101c 75%); transition: opacity .35s; }
+.au-overlay--out { opacity: 0; pointer-events: none; }
+.au-box { display: flex; flex-direction: column; align-items: center; gap: 14px; width: min(320px, 78vw); }
+.au-spin { font-size: 2.6rem; color: #ffcf3d; filter: drop-shadow(2px 2px 0 #000); }
+.au-title { font-weight: 900; font-size: 1.25rem; letter-spacing: .1em; color: #fff; text-shadow: 3px 3px 0 #000; }
+.au-bar { position: relative; isolation: isolate; width: 100%; height: 20px; filter: drop-shadow(3px 3px 0 rgba(0,0,0,.6)); }
+.au-bar::before, .au-bar::after { content: ""; position: absolute; z-index: -1; clip-path: polygon(1.2% 0, 100% 8%, 98.8% 100%, 0 92%); }
+.au-bar::before { inset: 0; background: #000; }
+.au-bar::after { inset: 2.5px; background: #15111d; }
+.au-bar i { position: absolute; left: 3.5px; top: 3.5px; bottom: 3.5px; max-width: calc(100% - 7px); background: linear-gradient(180deg, #ffe07a, #ffcf3d 55%, #f2a81c); clip-path: polygon(0 0, 100% 0, 97% 100%, 0 100%); transition: width .25s linear; }
+.au-pct { font-weight: 900; font-size: 1rem; color: #ffcf3d; text-shadow: 2px 2px 0 #000; font-variant-numeric: tabular-nums; }
+.au-skip { margin-top: 6px; padding: 8px 22px; border: none; background: #2b2733; color: #fff; font-family: inherit; font-weight: 900; font-size: .8rem; letter-spacing: .08em; cursor: pointer; clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }
+.au-overlay--check .au-title, .au-overlay--check .au-bar, .au-overlay--check .au-pct { visibility: hidden; }

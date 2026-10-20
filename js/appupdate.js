@@ -30,10 +30,45 @@ const AppUpdate = {
       this._cleanup(up);
     }
     this._ensureButton();
-    // Al abrir la app: comprueba y, si hay versión nueva, la instala sola
-    // (se salta con datos móviles; ahí queda el botón manual).
+    // Al abrir la app, ANTES del menú: pantalla de actualización que comprueba la versión
+    // y, si hay una nueva, la descarga (con barra de progreso) y reinicia sola.
+    // Con datos móviles se salta (son ~100 MB); queda el botón manual del menú.
     const net = navigator.connection;
-    if (!(net && net.type === "cellular")) setTimeout(() => this.run(true), 1200);
+    if (!(net && net.type === "cellular")) await this.run(true);
+  },
+
+  // ---------- Pantalla de actualización al arrancar ----------
+  _gateShow() {
+    if (this._gate) return;
+    const el = document.createElement("div");
+    el.className = "au-overlay au-overlay--check";
+    el.innerHTML = `<div class="au-box">
+      <i class="ph-bold ph-circle-notch au-spin app-update-spin"></i>
+      <div class="au-title">ACTUALIZANDO</div>
+      <div class="au-bar"><i style="width:0%"></i></div>
+      <b class="au-pct">0%</b>
+      <button type="button" class="au-skip" hidden>SALTAR</button>
+    </div>`;
+    document.body.appendChild(el);
+    this._gate = el;
+    this._gateStart = Date.now();
+    // Si la descarga se eterniza, aparece un botón para entrar con la versión actual.
+    this._skipTimer = setTimeout(() => { const b = el.querySelector(".au-skip"); if (b) { b.hidden = false; b.addEventListener("click", () => { this._skipped = true; this._gateHide(); }); } }, 20000);
+  },
+  _gateProgress(pct) {
+    if (!this._gate) return;
+    const p = Math.max(0, Math.min(100, Math.round(pct)));
+    const i = this._gate.querySelector(".au-bar i"), t = this._gate.querySelector(".au-pct");
+    if (i) i.style.width = p + "%";
+    if (t) t.textContent = p + "%";
+  },
+  _gateHide() {
+    clearTimeout(this._skipTimer);
+    const el = this._gate;
+    if (!el) return;
+    this._gate = null;
+    el.classList.add("au-overlay--out");
+    setTimeout(() => el.remove(), 350);
   },
 
   // Popup "DESCARGAR APP": solo en el navegador de un móvil Android (nunca en
@@ -167,10 +202,14 @@ const AppUpdate = {
     if (this._busy) return;
     this._busy = true;
     const idle = "download-simple";
+    if (auto) this._gateShow(); // tapa el menú mientras se comprueba la versión
     try {
       this._icon("circle-notch");
       const local = await (await fetch("version.json?_=" + Date.now(), { cache: "no-store" })).json();
-      const remote = await this._getJson(this.RELEASE_BASE + "version.json?_=" + Date.now());
+      const remote = await Promise.race([
+        this._getJson(this.RELEASE_BASE + "version.json?_=" + Date.now()),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 6000)),
+      ]);
       if (!remote || !remote.version || remote.version === local.version) {
         if (!auto) {
           this._icon("check");
@@ -180,8 +219,18 @@ const AppUpdate = {
       }
       this._icon("circle-notch");
       const up = this._updater();
-      const bundle = await up.download({ url: this.RELEASE_BASE + "bundle.zip", version: remote.version });
-            await up.set(bundle); // reinicia la app con la versión nueva
+      if (this._gate) this._gate.classList.remove("au-overlay--check");
+      let h = null;
+      try { h = await up.addListener("download", (e) => this._gateProgress(e && e.percent)); } catch (e) {}
+      let bundle;
+      try {
+        bundle = await up.download({ url: this.RELEASE_BASE + "bundle.zip", version: remote.version });
+      } finally {
+        try { if (h && h.remove) h.remove(); } catch (e) {}
+      }
+      if (this._skipped) return; // el jugador decidió entrar con la versión actual
+      this._gateProgress(100);
+      await up.set(bundle); // reinicia la app con la versión nueva
     } catch (e) {
       if (auto) this._icon(idle); // sin avisos en el arranque; queda el botón manual
       else {
@@ -190,6 +239,7 @@ const AppUpdate = {
       }
     } finally {
       this._busy = false;
+      if (auto) this._gateHide();
     }
   },
 };
