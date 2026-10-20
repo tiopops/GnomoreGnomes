@@ -3,8 +3,9 @@
    vive en newgame-flow.js; este archivo solo prepara el estado del menú al cargar. */
 
 function refreshResumeButton() {
+  // Reanudar partida eliminado: abandonar una partida cuenta como rendirse.
   const resumeBtn = document.getElementById("btn-resume-game");
-  resumeBtn.disabled = !SaveGame.hasSavedMatch();
+  if (resumeBtn) resumeBtn.disabled = !SaveGame.hasSavedMatch();
 }
 
 document.addEventListener("DOMContentLoaded", refreshResumeButton);

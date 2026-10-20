@@ -597,7 +597,8 @@ function initNewGameFlow() {
     }
   });
 
-  document.getElementById("btn-resume-game").addEventListener("click", resumeMatch);
+  const _rb = document.getElementById("btn-resume-game");
+  if (_rb) _rb.addEventListener("click", resumeMatch);
 
   document.querySelectorAll("[data-back]").forEach((btn) => {
     btn.addEventListener("click", goBack);

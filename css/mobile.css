@@ -32,7 +32,7 @@
   }
   .main-menu > * { max-width: none; width: auto; }
   .main-logo-wrap { grid-column: 1; grid-row: 1 / span 3; width: 100%; max-width: 100%; margin: 0; }
-  .main-menu .menu-buttons { grid-column: 2; grid-row: 2; width: min(380px, 100%); gap: 8px; }
+  .main-menu .menu-buttons { grid-column: 2; grid-row: 2; width: min(300px, 100%); gap: 8px; }
   .main-menu .menu-btn { --mb-h: 44px; --mb-rib: 52px; --mb-fs: 0.85rem; }
   #btn-new-game { --mb-h: 50px; }
   .main-menu .menu-footer { grid-column: 2; grid-row: 3; align-self: start; margin: 8px 0 0; font-size: 0.7rem; }
