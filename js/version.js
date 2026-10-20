@@ -7,9 +7,13 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001502";
+const GG_VERSION = "v.001503";
 
 const GG_CHANGELOG = [
+  { v: "v.001503", date: "21/10/2026", title: "Tutoriales", items: [
+    "Ya se puede abandonar un tutorial desde Ajustes: la confirmación de salir ya no queda tapada por Nizak ni bloqueada",
+    "Con Ajustes o la confirmación abiertos, la viñeta, el puntero y el contador del tutorial se esconden",
+  ] },
   { v: "v.001502", date: "21/10/2026", title: "Actualización de la APK", items: [
     "La comprobación de versión al abrir la app reintenta si GitHub tarda en responder",
     "El historial de versiones muestra, dentro de la APK, el paquete instalado y el resultado de la última comprobación",

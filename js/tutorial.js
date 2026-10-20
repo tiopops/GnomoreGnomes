@@ -85,7 +85,7 @@ const Tutorial = {
 
   stop() {
     this.active = false;
-    document.body.classList.remove("tut-on");
+    document.body.classList.remove("tut-on", "tut-hush");
     this.stepIndex = -1;
     clearInterval(this._timer);
     clearTimeout(this._typeTimer);
@@ -979,7 +979,7 @@ const Tutorial = {
       const t = e.target;
       if (!t || !t.closest) return;
       // Interfaz propia del tutorial y ajustes: siempre disponibles.
-      if (t.closest(".tut-panel, .tut-skip, .tut-hold, .gp-actions, [class*='settings']")) return;
+      if (t.closest(".tut-panel, .tut-skip, .tut-hold, .gp-actions, .mp-overlay, [class*='settings']")) return;
       const x = e.clientX;
       const y = e.clientY;
       const obEl = this._ob() && this._ob().el;
@@ -1254,6 +1254,9 @@ const Tutorial = {
     const P = this._els.pointer;
     if (!P) return;
     if (typeof TutorialFrame !== "undefined") TutorialFrame.layoutPanel(this._els.panel);
+    // Ajustes o la confirmación de salir abiertos: la viñeta, el puntero y el contador
+    // se esconden para no tapar esas ventanas ni sus botones.
+    document.body.classList.toggle("tut-hush", !!document.querySelector(".settings-overlay--visible, .mp-overlay--visible"));
     // Con una ventana (reclutar, habilidades...) abierta la viñeta se hace
     // compacta y sube arriba para no tapar sus botones.
     const popupEl = document.querySelector(".backpack-overlay .backpack-panel");
