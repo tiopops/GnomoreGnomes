@@ -117,7 +117,7 @@
      (rojo si es enemigo, amarillo si es un punto de interés normal). */
   --cursor-default: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 256 256"><polygon points="34,20 34,214 79,172 112,242 148,225 116,155 200,155" fill="%23ffffff" stroke="%23000000" stroke-width="14" stroke-linejoin="round"/></svg>') 4 2, auto;
   --cursor-pointer: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 256 256"><polygon points="34,20 34,214 79,172 112,242 148,225 116,155 200,155" fill="%23ffcf3f" stroke="%23000000" stroke-width="14" stroke-linejoin="round"/></svg>') 4 2, auto;
-  --cursor-enemy: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 256 256"><polygon points="34,20 34,214 79,172 112,242 148,225 116,155 200,155" fill="%23ff2d2d" stroke="%23000000" stroke-width="14" stroke-linejoin="round"/></svg>') 4 2, auto;
+  --cursor-enemy: url("../assets/iconos/cursor_puno.png") 24 24, auto; /* puño rojo para atacar */
 }
 
 * {

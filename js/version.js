@@ -7,9 +7,12 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001514";
+const GG_VERSION = "v.001515";
 
 const GG_CHANGELOG = [
+  { v: "v.001515", date: "21/10/2026", title: "Combate", items: [
+    "Al pasar el puntero sobre un enemigo (que se puede atacar) el puntero es un puño rojo",
+  ] },
   { v: "v.001514", date: "21/10/2026", title: "Recursos", items: [
     "Al poder recolectar un recurso, el puntero es un hacha amarilla",
   ] },
