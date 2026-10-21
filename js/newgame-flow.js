@@ -463,6 +463,7 @@ function spawnTestUnits(size, raceId, opponents, mp) {
   // (nacen sobre la marcha con cada muerte/gnomo aplastado), solo hay que
   // limpiar los de la partida anterior si la había.
   if (typeof BloodSplat !== "undefined") BloodSplat.resetAll();
+  if (typeof Sacrifice !== "undefined") Sacrifice.resetAll();
 
   // Armería (js/armory.js) — reinicia los niveles comprados de arma/armadura
   // de cada equipo al empezar una partida nueva.

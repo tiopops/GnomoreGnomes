@@ -7,9 +7,15 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001503";
+const GG_VERSION = "v.001504";
 
 const GG_CHANGELOG = [
+  { v: "v.001504", date: "21/10/2026", title: "Sacrificios de gnomos", items: [
+    "Nueva forma de ganar Gloria al instante: sacrificar gnomos. Cada sacrificio da +3 de Gloria",
+    "Se pueden lanzar gnomos al volcán, a charcos de lava, al agua, a setas explosivas y a cepos",
+    "Una piedra de Rock'n Troll o un cohete KataPum! contra un gnomo suelto también lo sacrifica",
+    "Cuando un gnomo muere así, aparece otro enseguida en una zona aleatoria del escenario",
+  ] },
   { v: "v.001503", date: "21/10/2026", title: "Tutoriales", items: [
     "Ya se puede abandonar un tutorial desde Ajustes: la confirmación de salir ya no queda tapada por Nizak ni bloqueada",
     "Con Ajustes o la confirmación abiertos, la viñeta, el puntero y el contador del tutorial se esconden",

@@ -825,10 +825,20 @@ const Volcano = {
       setTimeout(() => holder.el && holder.el.classList.remove("unit--throwing"), 380);
     }
     const amount = gnome.points;
+    // Sacrificio animado (js/sacrifice.js): vuelo al cráter, hundirse ardiendo, +Gloria y gnomo nuevo.
+    gnome.busy = false;
+    gnome.row = holder.row;
+    gnome.col = holder.col;
     gnome.detachFrom();
-    gnome.spriteEl.src = GNOME_ASSETS.grita;
-    await gnome.animateThrowTo(holder.row, holder.col, v.row, v.col);
-    Gnome.destroyInstance(gnome);
+    gnome.el.style.display = "none";
+    if (typeof Sacrifice !== "undefined") {
+      Sacrifice.busy++;
+      try { await Sacrifice._play("volcano", holder, gnome, v); } finally { Sacrifice.busy--; }
+    } else {
+      gnome.spriteEl.src = GNOME_ASSETS.grita;
+      await gnome.animateThrowTo(holder.row, holder.col, v.row, v.col);
+      Gnome.destroyInstance(gnome);
+    }
     await this.addPoints(v, holder.team, amount);
     if (holder.el) Units.refreshRange(holder);
   },

@@ -1164,12 +1164,14 @@ const Backpack = {
     const isValidTarget = (u) =>
       u.team !== "player" && u.el && !u.el.classList.contains("unit--fog-hidden");
     const targets = Units.list.filter(isValidTarget);
-    if (targets.length === 0) return; // no hay ningún rival a la vista, no se gasta el cohete
+    const gnomeTargets = typeof Sacrifice !== "undefined" ? Sacrifice.looseTargets() : [];
+    if (targets.length === 0 && gnomeTargets.length === 0) return; // nada a la vista, no se gasta el cohete
 
     this._katapumUid = uid;
     Units.clearRangeOverlays();
     document.body.classList.add("backpack-giving--katapum");
     targets.forEach((u) => u.el.classList.add("unit--katapum-target"));
+    gnomeTargets.forEach((t) => t.el.classList.add("unit--katapum-target")); // gnomos sueltos (sacrificio)
     this._katapumPickHandler = (e) => this._onKatapumPickClick(e);
     window.addEventListener("click", this._katapumPickHandler, { capture: true });
   },
@@ -1207,6 +1209,11 @@ const Backpack = {
       return;
     }
 
+    const gnomeTarget = typeof Sacrifice !== "undefined" ? Sacrifice.looseTargets().find((t) => t.el === unitEl) : null;
+    if (gnomeTarget) {
+      this._launchKatapum(uid, gnomeTarget.ref);
+      return;
+    }
     const target = Units.list.find((u) => u.id === unitEl.dataset.unitId);
     if (
       !target ||
@@ -1229,6 +1236,7 @@ const Backpack = {
     // Nada de piedras contra unidades o estructuras rivales: solo el volcán, la lava y
     // tus propias unidades con un gnomo en llamas (todo en Volcano.rockTargets).
     if (typeof Volcano !== "undefined") Volcano.rockTargets("player").forEach((t) => out.push(t)); // volcán y lava (js/volcano.js)
+    if (typeof Sacrifice !== "undefined") Sacrifice.looseTargets().forEach((t) => out.push(t)); // gnomos sueltos: sacrificio (js/sacrifice.js)
     return out;
   },
 
@@ -1313,6 +1321,7 @@ const Backpack = {
 
   _rockImpact(target, team = "player") {
     if (typeof SFX !== "undefined" && SFX.rockHit) SFX.rockHit();
+    if (target.kind === "gnome") return Sacrifice.rockOnGnome(target.ref, team);
     if (target.kind === "volcano") return Volcano.onRockHit(target.ref, team);
     if (target.kind === "lava") { Volcano.extinguish(target.ref); return; }
     if (target.kind === "firegnome") { Volcano.removeGnome(target.ref); return; }
@@ -1489,6 +1498,8 @@ const Backpack = {
   },
 
   _explodeKatapum(target) {
+    // Gnomo suelto: sacrificio (js/sacrifice.js) — lo revienta y da Gloria.
+    if (typeof Gnome !== "undefined" && Gnome.list.includes(target)) return Sacrifice.rocketOnGnome(target, this._katapumTeam || "player");
     const damage = this._rollKatapumDamage();
     // Solo se muestra el daño (sale de Skills.resolveDamage), no la tirada del dado.
     // Escudo/Piel de Roca (js/skills.js) también valen contra el misil; la

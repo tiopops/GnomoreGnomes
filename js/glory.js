@@ -93,6 +93,18 @@ const Glory = {
     this._renderPreview(team);
   },
 
+  // Suma INSTANTÁNEA (sacrificios de gnomos, js/sacrifice.js): a diferencia de
+  // queueKillBonus no espera al próximo turno. Respeta el tope GLORY_CAP.
+  addNow(team, amount) {
+    if (!(team in this.points) || amount <= 0) return 0;
+    const added = Math.min(amount, Math.max(0, GLORY_CAP - this.points[team]));
+    this.points[team] += added;
+    this._render(team, { bump: added > 0, gained: added });
+    if (amount - added > 0) this._showLost(team, amount - added);
+    this._renderPreview(team);
+    return added;
+  },
+
   // Gastar puntos — pedido explícito (js/shops.js, Tienda Goblin): "al
   // comprar un objeto, se descuentan los puntos de gloria". Primer (y de
   // momento único) sitio del juego que RESTA puntos en vez de sumarlos, así

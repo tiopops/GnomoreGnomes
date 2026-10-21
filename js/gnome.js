@@ -887,6 +887,7 @@ function createGnomeInstance() {
       if (typeof Egg !== "undefined") Egg.addThrowMarker(unit, this); // lanzar contra el huevo (js/egg.js)
       if (typeof Crane !== "undefined") Crane.addThrowMarker(unit, this); // espantar a la grulla (js/crane.js)
       if (typeof Bumpers !== "undefined") Bumpers.addThrowMarker(unit, this); // rebote de billar contra un bumper (js/bumpers.js)
+      if (typeof Sacrifice !== "undefined") Sacrifice.addThrowMarkers(unit, this); // agua, charcos de lava, setas y cepos (js/sacrifice.js)
       const movimiento = Units.moveRangeOf(unit);
       const tiles = this._throwableTiles(unit);
       tiles.forEach((tile, i) => {
@@ -2210,6 +2211,23 @@ const Gnome = {
   // Pedido explícito: "siempre deben haber al menos 2 gnomos sin coger; si no
   // es posible se generan en una casilla aleatoria para cumplir esta regla".
   MIN_LOOSE: 2,
+  // Un gnomo nuevo en una loseta libre al azar (sacrificios, js/sacrifice.js).
+  spawnRandom() {
+    if (typeof Units === "undefined" || !Units.boardSize) return null;
+    const size = Units.boardSize;
+    const rnd = typeof Net !== "undefined" && Net.active ? GGRand.local(`sac|${Net.seed}|${this._nextGid}`) : Math.random;
+    for (let attempts = 0; attempts < 300; attempts++) {
+      const row = Math.floor(rnd() * size);
+      const col = Math.floor(rnd() * size);
+      if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) continue;
+      if (Units.unitAt(row, col) || this.isAt(row, col)) continue;
+      const before = this.list.length;
+      const inst = this.spawnNear(row, col); // esquiva tótems/tiendas/obeliscos/recursos
+      if (this.list.length > before) return inst;
+    }
+    return null;
+  },
+
   ensureLooseGnome() {
     if (typeof Units === "undefined" || !Units.boardSize) return;
     const size = Units.boardSize;
