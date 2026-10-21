@@ -889,7 +889,7 @@ function createGnomeInstance() {
       if (typeof Bumpers !== "undefined") Bumpers.addThrowMarker(unit, this); // rebote de billar contra un bumper (js/bumpers.js)
       if (typeof Sacrifice !== "undefined") Sacrifice.addThrowMarkers(unit, this); // agua, charcos de lava, setas y cepos (js/sacrifice.js)
       const movimiento = Units.moveRangeOf(unit);
-      const tiles = this._throwableTiles(unit);
+      const tiles = this._throwableTiles(unit).filter((t) => !(typeof Sacrifice !== "undefined" && Sacrifice.isSacrificeTile(unit, t.row, t.col)));
       tiles.forEach((tile, i) => {
         const distance = Math.max(Math.abs(tile.row - unit.row), Math.abs(tile.col - unit.col));
         const difficultyClass = this._throwDifficultyClass(unit, distance, movimiento);
@@ -2111,8 +2111,8 @@ const Gnome = {
     this._currentHolderUnit = unit;
     this._ensureHoldingButtons();
     this._hitBtn.classList.add("gnome-action-btn--visible");
-    const hasAllies = Units.list.some((u) => u.team === "player" && u.id !== unit.id);
-    this._passBtn.classList.toggle("gnome-action-btn--visible", hasAllies || this._hasSceneThrowTarget(unit));
+    // Con un gnomo agarrado, lanzar siempre está disponible (aunque no haya más aliados).
+    this._passBtn.classList.add("gnome-action-btn--visible");
   },
 
   // Lanzar también vale contra el huevo, el volcán o un bumper (no solo a un aliado):

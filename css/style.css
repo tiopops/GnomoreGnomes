@@ -12094,15 +12094,25 @@ body.tut-hush .tut-panel * { pointer-events: none; }
 .sac-pts::before, .sac-pts::after { content: ""; position: absolute; z-index: -1; clip-path: polygon(3% 0, 100% 5%, 97% 100%, 0 94%); }
 .sac-pts::before { inset: 0; background: #000; }
 .sac-pts::after { inset: 3px; background: #3b2f48; }
-.pass-marker--sacrifice .pass-marker__skull {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  pointer-events: none;
-  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.85));
-  transition: transform 0.15s;
-}
-.pass-marker--sacrifice:hover .pass-marker__skull { transform: scale(1.25) rotate(-6deg); }
 /* Puntero de ejecución: la calavera. */
 .pass-marker--sacrifice,
-.pass-marker--sacrifice * { cursor: url("../assets/iconos/cursor_calavera.png") 24 24, pointer !important; }
+.pass-marker--sacrifice *,
+.range-marker--sacrifice,
+.range-marker--sacrifice * { cursor: url("../assets/iconos/cursor_calavera.png") 24 24, pointer !important; }
+/* Ceniza que deja el gnomo carbonizado de la seta */
+.sac-ash {
+  position: absolute;
+  border-radius: 50%;
+  transform-origin: 50% 50%;
+  background: radial-gradient(ellipse, rgba(90, 85, 80, 0.95) 0%, rgba(61, 57, 53, 0.85) 30%, rgba(40, 36, 33, 0.5) 55%, rgba(40, 36, 33, 0) 72%);
+}
+.sac-ash-fleck {
+  position: absolute;
+  border-radius: 50%;
+  background: #6b655e;
+  filter: blur(1px);
+  transition: transform 0.25s ease-out;
+}
+/* Puntero al poder coger un gnomo: la mano amarilla del suelo. */
+.catch-marker,
+.catch-marker * { cursor: url("../assets/iconos/cursor_mano.png") 24 24, pointer !important; }

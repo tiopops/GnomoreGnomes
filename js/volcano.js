@@ -790,7 +790,7 @@ const Volcano = {
     const dist = Math.max(Math.abs(v.row - unit.row), Math.abs(v.col - unit.col));
     if (dist < 1 || dist > GNOME_THROW_MAX_RANGE) return;
     Units.addMarker({
-      className: "pass-marker",
+      className: "pass-marker pass-marker--sacrifice",
       row: v.row,
       col: v.col,
       zOffset: 12,

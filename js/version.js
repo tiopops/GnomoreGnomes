@@ -7,9 +7,18 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001505";
+const GG_VERSION = "v.001507";
 
 const GG_CHANGELOG = [
+  { v: "v.001507", date: "21/10/2026", title: "Sacrificios", items: [
+    "Seta explosiva: el gnomo se carboniza en el sitio y se hunde en el suelo dejando un círculo de ceniza",
+    "Al poder coger un gnomo, el puntero es la mano amarilla",
+    "Los gnomos cargados valen más al sacrificarlos: +4 con 5 a 9 puntos y +5 con 10 o más",
+  ] },
+  { v: "v.001506", date: "21/10/2026", title: "Sacrificios", items: [
+    "El botón Lanzar está siempre disponible cuando una unidad lleva un gnomo, aunque no haya más aliados",
+    "Las casillas de sacrificio vuelven a mostrar el círculo habitual; la calavera aparece solo en el puntero",
+  ] },
   { v: "v.001505", date: "21/10/2026", title: "Sacrificios", items: [
     "Las casillas de sacrificio muestran la calavera y el puntero cambia a una calavera al apuntar",
   ] },

@@ -26,6 +26,14 @@
 // máquina de dinero. Con 5 un solo gnomo por turno pagaría casi cualquier compra
 // (3–6) y haría inútil el resto de fuentes de Gloria.
 const SACRIFICE_GLORY = 3;
+// Un gnomo "cargado" (con puntos acumulados) vale más al sacrificarlo, sin exagerar:
+// 10 o más puntos: +5; 5 a 9: +4; el resto: +3.
+function sacrificeValue(gnome) {
+  const p = gnome && gnome.points ? gnome.points : 0;
+  if (p >= 10) return 5;
+  if (p >= 5) return 4;
+  return SACRIFICE_GLORY;
+}
 const SAC_K = 74 / 165; // gnomo en el suelo: 74 px en el juego, 165 px en las demos
 const SAC_W = { ground: 74, fly: 93, sit: 78, fire: 110 };
 // Gorro: esquina superior izquierda del sprite en reposo (mismas proporciones que la demo).
@@ -34,10 +42,12 @@ const SAC_HAT = { w: 74 * (83 / 165), h: 74 * (45 / 165), bg: 74 * (113 / 165) }
 const Sacrifice = {
   busy: 0,
   _els: [],
+  _vals: [],
 
   resetAll() {
     this._els.forEach((e) => e.isConnected && e.remove());
     this._els = [];
+    this._vals = [];
     this.busy = 0;
   },
 
@@ -187,10 +197,10 @@ const Sacrifice = {
   },
 
   // Marcador "+N" de Gloria con el marco irregular de doble capa del juego.
-  async _pts(x, y, z) {
+  async _pts(x, y, z, value) {
     const e = document.createElement("div");
     e.className = "sac-pts";
-    e.textContent = `+${SACRIFICE_GLORY}`;
+    e.textContent = `+${value}`;
     e.style.left = `${x}px`;
     e.style.top = `${y}px`;
     this._add(e, z + 40);
@@ -214,9 +224,11 @@ const Sacrifice = {
 
   // ---------- Gloria y reaparición ----------
   _award(team, x, y, z) {
-    if (typeof Glory !== "undefined" && Glory.addNow) Glory.addNow(team, SACRIFICE_GLORY);
+    // el valor se fijó al morir el gnomo (_kill), en orden
+    const value = this._vals.length ? this._vals.shift() : SACRIFICE_GLORY;
+    if (typeof Glory !== "undefined" && Glory.addNow) Glory.addNow(team, value);
     this._snd("glory");
-    return this._pts(x, y, z);
+    return this._pts(x, y, z, value);
   },
 
   // Un gnomo nuevo en una zona aleatoria del escenario, con un "pop" de aparición.
@@ -233,6 +245,7 @@ const Sacrifice = {
 
   // El gnomo muere de verdad: se borra la instancia y llega otro.
   _kill(gnome) {
+    this._vals.push(sacrificeValue(gnome));
     if (gnome && typeof Gnome !== "undefined" && Gnome.list.includes(gnome)) Gnome.destroyInstance(gnome);
     this._respawn();
   },
@@ -280,28 +293,26 @@ const Sacrifice = {
   },
 
   addThrowMarkers(unit, gnome) {
+    // Mismo círculo habitual de lanzar (con su color de dificultad); solo el
+    // puntero cambia a la calavera al pasar por encima.
+    const movimiento = Units.moveRangeOf(unit);
     this.throwTargets(unit).forEach((t, i) => {
+      const dist = Math.max(Math.abs(t.row - unit.row), Math.abs(t.col - unit.col));
+      const diff = gnome._throwDifficultyClass(unit, dist, movimiento);
       Units.addMarker({
-        className: "pass-marker pass-marker--sacrifice",
+        className: `range-marker range-marker--pass-target range-marker--sacrifice ${diff}`,
         row: t.row,
         col: t.col,
-        zOffset: 12,
         delayIndex: i % 12,
-        visibleClass: "pass-marker--visible",
+        visibleClass: "range-marker--visible",
         owner: "gnome",
-        alwaysOnTop: true,
-        buildContent: (marker) => {
-          // Misma calavera que avisa de "el próximo golpe te mata" (calavera_miedo.png).
-          const icon = document.createElement("img");
-          icon.className = "pass-marker__skull";
-          icon.src = "assets/iconos/calavera_miedo.png";
-          icon.alt = "";
-          icon.draggable = false;
-          marker.appendChild(icon);
-        },
         onClick: () => this.perform(unit, gnome, t.kind, t),
       });
     });
+  },
+
+  isSacrificeTile(unit, row, col) {
+    return this.throwTargets(unit).some((t) => t.row === row && t.col === col);
   },
 
   // Gnomos sueltos a la vista (objetivos de piedra y de KataPum!).
@@ -626,54 +637,51 @@ const Sacrifice = {
     this._add(soot, 3);
     soot.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, fill: "forwards" });
     setTimeout(() => { soot.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 800, fill: "forwards" }).onfinish = () => this._rm(soot); }, 4500);
-    // el gnomo sale volando muy, muy alto
-    a.put(GNOME_ASSETS.grita, SAC_W.fly, gx, gy);
-    a.tf("none", "50% 50%");
-    const climb = 380 * SAC_K;
+    // la onda lo alcanza: se carboniza ahí mismo, sin moverse ni darse la vuelta
+    const K = SAC_K;
+    a.img.getAnimations().forEach((x) => x.cancel());
+    a.anim([{ filter: "brightness(1)" }, { filter: "brightness(4) saturate(0)", offset: 0.2 }, { filter: "brightness(.12) saturate(0) contrast(1.2)" }], { duration: 520, fill: "forwards", easing: "ease-out" });
+    a.anim([{ transform: "scale(1)" }, { transform: "scale(1.08,.94)", offset: 0.2 }, { transform: "scale(1)" }], { duration: 420, easing: "ease-out" });
+    this._burst(gx, gy - 80 * K, 14, "sac-em", z + 9, { v: 300, spread: 3.4, s: [4, 9], t: 800, g: 500 });
+    await this._sleep(560);
+    // humeando, negro como el carbón, quieto un momento
+    const wisp = setInterval(() => this._burst(gx + (Math.random() - 0.5) * 40 * K, gy - 110 * K, 1, "sac-smoke", z + 9, { v: 60, spread: 0.6, s: [18, 30], t: 1400, g: -80, sc: 2.2 }), 130);
+    await this._sleep(1200);
+    // ...y se hunde en el suelo, puf. Debajo queda un círculo de ceniza.
+    const D = SAC_W.ground * 0.9;
+    const ash = document.createElement("div");
+    ash.className = "sac-ash";
+    ash.style.cssText = `left:${gx - 95 * K}px;top:${gy - 32 * K}px;width:${190 * K}px;height:${60 * K}px;transform:scale(0)`;
+    this._add(ash, 3);
+    const flecks = [];
+    for (let i = 0; i < 9; i++) {
+      const f = document.createElement("div");
+      f.className = "sac-ash-fleck";
+      const w = (8 + Math.random() * 14) * K;
+      f.style.cssText = `left:${gx + (Math.random() - 0.5) * 140 * K - w / 2}px;top:${gy - 2 + (Math.random() - 0.5) * 10 * K}px;width:${w}px;height:${w * 0.4}px;transform:scale(0)`;
+      this._add(f, 3);
+      flecks.push(f);
+      setTimeout(() => { f.style.transform = "scale(1)"; }, 300 + i * 80);
+    }
+    const dust = setInterval(() => this._burst(gx + (Math.random() - 0.5) * 70 * K, gy - 4, 1, "sac-dust", z + 9, { v: 110, spread: 2.2, s: [8, 16], t: 600, g: 260 }), 70);
     await this._raf(900, (t) => {
-      a.put(null, null, gx - 60 * SAC_K * t, gy - (climb + 60) * Math.sin((Math.PI * t) / 2));
-      a.tf(`rotate(${t * 1500}deg)`);
-      a.img.style.filter = `brightness(${1 - 0.8 * t}) saturate(${1 - t})`;
-      a.d.style.opacity = 1 - Math.max(0, t - 0.7) * 3.3;
+      const d = D * (t * t * (3 - 2 * t) * 0.2 + t * t * 0.8);
+      ash.style.transform = `scale(${Math.min(1, t * 1.6)})`;
+      a.d.style.top = `${gy + d}px`;
+      a.d.style.clipPath = `inset(0 0 ${d}px 0)`;
+      a.img.style.transform = `translateX(${Math.sin(t * 40) * (1 - t) * 2}px)`;
     });
+    clearInterval(dust);
+    clearInterval(wisp);
     a.d.style.opacity = 0;
-    await this._sleep(700);
-    // vuelve a caer, ya chamuscado, justo en el cráter
-    const lx = mx - 4, lb = my + 6;
-    a.d.style.opacity = 1;
-    await this._raf(750, (t) => {
-      const y = lb - 170 * (1 - t * t);
-      a.put(null, null, lx, y);
-      a.tf(`rotate(${t * 400}deg)`);
-    });
     this._shake(false);
-    this._burst(lx, lb - 4, 10, "sac-smoke", z + 9, { v: 260, spread: 2.6, s: [24, 46], t: 1000, g: -40, sc: 2 });
-    this._burst(lx, lb - 4, 8, "sac-dust", z + 9, { v: 240, spread: 2.8, s: [12, 22], t: 800, g: 300 });
-    a.put(GNOME_ASSETS.idle, SAC_W.ground, lx, lb);
-    a.tf("none", "50% 100%");
-    a.img.style.filter = "brightness(.12) saturate(0) contrast(1.2)";
-    a.anim([{ transform: "scale(1.3,.65)" }, { transform: "scale(.92,1.12)" }, { transform: "scale(1)" }], { duration: 420, easing: "ease-out" });
-    for (let i = 0; i < 5; i++) setTimeout(() => this._burst(lx + (Math.random() - 0.5) * 14, lb - 56, 1, "sac-smoke", z + 9, { v: 60, spread: 0.5, s: [18, 30], t: 1400, g: -80, sc: 2.2 }), i * 160);
-    // el gorro cae del cielo y se le posa en la cabeza, perfecto
-    const hat = this._hat(z + 8, lx - SAC_HAT.w / 2, lb - SAC_W.ground);
-    hat.style.filter = "brightness(.2) grayscale(1)";
-    await hat.animate([{ transform: "translateY(-320px) rotate(300deg)" }, { transform: "translateY(0) rotate(0) scale(1.15,.8)" }, { transform: "translateY(-5px) scale(.95,1.1)" }, { transform: "translateY(0)" }], { duration: 900, easing: "cubic-bezier(.5,0,1,.6)", fill: "forwards" }).finished;
-    this._burst(lx, lb - 54, 6, "sac-dust", z + 9, { v: 140, spread: 2, s: [10, 18], t: 600, g: 200 });
-    await this._sleep(900);
-    a.anim([{ transform: "translateY(0)" }, { transform: "translateY(-4px) scale(1.04,.96)" }, { transform: "translateY(0)" }, { transform: "translateY(-4px) scale(1.04,.96)" }, { transform: "translateY(0)" }], { duration: 520 });
-    await this._sleep(520);
     this._kill(gnome);
-    a.anim([{ transform: "scale(1,1)", opacity: 1 }, { transform: "scale(1.05,.9)", opacity: 1, offset: 0.25 }, { transform: "scale(1,.12)", opacity: 0 }], { duration: 650, fill: "forwards", easing: "ease-in" });
-    hat.animate([{ transform: "translateY(0)" }, { transform: `translateY(${SAC_W.ground - SAC_HAT.h}px) rotate(12deg)` }], { duration: 650, fill: "forwards", easing: "cubic-bezier(.5,0,1,.6)" });
-    this._burst(lx, lb - 30, 16, "sac-smoke", z + 9, { v: 120, spread: 2.6, s: [14, 30], t: 1500, g: -60, sc: 2 });
-    this._burst(lx, lb - 28, 18, "sac-smoke", z + 9, { v: 260, spread: 2.8, s: [8, 14], t: 1300, g: 200, sc: 1.3 });
-    await this._sleep(700);
-    this._shake(false);
-    hat.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: "forwards" });
-    await this._sleep(300);
+    this._burst(gx, gy - 10 * K, 18, "sac-smoke", z + 9, { v: 200, spread: 3.0, s: [26, 54], t: 1500, g: -90, sc: 2.4 });
+    this._burst(gx, gy - 6 * K, 10, "sac-dust", z + 9, { v: 260, spread: 3.0, s: [12, 22], t: 800, g: 300 });
     a.remove();
-    this._rm(hat);
-    await this._award(team, lx, lb - 80, z);
+    await this._sleep(500);
+    await this._award(team, gx, gy - 80, z);
+    [ash, ...flecks].forEach((e) => e.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700, fill: "forwards" }).onfinish = () => this._rm(e));
   },
 
   // ---------- 6. Cepo ----------
