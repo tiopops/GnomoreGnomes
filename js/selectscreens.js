@@ -267,52 +267,45 @@ const SelectScreens = {
     return out || String(desc || "").slice(0, 280);
   },
 
-  renderInfo() {
-    const races = this.races(), S = this.ST, r = races[S.ri];
-    const b = document.getElementById("sel-info2");
-    // Las dos fichas (virtudes/debilidades y unidad) se pintan siempre apiladas en la
-    // misma celda: el recuadro mide lo que mide la mayor y no cambia de tamaño al alternar.
+  // Tarjetas de virtudes/debilidades de una raza.
+  _virtHtml(r) {
     const CHECK = '<svg class="sel-card__ic" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#1a1020" stroke="#000" stroke-width="2"/><path d="M9 16.5l4.8 4.8L23.5 11" fill="none" stroke="#7ee08a" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     const CROSS = '<svg class="sel-card__ic" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#1a1020" stroke="#000" stroke-width="2"/><path d="M10.5 10.5l11 11M21.5 10.5l-11 11" fill="none" stroke="#ff8a7a" stroke-width="4.2" stroke-linecap="round"/></svg>';
     const lis = (txt) => String(txt).split(/(?<=\.) /).map((x) => `<li>${x}</li>`).join("");
     const card = (cls, ic, title, txt) => `<div class="sel-card sel-card--${cls}"><div class="sel-card__hd">${ic}<b>${title}</b></div><ul>${lis(txt)}</ul><i class="sel-card__glow"></i></div>`;
-    const virt = `<div class="sel-cols">${card("v", CHECK, this.t("sel_virtues"), this.t(r.virtuesKey))}${card("w", CROSS, this.t("sel_weaknesses"), this.t(r.weaknessesKey))}</div>`;
-    let unit = "";
-    if (S.selU !== null) {
-      const u = this.units(r)[S.selU], T = UNIT_TYPES[u.id], A = (typeof ABILITIES !== "undefined" && ABILITIES[u.id]) || null;
-      const seg = (n) => `<span class="sel-seg">${[1, 2, 3, 4, 5].map((k) => `<i class="${k <= n ? "sel-seg--f" : ""}"></i>`).join("")}</span>`;
-      const icon = A ? (A.iconImg ? `<img src="${A.iconImg}" alt="">` : `<i class="ph-fill ${A.icon}"></i>`) : "";
-      const gl = r.gloryIcon ? `<img class="sel-glory" src="${r.gloryIcon}" alt="">` : "★";
-      unit = `<div class="sel-ud"><div class="sel-ud__hd">${icon}<div><div class="sel-ud__n">${T.name}</div><div class="sel-ud__a">${this.t("sel_ability")} · ${A ? A.name : "—"}</div></div><button type="button" class="sel-ud__x" id="sel-ux">✕ ${this.t("sel_close")}</button></div>
+    return `<div class="sel-cols">${card("v", CHECK, this.t("sel_virtues"), this.t(r.virtuesKey))}${card("w", CROSS, this.t("sel_weaknesses"), this.t(r.weaknessesKey))}</div>`;
+  },
+  // Ficha de una unidad (idBtn solo en la real: el botón de cerrar).
+  _unitHtml(r, u, idBtn) {
+    const T = UNIT_TYPES[u.id], A = (typeof ABILITIES !== "undefined" && ABILITIES[u.id]) || null;
+    const seg = (n) => `<span class="sel-seg">${[1, 2, 3, 4, 5].map((k) => `<i class="${k <= n ? "sel-seg--f" : ""}"></i>`).join("")}</span>`;
+    const icon = A ? (A.iconImg ? `<img src="${A.iconImg}" alt="">` : `<i class="ph-fill ${A.icon}"></i>`) : "";
+    const gl = r.gloryIcon ? `<img class="sel-glory" src="${r.gloryIcon}" alt="">` : "★";
+    return `<div class="sel-ud"><div class="sel-ud__hd">${icon}<div><div class="sel-ud__n">${T.name}</div><div class="sel-ud__a">${this.t("sel_ability")} · ${A ? A.name : "—"}</div></div><button type="button" class="sel-ud__x"${idBtn ? ' id="sel-ux"' : ""}>✕ ${this.t("sel_close")}</button></div>
       <div class="sel-stats">${this.STAT_ROWS.map(([k, lk]) => `<span>${this.t(lk)}</span>${seg(T[k] || 0)}`).join("")}<span class="sel-price">${this.t("sel_cost")}</span><span class="sel-price sel-price--v">${gl}${u.price}</span></div>
       <p>${A ? this.abilityText(A.description) : ""}</p></div>`;
-    }
+  },
+
+  renderInfo() {
+    const races = this.races(), S = this.ST, r = races[S.ri];
+    const b = document.getElementById("sel-info2");
+    // Todas las fichas se apilan en la misma celda y el recuadro mide SIEMPRE lo que mide la
+    // mayor de todas (virtudes y unidades de TODOS los equipos): nunca cambia de tamaño, ni al
+    // alternar entre virtudes y unidad ni al cambiar de equipo.
+    const unit = S.selU !== null ? this._unitHtml(r, this.units(r)[S.selU], true) : "";
     b.classList.toggle("sel-info2--unit", S.selU !== null);
-    b.innerHTML = `<div class="sel-stack"><div class="sel-pane sel-pane--v">${virt}</div><div class="sel-pane sel-pane--u">${unit}</div></div>`;
-    // el tamaño lo marca la ficha de unidad más alta posible: se reserva con una copia invisible
-    const ghost = this._unitGhost(r);
-    if (ghost) b.firstChild.insertAdjacentHTML("beforeend", `<div class="sel-pane sel-pane--ghost" aria-hidden="true">${ghost}</div>`);
+    const ghosts = [];
+    races.forEach((r2) => {
+      ghosts.push(this._virtHtml(r2));
+      this.units(r2).forEach((u) => ghosts.push(this._unitHtml(r2, u, false)));
+    });
+    b.innerHTML = `<div class="sel-stack"><div class="sel-pane sel-pane--v">${this._virtHtml(r)}</div><div class="sel-pane sel-pane--u">${unit}</div>${ghosts.map((g) => `<div class="sel-pane sel-pane--ghost" aria-hidden="true">${g}</div>`).join("")}</div>`;
     const x = b.querySelector("#sel-ux");
     if (x) x.addEventListener("click", () => {
       this.ST.selU = null;
       this.renderInfo();
       this.markTeam();
     });
-  },
-  // Ficha de la unidad con el texto más largo de la raza (solo para reservar el alto del recuadro).
-  _unitGhost(r) {
-    let best = null, len = -1;
-    this.units(r).forEach((u) => {
-      const A = (typeof ABILITIES !== "undefined" && ABILITIES[u.id]) || null;
-      const l = A ? this.abilityText(A.description).length : 0;
-      if (l > len) { len = l; best = u; }
-    });
-    if (!best) return "";
-    const T = UNIT_TYPES[best.id], A = (typeof ABILITIES !== "undefined" && ABILITIES[best.id]) || null;
-    const seg = `<span class="sel-seg">${[1, 2, 3, 4, 5].map(() => "<i></i>").join("")}</span>`;
-    return `<div class="sel-ud"><div class="sel-ud__hd">${A ? (A.iconImg ? `<img src="${A.iconImg}" alt="">` : `<i class="ph-fill ${A.icon}"></i>`) : ""}<div><div class="sel-ud__n">${T.name}</div><div class="sel-ud__a">${this.t("sel_ability")} · ${A ? A.name : "—"}</div></div><button type="button" class="sel-ud__x">✕ ${this.t("sel_close")}</button></div>
-      <div class="sel-stats">${this.STAT_ROWS.map(([k, lk]) => `<span>${this.t(lk)}</span>${seg}`).join("")}<span class="sel-price">${this.t("sel_cost")}</span><span class="sel-price sel-price--v">${r.gloryIcon ? `<img class="sel-glory" src="${r.gloryIcon}" alt="">` : "★"}0</span></div>
-      <p>${A ? this.abilityText(A.description) : ""}</p></div>`;
   },
   markTeam() {
     [...document.getElementById("sel-team").children].forEach((e, k) => e.classList.toggle("sel-un--sel", k === this.ST.selU));

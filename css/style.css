@@ -12144,3 +12144,6 @@ body.tut-hush .tut-panel * { pointer-events: none; }
 .sel-card__glow { position: absolute; right: -6px; bottom: -6px; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, var(--c), transparent 70%); opacity: 0.1; z-index: -1; pointer-events: none; }
 @media (max-width: 720px), (max-height: 560px) { .sel-card li { font-size: 13px; } .sel-card__hd b { font-size: 13.5px; } }
 @media (max-height: 560px) and (orientation: landscape) { .sel-card li { font-size: 12px; line-height: 1.22; } .sel-card ul { gap: 5px; } }
+/* Puntero al poder recolectar un recurso: el hacha amarilla. */
+.resource-node-attack-marker,
+.resource-node-attack-marker * { cursor: url("../assets/iconos/cursor_hacha.png") 24 24, pointer !important; }

@@ -7,9 +7,15 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001512";
+const GG_VERSION = "v.001514";
 
 const GG_CHANGELOG = [
+  { v: "v.001514", date: "21/10/2026", title: "Recursos", items: [
+    "Al poder recolectar un recurso, el puntero es un hacha amarilla",
+  ] },
+  { v: "v.001513", date: "21/10/2026", title: "Equipo", items: [
+    "El recuadro de virtudes/debilidades y de unidades mide siempre exactamente lo mismo, sea cual sea el equipo o la unidad elegida",
+  ] },
   { v: "v.001512", date: "21/10/2026", title: "Equipo", items: [
     "Nuevo diseño de virtudes y debilidades: dos tarjetas con cinta de título, iconos y una viñeta por frase",
   ] },
