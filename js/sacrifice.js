@@ -378,7 +378,7 @@ const Sacrifice = {
       const x = sx + (tx - sx) * t;
       const y = sb + (tbottom - sb) * t - Math.sin(Math.PI * t) * peak;
       a.put(null, null, x, y);
-      a.tf(`rotate(${-20 + t * 560}deg)`);
+      a.tf(`rotate(${opts.noSpin ? -20 + t * 20 : -20 + t * 560}deg)`);
       const gy = sb + 30 + (tbottom + 8 - sb - 30) * t;
       sh.style.left = `${x}px`;
       sh.style.top = `${gy}px`;
@@ -598,7 +598,7 @@ const Sacrifice = {
     const z = this._z(tgt.row, tgt.col) + 4;
     const mx = c.x, my = c.y + 10; // pie de la seta
     const gx = mx - 80, gy = my + 6;
-    const a = await this._fly(holder, gx, gy, z);
+    const a = await this._fly(holder, gx, gy, z, { noSpin: true }); // sin voltearse boca abajo
     a.put(GNOME_ASSETS.idle, SAC_W.ground, gx, gy);
     await this._land(a);
     await this._sleep(700);

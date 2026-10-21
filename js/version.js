@@ -7,9 +7,12 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001507";
+const GG_VERSION = "v.001508";
 
 const GG_CHANGELOG = [
+  { v: "v.001508", date: "21/10/2026", title: "Sacrificios", items: [
+    "Al lanzar un gnomo contra una seta ya no se voltea boca abajo en el aire",
+  ] },
   { v: "v.001507", date: "21/10/2026", title: "Sacrificios", items: [
     "Seta explosiva: el gnomo se carboniza en el sitio y se hunde en el suelo dejando un círculo de ceniza",
     "Al poder coger un gnomo, el puntero es la mano amarilla",
