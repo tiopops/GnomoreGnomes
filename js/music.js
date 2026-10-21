@@ -70,6 +70,9 @@ const Music = {
     window.addEventListener("pageshow", () => { if (!document.hidden) show(); });
     document.addEventListener("freeze", hide);
     document.addEventListener("resume", () => { if (!document.hidden) show(); });
+    // Escritorio: ventana tapada por otra o sin foco (no siempre dispara visibilitychange).
+    window.addEventListener("blur", hide);
+    window.addEventListener("focus", () => { if (!document.hidden) show(); });
     try {
       const A = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
       if (A && A.addListener) {

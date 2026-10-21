@@ -7,11 +7,11 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001509";
+const GG_VERSION = "v.001510";
 
 const GG_CHANGELOG = [
-  { v: "v.001509", date: "21/10/2026", title: "Sonido", items: [
-    "El pitido de «¡Todos listos!» ya no suena con el juego en segundo plano",
+  { v: "v.001510", date: "21/10/2026", title: "Sonido", items: [
+    "El pitido de «¡Todos listos!» y la música se silencian al perder el foco la ventana (segundo plano) y vuelven al regresar",
   ] },
   { v: "v.001508", date: "21/10/2026", title: "Sacrificios", items: [
     "Al lanzar un gnomo contra una seta ya no se voltea boca abajo en el aire",
