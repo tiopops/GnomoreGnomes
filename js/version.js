@@ -7,9 +7,16 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001510";
+const GG_VERSION = "v.001512";
 
 const GG_CHANGELOG = [
+  { v: "v.001512", date: "21/10/2026", title: "Equipo", items: [
+    "Nuevo diseño de virtudes y debilidades: dos tarjetas con cinta de título, iconos y una viñeta por frase",
+  ] },
+  { v: "v.001511", date: "21/10/2026", title: "Móvil", items: [
+    "Equipo: el recuadro de virtudes y debilidades y el de la ficha de unidad miden siempre lo mismo y no recortan el texto en el móvil",
+    "APK: la comprobación de versión se hace siempre al abrir la app (también con datos móviles), prueba varias vías de lectura y el aviso de advertencia ya no se queda fijo",
+  ] },
   { v: "v.001510", date: "21/10/2026", title: "Sonido", items: [
     "El pitido de «¡Todos listos!» y la música se silencian al perder el foco la ventana (segundo plano) y vuelven al regresar",
   ] },

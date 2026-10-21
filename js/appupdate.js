@@ -32,9 +32,9 @@ const AppUpdate = {
     this._ensureButton();
     // Al abrir la app, ANTES del menú: pantalla de actualización que comprueba la versión
     // y, si hay una nueva, la descarga (con barra de progreso) y reinicia sola.
-    // Con datos móviles se salta (son ~100 MB); queda el botón manual del menú.
-    const net = navigator.connection;
-    if (!(net && net.type === "cellular")) await this.run(true);
+    // Siempre al arrancar (también con datos móviles): el JSON de versión pesa unos bytes y la
+    // descarga es lo que el jugador espera nada más abrir la app.
+    await this.run(true);
   },
 
   // ---------- Pantalla de actualización al arrancar ----------
@@ -188,14 +188,43 @@ const AppUpdate = {
     if (el) el.className = "ph ph-" + name + " settings-gear-btn__icon" + (name === "circle-notch" ? " app-update-spin" : "");
   },
 
+  // Varias vías para leer el JSON de versión: cada móvil/WebView falla por un sitio distinto
+  // (redirección de GitHub, CORS, tiempo de espera...), así que se prueban en cadena.
   async _getJson(url) {
+    const errs = [];
     const http = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.CapacitorHttp;
+    const parse = (d) => (typeof d === "string" ? JSON.parse(d) : d);
+    const tries = [];
     if (http && http.get) {
-      const r = await http.get({ url, responseType: "json" });
-      return typeof r.data === "string" ? JSON.parse(r.data) : r.data;
+      tries.push(["nativo", async () => {
+        const r = await http.get({ url, responseType: "text", connectTimeout: 10000, readTimeout: 10000 });
+        if (r.status && r.status >= 400) throw new Error("HTTP " + r.status);
+        return parse(r.data);
+      }]);
     }
-    const r = await fetch(url, { cache: "no-store" });
-    return r.json();
+    tries.push(["web", async () => {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }]);
+    tries.push(["api", async () => {
+      const rel = await (await fetch("https://api.github.com/repos/tiopops/GnomoreGnomes/releases/tags/mobile-latest", { cache: "no-store" })).json();
+      const as = (rel.assets || []).find((x) => x.name === "version.json");
+      if (!as) throw new Error("sin version.json en la release");
+      const r = await fetch(as.url, { headers: { Accept: "application/octet-stream" }, cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }]);
+    for (const [name, fn] of tries) {
+      try {
+        const out = await fn();
+        if (out && out.version) return out;
+        errs.push(name + ": respuesta vacía");
+      } catch (e) {
+        errs.push(name + ": " + ((e && (e.message || e.errorMessage)) || e));
+      }
+    }
+    throw new Error(errs.join(" | "));
   },
 
   // Estado de la última comprobación (se muestra en el historial de versiones, dentro de la APK).
@@ -213,7 +242,7 @@ const AppUpdate = {
       try {
         return await Promise.race([
           this._getJson(this.RELEASE_BASE + "version.json?_=" + Date.now()),
-          new Promise((_, rej) => setTimeout(() => rej(new Error("tiempo agotado")), 12000)),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("tiempo agotado")), 25000)),
         ]);
       } catch (e) {
         lastErr = e;
@@ -263,7 +292,10 @@ const AppUpdate = {
       this._setStatus("error: " + ((e && (e.message || e.errorMessage)) || e));
       // Sin avisos en el arranque; el botón del menú queda con el aviso hasta la próxima comprobación buena.
       this._icon("warning");
-      if (!auto) setTimeout(() => this._icon(idle), 3000);
+      // El aviso nunca se queda fijo: vuelve al icono normal y, si fue en el arranque,
+      // se reintenta una vez en silencio por si solo era un fallo de red momentáneo.
+      setTimeout(() => this._icon(idle), 3000);
+      if (auto && !this._retried) { this._retried = true; setTimeout(() => this.run(false), 4000); }
     } finally {
       this._busy = false;
       if (auto) this._gateHide();

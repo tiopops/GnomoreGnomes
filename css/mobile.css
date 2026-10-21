@@ -73,10 +73,10 @@
   #race-list .sel-rname { font-size: clamp(20px, 6vw, 26px); margin: 4px 0 6px; padding: 0 8px; text-align: center; }
   #race-list .sel-rflav { display: none; }
   #race-list .sel-info2 {
-    width: calc(100% - 20px); height: clamp(236px, 34dvh, 284px); min-height: 0;
-    padding: 12px 16px 12px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    width: calc(100% - 20px); height: auto; min-height: clamp(236px, 34dvh, 284px);
+    padding: 12px 16px 12px; overflow: visible;
   }
-  #race-list .sel-cols { display: flex; flex-direction: column; gap: 10px; }
+  #race-list .sel-cols { display: flex; flex-direction: column; gap: 18px; }
   #race-list .sel-col, #race-list .sel-col p { margin: 0; }
   #race-list .sel-col h3 { font-size: 13px; margin-bottom: 3px; }
   #race-list .sel-col p, #race-list .sel-ud p { font-size: 13px; line-height: 1.3; }
@@ -90,7 +90,7 @@
 }
 @media (max-width: 720px) and (orientation: portrait) and (max-height: 700px) {
   #race-list .sel-hero { height: 100px; }
-  #race-list .sel-info2 { height: 240px; }
+  #race-list .sel-info2 { height: auto; min-height: 240px; }
   #race-list .sel-team { --us: 0.75; margin-top: 92px; }
   #race-list .sel-col p, #race-list .sel-ud p { font-size: 12.5px; }
 }
@@ -101,7 +101,7 @@
   #race-list.sel-root > .sel-pips { display: none; }
   #race-list.sel-root > .sel-hero { height: 150px; }
   #race-list.sel-root > .sel-rname { font-size: 19px; grid-row: 2; margin-top: 4px; }
-  #race-list.sel-root > .sel-info2 { grid-row: 1 / span 1; height: 176px; padding: 10px 16px; }
+  #race-list.sel-root > .sel-info2 { grid-row: 1 / span 1; height: auto; min-height: 176px; padding: 10px 16px; }
   #race-list.sel-root > .sel-team { grid-row: 2 / span 3; margin-top: 70px; }
   #race-list.sel-root > .sel-btn { grid-row: 3; margin-top: 6px; padding: 10px 26px; font-size: 15px; }
 }
@@ -125,9 +125,6 @@
 
 /* ---------- Ficha de unidad (al tocar una unidad en EQUIPO) ---------- */
 @media (max-width: 720px) and (orientation: portrait) {
-  #race-list.sel-root:has(.sel-ud) .sel-hero { height: 84px; }
-  #race-list.sel-root:has(.sel-ud) .sel-rname { display: none; }
-  #race-list.sel-root:has(.sel-ud) .sel-info2 { height: clamp(300px, 47dvh, 400px); }
   #race-list .sel-ud { gap: 4px 12px; }
   #race-list .sel-ud__n { font-size: 20px; }
   #race-list .sel-ud__a { font-size: 12px; }
@@ -283,7 +280,7 @@
 
 /* EQUIPO en horizontal: unidades más grandes, sin tapar el texto; vale también para móviles de menos de 721px de ancho */
 @media (max-height: 560px) and (orientation: landscape) {
-  #race-list.sel-root > .sel-info2 { height: 160px; padding: 8px 14px; }
+  #race-list.sel-root > .sel-info2 { height: auto; min-height: 160px; padding: 8px 14px; }
   #race-list.sel-root > .sel-team { --us: 0.78; margin-top: 104px; gap: 8px; }
   #race-list.sel-root > .sel-team .sel-un { width: 108px; }
   #race-list.sel-root > .sel-steps { position: absolute !important; top: calc(var(--m-top) + 6px); left: 50%; transform: translateX(-50%); margin: 0 !important; }
