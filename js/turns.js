@@ -405,7 +405,7 @@ const Turns = {
       return;
     }
     if (this._readyChimeTimer) return;
-    const beat = () => { if (typeof SFX !== "undefined" && SFX.readyChime) SFX.readyChime(); };
+    const beat = () => { if (document.hidden) return; /* en segundo plano no pita */ if (typeof SFX !== "undefined" && SFX.readyChime) SFX.readyChime(); };
     // Primer latido a mitad de ciclo (650 ms) y luego uno cada 1300 ms.
     this._readyChimeTimer = setTimeout(() => {
       beat();
