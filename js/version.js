@@ -7,9 +7,12 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001504";
+const GG_VERSION = "v.001505";
 
 const GG_CHANGELOG = [
+  { v: "v.001505", date: "21/10/2026", title: "Sacrificios", items: [
+    "Las casillas de sacrificio muestran la calavera y el puntero cambia a una calavera al apuntar",
+  ] },
   { v: "v.001504", date: "21/10/2026", title: "Sacrificios de gnomos", items: [
     "Nueva forma de ganar Gloria al instante: sacrificar gnomos. Cada sacrificio da +3 de Gloria",
     "Se pueden lanzar gnomos al volcán, a charcos de lava, al agua, a setas explosivas y a cepos",

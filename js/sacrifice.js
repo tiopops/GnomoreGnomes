@@ -291,8 +291,12 @@ const Sacrifice = {
         owner: "gnome",
         alwaysOnTop: true,
         buildContent: (marker) => {
-          const icon = document.createElement("i");
-          icon.className = "ph ph-skull pass-marker__icon";
+          // Misma calavera que avisa de "el próximo golpe te mata" (calavera_miedo.png).
+          const icon = document.createElement("img");
+          icon.className = "pass-marker__skull";
+          icon.src = "assets/iconos/calavera_miedo.png";
+          icon.alt = "";
+          icon.draggable = false;
           marker.appendChild(icon);
         },
         onClick: () => this.perform(unit, gnome, t.kind, t),
