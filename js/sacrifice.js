@@ -1,6 +1,6 @@
 /* Gnomore Gnomes — Sacrificios de gnomos.
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe: matar a un
-   gnomo de una de estas 7 formas, con su animación (todas aprobadas con demo,
+   gnomo de una de estas 8 formas, con su animación (todas aprobadas con demo,
    humor negro, sin textos de gritos, sprites a su tamaño real), cobrar la
    Gloria instantánea y hacer aparecer un gnomo nuevo en una zona aleatoria.
 
@@ -11,6 +11,7 @@
      5. Piedra         — piedra de Rock'n Troll desde la mochila contra un gnomo suelto.
      6. Cepo           — lanzarlo contra un cepo AtrapaPinreles colocado en el tablero.
      7. Cohete         — KataPum! contra un gnomo suelto.
+     8. Bumper         — lanzarlo al agujero de un bumper del pinball (HurryCrane): sangre a presión y humo.
 
    Gloria: SACRIFICE_GLORY (3) al instante (Glory.addNow). Ver el razonamiento
    del 3 frente al 5 junto a la constante.
@@ -289,6 +290,12 @@ const Sacrifice = {
         if (this._inRange(unit, t.row, t.col) && this._visible(t.row, t.col) && free(t.row, t.col)) out.push({ kind: "cepo", row: t.row, col: t.col, ref: t });
       });
     }
+    // Bumpers del pinball (nivel Poblado HurryCrane)
+    if (typeof Bumpers !== "undefined" && Bumpers.list && Bumpers.list.length && typeof Egg !== "undefined" && Egg.isActive && Egg.isActive()) {
+      Bumpers.list.forEach((b) => {
+        if (b.el && this._inRange(unit, b.row, b.col) && !(typeof Fog !== "undefined" && Fog.isFoggedReal(b.row, b.col))) out.push({ kind: "bumper", row: b.row, col: b.col, ref: b });
+      });
+    }
     return out;
   },
 
@@ -306,7 +313,8 @@ const Sacrifice = {
         delayIndex: i % 12,
         visibleClass: "range-marker--visible",
         owner: "gnome",
-        onClick: () => this.perform(unit, gnome, t.kind, t),
+        // el bumper pasa por Bumpers.throwGnome (js/net-hooks.js lo sincroniza en multijugador)
+        onClick: () => (t.kind === "bumper" && typeof Bumpers !== "undefined" ? Bumpers.throwGnome(unit, gnome, t.ref) : this.perform(unit, gnome, t.kind, t)),
       });
     });
   },
@@ -359,6 +367,7 @@ const Sacrifice = {
     if (kind === "water") return this._water(holder, gnome, tgt, team);
     if (kind === "mushroom") return this._mushroom(holder, gnome, tgt, team);
     if (kind === "cepo") return this._cepo(holder, gnome, tgt, team);
+    if (kind === "bumper") return this._bumper(holder, gnome, tgt.ref, team);
   },
 
   // Vuelo en arco con giros desde quien lo lanza hasta (tx, bottom). Devuelve el actor.
@@ -458,6 +467,69 @@ const Sacrifice = {
     await this._sleep(380);
     this._rm(front);
     await this._award(team, cx, cy - 30, z);
+  },
+
+  // ---------- 8. Bumper del pinball: se lo traga y escupe sangre a presión ----------
+  async _bumper(holder, gnome, b, team) {
+    const z = this._z(b.row, b.col) + 6;
+    const bx = parseFloat(b.el.style.left), by = parseFloat(b.el.style.top);
+    const sw = 205, sh = 205 * (922 / 990), k = sw / 990;
+    const ox = bx - sw / 2, oy = by - 0.92 * sh + 30;
+    const vx = ox + 520 * k, vy = oy + 125 * k; // rejilla de arriba
+    const chx = ox + 172 * k, chy = oy + 50 * k; // chimenea
+    const lite = typeof PerfMode !== "undefined" && PerfMode.enabled;
+    const a = await this._fly(holder, vx, vy + 24, z, { w: SAC_W.fly, noSpin: true, peak: 90 });
+    // golpe de bumper (combo, luces, onda de tambores) y de golpe al agujero
+    let n = 1;
+    if (typeof Bumpers !== "undefined") {
+      Bumpers.beginFlight();
+      n = Bumpers.registerHit();
+      Bumpers.reactAt(b, n);
+      Bumpers.markLit(b, team);
+    }
+    await this._raf(130, (t) => {
+      a.put(null, null, vx, vy + 24 + t * t * 30);
+      a.d.style.clipPath = `inset(0 0 ${Math.round(t * 70)}% 0)`;
+    });
+    a.remove();
+    this._kill(gnome);
+    // glup: la máquina se hincha un instante
+    this._shake(false);
+    const sp = b.spriteEl;
+    if (sp && sp.animate) sp.animate([{ scale: "1 1" }, { scale: ".94 1.08" }, { scale: "1.07 .93" }, { scale: "1 1" }], { duration: 420, easing: "ease-out" });
+    await this._sleep(640);
+    // sangre a presión por el agujero (solo gotitas) + humo negro por el agujero y la chimenea
+    this._snd("explosion");
+    const bg = () => "radial-gradient(circle at 35% 30%,#e8353d,#b0121a 55%,#6a090e)";
+    const dir = -Math.PI / 2;
+    if (sp && sp.animate) sp.animate([{ scale: "1 1" }, { scale: "1.04 .96" }, { scale: ".97 1.04" }, { scale: "1 1" }], { duration: 200, iterations: 7 });
+    const every = lite ? 60 : 30, c1 = lite ? 3 : 5, c2 = lite ? 1 : 2;
+    const spray = setInterval(() => {
+      this._burst(vx, vy - 3, c1, "", z + 8, { dir, spread: 0.8, v: 760, s: [7, 15], t: 1200, g: 1500, bg });
+      this._burst(vx, vy - 3, c2, "", z + 8, { dir, spread: 1.7, v: 480, s: [8, 18], t: 1100, g: 1500, bg });
+    }, every);
+    const smoke = setInterval(() => {
+      this._burst(vx, vy - 2, 1, "sac-smoke", z + 9, { dir, spread: 0.7, v: 140, s: [30, 58], t: 1700, g: -110, sc: 2.4 });
+      this._burst(chx, chy - 2, 1, "sac-smoke", z + 9, { dir, spread: 0.6, v: 110, s: [26, 46], t: 1600, g: -100, sc: 2.2 });
+    }, 90);
+    // charcos de sangre del juego alrededor de la base, de golpe
+    const size = Units.boardSize;
+    [[1, 1], [1, 0], [0, 1]].forEach(([dr, dc], i) => {
+      setTimeout(() => {
+        const r = b.row + dr, c = b.col + dc;
+        if (typeof BloodSplat !== "undefined" && r < size && c < size) BloodSplat.spawnAt(r, c, { lifetime: 3200, scale: 1.1 });
+      }, 1300 + i * 160);
+    });
+    await this._sleep(1300);
+    clearInterval(spray);
+    for (let i = 0; i < 6; i++) {
+      this._burst(vx, vy - 3, 3, "", z + 8, { dir, spread: 1, v: 320 - i * 30, s: [6, 13], t: 900, g: 1500, bg });
+      await this._sleep(110);
+    }
+    setTimeout(() => clearInterval(smoke), 1800);
+    await this._sleep(500);
+    if (typeof Bumpers !== "undefined") Bumpers.endFlight(team);
+    await this._award(team, vx, vy - 30, z);
   },
 
   // ---------- 2. Charco de lava ----------

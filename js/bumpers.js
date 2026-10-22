@@ -237,72 +237,12 @@ const Bumpers = {
     });
   },
 
+  // Lanzar un gnomo a un bumper es un SACRIFICIO (js/sacrifice.js, _bumper): se lo traga y escupe sangre a presión.
+  // Se mantiene este punto de entrada porque js/net-hooks.js lo sincroniza en multijugador.
   async throwGnome(holder, gnome, b) {
     if (!b || !this.list.includes(b) || gnome.heldBy !== holder.id || gnome.busy) return;
-    if (typeof Egg === "undefined" || !Egg.isActive() || Egg._busy) return;
-    if (typeof Turns !== "undefined" && !Turns.canAct(holder)) return;
-    if (typeof Turns !== "undefined") Turns.useAction(holder);
-    Units.clearRangeOverlays();
-    gnome.passing = false;
-    gnome.busy = true;
-    gnome.hideBadge();
-    Egg._busy = true;
-    try {
-      const out = this._outcome(b, holder);
-      Units.faceTowardsTile(holder, b.row, b.col);
-      gnome.row = holder.row;
-      gnome.col = holder.col;
-      Units.faceTowardsTile(gnome, b.row, b.col);
-      if (holder.el) {
-        holder.el.classList.remove("unit--throwing");
-        void holder.spriteEl.offsetWidth;
-        holder.el.classList.add("unit--throwing");
-        setTimeout(() => holder.el && holder.el.classList.remove("unit--throwing"), 380);
-      }
-      gnome.detachFrom();
-      gnome.spriteEl.src = GNOME_ASSETS.grita;
-      await gnome.animateThrowTo(holder.row, holder.col, b.row, b.col);
-      // Impacto en el bumper: golpe de combo, se enciende.
-      this.beginFlight();
-      const n = this.registerHit();
-      this.reactAt(b, n);
-      this.markLit(b, holder.team);
-      await new Promise((r) => setTimeout(r, 160));
-      // Rebote hacia su casilla (junto al huevo, junto al obstáculo o a 2 casillas del bumper).
-      await gnome.animateThrowTo(b.row, b.col, out.cell.row, out.cell.col);
-      const catcher = out.cell.unit && Units.list.includes(out.cell.unit) && !Gnome.isHeldBy(out.cell.unit.id) ? out.cell.unit : null;
-      if (catcher) {
-        // Cae en los brazos de una unidad: la coge directamente (sin mareo).
-        gnome.row = catcher.row;
-        gnome.col = catcher.col;
-        gnome.attachTo(catcher);
-        gnome._addPoints(GNOME_BUMP_POINTS);
-        Units.spawnFloatingText(catcher, `+${GNOME_BUMP_POINTS}`, { className: "dmg-popup gnome-points-popup" });
-        if (typeof SFX !== "undefined" && SFX.passSuccess) SFX.passSuccess();
-      } else {
-        await gnome.landAt(out.cell, { sound: () => { if (typeof SFX !== "undefined") SFX.gnomeLandSoft(); } });
-        gnome._addPoints(GNOME_BUMP_POINTS);
-        Units.spawnFloatingText(gnome, `+${GNOME_BUMP_POINTS}`, { className: "dmg-popup gnome-points-popup" });
-        gnome.setDizzy();
-      }
-      let flight = null;
-      if (out.kind === "egg") {
-        this._keepCombo = true;
-        flight = Egg._ricochetHit(holder, out.dir);
-      } else {
-        if (out.kind === "blocked" && Units.unitAt(out.blocker.row, out.blocker.col)) {
-          const u = Units.unitAt(out.blocker.row, out.blocker.col);
-          if (typeof Units.playShake === "function") Units.playShake(u);
-        }
-        flight = this.endFlight(holder.team);
-      }
-      await flight;
-    } finally {
-      Egg._busy = false;
-      this._keepCombo = false;
-      gnome.busy = false;
-      if (holder.el) Units.refreshRange(holder);
-    }
+    if (typeof Sacrifice === "undefined") return;
+    return Sacrifice.perform(holder, gnome, "bumper", { kind: "bumper", row: b.row, col: b.col, ref: b });
   },
 
   // Registra un golpe (bumper, tótem, obelisco o unidad). Devuelve el nº de golpes del vuelo.

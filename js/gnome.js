@@ -886,7 +886,6 @@ function createGnomeInstance() {
       if (typeof Volcano !== "undefined") Volcano.addThrowMarker(unit, this); // lanzar al volcán (js/volcano.js)
       if (typeof Egg !== "undefined") Egg.addThrowMarker(unit, this); // lanzar contra el huevo (js/egg.js)
       if (typeof Crane !== "undefined") Crane.addThrowMarker(unit, this); // espantar a la grulla (js/crane.js)
-      if (typeof Bumpers !== "undefined") Bumpers.addThrowMarker(unit, this); // rebote de billar contra un bumper (js/bumpers.js)
       if (typeof Sacrifice !== "undefined") Sacrifice.addThrowMarkers(unit, this); // agua, charcos de lava, setas y cepos (js/sacrifice.js)
       const movimiento = Units.moveRangeOf(unit);
       const tiles = this._throwableTiles(unit).filter((t) => !(typeof Sacrifice !== "undefined" && Sacrifice.isSacrificeTile(unit, t.row, t.col)));
