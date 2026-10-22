@@ -29,6 +29,14 @@ jobs:
       - name: Copiar el juego a mobile/www
         run: bash mobile/build-www.sh "$GITHUB_WORKSPACE"
 
+      - name: Optimizar imagenes (solo para la APK, la web no se toca)
+        run: |
+          sudo apt-get install -y pngquant
+          python3 -m pip install --quiet pillow
+          python3 mobile/optimize-www.py mobile/www
+          find mobile/www/assets -name '*.png' -print0 | xargs -0 -P4 -n8 pngquant --force --skip-if-larger --quality 75-95 --speed 3 --ext .png || true
+          du -sh mobile/www
+
       - name: Paquete de actualizacion
         run: |
           cd mobile/www
