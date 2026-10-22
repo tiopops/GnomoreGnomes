@@ -4664,14 +4664,14 @@ body.perf-mode .eye-cursor-fx {
 .match-loading-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(5, 5, 8, 0.82);
+  background: rgba(5, 5, 8, 0.97);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 950;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.35s ease;
 }
 
 .match-loading-overlay--visible {
@@ -9280,7 +9280,6 @@ body.tut-on .settings-gear-btn--account { display: none; }
    se hace visible al instante, así que la animación de entrada no cambia. */
 .screen:not(.screen--active),
 .settings-overlay:not(.settings-overlay--visible),
-.match-loading-overlay:not(.match-loading-overlay--visible),
 .backpack-overlay:not(.backpack-overlay--visible),
 .glory-popup-overlay:not(.glory-popup-overlay--visible),
 .unit-info-overlay:not(.unit-info-overlay--visible),
@@ -12147,3 +12146,6 @@ body.tut-hush .tut-panel * { pointer-events: none; }
 /* Puntero al poder recolectar un recurso: el hacha amarilla. */
 .resource-node-attack-marker,
 .resource-node-attack-marker * { cursor: url("../assets/iconos/cursor_hacha.png") 24 24, pointer !important; }
+
+/* La pantalla de carga se funde despacio al destapar el nivel ya cargado */
+.match-loading-overlay:not(.match-loading-overlay--visible) { visibility: hidden; transition: opacity 0.5s ease, visibility 0s linear 0.55s; }

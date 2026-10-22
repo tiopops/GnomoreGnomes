@@ -148,6 +148,37 @@ const Preload = {
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   },
 
+  // Espera a que TODAS las imágenes que la partida acaba de crear (losetas, unidades,
+  // recursos, decorado, HUD...) estén descargadas y decodificadas, con la pantalla de carga
+  // todavía tapándolo todo. Así, al quitarla, el nivel aparece completo de golpe: sin
+  // sprites que llegan tarde ni parpadeos mientras se decodifican. Tope de seguridad: 5 s.
+  async settle() {
+    if (!this._overlayEl || !this._overlayEl.classList.contains("match-loading-overlay--visible")) return;
+    const t0 = Date.now();
+    const left = () => Math.max(0, 5000 - (Date.now() - t0));
+    const cap = (pr) => Promise.race([pr, new Promise((r) => setTimeout(r, left()))]);
+    try { if (document.fonts && document.fonts.ready) await cap(document.fonts.ready); } catch (e) {}
+    // Dos pasadas: la segunda recoge lo que la primera pasada haya hecho aparecer.
+    for (let pass = 0; pass < 2; pass++) {
+      const byUrl = new Map();
+      document.querySelectorAll("img").forEach((im) => {
+        const u = im.currentSrc || im.src;
+        if (u && !byUrl.has(u)) byUrl.set(u, im);
+      });
+      const jobs = [];
+      byUrl.forEach((im) => {
+        if (im.complete && im.naturalWidth && !im.decode) return;
+        jobs.push(new Promise((res) => {
+          const go = () => (im.decode ? im.decode().then(res, res) : res());
+          if (im.complete) go();
+          else { im.addEventListener("load", go, { once: true }); im.addEventListener("error", res, { once: true }); }
+        }));
+      });
+      if (jobs.length) await cap(Promise.all(jobs));
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    }
+  },
+
   // Remate: se llama cuando el nivel ya está construido (o si falló el
   // arranque). No hace nada si la barra no se mostró (partidas posteriores
   // de la misma sesión de página, ver _done en run()).

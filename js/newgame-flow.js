@@ -50,16 +50,16 @@ function showScreen(id) {
   // El permiso de sonido de partida debe estar listo ya, antes del cambio real.
   if (id === "screen-board" && typeof MatchCleanup !== "undefined") MatchCleanup.enter();
   const toBoard = id === "screen-board" || cur.id === "screen-board";
-  const out = toBoard ? 260 : 150, inn = toBoard ? 480 : 260;
+  const out = toBoard ? 320 : 230, inn = toBoard ? 600 : 420;
   const c = _ensureCurtain();
   c.style.pointerEvents = "auto"; // sin clics dobles mientras se cierra el telón
-  c.style.transition = `opacity ${out}ms ease`;
+  c.style.transition = `opacity ${out}ms ease-in`;
   c.style.opacity = "1";
   _sceneSwapTimer = setTimeout(() => {
     _sceneSwapTimer = null;
     _swapScreen(id);
     c.style.pointerEvents = "none";
-    c.style.transition = `opacity ${inn}ms ease`;
+    c.style.transition = `opacity ${inn}ms ease-out`;
     c.style.opacity = "0";
   }, out + 20);
 }
@@ -176,15 +176,18 @@ async function startMatch({ modeId, raceId, levelId, opponents, mp }) {
     // agua).
     if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
     const { playerSpawnSpots } = spawnTestUnits(size, raceId, opponents, mp);
-    showScreen("screen-board");
+    // Entra al tablero DEBAJO de la pantalla de carga (sin telón) y espera a que todo
+    // esté cargado y decodificado antes de destaparlo.
+    _swapScreen("screen-board");
     screenHistory.length = 0;
     screenHistory.push("main-menu", "screen-board");
     syncBoardCamera(playerSpawnSpots[0]);
+    if (typeof Preload !== "undefined") await Preload.settle();
+    if (typeof Preload !== "undefined") Preload.finish();
     _playInitialFogReveal(playerSpawnSpots);
 
     const resumeBtn = document.getElementById("btn-resume-game");
     if (resumeBtn && !mp) resumeBtn.disabled = false;
-    if (typeof Preload !== "undefined") Preload.finish();
     if (mp) Net.startTurns();
     else setTimeout(() => { if (typeof Turns !== "undefined") Turns.showTurnBanner(); }, 900);
   } catch (err) {
@@ -206,12 +209,13 @@ async function resumeMatch() {
     renderMap(map, document.getElementById("board-tiles"));
     if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
     const { playerSpawnSpots } = spawnTestUnits(saved.size, saved.raceId, saved.opponents);
-    showScreen("screen-board");
+    _swapScreen("screen-board");
     screenHistory.length = 0;
     screenHistory.push("main-menu", "screen-board");
     syncBoardCamera(playerSpawnSpots[0]);
-    _playInitialFogReveal(playerSpawnSpots);
+    if (typeof Preload !== "undefined") await Preload.settle();
     if (typeof Preload !== "undefined") Preload.finish();
+    _playInitialFogReveal(playerSpawnSpots);
   } catch (err) {
     _recoverFromFailedMatchStart();
     _showStartMatchError(err);

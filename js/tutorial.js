@@ -64,14 +64,15 @@ const Tutorial = {
       this.active = true;
       document.body.classList.add("tut-on");
       this._ctx = {};
-      showScreen("screen-board");
+      _swapScreen("screen-board");
       screenHistory.length = 0;
       screenHistory.push("main-menu", "screen-board");
       syncBoardCamera(playerSpawnSpots[0]);
-      _playInitialFogReveal(playerSpawnSpots);
       this._setupScene();
       if (scenario !== "basic" && this._setupLevelScene) this._setupLevelScene();
+      if (typeof Preload !== "undefined") await Preload.settle();
       if (typeof Preload !== "undefined") Preload.finish();
+      _playInitialFogReveal(playerSpawnSpots);
       this._buildUI();
       // Pequeña pausa para que acabe el fundido y el revelado de niebla.
       setTimeout(() => this._goto(0), 900);

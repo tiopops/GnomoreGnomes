@@ -7,9 +7,16 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001516";
+const GG_VERSION = "v.001518";
 
 const GG_CHANGELOG = [
+  { v: "v.001518", date: "22/10/2026", title: "Carga", items: [
+    "La pantalla de carga espera a que todo el nivel (terreno, unidades, recursos, interfaz) esté cargado y listo antes de mostrarse, sin sprites que aparezcan tarde ni parpadeos",
+    "Fundidos más suaves y largos entre menús, y la pantalla de carga se desvanece despacio",
+  ] },
+  { v: "v.001517", date: "22/10/2026", title: "Móvil", items: [
+    "Mi cuenta, Ajustes y demás ventanas en el móvil: la X de cerrar ya no se corta por arriba y los paneles caben en pantallas pequeñas o apaisadas",
+  ] },
   { v: "v.001516", date: "22/10/2026", title: "Móvil", items: [
     "APK: las imágenes se reducen al compilar (de unos 88 MB a unos 25 MB), para que las actualizaciones pesen mucho menos y el móvil use menos memoria",
   ] },

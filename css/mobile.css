@@ -116,11 +116,11 @@
 }
 @media (max-width: 380px) { .pf-tab--off span i { display: none; } }
 @media (max-height: 520px) and (orientation: landscape) {
-  .account-panel.account-panel:has(.pf) { width: min(820px, 94vw); padding: 14px 18px 16px; max-height: calc(100dvh - 44px); overflow: visible; }
+  .account-panel.account-panel:has(.pf) { width: min(820px, 94vw); padding: 14px 18px 16px; max-height: calc(100dvh - 64px); overflow: visible; }
   .account-panel:has(.pf) .account-body { flex-direction: row; align-items: flex-start; gap: 14px; }
   .account-panel:has(.pf) .account-body > .pf-hero { flex: 0 0 38%; }
   .account-panel:has(.pf) .account-body > .pf { flex: 1 1 0; min-width: 0; }
-  .account-panel:has(.pf) .pf-body { max-height: calc(100dvh - 160px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .account-panel:has(.pf) .pf-body { max-height: calc(100dvh - 180px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
 }
 
 /* ---------- Ficha de unidad (al tocar una unidad en EQUIPO) ---------- */
@@ -152,7 +152,7 @@
   .settings-tab { font-size: 13px; padding: 9px 12px; }
 }
 @media (max-height: 520px) and (orientation: landscape) {
-  .settings-panel:not(.account-panel):not(.friends-panel) { width: min(760px, 94vw); height: calc(100dvh - 20px); padding: 10px 22px 12px; gap: 8px; }
+  .settings-panel:not(.account-panel):not(.friends-panel) { width: min(760px, 94vw); height: calc(100dvh - 66px); padding: 10px 22px 12px; gap: 8px; }
   .settings-panel:not(.account-panel):not(.friends-panel) .settings-panel__title { display: none; }
 }
 
@@ -272,10 +272,15 @@
   .settings-close-x, .version-panel > .backpack-close-btn { top: -14px; right: -8px; width: 50px; height: 50px; }
   .settings-close-x .backpack-close-btn__icon, .version-panel > .backpack-close-btn .backpack-close-btn__icon { font-size: 1.4rem; }
   .version-overlay { padding: 28px 0; }
+  /* Mi cuenta, amigos y demás paneles: la X nunca sale de la pantalla */
+  .settings-panel > .backpack-close-btn { top: -12px; right: -6px; width: 50px; height: 50px; }
+  .settings-panel > .backpack-close-btn .backpack-close-btn__icon { font-size: 1.4rem; }
+  .account-panel.account-panel { max-height: calc(100dvh - 76px); }
+  .account-panel .pf-body { max-height: calc(100dvh - 330px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
 }
 @media (max-height: 520px) and (orientation: landscape) {
-  .settings-overlay { padding: 30px 0 14px; }
-  .settings-panel { height: calc(100dvh - 54px); }
+  .settings-overlay { padding: 42px 0 14px; }
+  .settings-panel { height: calc(100dvh - 66px); }
 }
 
 /* EQUIPO en horizontal: unidades más grandes, sin tapar el texto; vale también para móviles de menos de 721px de ancho */
