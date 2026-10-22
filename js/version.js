@@ -7,9 +7,12 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001526";
+const GG_VERSION = "v.001527";
 
 const GG_CHANGELOG = [
+  { v: "v.001527", date: "22/10/2026", title: "Sacrificios", items: [
+    "Al apuntar un lanzamiento, el puntero sobre un bumper donde se puede sacrificar al gnomo es la calavera",
+  ] },
   { v: "v.001526", date: "22/10/2026", title: "Sacrificios", items: [
     "Nuevo sacrificio: lanzar un gnomo al agujero de un bumper del pinball. Se lo traga de golpe y la máquina escupe sangre a presión y humo negro, dejando charcos de sangre alrededor (da Gloria como el resto de sacrificios; ya no rebota)",
   ] },

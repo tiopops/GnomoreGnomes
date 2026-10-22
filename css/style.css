@@ -11064,6 +11064,8 @@ body.gp-active, body.gp-active * { cursor: none !important; }
 .unit.egg:hover { transform: translate(-50%, -92%) translateY(30px); }
 .unit.egg:hover:not(.gg-remembered) { filter: none; }
 body.gg-pinball-hover, body.gg-pinball-hover * { cursor: var(--cursor-pointer) !important; }
+/* Bumper con círculo de sacrificio encima: puntero calavera */
+body.gg-skull-hover, body.gg-skull-hover * { cursor: url("../assets/iconos/cursor_calavera.png") 24 24, pointer !important; }
 
 
 /* ============================================================================

@@ -325,16 +325,22 @@ const Bumpers = {
   },
   _onPointerMove(ev) {
     const sp = ev && ev.target && ev.target.closest && !ev.target.closest("#board-viewport") ? null : this._hoverAt(ev);
-    if (sp === this._hoverEl) return;
-    if (this._hoverEl) this._hoverEl.classList.remove("gg-hover");
+    if (sp === this._hoverEl && this._skullCheckedFor === sp) return;
+    if (this._hoverEl && sp !== this._hoverEl) this._hoverEl.classList.remove("gg-hover");
     this._hoverEl = sp;
+    this._skullCheckedFor = sp;
     if (sp) sp.classList.add("gg-hover");
-    document.body.classList.toggle("gg-pinball-hover", !!sp);
+    // Si con ese gnomo se puede sacrificar en este bumper (hay círculo de lanzar encima), el puntero es la calavera.
+    const b = sp ? this.list.find((x) => x.spriteEl === sp) : null;
+    const skull = !!(b && document.querySelector(`.range-marker--sacrifice[data-row="${b.row}"][data-col="${b.col}"]`));
+    document.body.classList.toggle("gg-skull-hover", skull);
+    document.body.classList.toggle("gg-pinball-hover", !!sp && !skull);
   },
   clearHover() {
     if (this._hoverEl) this._hoverEl.classList.remove("gg-hover");
     this._hoverEl = null;
-    document.body.classList.remove("gg-pinball-hover");
+    this._skullCheckedFor = null;
+    document.body.classList.remove("gg-pinball-hover", "gg-skull-hover");
   },
 
 };
