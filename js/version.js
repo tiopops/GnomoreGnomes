@@ -7,9 +7,12 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001523";
+const GG_VERSION = "v.001524";
 
 const GG_CHANGELOG = [
+  { v: "v.001524", date: "22/10/2026", title: "Sonido", items: [
+    "Con el juego en segundo plano (ventana tapada o app minimizada) no suena ningún efecto ni música hasta volver; antes los efectos podían reactivar el audio solos",
+  ] },
   { v: "v.001523", date: "22/10/2026", title: "Móvil", items: [
     "Mi cuenta: la X de cerrar ya no se recorta (igual que en Ajustes)",
     "Con la cámara muy ampliada o alejada, las ventanas (ajustes, mochila, cuenta…) ya no se quedan oscuras: el tablero se oculta detrás mientras están abiertas",

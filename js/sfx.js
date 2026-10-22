@@ -56,7 +56,11 @@ const SFX = {
     if (this.master) this.master.gain.value = this.enabled ? this.volume : 0;
   },
 
+  // En segundo plano (ventana tapada / app minimizada) no suena NADA: ni se crea ni se reanuda el contexto.
+  _inBg() { return typeof Music !== "undefined" && !!Music._bg; },
+
   ensureCtx() {
+    if (this._inBg()) return null;
     if (this.ctx) return this.ctx;
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return null;
@@ -78,7 +82,7 @@ const SFX = {
   _getVoice(name, freq, type) {
     const ctx = this.ensureCtx();
     if (!ctx) return null;
-    if (ctx.state === "suspended") ctx.resume();
+    if (ctx.state === "suspended" && !SFX._inBg()) ctx.resume();
     if (this.voices[name]) return this.voices[name];
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -301,7 +305,7 @@ const SFX = {
     if (!ctx) return;
     const mul = pitch || 1;
     try {
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended" && !SFX._inBg()) ctx.resume();
       const now = ctx.currentTime;
       const dur = Math.max(0.15, duration);
       const flickEnd = now + dur * 0.12;
@@ -619,7 +623,7 @@ const SFX = {
     const ctx = this.ensureCtx();
     if (!ctx) return;
     try {
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended" && !SFX._inBg()) ctx.resume();
       const t = ctx.currentTime;
       this._noiseBurst(0.55, "lowpass", 3800, 300, 0.55);
       this._noiseBurst(0.35, "highpass", 2500, 1200, 0.25, 0.02);
@@ -647,7 +651,7 @@ const SFX = {
     const ctx = this.ensureCtx();
     if (!ctx) return;
     try {
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended" && !SFX._inBg()) ctx.resume();
       const now = ctx.currentTime;
       const len = Math.round(ctx.sampleRate * Math.max(0.2, dur));
       const buf = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -675,7 +679,7 @@ const SFX = {
     const ctx = this.ensureCtx();
     if (!ctx) return;
     try {
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended" && !SFX._inBg()) ctx.resume();
       const now = ctx.currentTime;
       const o = ctx.createOscillator();
       const g = ctx.createGain();
@@ -709,7 +713,7 @@ const SFX = {
     const ctx = this.ensureCtx();
     if (!ctx) return;
     try {
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended" && !SFX._inBg()) ctx.resume();
       const now = ctx.currentTime + delay;
       const len = Math.round(ctx.sampleRate * dur);
       const buf = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -841,7 +845,7 @@ const SFX = {
     const nowMs = performance.now();
     if (nowMs < (this._themeUntil || 0)) return 0; // ya suena: sin solapar
     try {
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended" && !SFX._inBg()) ctx.resume();
       const BPM = 148, STEP = 60 / BPM / 4, NSTEP = 32;
       const t0 = ctx.currentTime + 0.05;
       const tomL = (t, g) => this._dTom(t, 85, g, 0.35);
@@ -913,7 +917,7 @@ const SFX = {
     const ctx = this.ensureCtx();
     if (!ctx) return;
     try {
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended" && !SFX._inBg()) ctx.resume();
       const now = ctx.currentTime;
       // Corta el tambor anterior (si aún suena) para que nunca se solapen.
       if (this._drumVoice) {
@@ -958,7 +962,7 @@ const SFX = {
     const ctx = this.ensureCtx();
     if (!ctx) return;
     try {
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended" && !SFX._inBg()) ctx.resume();
       const now = ctx.currentTime;
       const dur = 0.5;
 
@@ -1021,7 +1025,7 @@ const SFX = {
     const ctx = this.ensureCtx();
     if (!ctx) return;
     try {
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended" && !SFX._inBg()) ctx.resume();
       const now = ctx.currentTime;
       for (let i = 0; i < 4; i++) {
         const t = now + i * 0.34;
@@ -1045,7 +1049,7 @@ const SFX = {
     const ctx = this.ensureCtx();
     if (!ctx) return;
     try {
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended" && !SFX._inBg()) ctx.resume();
       const now = ctx.currentTime;
       const dur = 0.28;
       const bufferSize = Math.round(ctx.sampleRate * dur);
@@ -1076,7 +1080,7 @@ const SFX = {
     const ctx = this.ensureCtx();
     if (!ctx) return;
     try {
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended" && !SFX._inBg()) ctx.resume();
       const now = ctx.currentTime;
       const dur = 0.7;
 
