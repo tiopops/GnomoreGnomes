@@ -12149,7 +12149,7 @@ body.tut-hush .tut-panel * { pointer-events: none; }
 .resource-node-attack-marker--pino,
 .resource-node-attack-marker--pino *,
 .resource-node-attack-marker--cofre,
-.resource-node-attack-marker--cofre * { cursor: url("../assets/iconos/cursor_hacha.png?v=3") 24 24, pointer !important; }
+.resource-node-attack-marker--cofre * { cursor: url("../assets/iconos/cursor_hacha.png?v=4") 24 24, pointer !important; }
 
 /* La pantalla de carga se funde despacio al destapar el nivel ya cargado */
 .match-loading-overlay:not(.match-loading-overlay--visible) { visibility: hidden; transition: opacity 0.5s ease, visibility 0s linear 0.55s; }

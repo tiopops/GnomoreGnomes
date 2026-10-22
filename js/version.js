@@ -7,9 +7,12 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001521";
+const GG_VERSION = "v.001522";
 
 const GG_CHANGELOG = [
+  { v: "v.001522", date: "22/10/2026", title: "Recursos", items: [
+    "El hacha de recolectar es un poco más grande, para igualar al pico",
+  ] },
   { v: "v.001521", date: "22/10/2026", title: "Recursos", items: [
     "Puntero de recolectar: hacha amarilla para los árboles y pico amarillo para la piedra y la mena de metal (mismo tamaño)",
   ] },
