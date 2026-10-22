@@ -7,9 +7,18 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001518";
+const GG_VERSION = "v.001521";
 
 const GG_CHANGELOG = [
+  { v: "v.001521", date: "22/10/2026", title: "Recursos", items: [
+    "Puntero de recolectar: hacha amarilla para los árboles y pico amarillo para la piedra y la mena de metal (mismo tamaño)",
+  ] },
+  { v: "v.001520", date: "22/10/2026", title: "Recursos", items: [
+    "Pico de recolectar con trazo más fino, igual de delgado que el resto de punteros",
+  ] },
+  { v: "v.001519", date: "22/10/2026", title: "Recursos", items: [
+    "Al poder recolectar un recurso, el puntero es un pico amarillo (antes un hacha)",
+  ] },
   { v: "v.001518", date: "22/10/2026", title: "Carga", items: [
     "La pantalla de carga espera a que todo el nivel (terreno, unidades, recursos, interfaz) esté cargado y listo antes de mostrarse, sin sprites que aparezcan tarde ni parpadeos",
     "Fundidos más suaves y largos entre menús, y la pantalla de carga se desvanece despacio",

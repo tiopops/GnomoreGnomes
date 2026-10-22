@@ -519,7 +519,7 @@ const Resources = {
       const needsMove = approach.row !== unit.row || approach.col !== unit.col;
       if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return; // mover + golpear el recurso = 1 sola acción
       Units.addMarker({
-        className: "attack-marker resource-node-attack-marker",
+        className: "attack-marker resource-node-attack-marker resource-node-attack-marker--" + node.kind,
         row: node.row,
         col: node.col,
         zOffset: 2,
