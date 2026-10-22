@@ -350,6 +350,19 @@ if (typeof document !== "undefined") {
     if (ev.pointerType && ev.pointerType !== "mouse") return;
     if (typeof Bumpers !== "undefined") Bumpers._onPointerMove(ev);
   });
+  // Clic sobre el cuerpo del bumper con un gnomo en mano: es el sacrificio (la calavera), aunque el
+  // puntero esté sobre el hueco de la casilla de arriba. Se intercepta antes de que lo reciba otro círculo.
+  document.addEventListener("click", (ev) => {
+    if (typeof Bumpers === "undefined") return;
+    const vp = document.getElementById("board-viewport");
+    if (!vp || !vp.contains(ev.target) || ev.target.closest(".range-marker--sacrifice")) return;
+    const sp = Bumpers._hoverAt(ev);
+    const b = sp ? Bumpers.list.find((x) => x.spriteEl === sp) : null;
+    const m = b && document.querySelector(`.range-marker--sacrifice[data-row="${b.row}"][data-col="${b.col}"]`);
+    if (!m) return;
+    ev.stopPropagation(); ev.preventDefault();
+    m.click();
+  }, true);
   document.addEventListener("pointerdown", (ev) => {
     const vp = document.getElementById("board-viewport");
     if (vp && vp.contains(ev.target) && typeof Bumpers !== "undefined") Bumpers._onPointerDown(ev);

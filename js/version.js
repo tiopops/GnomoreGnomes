@@ -7,9 +7,12 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001527";
+const GG_VERSION = "v.001528";
 
 const GG_CHANGELOG = [
+  { v: "v.001528", date: "22/10/2026", title: "Sacrificios", items: [
+    "Al pulsar sobre el cuerpo del bumper con la calavera, se hace el sacrificio en vez de lanzar el gnomo a la casilla de arriba"
+  ] },
   { v: "v.001527", date: "22/10/2026", title: "Sacrificios", items: [
     "Al apuntar un lanzamiento, el puntero sobre un bumper donde se puede sacrificar al gnomo es la calavera",
   ] },
