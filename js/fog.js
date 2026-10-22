@@ -82,7 +82,13 @@ const Fog = {
   // aplicarse ANTES de que exista ninguna loseta de niebla todavía (a la
   // primera partida nueva ya le toca crear sus <img> de niebla con la
   // clase de <body> ya puesta, sin parpadeo).
+  // Interfaz móvil (mismo criterio que css/mobile.css): la niebla NUNCA se anima, no es una opción.
+  _mobileUI() {
+    try { return window.matchMedia("(max-width: 720px), (max-height: 560px)").matches; } catch (e) { return false; }
+  },
+
   initAnimPref() {
+    if (this._mobileUI()) { this.animEnabled = false; this._applyAnimToggle(); return; }
     const saved = localStorage.getItem(FOG_ANIM_STORAGE_KEY);
     if (saved === null) {
       // Sin preferencia guardada todavía: activada en escritorio, apagada
@@ -98,6 +104,14 @@ const Fog = {
   },
 
   setAnimEnabled(enabled) {
+    if (this._mobileUI()) {
+      // En móvil siempre apagada y sin guardar nada: así al volver a escritorio se respeta su preferencia.
+      this.animEnabled = false;
+      this._applyAnimToggle();
+      this._refreshIdle();
+      this.clearCulling();
+      return;
+    }
     this.animEnabled = !!enabled;
     localStorage.setItem(FOG_ANIM_STORAGE_KEY, this.animEnabled ? "1" : "0");
     this._applyAnimToggle();

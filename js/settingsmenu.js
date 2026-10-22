@@ -281,6 +281,8 @@ const SettingsMenu = {
       if (typeof Fog !== "undefined") Fog.setAnimEnabled(next);
       fogAnimBtn.querySelector(".settings-toggle").dataset.checked = String(next);
     });
+    // En móvil la niebla nunca se anima y la opción no existe.
+    if (typeof Fog !== "undefined" && Fog._mobileUI && Fog._mobileUI()) fogAnimBtn.style.display = "none";
     colVisual.appendChild(fogAnimBtn);
 
     // Pedido explícito: "vegeteacion" en la lista reordenada de opciones —

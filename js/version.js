@@ -7,9 +7,12 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001524";
+const GG_VERSION = "v.001525";
 
 const GG_CHANGELOG = [
+  { v: "v.001525", date: "22/10/2026", title: "Móvil", items: [
+    "Interfaz móvil: la niebla nunca está animada y la opción desaparece de los ajustes gráficos (en escritorio sigue igual)",
+  ] },
   { v: "v.001524", date: "22/10/2026", title: "Sonido", items: [
     "Con el juego en segundo plano (ventana tapada o app minimizada) no suena ningún efecto ni música hasta volver; antes los efectos podían reactivar el audio solos",
   ] },
