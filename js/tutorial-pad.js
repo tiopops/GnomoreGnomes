@@ -97,7 +97,11 @@ const TUTORIAL_PAD_TEXTS = {
       rep: [["Pulsa la diana.", "Selecciona a quien lleva el gnomo, lleva el cursor al tótem y pulsa {confirm} sobre la diana."]],
       en: { rep: [["Tap the target.", "Select whoever is carrying the gnome, move the cursor to the totem and press {confirm} on the target."]] },
     },
-    { // 18 Habilidades
+    { // 18 Sacrificio
+      rep: [["Ese charco lo he puesto yo, de nada.", "Ese charco lo he puesto yo, de nada. Selecciona con {confirm}, abre las acciones ({actions}), elige lanzar y apunta a la calavera con {confirm}."]],
+      en: { rep: [["I made that puddle myself, you're welcome.", "I made that puddle myself, you're welcome. Select with {confirm}, open actions ({actions}), choose throw and aim at the skull with {confirm}."]] },
+    },
+    { // 19 Habilidades
       rep: [["abre Habilidades,", "selecciónalo ({toObelisk} lleva el cursor y {confirm} lo selecciona) y abre Habilidades ({prevUnit} y {nextUnit} cambian de opción, {confirm} abre la marcada),"],
             ["Mírala y ciérrala.", "Mírala y ciérrala con {back}."]],
       mission: "Abre Habilidades y ciérrala con {back}",
@@ -105,18 +109,18 @@ const TUTORIAL_PAD_TEXTS = {
                   ["Take a look and close it.", "Take a look and close it with {back}."]],
             mission: "Open Skills and close it with {back}" },
     },
-    { // 19 Armería
+    { // 20 Armería
       rep: [["Ábrela y ciérrala.", "Ábrela con {confirm} (con el Obelisco seleccionado, {prevUnit} y {nextUnit} cambian de opción) y ciérrala con {back}."]],
       mission: "Abre la Armería y ciérrala con {back}",
       en: { rep: [["Open it and close it.", "Open it with {confirm} (with the Obelisk selected, {prevUnit} and {nextUnit} switch options) and close it with {back}."]],
             mission: "Open the Armory and close it with {back}" },
     },
-    { // 20 pasar turno
+    { // 21 pasar turno
       rep: [["pulsa PASAR TURNO.", "pulsa {endTurn} (PASAR TURNO)."]],
       mission: "Pulsa {endTurn}: PASAR TURNO",
       en: { rep: [["Hit END TURN.", "Press {endTurn} (END TURN)."]], mission: "Press {endTurn}: END TURN" },
     },
-    null, // 21 final
+    null, // 22 final
   ],
 
   mush: [

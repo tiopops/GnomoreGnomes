@@ -206,6 +206,17 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
+   "say": "Último truco, y de los buenos: el SACRIFICIO. Lanza al gnomo contra el agua, un volcán, un cepo… (verás una calavera) y ganas +3 de Gloria al instante. Más si llevaba puntos: 4 con 5+, 5 con 10+. Cuesta coger y lanzar, y luego aparece otro gnomo. Ese charco lo he puesto yo, de nada.",
+   "mission": "Sacrifica al gnomo en el agua",
+   "ok": "+3 de Gloria al instante. Tinkle dio su vida por la causa, aunque nadie le preguntó. El siguiente gnomo ya viene de camino.",
+   "mood": "aplaude",
+   "en": {
+    "say": "One last trick, a good one: SACRIFICE. Throw the gnome into water, a volcano, a trap… (you'll see a skull) and gain +3 Glory instantly. More if it carried points: 4 with 5+, 5 with 10+. It costs grab and throw, then another gnome shows up. I made that puddle myself, you're welcome.",
+    "mission": "Sacrifice the gnome in the water",
+    "ok": "+3 Glory, instantly. Tinkle gave his life for the cause, though nobody asked him. The next gnome is already on its way."
+   }
+  },
+  {
    "say": "Tu Obelisco guarda más trucos: abre Habilidades, mejoras permanentes que se compran con Gloria. Mírala y ciérrala.",
    "mission": "Abre Habilidades y ciérrala",
    "ok": "Demasiado árbol para tan poco bosque.",

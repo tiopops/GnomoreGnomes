@@ -678,6 +678,37 @@ const Tutorial = {
         ok: "¡Un tótem conquistado! ¿Tinkle? ¿Alguien puede llamar a emergencias? O a una funeraria... Y un truco: si una de tus unidades empieza el turno pegada a un tótem tuyo, recarga su habilidad especial. Capturar tótems también sirve para eso.",
       },
       {
+        say: `Un último truco, y es de los buenos: el SACRIFICIO. Si lanzas al gnomo contra el agua, un volcán, un cepo, una seta explosiva... (verás una calavera sobre esas casillas), se acaba el gnomo y ganas +3 Puntos de Gloria al instante, sin esperar al siguiente turno. Más si llevaba puntos: 4 con 5 o más, 5 con 10 o más. Cuesta las acciones de coger y lanzar, y al rato aparece otro gnomo por ahí, que de esto nunca falta. Ese charco de ahí lo he puesto yo, de nada. Pulsa lanzar y elige la calavera.`,
+        mission: "Sacrifica al gnomo en el agua",
+        onStart: () => {
+          T._refill();
+          let h = T._my().find((u) => Gnome.isHeldBy(u.id));
+          if (!h) {
+            h = T._my()[0];
+            T._giveGnome(h);
+          }
+          T._ctx.sacId = h && h.id;
+          T._ctx.sacSeen = false;
+          const spot = h && T._findSpot(h, { minD: 2, maxD: 3, side: "above", minOb: 2 });
+          if (spot) T._makeWater(spot.row, spot.col);
+          if (typeof Fog !== "undefined") Fog.applyVisibility();
+        },
+        target: () => {
+          const h = Units.list.find((u) => u.id === T._ctx.sacId);
+          if (!h) return null;
+          if (Units.selectedId !== h.id) return T._unitEl(h);
+          const g = Gnome.list.find((x) => x.heldBy === h.id);
+          if (g && g.passing) return T._anyMarker("range-marker--sacrifice") || T._anyMarker("pass-marker");
+          return Gnome._passBtn || T._unitEl(h);
+        },
+        refillFor: () => T._ctx.sacId,
+        done: () => {
+          if (typeof Sacrifice !== "undefined" && Sacrifice.busy > 0) T._ctx.sacSeen = true;
+          return !!T._ctx.sacSeen && Sacrifice.busy === 0;
+        },
+        ok: "+3 de Gloria al instante. Tinkle dio su vida por la causa, aunque nadie le preguntó. Descuida: el siguiente gnomo ya viene de camino.",
+      },
+      {
         say: `Tu Obelisco guarda más trucos. Selecciónalo y abre Habilidades: tres ramas (Guerra, Protección y Supervivencia) con mejoras permanentes que se compran con Puntos de Gloria. Échale un vistazo y ciérrala con la X. No te pido que entiendas nada, de momento con que sepas que está ahí, es suficiente.`,
         mission: "Abre Habilidades y ciérrala",
         onStart: () => {
@@ -747,7 +778,7 @@ const Tutorial = {
           const p = getTileCenter(r, c, Units.boardSize);
           // "center": hacia el centro del mapa (el Obelisco puede estar en cualquier lado).
           const mid = getTileCenter(Math.floor(Units.boardSize / 2), Math.floor(Units.boardSize / 2), Units.boardSize);
-          const score = (side === "below" ? p.y : side === "right" ? p.x : -Math.hypot(p.x - mid.x, p.y - mid.y)) - d * 4;
+          const score = (side === "above" ? -p.y : side === "below" ? p.y : side === "right" ? p.x : -Math.hypot(p.x - mid.x, p.y - mid.y)) - d * 4;
           if (!best || score > best.score) best = { row: r, col: c, score };
         }
       }

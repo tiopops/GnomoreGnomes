@@ -7,9 +7,12 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001534";
+const GG_VERSION = "v.001535";
 
 const GG_CHANGELOG = [
+  { v: "v.001535", date: "23/10/2026", title: "Tutorial", items: [
+    "Primeros pasos: nueva misión de sacrificio (lanzar el gnomo al agua) con +Gloria instantánea, con su charco de práctica"
+  ] },
   { v: "v.001534", date: "23/10/2026", title: "Rendimiento móvil", items: [
     "Con la animación de niebla desactivada (siempre en móvil), la niebla se disipa con un simple fundido",
     "Cámara muy alejada: se quitan las sombras con desenfoque de unidades, tienda y huevo",

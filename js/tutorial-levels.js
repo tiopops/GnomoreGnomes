@@ -170,6 +170,29 @@ Object.assign(Tutorial, {
     }
   },
 
+  // Charco de práctica: convierte una loseta de hierba en agua REAL (terreno,
+  // textura y mapa de tipos) y la deja ya revelada.
+  _makeWater(row, col) {
+    if (typeof TerrainMap === "undefined" || !TerrainMap.grid) return;
+    TerrainMap.grid[row][col] = "water";
+    const info = TILE_TYPES.water;
+    const t = typeof TerrainCanvas !== "undefined" && TerrainCanvas._t(row, col);
+    if (t) {
+      const w = Math.floor(TILE_WIDTH * (info.scale != null ? info.scale : TILE_DEFAULT_ADJUST.scale));
+      t.reveal = {
+        src: info.variants[0],
+        ox: info.offsetX != null ? info.offsetX : TILE_DEFAULT_ADJUST.offsetX,
+        oy: info.offsetY != null ? info.offsetY : TILE_DEFAULT_ADJUST.offsetY,
+        w,
+        h: Math.floor(Math.round((w * (info.nativeHeight || TILE_NATIVE_HEIGHT)) / (info.nativeWidth || TILE_NATIVE_WIDTH))),
+      };
+      TerrainCanvas._load(TerrainCanvas._urlFor(t.reveal.src, 0));
+      TerrainCanvas._load(TerrainCanvas._urlFor(t.reveal.src, 1));
+      TerrainCanvas._load(TerrainCanvas._urlFor(t.reveal.src, 2));
+      TerrainCanvas.setRevealed(row, col, true);
+    }
+  },
+
   // Entrega a la unidad un gnomo nuevo ya cogido (para repetir lanzamientos sin volver a andar).
   _giveGnome(unit) {
     if (!unit) return null;
