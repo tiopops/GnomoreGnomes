@@ -346,6 +346,11 @@ const Crane = {
       buildContent: (marker) => {
         const icon = document.createElement("i");
         icon.className = "ph ph-paper-plane-tilt pass-marker__icon";
+        // El icono se sube hasta la grulla (que está en lo alto del obelisco), no en la base.
+        try {
+          const tc = getTileCenter(ob.row, ob.col, Units.boardSize);
+          if (this._pos && tc) icon.style.transform = `translateY(${Math.round(this._pos.by - tc.y)}px)`;
+        } catch (e) {}
         marker.appendChild(icon);
       },
       onClick: () => this.throwGnome(unit, gnome),

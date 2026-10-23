@@ -7,9 +7,33 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001528";
+const GG_VERSION = "v.001534";
 
 const GG_CHANGELOG = [
+  { v: "v.001534", date: "23/10/2026", title: "Rendimiento móvil", items: [
+    "Con la animación de niebla desactivada (siempre en móvil), la niebla se disipa con un simple fundido",
+    "Cámara muy alejada: se quitan las sombras con desenfoque de unidades, tienda y huevo",
+    "La capa de la cámara se vuelve a rasterizar tras cualquier cambio de zoom notable (menos losetas a medias al alejar)",
+    "El suelo en canvas no pasa de 2x de resolución en teléfonos"
+  ] },
+  { v: "v.001533", date: "23/10/2026", title: "Sacrificios", items: [
+    "Sacrificio en el volcán: el gnomo patalea en la lava y, al hundirse, asoma una mano con el pulgar arriba que también se hunde"
+  ] },
+  { v: "v.001532", date: "23/10/2026", title: "Punteros", items: [
+    "Estampar un gnomo contra un tótem usa una bandera roja como puntero"
+  ] },
+  { v: "v.001531", date: "23/10/2026", title: "Fin de partida", items: [
+    "Nueva pantalla de victoria, derrota y empate: más compacta, con el turno en que acabó la partida y barras comparativas",
+    "Partículas según el resultado (confeti, brasas o polvo)"
+  ] },
+  { v: "v.001530", date: "23/10/2026", title: "Punteros", items: [
+    "Abrir un cofre usa la mano amarilla de coger en vez del hacha",
+    "Entrar en la Tienda Goblin o la casa de la adivina usa la mano amarilla que señala"
+  ] },
+  { v: "v.001529", date: "23/10/2026", title: "Grulla y huevo", items: [
+    "El icono para lanzarle un gnomo a la grulla sale sobre ella (no en la base del obelisco) y se puede pulsar la propia grulla",
+    "El rebote del huevo lanzado por los rivales respeta su propia niebla (lo que ven sus unidades, aldeas y obelisco), no la del jugador"
+  ] },
   { v: "v.001528", date: "22/10/2026", title: "Sacrificios", items: [
     "Al pulsar sobre el cuerpo del bumper con la calavera, se hace el sacrificio en vez de lanzar el gnomo a la casilla de arriba"
   ] },

@@ -986,6 +986,91 @@ const Obelisks = {
       .join("");
   },
 
+  // Tabla con barras enfrentadas (1 contra 1): valor tú | barra | dato | barra | valor rival.
+  _statsBarsHtml() {
+    const ai = Teams.ai()[0];
+    const hp = (t) => Math.max(0, this.byTeam(t)?.hp ?? 0);
+    const mx = (t) => this.byTeam(t)?.maxHp ?? OBELISK_MAX_HP;
+    const own = (t) => (typeof Villages !== "undefined" ? Villages.ownedCount(t) : 0);
+    // [icono, etiqueta, valor tú, valor rival, texto tú, texto rival, gana el menor]
+    const rows = [
+      ["heartbeat", "Vida del Obelisco", hp("player"), hp(ai), `${hp("player")} / ${mx("player")}`, `${hp(ai)} / ${mx(ai)}`, false],
+      ["flag-banner", "Totems capturados", own("player"), own(ai), "", "", false],
+      ["users-three", "Unidades reclutadas", this.recruitedCountFor("player"), this.recruitedCountFor(ai), "", "", false],
+      ["paper-plane-tilt", "Pases de gnomo logrados", this._passes.player || 0, this._passes[ai] || 0, "", "", false],
+      ["skull", "Bajas sufridas", this._deaths.player || 0, this._deaths[ai] || 0, "", "", true],
+    ];
+    const head = `<div class="go-head"><span>TÚ</span><span>${Teams.rivalCount > 1 ? "RIVAL" : "RIVAL"}</span></div>`;
+    return head + rows.map(([ic, lab, p, e, tp, te, low], i) => {
+      const m = Math.max(p, e, 1);
+      const better = p === e ? 0 : ((low ? p < e : p > e) ? 1 : -1);
+      const d = 0.9 + i * 0.12;
+      return `<div class="go-row" style="animation-delay:${d}s">
+        <span class="go-v go-v--p${better > 0 ? " go-v--win" : ""}" data-n="${p}" data-t="${tp}">0</span>
+        <span class="go-bar go-bar--l${better < 0 ? " go-bar--dim" : ""}"><i data-w="${(p / m) * 100}" style="transition-delay:${d + 0.1}s"></i></span>
+        <span class="go-lab"><i class="ph ph-${ic}"></i>${lab}</span>
+        <span class="go-bar go-bar--r${better > 0 ? " go-bar--dim" : ""}"><i data-w="${(e / m) * 100}" style="transition-delay:${d + 0.1}s"></i></span>
+        <span class="go-v go-v--e${better < 0 ? " go-v--win" : ""}" data-n="${e}" data-t="${te}">0</span>
+      </div>`;
+    }).join("");
+  },
+
+  // Partículas del final (hojas/chispas, brasas o polvo) — solo decorativas; se paran al cerrar.
+  _gameOverParticles(overlay, kind) {
+    if (document.body.classList.contains("perf-mode")) return;
+    const fx = document.createElement("div");
+    fx.className = "go-fx";
+    overlay.insertBefore(fx, overlay.firstChild);
+    const mobile = window.innerWidth < 700;
+    const mk = () => {
+      if (!fx.isConnected) return;
+      const e = document.createElement("i");
+      let w, h, bg, dur, dx, rot = 0, br = "0";
+      if (kind === "win") {
+        const c = ["#8fbf4d", "#ffcf3f", "#c8e86a", "#fff3b0", "#e36a2e"][Math.floor(Math.random() * 5)];
+        w = 6 + Math.random() * 7; h = w * (Math.random() > 0.5 ? 1 : 2.2); bg = c;
+        dur = 5 + Math.random() * 4; dx = (Math.random() - 0.5) * 160; rot = 360 + Math.random() * 540; br = Math.random() > 0.6 ? "50% 0" : "1px";
+      } else if (kind === "lose") {
+        w = h = 2 + Math.random() * 4; bg = Math.random() > 0.5 ? "#ff6a3a" : "#8a8a8a"; dur = 7 + Math.random() * 5; dx = (Math.random() - 0.5) * 90; br = "50%";
+      } else {
+        w = h = 2 + Math.random() * 3; bg = "#cdeeff"; dur = 8 + Math.random() * 5; dx = (Math.random() - 0.5) * 60; br = "50%";
+      }
+      e.style.cssText = `left:${Math.random() * 100}%;width:${w}px;height:${h}px;background:${bg};border-radius:${br}`;
+      fx.appendChild(e);
+      const H = window.innerHeight + 60, up = kind === "draw";
+      const an = e.animate([
+        { transform: `translate(0,${up ? H : 0}px) rotate(0)`, opacity: 0 },
+        { opacity: 0.9, offset: 0.1 },
+        { transform: `translate(${dx}px,${up ? -40 : H}px) rotate(${rot}deg)`, opacity: 0 },
+      ], { duration: dur * 1000, easing: "linear" });
+      an.onfinish = () => e.remove();
+    };
+    const n = mobile ? 14 : (kind === "win" ? 40 : 18);
+    for (let i = 0; i < n; i++) setTimeout(mk, i * 60);
+    const iv = setInterval(() => { if (!fx.isConnected) clearInterval(iv); else mk(); }, mobile ? 380 : (kind === "win" ? 150 : 300));
+  },
+
+  // Rellena las barras y cuenta los números (el CSS ya escalona la entrada de las filas).
+  _animateGameOverStats(overlay) {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      overlay.querySelectorAll(".go-turn__bar i, .go-bar i").forEach((i) => { i.style.width = i.dataset.w + "%"; });
+    }));
+    overlay.querySelectorAll(".go-v").forEach((el, i) => {
+      const n = +el.dataset.n, t = el.dataset.t;
+      setTimeout(() => {
+        const t0 = performance.now();
+        const f = (now) => {
+          if (!el.isConnected) return;
+          const q = Math.min(1, (now - t0) / 800);
+          const v = Math.round(n * (1 - Math.pow(1 - q, 3)));
+          el.textContent = t ? (q < 1 ? v : t) : v;
+          if (q < 1) requestAnimationFrame(f);
+        };
+        requestAnimationFrame(f);
+      }, 1000 + Math.floor(i / 2) * 120);
+    });
+  },
+
   _showGameOverOverlay(winnerTeam, reason) {
     if (this._gameOverEl) this._gameOverEl.remove();
 
@@ -1030,6 +1115,10 @@ const Obelisks = {
       else SFX.defeat && SFX.defeat();
     }
 
+    const maxR = Turns.maxRounds();
+    const turnNo = Math.max(1, Math.min(maxR, (typeof Turns !== "undefined" && Turns.roundNumber) || 1));
+    const turnHtml = `<div class="go-turn"><i class="ph ph-hourglass-medium"></i><div class="go-turn__t"><small>${reason === "turnLimit" ? "LÍMITE DE TURNOS" : "PARTIDA DECIDIDA EN EL"}</small><b>TURNO ${turnNo} <em>/ ${maxR}</em></b></div><span class="go-turn__bar"><i data-w="${(turnNo / maxR) * 100}"></i></span></div>`;
+
     const overlay = document.createElement("div");
     overlay.className = "obelisk-gameover-overlay";
     overlay.innerHTML = `
@@ -1039,14 +1128,15 @@ const Obelisks = {
         ${draw ? "" : `<div class="obelisk-gameover-kicker">${won ? "¡VICTORIA!" : "DERROTA"}</div>`}
         <div class="p5-banner__label obelisk-gameover-panel__title">${titleHtml}</div>
         <div class="obelisk-gameover-panel__msg">${msg}</div>
-        <div class="obelisk-gameover-stats">
+        ${turnHtml}
+        ${Teams.rivalCount === 1 ? `<div class="obelisk-gameover-stats obelisk-gameover-stats--bars">${this._statsBarsHtml()}</div>` : `<div class="obelisk-gameover-stats">
           <div class="obelisk-gameover-stats__row obelisk-gameover-stats__row--header obelisk-gameover-stats__row--n" style="grid-template-columns: 62px 1fr repeat(${Teams.rivalCount}, 62px)">
             <span class="obelisk-gameover-stats__value obelisk-gameover-stats__value--player">TÚ</span>
             <span class="obelisk-gameover-stats__label"></span>
             ${Teams.ai().map((t) => `<span class="obelisk-gameover-stats__value obelisk-gameover-stats__value--enemy">${Teams.rivalCount > 1 ? "RIVAL " + Teams.rivalIndex(t) : "RIVAL"}</span>`).join("")}
           </div>
           ${this._statsRowsHtml()}
-        </div>
+        </div>`}
         ${typeof Progress !== "undefined" ? Progress.endHtml() : ""}
         <button type="button" class="p5-banner p5-banner--action obelisk-gameover-panel__btn">
           <span class="p5-banner__label">VOLVER AL MENÚ</span>
@@ -1066,7 +1156,11 @@ const Obelisks = {
       }
     });
     if (tone) overlay.querySelector(".obelisk-gameover-panel").style.setProperty("--go-tone", tone);
+    else if (draw) overlay.querySelector(".obelisk-gameover-panel").style.setProperty("--go-tone", "#8fd6ff");
+    else if (!won) overlay.querySelector(".obelisk-gameover-panel").style.setProperty("--go-tone", "#e0262a");
     document.body.appendChild(overlay);
+    this._gameOverParticles(overlay, draw ? "draw" : won ? "win" : "lose");
+    this._animateGameOverStats(overlay);
     this._gameOverEl = overlay;
     requestAnimationFrame(() => overlay.classList.add("obelisk-gameover-overlay--visible"));
     if (typeof Progress !== "undefined") setTimeout(() => Progress.animateEnd(overlay), 500);

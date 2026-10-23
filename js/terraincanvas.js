@@ -345,7 +345,10 @@ const TerrainCanvas = {
     const vw = this.viewportEl.clientWidth;
     const vh = this.viewportEl.clientHeight;
     if (!vw || !vh) return;
-    const dpr = window.devicePixelRatio || 1;
+    // En teléfono el canvas no necesita más de 2x (la textura del suelo ya es de baja resolución):
+    // menos memoria de vídeo y menos relleno por frame.
+    let dpr = window.devicePixelRatio || 1;
+    if (typeof PerfMode !== "undefined" && PerfMode._isPhone && PerfMode._isPhone()) dpr = Math.min(dpr, 2);
     if (this._bw !== vw || this._bh !== vh || this._dpr !== dpr) {
       this._bw = vw; this._bh = vh; this._dpr = dpr;
       this.canvas.width = Math.round(vw * dpr);

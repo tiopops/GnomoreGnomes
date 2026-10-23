@@ -339,8 +339,24 @@ const Egg = {
 
   // Simula el vuelo de `dist` casillas desde el huevo en la dirección `dir`
   // con rebotes en los límites del tablero y en los obeliscos (pinball).
+  // ¿Ve este equipo (no jugador) la casilla? Percepción en vivo de sus unidades, aldeas y obelisco.
+  _teamSees(team, row, col) {
+    const near = (r, c, rad) => Math.max(Math.abs(r - row), Math.abs(c - col)) <= rad;
+    if (typeof Units !== "undefined" && Units.list.some((u) => u.team === team && near(u.row, u.col, (UNIT_TYPES[u.typeId] ? UNIT_TYPES[u.typeId].percepcion : 1)))) return true;
+    if (typeof Villages !== "undefined" && Villages.list.some((v) => v.owner === team && near(v.row, v.col, typeof FOG_VILLAGE_PERCEPTION_RADIUS !== "undefined" ? FOG_VILLAGE_PERCEPTION_RADIUS : 2))) return true;
+    if (typeof Obelisks !== "undefined" && Obelisks.list.some((o) => o.team === team && near(o.row, o.col, typeof FOG_OBELISK_PERCEPTION_RADIUS !== "undefined" ? FOG_OBELISK_PERCEPTION_RADIUS : 3))) return true;
+    return false;
+  },
+
   _simulate(dir, dist, holderTeam, holder) {
     const e = this.egg;
+    // Niebla desde el punto de vista de quien lanza: el jugador usa la suya; los rivales (IA) no tienen
+    // niebla propia, así que ven solo lo que perciben sus unidades, aldeas y obelisco.
+    const fogd = (r, c) => {
+      if (typeof Fog === "undefined") return false;
+      if (!holderTeam || holderTeam === "player") return Fog.isFoggedReal(r, c);
+      return !this._teamSees(holderTeam, r, c);
+    };
     const size = Units.boardSize;
     // Para el huevo el obelisco ocupa 4 losetas (la suya y las 3 de "detrás", donde se alza el sprite):
     // si no, es muy difícil que impacte y visualmente ya parece que las ocupe.
@@ -370,13 +386,13 @@ const Egg = {
       let best = null, bs = Infinity;
       Bumpers.list.forEach((b) => {
         if (b === cur || seen.has(b) || blocked.has(b)) return;
-        if (typeof Fog !== "undefined" && Fog.isFoggedReal(b.row, b.col)) return;
+        if (fogd(b.row, b.col)) return;
         const ar = b.row - fr, ac = b.col - fc, st = Math.max(Math.abs(ar), Math.abs(ac));
         if (!st || st > EGG_HOMING_RANGE) return;
         // La trayectoria no puede atravesar niebla de guerra: si hay niebla de por medio, no se teledirige.
         for (let j = 1; j < st; j++) {
           const lr = fr + Math.round(ar * j / st), lc = fc + Math.round(ac * j / st);
-          if (typeof Fog !== "undefined" && Fog.isFoggedReal(lr, lc)) return;
+          if (fogd(lr, lc)) return;
           if (clear && wall(lr, lc)) return;
         }
         const sc = st * 10 + Math.abs(ar) + Math.abs(ac);
@@ -393,7 +409,7 @@ const Egg = {
       let best = null, bs = Infinity;
       Bumpers.list.forEach((b) => {
         if (seen.has(b) || blocked.has(b)) return;
-        if (typeof Fog !== "undefined" && Fog.isFoggedReal(b.row, b.col)) return;
+        if (fogd(b.row, b.col)) return;
         const ar = b.row - fr, ac = b.col - fc, st = Math.max(Math.abs(ar), Math.abs(ac));
         if (st < 2 || st > rem) return;
         const fwd = (ar * dr0 + ac * dc0) / dl, cross = Math.abs(ar * dc0 - ac * dr0) / dl;
@@ -401,7 +417,7 @@ const Egg = {
         for (let j = 1; j < st; j++) {
           const lr = fr + Math.round(ar * j / st), lc = fc + Math.round(ac * j / st);
           if (wall(lr, lc)) return;
-          if (typeof Fog !== "undefined" && Fog.isFoggedReal(lr, lc)) return;
+          if (fogd(lr, lc)) return;
         }
         const sc = cross * 10 + st;
         if (sc < bs) { bs = sc; best = b; }

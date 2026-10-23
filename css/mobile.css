@@ -256,9 +256,10 @@
   .obelisk-gameover-panel > .obelisk-gameover-kicker { grid-column: 1; grid-row: 1; }
   .obelisk-gameover-panel > .obelisk-gameover-panel__title { grid-column: 1; grid-row: 2; }
   .obelisk-gameover-panel > .obelisk-gameover-panel__msg { grid-column: 1; grid-row: 3; font-size: 0.85rem; }
-  .obelisk-gameover-panel > .obelisk-gameover-stats { grid-column: 2; grid-row: 1 / span 4; width: 100%; }
-  .obelisk-gameover-panel > .pxp { grid-column: 1; grid-row: 4; width: 100%; }
-  .obelisk-gameover-panel > .obelisk-gameover-panel__btn { grid-column: 1 / -1; grid-row: 5; margin-top: 6px; }
+  .obelisk-gameover-panel > .obelisk-gameover-stats { grid-column: 2; grid-row: 1 / span 5; width: 100%; }
+  .obelisk-gameover-panel > .go-turn { grid-column: 1; grid-row: 4; }
+  .obelisk-gameover-panel > .pxp { grid-column: 1; grid-row: 5; width: 100%; }
+  .obelisk-gameover-panel > .obelisk-gameover-panel__btn { grid-column: 1 / -1; grid-row: 6; margin-top: 6px; }
   .obelisk-gameover-panel .gameover-team { font-size: clamp(1.3rem, 7.5vh, 2rem); -webkit-text-stroke-width: 2px; }
   .obelisk-gameover-panel__title { gap: 2px; }
   .obelisk-gameover-panel__title small { font-size: 0.8rem; letter-spacing: 0.2em; }
@@ -266,6 +267,13 @@
   .obelisk-gameover-stats__row { gap: 6px; font-size: 0.78rem; }
   .obelisk-gameover-stats__value { font-size: 0.95rem; }
   .obelisk-gameover-panel__btn { padding: 8px 30px; }
+  .go-row { grid-template-columns: 40px 1fr 1fr 40px; row-gap: 1px; }
+  .go-lab { grid-column: 2 / 4; grid-row: 1; font-size: .62rem; }
+  .go-row .go-bar { grid-row: 2; }
+  .go-row .go-v { grid-row: 1 / 3; }
+  .go-turn { padding: 2px 12px 2px 8px; }
+  .go-turn__t small { white-space: nowrap; font-size: .55rem; }
+  .obelisk-gameover-panel.obelisk-gameover-panel { margin-top: calc(var(--go-logo) * 0.5); }
 }
 
 /* X de cerrar de Ajustes y del historial de versiones: dentro de pantalla en móvil */

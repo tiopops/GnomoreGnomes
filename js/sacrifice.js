@@ -405,13 +405,17 @@ const Sacrifice = {
     ).finished;
   },
 
-  // ---------- 1. Volcán ----------
+  // ---------- 1. Volcán (parodia de Terminator) ----------
+  // Cae a la lava, patalea como en el agua y se hunde; entonces sale una mano con el pulgar arriba
+  // y se hunde también, derritiéndose. Medidas de la demo (volcán de 560 px) pasadas con K.
   async _volcano(holder, gnome, v, team) {
     const z = this._z(v.row, v.col) + 4;
     const ax = parseFloat(v.el.style.left), ay = parseFloat(v.el.style.top);
     const vh = 330 * (453 / 560);
     const cx = ax, cy = ay - 0.194 * vh; // boca del cráter
-    const a = await this._fly(holder, cx, cy + 22, z, { w: SAC_W.fly });
+    const K = 330 / 560, KK = K * 1.1;
+    const px = cx + 20 * K, lv = cy + 20; // centro de la poza y superficie de la lava
+    const a = await this._fly(holder, px, lv + 8, z, { w: SAC_W.fly });
     // Capa delantera del volcán: el gnomo se hunde "dentro" de la boca.
     const front = document.createElement("div");
     front.className = "unit volcano sac-volcano-front";
@@ -424,114 +428,95 @@ const Sacrifice = {
     front.style.left = `${ax}px`;
     front.style.top = `${ay}px`;
     this._add(front, z + 6);
-    // Impacto: salpicadura de lava y llama
+    const clip = (bottom) => { a.img.style.clipPath = `inset(-400px -400px ${Math.max(0, bottom - lv)}px -400px)`; };
+    // Impacto: salpicadura de lava (sin fuego)
     this._snd("fireBoom");
-    a.put(GNOME_FIRE.corre, SAC_W.fire, cx, cy + 22);
-    a.tf("rotate(0deg)", "50% 100%");
-    this._burst(cx, cy - 6, 22, "sac-lv", z + 8, { v: 520, spread: 2, s: [10, 22], t: 1100, g: 1400 });
-    this._burst(cx, cy - 6, 14, "sac-em", z + 8, { v: 420, spread: 2.4, s: [4, 8], t: 1300, g: 500 });
-    this._ring(cx, cy + 6, 260, 90, 650, z + 7);
-    setTimeout(() => this._ring(cx, cy + 6, 200, 70, 650, z + 7), 150);
+    this._burst(px, lv - 6, 16, "sac-lv", z + 8, { v: 420, spread: 1.8, s: [8, 18], t: 1000, g: 1400 });
+    this._burst(px, lv - 6, 8, "sac-lv", z + 8, { v: 240, spread: 2.8, s: [6, 12], t: 800, g: 1100 });
+    this._ring(px, lv + 4, 240, 84, 700, z + 7);
+    setTimeout(() => this._ring(px, lv + 4, 170, 60, 700, z + 7), 140);
     this._shake(false);
-    let flip = false;
-    const fl = setInterval(() => { flip = !flip; a.img.src = flip ? GNOME_FIRE.agarrado : GNOME_FIRE.corre; }, 150);
-    const be = setInterval(() => this._burst(cx + (Math.random() - 0.5) * 30, cy - 20, 2, "sac-em", z + 8, { v: 140, spread: 1, s: [4, 9], t: 700, g: -200 }), 70);
-    // se hunde ardiendo, dando bandazos
-    await this._raf(1050, (t) => {
+    a.tf("none", "50% 100%");
+    // sale a flote y patalea; cada vez con menos fuerza
+    const cyc = [{ up: 62, sink: 30, n: 520 }, { up: 46, sink: 54, n: 480 }, { up: 30, sink: 78, n: 440 }];
+    for (let i = 0; i < cyc.length; i++) {
+      const c = cyc[i];
+      this._snd("drownFlail");
+      await this._raf(c.n, (t) => {
+        const e = Math.sin(Math.PI * t);
+        const bottom = lv + (c.sink - e * c.up) * KK;
+        a.put(null, null, px + Math.sin(t * 20) * 3, bottom);
+        clip(bottom);
+        a.tf(`rotate(${Math.sin(t * 26) * (14 - 3 * i)}deg)`, "50% 100%");
+      });
+      this._burst(px, lv - 8, 6, "sac-lv", z + 8, { v: 230, spread: 2, s: [5, 10], t: 600, g: 800 });
+      this._ring(px, lv + 4, 140, 46, 500, z + 7);
+      this._bubbles(px, lv, 3, z + 7, true);
+    }
+    // se hunde del todo
+    this._snd("drownBubbles");
+    await this._raf(900, (t) => {
       const e = this._ease(t);
-      a.put(null, null, cx + Math.sin(t * 14) * 4, cy + 22 + e * 62);
-      a.tf(`rotate(${Math.sin(t * 16) * 16}deg) scale(${1 - 0.28 * e},${1 - 0.5 * e})`, "50% 100%");
-      a.d.style.opacity = t > 0.9 ? 1 - (t - 0.9) * 10 : 1;
+      const bottom = lv + (78 + e * 110) * KK;
+      a.put(null, null, px + Math.sin(t * 10) * 2, bottom);
+      clip(bottom);
+      a.tf(`rotate(${Math.sin(t * 14) * 10}deg)`, "50% 100%");
+      if (Math.random() < 0.25) this._burst(px + (Math.random() - 0.5) * 30 * K, lv - 4, 1, "sac-em", z + 8, { v: 90, spread: 1, s: [4, 7], t: 600, g: -100 });
     });
-    clearInterval(fl);
-    clearInterval(be);
     a.remove();
     this._kill(gnome);
-    this._bubbles(cx, cy + 4, 4, z + 7, true);
-    await this._sleep(600);
-    // solo queda el gorro flotando... y se prende y se hunde
-    const hat = this._hat(z + 8, cx - SAC_HAT.w / 2, cy - SAC_HAT.h - 2);
-    hat.animate([{ transform: "translateY(10px) scale(.2)", opacity: 0 }, { transform: "translateY(-12px) rotate(-10deg) scale(1.15)", opacity: 1, offset: 0.5 }, { transform: "translateY(0) rotate(4deg)", opacity: 1 }], { duration: 520, easing: "ease-out", fill: "forwards" });
-    await this._sleep(1400);
-    const hb = setInterval(() => this._burst(cx + (Math.random() - 0.5) * 24, cy - SAC_HAT.h, 2, "sac-em", z + 9, { v: 110, spread: 1, s: [4, 9], t: 600, g: -150 }), 60);
-    hat.animate([{ transform: "translateY(0) rotate(4deg) scale(1)", filter: "brightness(1)" }, { transform: "translateY(3px) rotate(10deg) scale(.9)", filter: "brightness(2.2) sepia(1) saturate(4) hue-rotate(-20deg)", offset: 0.45 }, { transform: "translateY(22px) rotate(40deg) scale(.4)", filter: "brightness(.3)", opacity: 0 }], { duration: 900, easing: "ease-in", fill: "forwards" });
-    await this._sleep(950);
-    clearInterval(hb);
-    this._rm(hat);
+    this._bubbles(px, lv, 5, z + 7, true);
+    this._ring(px, lv + 4, 120, 40, 600, z + 7);
+    this._snd("drownPlop");
+    await this._sleep(1100);
+    // ...y entonces sale el pulgar arriba, con un charquito que lo rodea
+    const TW = 54 * K, TH = 47 * K, PAD = 12;
+    const mkLip = (zz, half) => {
+      const l = document.createElement("div");
+      l.className = "sac-lavalip";
+      const w = 72 * K, h = 17 * K;
+      l.style.cssText = `left:${px - w / 2}px;top:${lv - h / 2}px;width:${w}px;height:${h}px;${half ? "clip-path:inset(52% 0 0 0);" : ""}`;
+      return this._add(l, zz);
+    };
+    const lipB = mkLip(z + 5, false), lipF = mkLip(z + 9, true);
+    const wrap = document.createElement("div");
+    wrap.className = "sac-thumb-mask";
+    wrap.style.cssText = `left:${px - TW / 2 + 1}px;top:${lv + 1 - TH - PAD}px;width:${TW}px;height:${TH + PAD}px`;
+    const th = document.createElement("img");
+    th.src = "assets/iconos/pulgar_arriba.png";
+    th.draggable = false;
+    th.alt = "";
+    th.style.cssText = `position:absolute;left:0;top:${PAD}px;width:${TW}px;height:${TH}px`;
+    wrap.appendChild(th);
+    this._add(wrap, z + 7);
+    [lipB, lipF].forEach((l) => l.animate([{ transform: "scale(.4,.3)" }, { transform: "scale(1.15,1.2)" }, { transform: "scale(1)" }], { duration: 500, easing: "ease-out" }));
+    await th.animate([{ transform: `translateY(${TH + 6}px)` }, { transform: "translateY(-3px)" }, { transform: "translateY(0)" }], { duration: 900, easing: "cubic-bezier(.2,.9,.3,1.1)" }).finished;
+    this._ring(px, lv, 120, 41, 700, z + 7);
+    await this._sleep(1500);
+    // y se hunde despacio en la lava, quemándose, hasta desaparecer del todo
+    const hb = setInterval(() => this._burst(px + (Math.random() - 0.5) * 40 * K, lv - 8 * K, 2, "sac-em", z + 8, { v: 100, spread: 1, s: [4, 8], t: 600, g: -140 }), 90);
+    const sk = setInterval(() => this._burst(px + (Math.random() - 0.5) * 24 * K, lv - 30 * K, 1, "sac-smoke", z + 9, { v: 70, spread: 0.5, s: [18, 30], t: 1200, g: -70, sc: 2 }), 160);
+    const rg = setInterval(() => this._ring(px, lv, 70, 24, 700, z + 7), 500);
+    await this._raf(4200, (t) => {
+      th.style.transform = `translateY(${t * (TH + 8)}px)`;
+      th.style.filter = `brightness(${1.25 - t * 0.95}) sepia(${t}) saturate(${1 + t * 5})`;
+    });
+    clearInterval(hb); clearInterval(sk); clearInterval(rg);
+    this._rm(wrap);
+    [lipB, lipF].forEach((l) => l.animate([{ transform: "scale(1)", opacity: 1 }, { transform: "scale(1.2,1.3)", opacity: 1, offset: 0.3 }, { transform: "scale(.3,.2)", opacity: 0 }], { duration: 600, fill: "forwards" }));
+    this._bubbles(px, lv, 4, z + 7, true);
+    await this._sleep(700);
+    this._rm(lipB); this._rm(lipF);
     // el volcán eructa, satisfecho
-    this._burst(cx, cy - 10, 6, "sac-smoke", z + 9, { v: 160, spread: 0.7, s: [26, 44], t: 1300, g: -120, sc: 2.2 });
+    this._burst(px, lv - 10, 6, "sac-smoke", z + 9, { v: 160, spread: 0.7, s: [26, 44], t: 1300, g: -120, sc: 2.2 });
     const belch = [{ transform: "scale(1)" }, { transform: "scale(1.05,.95)" }, { transform: "scale(.97,1.04)" }, { transform: "scale(1)" }];
     if (vs) vs.animate(belch, { duration: 520, easing: "ease-out" });
     fimg.animate(belch, { duration: 520, easing: "ease-out" });
-    this._ring(cx, cy + 6, 240, 80, 600, z + 7);
+    this._ring(px, lv + 6, 240, 80, 600, z + 7);
     await this._sleep(380);
     this._rm(front);
     await this._award(team, cx, cy - 30, z);
   },
-
-  // ---------- 8. Bumper del pinball: se lo traga y escupe sangre a presión ----------
-  async _bumper(holder, gnome, b, team) {
-    const z = this._z(b.row, b.col) + 6;
-    const bx = parseFloat(b.el.style.left), by = parseFloat(b.el.style.top);
-    const sw = 205, sh = 205 * (922 / 990), k = sw / 990;
-    const ox = bx - sw / 2, oy = by - 0.92 * sh + 30;
-    const vx = ox + 520 * k, vy = oy + 125 * k; // rejilla de arriba
-    const chx = ox + 172 * k, chy = oy + 50 * k; // chimenea
-    const lite = typeof PerfMode !== "undefined" && PerfMode.enabled;
-    const a = await this._fly(holder, vx, vy + 24, z, { w: SAC_W.fly, noSpin: true, peak: 90 });
-    // golpe de bumper (combo, luces, onda de tambores) y de golpe al agujero
-    let n = 1;
-    if (typeof Bumpers !== "undefined") {
-      Bumpers.beginFlight();
-      n = Bumpers.registerHit();
-      Bumpers.reactAt(b, n);
-      Bumpers.markLit(b, team);
-    }
-    await this._raf(130, (t) => {
-      a.put(null, null, vx, vy + 24 + t * t * 30);
-      a.d.style.clipPath = `inset(0 0 ${Math.round(t * 70)}% 0)`;
-    });
-    a.remove();
-    this._kill(gnome);
-    // glup: la máquina se hincha un instante
-    this._shake(false);
-    const sp = b.spriteEl;
-    if (sp && sp.animate) sp.animate([{ scale: "1 1" }, { scale: ".94 1.08" }, { scale: "1.07 .93" }, { scale: "1 1" }], { duration: 420, easing: "ease-out" });
-    await this._sleep(640);
-    // sangre a presión por el agujero (solo gotitas) + humo negro por el agujero y la chimenea
-    this._snd("explosion");
-    const bg = () => "radial-gradient(circle at 35% 30%,#e8353d,#b0121a 55%,#6a090e)";
-    const dir = -Math.PI / 2;
-    if (sp && sp.animate) sp.animate([{ scale: "1 1" }, { scale: "1.04 .96" }, { scale: ".97 1.04" }, { scale: "1 1" }], { duration: 200, iterations: 7 });
-    const every = lite ? 60 : 30, c1 = lite ? 3 : 5, c2 = lite ? 1 : 2;
-    const spray = setInterval(() => {
-      this._burst(vx, vy - 3, c1, "", z + 8, { dir, spread: 0.8, v: 760, s: [7, 15], t: 1200, g: 1500, bg });
-      this._burst(vx, vy - 3, c2, "", z + 8, { dir, spread: 1.7, v: 480, s: [8, 18], t: 1100, g: 1500, bg });
-    }, every);
-    const smoke = setInterval(() => {
-      this._burst(vx, vy - 2, 1, "sac-smoke", z + 9, { dir, spread: 0.7, v: 140, s: [30, 58], t: 1700, g: -110, sc: 2.4 });
-      this._burst(chx, chy - 2, 1, "sac-smoke", z + 9, { dir, spread: 0.6, v: 110, s: [26, 46], t: 1600, g: -100, sc: 2.2 });
-    }, 90);
-    // charcos de sangre del juego alrededor de la base, de golpe
-    const size = Units.boardSize;
-    [[1, 1], [1, 0], [0, 1]].forEach(([dr, dc], i) => {
-      setTimeout(() => {
-        const r = b.row + dr, c = b.col + dc;
-        if (typeof BloodSplat !== "undefined" && r < size && c < size) BloodSplat.spawnAt(r, c, { lifetime: 3200, scale: 1.1 });
-      }, 1300 + i * 160);
-    });
-    await this._sleep(1300);
-    clearInterval(spray);
-    for (let i = 0; i < 6; i++) {
-      this._burst(vx, vy - 3, 3, "", z + 8, { dir, spread: 1, v: 320 - i * 30, s: [6, 13], t: 900, g: 1500, bg });
-      await this._sleep(110);
-    }
-    setTimeout(() => clearInterval(smoke), 1800);
-    await this._sleep(500);
-    if (typeof Bumpers !== "undefined") Bumpers.endFlight(team);
-    await this._award(team, vx, vy - 30, z);
-  },
-
   // ---------- 2. Charco de lava ----------
   async _puddle(holder, gnome, tgt, team) {
     const c = this._tile(tgt.row, tgt.col);

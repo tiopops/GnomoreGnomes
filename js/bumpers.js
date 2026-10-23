@@ -357,6 +357,11 @@ if (typeof document !== "undefined") {
     const vp = document.getElementById("board-viewport");
     if (!vp || !vp.contains(ev.target) || ev.target.closest(".range-marker--sacrifice")) return;
     const sp = Bumpers._hoverAt(ev);
+    if (sp && typeof Crane !== "undefined" && sp === Crane.imgEl) {
+      const cm = document.querySelector(".crane-throw-marker");
+      if (cm) { ev.stopPropagation(); ev.preventDefault(); cm.click(); }
+      return;
+    }
     const b = sp ? Bumpers.list.find((x) => x.spriteEl === sp) : null;
     const m = b && document.querySelector(`.range-marker--sacrifice[data-row="${b.row}"][data-col="${b.col}"]`);
     if (!m) return;

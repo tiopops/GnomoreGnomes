@@ -12149,9 +12149,91 @@ body.tut-hush .tut-panel * { pointer-events: none; }
 .resource-node-attack-marker,
 .resource-node-attack-marker * { cursor: url("../assets/iconos/cursor_pico.png?v=3") 24 24, pointer !important; }
 .resource-node-attack-marker--pino,
-.resource-node-attack-marker--pino *,
+.resource-node-attack-marker--pino * { cursor: url("../assets/iconos/cursor_hacha.png?v=4") 24 24, pointer !important; }
+/* Cofre: la mano amarilla de coger. */
 .resource-node-attack-marker--cofre,
-.resource-node-attack-marker--cofre * { cursor: url("../assets/iconos/cursor_hacha.png?v=4") 24 24, pointer !important; }
+.resource-node-attack-marker--cofre * { cursor: url("../assets/iconos/cursor_mano.png") 24 24, pointer !important; }
+/* Entrar en la Tienda Goblin o la casa de la adivina: mano que señala (Phosphor hand-pointing, amarilla). */
+.shop-open-marker,
+.shop-open-marker * { cursor: url("../assets/iconos/cursor_senalar.png") 21 6, pointer !important; }
 
 /* La pantalla de carga se funde despacio al destapar el nivel ya cargado */
 .match-loading-overlay:not(.match-loading-overlay--visible) { visibility: hidden; transition: opacity 0.5s ease, visibility 0s linear 0.55s; }
+
+/* ---------- Final de partida v3: compacto, colores planos (sin difuminados) ---------- */
+.obelisk-gameover-panel.obelisk-gameover-panel {
+  --go-logo: 210px;
+  width: min(600px, calc(100vw - 24px)); max-width: none;
+  padding: calc(var(--go-logo) * 0.5 - 1px) 34px 20px;
+  margin-top: calc(var(--go-logo) * 0.4);
+  gap: 8px;
+}
+.obelisk-gameover-panel.obelisk-gameover-panel::after { background: color-mix(in srgb, var(--go-tone) 14%, #0e0c0a); }
+.obelisk-gameover-panel__logos::before { display: none; }
+.obelisk-gameover-panel__logo { filter: drop-shadow(0 6px 0 rgba(0,0,0,.5)); }
+.obelisk-gameover-panel__logo--draw { width: min(300px, 80vw); }
+.obelisk-gameover-kicker { font-size: .8rem; }
+.obelisk-gameover-panel__title small { font-size: .8rem; letter-spacing: .3em; }
+.gameover-team { font-size: clamp(1.6rem, 7vw, 2.6rem); -webkit-text-stroke-width: 2px; text-shadow: 0 4px 0 rgba(0,0,0,.6); }
+.obelisk-gameover-panel__title { font-size: 1.9rem; }
+.obelisk-gameover-panel .obelisk-gameover-panel__title { color: var(--go-tone); }
+.go-turn__t small { white-space: nowrap; }
+.obelisk-gameover-panel__msg { font-size: .8rem; }
+.go-turn { position: relative; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 4px 16px 4px 10px; background: #000; border: 2px solid var(--go-tone); clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }
+.go-turn > .ph { font-size: 1.2rem; color: var(--go-tone); }
+.go-turn__t small { display: block; font-size: .6rem; letter-spacing: .25em; opacity: .7; }
+.go-turn__t b { font-weight: 400; font-size: 1.05rem; letter-spacing: .04em; color: #fff; }
+.go-turn__t em { font-style: normal; color: var(--go-tone); }
+.go-turn__bar { height: 6px; width: 90px; margin-left: 4px; background: #2a2a2a; border: 1px solid #000; transform: skewX(-20deg); overflow: hidden; }
+.go-turn__bar i { display: block; height: 100%; width: 0; background: var(--go-tone); transition: width 1.1s .9s cubic-bezier(.2,.8,.2,1); }
+.obelisk-gameover-stats--bars { padding: 8px 12px; gap: 6px; border-radius: 8px; }
+.go-head { display: grid; grid-template-columns: 1fr 1fr; font-size: .62rem; letter-spacing: .12em; padding-bottom: 4px; border-bottom: 2px solid rgba(255,255,255,.16); }
+.go-head span:first-child { color: #8fd6ff; } .go-head span:last-child { color: #ff8a7a; text-align: right; }
+.go-row { display: grid; grid-template-columns: 50px 1fr 184px 1fr 50px; align-items: center; gap: 6px; opacity: 0; transform: translateX(-10px); animation: go-rowin .45s both; }
+@keyframes go-rowin { to { opacity: 1; transform: none; } }
+.go-v { font-size: .85rem; white-space: nowrap; text-align: center; }
+.go-v--p { color: #8fd6ff; } .go-v--e { color: #ff8a7a; } .go-v--win { color: #fff; } .go-v--p.go-v--win { color: #8fd6ff; }
+.go-lab { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: .68rem; color: rgba(255,255,255,.8); text-align: center; line-height: 1.1; }
+.go-lab .ph { font-size: .95rem; color: var(--go-tone); }
+.go-bar { position: relative; height: 9px; background: rgba(255,255,255,.07); border: 1px solid #000; transform: skewX(-20deg); overflow: hidden; }
+.go-bar i { position: absolute; top: 0; bottom: 0; width: 0; transition: width 1s cubic-bezier(.2,.8,.2,1); }
+.go-bar--l i { right: 0; background: linear-gradient(90deg, #3b8fc0, #8fd6ff); }
+.go-bar--r i { left: 0; background: linear-gradient(90deg, #ff8a7a, #c0463b); }
+.go-bar--dim i { filter: saturate(.4) brightness(.7); }
+.go-fx { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.go-fx i { position: absolute; top: -30px; will-change: transform; }
+.obelisk-gameover-panel { position: relative; z-index: 1; }
+.obelisk-gameover-panel .pxp { margin: 0; }
+@media (max-width: 560px) {
+  .obelisk-gameover-panel.obelisk-gameover-panel { --go-logo: 170px; padding: calc(var(--go-logo) * 0.5) 14px 18px; }
+  .go-row { grid-template-columns: 44px 1fr 1fr 44px; row-gap: 2px; }
+  .go-lab { grid-column: 2 / 4; grid-row: 1; }
+  .go-row .go-bar { grid-row: 2; }
+  .go-row .go-v { grid-row: 1 / 3; }
+}
+
+/* Estampar un gnomo contra un tótem: bandera roja (Phosphor flag-banner). */
+.village-attack-marker,
+.village-attack-marker *,
+.village--targeted,
+.village--targeted * { cursor: url("../assets/iconos/cursor_bandera.png?v=1") 24 24, pointer !important; }
+
+/* Sacrificio del volcán (parodia de Terminator): charquito y máscara de la mano. */
+.sac-lavalip { position: absolute; border-radius: 50%; background: #ff9a22; border: 2px solid #c9460f; box-sizing: border-box; pointer-events: none; }
+.sac-thumb-mask { position: absolute; overflow: hidden; pointer-events: none; }
+
+/* ---------- Pack de rendimiento móvil ---------- */
+/* Niebla con la animación desactivada (siempre en móvil): se disipa con un simple fundido,
+   sin crecer ni desplazarse. */
+body.gg-fog-anim-off .tile__fog--revealed {
+  animation-name: fog-fade;
+  animation-duration: 0.7s;
+  animation-timing-function: ease-out;
+  will-change: opacity;
+}
+@keyframes fog-fade { from { opacity: 0.96; } to { opacity: 0; } }
+
+/* Cámara muy alejada: sin sombras con desenfoque (se ven diminutas y son lo más caro de componer). */
+body.gg-lod-far .unit:not(.unit--exhausted):not(.unit--selected):not(.unit--doomed) .unit__flip,
+body.gg-lod-far .shop__sprite:not(.oracle__sprite),
+body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }

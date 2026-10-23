@@ -272,8 +272,13 @@ const BoardView = {
       this._zoomChanges++;
       clearTimeout(this._flushTimer);
       this._flushTimer = setTimeout(() => {
-        if (this._zoomChanges < 3) { this._zoomChanges = 0; return; }
+        // Re-rasteriza la capa de la cámara si el zoom ha cambiado de verdad desde la última vez
+        // (aunque haya sido un solo gesto): evita losetas a medias al alejar en móvil.
+        const ratio = this._flushScale ? this.scale / this._flushScale : 1;
+        const big = ratio > 1.2 || ratio < 0.83;
+        if (this._zoomChanges < 3 && !big) { this._zoomChanges = 0; return; }
         this._zoomChanges = 0;
+        this._flushScale = this.scale;
         const el = this.cameraEl;
         el.style.willChange = "auto";
         void el.offsetWidth;
@@ -283,8 +288,20 @@ const BoardView = {
     this._lastScaleSeen = this.scale;
   },
 
+  // Nivel de detalle lejano (móvil/APK alejado): con la cámara muy alejada las sombras con
+  // desenfoque de unidades y edificios no se aprecian y cuestan mucho de componer.
+  _lodFar: false,
+  _updateLod() {
+    const far = this._lodFar ? this.scale < 0.68 : this.scale < 0.6;
+    if (far !== this._lodFar) {
+      this._lodFar = far;
+      document.body.classList.toggle("gg-lod-far", far);
+    }
+  },
+
   _apply() {
     this._trackZoomForFlush();
+    this._updateLod();
     this.cameraEl.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.scale})`;
     // Pedido explícito: "¿se podrían desactivar las losetas de niebla que
     // no aparecen en pantalla?" — recalcula qué losetas de niebla caen
