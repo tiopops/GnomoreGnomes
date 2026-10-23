@@ -7,9 +7,12 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001535";
+const GG_VERSION = "v.001536";
 
 const GG_CHANGELOG = [
+  { v: "v.001536", date: "23/10/2026", title: "Niebla inicial", items: [
+    "La zona alrededor de tu Obelisco empieza ya despejada: la niebla inicial no se disipa, nunca llega a verse"
+  ] },
   { v: "v.001535", date: "23/10/2026", title: "Tutorial", items: [
     "Primeros pasos: nueva misión de sacrificio (lanzar el gnomo al agua) con +Gloria instantánea, con su charco de práctica"
   ] },

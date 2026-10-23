@@ -178,13 +178,13 @@ async function startMatch({ modeId, raceId, levelId, opponents, mp }) {
     const { playerSpawnSpots } = spawnTestUnits(size, raceId, opponents, mp);
     // Entra al tablero DEBAJO de la pantalla de carga (sin telón) y espera a que todo
     // esté cargado y decodificado antes de destaparlo.
+    _playInitialFogReveal(playerSpawnSpots); // antes de mostrar el tablero: nace ya despejado
     _swapScreen("screen-board");
     screenHistory.length = 0;
     screenHistory.push("main-menu", "screen-board");
     syncBoardCamera(playerSpawnSpots[0]);
     if (typeof Preload !== "undefined") await Preload.settle();
     if (typeof Preload !== "undefined") Preload.finish();
-    _playInitialFogReveal(playerSpawnSpots);
 
     const resumeBtn = document.getElementById("btn-resume-game");
     if (resumeBtn && !mp) resumeBtn.disabled = false;
@@ -209,13 +209,13 @@ async function resumeMatch() {
     renderMap(map, document.getElementById("board-tiles"));
     if (typeof TerrainMap !== "undefined") TerrainMap.init(map);
     const { playerSpawnSpots } = spawnTestUnits(saved.size, saved.raceId, saved.opponents);
+    _playInitialFogReveal(playerSpawnSpots); // antes de mostrar el tablero: nace ya despejado
     _swapScreen("screen-board");
     screenHistory.length = 0;
     screenHistory.push("main-menu", "screen-board");
     syncBoardCamera(playerSpawnSpots[0]);
     if (typeof Preload !== "undefined") await Preload.settle();
     if (typeof Preload !== "undefined") Preload.finish();
-    _playInitialFogReveal(playerSpawnSpots);
   } catch (err) {
     _recoverFromFailedMatchStart();
     _showStartMatchError(err);
@@ -555,11 +555,8 @@ const FOG_REVEAL_STAGGER_MS = 260;
 
 function _playInitialFogReveal(playerSpawnSpots) {
   if (typeof Fog === "undefined" || !playerSpawnSpots) return;
-  playerSpawnSpots.forEach((spot, i) => {
-    setTimeout(() => {
-      Fog.revealInitial(spot.row, spot.col);
-    }, FOG_REVEAL_START_DELAY_MS + i * FOG_REVEAL_STAGGER_MS);
-  });
+  // Sin esperas ni animación: la zona inicial ya empieza despejada.
+  playerSpawnSpots.forEach((spot) => Fog.revealInitial(spot.row, spot.col));
 }
 
 // Ajusta la cámara del tablero (zoom/desplazamiento) al tamaño real del

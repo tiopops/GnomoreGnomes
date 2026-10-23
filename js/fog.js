@@ -520,7 +520,7 @@ const Fog = {
 
   // Revelado FIJO al empezar la partida — ver FOG_INITIAL_RADIUS arriba.
   revealInitial(row, col) {
-    this.revealAround(row, col, FOG_INITIAL_RADIUS);
+    this.revealAround(row, col, FOG_INITIAL_RADIUS, true); // la partida ya empieza despejada: sin disipado
   },
 
   // Revelado tras moverse — SÍ según la PERCEPCION de quien se ha movido
