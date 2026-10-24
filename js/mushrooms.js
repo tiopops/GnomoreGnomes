@@ -129,6 +129,7 @@ const Mushrooms = {
     img.alt = "";
     img.draggable = false;
     img.style.width = `${MUSHROOM_GROUND_SIZE}px`;
+    img.style.animationDelay = `-${(Math.random() * 2.6).toFixed(2)}s`; // idle desincronizado
     if (typeof SpriteQuality !== "undefined") SpriteQuality.register(img, MUSHROOM_SPRITE);
     else img.src = MUSHROOM_SPRITE;
     el.appendChild(img);

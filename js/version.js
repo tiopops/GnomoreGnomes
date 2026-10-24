@@ -12,10 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001569";
+const GG_VERSION = "v.001571";
 
 const GG_CHANGELOG = [
-  { v: "v.001569", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001571", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Resolución adaptativa: los bumpers (y cualquier sprite con brillo/saturación propios) ya no parpadean al cambiar de calidad con zoom rápido — el fundido conserva su filtro",
+    "Resolución adaptativa: la subida a calidad normal espera a que termine el zoom, eliminando el tirón a mitad de un acercamiento rápido",
+    "Setas del escenario: ahora usan la misma animación idle que el resto de elementos (respiran), cada una desfasada para que no latan a la vez",
     "Niebla de calidad baja: los objetos que quedan sobre la niebla (junto a casillas sin revelar o disipándose) se ven al 66 % de opacidad, con un fundido suave al aparecer y desaparecer",
     "Niebla de alta calidad: ahora TODOS los objetos del mapa junto al borde se hunden en la niebla, en todos los niveles (huevo, objetos y trampas del suelo, bumpers, tótems de visión, manchas de sangre, unidades y gnomos, además de los que ya lo hacían). La niebla de un objeto ya no tapa a los objetos que tiene delante, y se quita el congelado de animaciones de los objetos del borde",
     "Niebla: con «Niebla de alta calidad» desactivada, la niebla se disipa con un simple fundido (como antes), sin crecer ni subir. Con ella activada, las setas sueltas y los tambores junto al borde también quedan hundidos en la niebla (antes la seta se veía por encima)",

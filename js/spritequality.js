@@ -199,7 +199,20 @@ const SpriteQuality = {
     if (this._armed === target) return;
     clearTimeout(this._debounce);
     this._armed = target;
-    this._debounce = setTimeout(() => { this._armed = null; this._setTierBatched(target); }, target < this.tier ? 90 : 350);
+    // Subir a calidad normal (target 0) es lo caro: repinta el suelo y recarga/decodifica
+    // texturas grandes. Hacerlo A MITAD de un zoom rápido provocaba un tirón justo en medio del
+    // gesto, así que ese cambio espera a que el zoom se asiente (la versión media sigue siendo
+    // nítida durante esos instantes). Bajar de calidad es barato y se mantiene inmediato.
+    const fire = () => {
+      this._debounce = null;
+      if (target === 0 && typeof BoardView !== "undefined" && (BoardView._zoomAnchor || Math.abs((BoardView.targetScale || 0) - (BoardView.scale || 0)) > 0.004)) {
+        this._debounce = setTimeout(fire, 120); // el zoom sigue en marcha: se vuelve a mirar
+        return;
+      }
+      this._armed = null;
+      this._setTierBatched(target);
+    };
+    this._debounce = setTimeout(fire, target < this.tier ? 90 : 350);
   },
 
   _setTierBatched(tier) {
@@ -316,7 +329,16 @@ const SpriteQuality = {
     // durante el fundido se apilaban dos sombras (la del sprite nuevo y la del viejo) y aparecía
     // un halo oscuro alrededor que desaparecía de golpe al terminar. Así la sombra es siempre una
     // sola, la del sprite real, y no parpadea.
-    ghost.style.filter = "none";
+    // PERO sí conserva el resto del filtro del sprite real (brillo/saturación, p.ej. los
+    // bumpers apagados van a brightness(.8) saturate(.5)): con "none" el fantasma nacía a todo
+    // color y brillo y se fundía hacia el sprite apagado = un destello al cambiar de calidad.
+    let gf = "none";
+    try {
+      const f = getComputedStyle(imgEl).filter;
+      if (f && f !== "none") gf = f.replace(/drop-shadow\((?:[^()]|\([^()]*\))*\)/g, "").replace(/\s+/g, " ").trim() || "none";
+    } catch (e) {}
+    ghost.style.filter = gf;
+    ghost.style.transition = "none";
     ghost.decoding = "sync";
     // Geometría EXACTA (sin redondeos): offsetLeft/Top/Width/Height son enteros y
     // el sprite real suele tener decimales (zoom, rem, %): el fantasma quedaba
