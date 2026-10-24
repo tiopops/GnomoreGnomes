@@ -467,6 +467,34 @@ const GamepadCtl = {
       }
       return;
     }
+    // Ventanas de elegir-y-comprar (Reclutar, tiendas): LB/RB cambian la unidad/objeto
+    // elegido y A compra/recluta directamente (si no, A solo seleccionaba y había que
+    // navegar hasta el botón).
+    if (mode.root && mode.root.querySelector && (act === "prevUnit" || act === "nextUnit" || act === "confirm")) {
+      const root = mode.root;
+      const buy = root.querySelector(".shop-buy-btn");
+      const slots = [...root.querySelectorAll(".backpack-slot")].filter((e) => !e.disabled && this._isVisible(e));
+      if (buy && slots.length > 1 && this._tabsIn(root).length < 2) {
+        if (act !== "confirm") {
+          let i = slots.findIndex((e) => /selected/.test(e.className));
+          if (i < 0) i = 0;
+          const n = (i + (act === "nextUnit" ? 1 : -1) + slots.length) % slots.length;
+          this._clickNow(slots[n]);
+          const again = [...root.querySelectorAll(".backpack-slot")].filter((e) => !e.disabled && this._isVisible(e));
+          this._focusEl = again[n] || buy;
+          if (typeof SFX !== "undefined" && SFX.hover) { try { SFX.hover(); } catch (e) {} }
+          return;
+        }
+        const f = this._focusEl;
+        const onSlot = !f || (f.classList && f.classList.contains("backpack-slot")) || f === buy || /backpack-close/.test((f && f.className) || "");
+        const onCard = f && f.classList && f.classList.contains("backpack-slot") && !/selected/.test(f.className);
+        if (onSlot && !onCard) {
+          if (buy.disabled) { if (typeof SFX !== "undefined" && SFX.error) { try { SFX.error(); } catch (e) {} } return; }
+          this._clickNow(buy);
+          return;
+        }
+      }
+    }
     if (act === "confirm") {
       const el = this._ensureFocus(mode);
       if (!el) return;
@@ -645,16 +673,27 @@ const GamepadCtl = {
       let main;
       let perp;
       let overlap;
-      if (dx) { main = vx * dx; perp = Math.abs(vy); overlap = b.top < a.bottom && b.bottom > a.top; }
-      else { main = vy * dy; perp = Math.abs(vx); overlap = b.left < a.right && b.right > a.left; }
+      let share; // cuánto de la fila/columna comparten (0..1 del elemento más pequeño)
+      if (dx) { main = vx * dx; perp = Math.abs(vy); overlap = b.top < a.bottom && b.bottom > a.top; share = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top); share /= Math.max(1, Math.min(a.height, b.height)); }
+      else { main = vy * dy; perp = Math.abs(vx); overlap = b.left < a.right && b.right > a.left; share = Math.min(a.right, b.right) - Math.max(a.left, b.left); share /= Math.max(1, Math.min(a.width, b.width)); }
       if (main < 2) return;
       if (perp > main * 3 && !overlap) return;
-      const score = main + perp * (overlap ? 0.4 : 2.2);
+      // Misma fila/columna de verdad (>=50%): siempre gana a un botón ancho de otra fila
+      // cuyo centro quede más cerca (antes "Buscar mando" -> derecha saltaba a "Ayudas").
+      const score = main + perp * (overlap ? 0.4 : 2.2) + (share >= 0.5 ? 0 : 100000);
       if (score < bestScore) { bestScore = score; best = el; }
     });
     if (best) {
       this._focusEl = best;
-      best.scrollIntoView({ block: "nearest", inline: "nearest" });
+      // En Reclutar/tiendas, la cruceta sobre una carta la elige (A después compra).
+      if (best.classList && best.classList.contains("backpack-slot") && !best.disabled && !/selected/.test(best.className) && mode.root.querySelector(".shop-buy-btn")) {
+        const sibs = [...mode.root.querySelectorAll(".backpack-slot")];
+        const ix = sibs.indexOf(best);
+        this._clickNow(best);
+        const again = [...mode.root.querySelectorAll(".backpack-slot")];
+        if (again[ix]) this._focusEl = again[ix];
+      }
+      this._focusEl.scrollIntoView({ block: "nearest", inline: "nearest" });
       if (typeof SFX !== "undefined" && SFX.hover) { try { SFX.hover(); } catch (e) {} }
     } else {
       const sc = this._scrollParent(cur, mode.root);

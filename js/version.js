@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001544";
+const GG_VERSION = "v.001545";
 
 const GG_CHANGELOG = [
-  { v: "v.001544", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001545", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Mando: en Reclutar y en las tiendas, LB/RB cambian la unidad u objeto elegido, la cruceta izquierda/derecha también lo elige y A recluta/compra directamente; en Ajustes, derecha desde \"Buscar mando\" ya llega a \"Test\" (antes saltaba a \"Ayudas del mando\")",
     "APK: arreglada la actualización desde dentro del juego (\"No se pudo actualizar\"): el plugin exigía el checksum SHA-256 del paquete y no se le enviaba; ahora se calcula al generar la release y se pasa al descargar",
     "Resolución adaptativa: al acercar la cámara los sprites suben a calidad completa casi al instante y con un fundido más corto, eliminando el parpadeo con sombra oscura difusa (\"bum\") alrededor de arbustos, árboles y obeliscos",
     "Historial de versiones: lo más reciente siempre arriba (entradas y cambios de cada día, del último al primero)",
