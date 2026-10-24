@@ -467,31 +467,31 @@ const GamepadCtl = {
       }
       return;
     }
-    // Ventanas de elegir-y-comprar (Reclutar, tiendas): LB/RB cambian la unidad/objeto
-    // elegido y A compra/recluta directamente (si no, A solo seleccionaba y había que
-    // navegar hasta el botón).
+    // Ventanas de elegir-y-comprar (Reclutar, tiendas, Habilidades, Armería): resaltar un elemento
+    // ya lo selecciona (se ve su descripción), LB/RB los recorren (si no hay pestañas) y A sobre el
+    // elegido compra/recluta/mejora directamente.
     if (mode.root && mode.root.querySelector && (act === "prevUnit" || act === "nextUnit" || act === "confirm")) {
       const root = mode.root;
-      const buy = root.querySelector(".shop-buy-btn");
-      const slots = [...root.querySelectorAll(".backpack-slot")].filter((e) => !e.disabled && this._isVisible(e));
-      if (buy && slots.length > 1 && this._tabsIn(root).length < 2) {
+      const p = this._picker(root);
+      if (p) {
         if (act !== "confirm") {
-          let i = slots.findIndex((e) => /selected/.test(e.className));
-          if (i < 0) i = 0;
-          const n = (i + (act === "nextUnit" ? 1 : -1) + slots.length) % slots.length;
-          this._clickNow(slots[n]);
-          const again = [...root.querySelectorAll(".backpack-slot")].filter((e) => !e.disabled && this._isVisible(e));
-          this._focusEl = again[n] || buy;
-          if (typeof SFX !== "undefined" && SFX.hover) { try { SFX.hover(); } catch (e) {} }
-          return;
-        }
-        const f = this._focusEl;
-        const onSlot = !f || (f.classList && f.classList.contains("backpack-slot")) || f === buy || /backpack-close/.test((f && f.className) || "");
-        const onCard = f && f.classList && f.classList.contains("backpack-slot") && !/selected/.test(f.className);
-        if (onSlot && !onCard) {
-          if (buy.disabled) { if (typeof SFX !== "undefined" && SFX.error) { try { SFX.error(); } catch (e) {} } return; }
-          this._clickNow(buy);
-          return;
+          if (this._tabsIn(root).length < 2 && p.items.length > 1) {
+            let i = p.items.findIndex((e) => /selected/.test(e.className));
+            if (i < 0) i = 0;
+            const n = (i + (act === "nextUnit" ? 1 : -1) + p.items.length) % p.items.length;
+            this._pickItem(root, p.items, n);
+            return;
+          }
+        } else {
+          const f = this._focusEl;
+          const ix = f ? p.items.indexOf(f) : -1;
+          if (ix >= 0 || !f || f === p.buy) {
+            const it = ix >= 0 ? p.items[ix] : p.items.find((e) => /selected/.test(e.className));
+            if (it && !/selected/.test(it.className)) { this._pickItem(root, p.items, p.items.indexOf(it)); return; }
+            if (p.buy.disabled) { if (typeof SFX !== "undefined" && SFX.error) { try { SFX.error(); } catch (e) {} } return; }
+            this._clickNow(p.buy);
+            return;
+          }
         }
       }
     }
@@ -512,6 +512,22 @@ const GamepadCtl = {
       if (mode.layer && mode.layer.classList.contains("settings-overlay--visible")) this._uiBack(mode);
       else if (mode.menu && typeof SettingsMenu !== "undefined") SettingsMenu.open();
     }
+  },
+  // Ventana "elegir y comprar": elementos elegibles + botón principal (RECLUTAR/COMPRAR/MEJORAR...).
+  _PICK_SEL: ".backpack-slot, .skills-node, .armory-node",
+  _picker(root) {
+    const buy = root.querySelector(".shop-buy-btn");
+    if (!buy || !this._isVisible(buy)) return null;
+    const items = [...root.querySelectorAll(this._PICK_SEL)].filter((e) => !e.disabled && this._isVisible(e) && !e.classList.contains("backpack-slot--empty"));
+    return items.length ? { buy, items } : null;
+  },
+  _pickItem(root, items, n) {
+    const all = [...root.querySelectorAll(this._PICK_SEL)];
+    const ix = all.indexOf(items[n]);
+    this._clickNow(items[n]);
+    const again = [...root.querySelectorAll(this._PICK_SEL)];
+    this._focusEl = again[ix] || items[n];
+    if (typeof SFX !== "undefined" && SFX.hover) { try { SFX.hover(); } catch (e) {} }
   },
   _uiBack(mode) {
     const root = mode.root;
@@ -685,14 +701,9 @@ const GamepadCtl = {
     });
     if (best) {
       this._focusEl = best;
-      // En Reclutar/tiendas, la cruceta sobre una carta la elige (A después compra).
-      if (best.classList && best.classList.contains("backpack-slot") && !best.disabled && !/selected/.test(best.className) && mode.root.querySelector(".shop-buy-btn")) {
-        const sibs = [...mode.root.querySelectorAll(".backpack-slot")];
-        const ix = sibs.indexOf(best);
-        this._clickNow(best);
-        const again = [...mode.root.querySelectorAll(".backpack-slot")];
-        if (again[ix]) this._focusEl = again[ix];
-      }
+      // En ventanas de elegir y comprar, la cruceta sobre un elemento lo selecciona (se ve su descripción).
+      const pk = this._picker(mode.root);
+      if (pk && pk.items.includes(best) && !/selected/.test(best.className)) this._pickItem(mode.root, pk.items, pk.items.indexOf(best));
       this._focusEl.scrollIntoView({ block: "nearest", inline: "nearest" });
       if (typeof SFX !== "undefined" && SFX.hover) { try { SFX.hover(); } catch (e) {} }
     } else {
@@ -741,7 +752,7 @@ const GamepadCtl = {
     const c = getTileCenter(this._tile.row, this._tile.col, this._size());
     this._cursorEl.style.left = c.x + "px";
     this._cursorEl.style.top = c.y + "px";
-    this._cursorEl.style.zIndex = String((this._tile.row + this._tile.col) * 10 + 4000);
+    this._cursorEl.style.zIndex = "60000"; // siempre POR ENCIMA de los sprites (antes un árbol de delante lo tapaba)
   },
   _boardMove(dx, dy) {
     if (!this._ensureCursor()) return;
@@ -895,7 +906,15 @@ const GamepadCtl = {
     if (act === "center") { if (this._ensureCursor()) this._follow(true); return; }
     if (act === "toObelisk") {
       const ob = typeof Obelisks !== "undefined" ? Obelisks.byTeam("player") : null;
-      if (ob && this._ensureCursor()) { this._tile = { row: ob.row, col: ob.col }; this._placeCursor(); this._follow(true); }
+      if (ob && this._ensureCursor()) {
+        this._cancelTargets();
+        this._tile = { row: ob.row, col: ob.col };
+        this._placeCursor();
+        this._follow(true);
+        // Acceso directo: además de ir, selecciona la base para que salga su menú (Reclutar · Habilidades · Armería).
+        if (typeof Units !== "undefined" && Units.deselect) Units.deselect();
+        try { this._activateTile(); this._finishClick(); } catch (e) {}
+      }
       return;
     }
     if (act === "glory") { if (typeof Glory !== "undefined" && Glory.openPopup) Glory.openPopup(); return; }
@@ -1249,19 +1268,23 @@ const GamepadCtl = {
     if (mode.type === "ui" && mode.root && mode.root.classList.contains("gp-kb")) {
       items = [["confirm", "Escribir"], ["back", "Cerrar"], ["actions", "Espacio"], ["endTurn", "Borrar"], ["settings", "Aceptar"], ["prevUnit", "◂ Cursor"], ["nextUnit", "Cursor ▸"]];
     } else if (mode.type === "ui") {
-      items = [["confirm", "Aceptar"], ["back", "Atrás"]];
+      const pk = mode.root && mode.root.querySelector ? this._picker(mode.root) : null;
+      let lab = "Aceptar";
+      if (pk) { const t = (pk.buy.textContent || "").trim().toLowerCase(); if (t && t.length < 18) lab = t.charAt(0).toUpperCase() + t.slice(1); }
+      items = [["confirm", lab], ["back", "Atrás"]];
       if (mode.root && this._tabsIn(mode.root).length > 1) items.push(["prevUnit", "◂ Pestaña"], ["nextUnit", "Pestaña ▸"]);
+      else if (pk && pk.items.length > 1) items.push(["prevUnit", "◂ Elegir"], ["nextUnit", "Elegir ▸"]);
       items.push(["__dpad", "Mover"]);
     } else {
       const sel = typeof Units !== "undefined" && Units.selectedId;
       const obOpen = this._obMenu().length > 0;
       items = obOpen
-        ? [["confirm", "Elegir"], ["back", "Cancelar"], ["prevUnit", "◂ Opción"], ["nextUnit", "Opción ▸"], ["endTurn", "Fin de turno"]]
+        ? [["confirm", "Elegir"], ["back", "Cancelar"], ["prevUnit", "◂ Opción"], ["nextUnit", "Opción ▸"], ["endTurn", "Fin de turno"], ["toObelisk", "Mi base"]]
         : sel
         ? (this._targetMarkers().length
-          ? [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Objetivo"], ["nextUnit", "Objetivo ▸"]]
-          : [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"]])
-        : [["confirm", "Seleccionar"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["endTurn", "Fin de turno"], ["settings", "Ajustes"]];
+          ? [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Objetivo"], ["nextUnit", "Objetivo ▸"], ["toObelisk", "Mi base"]]
+          : [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["toObelisk", "Mi base"]])
+        : [["confirm", "Seleccionar"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["toObelisk", "Mi base"], ["endTurn", "Fin de turno"], ["settings", "Ajustes"]];
     }
     const key = items.map((x) => x[0] + this.map[x[0]] + x[1]).join("|") + I18N.currentLang + mode.type;
     if (force || key !== this._lastBarKey) {

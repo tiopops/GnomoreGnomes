@@ -12,10 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001545";
+const GG_VERSION = "v.001547";
 
 const GG_CHANGELOG = [
-  { v: "v.001545", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001547", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Resolución adaptativa: el fundido entre calidades ya no duplica la sombra difusa del sprite (el halo oscuro del \"bum\" en arbustos, árboles y obelisco se reduce a menos de la mitad)",
+    "Mando: atajo a la base principal (R3 por defecto, aparece en la leyenda como \"Mi base\"): lleva el cursor y selecciona el Obelisco para abrir su menú. En Habilidades, Armería, Reclutar y tiendas, resaltar con la cruceta ya selecciona (se ve la descripción) y A compra/mejora/recluta; LB/RB recorren los elementos y la leyenda indica la acción. El cursor del tablero ya no queda tapado por los sprites",
     "Mando: en Reclutar y en las tiendas, LB/RB cambian la unidad u objeto elegido, la cruceta izquierda/derecha también lo elige y A recluta/compra directamente; en Ajustes, derecha desde \"Buscar mando\" ya llega a \"Test\" (antes saltaba a \"Ayudas del mando\")",
     "APK: arreglada la actualización desde dentro del juego (\"No se pudo actualizar\"): el plugin exigía el checksum SHA-256 del paquete y no se le enviaba; ahora se calcula al generar la release y se pasa al descargar",
     "Resolución adaptativa: al acercar la cámara los sprites suben a calidad completa casi al instante y con un fundido más corto, eliminando el parpadeo con sombra oscura difusa (\"bum\") alrededor de arbustos, árboles y obeliscos",

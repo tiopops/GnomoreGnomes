@@ -335,6 +335,11 @@ const SpriteQuality = {
     ghost.removeAttribute("data-src-orig");
     ghost.setAttribute("aria-hidden", "true");
     ghost.classList.add("sq-ghost");
+    // Solución al "bum": el fantasma NO lleva la sombra difusa (drop-shadow) del sprite. Con ella,
+    // durante el fundido se apilaban dos sombras (la del sprite nuevo y la del viejo) y aparecía
+    // un halo oscuro alrededor que desaparecía de golpe al terminar. Así la sombra es siempre una
+    // sola, la del sprite real, y no parpadea.
+    ghost.style.filter = "none";
     ghost.decoding = "sync";
     // Geometría EXACTA (sin redondeos): offsetLeft/Top/Width/Height son enteros y
     // el sprite real suele tener decimales (zoom, rem, %): el fantasma quedaba
