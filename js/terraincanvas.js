@@ -458,6 +458,16 @@ const TerrainCanvas = {
   // Calidad dinámica / modo rendimiento / niebla levantada: repintar.
   refresh() { this.requestDraw(); },
 
+  // Repintado COMPLETO con el lienzo reasignado desde cero. En algunos móviles, tras alejar/acercar la
+  // cámara varias veces, la GPU deja rectángulos del lienzo con contenido viejo o sin pintar (suelo que
+  // desaparece, trozos de niebla de otro fotograma). Reasignar el tamaño tira la textura de la GPU y se
+  // vuelve a pintar en el MISMO fotograma, así que no se ve ningún parpadeo.
+  hardRefresh() {
+    if (!this.canvas || !this.tiles) return;
+    this._bw = 0; // fuerza canvas.width/height de nuevo en render()
+    this.render();
+  },
+
   clear() {
     this.tiles = null;
     this._active.clear();

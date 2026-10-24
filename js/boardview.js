@@ -270,8 +270,24 @@ const BoardView = {
   _trackZoomForFlush() {
     if (this._lastScaleSeen !== null && Math.abs(this.scale - this._lastScaleSeen) > 0.002) {
       this._zoomChanges++;
+      // Mientras la cámara hace zoom, las nubes de niebla animadas se pausan (mismo punto de la
+      // animación, sin reiniciarse): capas animadas + escala cambiando a la vez eran una fuente
+      // de parpadeos al alejar/acercar.
+      if (!this._zooming) { this._zooming = true; document.body.classList.add("gg-cam-zooming"); }
+      clearTimeout(this._zoomEndTimer);
+      this._zoomEndTimer = setTimeout(() => { this._zooming = false; document.body.classList.remove("gg-cam-zooming"); }, 260);
       clearTimeout(this._flushTimer);
-      this._flushTimer = setTimeout(() => {
+      const doFlush = () => {
+        // Solo con la cámara YA quieta (antes se soltaba la capa a mitad del suavizado del zoom,
+        // y re-rasterizar la capa entera de la cámara con todo en movimiento se veía como un
+        // parpadeo general justo al terminar de alejar/acercar).
+        if (Math.abs(this.targetScale - this.scale) > 0.002 || Math.abs(this.targetPanX - this.panX) > 0.5 || Math.abs(this.targetPanY - this.panY) > 0.5) {
+          this._flushTimer = setTimeout(doFlush, 160);
+          return;
+        }
+        // Cámara quieta tras un zoom: se renueva también el lienzo del suelo/niebla profunda (rectángulos
+        // viejos o sin pintar al alejar en móvil, ver TerrainCanvas.hardRefresh).
+        try { if (typeof TerrainCanvas !== "undefined" && TerrainCanvas.hardRefresh) TerrainCanvas.hardRefresh(); } catch (e) {}
         // Re-rasteriza la capa de la cámara si el zoom ha cambiado de verdad desde la última vez
         // (aunque haya sido un solo gesto): evita losetas a medias al alejar en móvil.
         const ratio = this._flushScale ? this.scale / this._flushScale : 1;
@@ -283,7 +299,8 @@ const BoardView = {
         el.style.willChange = "auto";
         void el.offsetWidth;
         requestAnimationFrame(() => { el.style.willChange = ""; });
-      }, 100);
+      };
+      this._flushTimer = setTimeout(doFlush, 450);
     }
     this._lastScaleSeen = this.scale;
   },
@@ -342,7 +359,7 @@ const BoardView = {
     // Comprobación barata (dos comparaciones de número) en cada frame;
     // solo hace trabajo de verdad al cruzar alguno de los dos umbrales.
     if (typeof SpriteQuality !== "undefined" && SpriteQuality.updateForScale) {
-      SpriteQuality.updateForScale(this.scale);
+      SpriteQuality.updateForScale(typeof this.targetScale === "number" && this.targetScale > 0 ? this.targetScale : this.scale); // por el DESTINO del zoom, no por el valor a mitad de suavizado
     }
     // El menú del Obelisco (RECLUTAR/HABILIDADES/ARMERÍA) YA NO se
     // reposiciona aquí a mano — ver la nota larga en obelisks.js, sección

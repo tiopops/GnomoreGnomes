@@ -1319,8 +1319,14 @@ body.gg-fog-anim-off .tile__fog--idle:not(.tile__fog--revealed) {
 .tile__fog--deep { display: none !important; }
 
 .tile__fog--culled {
-  display: none;
+  /* visibility en vez de display:none: al volver a entrar en pantalla la nube conserva su fase
+     de animación (display:none la reiniciaba y la nube "saltaba" al reaparecer). */
+  visibility: hidden;
+  animation-play-state: paused;
 }
+
+/* Mientras la cámara hace zoom, la niebla animada se queda quieta (se reanuda en el mismo punto). */
+body.gg-cam-zooming .tile__fog--idle { animation-play-state: paused; }
 
 /* Pedido explícito: "si alejo mucho la camara aparecen errores graficos...
    tengo idea de hacer los escenarios mucho mas grandes y detallados, asi
@@ -11990,9 +11996,9 @@ body.tut-on .settings-gear-btn--update { display: none; }
 /* Pantalla de actualización al arrancar la APK (js/appupdate.js) */
 .au-overlay { position: fixed; inset: 0; z-index: 200000; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 40%, #2a2238 0%, #14101c 75%); transition: opacity .35s; }
 .au-overlay--out { opacity: 0; pointer-events: none; }
-.au-box { display: flex; flex-direction: column; align-items: center; gap: 14px; width: min(320px, 78vw); }
+.au-box { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; width: min(360px, 88vw); }
 .au-spin { font-size: 2.6rem; color: #ffcf3d; filter: drop-shadow(2px 2px 0 #000); }
-.au-title { font-weight: 900; font-size: 1.25rem; letter-spacing: .1em; color: #fff; text-shadow: 3px 3px 0 #000; }
+.au-title { width: 100%; text-align: center; text-wrap: balance; padding-left: .1em; font-weight: 900; font-size: 1.25rem; letter-spacing: .1em; color: #fff; text-shadow: 3px 3px 0 #000; }
 .au-bar { position: relative; isolation: isolate; width: 100%; height: 20px; filter: drop-shadow(3px 3px 0 rgba(0,0,0,.6)); }
 .au-bar::before, .au-bar::after { content: ""; position: absolute; z-index: -1; clip-path: polygon(1.2% 0, 100% 8%, 98.8% 100%, 0 92%); }
 .au-bar::before { inset: 0; background: #000; }
@@ -12254,3 +12260,12 @@ body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }
 .au-btn--grey::after { background: #2b2733; }
 .au-btn:active { transform: translate(2px, 2px); filter: drop-shadow(2px 2px 0 rgba(0,0,0,.65)); }
 .au-btn span { position: relative; text-shadow: none; }
+
+/* Icono de acción (pico/hacha/mano/bandera...) del cursor del mando: sobre todos los sprites, sin difuminados. */
+.gp-actionicon{position:fixed;z-index:99985;width:44px;height:44px;margin:-22px 0 0 -22px;pointer-events:none;display:none;image-rendering:auto;filter:drop-shadow(2px 2px 0 #000);animation:gp-actionicon-bob .9s ease-in-out infinite}
+@keyframes gp-actionicon-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+/* Pantalla de actualización: todo el texto centrado (el espaciado de letras añade un hueco a la derecha: se compensa). */
+.au-text, .au-ver, .au-pct { width: 100%; text-align: center; }
+.au-btn span { display: block; text-align: center; padding-left: .1em; }
+.au-btn { display: block; text-align: center; }

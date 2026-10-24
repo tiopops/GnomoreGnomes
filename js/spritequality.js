@@ -217,12 +217,15 @@ const SpriteQuality = {
     // el parpadeo de sprites al acercar/alejar): se espera a que el zoom
     // lleve ~350ms quieto y entonces se reparte el cambio en lotes por frame.
     const target = this._aboveMid ? 0 : 1;
+    if (target === this.tier) { clearTimeout(this._debounce); this._armed = null; return; }
+    // Ya hay un cambio programado hacia ese nivel: NO se reinicia la cuenta en cada fotograma de
+    // cámara (el suavizado del zoom dura ~2,5 s y, al reiniciarse el temporizador en cada uno, el
+    // cambio no llegaba hasta que la cámara terminaba de asentarse: los sprites seguían en alta
+    // resolución varios segundos después de alejar).
+    if (this._armed === target) return;
     clearTimeout(this._debounce);
-    if (target === this.tier) return;
-    // Al ACERCAR (subir calidad) se actúa casi enseguida: la versión media
-    // ampliada se ve borrosa con un contorno oscuro grueso, y verla 350ms más
-    // era justo el "bum" visible. Al alejar se mantiene la espera larga.
-    this._debounce = setTimeout(() => this._setTierBatched(target), target < this.tier ? 90 : 350);
+    this._armed = target;
+    this._debounce = setTimeout(() => { this._armed = null; this._setTierBatched(target); }, target < this.tier ? 90 : 350);
   },
 
   _setTierBatched(tier) {

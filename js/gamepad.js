@@ -40,14 +40,14 @@ const GP_BTN = {
 const GP_ACTIONS = [
   { id: "confirm", label: "Aceptar", def: 0 },
   { id: "back", label: "Atrás", def: 1 },
-  { id: "actions", label: "Acciones", def: 2 },
+  { id: "backpack", label: "Mochila", def: 2 },
+  { id: "actions", label: "Acciones", def: 10 },
   { id: "endTurn", label: "Fin de turno", def: 3 },
   { id: "prevUnit", label: "Anterior", def: 4 },
   { id: "nextUnit", label: "Siguiente", def: 5 },
   { id: "zoomOut", label: "Alejar cámara", def: 6 },
   { id: "zoomIn", label: "Acercar cámara", def: 7 },
-  { id: "center", label: "Centrar cámara", def: 10 },
-  { id: "toObelisk", label: "Ir a mi Obelisco", def: 11 },
+  { id: "toObelisk", label: "Mi base (otra vez: centrar)", def: 11 },
   { id: "glory", label: "Gloria", def: 8 },
   { id: "settings", label: "Ajustes", def: 9 },
 ];
@@ -139,6 +139,9 @@ const GamepadCtl = {
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem(GP_STORE_MAP) || "{}") || {}; } catch (e) {}
     this.map = {};
+    // Migración: X pasa a ser la Mochila y las Acciones a L3 (antes X = Acciones, L3 = centrar): se
+    // descartan solo las asignaciones viejas de esos tres botones para que tomen los nuevos valores.
+    if (saved && saved.backpack === undefined && Object.keys(saved).length) { delete saved.actions; delete saved.center; delete saved.toObelisk; }
     GP_ACTIONS.forEach((a) => { this.map[a.id] = Number.isInteger(saved[a.id]) ? saved[a.id] : a.def; });
     try { this.hints = localStorage.getItem(GP_STORE_HINTS) !== "false"; } catch (e) { this.hints = true; }
   },
@@ -301,23 +304,46 @@ const GamepadCtl = {
     let dx = (down[15] ? 1 : 0) - (down[14] ? 1 : 0);
     let dy = (down[13] ? 1 : 0) - (down[12] ? 1 : 0);
     let fromStick = false;
+    let ang; // ángulo REAL del stick (sin cuantizar): el tablero lo usa para elegir la loseta más cercana en ángulo
     if (!dx && !dy && ls.m > 0.55) {
       const a = Math.atan2(ls.y, ls.x);
       const s = Math.round(a / (Math.PI / 4)) * (Math.PI / 4);
       dx = Math.round(Math.cos(s));
       dy = Math.round(Math.sin(s));
       fromStick = true;
+      ang = a;
     }
-    const key = dx + "," + dy;
+    // La repetición se reinicia al cambiar de dirección de verdad (sectores de 30° en el stick).
+    const key = fromStick ? "s" + Math.round(ang / (Math.PI / 6)) : dx + "," + dy;
+    // Cruceta en el tablero: una cruceta física no tiene botón diagonal, hay que pulsar dos a la vez y
+    // nadie los pulsa en el mismo milisegundo. Ventana de acorde de 80 ms (como el "perdón" de
+    // diagonales de los juegos de lucha): al pulsar un solo botón se espera un instante por si llega
+    // el segundo; si llega, se hace UN movimiento diagonal (no dos rectos). Y al soltar solo uno de los
+    // dos botones de una diagonal no se hace el movimiento recto sobrante.
+    const single = !fromStick && (dx ? !dy : !!dy);
+    const wasDiag = !!this._rep.key && /^-?1,-?1$/.test(this._rep.key);
+    let hold = false;
+    if (single && this._rep.key !== key && this._mode(now).type === "board") {
+      if (!this._chord || this._chord.k !== key) this._chord = { k: key, t: now + 80 };
+      if (!wasDiag && now < this._chord.t) hold = true;
+    } else if (!single && (dx || dy)) this._chord = null;
     if (!dx && !dy) {
+      // Toque más corto que la ventana: se suelta antes de que se decida -> el movimiento se hace igualmente.
+      const pend = this._chord && !this._chord.fired ? this._chord.k.split(",").map(Number) : null;
       this._rep.key = "";
+      this._chord = null;
+      if (pend) this._dir(pend[0], pend[1]);
+    } else if (hold) {
+      // esperando por si llega el segundo botón de la diagonal
     } else if (key !== this._rep.key) {
+      const swallow = single && wasDiag; // soltaste un botón de la diagonal: no cuenta como pulsación nueva
       this._rep.key = key;
-      this._rep.next = now + (fromStick ? 300 : 380);
-      this._dir(dx, dy);
+      this._rep.next = now + (fromStick ? 280 : 380);
+      if (this._chord) this._chord.fired = true;
+      if (!swallow) this._dir(dx, dy, ang);
     } else if (now >= this._rep.next) {
-      this._rep.next = now + (fromStick ? 150 : 120);
-      this._dir(dx, dy);
+      this._rep.next = now + (fromStick ? 175 - 65 * ls.m : 120); // más inclinado = más rápido
+      this._dir(dx, dy, ang);
     }
 
     // Analógico: cámara (stick derecho), zoom (gatillos) y scroll en ventanas.
@@ -456,7 +482,7 @@ const GamepadCtl = {
   _uiAction(act, mode, press) {
     if (mode.root && mode.root.classList.contains("gp-kb")) {
       if (act === "back") this._kbClose(false);
-      else if (act === "actions") this._kbType(" ");
+      else if (act === "backpack") this._kbType(" ");
       else if (act === "endTurn") this._kbBackspace();
       else if (act === "prevUnit") this._kbCaret(-1);
       else if (act === "nextUnit") this._kbCaret(1);
@@ -658,11 +684,11 @@ const GamepadCtl = {
     this._focusEl = first[0].el;
     return this._focusEl;
   },
-  _dir(dx, dy) {
+  _dir(dx, dy, ang) {
     const mode = this._mode(performance.now());
     if (this._listening) return;
     if (mode.type === "ui") this._uiMove(mode, dx, dy);
-    else this._boardMove(dx, dy);
+    else this._boardMove(dx, dy, ang);
   },
   _uiMove(mode, dx, dy) {
     const cur = this._ensureFocus(mode);
@@ -752,30 +778,51 @@ const GamepadCtl = {
     const c = getTileCenter(this._tile.row, this._tile.col, this._size());
     this._cursorEl.style.left = c.x + "px";
     this._cursorEl.style.top = c.y + "px";
-    this._cursorEl.style.zIndex = "60000"; // siempre POR ENCIMA de los sprites (antes un árbol de delante lo tapaba)
+    this._cursorEl.style.zIndex = "1"; // sobre las losetas pero POR DEBAJO de cualquier sprite (unidades, árboles, edificios, marcadores)
   },
-  _boardMove(dx, dy) {
+  // Navegación por losetas (cruceta / stick), como en los juegos de estrategia por casillas:
+  //  - Se elige entre las 8 losetas vecinas la de ÁNGULO REAL más cercano a la dirección pulsada en
+  //    pantalla (las vecinas isométricas están a 0°, ±32°, ±90°, ±148° y 180°, no cada 45°), sin zona
+  //    muerta: una diagonal del stick o de la cruceta (dos botones) siempre da una loseta.
+  //  - Deslizamiento por los bordes: si la vecina directa no existe (borde del mapa), se prueba la más
+  //    cercana en ángulo hasta ~58°, en vez de quedarse parado.
+  //  - Imán suave: entre dos vecinas casi igual de buenas, gana la que tiene algo (unidad, recurso,
+  //    edificio, objetivo marcado) — las losetas "difíciles" ya no se escapan.
+  _boardMove(dx, dy, ang) {
     if (!this._ensureCursor()) return;
     const size = this._size();
     const halfW = 94;
     const halfH = 58.5;
-    const want = Math.hypot(dx * halfW, dy * halfH) || 1;
-    let best = null;
-    let bestDot = 0.6;
+    const want = ang !== undefined ? ang : Math.atan2(dy, dx);
+    const cand = [];
     for (let dr = -1; dr <= 1; dr++) {
       for (let dc = -1; dc <= 1; dc++) {
         if (!dr && !dc) continue;
-        const sx = (dc - dr) * halfW;
-        const sy = (dc + dr) * halfH;
-        const dot = (sx * dx * halfW + sy * dy * halfH) / ((Math.hypot(sx, sy) || 1) * want);
         const nr = this._tile.row + dr;
         const nc = this._tile.col + dc;
         if (nr < 0 || nc < 0 || nr >= size || nc >= size) continue;
-        if (dot > bestDot) { bestDot = dot; best = { row: nr, col: nc }; }
+        const a = Math.atan2((dc + dr) * halfH, (dc - dr) * halfW);
+        let d = Math.abs(a - want);
+        if (d > Math.PI) d = 2 * Math.PI - d;
+        cand.push({ row: nr, col: nc, d });
       }
     }
+    const MAX = (58 * Math.PI) / 180;
+    const BONUS = (10 * Math.PI) / 180;
+    let best = null;
+    let bestScore = Infinity;
+    cand.forEach((c) => {
+      if (c.d > MAX) return;
+      let sc = c.d;
+      if (c.d < (30 * Math.PI) / 180) {
+        let has = false;
+        try { has = this._tileTargets(c.row, c.col).length > 0; } catch (e) {}
+        if (has) sc -= BONUS;
+      }
+      if (sc < bestScore) { bestScore = sc; best = c; }
+    });
     if (!best) return;
-    this._tile = best;
+    this._tile = { row: best.row, col: best.col };
     this._placeCursor();
     this._follow();
     this._hover();
@@ -892,6 +939,12 @@ const GamepadCtl = {
     }
     if (act === "confirm") { this._activateTile(); return; }
     if (act === "back") { this._cancel(); return; }
+    if (act === "backpack") {
+      const bb = document.querySelector(".backpack-btn");
+      if (bb && this._isVisible(bb)) { this._clickNow(bb); }
+      else this._toast("Selecciona una unidad para abrir su mochila", "ph-fill ph-backpack");
+      return;
+    }
     if (act === "actions") { this._openActions(); return; }
     if (act === "endTurn") {
       const b = document.querySelector(".end-turn-btn--visible");
@@ -906,6 +959,11 @@ const GamepadCtl = {
     if (act === "center") { if (this._ensureCursor()) this._follow(true); return; }
     if (act === "toObelisk") {
       const ob = typeof Obelisks !== "undefined" ? Obelisks.byTeam("player") : null;
+      // Pulsarlo estando ya sobre la base: centra la cámara en la unidad seleccionada (o en el cursor).
+      if (ob && this._tile && this._tile.row === ob.row && this._tile.col === ob.col && typeof Units !== "undefined" && Units.selectedId) {
+        const u = Units.list.find((x) => x.id === Units.selectedId);
+        if (u && this._ensureCursor()) { this._tile = { row: u.row, col: u.col }; this._placeCursor(); this._follow(true); return; }
+      }
       if (ob && this._ensureCursor()) {
         this._cancelTargets();
         this._tile = { row: ob.row, col: ob.col };
@@ -1242,7 +1300,42 @@ const GamepadCtl = {
         this._cursorEl.classList.add("gp-tile--on");
       } else this._cursorEl && this._cursorEl.classList.remove("gp-tile--on");
     }
+    this._actionIcon(mode, now);
     this._updateHints(false, mode, now);
+  },
+
+  // Icono de acción del cursor del mando (pico, hacha, mano, bandera, calavera, daga...): con el
+  // ratón lo da el puntero del sistema; con el mando se dibuja el MISMO icono sobre la casilla
+  // elegida, por encima de todos los sprites.
+  _actionIcon(mode, now) {
+    let el = this._iconEl;
+    const hide = () => { if (el && el.style.display !== "none") el.style.display = "none"; };
+    if (!(mode.type === "board" && this.active && this._tile && typeof BoardView !== "undefined" && BoardView.viewportEl)) { hide(); return; }
+    if (this._iconAt && now - this._iconAt < 90) return; // no hace falta cada fotograma
+    this._iconAt = now;
+    let url = null;
+    try {
+      const { row, col } = this._tile;
+      for (const t of this._tileTargets(row, col)) {
+        const c = getComputedStyle(t).cursor || "";
+        const m = /url\(["']?([^"')]+)["']?\)/.exec(c);
+        if (m) { url = m[1]; break; }
+      }
+    } catch (e) {}
+    if (!url) { hide(); return; }
+    if (!el) {
+      el = document.createElement("img");
+      el.className = "gp-actionicon";
+      el.alt = "";
+      el.draggable = false;
+      document.body.appendChild(el);
+      this._iconEl = el;
+    }
+    if (el.getAttribute("src") !== url) el.setAttribute("src", url);
+    const p = this._tileClient(this._tile.row, this._tile.col, false);
+    el.style.left = Math.round(p.x) + "px";
+    el.style.top = Math.round(p.y - 34 * Math.max(0.7, BoardView.scale)) + "px";
+    el.style.display = "block";
   },
 
   glyph(i) {
@@ -1266,7 +1359,7 @@ const GamepadCtl = {
     // Barra inferior contextual.
     let items;
     if (mode.type === "ui" && mode.root && mode.root.classList.contains("gp-kb")) {
-      items = [["confirm", "Escribir"], ["back", "Cerrar"], ["actions", "Espacio"], ["endTurn", "Borrar"], ["settings", "Aceptar"], ["prevUnit", "◂ Cursor"], ["nextUnit", "Cursor ▸"]];
+      items = [["confirm", "Escribir"], ["back", "Cerrar"], ["backpack", "Espacio"], ["endTurn", "Borrar"], ["settings", "Aceptar"], ["prevUnit", "◂ Cursor"], ["nextUnit", "Cursor ▸"]];
     } else if (mode.type === "ui") {
       const pk = mode.root && mode.root.querySelector ? this._picker(mode.root) : null;
       let lab = "Aceptar";
@@ -1282,8 +1375,8 @@ const GamepadCtl = {
         ? [["confirm", "Elegir"], ["back", "Cancelar"], ["prevUnit", "◂ Opción"], ["nextUnit", "Opción ▸"], ["endTurn", "Fin de turno"], ["toObelisk", "Mi base"]]
         : sel
         ? (this._targetMarkers().length
-          ? [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Objetivo"], ["nextUnit", "Objetivo ▸"], ["toObelisk", "Mi base"]]
-          : [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["toObelisk", "Mi base"]])
+          ? [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["backpack", "Mochila"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Objetivo"], ["nextUnit", "Objetivo ▸"], ["toObelisk", "Mi base"]]
+          : [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["backpack", "Mochila"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["toObelisk", "Mi base"]])
         : [["confirm", "Seleccionar"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["toObelisk", "Mi base"], ["endTurn", "Fin de turno"], ["settings", "Ajustes"]];
     }
     const key = items.map((x) => x[0] + this.map[x[0]] + x[1]).join("|") + I18N.currentLang + mode.type;

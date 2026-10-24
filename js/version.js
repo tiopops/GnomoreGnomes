@@ -12,12 +12,20 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001547";
+const GG_VERSION = "v.001551";
 
 const GG_CHANGELOG = [
-  { v: "v.001547", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001551", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Mando: la cruceta ahora perdona las diagonales: ventana de 80 ms para pulsar dos botones (arriba+derecha...) y se hace UN movimiento diagonal; un toque corto sigue moviendo; al soltar un solo botón de una diagonal no se hace el movimiento sobrante",
+    "Mando: X abre directamente la Mochila (y sale en la leyenda como \"Mochila\"); el menú de Acciones pasa a L3 y \"Mi base\" (R3) pulsado otra vez centra la cámara en la unidad seleccionada (sustituye a \"Centrar cámara\"). Si tenías botones personalizados, X/L3/R3 toman los nuevos valores",
+    "Errores gráficos al alejar la cámara (rectángulos de suelo sin pintar y trozos de niebla viejos): cuando la cámara queda quieta tras un zoom se renueva el lienzo del suelo/niebla profunda reasignándolo y repintándolo en el mismo fotograma",
+    "APK: el texto de la pantalla de actualización disponible queda centrado (título, textos, versión y botones)",
+    "Niebla: menos parpadeos al alejar/acercar la cámara: las nubes animadas se pausan mientras hay zoom y se reanudan en el mismo punto, las nubes fuera de pantalla ya no reinician su animación al reaparecer, y la capa de la cámara solo se renueva cuando ya está totalmente quieta",
+    "Resolución adaptativa: los sprites (árboles, rocas, arbustos, edificios...) bajan de calidad ~0,35 s después de alejar la cámara; antes tardaban ~3 s porque el suavizado del zoom reiniciaba la cuenta en cada fotograma. Ahora se decide por el destino del zoom",
+    "Mando: navegación por losetas rediseñada (como en los juegos de estrategia por casillas): elige la loseta vecina de ángulo REAL más cercano (las diagonales de stick y cruceta ya funcionan), desliza por los bordes del mapa en vez de quedarse parado, imán suave hacia losetas con unidad/recurso/edificio/objetivo y el stick va más rápido cuanto más se inclina",
+    "Mando: el cursor amarillo del tablero va sobre las losetas pero por debajo de cualquier sprite; y sobre la casilla elegida aparece el icono de acción (pico, hacha, mano, bandera, calavera...) por encima de todos los sprites, igual que con el ratón",
     "Resolución adaptativa: el fundido entre calidades ya no duplica la sombra difusa del sprite (el halo oscuro del \"bum\" en arbustos, árboles y obelisco se reduce a menos de la mitad)",
-    "Mando: atajo a la base principal (R3 por defecto, aparece en la leyenda como \"Mi base\"): lleva el cursor y selecciona el Obelisco para abrir su menú. En Habilidades, Armería, Reclutar y tiendas, resaltar con la cruceta ya selecciona (se ve la descripción) y A compra/mejora/recluta; LB/RB recorren los elementos y la leyenda indica la acción. El cursor del tablero ya no queda tapado por los sprites",
+    "Mando: atajo a la base principal (R3 por defecto, aparece en la leyenda como \"Mi base\"): lleva el cursor y selecciona el Obelisco para abrir su menú. En Habilidades, Armería, Reclutar y tiendas, resaltar con la cruceta ya selecciona (se ve la descripción) y A compra/mejora/recluta; LB/RB recorren los elementos y la leyenda indica la acción",
     "Mando: en Reclutar y en las tiendas, LB/RB cambian la unidad u objeto elegido, la cruceta izquierda/derecha también lo elige y A recluta/compra directamente; en Ajustes, derecha desde \"Buscar mando\" ya llega a \"Test\" (antes saltaba a \"Ayudas del mando\")",
     "APK: arreglada la actualización desde dentro del juego (\"No se pudo actualizar\"): el plugin exigía el checksum SHA-256 del paquete y no se le enviaba; ahora se calcula al generar la release y se pasa al descargar",
     "Resolución adaptativa: al acercar la cámara los sprites suben a calidad completa casi al instante y con un fundido más corto, eliminando el parpadeo con sombra oscura difusa (\"bum\") alrededor de arbustos, árboles y obeliscos",
