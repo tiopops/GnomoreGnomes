@@ -10,10 +10,10 @@
    suben el número de versión y se le añaden los cambios nuevos (nunca dos
    entradas con la misma fecha). */
 
-const GG_VERSION = "v.001538";
+const GG_VERSION = "v.001539";
 
 const GG_CHANGELOG = [
-  { v: "v.001538", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001539", date: "24/10/2026", title: "APK y rendimiento", items: [
     "Actualización de la APK: el aviso de arranque correcto se envía al principio de la carga (antes la app volvía a la versión antigua si tardaba en cargar)",
     "Resolución adaptativa en todos los sprites: nuevas versiones reducidas de las unidades al golpear, cofres, grulla y raíces, y los cambios de pose también respetan la calidad",
     "Resolución adaptativa: fundido cruzado al cambiar de calidad al alejar o acercar la cámara (solo en los sprites visibles)",
@@ -22,7 +22,8 @@ const GG_CHANGELOG = [
     "Niebla animada: sin parpadeos al revelar una zona nueva",
     "APK: pantalla de aviso al abrir la app con «Existe una nueva actualización», la versión y el botón ACTUALIZAR; si falla, muestra el motivo",
     "Armería: la marca de nivel comprado es ahora un cuadrado irregular",
-    "Historial de cambios unificado por día"
+    "Historial de cambios unificado por día",
+    "Fundido de resolución adaptativa: las animaciones de reposo (respiración, balanceo) ya no hacen saltar el sprite al cambiar de calidad"
   ] },
   { v: "v.001536", date: "23/10/2026", title: "Grulla y huevo · Fin de partida · Punteros · Sacrificios · Rendimiento móvil · Tutorial · Niebla inicial", items: [
     "El icono para lanzarle un gnomo a la grulla sale sobre ella (no en la base del obelisco) y se puede pulsar la propia grulla",

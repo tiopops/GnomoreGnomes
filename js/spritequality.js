@@ -334,7 +334,22 @@ const SpriteQuality = {
     const drop = () => { this._ghosts = Math.max(0, this._ghosts - 1); ghost.remove(); };
     const go = () => {
       if (!imgEl.isConnected) return drop();
+      // Animaciones de reposo (respiración, balanceo...): el fantasma nace con
+      // ellas reiniciadas y el sprite real no; sin igualarlas, el fantasma se
+      // veía en otra pose y el cambio "saltaba". Se copia el instante exacto de
+      // cada animación del sprite real a la del fantasma.
+      let real = [];
+      try { real = imgEl.getAnimations ? imgEl.getAnimations() : []; } catch (e) {}
       imgEl.parentElement.insertBefore(ghost, imgEl.nextSibling);
+      try {
+        ghost.getAnimations().forEach((ga) => {
+          const ra = real.find((x) => x.animationName && x.animationName === ga.animationName);
+          if (!ra) return;
+          ga.pause();
+          ga.currentTime = ra.currentTime;
+          if (ra.playState === "running") ga.play();
+        });
+      } catch (e) {}
       this._nset(imgEl, url); // la nueva ya está decodificada: debajo del fantasma
       const a = ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: this.FADE_MS, easing: "ease-out" });
       a.onfinish = drop;
