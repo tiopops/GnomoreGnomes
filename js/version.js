@@ -5,133 +5,82 @@
      - GG_CHANGELOG: lista de versiones, la más nueva primero.
      - La ventanita que se abre al pulsar el número del menú principal.
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
-   añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
+   añadir arriba una entrada (o ampliar la actual) con lo más relevante.
+   REGLA: una sola entrada por día. Si ya hay una con la fecha de hoy, se le
+   suben el número de versión y se le añaden los cambios nuevos (nunca dos
+   entradas con la misma fecha). */
 
-const GG_VERSION = "v.001537";
+const GG_VERSION = "v.001538";
 
 const GG_CHANGELOG = [
-  { v: "v.001537", date: "24/10/2026", title: "APK", items: [
-    "Actualización de la APK: el aviso de arranque correcto se envía al principio de la carga (antes la app volvía a la versión antigua si tardaba en cargar)"
+  { v: "v.001538", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Actualización de la APK: el aviso de arranque correcto se envía al principio de la carga (antes la app volvía a la versión antigua si tardaba en cargar)",
+    "Resolución adaptativa en todos los sprites: nuevas versiones reducidas de las unidades al golpear, cofres, grulla y raíces, y los cambios de pose también respetan la calidad",
+    "Resolución adaptativa: fundido cruzado al cambiar de calidad al alejar o acercar la cámara (solo en los sprites visibles)",
+    "Niebla: siempre en baja resolución, con cualquier zoom",
+    "Al revelar una zona, las nubes ya están preparadas desde la pantalla de carga y las texturas medias de los sprites también (menos tirones)",
+    "Niebla animada: sin parpadeos al revelar una zona nueva",
+    "APK: pantalla de aviso al abrir la app con «Existe una nueva actualización», la versión y el botón ACTUALIZAR; si falla, muestra el motivo",
+    "Armería: la marca de nivel comprado es ahora un cuadrado irregular",
+    "Historial de cambios unificado por día"
   ] },
-  { v: "v.001536", date: "23/10/2026", title: "Niebla inicial", items: [
-    "La zona alrededor de tu Obelisco empieza ya despejada: la niebla inicial no se disipa, nunca llega a verse"
-  ] },
-  { v: "v.001535", date: "23/10/2026", title: "Tutorial", items: [
-    "Primeros pasos: nueva misión de sacrificio (lanzar el gnomo al agua) con +Gloria instantánea, con su charco de práctica"
-  ] },
-  { v: "v.001534", date: "23/10/2026", title: "Rendimiento móvil", items: [
+  { v: "v.001536", date: "23/10/2026", title: "Grulla y huevo · Fin de partida · Punteros · Sacrificios · Rendimiento móvil · Tutorial · Niebla inicial", items: [
+    "El icono para lanzarle un gnomo a la grulla sale sobre ella (no en la base del obelisco) y se puede pulsar la propia grulla",
+    "El rebote del huevo lanzado por los rivales respeta su propia niebla (lo que ven sus unidades, aldeas y obelisco), no la del jugador",
+    "Abrir un cofre usa la mano amarilla de coger en vez del hacha",
+    "Entrar en la Tienda Goblin o la casa de la adivina usa la mano amarilla que señala",
+    "Nueva pantalla de victoria, derrota y empate: más compacta, con el turno en que acabó la partida y barras comparativas",
+    "Partículas según el resultado (confeti, brasas o polvo)",
+    "Estampar un gnomo contra un tótem usa una bandera roja como puntero",
+    "Sacrificio en el volcán: el gnomo patalea en la lava y, al hundirse, asoma una mano con el pulgar arriba que también se hunde",
     "Con la animación de niebla desactivada (siempre en móvil), la niebla se disipa con un simple fundido",
     "Cámara muy alejada: se quitan las sombras con desenfoque de unidades, tienda y huevo",
     "La capa de la cámara se vuelve a rasterizar tras cualquier cambio de zoom notable (menos losetas a medias al alejar)",
-    "El suelo en canvas no pasa de 2x de resolución en teléfonos"
+    "El suelo en canvas no pasa de 2x de resolución en teléfonos",
+    "Primeros pasos: nueva misión de sacrificio (lanzar el gnomo al agua) con +Gloria instantánea, con su charco de práctica",
+    "La zona alrededor de tu Obelisco empieza ya despejada: la niebla inicial no se disipa, nunca llega a verse"
   ] },
-  { v: "v.001533", date: "23/10/2026", title: "Sacrificios", items: [
-    "Sacrificio en el volcán: el gnomo patalea en la lava y, al hundirse, asoma una mano con el pulgar arriba que también se hunde"
-  ] },
-  { v: "v.001532", date: "23/10/2026", title: "Punteros", items: [
-    "Estampar un gnomo contra un tótem usa una bandera roja como puntero"
-  ] },
-  { v: "v.001531", date: "23/10/2026", title: "Fin de partida", items: [
-    "Nueva pantalla de victoria, derrota y empate: más compacta, con el turno en que acabó la partida y barras comparativas",
-    "Partículas según el resultado (confeti, brasas o polvo)"
-  ] },
-  { v: "v.001530", date: "23/10/2026", title: "Punteros", items: [
-    "Abrir un cofre usa la mano amarilla de coger en vez del hacha",
-    "Entrar en la Tienda Goblin o la casa de la adivina usa la mano amarilla que señala"
-  ] },
-  { v: "v.001529", date: "23/10/2026", title: "Grulla y huevo", items: [
-    "El icono para lanzarle un gnomo a la grulla sale sobre ella (no en la base del obelisco) y se puede pulsar la propia grulla",
-    "El rebote del huevo lanzado por los rivales respeta su propia niebla (lo que ven sus unidades, aldeas y obelisco), no la del jugador"
-  ] },
-  { v: "v.001528", date: "22/10/2026", title: "Sacrificios", items: [
-    "Al pulsar sobre el cuerpo del bumper con la calavera, se hace el sacrificio en vez de lanzar el gnomo a la casilla de arriba"
-  ] },
-  { v: "v.001527", date: "22/10/2026", title: "Sacrificios", items: [
-    "Al apuntar un lanzamiento, el puntero sobre un bumper donde se puede sacrificar al gnomo es la calavera",
-  ] },
-  { v: "v.001526", date: "22/10/2026", title: "Sacrificios", items: [
-    "Nuevo sacrificio: lanzar un gnomo al agujero de un bumper del pinball. Se lo traga de golpe y la máquina escupe sangre a presión y humo negro, dejando charcos de sangre alrededor (da Gloria como el resto de sacrificios; ya no rebota)",
-  ] },
-  { v: "v.001525", date: "22/10/2026", title: "Móvil", items: [
-    "Interfaz móvil: la niebla nunca está animada y la opción desaparece de los ajustes gráficos (en escritorio sigue igual)",
-  ] },
-  { v: "v.001524", date: "22/10/2026", title: "Sonido", items: [
-    "Con el juego en segundo plano (ventana tapada o app minimizada) no suena ningún efecto ni música hasta volver; antes los efectos podían reactivar el audio solos",
-  ] },
-  { v: "v.001523", date: "22/10/2026", title: "Móvil", items: [
-    "Mi cuenta: la X de cerrar ya no se recorta (igual que en Ajustes)",
-    "Con la cámara muy ampliada o alejada, las ventanas (ajustes, mochila, cuenta…) ya no se quedan oscuras: el tablero se oculta detrás mientras están abiertas",
-  ] },
-  { v: "v.001522", date: "22/10/2026", title: "Recursos", items: [
-    "El hacha de recolectar es un poco más grande, para igualar al pico",
-  ] },
-  { v: "v.001521", date: "22/10/2026", title: "Recursos", items: [
-    "Puntero de recolectar: hacha amarilla para los árboles y pico amarillo para la piedra y la mena de metal (mismo tamaño)",
-  ] },
-  { v: "v.001520", date: "22/10/2026", title: "Recursos", items: [
-    "Pico de recolectar con trazo más fino, igual de delgado que el resto de punteros",
-  ] },
-  { v: "v.001519", date: "22/10/2026", title: "Recursos", items: [
-    "Al poder recolectar un recurso, el puntero es un pico amarillo (antes un hacha)",
-  ] },
-  { v: "v.001518", date: "22/10/2026", title: "Carga", items: [
+  { v: "v.001528", date: "22/10/2026", title: "Carga · Recursos · Sonido · Móvil · Sacrificios", items: [
+    "APK: las imágenes se reducen al compilar (de unos 88 MB a unos 25 MB), para que las actualizaciones pesen mucho menos y el móvil use menos memoria",
+    "Mi cuenta, Ajustes y demás ventanas en el móvil: la X de cerrar ya no se corta por arriba y los paneles caben en pantallas pequeñas o apaisadas",
     "La pantalla de carga espera a que todo el nivel (terreno, unidades, recursos, interfaz) esté cargado y listo antes de mostrarse, sin sprites que aparezcan tarde ni parpadeos",
     "Fundidos más suaves y largos entre menús, y la pantalla de carga se desvanece despacio",
+    "Al poder recolectar un recurso, el puntero es un pico amarillo (antes un hacha)",
+    "Pico de recolectar con trazo más fino, igual de delgado que el resto de punteros",
+    "Puntero de recolectar: hacha amarilla para los árboles y pico amarillo para la piedra y la mena de metal (mismo tamaño)",
+    "El hacha de recolectar es un poco más grande, para igualar al pico",
+    "Mi cuenta: la X de cerrar ya no se recorta (igual que en Ajustes)",
+    "Con la cámara muy ampliada o alejada, las ventanas (ajustes, mochila, cuenta…) ya no se quedan oscuras: el tablero se oculta detrás mientras están abiertas",
+    "Con el juego en segundo plano (ventana tapada o app minimizada) no suena ningún efecto ni música hasta volver; antes los efectos podían reactivar el audio solos",
+    "Interfaz móvil: la niebla nunca está animada y la opción desaparece de los ajustes gráficos (en escritorio sigue igual)",
+    "Nuevo sacrificio: lanzar un gnomo al agujero de un bumper del pinball. Se lo traga de golpe y la máquina escupe sangre a presión y humo negro, dejando charcos de sangre alrededor (da Gloria como el resto de sacrificios; ya no rebota)",
+    "Al apuntar un lanzamiento, el puntero sobre un bumper donde se puede sacrificar al gnomo es la calavera",
+    "Al pulsar sobre el cuerpo del bumper con la calavera, se hace el sacrificio en vez de lanzar el gnomo a la casilla de arriba"
   ] },
-  { v: "v.001517", date: "22/10/2026", title: "Móvil", items: [
-    "Mi cuenta, Ajustes y demás ventanas en el móvil: la X de cerrar ya no se corta por arriba y los paneles caben en pantallas pequeñas o apaisadas",
-  ] },
-  { v: "v.001516", date: "22/10/2026", title: "Móvil", items: [
-    "APK: las imágenes se reducen al compilar (de unos 88 MB a unos 25 MB), para que las actualizaciones pesen mucho menos y el móvil use menos memoria",
-  ] },
-  { v: "v.001515", date: "21/10/2026", title: "Combate", items: [
-    "Al pasar el puntero sobre un enemigo (que se puede atacar) el puntero es un puño rojo",
-  ] },
-  { v: "v.001514", date: "21/10/2026", title: "Recursos", items: [
-    "Al poder recolectar un recurso, el puntero es un hacha amarilla",
-  ] },
-  { v: "v.001513", date: "21/10/2026", title: "Equipo", items: [
-    "El recuadro de virtudes/debilidades y de unidades mide siempre exactamente lo mismo, sea cual sea el equipo o la unidad elegida",
-  ] },
-  { v: "v.001512", date: "21/10/2026", title: "Equipo", items: [
-    "Nuevo diseño de virtudes y debilidades: dos tarjetas con cinta de título, iconos y una viñeta por frase",
-  ] },
-  { v: "v.001511", date: "21/10/2026", title: "Móvil", items: [
-    "Equipo: el recuadro de virtudes y debilidades y el de la ficha de unidad miden siempre lo mismo y no recortan el texto en el móvil",
-    "APK: la comprobación de versión se hace siempre al abrir la app (también con datos móviles), prueba varias vías de lectura y el aviso de advertencia ya no se queda fijo",
-  ] },
-  { v: "v.001510", date: "21/10/2026", title: "Sonido", items: [
-    "El pitido de «¡Todos listos!» y la música se silencian al perder el foco la ventana (segundo plano) y vuelven al regresar",
-  ] },
-  { v: "v.001508", date: "21/10/2026", title: "Sacrificios", items: [
-    "Al lanzar un gnomo contra una seta ya no se voltea boca abajo en el aire",
-  ] },
-  { v: "v.001507", date: "21/10/2026", title: "Sacrificios", items: [
-    "Seta explosiva: el gnomo se carboniza en el sitio y se hunde en el suelo dejando un círculo de ceniza",
-    "Al poder coger un gnomo, el puntero es la mano amarilla",
-    "Los gnomos cargados valen más al sacrificarlos: +4 con 5 a 9 puntos y +5 con 10 o más",
-  ] },
-  { v: "v.001506", date: "21/10/2026", title: "Sacrificios", items: [
-    "El botón Lanzar está siempre disponible cuando una unidad lleva un gnomo, aunque no haya más aliados",
-    "Las casillas de sacrificio vuelven a mostrar el círculo habitual; la calavera aparece solo en el puntero",
-  ] },
-  { v: "v.001505", date: "21/10/2026", title: "Sacrificios", items: [
-    "Las casillas de sacrificio muestran la calavera y el puntero cambia a una calavera al apuntar",
-  ] },
-  { v: "v.001504", date: "21/10/2026", title: "Sacrificios de gnomos", items: [
+  { v: "v.001515", date: "21/10/2026", title: "Actualización de la APK · Tutoriales · Sacrificios de gnomos · Sacrificios · Sonido · Móvil · Equipo · Recursos · Combate", items: [
+    "La comprobación de versión al abrir la app reintenta si GitHub tarda en responder",
+    "El historial de versiones muestra, dentro de la APK, el paquete instalado y el resultado de la última comprobación",
+    "Recuadro de información de escenario con el mismo tamaño en los tres niveles",
+    "Ya se puede abandonar un tutorial desde Ajustes: la confirmación de salir ya no queda tapada por Nizak ni bloqueada",
+    "Con Ajustes o la confirmación abiertos, la viñeta, el puntero y el contador del tutorial se esconden",
     "Nueva forma de ganar Gloria al instante: sacrificar gnomos. Cada sacrificio da +3 de Gloria",
     "Se pueden lanzar gnomos al volcán, a charcos de lava, al agua, a setas explosivas y a cepos",
     "Una piedra de Rock'n Troll o un cohete KataPum! contra un gnomo suelto también lo sacrifica",
     "Cuando un gnomo muere así, aparece otro enseguida en una zona aleatoria del escenario",
-  ] },
-  { v: "v.001503", date: "21/10/2026", title: "Tutoriales", items: [
-    "Ya se puede abandonar un tutorial desde Ajustes: la confirmación de salir ya no queda tapada por Nizak ni bloqueada",
-    "Con Ajustes o la confirmación abiertos, la viñeta, el puntero y el contador del tutorial se esconden",
-  ] },
-  { v: "v.001502", date: "21/10/2026", title: "Actualización de la APK", items: [
-    "La comprobación de versión al abrir la app reintenta si GitHub tarda en responder",
-    "El historial de versiones muestra, dentro de la APK, el paquete instalado y el resultado de la última comprobación",
-    "Recuadro de información de escenario con el mismo tamaño en los tres niveles",
+    "Las casillas de sacrificio muestran la calavera y el puntero cambia a una calavera al apuntar",
+    "El botón Lanzar está siempre disponible cuando una unidad lleva un gnomo, aunque no haya más aliados",
+    "Las casillas de sacrificio vuelven a mostrar el círculo habitual; la calavera aparece solo en el puntero",
+    "Seta explosiva: el gnomo se carboniza en el sitio y se hunde en el suelo dejando un círculo de ceniza",
+    "Al poder coger un gnomo, el puntero es la mano amarilla",
+    "Los gnomos cargados valen más al sacrificarlos: +4 con 5 a 9 puntos y +5 con 10 o más",
+    "Al lanzar un gnomo contra una seta ya no se voltea boca abajo en el aire",
+    "El pitido de «¡Todos listos!» y la música se silencian al perder el foco la ventana (segundo plano) y vuelven al regresar",
+    "Equipo: el recuadro de virtudes y debilidades y el de la ficha de unidad miden siempre lo mismo y no recortan el texto en el móvil",
+    "APK: la comprobación de versión se hace siempre al abrir la app (también con datos móviles), prueba varias vías de lectura y el aviso de advertencia ya no se queda fijo",
+    "Nuevo diseño de virtudes y debilidades: dos tarjetas con cinta de título, iconos y una viñeta por frase",
+    "El recuadro de virtudes/debilidades y de unidades mide siempre exactamente lo mismo, sea cual sea el equipo o la unidad elegida",
+    "Al poder recolectar un recurso, el puntero es un hacha amarilla",
+    "Al pasar el puntero sobre un enemigo (que se puede atacar) el puntero es un puño rojo"
   ] },
   { v: "v.001501", date: "20/10/2026", title: "Móvil y APK", items: [
     "Menú principal nuevo: botones con cinta de color, logo más grande en móvil y sin scroll en escritorio",
@@ -140,51 +89,51 @@ const GG_CHANGELOG = [
     "La música se pausa al salir de la app y el modo rendimiento se activa solo en móviles",
     "Iconos incluidos en la app, sin necesidad de conexión",
     "Reanudar partida retirado: abandonar cuenta como rendirse",
-    "HurryCrane Village pasa a llamarse Poblado HurryCrane, con colores de recursos más integrados",
+    "HurryCrane Village pasa a llamarse Poblado HurryCrane, con colores de recursos más integrados"
   ] },
   { v: "v.001500", date: "19/10/2026", title: "Progreso y partidas online", items: [
     "Nivel y experiencia de cuenta, y misiones diarias con racha",
     "Partida Rápida online: emparejamiento por nivel de habilidad, elección de equipo y ruleta de escenario",
     "Multijugador y Mi cuenta rediseñados",
     "Pantalla de actualización de la APK al abrir la app",
-    "Tutorial más ligero",
+    "Tutorial más ligero"
   ] },
   { v: "v.001400", date: "18/10/2026", title: "App Android y rendimiento", items: [
     "APK de Android con actualización automática",
     "Suelo y niebla profunda dibujados en canvas, y modo rendimiento",
     "Ventanas de reclutar, armería y habilidades con tamaño fijo; tamaños de unidades ajustados",
-    "La grulla se queda 2 turnos en cada obelisco; aterrizaje y plumas nuevos",
+    "La grulla se queda 2 turnos en cada obelisco; aterrizaje y plumas nuevos"
   ] },
   { v: "v.001300", date: "15/10/2026", title: "Pinball de HurryCrane", items: [
     "Bumpers repartidos por el mapa con turbo, luces y teledirigido; combos y ruleta de jackpot",
     "Huevo estilo pinball con guía de trayectoria, rebotes y premio tipo tragaperras",
-    "La IA aprovecha bumpers y combos; tutorial del nivel y música propia",
+    "La IA aprovecha bumpers y combos; tutorial del nivel y música propia"
   ] },
   { v: "v.001200", date: "13/10/2026", title: "Equipo SurcaNubes", items: [
     "Nuevo equipo SurcaNubes: ManosLargas, AlaFugaz y NidoBot con sus habilidades",
     "Nuevo nivel con el Huevo de Grulla",
-    "La IA rival usa las habilidades de todos los equipos",
+    "La IA rival usa las habilidades de todos los equipos"
   ] },
   { v: "v.001100", date: "11/10/2026", title: "Oráculo y mando", items: [
     "Casa del Oráculo: cartas, beneficios y maldición",
     "Soporte de mando con teclado en pantalla; tutoriales adaptados al mando",
     "Tienda goblin con vendedor animado y moneda",
     "Partidas de 50 rondas con desempate por puntos y gloria máxima de 30",
-    "Estadísticas de jugador y cambio de nombre cada 7 días",
+    "Estadísticas de jugador y cambio de nombre cada 7 días"
   ] },
   { v: "v.001000", date: "08/10/2026", title: "Multijugador y tutoriales", items: [
     "Multijugador 1 contra 1 con invitaciones de amigos y sala",
     "Tutoriales de MushBoom y Rock'n Troll con su propio submenú",
-    "Efectos de goma al pegar, lanzar y ahogarse",
+    "Efectos de goma al pegar, lanzar y ahogarse"
   ] },
   { v: "v.000900", date: "05/10/2026", title: "Colinas Rock'n Troll", items: [
     "Volcán con erupción, gnomos en llamas, lava y piedras",
     "Tambores de guerra con lluvia de rocas",
-    "Reliquias nuevas y pantalla final con el emblema del equipo ganador",
+    "Reliquias nuevas y pantalla final con el emblema del equipo ganador"
   ] },
   { v: "v.000800", date: "Septiembre 2026", title: "Base del juego", items: [
     "Mapa, niebla de guerra, obeliscos, tótems, combate y tutorial de Nizak",
-    "Equipos de MushBoom y cuentas de jugador",
+    "Equipos de MushBoom y cuentas de jugador"
   ] },
 ];
 

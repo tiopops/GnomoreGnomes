@@ -38,23 +38,61 @@ const AppUpdate = {
   },
 
   // ---------- Pantalla de actualización al arrancar ----------
+  // Una sola pantalla con varios estados: comprobando (solo el circulito),
+  // aviso de versión nueva con el botón ACTUALIZAR, progreso de descarga y
+  // error (con el motivo y REINTENTAR / CONTINUAR).
   _gateShow() {
     if (this._gate) return;
     const el = document.createElement("div");
     el.className = "au-overlay au-overlay--check";
-    el.innerHTML = `<div class="au-box">
-      <i class="ph-bold ph-circle-notch au-spin app-update-spin"></i>
-      <div class="au-title">ACTUALIZANDO</div>
-      <div class="au-bar"><i style="width:0%"></i></div>
-      <b class="au-pct">0%</b>
-      <button type="button" class="au-skip" hidden>SALTAR</button>
-    </div>`;
     document.body.appendChild(el);
     this._gate = el;
-    this._gateStart = Date.now();
-    // Si la descarga se eterniza, aparece un botón para entrar con la versión actual.
-    this._skipTimer = setTimeout(() => { const b = el.querySelector(".au-skip"); if (b) { b.hidden = false; b.addEventListener("click", () => { this._skipped = true; this._gateHide(); }); } }, 20000);
+    this._gateState("check");
   },
+  _esc(t) { return String(t == null ? "" : t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); },
+  _gateState(state, opts) {
+    const el = this._gate;
+    if (!el) return;
+    opts = opts || {};
+    clearTimeout(this._skipTimer);
+    el.classList.toggle("au-overlay--check", state === "check");
+    const btn = (id, txt, cls) => `<button type="button" class="au-btn ${cls || ""}" data-au="${id}"><span>${txt}</span></button>`;
+    let html = "";
+    if (state === "check") {
+      html = `<i class="ph-bold ph-circle-notch au-spin app-update-spin"></i>`;
+    } else if (state === "ask") {
+      html = `<i class="ph-bold ph-download-simple au-ic"></i>
+        <div class="au-title">ACTUALIZACIÓN DISPONIBLE</div>
+        <div class="au-text">Existe una nueva actualización.</div>
+        <div class="au-ver">Versión: <b>${this._esc(opts.version)}</b></div>
+        ${btn("go", "ACTUALIZAR")}`;
+    } else if (state === "progress") {
+      html = `<i class="ph-bold ph-circle-notch au-spin app-update-spin"></i>
+        <div class="au-title">ACTUALIZANDO</div>
+        <div class="au-bar"><i style="width:0%"></i></div>
+        <b class="au-pct">0%</b>
+        <button type="button" class="au-skip" hidden>SALTAR</button>`;
+    } else if (state === "error") {
+      html = `<i class="ph-bold ph-warning au-ic au-ic--warn"></i>
+        <div class="au-title">NO SE PUDO ACTUALIZAR</div>
+        <div class="au-text au-text--err">${this._esc(opts.msg)}</div>
+        ${btn("retry", "REINTENTAR")}
+        ${btn("skip", "CONTINUAR", "au-btn--grey")}`;
+    }
+    el.innerHTML = `<div class="au-box">${html}</div>`;
+    if (state === "progress") {
+      // Si la descarga se eterniza, aparece un botón para entrar con la versión actual.
+      this._skipTimer = setTimeout(() => {
+        const b = el.querySelector(".au-skip");
+        if (b) { b.hidden = false; b.addEventListener("click", () => { this._skipped = true; this._gateHide(); }); }
+      }, 20000);
+    }
+    el.querySelectorAll("[data-au]").forEach((b) => b.addEventListener("click", () => {
+      const cb = this._onChoice; this._onChoice = null;
+      if (cb) cb(b.dataset.au);
+    }));
+  },
+  _gateChoice() { return new Promise((res) => { this._onChoice = res; }); },
   _gateProgress(pct) {
     if (!this._gate) return;
     const p = Math.max(0, Math.min(100, Math.round(pct)));
@@ -69,6 +107,15 @@ const AppUpdate = {
     this._gate = null;
     el.classList.add("au-overlay--out");
     setTimeout(() => el.remove(), 350);
+  },
+
+  // Nombre legible de una versión publicada: "v.001540" si el paquete lo trae;
+  // si no, la fecha y hora de la compilación.
+  _verName(v) {
+    if (!v) return "?";
+    if (v.name) return v.name;
+    const m = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(String(v.version));
+    return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : String(v.version);
   },
 
   // Popup "DESCARGAR APP": solo en el navegador de un móvil Android (nunca en
@@ -256,49 +303,60 @@ const AppUpdate = {
     if (this._busy) return;
     this._busy = true;
     const idle = "download-simple";
-    if (auto) this._gateShow(); // tapa el menú mientras se comprueba la versión
+    this._skipped = false;
+    this._gateShow(); // tapa el menú mientras se comprueba la versión
     try {
-      this._icon("circle-notch");
-      const local = await (await fetch("version.json?_=" + Date.now(), { cache: "no-store" })).json();
-      this.localVersion = local && local.version;
-      const remote = await this._getRemote();
-      if (!remote || !remote.version) throw new Error("respuesta vacía");
-      if (remote.version === local.version) {
-        this._setStatus("al día (" + local.version + ")");
-        if (!auto) {
-          this._icon("check");
-          setTimeout(() => this._icon(idle), 2500);
-        } else this._icon(idle);
-        return;
+      for (;;) {
+        let remote = null;
+        let failMsg = null;
+        try {
+          this._gateState("check");
+          this._icon("circle-notch");
+          const local = await (await fetch("version.json?_=" + Date.now(), { cache: "no-store" })).json();
+          this.localVersion = local && local.version;
+          remote = await this._getRemote();
+          if (!remote || !remote.version) throw new Error("respuesta vacía");
+          if (remote.version === local.version) {
+            this._setStatus("al día (" + local.version + ")");
+            this._icon(auto ? idle : "check");
+            if (!auto) setTimeout(() => this._icon(idle), 2500);
+            return;
+          }
+          // Hay versión nueva: se avisa y se espera a que el jugador pulse ACTUALIZAR.
+          this._setStatus("nueva versión " + remote.version);
+          this._icon(idle);
+          this._gateState("ask", { version: this._verName(remote) });
+          await this._gateChoice();
+          this._setStatus("descargando " + remote.version);
+          const up = this._updater();
+          if (!up) throw new Error("sin plugin de actualización");
+          this._gateState("progress");
+          let h = null;
+          try { h = await up.addListener("download", (e) => this._gateProgress(e && e.percent)); } catch (e) {}
+          let bundle;
+          try {
+            bundle = await up.download({ url: this.RELEASE_BASE + "bundle.zip", version: remote.version });
+          } finally {
+            try { if (h && h.remove) h.remove(); } catch (e) {}
+          }
+          if (this._skipped) { this._setStatus("omitida por el jugador"); return; } // entra con la versión actual
+          this._gateProgress(100);
+          this._setStatus("instalando " + remote.version);
+          await up.set(bundle); // reinicia la app con la versión nueva
+          return;
+        } catch (e) {
+          failMsg = (e && (e.message || e.errorMessage)) || String(e);
+        }
+        // Algo falló: se enseña el motivo (antes la app entraba al menú sin decir nada).
+        this._setStatus("error: " + failMsg);
+        this._icon("warning");
+        this._gateState("error", { msg: failMsg });
+        const choice = await this._gateChoice();
+        if (choice !== "retry") { this._icon(idle); return; }
       }
-      this._setStatus("descargando " + remote.version);
-      this._icon("circle-notch");
-      const up = this._updater();
-      if (!up) throw new Error("sin plugin de actualización");
-      if (this._gate) this._gate.classList.remove("au-overlay--check");
-      let h = null;
-      try { h = await up.addListener("download", (e) => this._gateProgress(e && e.percent)); } catch (e) {}
-      let bundle;
-      try {
-        bundle = await up.download({ url: this.RELEASE_BASE + "bundle.zip", version: remote.version });
-      } finally {
-        try { if (h && h.remove) h.remove(); } catch (e) {}
-      }
-      if (this._skipped) { this._setStatus("omitida por el jugador"); return; } // entra con la versión actual
-      this._gateProgress(100);
-      this._setStatus("instalando " + remote.version);
-      await up.set(bundle); // reinicia la app con la versión nueva
-    } catch (e) {
-      this._setStatus("error: " + ((e && (e.message || e.errorMessage)) || e));
-      // Sin avisos en el arranque; el botón del menú queda con el aviso hasta la próxima comprobación buena.
-      this._icon("warning");
-      // El aviso nunca se queda fijo: vuelve al icono normal y, si fue en el arranque,
-      // se reintenta una vez en silencio por si solo era un fallo de red momentáneo.
-      setTimeout(() => this._icon(idle), 3000);
-      if (auto && !this._retried) { this._retried = true; setTimeout(() => this.run(false), 4000); }
     } finally {
       this._busy = false;
-      if (auto) this._gateHide();
+      this._gateHide();
     }
   },
 };

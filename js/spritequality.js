@@ -117,7 +117,7 @@ const SpriteQuality = {
             return;
           }
           const orig = imgEl.dataset.srcOrig;
-          if (orig) imgEl.src = this._srcForTier(orig, 0, +imgEl.dataset.sqShift || 0);
+          if (orig) this._nset(imgEl, this._srcForTier(orig, 0, +imgEl.dataset.sqShift || 0));
         });
       }
     }
@@ -180,7 +180,7 @@ const SpriteQuality = {
       // _isFogSprite) — se fija una vez aquí y ya no vuelve a cambiar de
       // textura nunca, ni al cruzar fronteras de zoom ni al activar/
       // desactivar Resolución Adaptativa.
-      imgEl.src = lowResTileSrc(originalSrc);
+      this._nset(imgEl, lowResTileSrc(originalSrc));
       return;
     }
     // Un sprite que nace con la cámara alejada (p.ej. una loseta que vuelve
@@ -190,15 +190,15 @@ const SpriteQuality = {
     // en cuanto esté cargada y decodificada.
     const wanted = this._srcForTier(originalSrc, this.tier, +imgEl.dataset.sqShift || 0);
     if (this.tier !== 0 && !this._loaded.has(wanted)) {
-      imgEl.src = this._srcForTier(originalSrc, 0, +imgEl.dataset.sqShift || 0);
-      this._swap(imgEl, this.tier);
+      this._nset(imgEl, this._srcForTier(originalSrc, 0, +imgEl.dataset.sqShift || 0));
+      this._swap(imgEl, this.tier, true);
     } else {
-      imgEl.src = wanted;
+      this._nset(imgEl, wanted);
     }
     // Si la versión reducida no existe en disco, vuelve a la original en
     // vez de dejar el sprite roto/invisible.
     imgEl.addEventListener("error", () => {
-      if (imgEl.dataset.srcOrig && !imgEl.src.endsWith(imgEl.dataset.srcOrig)) imgEl.src = imgEl.dataset.srcOrig;
+      if (imgEl.dataset.srcOrig && !imgEl.src.endsWith(imgEl.dataset.srcOrig)) this._nset(imgEl, imgEl.dataset.srcOrig);
     });
     this._sprites.add(imgEl);
   },
@@ -265,7 +265,7 @@ const SpriteQuality = {
   // la propia demo, el cambio de golpe es el que menos se nota — así que
   // esta es la versión definitiva: sin fantasma, sin fundido, un solo
   // assignment de src.
-  _swap(imgEl, tier) {
+  _swap(imgEl, tier, noFade) {
     const orig = imgEl.dataset.srcOrig;
     if (!orig) return;
     const url = this._srcForTier(orig, tier, +imgEl.dataset.sqShift || 0);
@@ -283,8 +283,104 @@ const SpriteQuality = {
       // Por si mientras cargaba se cambió otra vez de nivel o de textura.
       if (this.tier !== tier) return;
       if (imgEl.dataset.srcOrig !== orig) return;
-      imgEl.src = url;
+      if (noFade || !this._canFade(imgEl)) { this._nset(imgEl, url); return; }
+      this._fadeTo(imgEl, url);
     });
+  },
+
+  // ---------- Fundido cruzado ----------
+  // Pedido explícito (segunda decisión de Jesús, tras ver el cambio seco en
+  // móvil/APK): "al alejar y acercar la cámara los sprites cambian de golpe,
+  // si hacemos un fade cruzado para que no se pierda la imagen ni haya
+  // parpadeos...". Coste real: SOLO los sprites que están en pantalla en ese
+  // instante (los de fuera de cámara cambian de golpe, no se ven) llevan un
+  // "fantasma" con la textura vieja encima durante ~240ms; la nueva ya está
+  // decodificada antes de asignarse, y debajo siempre hay un sprite opaco, así
+  // que nunca hay un fotograma vacío ni una bajada de opacidad en medio. Tope
+  // de fantasmas simultáneos para que un cambio de nivel con mil sprites a la
+  // vista no sume capas de más; los que sobren cambian de golpe.
+  crossfade: true,
+  FADE_MS: 240,
+  MAX_GHOSTS: 70,
+  _ghosts: 0,
+
+  _canFade(imgEl) {
+    if (!this.crossfade || this._ghosts >= this.MAX_GHOSTS) return false;
+    if (typeof PerfMode !== "undefined" && PerfMode.enabled) return false;
+    if (!imgEl.isConnected || !imgEl.parentElement || !imgEl.animate) return false;
+    if (imgEl.offsetParent !== imgEl.parentElement) return false; // sin padre posicionado no se puede superponer con seguridad
+    const r = imgEl.getBoundingClientRect();
+    if (!r.width || !r.height) return false;
+    return r.right > 0 && r.bottom > 0 && r.left < window.innerWidth && r.top < window.innerHeight;
+  },
+
+  _fadeTo(imgEl, url) {
+    const ghost = imgEl.cloneNode(false);
+    ghost.removeAttribute("id");
+    ghost.removeAttribute("data-src-orig");
+    ghost.setAttribute("aria-hidden", "true");
+    ghost.classList.add("sq-ghost");
+    ghost.decoding = "sync";
+    const st = ghost.style;
+    st.position = "absolute";
+    st.left = imgEl.offsetLeft + "px";
+    st.top = imgEl.offsetTop + "px";
+    st.width = imgEl.offsetWidth + "px";
+    st.height = imgEl.offsetHeight + "px";
+    st.margin = "0";
+    st.pointerEvents = "none";
+    st.zIndex = "";
+    this._ghosts++;
+    const drop = () => { this._ghosts = Math.max(0, this._ghosts - 1); ghost.remove(); };
+    const go = () => {
+      if (!imgEl.isConnected) return drop();
+      imgEl.parentElement.insertBefore(ghost, imgEl.nextSibling);
+      this._nset(imgEl, url); // la nueva ya está decodificada: debajo del fantasma
+      const a = ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: this.FADE_MS, easing: "ease-out" });
+      a.onfinish = drop;
+      a.oncancel = drop;
+    };
+    if (ghost.decode) ghost.decode().then(go, () => { this._nset(imgEl, url); drop(); });
+    else go();
+  },
+
+  // Carga y decodifica de antemano la versión de `tier` de todos los sprites
+  // registrados (la usa la pantalla de carga): al cruzar el umbral de zoom el
+  // cambio encuentra las texturas ya listas y no hay que esperar a nada.
+  preloadTier(tier) {
+    const urls = new Set();
+    this._sprites.forEach((im) => {
+      const o = im.dataset && im.dataset.srcOrig;
+      if (o) urls.add(this._srcForTier(o, tier, +im.dataset.sqShift || 0));
+    });
+    return Promise.all(Array.from(urls).map((u) => this._ready(u)));
+  },
+
+  // Asignación REAL de src (sin pasar por el gancho de abajo).
+  _nset(imgEl, v) {
+    _SQ_NATIVE_SRC.set.call(imgEl, v);
+  },
+
+  // Gancho para asignaciones sueltas: cualquier sitio del juego que haga
+  // `sprite.src = "assets/..."` (cambiar de pose, de fase, de estado) sobre un
+  // sprite ya registrado pasa por aquí y recibe la calidad que toque en vez
+  // de la textura grande tal cual — así los sprites que cambian de imagen
+  // (golpes, impactos, huevo, grulla...) no se saltan la resolución adaptativa.
+  _onSet(imgEl, v) {
+    const ds = imgEl.dataset;
+    if (!ds || ds.srcOrig === undefined || typeof v !== "string" || v.indexOf("assets/") < 0 || /_(midres|lowres)\.[a-z0-9]+(\?.*)?$/i.test(v) || imgEl.classList.contains("tile__fog")) {
+      return this._nset(imgEl, v);
+    }
+    ds.srcOrig = v;
+    const tier = this.enabled ? this.tier : 0;
+    const shift = +ds.sqShift || 0;
+    const wanted = this._srcForTier(v, tier, shift);
+    if (tier !== 0 && !this._loaded.has(wanted)) {
+      this._nset(imgEl, this._srcForTier(v, 0, shift));
+      this._swap(imgEl, tier, true);
+    } else {
+      this._nset(imgEl, wanted);
+    }
   },
 
   // url -> Promise<boolean>: carga + decodifica una vez y recuerda el
@@ -312,6 +408,19 @@ const SpriteQuality = {
     return p;
   },
 };
+
+// Gancho sobre HTMLImageElement.src (ver SpriteQuality._onSet): se instala una
+// sola vez al cargar el script, antes de que exista ningún sprite.
+const _SQ_NATIVE_SRC = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
+if (_SQ_NATIVE_SRC && _SQ_NATIVE_SRC.set && !HTMLImageElement.prototype.__sqHooked) {
+  Object.defineProperty(HTMLImageElement.prototype, "src", {
+    configurable: true,
+    enumerable: _SQ_NATIVE_SRC.enumerable,
+    get() { return _SQ_NATIVE_SRC.get.call(this); },
+    set(v) { SpriteQuality._onSet(this, v); },
+  });
+  HTMLImageElement.prototype.__sqHooked = true;
+}
 
 // Lee la preferencia guardada ANTES de que ninguna partida pueda arrancar
 // (register()/updateForScale() ya la consultan desde el primer sprite que

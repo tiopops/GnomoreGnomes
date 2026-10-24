@@ -207,6 +207,15 @@ const Fog = {
     // convierte a DOM las nubes de su entorno.
     this._container = container;
     this._deep = new Uint8Array(size * size).fill(1);
+    // Reserva de nubes ya construidas (y con su textura decodificada) hecha
+    // AQUÍ, durante la pantalla de carga: al revelar una zona, _enterDom solo
+    // tiene que engancharlas al DOM en vez de fabricar y decodificar decenas de
+    // <img> en pleno juego (era el tirón al descubrir zona). No cuentan como
+    // elementos del tablero hasta que _enterDom las usa.
+    this._pool = new Array(size * size);
+    for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) this._pool[r * size + c] = createFogEl(r, c, size);
+    const warm = this._pool[0];
+    if (warm && warm.decode) warm.decode().catch(() => {});
     if (typeof TerrainMap !== "undefined") TerrainMap.setAllFogDeep(true);
     // Modo rendimiento: el terreno de losetas sin explorar (y sin vecinas exploradas) no se pinta
     // debajo de la niebla (ver "tile--unexplored" en style.css; solo actúa con body.perf-mode).
@@ -386,7 +395,8 @@ const Fog = {
     const key = `${r},${c}`;
     let el = this._fogEls.get(key);
     if (!el) {
-      el = createFogEl(r, c, this.size);
+      el = (this._pool && this._pool[i]) || createFogEl(r, c, this.size);
+      if (this._pool) this._pool[i] = null;
       // La nube de canvas se mantiene dibujada hasta que la imagen DOM esté
       // cargada Y decodificada: si se quitaba antes, había uno o dos frames
       // sin nube (o con la textura a medias) = el parpadeo al descubrir zona.
@@ -411,7 +421,12 @@ const Fog = {
     if (!el._pend) return;
     el._pend = false;
     el.style.visibility = "";
-    if (typeof TerrainMap !== "undefined") TerrainMap.setFogDeep(r, c, false);
+    // La nube de canvas se quita DOS fotogramas después de mostrar la de DOM:
+    // la capa nueva necesita rasterizarse; quitarla antes dejaba un fotograma
+    // sin nube (el parpadeo al descubrir zona con la niebla animada).
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (typeof TerrainMap !== "undefined" && this._deep && !this._deep[r * this.size + c]) TerrainMap.setFogDeep(r, c, false);
+    }));
   },
 
   // Una loseta se acaba de revelar: todas las nubes a menos de FOG_DEEP_RADIUS
@@ -504,7 +519,15 @@ const Fog = {
     // opacidad) en vez de desaparecer de golpe — nivel Triple A / feedback
     // (regla de oro del proyecto): explorar debe sentirse como un
     // descubrimiento, no como un interruptor on/off.
-    fogEl.classList.add("tile__fog--revealed");
+    // Primero se le da su capa de GPU (will-change) y se deja que se rasterice;
+    // la animación de disipado solo arranca 2 fotogramas después. Si capa y
+    // animación nacían en el mismo fotograma, la nube parpadeaba al empezar a
+    // disiparse (sobre todo con muchas a la vez al revelar una zona grande).
+    fogEl.style.willChange = "transform, opacity";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      fogEl.style.willChange = "";
+      fogEl.classList.add("tile__fog--revealed");
+    }));
     // Al terminar la animación de disipado se saca del flujo de pintado por
     // completo (display:none) — ya es invisible (opacity:0 al final del
     // keyframe) pero sin esto seguiría "animando en reposo" para siempre sin

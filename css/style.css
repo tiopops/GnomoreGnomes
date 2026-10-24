@@ -12237,3 +12237,20 @@ body.gg-fog-anim-off .tile__fog--revealed {
 body.gg-lod-far .unit:not(.unit--exhausted):not(.unit--selected):not(.unit--doomed) .unit__flip,
 body.gg-lod-far .shop__sprite:not(.oracle__sprite),
 body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }
+
+/* Pantalla de actualización de la APK: aviso de versión nueva + botón ACTUALIZAR
+   (mismo marco irregular de la interfaz: contorno negro completo, sombra dura). */
+.au-ic { font-size: 3rem; color: #ffcf3d; filter: drop-shadow(3px 3px 0 #000); }
+.au-ic--warn { color: #ff7a59; }
+.au-text { font-weight: 800; font-size: .95rem; color: #f4f2f8; text-align: center; text-shadow: 2px 2px 0 #000; line-height: 1.3; }
+.au-text--err { font-size: .72rem; color: #ffb4a3; word-break: break-word; max-width: 100%; opacity: .9; }
+.au-ver { font-weight: 800; font-size: .9rem; color: #c9c3d6; text-shadow: 2px 2px 0 #000; }
+.au-ver b { color: #ffcf3d; font-weight: 900; }
+.au-btn { position: relative; isolation: isolate; border: none; background: none; padding: 14px 34px; margin-top: 8px; min-width: 200px; font-family: inherit; font-weight: 900; font-size: 1.05rem; letter-spacing: .1em; color: #14101c; cursor: pointer; filter: drop-shadow(4px 4px 0 rgba(0,0,0,.65)); }
+.au-btn::before, .au-btn::after { content: ""; position: absolute; z-index: -1; clip-path: polygon(3% 0, 100% 7%, 97% 100%, 0 93%); }
+.au-btn::before { inset: 0; background: #000; }
+.au-btn::after { inset: 3px; background: linear-gradient(180deg, #ffe07a, #ffcf3d 55%, #f2a81c); }
+.au-btn--grey { color: #fff; }
+.au-btn--grey::after { background: #2b2733; }
+.au-btn:active { transform: translate(2px, 2px); filter: drop-shadow(2px 2px 0 rgba(0,0,0,.65)); }
+.au-btn span { position: relative; text-shadow: none; }

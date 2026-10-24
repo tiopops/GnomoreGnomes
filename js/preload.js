@@ -158,6 +158,8 @@ const Preload = {
     const left = () => Math.max(0, 5000 - (Date.now() - t0));
     const cap = (pr) => Promise.race([pr, new Promise((r) => setTimeout(r, left()))]);
     try { if (document.fonts && document.fonts.ready) await cap(document.fonts.ready); } catch (e) {}
+    // Texturas de calidad media de todos los sprites (resolución adaptativa) listas de antemano.
+    if (typeof SpriteQuality !== "undefined" && SpriteQuality.enabled) { try { await cap(SpriteQuality.preloadTier(1)); } catch (e) {} }
     // Dos pasadas: la segunda recoge lo que la primera pasada haya hecho aparecer.
     for (let pass = 0; pass < 2; pass++) {
       const byUrl = new Map();
