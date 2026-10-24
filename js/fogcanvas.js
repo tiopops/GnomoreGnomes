@@ -56,6 +56,7 @@ const FogCanvas = {
   IDLE_MS: 8000, // mismo ciclo que fog-idle-drift
   DISSIPATE_MS: 1200, // mismo tiempo que fog-dissipate
   PEEK_ON: true,
+  BREATHE: false, // respiración de las nubes del borde: apagada (era lo que más pesaba; ver version.js)
   MAX_ANIMATED: 28,
 
   // ---------- Ciclo de vida ----------
@@ -148,7 +149,7 @@ const FogCanvas = {
     const A = this._anim;
     A.fill(0);
     const F = typeof Fog !== "undefined" ? Fog : null;
-    if (!F || !F.revealedGrid || !F.animEnabled) return;
+    if (!F || !F.revealedGrid || !F.animEnabled || !this.BREATHE) return;
     let count = 0;
     for (let r = 0; r < n && count < this.MAX_ANIMATED; r++) {
       for (let c = 0; c < n && count < this.MAX_ANIMATED; c++) {
@@ -289,7 +290,7 @@ const FogCanvas = {
     this._fw = Math.round(TILE_WIDTH * FOG_OVERHANG);
     this._fh = Math.round((this._fw * FOG_NATIVE_HEIGHT) / FOG_NATIVE_WIDTH);
     const mobile = this._mobile();
-    const animOn = F.animEnabled && !mobile;
+    const animOn = this.BREATHE && F.animEnabled && !mobile;
     let drawn = 0;
 
     if (this._liftA > 0.003) {
@@ -449,6 +450,7 @@ const FogCanvas = {
       const cand = [];
       for (let r = Math.max(0, e.row - 3); r <= Math.min(n - 1, e.row + 3); r++) {
         for (let c = Math.max(0, e.col - 3); c <= Math.min(n - 1, e.col + 3); c++) {
+          if (r + c < de) continue; // la niebla de DETRÁS (fila+columna menor) nunca tapa al objeto
           if (F.revealedGrid[r][c] && !this._dis.has(r * n + c)) continue;
           const ctr = getTileCenter(r, c, n);
           const hw = this._fw * 0.85, hh = this._fh * 0.85;
@@ -479,12 +481,18 @@ const FogCanvas = {
       if (!any) continue;
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.globalCompositeOperation = "destination-in";
-      g.drawImage(this._baseMask(e.sp, e.flip), 0, 0, W, H);
+      // Degradado vertical (sin silueta del sprite: así no hay recortes ni bordes sueltos): la parte
+      // alta del objeto queda libre y la niebla de delante sube suavemente por su base.
+      const gr = g.createLinearGradient(0, 0, 0, H);
+      gr.addColorStop(0, "rgba(0,0,0,0)");
+      gr.addColorStop(0.5, "rgba(0,0,0,0)");
+      gr.addColorStop(0.82, "rgba(0,0,0,1)");
+      gr.addColorStop(1, "rgba(0,0,0,1)");
+      g.fillStyle = gr;
+      g.fillRect(0, 0, W, H);
       g.globalCompositeOperation = "source-over";
       octx.globalAlpha = 1;
-      if (el.classList.contains("gg-remembered") && "filter" in octx) octx.filter = "saturate(0.25) brightness(0.65)";
       octx.drawImage(off, 0, 0, W, H, R.x, R.y, R.w, R.h);
-      if ("filter" in octx) octx.filter = "none";
       count++;
     }
     this._geomDirty = false;

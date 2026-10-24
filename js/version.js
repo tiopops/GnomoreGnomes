@@ -12,10 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001562";
+const GG_VERSION = "v.001564";
 
 const GG_CHANGELOG = [
-  { v: "v.001562", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001564", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Rendimiento: apagada la respiración (movimiento lento) de las nubes del borde de la niebla en escritorio; era lo que más fotogramas costaba y apenas se notaba",
+    "Niebla: la niebla que queda DETRÁS de un objeto ya no lo tapa, y la de delante sube por su base con un degradado suave, sin recortes con la silueta del sprite ni contornos sueltos",
     "Niebla: al revelar una zona, los objetos del mapa aparecen al instante (antes la zona salía vacía y los objetos 'saltaban' un segundo después)",
     "Niebla: las bases de los objetos junto a la niebla se hunden en ella sin recortes ni bordes sueltos (antes se veían siluetas y contornos oscuros traspasando la niebla)",
     "Niebla: ya no tapa la interfaz de los objetos (indicador de población del obelisco, barras de vida, insignias, avisos y marcadores): la niebla va por debajo de todo eso, y solo la base de los objetos con nubes delante sigue quedando enterrada",
