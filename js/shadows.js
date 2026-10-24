@@ -93,7 +93,19 @@ const Shadows = {
     if (!spriteEl.complete) spriteEl.addEventListener("load", sync, { once: true });
 
     const observer = new MutationObserver(() => {
-      if (shadowEl.src !== spriteEl.src) shadowEl.src = spriteEl.src;
+      if (shadowEl.src !== spriteEl.src) {
+        // La sombra cambia de textura SOLO cuando la nueva ya está decodificada
+        // (como el sprite en SpriteQuality): asignarla de golpe dejaba la sombra
+        // en blanco un fotograma al cambiar de calidad = la "sombra que salta".
+        const want = spriteEl.src;
+        if (shadowEl._swapWant === want) { sync(); return; }
+        shadowEl._swapWant = want;
+        const apply = () => { if (shadowEl._swapWant === want) { shadowEl._swapWant = null; if (shadowEl.src !== spriteEl.src) shadowEl.src = spriteEl.src; sync(); } };
+        const im = new Image();
+        im.src = want;
+        if (im.decode) im.decode().then(apply, apply);
+        else apply();
+      }
       sync();
     });
     observer.observe(spriteEl, { attributes: true, attributeFilter: ["src", "style"] });

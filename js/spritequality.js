@@ -340,7 +340,13 @@ const SpriteQuality = {
       // cada animación del sprite real a la del fantasma.
       let real = [];
       try { real = imgEl.getAnimations ? imgEl.getAnimations() : []; } catch (e) {}
-      imgEl.parentElement.insertBefore(ghost, imgEl.nextSibling);
+      // La sombra proyectada (Shadows.attach) tiene que seguir siendo el hermano
+      // INMEDIATO del sprite real (el CSS que la sincroniza con el salto y la
+      // respiración usa ese selector): el fantasma va detrás de ella, nunca entre
+      // las dos — meterlo en medio era lo que hacía saltar la sombra.
+      let after = imgEl.nextSibling;
+      if (after && after.classList && after.classList.contains("gg-cast-shadow")) after = after.nextSibling;
+      imgEl.parentElement.insertBefore(ghost, after);
       try {
         ghost.getAnimations().forEach((ga) => {
           const ra = real.find((x) => x.animationName && x.animationName === ga.animationName);
