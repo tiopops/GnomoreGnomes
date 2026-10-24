@@ -41,6 +41,17 @@ jobs:
         run: |
           cd mobile/www
           zip -qr ../bundle.zip .
+          cd ..
+          # El plugin nativo (7.x) EXIGE el SHA-256 del zip al descargar: sin el, falla al instante
+          # con "Failed to download". Se publica dentro del version.json de la release.
+          python3 - <<'PY'
+          import hashlib, json
+          h = hashlib.sha256(open("bundle.zip", "rb").read()).hexdigest()
+          v = json.load(open("www/version.json"))
+          v["checksum"] = h
+          json.dump(v, open("release-version.json", "w"), ensure_ascii=False)
+          print("sha256", h)
+          PY
 
       - name: Construir la APK
         run: |
@@ -58,5 +69,6 @@ jobs:
           gh release view mobile-latest >/dev/null 2>&1 || gh release create mobile-latest --prerelease --title "Android (ultima version)" --notes "APK y paquete de actualizacion. Se regenera solo en cada push."
           cp mobile/android/app/build/outputs/apk/release/app-release.apk GnomoreGnomes.apk
           gh release upload mobile-latest mobile/bundle.zip --clobber
-          gh release upload mobile-latest mobile/www/version.json --clobber
+          mkdir -p rel && cp mobile/release-version.json rel/version.json
+          gh release upload mobile-latest rel/version.json --clobber
           gh release upload mobile-latest GnomoreGnomes.apk --clobber

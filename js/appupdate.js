@@ -335,7 +335,7 @@ const AppUpdate = {
           try { h = await up.addListener("download", (e) => this._gateProgress(e && e.percent)); } catch (e) {}
           let bundle;
           try {
-            bundle = await up.download({ url: this.RELEASE_BASE + "bundle.zip", version: remote.version });
+            bundle = await up.download({ url: this.RELEASE_BASE + "bundle.zip", version: remote.version, checksum: remote.checksum || "" });
           } finally {
             try { if (h && h.remove) h.remove(); } catch (e) {}
           }

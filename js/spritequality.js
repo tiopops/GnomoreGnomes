@@ -219,7 +219,10 @@ const SpriteQuality = {
     const target = this._aboveMid ? 0 : 1;
     clearTimeout(this._debounce);
     if (target === this.tier) return;
-    this._debounce = setTimeout(() => this._setTierBatched(target), 350);
+    // Al ACERCAR (subir calidad) se actúa casi enseguida: la versión media
+    // ampliada se ve borrosa con un contorno oscuro grueso, y verla 350ms más
+    // era justo el "bum" visible. Al alejar se mantiene la espera larga.
+    this._debounce = setTimeout(() => this._setTierBatched(target), target < this.tier ? 90 : 350);
   },
 
   _setTierBatched(tier) {
@@ -313,7 +316,7 @@ const SpriteQuality = {
   // de fantasmas simultáneos para que un cambio de nivel con mil sprites a la
   // vista no sume capas de más; los que sobren cambian de golpe.
   crossfade: true,
-  FADE_MS: 240,
+  FADE_MS: 140,
   MAX_GHOSTS: 70,
   _ghosts: 0,
 
