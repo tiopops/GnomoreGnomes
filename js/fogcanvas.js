@@ -51,6 +51,7 @@ const FogCanvas = {
   _fw: 0,
   _fh: 0,
   _off: null,
+  _dynT: 0,
 
   ALPHA: 0.96,
   IDLE_MS: 8000, // mismo ciclo que fog-idle-drift
@@ -202,12 +203,18 @@ const FogCanvas = {
     if (F.revealedGrid[r][c]) {
       const t0 = this._dis.get(idx);
       if (t0 === undefined) return null;
-      const t = (now - t0) / this.DISSIPATE_MS;
+      // Calidad baja: un simple fundido (0,7 s), sin crecer ni subir; alta calidad: se disipa con la animación completa.
+      const lq = !F.animEnabled;
+      const t = (now - t0) / (lq ? 700 : this.DISSIPATE_MS);
       if (t >= 1) { this._dis.delete(idx); return null; }
-      const e = this._ease(t);
-      a = this.ALPHA * (1 - e);
-      sc = 1 + (mobile ? 0.4 : 0.6) * e;
-      dy = -(mobile ? 0.22 : 0.24) * fh * e;
+      if (lq) {
+        a = this.ALPHA * (1 - (1 - (1 - t) * (1 - t)));
+      } else {
+        const e = this._ease(t);
+        a = this.ALPHA * (1 - e);
+        sc = 1 + (mobile ? 0.4 : 0.6) * e;
+        dy = -(mobile ? 0.22 : 0.24) * fh * e;
+      }
       this._busy = true;
     } else if (animOn && this._anim[idx]) {
       // fog-idle-drift: 0%,100% reposo; 50% translate(-50%,-42%) scale(1.09) rotate(1.6deg); ease-in-out
@@ -322,6 +329,7 @@ const FogCanvas = {
     }
     this._stats.drawn = drawn;
     if (this._busy || this._dis.size) this.requestDraw();
+    else if (this._edges.some((e) => e.dyn) && !this._dynT) this._dynT = setTimeout(() => { this._dynT = 0; this.requestDraw(); }, 120); // unidades/gnomos junto a la niebla: repasa su silueta
   },
 
   // ---------- Objetos enterrados / que asoman ----------
@@ -336,6 +344,16 @@ const FogCanvas = {
     if (typeof Altar !== "undefined") add("altar", Altar.list);
     if (typeof Bushes !== "undefined") add("bush", Bushes.list);
     if (typeof Hierbajos !== "undefined") add("hier", Hierbajos.list);
+    if (typeof Mushrooms !== "undefined") add("mush", Mushrooms.list.filter((m) => !m.heldBy));
+    if (typeof Drums !== "undefined") add("drum", Drums.list);
+    if (typeof Bumpers !== "undefined") add("bumper", Bumpers.list);
+    if (typeof TotemVision !== "undefined") add("totem", TotemVision.list);
+    if (typeof BloodSplat !== "undefined") add("blood", BloodSplat.list);
+    if (typeof Egg !== "undefined" && Egg.egg && !Egg.egg.exploded) add("egg", [Egg.egg]);
+    if (typeof Backpack !== "undefined") { add("item", Backpack.placedItems); add("trap", Backpack.traps); }
+    // Móviles (se vuelven a medir en cada repintado): unidades y gnomos
+    if (typeof Units !== "undefined") add("unit", Units.list);
+    if (typeof Gnome !== "undefined") add("gnome", Gnome.list);
     return out;
   },
 
@@ -357,23 +375,21 @@ const FogCanvas = {
           if (o.row < 0 || o.col < 0 || o.row >= n || o.col >= n) continue;
           if (!F.revealedGrid[o.row][o.col]) continue;
           let edge = false;
-          for (let dr = -3; dr <= 3 && !edge; dr++) {
+          for (let dr = -4; dr <= 4 && !edge; dr++) {
             const rr = o.row + dr;
             if (rr < 0 || rr >= n) continue;
-            for (let dc = -3; dc <= 3; dc++) {
+            for (let dc = -4; dc <= 4; dc++) {
               const cc = o.col + dc;
               if (cc >= 0 && cc < n && !F.revealedGrid[rr][cc]) { edge = true; break; }
             }
           }
-          if (edge) next.push({ el: o.el, row: o.row, col: o.col, kind, rect: null, src: "", flip: false });
+          if (edge) next.push({ el: o.el, row: o.row, col: o.col, kind, rect: null, src: "", flip: false, dyn: kind === "unit" || kind === "gnome" });
         }
       }
     }
     const nextSet = new Set(next.map((e) => e.el));
     prev.forEach((el) => { if (!nextSet.has(el)) el.classList.remove("gg-peek"); });
     this._edges = next;
-    // Medir tras congelar la respiración (la silueta debe coincidir con el sprite).
-    next.forEach((e) => { if (!e.el.classList.contains("gg-peek")) e.el.classList.add("gg-peek"); });
     this._geomDirty = true;
   },
 
@@ -473,17 +489,31 @@ const FogCanvas = {
     }
     g.globalAlpha = 1;
     if (!any) return false;
-    if (!sprite && e.sp && e.rect) {
-      // La sombra va en el suelo, DETRÁS del objeto: la niebla sobre la sombra no debe tapar al objeto.
-      const S = e.rect, d = 1.5 / scale;
+    // Se recortan (destination-out) los objetos que están DELANTE del que se está pintando y se solapan con
+    // la caja: la niebla de este parche nunca debe tapar a lo que tiene delante (en la misma fila+columna
+    // gana el de mayor fila). En modo sombra también se recorta el propio objeto (la sombra va detrás).
+    {
+      const d = 1.5 / scale;
       g.setTransform(k, 0, 0, k, -B.x * k, -B.y * k);
       g.globalCompositeOperation = "destination-out";
-      for (const [ox, oy] of [[0, 0], [d, 0], [-d, 0], [0, d], [0, -d]]) {
-        g.save();
-        g.translate(S.x + S.w / 2 + ox, S.y + oy);
-        if (e.flip) g.scale(-1, 1);
-        g.drawImage(e.sp, -S.w / 2, 0, S.w, S.h);
-        g.restore();
+      const cut = (S, sp, flip) => {
+        for (const [ox, oy] of [[0, 0], [d, 0], [-d, 0], [0, d], [0, -d]]) {
+          g.save();
+          g.translate(S.x + S.w / 2 + ox, S.y + oy);
+          if (flip) g.scale(-1, 1);
+          g.drawImage(sp, -S.w / 2, 0, S.w, S.h);
+          g.restore();
+        }
+      };
+      if (!sprite && e.sp && e.rect) cut(e.rect, e.sp, e.flip);
+      for (const o of this._edges) {
+        if (o === e || !o.rect || !o.sp || !o.sp.complete) continue;
+        if (o.el.classList.contains("unit--fog-hidden") || o.el.classList.contains("gg-viewport-culled")) continue;
+        const dO = o.row + o.col;
+        if (dO < de || (dO === de && o.row <= e.row)) continue; // detrás o a la par: lo tapa la niebla igual
+        const S = o.rect;
+        if (S.x + S.w < B.x || S.x > B.x + B.w || S.y + S.h < B.y || S.y > B.y + B.h) continue;
+        cut(S, o.sp, o.flip);
       }
     }
     g.setTransform(1, 0, 0, 1, 0, 0);
@@ -528,10 +558,14 @@ const FogCanvas = {
     const vpr = BoardView.viewportEl.getBoundingClientRect();
     let count = 0;
     for (const e of this._edges) {
+      if (!e.el.isConnected) continue;
+      if (this._geomDirty || !e.rect || e.dyn) this._measure(e, panX, panY, scale);
+    }
+    for (const e of this._edges) {
       const el = e.el;
       if (!el.isConnected) { this._edgeDirty = true; continue; }
       if (el.classList.contains("unit--fog-hidden") || el.classList.contains("gg-viewport-culled")) continue;
-      if (this._geomDirty || !e.rect) this._measure(e, panX, panY, scale);
+      if (this._geomDirty || !e.rect || e.dyn) this._measure(e, panX, panY, scale);
       if (!e.rect) continue;
       if (!e.sp.complete || (e.sp.currentSrc || e.sp.src) !== e.src) { this._measure(e, panX, panY, scale); if (!e.rect) continue; }
       const R = e.rect;
