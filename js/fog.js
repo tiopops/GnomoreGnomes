@@ -523,6 +523,7 @@ const Fog = {
     // la animación de disipado solo arranca 2 fotogramas después. Si capa y
     // animación nacían en el mismo fotograma, la nube parpadeaba al empezar a
     // disiparse (sobre todo con muchas a la vez al revelar una zona grande).
+    this._watchEntityReveal();
     fogEl.style.willChange = "transform, opacity";
     requestAnimationFrame(() => requestAnimationFrame(() => {
       fogEl.style.willChange = "";
@@ -539,6 +540,35 @@ const Fog = {
       },
       { once: true }
     );
+  },
+
+  // Fallo de revelado: al revelar una loseta, applyVisibility quita
+  // unit--fog-hidden de árboles/rocas/unidades EN EL ACTO, mientras su nube
+  // aún está opaca (se disipa 1.2 s) -> aparecían de golpe ("pop"), y en
+  // móvil (perf-mode usa display:none) sin ningún fundido. Durante la
+  // ventana de un revelado se observan los cambios de clase y a cada
+  // elemento que deja de estar oculto se le da unit--fog-in: fundido
+  // retrasado hasta que la nube ya se ha aclarado (ver style.css).
+  _watchEntityReveal() {
+    clearTimeout(this._werT);
+    this._werT = setTimeout(() => {
+      if (this._wer) { this._wer.disconnect(); this._wer = null; }
+    }, 1700);
+    if (this._wer || typeof MutationObserver === "undefined") return;
+    this._wer = new MutationObserver((muts) => {
+      for (const m of muts) {
+        const el = m.target;
+        if (!el.classList || el.classList.contains("unit--fog-in")) continue;
+        if ((m.oldValue || "").indexOf("unit--fog-hidden") < 0) continue;
+        if (el.classList.contains("unit--fog-hidden")) continue;
+        el.classList.add("unit--fog-in");
+        el.addEventListener("animationend", (e) => {
+          if (e.target === el) el.classList.remove("unit--fog-in");
+        }, { once: true });
+        setTimeout(() => el.classList.remove("unit--fog-in"), 1500);
+      }
+    });
+    this._wer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["class"], attributeOldValue: true });
   },
 
   // Revelado FIJO al empezar la partida — ver FOG_INITIAL_RADIUS arriba.

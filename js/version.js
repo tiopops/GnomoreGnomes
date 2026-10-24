@@ -12,10 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001552";
+const GG_VERSION = "v.001554";
 
 const GG_CHANGELOG = [
-  { v: "v.001552", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001554", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Mando: el icono de acción (pico, hacha, mano, bandera, puño...) ahora es más grande y se dibuja sobre el propio sprite (árbol, roca, gnomo, tótem...) en vez de sobre la loseta, y se ignoran los cursores genéricos para que nunca salga una flecha por error",
+    "Móvil: las sombras gigantes que no correspondían a los sprites estaban causadas por sprites que nacían ocultos (su sombra se quedaba sin ancho y se dibujaba a tamaño natural); ahora la sombra se oculta hasta ajustarse y se corrige sola en cuanto el sprite tiene tamaño",
+    "Niebla: al revelarse, árboles, rocas, unidades y demás ya no aparecen de golpe sobre su nube opaca (ni sin fundido en móvil): se desvanecen hacia dentro cuando la nube ya se ha aclarado",
     "Mando: la leyenda muestra X = Mochila también sin unidad seleccionada y con el menú de la base abierto (y Acciones sin selección)",
     "Mando: la cruceta perdona mucho más las diagonales: ventana de 170 ms para pulsar los dos botones (arriba+derecha...) y, si el segundo llega tarde (hasta 260 ms), se deshace el movimiento recto y se hace la diagonal; un toque corto sigue moviendo; al soltar un solo botón de una diagonal no se hace el movimiento sobrante",
     "Mando: X abre directamente la Mochila (y sale en la leyenda como \"Mochila\"); el menú de Acciones pasa a L3 y \"Mi base\" (R3) pulsado otra vez centra la cámara en la unidad seleccionada (sustituye a \"Centrar cámara\"). Si tenías botones personalizados, X/L3/R3 toman los nuevos valores",

@@ -1875,6 +1875,10 @@ body.team-markers--visible .unit__team-marker {
   display: none;
 }
 
+/* Una sombra sin ancho ni proporción calculados (sprite oculto/recortado al crearse) se pintaría a su
+   tamaño natural, gigante: oculta hasta que Shadows._syncShape la deja lista (data-ok). */
+.gg-cast-shadow:not([data-ok]) { visibility: hidden; }
+
 /* Golpear al gnomo mientras se lleva cogido (ver Gnome.hit) — retroalimentación
    en QUIEN GOLPEA, no solo en el gnomo (que ya temblaba con gnome-attach--hit):
    un puñetazo corto que sustituye a la respiración mientras dura, mismo patrón
@@ -12262,10 +12266,16 @@ body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }
 .au-btn span { position: relative; text-shadow: none; }
 
 /* Icono de acción (pico/hacha/mano/bandera...) del cursor del mando: sobre todos los sprites, sin difuminados. */
-.gp-actionicon{position:fixed;z-index:99985;width:44px;height:44px;margin:-22px 0 0 -22px;pointer-events:none;display:none;image-rendering:auto;filter:drop-shadow(2px 2px 0 #000);animation:gp-actionicon-bob .9s ease-in-out infinite}
+.gp-actionicon{position:fixed;z-index:99985;width:56px;height:56px;margin:-28px 0 0 -28px;pointer-events:none;display:none;image-rendering:auto;filter:drop-shadow(2px 2px 0 #000);animation:gp-actionicon-bob .9s ease-in-out infinite}
 @keyframes gp-actionicon-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 
 /* Pantalla de actualización: todo el texto centrado (el espaciado de letras añade un hueco a la derecha: se compensa). */
 .au-text, .au-ver, .au-pct { width: 100%; text-align: center; }
 .au-btn span { display: block; text-align: center; padding-left: .1em; }
 .au-btn { display: block; text-align: center; }
+
+/* Revelado de niebla: la entidad aparece cuando su nube ya se ha aclarado
+   (ver Fog._watchEntityReveal). backwards = invisible durante el retraso. */
+.unit--fog-in { animation: fog-entity-in 0.55s ease-out 0.5s backwards; }
+@keyframes fog-entity-in { from { opacity: 0; } to { opacity: 1; } }
+/* Sombras sin ajustar todavía (ver js/shadows.js): ocultas, no a tamaño natural. */

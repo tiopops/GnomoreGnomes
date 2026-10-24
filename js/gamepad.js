@@ -1326,8 +1326,8 @@ const GamepadCtl = {
       const { row, col } = this._tile;
       for (const t of this._tileTargets(row, col)) {
         const c = getComputedStyle(t).cursor || "";
-        const m = /url\(["']?([^"')]+)["']?\)/.exec(c);
-        if (m) { url = m[1]; break; }
+        const m = /url\(["']?((?:\.\.\/|https?:|file:|\/|assets\/)[^"')]+)["']?\)/.exec(c);
+        if (m && !/^data:/i.test(m[1])) { url = m[1]; break; }
       }
     } catch (e) {}
     if (!url) { hide(); return; }
@@ -1341,8 +1341,25 @@ const GamepadCtl = {
     }
     if (el.getAttribute("src") !== url) el.setAttribute("src", url);
     const p = this._tileClient(this._tile.row, this._tile.col, false);
-    el.style.left = Math.round(p.x) + "px";
-    el.style.top = Math.round(p.y - 34 * Math.max(0.7, BoardView.scale)) + "px";
+    // Sobre el propio sprite (árbol, roca, gnomo, tótem...): centrado en su parte alta.
+    let x = p.x, y = p.y - 34 * Math.max(0.7, BoardView.scale);
+    try {
+      const { row, col } = this._tile;
+      let sp = null;
+      const at = (list) => (list || []).find((o) => o && o.row === row && o.col === col && o.el);
+      for (const n of ["Resources", "Gnome", "Mushrooms", "Villages", "Shops", "Obelisks", "Oracle", "Altar"]) {
+        let mod = null;
+        try { mod = eval(n); } catch (e) {}
+        const o = mod && at(mod.list);
+        if (o) { sp = o.el; break; }
+      }
+      const r = sp && sp.getBoundingClientRect();
+      if (r && r.width > 4 && r.height > 4) { x = r.left + r.width / 2; y = r.top + Math.min(r.height * 0.3, 60); }
+    } catch (e) {}
+    x = Math.max(30, Math.min(innerWidth - 30, x));
+    y = Math.max(30, Math.min(innerHeight - 90, y));
+    el.style.left = Math.round(x) + "px";
+    el.style.top = Math.round(y) + "px";
     el.style.display = "block";
   },
 

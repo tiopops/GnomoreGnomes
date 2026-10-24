@@ -109,8 +109,30 @@ const Shadows = {
       sync();
     });
     observer.observe(spriteEl, { attributes: true, attributeFilter: ["src", "style"] });
+    // Sprites que nacen ocultos (recorte fuera de pantalla, display:none, contenedor aún sin
+    // maquetar) no tienen ancho al crearse: la sombra se quedaba SIN ancho y se pintaba a su tamaño
+    // natural (hasta 1266 px) = las sombras "gigantes que no corresponden al sprite". Un
+    // ResizeObserver compartido la ajusta en cuanto el sprite tiene tamaño de verdad.
+    this._watch(spriteEl, shadowEl);
 
     return shadowEl;
+  },
+
+  _watch(spriteEl, shadowEl) {
+    if (typeof ResizeObserver === "undefined") return;
+    if (!this._ro) {
+      this._targets = new WeakMap();
+      this._ro = new ResizeObserver((entries) => {
+        for (const en of entries) {
+          const sh = this._targets.get(en.target);
+          if (!sh) continue;
+          if (!en.target.isConnected || !sh.isConnected) { this._ro.unobserve(en.target); this._targets.delete(en.target); continue; }
+          if (en.contentRect.width > 0 && !sh.dataset.ok) this._syncShape(sh, en.target);
+        }
+      });
+    }
+    this._targets.set(spriteEl, shadowEl);
+    this._ro.observe(spriteEl);
   },
 
   // BUG encontrado al probar con los tótems (muy altos y estrechos,
@@ -148,6 +170,7 @@ const Shadows = {
     const naturalW = spriteEl.naturalWidth;
     const naturalH = spriteEl.naturalHeight;
     if (!naturalW || !naturalH) return;
+    shadowEl.dataset.ok = "1"; // ya tiene ancho y proporción: puede verse (hasta entonces va oculta, ver style.css)
     const renderedHeight = (widthPx / naturalW) * naturalH;
     const scaleY = Math.min(this._BASE_SCALE_Y, this._TARGET_SQUASHED_HEIGHT / renderedHeight);
     shadowEl.style.setProperty("--gg-shadow-scale-y", scaleY.toFixed(3));
