@@ -16,6 +16,24 @@
 <link rel="stylesheet" href="assets/fonts/phosphor/bold.css">
 <link rel="stylesheet" href="assets/fonts/phosphor/fill.css">
 <script>
+  // APK (Capacitor Updater): avisa de que la versión descargada ha arrancado LO ANTES
+  // POSIBLE. Si el aviso llega tarde (el móvil tarda en cargar todos los scripts), el
+  // plugin da por mala la versión nueva y vuelve a la antigua: parecía que "no se
+  // actualizaba nunca". Va al principio, antes de cargar nada pesado.
+  (function () {
+    var n = 0;
+    (function ping() {
+      try {
+        var C = window.Capacitor;
+        var up = C && C.Plugins && C.Plugins.CapacitorUpdater;
+        if (up && up.notifyAppReady) { up.notifyAppReady(); return; }
+        if (!C || !C.isNativePlatform || !C.isNativePlatform()) return;
+      } catch (e) {}
+      if (++n < 40) setTimeout(ping, 100);
+    })();
+  })();
+</script>
+<script>
   // Pedido explícito: "en la interfaz del smartphone, a veces tengo que
   // hacer doble clic para seleccionar unidades o acciones...debe ser de
   // una" — bug documentado de Safari/Chrome en iOS: cualquier elemento con
@@ -206,7 +224,7 @@
   <script src="js/tutorial-texts.js?v=1793400001"></script>
   <script src="js/tutorial-levels.js?v=1793400001"></script>
   <script src="js/tutorial-pad.js?v=1793400001"></script>
-  <script src="js/version.js?v=1793400002"></script>
+  <script src="js/version.js?v=1793400003"></script>
   <script src="js/menu.js?v=1793200002"></script>
   <script src="js/appupdate.js?v=1793300008"></script>
   <script src="js/assetlist.js?v=1793000090"></script>

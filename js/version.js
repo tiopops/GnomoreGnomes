@@ -7,9 +7,12 @@
    MANTENIMIENTO: con cada mejora, contenido o corrección, subir GG_VERSION y
    añadir arriba una entrada (o ampliar la actual) con lo más relevante. */
 
-const GG_VERSION = "v.001536";
+const GG_VERSION = "v.001537";
 
 const GG_CHANGELOG = [
+  { v: "v.001537", date: "24/10/2026", title: "APK", items: [
+    "Actualización de la APK: el aviso de arranque correcto se envía al principio de la carga (antes la app volvía a la versión antigua si tardaba en cargar)"
+  ] },
   { v: "v.001536", date: "23/10/2026", title: "Niebla inicial", items: [
     "La zona alrededor de tu Obelisco empieza ya despejada: la niebla inicial no se disipa, nunca llega a verse"
   ] },
