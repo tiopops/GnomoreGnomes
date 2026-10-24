@@ -275,7 +275,7 @@ const GamepadCtl = {
     // Probador (pestaña Mando): solo funciona con el botón TEST activado.
     if (this._test) {
       this._paintTester(down, pad);
-      if (down[8] && down[9]) this._setTest(false);
+      this._exitHold(down[9], now);
       this._prev = down;
       this._rep.key = "";
       this._ringEl && this._ringEl.classList.remove("gp-focus--on");
@@ -1490,7 +1490,7 @@ const GamepadCtl = {
         <button type="button" class="p5-banner p5-banner--action gp-rescan" style="--p5-tone:#2b3a52"><span class="p5-banner__label"><i class="ph ph-arrows-clockwise"></i> Buscar mando</span></button>
         <button type="button" class="p5-banner p5-banner--action gp-testbtn${this._test ? " gp-testbtn--on" : ""}" style="--p5-tone:${this._test ? "#1f6b34" : "#2b3a52"}"><span class="p5-banner__label"><i class="ph-fill ph-${this._test ? "stop" : "play"}"></i> ${this._test ? "Salir del test" : "Test"}</span></button>
       </div>
-      ${this._test ? '<div class="gp-note gp-note--test">Modo test: pulsa los botones del mando para ver cómo se iluminan. Pulsa SELECT y START a la vez para salir.</div>' : ""}
+      ${this._test ? '<div class="gp-note gp-note--test">Modo test: pulsa los botones del mando para ver cómo se iluminan. Mantén START pulsado 3 segundos para salir.</div>' : ""}
       <button type="button" class="p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle gp-hintsbtn" style="--p5-tone:#2b2733">
         <span class="settings-panel__option-main"><i class="ph ph-question settings-panel__option-icon"></i><span class="p5-banner__label">Ayudas del mando</span></span>
         <span class="settings-toggle" data-checked="${this.hints}"><i class="ph ph-check settings-toggle__check"></i></span>
@@ -1521,7 +1521,38 @@ const GamepadCtl = {
     );
     pane.querySelector(".gp-reset").addEventListener("click", () => { if (typeof SFX !== "undefined") SFX.click(); this._listening = null; this.resetMap(); });
   },
+  // Salir del test: START mantenido 3 s, con un indicador junto al mando.
+  _exitHold(on, now) {
+    const HOLD = 3000;
+    let el = this._exitEl;
+    if (!on) {
+      this._exitT0 = 0;
+      if (el) el.style.display = "none";
+      return;
+    }
+    if (!this._exitT0) this._exitT0 = now;
+    const left = HOLD - (now - this._exitT0);
+    if (left <= 0) { this._exitT0 = 0; if (el) el.style.display = "none"; this._setTest(false); return; }
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "gp-exithold";
+      el.innerHTML = '<div class="gp-exithold__ring"><span class="gp-exithold__n"></span></div><div class="gp-exithold__t">Mantén START para salir</div>';
+      document.body.appendChild(el);
+      this._exitEl = el;
+    }
+    const svg = this._pane && this._pane.querySelector(".gp-tester");
+    const r = svg && svg.isConnected ? svg.getBoundingClientRect() : null;
+    if (r && r.width) {
+      el.style.left = Math.round(Math.min(innerWidth - 110, r.right + 12)) + "px";
+      el.style.top = Math.round(r.top + r.height / 2 - 45) + "px";
+    } else { el.style.left = "auto"; el.style.right = "20px"; el.style.top = "40%"; }
+    el.style.display = "flex";
+    el.firstChild.style.setProperty("--p", (((now - this._exitT0) / HOLD) * 360).toFixed(1) + "deg");
+    el.querySelector(".gp-exithold__n").textContent = Math.ceil(left / 1000);
+  },
   _setTest(v) {
+    this._exitT0 = 0;
+    if (this._exitEl) this._exitEl.style.display = "none";
     this._test = !!v;
     this._prev = {};
     this._lastBarKey = "";

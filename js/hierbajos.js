@@ -125,7 +125,10 @@ const Hierbajos = {
     el.className = "unit hierbajo";
 
     const spriteEl = document.createElement("img");
-    spriteEl.decoding = "async";
+    // Decoración diminuta y numerosa: decodificación síncrona (no queda en blanco al
+    // reaparecer tras el culling) y cambio de calidad directo, sin fantasma de fundido.
+    spriteEl.decoding = "sync";
+    spriteEl.dataset.sqNoFade = "1";
     spriteEl.className = "hierbajo__sprite";
     // Calidad de sprite dinámica según el zoom (pedido explícito, ver
     // js/spritequality.js) — los hierbajos son con diferencia el elemento

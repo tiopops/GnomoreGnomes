@@ -7955,7 +7955,8 @@ body.backpack-giving--katapum .unit--katapum-target * {
   /* Sin drop-shadow marcada a propósito: es hierba rasante, no un objeto
      "de pie" como un personaje o un arbusto — una sombra fuerte se leería
      como un bulto en vez de vegetación pegada al suelo. */
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
+  /* (sin filter: un drop-shadow por hierbajo obligaba a re-rasterizar decenas de capas con
+     cada paso del zoom -> parpadeo al alejar/acercar) */
   /* El propio escalado/espejado/rotación aleatorios de cada instancia los
      pone JS inline (ver Hierbajos._create) — transform-origin centrado
      abajo para que roten/escalen desde su base, no desde su centro. */
@@ -12279,3 +12280,9 @@ body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }
 .unit--fog-in { animation: fog-entity-in 0.55s ease-out 0.5s backwards; }
 @keyframes fog-entity-in { from { opacity: 0; } to { opacity: 1; } }
 /* Sombras sin ajustar todavía (ver js/shadows.js): ocultas, no a tamaño natural. */
+
+/* Salir del test del mando: indicador de START mantenido (3 s). Colores planos, sin brillos. */
+.gp-exithold{position:fixed;z-index:99990;display:none;flex-direction:column;align-items:center;gap:6px;width:100px;pointer-events:none;font-family:'Russo One',sans-serif}
+.gp-exithold__ring{width:72px;height:72px;border-radius:50%;background:conic-gradient(#ffd54a var(--p,0deg),#2b3a52 0);display:flex;align-items:center;justify-content:center;border:3px solid #000;box-shadow:3px 3px 0 #000}
+.gp-exithold__n{width:52px;height:52px;border-radius:50%;background:#1d2636;color:#ffd54a;font-size:28px;line-height:52px;text-align:center}
+.gp-exithold__t{font-size:11px;color:#fff;text-align:center;text-shadow:2px 2px 0 #000;text-transform:uppercase}

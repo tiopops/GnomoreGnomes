@@ -12,10 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001554";
+const GG_VERSION = "v.001556";
 
 const GG_CHANGELOG = [
-  { v: "v.001554", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001556", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Hierbajos (vegetación): parpadeo al alejar/acercar la cámara — ya no llevan sombra difusa por sprite (decenas de capas que se re-rasterizaban en cada paso del zoom), se decodifican de forma síncrona (no quedan en blanco al reaparecer) y cambian de calidad de golpe y a la vez, sin fantasmas de fundido escalonados",
+    "Mando: para salir del test hay que mantener START pulsado 3 segundos seguidos; junto al mando aparece un indicador circular con la cuenta atrás (se reinicia si sueltas el botón)",
     "Mando: el icono de acción (pico, hacha, mano, bandera, puño...) ahora es más grande y se dibuja sobre el propio sprite (árbol, roca, gnomo, tótem...) en vez de sobre la loseta, y se ignoran los cursores genéricos para que nunca salga una flecha por error",
     "Móvil: las sombras gigantes que no correspondían a los sprites estaban causadas por sprites que nacían ocultos (su sombra se quedaba sin ancho y se dibujaba a tamaño natural); ahora la sombra se oculta hasta ajustarse y se corrige sola en cuanto el sprite tiene tamaño",
     "Niebla: al revelarse, árboles, rocas, unidades y demás ya no aparecen de golpe sobre su nube opaca (ni sin fundido en móvil): se desvanecen hacia dentro cuando la nube ya se ha aclarado",

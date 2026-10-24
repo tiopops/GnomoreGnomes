@@ -290,7 +290,7 @@ const SpriteQuality = {
       if (this.tier !== tier) return;
       if (imgEl.dataset.srcOrig !== orig) return;
       this._pin(imgEl);
-      if (noFade || !this._canFade(imgEl)) { this._nset(imgEl, url); return; }
+      if (noFade || imgEl.dataset.sqNoFade || !this._canFade(imgEl)) { this._nset(imgEl, url); return; }
       this._fadeTo(imgEl, url);
     });
   },
