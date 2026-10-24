@@ -52,6 +52,8 @@ const FogCanvas = {
   _fh: 0,
   _off: null,
   _dynT: 0,
+  _faded: [],
+  _fadeDirty: true,
 
   ALPHA: 0.96,
   IDLE_MS: 8000, // mismo ciclo que fog-idle-drift
@@ -79,6 +81,8 @@ const FogCanvas = {
 
   clear() {
     this.size = 0;
+    (this._faded || []).forEach((el) => el.classList.remove("gg-fogfade"));
+    this._faded = [];
     this._dis.clear();
     this._edges = [];
     [this.back, this.canvas].forEach((cv) => {
@@ -114,6 +118,7 @@ const FogCanvas = {
   // ---------- Eventos de Fog ----------
   // Una loseta se acaba de revelar: arranca su disipado (o nada, si es instantáneo).
   onReveal(row, col, instant) {
+    this._fadeDirty = true;
     if (!this.size) return;
     if (!instant) this._dis.set(row * this.size + col, performance.now());
     this._animDirty = true;
@@ -122,12 +127,14 @@ const FogCanvas = {
   },
 
   onVisibilityChanged() {
+    this._fadeDirty = true;
     this._edgeDirty = true;
     this.requestDraw();
   },
 
   // El Vigilante levanta/baja toda la niebla con un fundido.
   setLifted(on) {
+    this._fadeDirty = true;
     const now = performance.now();
     this._liftFrom = this._liftA;
     this._liftTo = on ? 0 : 1;
@@ -137,6 +144,7 @@ const FogCanvas = {
   },
 
   onAnimToggle() {
+    this._fadeDirty = true;
     this._animDirty = true;
     this._edgeDirty = true;
     this.requestDraw();
@@ -206,7 +214,7 @@ const FogCanvas = {
       // Calidad baja: un simple fundido (0,7 s), sin crecer ni subir; alta calidad: se disipa con la animación completa.
       const lq = !F.animEnabled;
       const t = (now - t0) / (lq ? 700 : this.DISSIPATE_MS);
-      if (t >= 1) { this._dis.delete(idx); return null; }
+      if (t >= 1) { this._dis.delete(idx); this._fadeDirty = true; return null; }
       if (lq) {
         a = this.ALPHA * (1 - (1 - (1 - t) * (1 - t)));
       } else {
@@ -277,6 +285,7 @@ const FogCanvas = {
 
     const now = performance.now();
     if (this._animDirty !== false) this._recomputeAnim();
+    if (this._fadeDirty !== false) this._recomputeFade();
 
     // Fundido global (El Vigilante).
     if (this._liftA !== this._liftTo) {
@@ -328,7 +337,7 @@ const FogCanvas = {
       }
     }
     this._stats.drawn = drawn;
-    if (this._busy || this._dis.size) this.requestDraw();
+    if (this._busy || this._dis.size || this._fadeDirty) this.requestDraw();
     else if (this._edges.some((e) => e.dyn) && !this._dynT) this._dynT = setTimeout(() => { this._dynT = 0; this.requestDraw(); }, 120); // unidades/gnomos junto a la niebla: repasa su silueta
   },
 
@@ -584,6 +593,30 @@ const FogCanvas = {
     }
     this._geomDirty = false;
     this._stats.peeks = count;
+  },
+
+  _recomputeFade() {
+    this._fadeDirty = false;
+    const F = Fog, n = this.size;
+    const lq = !F.animEnabled && F.revealedGrid && !F._lifted;
+    const nowOver = new Set();
+    if (lq) {
+      for (const [, list] of this._entityLists()) {
+        for (const o of list) {
+          if (!o || !o.el || !o.el.isConnected || o.row < 0 || o.col < 0) continue;
+          if (!F.revealedGrid[o.row][o.col]) continue;
+          let over = false;
+          for (let dr = -1; dr <= 1 && !over; dr++) for (let dc = -1; dc <= 1; dc++) {
+            const rr = o.row + dr, cc = o.col + dc;
+            if (rr >= 0 && cc >= 0 && rr < n && cc < n && (!F.revealedGrid[rr][cc] || this._dis.has(rr * n + cc))) { over = true; break; }
+          }
+          if (over) nowOver.add(o.el);
+        }
+      }
+    }
+    (this._faded || []).forEach((el) => { if (!nowOver.has(el)) el.classList.remove("gg-fogfade"); });
+    nowOver.forEach((el) => el.classList.add("gg-fogfade"));
+    this._faded = [...nowOver];
   },
 
   // Repintado desde cero (zoom/rotación/cambio de calidad): también se vuelve a medir.

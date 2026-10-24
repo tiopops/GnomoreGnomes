@@ -12061,3 +12061,6 @@ body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }
 .board-fog--back { z-index: 2; }
 /* Objeto revelado que asoma sobre la niebla: se congela su respiración para que la copia del lienzo coincida. */
 .gg-peek, .gg-peek * { animation-play-state: paused !important; }
+
+/* Niebla de calidad baja: los objetos que están sobre la niebla se ven al 66 % (ver FogCanvas._recomputeFade). */
+.gg-fogfade:not(.unit--fog-hidden):not(.gg-viewport-culled) { opacity: 0.66; transition: opacity 0.35s ease; }
