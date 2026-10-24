@@ -12,11 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001551";
+const GG_VERSION = "v.001552";
 
 const GG_CHANGELOG = [
-  { v: "v.001551", date: "24/10/2026", title: "APK y rendimiento", items: [
-    "Mando: la cruceta ahora perdona las diagonales: ventana de 80 ms para pulsar dos botones (arriba+derecha...) y se hace UN movimiento diagonal; un toque corto sigue moviendo; al soltar un solo botón de una diagonal no se hace el movimiento sobrante",
+  { v: "v.001552", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Mando: la leyenda muestra X = Mochila también sin unidad seleccionada y con el menú de la base abierto (y Acciones sin selección)",
+    "Mando: la cruceta perdona mucho más las diagonales: ventana de 170 ms para pulsar los dos botones (arriba+derecha...) y, si el segundo llega tarde (hasta 260 ms), se deshace el movimiento recto y se hace la diagonal; un toque corto sigue moviendo; al soltar un solo botón de una diagonal no se hace el movimiento sobrante",
     "Mando: X abre directamente la Mochila (y sale en la leyenda como \"Mochila\"); el menú de Acciones pasa a L3 y \"Mi base\" (R3) pulsado otra vez centra la cámara en la unidad seleccionada (sustituye a \"Centrar cámara\"). Si tenías botones personalizados, X/L3/R3 toman los nuevos valores",
     "Errores gráficos al alejar la cámara (rectángulos de suelo sin pintar y trozos de niebla viejos): cuando la cámara queda quieta tras un zoom se renueva el lienzo del suelo/niebla profunda reasignándolo y repintándolo en el mismo fotograma",
     "APK: el texto de la pantalla de actualización disponible queda centrado (título, textos, versión y botones)",

@@ -316,7 +316,7 @@ const GamepadCtl = {
     // La repetición se reinicia al cambiar de dirección de verdad (sectores de 30° en el stick).
     const key = fromStick ? "s" + Math.round(ang / (Math.PI / 6)) : dx + "," + dy;
     // Cruceta en el tablero: una cruceta física no tiene botón diagonal, hay que pulsar dos a la vez y
-    // nadie los pulsa en el mismo milisegundo. Ventana de acorde de 80 ms (como el "perdón" de
+    // nadie los pulsa en el mismo milisegundo. Ventana de acorde de 170 ms (como el "perdón" de
     // diagonales de los juegos de lucha): al pulsar un solo botón se espera un instante por si llega
     // el segundo; si llega, se hace UN movimiento diagonal (no dos rectos). Y al soltar solo uno de los
     // dos botones de una diagonal no se hace el movimiento recto sobrante.
@@ -324,7 +324,7 @@ const GamepadCtl = {
     const wasDiag = !!this._rep.key && /^-?1,-?1$/.test(this._rep.key);
     let hold = false;
     if (single && this._rep.key !== key && this._mode(now).type === "board") {
-      if (!this._chord || this._chord.k !== key) this._chord = { k: key, t: now + 80 };
+      if (!this._chord || this._chord.k !== key) this._chord = { k: key, t: now + 170 };
       if (!wasDiag && now < this._chord.t) hold = true;
     } else if (!single && (dx || dy)) this._chord = null;
     if (!dx && !dy) {
@@ -340,7 +340,15 @@ const GamepadCtl = {
       this._rep.key = key;
       this._rep.next = now + (fromStick ? 280 : 380);
       if (this._chord) this._chord.fired = true;
+      // Segundo botón tardío (hasta 260 ms después del primero): se deshace el movimiento recto que ya
+      // se hizo y se aplica la diagonal completa, así que no hace falta pulsarlos a la vez.
+      if (!fromStick && dx && dy && this._fireInfo && this._fireInfo.before && now - this._fireInfo.at < 260 && this._tile && this._mode(now).type === "board") {
+        this._tile = { ...this._fireInfo.before };
+        this._placeCursor();
+      }
+      const before = this._tile ? { ...this._tile } : null;
       if (!swallow) this._dir(dx, dy, ang);
+      this._fireInfo = { at: now, before };
     } else if (now >= this._rep.next) {
       this._rep.next = now + (fromStick ? 175 - 65 * ls.m : 120); // más inclinado = más rápido
       this._dir(dx, dy, ang);
@@ -942,7 +950,7 @@ const GamepadCtl = {
     if (act === "backpack") {
       const bb = document.querySelector(".backpack-btn");
       if (bb && this._isVisible(bb)) { this._clickNow(bb); }
-      else this._toast("Selecciona una unidad para abrir su mochila", "ph-fill ph-backpack");
+      else this._toast("La mochila no está disponible ahora", "ph-fill ph-backpack");
       return;
     }
     if (act === "actions") { this._openActions(); return; }
@@ -1372,12 +1380,12 @@ const GamepadCtl = {
       const sel = typeof Units !== "undefined" && Units.selectedId;
       const obOpen = this._obMenu().length > 0;
       items = obOpen
-        ? [["confirm", "Elegir"], ["back", "Cancelar"], ["prevUnit", "◂ Opción"], ["nextUnit", "Opción ▸"], ["endTurn", "Fin de turno"], ["toObelisk", "Mi base"]]
+        ? [["confirm", "Elegir"], ["back", "Cancelar"], ["prevUnit", "◂ Opción"], ["nextUnit", "Opción ▸"], ["backpack", "Mochila"], ["endTurn", "Fin de turno"], ["toObelisk", "Mi base"]]
         : sel
         ? (this._targetMarkers().length
           ? [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["backpack", "Mochila"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Objetivo"], ["nextUnit", "Objetivo ▸"], ["toObelisk", "Mi base"]]
           : [["confirm", "Mover / Actuar"], ["back", "Cancelar"], ["backpack", "Mochila"], ["actions", "Acciones"], ["endTurn", "Fin de turno"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["toObelisk", "Mi base"]])
-        : [["confirm", "Seleccionar"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["toObelisk", "Mi base"], ["endTurn", "Fin de turno"], ["settings", "Ajustes"]];
+        : [["confirm", "Seleccionar"], ["prevUnit", "◂ Unidad"], ["nextUnit", "Unidad ▸"], ["backpack", "Mochila"], ["actions", "Acciones"], ["toObelisk", "Mi base"], ["endTurn", "Fin de turno"], ["settings", "Ajustes"]];
     }
     const key = items.map((x) => x[0] + this.map[x[0]] + x[1]).join("|") + I18N.currentLang + mode.type;
     if (force || key !== this._lastBarKey) {
