@@ -283,9 +283,22 @@ const SpriteQuality = {
       // Por si mientras cargaba se cambió otra vez de nivel o de textura.
       if (this.tier !== tier) return;
       if (imgEl.dataset.srcOrig !== orig) return;
+      this._pin(imgEl);
       if (noFade || !this._canFade(imgEl)) { this._nset(imgEl, url); return; }
       this._fadeTo(imgEl, url);
     });
+  },
+
+  // Mantiene la proporción EXACTA del sprite al cambiar de textura: la versión
+  // reducida tiene el tamaño redondeado (p.ej. 243x300 -> 121x150), y con
+  // height:auto esa diferencia de proporción movía la altura del sprite una
+  // fracción de píxel al cambiar = el pequeño salto. Se fija una vez, desde la
+  // textura original ya cargada.
+  _pin(imgEl) {
+    if (imgEl.style.aspectRatio || !imgEl.naturalWidth || !imgEl.naturalHeight) return;
+    if (/_(midres|lowres)\.[a-z0-9]+/i.test(imgEl.currentSrc || imgEl.src)) return;
+    imgEl.style.aspectRatio = imgEl.naturalWidth + " / " + imgEl.naturalHeight;
+    imgEl.dataset.sqPin = "1";
   },
 
   // ---------- Fundido cruzado ----------
@@ -308,7 +321,6 @@ const SpriteQuality = {
     if (!this.crossfade || this._ghosts >= this.MAX_GHOSTS) return false;
     if (typeof PerfMode !== "undefined" && PerfMode.enabled) return false;
     if (!imgEl.isConnected || !imgEl.parentElement || !imgEl.animate) return false;
-    if (imgEl.offsetParent !== imgEl.parentElement) return false; // sin padre posicionado no se puede superponer con seguridad
     const r = imgEl.getBoundingClientRect();
     if (!r.width || !r.height) return false;
     return r.right > 0 && r.bottom > 0 && r.left < window.innerWidth && r.top < window.innerHeight;
@@ -321,15 +333,22 @@ const SpriteQuality = {
     ghost.setAttribute("aria-hidden", "true");
     ghost.classList.add("sq-ghost");
     ghost.decoding = "sync";
+    // Geometría EXACTA (sin redondeos): offsetLeft/Top/Width/Height son enteros y
+    // el sprite real suele tener decimales (zoom, rem, %): el fantasma quedaba
+    // medio píxel desplazado/más bajito y, al cambiar, se veía un pequeño salto
+    // ("bum"). Aquí el fantasma conserva su posición estática de flujo (sin
+    // left/top) y copia el ancho/alto calculados con decimales.
+    const cs = getComputedStyle(imgEl);
     const st = ghost.style;
     st.position = "absolute";
-    st.left = imgEl.offsetLeft + "px";
-    st.top = imgEl.offsetTop + "px";
-    st.width = imgEl.offsetWidth + "px";
-    st.height = imgEl.offsetHeight + "px";
-    st.margin = "0";
+    st.left = "auto";
+    st.top = "auto";
+    st.right = "auto";
+    st.bottom = "auto";
+    st.width = cs.width;
+    st.height = cs.height;
     st.pointerEvents = "none";
-    st.zIndex = "";
+    st.zIndex = "1";
     this._ghosts++;
     const drop = () => { this._ghosts = Math.max(0, this._ghosts - 1); ghost.remove(); };
     const go = () => {
@@ -340,21 +359,30 @@ const SpriteQuality = {
       // cada animación del sprite real a la del fantasma.
       let real = [];
       try { real = imgEl.getAnimations ? imgEl.getAnimations() : []; } catch (e) {}
-      // La sombra proyectada (Shadows.attach) tiene que seguir siendo el hermano
-      // INMEDIATO del sprite real (el CSS que la sincroniza con el salto y la
-      // respiración usa ese selector): el fantasma va detrás de ella, nunca entre
-      // las dos — meterlo en medio era lo que hacía saltar la sombra.
-      let after = imgEl.nextSibling;
-      if (after && after.classList && after.classList.contains("gg-cast-shadow")) after = after.nextSibling;
-      imgEl.parentElement.insertBefore(ghost, after);
+      // El fantasma va JUSTO ANTES del sprite real: al ser absoluto y sin left/top,
+      // hereda la posición de flujo que tendría el sprite (fracciones incluidas), y
+      // con z-index sube por encima de él. Así tampoco se mete entre el sprite y su
+      // sombra proyectada (Shadows.attach), que debe seguir siendo su hermana
+      // inmediata para que el CSS que la sincroniza con el salto funcione.
+      imgEl.parentElement.insertBefore(ghost, imgEl);
       try {
         ghost.getAnimations().forEach((ga) => {
           const ra = real.find((x) => x.animationName && x.animationName === ga.animationName);
           if (!ra) return;
-          ga.pause();
-          ga.currentTime = ra.currentTime;
-          if (ra.playState === "running") ga.play();
+          // Mismo instante de inicio en la misma línea de tiempo = exactamente la misma fase.
+          if (ra.startTime != null) ga.startTime = ra.startTime;
+          else { ga.pause(); ga.currentTime = ra.currentTime; }
         });
+      } catch (e) {}
+      // Comprobación: si el fantasma no cae EXACTAMENTE sobre el sprite (contenedor
+      // con otra alineación, transformaciones raras...), no se hace fundido: cambio
+      // directo, mejor eso que un fantasma desplazado.
+      try {
+        const ra = imgEl.getBoundingClientRect(), rg = ghost.getBoundingClientRect();
+        if (Math.abs(ra.left - rg.left) > 0.2 || Math.abs(ra.top - rg.top) > 0.2 || Math.abs(ra.width - rg.width) > 0.2 || Math.abs(ra.height - rg.height) > 0.2) {
+          this._nset(imgEl, url);
+          return drop();
+        }
       } catch (e) {}
       this._nset(imgEl, url); // la nueva ya está decodificada: debajo del fantasma
       const a = ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: this.FADE_MS, easing: "ease-out" });
@@ -392,6 +420,8 @@ const SpriteQuality = {
     if (!ds || ds.srcOrig === undefined || typeof v !== "string" || v.indexOf("assets/") < 0 || /_(midres|lowres)\.[a-z0-9]+(\?.*)?$/i.test(v) || imgEl.classList.contains("tile__fog")) {
       return this._nset(imgEl, v);
     }
+    // Otra imagen original (cambio de pose): la proporción fijada era de la anterior.
+    if (ds.srcOrig !== v && ds.sqPin) { imgEl.style.aspectRatio = ""; delete ds.sqPin; }
     ds.srcOrig = v;
     const tier = this.enabled ? this.tier : 0;
     const shift = +ds.sqShift || 0;
