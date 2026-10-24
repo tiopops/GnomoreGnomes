@@ -336,7 +336,7 @@ const EN_DICT = {
 "Mostrar equipos": "Show teams",
 "Modo rendimiento": "Performance mode",
 "Sombras": "Shadows",
-"Animación de niebla": "Fog animation",
+"Niebla de alta calidad": "High-quality fog",
 "Vegetación": "Vegetation",
 "Resolución adaptativa": "Adaptive resolution",
 "Idioma": "Language",

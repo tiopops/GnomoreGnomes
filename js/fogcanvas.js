@@ -56,7 +56,7 @@ const FogCanvas = {
   IDLE_MS: 8000, // mismo ciclo que fog-idle-drift
   DISSIPATE_MS: 1200, // mismo tiempo que fog-dissipate
   PEEK_ON: true,
-  BREATHE: false, // respiración de las nubes del borde: apagada (era lo que más pesaba; ver version.js)
+  BREATHE: true, // respiración de las nubes del borde (solo en escritorio y con "Niebla de alta calidad")
   MAX_ANIMATED: 28,
 
   // ---------- Ciclo de vida ----------
@@ -137,6 +137,7 @@ const FogCanvas = {
 
   onAnimToggle() {
     this._animDirty = true;
+    this._edgeDirty = true;
     this.requestDraw();
   },
 
@@ -349,7 +350,7 @@ const FogCanvas = {
     const n = this.size;
     const prev = new Set(this._edges.map((e) => e.el));
     const next = [];
-    if (F.revealedGrid && !F._lifted) {
+    if (F.revealedGrid && !F._lifted && F.animEnabled) { // solo con "Niebla de alta calidad"
       for (const [kind, list] of this._entityLists()) {
         for (const o of list) {
           if (!o || !o.el || !o.el.isConnected) continue;
@@ -429,11 +430,102 @@ const FogCanvas = {
   // silueta y sobre su parte baja. Así la base queda enterrada en la nube, la parte alta asoma, y
   // las nubes de DETRÁS no lo tapan. La interfaz (barras, insignias, marcadores) queda por encima
   // de la niebla de fondo, que va por debajo de todo.
+  // Pinta, sobre un objeto, la niebla que tiene DELANTE (o toda la que cubre su sombra) en un lienzo
+  // auxiliar y la estampa en el lienzo superior con los bordes difuminados (sin rectángulos visibles).
+  //   mode "sprite": solo nubes por delante (fila+columna >= la del objeto); la parte alta queda libre,
+  //                  la base se hunde. La caja se amplía por los lados y por abajo con un fundido.
+  //   mode "shadow": cualquier nube que cubra la sombra del suelo (la sombra siempre va bajo la niebla).
+  _patch(octx, g, F, tex, e, mode, R, scale, dpr, now, mobile, animOn) {
+    const n = this.size;
+    const sprite = mode === "sprite";
+    const mxs = sprite ? 0.2 : 0.12, bot = sprite ? 0.3 : 0.12, top = sprite ? 0 : 0.12;
+    const B = { x: R.x - R.w * mxs, y: R.y - R.h * top, w: R.w * (1 + 2 * mxs), h: R.h * (1 + top + bot) };
+    const de = e.row + e.col;
+    const cand = [];
+    const rad = sprite ? 3 : 4;
+    for (let r = Math.max(0, e.row - rad); r <= Math.min(n - 1, e.row + rad); r++) {
+      for (let c = Math.max(0, e.col - rad); c <= Math.min(n - 1, e.col + rad); c++) {
+        if (sprite && r + c < de) continue; // la niebla de DETRÁS nunca tapa al objeto
+        if (F.revealedGrid[r][c] && !this._dis.has(r * n + c)) continue;
+        const ctr = getTileCenter(r, c, n);
+        const hw = this._fw * 0.85, hh = this._fh * 0.85;
+        if (ctr.x + hw < B.x || ctr.x - hw > B.x + B.w || ctr.y + hh < B.y || ctr.y - hh > B.y + B.h) continue;
+        cand.push([r + c, r, c]);
+      }
+    }
+    if (!cand.length) return false;
+    cand.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    let k = scale * dpr;
+    const maxK = Math.min(640 / B.w, 640 / B.h);
+    if (k > maxK) k = maxK;
+    const W = Math.max(1, Math.ceil(B.w * k)), H = Math.max(1, Math.ceil(B.h * k));
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalCompositeOperation = "source-over";
+    g.clearRect(0, 0, W, H);
+    g.setTransform(k, 0, 0, k, -B.x * k, -B.y * k);
+    g.imageSmoothingEnabled = true;
+    let any = false;
+    for (const [, r, c] of cand) {
+      const p = this._cloud(F, r, c, now, mobile, animOn);
+      if (!p) continue;
+      this._paintCloud(g, tex, r, c, p);
+      any = true;
+    }
+    g.globalAlpha = 1;
+    if (!any) return false;
+    if (!sprite && e.sp && e.rect) {
+      // La sombra va en el suelo, DETRÁS del objeto: la niebla sobre la sombra no debe tapar al objeto.
+      const S = e.rect, d = 1.5 / scale;
+      g.setTransform(k, 0, 0, k, -B.x * k, -B.y * k);
+      g.globalCompositeOperation = "destination-out";
+      for (const [ox, oy] of [[0, 0], [d, 0], [-d, 0], [0, d], [0, -d]]) {
+        g.save();
+        g.translate(S.x + S.w / 2 + ox, S.y + oy);
+        if (e.flip) g.scale(-1, 1);
+        g.drawImage(e.sp, -S.w / 2, 0, S.w, S.h);
+        g.restore();
+      }
+    }
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalCompositeOperation = "destination-in";
+    // Horizontal: fundido en los márgenes laterales.
+    const hf = mxs / (1 + 2 * mxs);
+    let gr = g.createLinearGradient(0, 0, W, 0);
+    gr.addColorStop(0, "rgba(0,0,0,0)");
+    gr.addColorStop(hf, "rgba(0,0,0,1)");
+    gr.addColorStop(1 - hf, "rgba(0,0,0,1)");
+    gr.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = gr;
+    g.fillRect(0, 0, W, H);
+    // Vertical.
+    const tot = 1 + top + bot;
+    gr = g.createLinearGradient(0, 0, 0, H);
+    if (sprite) {
+      // la parte alta del objeto queda libre; la niebla de delante sube suavemente por su base
+      gr.addColorStop(0, "rgba(0,0,0,0)");
+      gr.addColorStop(0.5 / tot, "rgba(0,0,0,0)");
+      gr.addColorStop(0.82 / tot, "rgba(0,0,0,1)");
+      gr.addColorStop(1 / tot, "rgba(0,0,0,1)");
+      gr.addColorStop(1, "rgba(0,0,0,0)");
+    } else {
+      gr.addColorStop(0, "rgba(0,0,0,0)");
+      gr.addColorStop(top / tot, "rgba(0,0,0,1)");
+      gr.addColorStop((top + 1) / tot, "rgba(0,0,0,1)");
+      gr.addColorStop(1, "rgba(0,0,0,0)");
+    }
+    g.fillStyle = gr;
+    g.fillRect(0, 0, W, H);
+    g.globalCompositeOperation = "source-over";
+    octx.globalAlpha = 1;
+    octx.drawImage(this._off, 0, 0, W, H, B.x, B.y, B.w, B.h);
+    return true;
+  },
+
   _drawBuried(octx, F, tex, panX, panY, scale, vw, vh, dpr, now, mobile, animOn) {
     if (this._edgeDirty) this._recomputeEdges();
-    const n = this.size;
     if (!this._off) { this._off = document.createElement("canvas"); this._off.width = 640; this._off.height = 640; }
-    const off = this._off, g = off.getContext("2d");
+    const g = this._off.getContext("2d");
+    const vpr = BoardView.viewportEl.getBoundingClientRect();
     let count = 0;
     for (const e of this._edges) {
       const el = e.el;
@@ -444,56 +536,17 @@ const FogCanvas = {
       if (!e.sp.complete || (e.sp.currentSrc || e.sp.src) !== e.src) { this._measure(e, panX, panY, scale); if (!e.rect) continue; }
       const R = e.rect;
       const sx = R.x * scale + panX, sy = R.y * scale + panY;
-      if (sx > vw + 50 || sy > vh + 50 || sx + R.w * scale < -50 || sy + R.h * scale < -50) continue;
-      // Nubes candidatas: a 3 casillas, sin revelar (o disipándose), por delante y que toquen el sprite.
-      const de = e.row + e.col;
-      const cand = [];
-      for (let r = Math.max(0, e.row - 3); r <= Math.min(n - 1, e.row + 3); r++) {
-        for (let c = Math.max(0, e.col - 3); c <= Math.min(n - 1, e.col + 3); c++) {
-          if (r + c < de) continue; // la niebla de DETRÁS (fila+columna menor) nunca tapa al objeto
-          if (F.revealedGrid[r][c] && !this._dis.has(r * n + c)) continue;
-          const ctr = getTileCenter(r, c, n);
-          const hw = this._fw * 0.85, hh = this._fh * 0.85;
-          if (ctr.x + hw < R.x || ctr.x - hw > R.x + R.w || ctr.y + hh < R.y || ctr.y - hh > R.y + R.h) continue;
-          cand.push([r + c, r, c]);
+      if (sx > vw + 80 || sy > vh + 80 || sx + R.w * scale < -80 || sy + R.h * scale < -80) continue;
+      if (this._patch(octx, g, F, tex, e, "sprite", R, scale, dpr, now, mobile, animOn)) count++;
+      // La sombra proyectada del objeto también queda bajo la niebla.
+      const sh = el.querySelector(".gg-cast-shadow");
+      if (sh && sh.dataset.ok) {
+        const r = sh.getBoundingClientRect();
+        if (r.width > 2 && r.height > 2 && getComputedStyle(sh).visibility !== "hidden") {
+          const SR = { x: (r.left - vpr.left - panX) / scale, y: (r.top - vpr.top - panY) / scale, w: r.width / scale, h: r.height / scale };
+          this._patch(octx, g, F, tex, e, "shadow", SR, scale, dpr, now, mobile, animOn);
         }
       }
-      if (!cand.length) continue;
-      cand.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-      // Silueta del sprite como máscara de las nubes, en un lienzo auxiliar a resolución de pantalla.
-      let k = scale * dpr;
-      const maxK = Math.min(640 / R.w, 640 / R.h);
-      if (k > maxK) k = maxK;
-      const W = Math.max(1, Math.ceil(R.w * k)), H = Math.max(1, Math.ceil(R.h * k));
-      g.setTransform(1, 0, 0, 1, 0, 0);
-      g.globalCompositeOperation = "source-over";
-      g.clearRect(0, 0, W, H);
-      g.setTransform(k, 0, 0, k, -R.x * k, -R.y * k);
-      g.imageSmoothingEnabled = true;
-      let any = false;
-      for (const [, r, c] of cand) {
-        const p = this._cloud(F, r, c, now, mobile, animOn);
-        if (!p) continue;
-        this._paintCloud(g, tex, r, c, p);
-        any = true;
-      }
-      g.globalAlpha = 1;
-      if (!any) continue;
-      g.setTransform(1, 0, 0, 1, 0, 0);
-      g.globalCompositeOperation = "destination-in";
-      // Degradado vertical (sin silueta del sprite: así no hay recortes ni bordes sueltos): la parte
-      // alta del objeto queda libre y la niebla de delante sube suavemente por su base.
-      const gr = g.createLinearGradient(0, 0, 0, H);
-      gr.addColorStop(0, "rgba(0,0,0,0)");
-      gr.addColorStop(0.5, "rgba(0,0,0,0)");
-      gr.addColorStop(0.82, "rgba(0,0,0,1)");
-      gr.addColorStop(1, "rgba(0,0,0,1)");
-      g.fillStyle = gr;
-      g.fillRect(0, 0, W, H);
-      g.globalCompositeOperation = "source-over";
-      octx.globalAlpha = 1;
-      octx.drawImage(off, 0, 0, W, H, R.x, R.y, R.w, R.h);
-      count++;
     }
     this._geomDirty = false;
     this._stats.peeks = count;

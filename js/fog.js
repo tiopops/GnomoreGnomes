@@ -79,13 +79,15 @@ const Fog = {
   // aplicarse ANTES de que exista ninguna loseta de niebla todavía (a la
   // primera partida nueva ya le toca crear sus <img> de niebla con la
   // clase de <body> ya puesta, sin parpadeo).
-  // Interfaz móvil (mismo criterio que css/mobile.css): la niebla NUNCA se anima, no es una opción.
+  // "Niebla de alta calidad" (animEnabled): ACTIVADA = dos lienzos (niebla de fondo + base de los objetos
+  // hundida en la niebla, nubes del borde que respiran en escritorio); DESACTIVADA = un único lienzo
+  // por debajo de los objetos, el más ligero. Por defecto: activada en escritorio, desactivada en móvil.
+  // Interfaz móvil (mismo criterio que css/mobile.css):
   _mobileUI() {
     try { return window.matchMedia("(max-width: 720px), (max-height: 560px)").matches; } catch (e) { return false; }
   },
 
   initAnimPref() {
-    if (this._mobileUI()) { this.animEnabled = false; this._applyAnimToggle(); return; }
     const saved = localStorage.getItem(FOG_ANIM_STORAGE_KEY);
     if (saved === null) {
       // Sin preferencia guardada todavía: activada en escritorio, apagada
@@ -93,7 +95,7 @@ const Fog = {
       // aquí; a partir de la primera vez que el jugador toque el
       // checkbox, su elección se respeta siempre, sea cual sea el ancho
       // de pantalla en partidas futuras.
-      this.animEnabled = window.innerWidth > FOG_ANIM_MOBILE_BREAKPOINT;
+      this.animEnabled = !this._mobileUI() && window.innerWidth > FOG_ANIM_MOBILE_BREAKPOINT;
     } else {
       this.animEnabled = saved === "1";
     }
@@ -101,13 +103,6 @@ const Fog = {
   },
 
   setAnimEnabled(enabled) {
-    if (this._mobileUI()) {
-      // En móvil siempre apagada y sin guardar nada: así al volver a escritorio se respeta su preferencia.
-      this.animEnabled = false;
-      this._applyAnimToggle();
-      if (typeof FogCanvas !== "undefined") FogCanvas.onAnimToggle();
-      return;
-    }
     this.animEnabled = !!enabled;
     localStorage.setItem(FOG_ANIM_STORAGE_KEY, this.animEnabled ? "1" : "0");
     this._applyAnimToggle();

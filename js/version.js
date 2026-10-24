@@ -12,10 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001564";
+const GG_VERSION = "v.001566";
 
 const GG_CHANGELOG = [
-  { v: "v.001564", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001566", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Configuración: la opción «Animación de niebla» pasa a llamarse «Niebla de alta calidad». Activada: niebla en dos capas (la base de los objetos junto al borde se hunde en la niebla, sombras cubiertas, y en escritorio las nubes del borde respiran). Desactivada: niebla en un único lienzo por debajo de los objetos, la más ligera. Ahora también aparece en móvil (por defecto activada en escritorio y desactivada en móvil)",
+    "Niebla: la sombra proyectada de los objetos del borde ahora queda cubierta por la niebla (antes se veía por encima como un rectángulo gris), y se eliminan los bordes rectos y líneas horizontales que dejaba la niebla sobre la base de los objetos (ahora se difuminan por los lados y por abajo)",
     "Rendimiento: apagada la respiración (movimiento lento) de las nubes del borde de la niebla en escritorio; era lo que más fotogramas costaba y apenas se notaba",
     "Niebla: la niebla que queda DETRÁS de un objeto ya no lo tapa, y la de delante sube por su base con un degradado suave, sin recortes con la silueta del sprite ni contornos sueltos",
     "Niebla: al revelar una zona, los objetos del mapa aparecen al instante (antes la zona salía vacía y los objetos 'saltaban' un segundo después)",
