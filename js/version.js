@@ -12,10 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001561";
+const GG_VERSION = "v.001562";
 
 const GG_CHANGELOG = [
-  { v: "v.001561", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001562", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Niebla: al revelar una zona, los objetos del mapa aparecen al instante (antes la zona salía vacía y los objetos 'saltaban' un segundo después)",
+    "Niebla: las bases de los objetos junto a la niebla se hunden en ella sin recortes ni bordes sueltos (antes se veían siluetas y contornos oscuros traspasando la niebla)",
     "Niebla: ya no tapa la interfaz de los objetos (indicador de población del obelisco, barras de vida, insignias, avisos y marcadores): la niebla va por debajo de todo eso, y solo la base de los objetos con nubes delante sigue quedando enterrada",
     "Mantenimiento: eliminado el código y el CSS de la niebla antigua (nubes del DOM, animaciones y desenfoque, pasada de niebla profunda del suelo, restos en la resolución adaptativa y funciones sin uso); sin cambios visibles ni de comportamiento",
     "Niebla rehecha: ahora se dibuja en UN solo lienzo en vez de decenas de nubes del DOM con animaciones CSS, z-index por nube y desenfoque. Menos consumo, sin parpadeos al revelar ni al hacer zoom, y la cámara, el suelo y la niebla se actualizan en el mismo fotograma. Los árboles, rocas y estructuras ya revelados junto a la niebla asoman por encima de ella (la base queda enterrada en la nube). Las nubes se disipan sin blur, y la respiración de las nubes de frontera se mantiene en escritorio y se apaga en móvil",

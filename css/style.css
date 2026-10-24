@@ -12044,7 +12044,7 @@ body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }
 
 /* Revelado de niebla: la entidad aparece cuando su nube ya se ha aclarado
    (ver Fog._watchEntityReveal). backwards = invisible durante el retraso. */
-.unit--fog-in { animation: fog-entity-in 0.55s ease-out 0.5s backwards; }
+.unit--fog-in { animation: none; }
 @keyframes fog-entity-in { from { opacity: 0; } to { opacity: 1; } }
 /* Sombras sin ajustar todavía (ver js/shadows.js): ocultas, no a tamaño natural. */
 

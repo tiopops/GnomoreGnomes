@@ -328,7 +328,7 @@ const Fog = {
     // inicialmente bajo la niebla todas son de hierba hasta que se revelan". Se dispara cuando
     // empieza a disiparse la nube, para que el cambio de textura quede disimulado detrás de ella.
     if (typeof TerrainMap !== "undefined") TerrainMap.revealTile(row, col);
-    if (!instant) this._watchEntityReveal();
+    // Los objetos de la zona revelada aparecen al instante (la niebla se disipa por debajo/encima).
     // La nube se disipa en el lienzo de niebla (js/fogcanvas.js).
     if (typeof FogCanvas !== "undefined") FogCanvas.onReveal(row, col, !!instant);
   },

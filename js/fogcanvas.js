@@ -406,13 +406,15 @@ const FogCanvas = {
     m.width = W; m.height = H;
     const g = m.getContext("2d");
     if (flip) { g.translate(W, 0); g.scale(-1, 1); }
-    g.drawImage(sp, 0, 0, W, H);
+    // Silueta ligeramente engordada (±2 px): cubre el borde oscuro antialiasado del sprite.
+    const d = Math.max(1.5, W / 160);
+    for (const [ox, oy] of [[0, 0], [d, 0], [-d, 0], [0, d], [0, -d], [d, d], [-d, d], [d, -d], [-d, -d]]) g.drawImage(sp, ox, oy, W, H);
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.globalCompositeOperation = "destination-in";
     const gr = g.createLinearGradient(0, 0, 0, H);
     gr.addColorStop(0, "rgba(0,0,0,0)");
-    gr.addColorStop(0.42, "rgba(0,0,0,0)");
-    gr.addColorStop(0.78, "rgba(0,0,0,1)");
+    gr.addColorStop(0.5, "rgba(0,0,0,0)");
+    gr.addColorStop(0.8, "rgba(0,0,0,1)");
     gr.addColorStop(1, "rgba(0,0,0,1)");
     g.fillStyle = gr;
     g.fillRect(0, 0, W, H);
@@ -435,7 +437,7 @@ const FogCanvas = {
     for (const e of this._edges) {
       const el = e.el;
       if (!el.isConnected) { this._edgeDirty = true; continue; }
-      if (el.classList.contains("unit--fog-hidden") || el.classList.contains("gg-viewport-culled") || el.classList.contains("unit--fog-in")) continue;
+      if (el.classList.contains("unit--fog-hidden") || el.classList.contains("gg-viewport-culled")) continue;
       if (this._geomDirty || !e.rect) this._measure(e, panX, panY, scale);
       if (!e.rect) continue;
       if (!e.sp.complete || (e.sp.currentSrc || e.sp.src) !== e.src) { this._measure(e, panX, panY, scale); if (!e.rect) continue; }
@@ -447,7 +449,6 @@ const FogCanvas = {
       const cand = [];
       for (let r = Math.max(0, e.row - 3); r <= Math.min(n - 1, e.row + 3); r++) {
         for (let c = Math.max(0, e.col - 3); c <= Math.min(n - 1, e.col + 3); c++) {
-          if (r + c < de) continue;
           if (F.revealedGrid[r][c] && !this._dis.has(r * n + c)) continue;
           const ctr = getTileCenter(r, c, n);
           const hw = this._fw * 0.85, hh = this._fh * 0.85;
