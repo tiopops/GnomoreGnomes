@@ -37,8 +37,7 @@
    nivel "baja" (2) de este mecanismo general por completo: ya solo existe
    una frontera (_MID_DOWN/_MID_UP), no dos. La convención de archivo
    "_lowres" (antes el nivel 2 de aquí) sigue viva igual — la sigue usando
-   lowResTileSrc (js/mapgen.js) y, aparte de este mecanismo, la propia
-   niebla la usa SIEMPRE ahora (ver _FOG_ALWAYS_LOWRES más abajo).
+   lowResTileSrc (js/mapgen.js), que también usa la niebla (js/fogcanvas.js).
 
    Por qué esto (y no solo el culling de js/entitycull.js): el culling
    ahorra pintar lo que está fuera de cámara, pero lo que SÍ está en
@@ -104,9 +103,7 @@ const SpriteQuality = {
     if (!this.enabled) {
       // Desactivarla a mano devuelve TODO a la textura normal de golpe y
       // deja de reaccionar al zoom hasta que se vuelva a activar — ver el
-      // "return" temprano de updateForScale más abajo. La niebla NO forma
-      // parte de este Set (ver register/_FOG_ALWAYS_LOWRES) así que sigue
-      // en baja resolución pase lo que pase con este interruptor.
+      // "return" temprano de updateForScale más abajo.
       this._aboveMid = true;
       if (this.tier !== 0) {
         this.tier = 0;
@@ -144,21 +141,6 @@ const SpriteQuality = {
   _aboveMid: true,
   _sprites: new Set(),
 
-  // Pedido explícito (pasada posterior): "la niebla puedes ponerla siempre
-  // en baja resolucion estemos a la distancia que estemos? (quiero probar,
-  // puede que me arrepienta asi que dejalo preparado por si quiero volver
-  // a como estaba)" — la niebla YA NO sigue el zoom como el resto de
-  // sprites (dos niveles arriba): se queda SIEMPRE en "_lowres",
-  // independientemente de lo cerca o lejos que esté la cámara. Para volver
-  // atrás (niebla siguiendo el zoom como cualquier otro sprite, con solo
-  // normal/media) basta con poner esto a false — no hace falta tocar nada
-  // más, register()/_swap() ya miran esta bandera antes que el tier normal.
-  _FOG_ALWAYS_LOWRES: true,
-
-  _isFogSprite(imgEl) {
-    return imgEl.classList.contains("tile__fog");
-  },
-
   // `shift`: las losetas de terreno (1254px de origen, se pintan a ~190-250px)
   // no necesitan nunca su imagen completa: su nivel "normal" ya usa la media
   // y el "lejano" la pequeña. Menos memoria de textura = menos descartes del
@@ -175,14 +157,6 @@ const SpriteQuality = {
     if (!imgEl || !originalSrc) return;
     imgEl.dataset.srcOrig = originalSrc;
     if (opts && opts.shift) imgEl.dataset.sqShift = String(opts.shift);
-    if (this._FOG_ALWAYS_LOWRES && this._isFogSprite(imgEl) && typeof lowResTileSrc === "function") {
-      // La niebla no entra en el Set de sprites que siguen el zoom (ver
-      // _isFogSprite) — se fija una vez aquí y ya no vuelve a cambiar de
-      // textura nunca, ni al cruzar fronteras de zoom ni al activar/
-      // desactivar Resolución Adaptativa.
-      this._nset(imgEl, lowResTileSrc(originalSrc));
-      return;
-    }
     // Un sprite que nace con la cámara alejada (p.ej. una loseta que vuelve
     // a montarse al desplazarse) NO debe pedir de golpe una versión reducida
     // que aún no se ha cargado: se queda en blanco hasta que llega. Si esa
@@ -428,7 +402,7 @@ const SpriteQuality = {
   // (golpes, impactos, huevo, grulla...) no se saltan la resolución adaptativa.
   _onSet(imgEl, v) {
     const ds = imgEl.dataset;
-    if (!ds || ds.srcOrig === undefined || typeof v !== "string" || v.indexOf("assets/") < 0 || /_(midres|lowres)\.[a-z0-9]+(\?.*)?$/i.test(v) || imgEl.classList.contains("tile__fog")) {
+    if (!ds || ds.srcOrig === undefined || typeof v !== "string" || v.indexOf("assets/") < 0 || /_(midres|lowres)\.[a-z0-9]+(\?.*)?$/i.test(v)) {
       return this._nset(imgEl, v);
     }
     // Otra imagen original (cambio de pose): la proporción fijada era de la anterior.

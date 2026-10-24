@@ -1183,151 +1183,6 @@ h2 {
   opacity: 1;
 }
 
-/* Niebla de guerra (js/mapgen.js genera esta capa siempre, js/fog.js decide
-   cuándo ocultarla) — centrada EXACTAMENTE en el centro de su loseta
-   (getTileCenter, ver comentario de FOG_SRC en mapgen.js: niebla_01.png es
-   solo la nube, sin ninguna loseta dibujada dentro, así que no hay que
-   adivinar ningún ancla) y más ancha que ella (FOG_OVERHANG en mapgen.js)
-   para que el borde entre lo revelado y lo que no se ha explorado todavía
-   se lea como una nube continua en vez de un corte recto tile a tile.
-   pointer-events: none — nunca debe robar clics: las losetas de niebla ya
-   quedan excluidas como destino de movimiento en js/movement.js, así que no
-   hace falta que intercepte nada aquí.
-
-   Nivel Triple A / feedback (regla de oro del proyecto) — NO es una nube
-   estática: respira/deriva muy despacio incluso parada (fog-idle-drift,
-   desfasada al azar por loseta desde mapgen.js para que un campo entero de
-   niebla no "lata" a la vez como si fuera un efecto de pantalla en vez de
-   niebla de verdad), y al revelarse no es un simple fundido de opacidad
-   sino que se DISIPA de verdad (fog-dissipate más abajo): crece, se
-   difumina y se desvanece, como si el viento se la llevara. */
-.tile__fog {
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  opacity: 0.96;
-  /* BUG encontrado y corregido: "el z-index de la niebla no funciona
-     correctamente, debería estar detrás de mi personaje" — antes este
-     z-index era fijo y ENORME (100000) para TODAS las nubes, a propósito
-     para que la niebla de una loseta siempre quedara por encima de
-     cualquier unidad de pie en ESA MISMA loseta sin revelar. Pero
-     FOG_OVERHANG (mapgen.js) hace cada nube más ancha que su propia
-     loseta para que el borde se lea continuo — y como ese valor fijo
-     ignoraba por completo el orden normal de dibujado (mayor fila+columna
-     = más cerca de cámara = por encima), una nube de una loseta que
-     todavía no se ha revelado y que está DETRÁS del jugador en la
-     cuadrícula (fila+columna menor) se seguía pintando por delante de su
-     propio personaje en cuanto el solapamiento la hacía asomar sobre esa
-     casilla — justo el bug reportado. Ahora el z-index de cada nube lo
-     pone JS por loseta (ver mapgen.js, mismo patrón (fila+columna)*10 que
-     usan unidades/marcadores, +6 para quedar por encima de cualquier
-     unidad de SU PROPIA loseta (unidades van a +5) sin adelantarse a las
-     losetas siguientes) — así una nube "detrás" del jugador vuelve a
-     quedar detrás, y una "delante" (loseta más cercana a cámara que
-     todavía tapa lo que hay detrás) sigue ocultándolo correctamente, que
-     es la oclusión normal esperada en isométrico. */
-  /* Rendimiento móvil — pedido explícito: "el rendimiento en smartphone es
-     lamentable, el juego es injugable, va lento, tiene errores gráficos" —
-     causa raíz encontrada: con un tablero de hasta 17x17 (289 losetas,
-     BOARD_SIZE_BY_OPPONENTS en js/matchsetup.js) TODAS empiezan con su
-     niebla visible y en reposo (fog-idle-drift, infinita) a la vez. Antes
-     esta regla base tenía "will-change: transform, opacity, filter" — pero
-     fog-idle-drift SOLO anima transform (ver @keyframes debajo); promocionar
-     opacity Y filter también, de fábrica, en las ~289 losetas en reposo a
-     la vez, fuerza al navegador a crear una capa de composición GPU aparte
-     por cada una CON soporte para filtro (mucho más cara que una capa
-     simple de transform/opacity: en varios móviles ese tipo de capa no
-     puede acelerarse igual de bien por hardware) — ahí es donde se iba la memoria
-     de vídeo y aparecían los "errores gráficos" (parpadeos, texturas mal
-     compuestas) además de la lentitud general. Con solo "transform" aquí,
-     las losetas en reposo piden la capa más barata posible; el combo
-     completo (transform+opacity+filter) se mueve a .tile__fog--revealed
-     más abajo, que sí anima las tres a la vez pero solo en las pocas
-     losetas que se están revelando en un momento dado (nunca las 289 juntas)
-     y solo durante su animación de 1.2s, no todo el partido. */
-}
-
-/* Pedido explícito: "la animacion de la niebla consume una cantidad de
-   recursos ingente...optimiza esa caracteristica para que apenas consuma
-   recursos" — la animación en sí no es el gasto real, es CUÁNTAS capas de
-   composición GPU separadas hace falta mantener a la vez (will-change
-   reserva una por loseta aunque casi no cueste nada de CPU por fotograma).
-   Con tableros ahora de hasta 25x25 (BOARD_SIZE_BY_OPPONENTS, js/
-   matchsetup.js) puede haber más de un centenar de nubes en reposo
-   visibles a la vez incluso con el recorte fuera-de-pantalla (Fog.
-   updateCulling) ya aplicado. Solución: SOLO una de cada dos losetas
-   anima de verdad (tile__fog--idle, ver el patrón fila+columna en
-   mapgen.js/renderMap) — la mitad de capas GPU simultáneas como techo, sin
-   tocar la animación en sí ("lo mas fiel posible" al pedido) ni cuántas
-   nubes se VEN (la otra mitad sigue pintando su nube, solo que
-   completamente quieta). Repartido por fila+columna en vez de al azar
-   para que quede parejo por todo el mapa, no en manchas. */
-.tile__fog--idle {
-  will-change: transform;
-  animation: fog-idle-drift 8s ease-in-out infinite;
-}
-
-/* Pedido explícito (pasada posterior): "si animar niebla fuese una
-   animacion un poquito mas exagerada y afectase a menos losetas...en vez
-   de un 50, un 30%" — ver el patrón fila/columna en mapgen.js/renderMap,
-   bajado de la mitad a 3 de cada 10 losetas. Para que el campo de niebla
-   se siga leyendo "vivo" con menos nubes animadas a la vez, el propio
-   vaivén de cada una que SÍ anima sube un poco de amplitud (-47%→-44% de
-   deriva, 1.035→1.07 de escala, 0.6deg→1.2deg de giro) — sigue siendo el
-   mismo derivado sutil de siempre, ni más caro por fotograma (misma
-   duración/misma propiedad transform) ni brusco, solo un pelín más
-   notorio para compensar visualmente que hay menos nubes moviéndose.
-   Pedido explícito (tercera pasada, ver mapgen.js): bajado otra vez de 3
-   de cada 10 a 2 de cada 10 losetas — misma lógica de compensación, un
-   empujón más de amplitud (-44%→-42%, 1.07→1.09, 1.2deg→1.6deg) para que
-   el campo siga leyéndose igual de vivo con aún menos nubes en marcha. */
-@keyframes fog-idle-drift {
-  0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-  50% { transform: translate(-50%, -42%) scale(1.09) rotate(1.6deg); }
-}
-
-/* Pedido explícito: "añade un checkbox para desactivar/activar la
-   animacion de la niebla en configuracion" — ver Fog.setAnimEnabled en
-   js/fog.js, que solo alterna esta clase en <body> (nunca recorre las
-   losetas una a una). Quita TANTO la animación como el will-change de la
-   regla de arriba — no basta con parar fog-idle-drift, will-change por sí
-   solo ya reserva una capa de composición GPU por loseta aunque no se esté
-   animando nada, que es justo lo que se quiere ahorrar en el móvil más
-   flojo. :not(.tile__fog--revealed) para no pisar nunca la animación de
-   disipado (fog-dissipate, más abajo) de las pocas losetas que se estén
-   revelando en ese instante — esa es barata de por sí (nunca muchas a la
-   vez) y debe seguir viéndose igual de bien con el checkbox desactivado. */
-body.gg-fog-anim-off .tile__fog--idle:not(.tile__fog--revealed) {
-  animation: none;
-  will-change: auto;
-}
-
-/* Pedido explícito: "¿se podrían desactivar las losetas de niebla que no
-   aparecen en pantalla hasta que la cámara se mueva y sea visible?" — ver
-   Fog.updateCulling (js/fog.js) y BoardView._apply (js/boardview.js), que
-   recalculan esto en cada frame de cámara SOLO con la animación activada
-   (comprobado: sin animación no compensa el coste de recalcular). Oculta
-   por completo (display:none, ni siquiera se pinta) cualquier loseta de
-   niebla fuera del viewport + un margen amplio (3 losetas de ancho) —
-   probado contra el peor caso de "popping" (un arrastre que cubra de
-   golpe todo el rango de la cámara en una sola ráfaga de eventos
-   táctiles): con un margen más ajustado (1.5 losetas) se veía un hueco en
-   ese caso límite, con este no. */
-/* Nube que vuelve a ser "profunda" tras el oráculo: la pinta el canvas del suelo. */
-.tile__fog--deep { display: none !important; }
-
-.tile__fog--culled {
-  /* visibility en vez de display:none: al volver a entrar en pantalla la nube conserva su fase
-     de animación (display:none la reiniciaba y la nube "saltaba" al reaparecer). */
-  visibility: hidden;
-  animation-play-state: paused;
-}
-
-/* Mientras la cámara hace zoom, la niebla animada se queda quieta (se reanuda en el mismo punto). */
-body.gg-cam-zooming .tile__fog--idle { animation-play-state: paused; }
-
 /* Pedido explícito: "si alejo mucho la camara aparecen errores graficos...
    tengo idea de hacer los escenarios mucho mas grandes y detallados, asi
    que esto va a suponer un problema grave...como lo arreglamos?" —
@@ -1349,81 +1204,6 @@ body.gg-cam-zooming .tile__fog--idle { animation-play-state: paused; }
    margen, ni siquiera se pinta. */
 .gg-viewport-culled {
   display: none;
-}
-
-/* Calidad de sprite dinámica (js/spritequality.js) — pedido explícito:
-   "contra más lejos se ve la cámara, cambiar sprites por los mismos como
-   resolución más baja". Se probaron dos mecanismos con transición (fundido
-   secuencial, luego un cruce con solape real) pero, comparándolos en la
-   demo con el cambio instantáneo, Jesús decidió que este último es el que
-   menos se nota de los tres ("mejor el cambio de calidad de sprite
-   dinámica sin fundido") — así que el cambio de textura (ver
-   SpriteQuality._swap) es un simple assignment de src, sin ninguna clase
-   ni transición CSS de por medio. */
-
-/* Al revelarse (Fog.revealForUnit) sustituye por completo la animación de
-   reposo (misma propiedad "animation", gana por ir después en la hoja de
-   estilos) — nunca las dos compitiendo por transform a la vez, mismo patrón
-   que unit--moving/unit__sprite--hop en units.js/style.css. "forwards"
-   deja el fotograma final (opacity:0, ya disipada) en vez de volver de
-   golpe al primero al terminar; js/fog.js la esconde del todo
-   (display:none) cuando acaba, vía animationend. */
-.tile__fog--revealed {
-  /* Aquí SÍ se promociona opacity y filter además de transform (a
-     diferencia de .tile__fog de arriba) — esta clase solo la llevan las
-     pocas losetas que se están disipando en un instante dado (nunca el
-     tablero entero a la vez), así que el coste extra de esa capa más
-     pesada es puntual y pequeño. */
-  will-change: transform, opacity, filter;
-  /* SOLO 0% y 100% a propósito — la primera versión (con un keyframe
-     intermedio al 35%, y luego la siguiente con varios al 25/50/75%) tenía
-     el mismo problema de fondo: cuando una animación CSS lleva varios
-     keyframes y una única timing-function en el shorthand, esa curva de
-     aceleración/deceleración se vuelve a aplicar DESDE CERO dentro de cada
-     tramo entre dos keyframes, no una sola vez a lo largo de toda la
-     animación. Eso hace que la velocidad caiga casi a cero justo antes de
-     cada punto intermedio y "arranque" de golpe en el siguiente tramo — el
-     tirón que reportó Jesús, y con varios keyframes intermedios pasaba
-     varias veces seguidas ("como en 2 partes"). Con un solo tramo (0→100%)
-     la curva se aplica de una sola vez, sin reinicios a mitad de camino. */
-  animation: fog-dissipate 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
-}
-
-@keyframes fog-dissipate {
-  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.96; filter: blur(0px); }
-  100% { transform: translate(-50%, -74%) scale(1.6); opacity: 0; filter: blur(7px); }
-}
-
-/* Pedido explícito: "mejora el efecto de disipacion de la niebla, en la
-   interfaz movil genera errores graficos y ralentiza el juego. en el modo
-   escritorio no toques nada" — de las tres propiedades que anima
-   fog-dissipate (transform/opacity/filter), filter:blur() es con
-   diferencia la más cara: un blur de verdad obliga al navegador a
-   componer un búfer aparte y difuminarlo píxel a píxel en cada fotograma,
-   mucho peor soportado por la GPU de un móvil que transform/opacity. Con
-   hasta 289 losetas de niebla en el tablero (BOARD_SIZE_BY_OPPONENTS,
-   js/matchsetup.js) y varias disipándose a la vez al revelar una zona
-   grande de un golpe (Fog.revealAround), ese coste se nota como los
-   "errores graficos" (parpadeos, texturas mal compuestas) y la
-   ralentización reportados. En vez de tocar fog-dissipate en sí (se vería
-   IGUAL en escritorio, y el pedido es tajante: "no toques nada" ahí), se
-   sustituye SOLO en este breakpoint por fog-dissipate-mobile: mismo
-   crecimiento + desvanecido, sin el filtro. Mismo breakpoint
-   (FOG_ANIM_MOBILE_BREAKPOINT = 480px, js/fog.js) que ya usa el resto de
-   ajustes de rendimiento para móvil de este archivo, así que cualquier
-   ventana de escritorio (por estrecha que sea) nunca entra aquí. */
-@media (max-width: 480px) {
-  .tile__fog--revealed {
-    animation-name: fog-dissipate-mobile;
-    /* Sin "filter" en la lista (a diferencia de la regla de escritorio,
-       justo arriba) — nada que promocionar si esta versión no lo anima. */
-    will-change: transform, opacity;
-  }
-
-  @keyframes fog-dissipate-mobile {
-    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.96; }
-    100% { transform: translate(-50%, -72%) scale(1.4); opacity: 0; }
-  }
 }
 
 /* Pedido explícito (memoria de niebla de guerra, ver Fog._recomputePerception
@@ -10550,8 +10330,6 @@ body.tut-on .tut-portrait, body.tut-on .tut-portrait * { pointer-events: none; }
 .oracle--locked .oracle__lock,
 .oracle--depleted .oracle__lock { opacity: 0; } /* sin candado: basta con el edificio oscurecido */
 .oracle--depleted { cursor: var(--cursor-default); }
-body.oracle-fog-lifted .tile__fog { opacity: 0 !important; transition: opacity 0.6s ease; }
-.tile__fog { transition: opacity 0.6s ease; }
 
 .backpack-slot__icon[src*="oraculo/carta"] { object-fit: contain; width: 70%; height: 84%; }
 
@@ -12233,17 +12011,6 @@ body.tut-hush .tut-panel * { pointer-events: none; }
 .sac-lavalip { position: absolute; border-radius: 50%; background: #ff9a22; border: 2px solid #c9460f; box-sizing: border-box; pointer-events: none; }
 .sac-thumb-mask { position: absolute; overflow: hidden; pointer-events: none; }
 
-/* ---------- Pack de rendimiento móvil ---------- */
-/* Niebla con la animación desactivada (siempre en móvil): se disipa con un simple fundido,
-   sin crecer ni desplazarse. */
-body.gg-fog-anim-off .tile__fog--revealed {
-  animation-name: fog-fade;
-  animation-duration: 0.7s;
-  animation-timing-function: ease-out;
-  will-change: opacity;
-}
-@keyframes fog-fade { from { opacity: 0.96; } to { opacity: 0; } }
-
 /* Cámara muy alejada: sin sombras con desenfoque (se ven diminutas y son lo más caro de componer). */
 body.gg-lod-far .unit:not(.unit--exhausted):not(.unit--selected):not(.unit--doomed) .unit__flip,
 body.gg-lod-far .shop__sprite:not(.oracle__sprite),
@@ -12286,3 +12053,11 @@ body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }
 .gp-exithold__ring{width:72px;height:72px;border-radius:50%;background:conic-gradient(#ffd54a var(--p,0deg),#2b3a52 0);display:flex;align-items:center;justify-content:center;border:3px solid #000;box-shadow:3px 3px 0 #000}
 .gp-exithold__n{width:52px;height:52px;border-radius:50%;background:#1d2636;color:#ffd54a;font-size:28px;line-height:52px;text-align:center}
 .gp-exithold__t{font-size:11px;color:#fff;text-align:center;text-shadow:2px 2px 0 #000;text-transform:uppercase}
+
+/* Niebla en lienzos (js/fogcanvas.js), dentro de la cámara: el de fondo (z-index 2) queda POR DEBAJO de
+   sprites, barras, insignias y marcadores; el superior (2000) solo repinta la base de objetos con
+   niebla delante, y queda por debajo de lo que va "sobre la niebla" (gnomos 3000, marcadores 5000). */
+.board-fog { position: absolute; left: 0; top: 0; transform-origin: 0 0; z-index: 2000; pointer-events: none; will-change: transform; }
+.board-fog--back { z-index: 2; }
+/* Objeto revelado que asoma sobre la niebla: se congela su respiración para que la copia del lienzo coincida. */
+.gg-peek, .gg-peek * { animation-play-state: paused !important; }

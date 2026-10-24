@@ -1,8 +1,7 @@
 /* Gnomore Gnomes — niebla de guerra (fog of war).
    Regla de oro: un archivo por mecánica. Este archivo solo sabe QUÉ losetas
    están reveladas y CUÁNDO revelar más — no pinta la niebla en sí (eso lo
-   hace js/mapgen.js, que crea SIEMPRE la capa .tile__fog en cada loseta al
-   generar el mapa, visible por defecto) ni decide a qué casillas puede
+   hace js/fogcanvas.js, un único lienzo) ni decide a qué casillas puede
    moverse una unidad (eso lo sigue decidiendo js/movement.js, que consulta
    Fog.isFogged para excluir de su rango las que aún no se han revelado —
    pedido explícito: "un personaje no puede moverse a una zona que esté
@@ -14,9 +13,8 @@
    spawnRandomEnemy no cambian), la niebla solo lo tapa visualmente hasta
    que este archivo decide revelar cada loseta.
 
-   Se apoya en los atributos data-row/data-col que mapgen.js ya deja en cada
-   `.tile` (y en su `.tile__fog` hijo) para encontrar qué elemento ocultar
-   sin tener que mantener su propio índice DOM aparte. */
+   Mantiene Fog.revealedGrid/perceivedGrid y avisa a FogCanvas de cada loseta
+   que se revela; applyVisibility oculta/muestra a quien quede bajo la niebla. */
 
 // Radio (casillas, distancia Chebyshev) revelado alrededor de cada
 // personaje AL EMPEZAR la partida — pedido explícito: FIJO, no depende de
@@ -73,7 +71,6 @@ const Fog = {
   // sin estar percibida ahora mismo — ese es justo el estado "recordado"
   // que pidió el usuario (ver isPerceived/_recomputePerception más abajo).
   perceivedGrid: null,
-  _fogEls: null, // Map "row,col" -> elemento .tile__fog de esa loseta
   animEnabled: true,
 
   // Se llama UNA vez al cargar la página (igual que Shadows.init), no por
@@ -108,69 +105,17 @@ const Fog = {
       // En móvil siempre apagada y sin guardar nada: así al volver a escritorio se respeta su preferencia.
       this.animEnabled = false;
       this._applyAnimToggle();
-      this._refreshIdle();
-      this.clearCulling();
+      if (typeof FogCanvas !== "undefined") FogCanvas.onAnimToggle();
       return;
     }
     this.animEnabled = !!enabled;
     localStorage.setItem(FOG_ANIM_STORAGE_KEY, this.animEnabled ? "1" : "0");
     this._applyAnimToggle();
-    // Pedido explícito: "¿se podrían desactivar las losetas de niebla que
-    // no aparecen en pantalla hasta que la cámara se mueva?" — el culling
-    // de abajo (updateCulling) solo merece la pena cuando hay animación
-    // que ahorrar (medido: con la animación desactivada, recorrer las 289
-    // losetas en cada frame de cámara cuesta MÁS de lo que ahorra). Al
-    // apagar la animación hay que devolver a visibles las que estuvieran
-    // "culled" (si no, se quedarían ocultas para siempre, porque
-    // BoardView deja de llamar a updateCulling con animEnabled=false); al
-    // activarla, calcular el culling YA MISMO en vez de esperar al
-    // siguiente movimiento de cámara.
-    this._refreshIdle();
-    if (!this.animEnabled) {
-      this.clearCulling();
-    } else if (typeof BoardView !== "undefined" && BoardView.viewportEl) {
-      this.updateCulling(BoardView.panX, BoardView.panY, BoardView.scale, BoardView.viewportEl.clientWidth, BoardView.viewportEl.clientHeight);
-    }
+    if (typeof FogCanvas !== "undefined") FogCanvas.onAnimToggle();
   },
 
   _applyAnimToggle() {
     document.body.classList.toggle("gg-fog-anim-off", !this.animEnabled);
-  },
-
-  // Pedido explícito: "¿se podrían desactivar las losetas de niebla que no
-  // aparecen en pantalla hasta que la cámara se mueva y sea visible? ¿o
-  // habría popping?" — comprobado con pruebas antes de implementar (ver
-  // conversación): con un margen de 1.5 losetas SÍ llegaba a fallar en el
-  // peor caso posible (un arrastre que cubra de golpe todo el rango de la
-  // cámara en una sola ráfaga, quedaba a solo 3.4px de mostrar un hueco).
-  // x3 TILE_WIDTH deja margen de sobra incluso en ese caso límite, medido
-  // con el mismo peor-caso synthetic (sobran ~270px). Con margen x1.5 la
-  // mejora de fps era mayor, pero no merece la pena arriesgarse a un
-  // parpadeo visible por ese margen extra de rendimiento.
-  _cullCount: 0,
-  clearCulling() {
-    if (!this._fogEls) return;
-    this._fogEls.forEach((fogEl) => fogEl.classList.remove("tile__fog--culled"));
-    this._cullCount = 0;
-  },
-  updateCulling(panX, panY, scale, viewportW, viewportH) {
-    if (!this._fogEls) return;
-    const margin = TILE_WIDTH * 3 * scale;
-    let visibleCount = 0;
-    this._fogEls.forEach((fogEl, key) => {
-      if (fogEl.style.display === "none") return; // ya revelada y oculta del todo
-      if (fogEl.classList.contains("tile__fog--revealed")) return; // disipándose, no tocar
-      const commaIdx = key.indexOf(",");
-      const row = Number(key.slice(0, commaIdx));
-      const col = Number(key.slice(commaIdx + 1));
-      const c = getTileCenter(row, col, this.size);
-      const screenX = panX + c.x * scale;
-      const screenY = panY + c.y * scale;
-      const visible = screenX > -margin && screenX < viewportW + margin && screenY > -margin && screenY < viewportH + margin;
-      if (visible) visibleCount++;
-      fogEl.classList.toggle("tile__fog--culled", !visible);
-    });
-    this._cullCount = visibleCount;
   },
 
   // Se llama UNA vez al generar/pintar cada mapa nuevo (spawnTestUnits en
@@ -182,7 +127,6 @@ const Fog = {
     this.size = size;
     this.revealedGrid = Array.from({ length: size }, () => new Array(size).fill(false));
     this.perceivedGrid = Array.from({ length: size }, () => new Array(size).fill(false));
-    this._fogEls = new Map();
     // Pedido explícito: "cuando la surcabosques usa vision lejana, la zona
     // se revela sin niebla durante 4 segundos, despues la niebla se
     // apodera de la zona de nuevo" — ver _tempPerceptionSources/
@@ -198,25 +142,9 @@ const Fog = {
     // cada movimiento cuando, sobre todo al principio de la partida, la
     // inmensa mayoría siguen sin descubrir.
     this._revealedPositions = [];
-    // Niebla en dos capas: las nubes LEJOS de lo explorado (>= FOG_DEEP_RADIUS
-    // casillas de cualquier loseta revelada) no existen como elemento del DOM:
-    // las pinta TerrainCanvas en el canvas del suelo (js/terraincanvas.js). Las
-    // cercanas a lo explorado (frontera: se animan, se disipan, se mezclan en
-    // z-index con unidades y objetos) siguen siendo <img> y se crean bajo
-    // demanda en _enterDom. Al empezar todo es profundo; cada revelado
-    // convierte a DOM las nubes de su entorno.
+    // La niebla se pinta en UN solo lienzo (js/fogcanvas.js); aquí solo vive el estado.
     this._container = container;
-    this._deep = new Uint8Array(size * size).fill(1);
-    // Reserva de nubes ya construidas (y con su textura decodificada) hecha
-    // AQUÍ, durante la pantalla de carga: al revelar una zona, _enterDom solo
-    // tiene que engancharlas al DOM en vez de fabricar y decodificar decenas de
-    // <img> en pleno juego (era el tirón al descubrir zona). No cuentan como
-    // elementos del tablero hasta que _enterDom las usa.
-    this._pool = new Array(size * size);
-    for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) this._pool[r * size + c] = createFogEl(r, c, size);
-    const warm = this._pool[0];
-    if (warm && warm.decode) warm.decode().catch(() => {});
-    if (typeof TerrainMap !== "undefined") TerrainMap.setAllFogDeep(true);
+    if (typeof FogCanvas !== "undefined") FogCanvas.setup(size);
     // Modo rendimiento: el terreno de losetas sin explorar (y sin vecinas exploradas) no se pinta
     // debajo de la niebla (ver "tile--unexplored" en style.css; solo actúa con body.perf-mode).
     if (typeof TerrainMap !== "undefined") TerrainMap.markAllUnexplored();
@@ -383,163 +311,26 @@ const Fog = {
     this.applyVisibility();
   },
 
-  // ---------- Niebla profunda (canvas) vs niebla de frontera (DOM) ----------
-  FOG_DEEP_RADIUS: 6, // casillas (Chebyshev) de margen alrededor de lo revelado
-
-  // Pasa a DOM la nube de (r,c) si aún era "profunda": crea su <img> (con los
-  // mismos atributos que siempre) y deja de pintarla el canvas.
-  _enterDom(r, c) {
-    const i = r * this.size + c;
-    if (!this._deep || !this._deep[i]) return;
-    this._deep[i] = 0;
-    const key = `${r},${c}`;
-    let el = this._fogEls.get(key);
-    if (!el) {
-      el = (this._pool && this._pool[i]) || createFogEl(r, c, this.size);
-      if (this._pool) this._pool[i] = null;
-      // La nube de canvas se mantiene dibujada hasta que la imagen DOM esté
-      // cargada Y decodificada: si se quitaba antes, había uno o dos frames
-      // sin nube (o con la textura a medias) = el parpadeo al descubrir zona.
-      el.style.visibility = "hidden";
-      el._pend = true;
-      this._container.appendChild(el);
-      this._fogEls.set(key, el);
-      const done = () => this._finishEnter(r, c, el);
-      const go = () => (el.decode ? el.decode().then(done, done) : done());
-      if (el.complete && el.naturalWidth > 0) go();
-      else {
-        el.addEventListener("load", go, { once: true });
-        el.addEventListener("error", done, { once: true });
-      }
-    } else {
-      el.classList.remove("tile__fog--deep");
-      if (typeof TerrainMap !== "undefined") TerrainMap.setFogDeep(r, c, false);
-    }
-  },
-
-  _finishEnter(r, c, el) {
-    if (!el._pend) return;
-    el._pend = false;
-    el.style.visibility = "";
-    // La nube de canvas se quita DOS fotogramas después de mostrar la de DOM:
-    // la capa nueva necesita rasterizarse; quitarla antes dejaba un fotograma
-    // sin nube (el parpadeo al descubrir zona con la niebla animada).
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (typeof TerrainMap !== "undefined" && this._deep && !this._deep[r * this.size + c]) TerrainMap.setFogDeep(r, c, false);
-    }));
-  },
-
-  // Una loseta se acaba de revelar: todas las nubes a menos de FOG_DEEP_RADIUS
-  // pasan a DOM (la suya, que se va a disipar, y las vecinas que pueden
-  // tapar/ser tapadas por unidades y objetos).
-  _densify(row, col) {
-    const R = this.FOG_DEEP_RADIUS;
-    for (let dr = -R; dr <= R; dr++) {
-      const r = row + dr;
-      if (r < 0 || r >= this.size) continue;
-      for (let dc = -R; dc <= R; dc++) {
-        const c = col + dc;
-        if (c < 0 || c >= this.size) continue;
-        this._enterDom(r, c);
-      }
-    }
-  },
-
-  // El Vigilante (oráculo) levanta la niebla: con los objetos visibles bajo
-  // ella hay que respetar el orden de profundidad de TODAS las nubes -> todas
-  // a DOM mientras dure. Al terminar, vuelven a ser profundas las que toque.
+  // El Vigilante (js/oracle.js) levanta/baja toda la niebla.
   _onLiftChanged(on) {
-    if (!this._deep) return;
-    const n = this.size;
-    if (on) {
-      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (!this.revealedGrid[r][c]) this._enterDom(r, c);
-      return;
-    }
-    const R = this.FOG_DEEP_RADIUS;
-    for (let r = 0; r < n; r++) {
-      for (let c = 0; c < n; c++) {
-        if (this.revealedGrid[r][c] || this._deep[r * n + c]) continue;
-        let near = false;
-        outer: for (let dr = -R; dr <= R; dr++) {
-          const rr = r + dr;
-          if (rr < 0 || rr >= n) continue;
-          for (let dc = -R; dc <= R; dc++) {
-            const cc = c + dc;
-            if (cc >= 0 && cc < n && this.revealedGrid[rr][cc]) { near = true; break outer; }
-          }
-        }
-        if (near) continue;
-        this._deep[r * n + c] = 1;
-        const el = this._fogEls.get(`${r},${c}`);
-        if (el) el.classList.add("tile__fog--deep");
-        if (typeof TerrainMap !== "undefined") TerrainMap.setFogDeep(r, c, true);
-      }
-    }
+    if (typeof FogCanvas !== "undefined") FogCanvas.setLifted(on);
   },
+
 
   _reveal(row, col, instant) {
     if (this.revealedGrid[row][col]) return;
     this.revealedGrid[row][col] = true;
-    this._densify(row, col);
     this._revealedPositions.push({ row, col });
     if (typeof TerrainMap !== "undefined") {
       for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) TerrainMap.markExplored(row + dr, col + dc);
     }
-    const fogEl = this._fogEls.get(`${row},${col}`);
-    if (!fogEl) return;
-    this._finishEnter(row, col, fogEl);
-    if (instant) {
-      fogEl.classList.add("tile__fog--revealed");
-      fogEl.style.display = "none";
-      if (typeof TerrainMap !== "undefined") TerrainMap.revealTile(row, col);
-      return;
-    }
-    // BUG encontrado y corregido: mapgen.js pone a cada niebla un
-    // animation-delay NEGATIVO aleatorio inline (0 a -9s) para desincronizar
-    // la respiración de reposo (fog-idle-drift, 8s de ciclo) entre losetas.
-    // Ese estilo inline pesa más que la propiedad "animation" del CSS de
-    // .tile__fog--revealed, así que si no se limpia aquí se queda puesto al
-    // cambiar de animación — y como fog-dissipate dura solo 1.1s, un delay
-    // heredado de p.ej. -7s hace que arranque ya "7s dentro" de un ciclo de
-    // 1.1s, es decir prácticamente en su último fotograma: la niebla
-    // desaparece de golpe (el "POP!" que reportaste) en vez de disiparse. Con
-    // delays pequeños casi no se notaba, de ahí que unas veces se viera bien
-    // y otras no — no era una carrera ni una regla CSS duplicada, era este
-    // resto de estilo inline. Se limpia justo antes de cambiar de animación.
-    fogEl.style.animationDelay = "0s";
-    // Terreno real (js/mapgen.js, TerrainMap) — pedido explícito: "la loseta
-    // de agua sustituye a las de hierba, pero inicialmente bajo la niebla
-    // todas son de hierba hasta que se revelan". Se dispara en el MISMO
-    // instante en que empieza a disiparse la niebla de esta loseta (no al
-    // terminar) para que el cambio de textura quede disimulado detrás de la
-    // propia nube durante su 1.2s de disipado en vez de dar un salto brusco.
+    // Terreno real (js/mapgen.js, TerrainMap): "la loseta de agua sustituye a las de hierba, pero
+    // inicialmente bajo la niebla todas son de hierba hasta que se revelan". Se dispara cuando
+    // empieza a disiparse la nube, para que el cambio de textura quede disimulado detrás de ella.
     if (typeof TerrainMap !== "undefined") TerrainMap.revealTile(row, col);
-    // Se disipa con su propia animación (@keyframes fog-dissipate, ver
-    // style.css: crece, se difumina y se desvanece, no un simple fundido de
-    // opacidad) en vez de desaparecer de golpe — nivel Triple A / feedback
-    // (regla de oro del proyecto): explorar debe sentirse como un
-    // descubrimiento, no como un interruptor on/off.
-    // Primero se le da su capa de GPU (will-change) y se deja que se rasterice;
-    // la animación de disipado solo arranca 2 fotogramas después. Si capa y
-    // animación nacían en el mismo fotograma, la nube parpadeaba al empezar a
-    // disiparse (sobre todo con muchas a la vez al revelar una zona grande).
-    this._watchEntityReveal();
-    fogEl.style.willChange = "transform, opacity";
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      fogEl.style.willChange = "";
-      fogEl.classList.add("tile__fog--revealed");
-    }));
-    // Al terminar la animación de disipado se saca del flujo de pintado por
-    // completo (display:none) — ya es invisible (opacity:0 al final del
-    // keyframe) pero sin esto seguiría "animando en reposo" para siempre sin
-    // coste visible; con esto no vuelve a costar nada.
-    fogEl.addEventListener(
-      "animationend",
-      () => {
-        fogEl.style.display = "none";
-      },
-      { once: true }
-    );
+    if (!instant) this._watchEntityReveal();
+    // La nube se disipa en el lienzo de niebla (js/fogcanvas.js).
+    if (typeof FogCanvas !== "undefined") FogCanvas.onReveal(row, col, !!instant);
   },
 
   // Fallo de revelado: al revelar una loseta, applyVisibility quita
@@ -817,349 +608,11 @@ const Fog = {
     // "NADA debe verse si tiene niebla encima" para el del rival, nunca
     // para el propio (ver TotemVision.refreshFogVisibility).
     if (typeof TotemVision !== "undefined") TotemVision.refreshFogVisibility();
-    // Pedido explícito: "algunas unidades asoman por la niebla a veces...
-    // asegurate de que se arregla eso" — lo de arriba oculta del todo a
-    // quien esté DE PIE sobre su propia loseta sin revelar, pero un
-    // personaje visible (su loseta YA revelada) tiene un sprite más alto
-    // que su propia loseta, así que puede asomar por encima dentro del
-    // hueco de pantalla de una loseta VECINA que sigue sin revelar (mismo
-    // solapamiento por FOG_OVERHANG que ya se investigó para el z-index de
-    // la niebla, ver mapgen.js). Se arregla aparte (_refreshFogCoverZ) en
-    // vez de aquí mismo.
-    this._refreshFogCoverZ();
-    this._refreshIdle();
+    // Un sprite visible puede solaparse con nubes de losetas vecinas sin revelar: ya lo resuelve el
+    // propio lienzo (js/fogcanvas.js), que va por encima de los sprites; solo hay que avisarle.
+    if (typeof FogCanvas !== "undefined") FogCanvas.onVisibilityChanged();
   },
 
-  // Animación de reposo SOLO en la frontera de la niebla: la nube interior
-  // es una masa uniforme que nadie ve moverse, y cada nube animada cuesta una
-  // capa GPU (causa de las losetas que desaparecen). Frontera = sin revelar
-  // con una revelada a <=2 casillas; una de cada dos, tope 28.
-  _refreshIdle() {
-    if (!this._fogEls || !this.revealedGrid) return;
-    const n = this.size;
-    let count = 0;
-    this._fogEls.forEach((el, key) => {
-      const i = key.indexOf(",");
-      const r = +key.slice(0, i), c = +key.slice(i + 1);
-      let on = false;
-      const was = el.classList.contains("tile__fog--idle");
-      // Una nube que ya respira sigue respirando (sin apagarla a mitad de
-      // ciclo: eso la devolvía de golpe a su pose estática = parpadeo).
-      if (was && this.animEnabled && !this.revealedGrid[r][c] && count < 28) on = true;
-      else if (this.animEnabled && count < 28 && !this.revealedGrid[r][c] && (r + c) % 2 === 0) {
-        outer: for (let dr = -2; dr <= 2; dr++) {
-          const rr = r + dr;
-          if (rr < 0 || rr >= n) continue;
-          for (let dc = -2; dc <= 2; dc++) {
-            const cc = c + dc;
-            if (cc >= 0 && cc < n && this.revealedGrid[rr][cc]) { on = true; break outer; }
-          }
-        }
-      }
-      if (on) count++;
-      // Al encenderse por primera vez arranca en la fase 0 (idéntica a la
-      // pose estática): el delay negativo aleatorio de mapgen la hacía
-      // saltar de golpe a mitad de ciclo ("chisporroteo").
-      if (on && !was) {
-        // Primero se le da su capa de GPU (will-change) y se deja que se
-        // rasterice; la animación solo se añade 2 frames después. Si capa y
-        // animación aparecían en el mismo frame, Chrome rasterizaba la nube
-        // dos veces (a escala 1 y luego a la de la animación) = parpadeo.
-        el.style.animationDelay = (Math.random() * 6).toFixed(2) + "s"; // positivo: espera quieta y arranca en fase 0, sin salto
-        if (!el._idleWait) {
-          el._idleWait = true;
-          el.style.willChange = "transform";
-          requestAnimationFrame(() => requestAnimationFrame(() => {
-            el._idleWait = false;
-            el.style.willChange = "";
-            if (!el.classList.contains("tile__fog--revealed") && this.animEnabled && !this.revealedGrid[+el.dataset.row][+el.dataset.col]) el.classList.add("tile__fog--idle");
-          }));
-        }
-        return;
-      }
-      if (!on && el._idleWait) return;
-      el.classList.toggle("tile__fog--idle", on);
-    });
-  },
-
-  // z-index "de reposo" de una nube de niebla — mismo cálculo que pone
-  // mapgen.js al crearla (ver ese archivo, comentario del bug de z-index ya
-  // arreglado antes): (fila+columna)*10+6, +1 por encima de una unidad de
-  // pie en ESA MISMA loseta (+5) pero sin llegar al rango de la loseta
-  // siguiente, que es lo que deja que el orden normal por fila+columna
-  // decida el resto del tablero sin tocarlo.
-  _fogRestZ(row, col) {
-    return (row + col) * 10 + 6;
-  },
-
-  // Sube el z-index de SOLO las nubes vecinas "de arriba" que todavía
-  // sigan sin revelar y estén junto a una unidad (o gnomo suelto) visible
-  // — justo lo justo para taparla (su propio z-index +1), nunca más. No es
-  // un z-index fijo y enorme para TODA la niebla sin revelar (esa fue
-  // justo la solución equivocada de antes, ver comentario de mapgen.js: una
-  // nube lejana no debe tapar por delante a un personaje que en realidad
-  // está más cerca de cámara) — solo se sube la nube exacta que un sprite
-  // concreto necesita tener delante, y vuelve sola a su z-index de reposo
-  // en cuanto ya no haga falta (la unidad se aleja, o esa loseta se
-  // revela), porque cada llamada empieza reseteando todo antes de volver a
-  // subir lo que siga haciendo falta.
-  // Pedido explícito (pasada posterior, con capturas): "algunas unidades se
-  // siguen asomando a traves de la niebla" — investigado con un barrido
-  // real (comparando el rectángulo en pantalla de cada candidato contra el
-  // de cada nube de niebla vecina). Dos intentos previos, los dos
-  // descartados tras medir en vivo:
-  //   1) Lista fija de 4 vecinos ("justo arriba", las dos adyacentes y "2
-  //      casillas arriba" en diagonal): cubría de sobra una unidad normal
-  //      o el GolemCorteza, pero un Obelisco (mucho MÁS ANCHO que una sola
-  //      loseta) se salía por los LADOS — hasta 5 columnas más allá de su
-  //      propia loseta.
-  //   2) "Cuántas filas/columnas de loseta ocupa" (alto y ancho del sprite
-  //      entre alto y ancho de una loseta, redondeando hacia arriba):
-  //      parecía razonable pero seguía quedándose corto con el Obelisco
-  //      (el barrido en vivo lo confirmó). El motivo real: en isométrico,
-  //      "una fila más arriba en pantalla" no es un simple desplazamiento
-  //      vertical — es diagonal, cambia fila Y columna del tablero a la
-  //      vez (ver getTileCenter en mapgen.js) — así que convertir un alto
-  //      en píxeles a "N filas" con una simple división no encaja con la
-  //      geometría real del rombo; hacía falta mucho más margen del que
-  //      ese cálculo daba, distinto además según cada combinación de alto
-  //      Y ancho, no solo el alto.
-  //
-  // La única manera de acertar SIEMPRE, sea cual sea el tamaño y la forma
-  // del sprite (sin tener que volver a ajustar nada a mano el día que se
-  // añada uno nuevo, incluso mucho más grande — regla de oro de
-  // escalabilidad), es comprobar el solape en pantalla de verdad: el
-  // rectángulo real del candidato contra el rectángulo real de CADA nube
-  // todavía sin revelar, exactamente igual que hace un ojo humano mirando
-  // la pantalla. _refreshFogCoverZ mide cada nube sin revelar UNA sola vez
-  // (nunca más de una vez por nube, aunque haya varios candidatos) y
-  // reutiliza esos rectángulos para todos los candidatos — sigue sin
-  // ejecutarse en cada frame de cámara (solo cuando cambia la niebla, ver
-  // los sitios que llaman a applyVisibility), así que el coste de más
-  // rectángulos no se nota.
-  _OVERLAP_MIN_AREA_PX: 30, // ruido de subpíxel/redondeo, no una superposición real
-
-  // Pedido explícito (con capturas): "el obelisco y sus iconos y otros
-  // elementos...no se asoman por la niebla, esto deberia tenerse en cuenta
-  // para los objetos que estan a la vista o en niebla de guerra" — hasta
-  // ahora coverFrom media SOLO el rect del propio contenedor (.unit/
-  // .obelisk/...), pero varias "insignias" flotantes (la barra de vida,
-  // .unit__hpbar; el indicador de población del Obelisco,
-  // .obelisk__pop-badge...) son hijos con position:absolute y un top/right
-  // NEGATIVO que las saca del propio cuadro del contenedor — un hijo
-  // posicionado así NUNCA agranda el getBoundingClientRect() de su padre,
-  // así que esa insignia podía asomar por encima de una nube vecina sin
-  // que coverFrom se enterara. En vez de enumerar a mano cada insignia de
-  // cada tipo de objeto (frágil: el día de mañana se añade una nueva y hay
-  // que acordarse de venir aquí), se mide la UNIÓN del propio rect más el
-  // de TODOS sus descendientes con tamaño real — mismo "acierta siempre,
-  // sea cual sea la forma" que ya se investigó para el propio solape (ver
-  // la nota larga de _refreshFogCoverZ más abajo): cualquier sprite/icono
-  // nuevo que se añada a cualquier objeto queda cubierto solo, sin tocar
-  // este archivo otra vez.
-  // Pedido explícito (con captura): "a veces hay gnomos que se ven por
-  // encima de la niebla" — el margen de arriba ya cubría la forma EN
-  // REPOSO de cada sprite/insignia, pero _refreshFogCoverZ solo se llama en
-  // eventos puntuales (mover, empezar turno...), nunca en cada fotograma.
-  // El salto de idle de un gnomo suelto (unit__sprite--hop, reutilizado
-  // igual en el paso de un personaje normal, ver @keyframes unit-hop en
-  // style.css) sube el sprite hasta 18px con un transform CSS que dispara
-  // solo, sin avisar a JS — así que casi nunca coincide el instante exacto
-  // en que _refreshFogCoverZ mide con el pico del salto, y esa cresta se
-  // queda sin contar en el rect medido, asomando un instante por encima de
-  // la niebla vecina hasta el siguiente evento que sí recalcule. En vez de
-  // perseguir el salto con un segundo sistema (costoso: forzaría medir en
-  // cada fotograma), se añade un margen de seguridad fijo por ARRIBA a
-  // cualquier rect medido aquí, algo mayor que el pico real (18px) para
-  // tener colchón: nunca hace falta que sea exacto, un margen de más solo
-  // sube un pelín antes de la cuenta el z-index de la nube vecina (nunca al
-  // revés), así que siempre pasa por "de más" nunca por "de menos".
-  _HOP_SAFETY_MARGIN_PX: 22,
-
-  _expandedRect(el) {
-    const base = el.getBoundingClientRect();
-    let left = base.left,
-      top = base.top,
-      right = base.right,
-      bottom = base.bottom;
-    el.querySelectorAll("*").forEach((child) => {
-      const r = child.getBoundingClientRect();
-      if (r.width === 0 || r.height === 0) return;
-      if (r.left < left) left = r.left;
-      if (r.top < top) top = r.top;
-      if (r.right > right) right = r.right;
-      if (r.bottom > bottom) bottom = r.bottom;
-    });
-    top -= this._HOP_SAFETY_MARGIN_PX;
-    return { left, top, right, bottom, width: right - left, height: bottom - top };
-  },
-
-  OBJECTS_PEEK_OVER_FOG: true,
-
-  _refreshFogCoverZ() {
-    if (!this.revealedGrid || !this._fogEls) return;
-    // Rectángulos reales de TODAS las nubes que sigan sin revelar (a la vez
-    // que se las resetea a su z-index de reposo) — una sola lectura por
-    // nube, reutilizada abajo para cualquier candidato. Una nube culleada
-    // (fuera de pantalla, ver Fog.updateCulling) mide 0x0 aquí y
-    // simplemente nunca solapará con nada — correcto: si no se pinta, no
-    // hay nada que tapar.
-    const unrevealed = [];
-    this._fogEls.forEach((fogEl, key) => {
-      const [r, c] = key.split(",").map(Number);
-      if (this.revealedGrid[r][c]) return;
-      fogEl.style.zIndex = String(this._fogRestZ(r, c));
-      const rect = fogEl.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) unrevealed.push({ row: r, col: c, el: fogEl, rect });
-    });
-
-    const coverFrom = (row, col, el) => {
-      // Pedido explícito: un objeto en zona VISIBLE con niebla por encima
-      // SÍ debe asomarse por encima de ella. Los que están en niebla ya van
-      // ocultos (unit--fog-hidden), así que aquí ya no hay nada que tapar.
-      // Solo se salta si su propia loseta está de verdad revelada; un objeto sobre niebla real
-      // (p. ej. durante el turno rival, donde isFogged() es false) sigue tapado por ella.
-      if (this.OBJECTS_PEEK_OVER_FOG && !this.isFoggedReal(row, col)) return;
-      if (!el || el.classList.contains("unit--fog-hidden")) return;
-      const rect = this._expandedRect(el);
-      if (rect.width === 0 || rect.height === 0) return;
-      const z = (row + col) * 10 + 5;
-      unrevealed.forEach((tile) => {
-        if (tile.row === row && tile.col === col && !this.isFoggedReal(row, col)) return; // la propia loseta no cuenta como "vecina" (salvo si el objeto está sobre niebla real)
-        const overlapX = Math.max(0, Math.min(rect.right, tile.rect.right) - Math.max(rect.left, tile.rect.left));
-        const overlapY = Math.max(0, Math.min(rect.bottom, tile.rect.bottom) - Math.max(rect.top, tile.rect.top));
-        if (overlapX * overlapY < this._OVERLAP_MIN_AREA_PX) return;
-        const current = parseInt(tile.el.style.zIndex, 10) || 0;
-        tile.el.style.zIndex = String(Math.max(current, z + 1));
-      });
-    };
-    if (typeof Units !== "undefined") {
-      Units.list.forEach((u) => coverFrom(u.row, u.col, u.el));
-    }
-    if (typeof Gnome !== "undefined") {
-      Gnome.list.forEach((g) => {
-        if (g.heldBy) return; // vive dentro del personaje que lo lleva, hereda su cobertura
-        coverFrom(g.row, g.col, g.el);
-      });
-    }
-    // Pedido explícito: "a veces el indicador de poblacion y la barra de
-    // vida del obelisco se queda por debajo de la niebla, no debe ser asi".
-    // El obelisco (y el resto de objetos grandes y fijos del tablero: aldeas,
-    // tiendas, arbustos y nodos de recursos) tiene exactamente el mismo
-    // problema geométrico que ya se resolvía arriba solo para Units/Gnome:
-    // su sprite (con la barra de vida y el indicador de población flotando
-    // encima) es más alto que su propia loseta, así que puede asomar dentro
-    // del hueco de pantalla de una loseta VECINA todavía sin revelar. Antes
-    // de este arreglo estos objetos no pasaban nunca por coverFrom(), así
-    // que esa loseta vecina se quedaba en su z-index de "descanso" y el
-    // trozo asomado del obelisco/aldea/tienda/arbusto/recurso se veía POR
-    // ENCIMA de su niebla en vez de tapado por ella.
-    if (typeof Obelisks !== "undefined") {
-      Obelisks.list.forEach((o) => {
-        if (!o.el) return;
-        // Pedido explícito (con captura): "el obelisco del jugador y sus
-        // iconos, deben sobresalir siempre por encima de la niebla" — el
-        // Obelisco PROPIO nunca está realmente bajo niebla (más arriba en
-        // este mismo archivo ni siquiera se le pone la clase
-        // unit--fog-hidden, team==="player" corta antes), así que su punta
-        // asomando por encima de una nube VECINA todavía sin revelar no es
-        // el mismo bug que la barra de vida/insignia "hundiéndose" bajo su
-        // propia niebla (ese sí se arregla con coverFrom, y sigue
-        // aplicándose tal cual al Obelisco rival): aquí es justo lo
-        // contrario, una base altísima que sobresale por encima del
-        // horizonte de niebla vecina sin explorar, algo normal y esperado
-        // visualmente, no un fallo. Se salta coverFrom solo para el propio,
-        // dejándolo siempre a su z-index natural (por encima de cualquier
-        // nube vecina); el del rival sigue pasando por aquí como siempre.
-        if (o.team === "player") return;
-        coverFrom(o.row, o.col, o.el);
-      });
-    }
-    if (typeof Villages !== "undefined") {
-      Villages.list.forEach((v) => {
-        if (!v.el) return;
-        coverFrom(v.row, v.col, v.el);
-      });
-    }
-    if (typeof Shops !== "undefined") {
-      Shops.list.forEach((s) => {
-        if (!s.el) return;
-        coverFrom(s.row, s.col, s.el);
-      });
-    }
-    if (typeof Oracle !== "undefined") {
-      Oracle.list.forEach((o) => {
-        if (!o.el) return;
-        coverFrom(o.row, o.col, o.el);
-      });
-    }
-    // Setas explosivas (js/mushrooms.js): faltaban aquí y asomaban por la niebla vecina.
-    if (typeof Mushrooms !== "undefined") {
-      Mushrooms.list.forEach((m) => {
-        if (!m.el || m.heldBy) return;
-        coverFrom(m.row, m.col, m.el);
-      });
-    }
-    if (typeof Bushes !== "undefined") {
-      Bushes.list.forEach((b) => {
-        if (!b.el) return;
-        coverFrom(b.row, b.col, b.el);
-      });
-    }
-    if (typeof Resources !== "undefined") {
-      Resources.list.forEach((r) => {
-        if (!r.el) return;
-        coverFrom(r.row, r.col, r.el);
-      });
-    }
-    if (typeof TotemVision !== "undefined") {
-      TotemVision.list.forEach((t) => {
-        if (!t.el) return;
-        coverFrom(t.row, t.col, t.el);
-      });
-    }
-    // Hierbajos y Tambores de guerra: mismo problema geométrico (sprite más
-    // alto/ancho que su loseta) — antes los hierbajos nunca pasaban por aquí
-    // y asomaban POR ENCIMA de la niebla vecina.
-    if (typeof Hierbajos !== "undefined") {
-      Hierbajos.list.forEach((h) => {
-        if (!h.el) return;
-        coverFrom(h.row, h.col, h.el);
-      });
-    }
-    if (typeof Drums !== "undefined") {
-      Drums.list.forEach((d) => {
-        if (!d.el) return;
-        coverFrom(d.row, d.col, d.el);
-      });
-    }
-    if (typeof Bumpers !== "undefined") Bumpers.list.forEach((b) => { if (b.el) coverFrom(b.row, b.col, b.el); });
-    if (typeof Egg !== "undefined") {
-      if (Egg.egg && Egg.egg.el) coverFrom(Egg.egg.row, Egg.egg.col, Egg.egg.el);
-      Object.values(Egg.nests).forEach((n) => { if (n.el) coverFrom(n.row, n.col, n.el); });
-    }
-    if (typeof Volcano !== "undefined") {
-      Volcano.list.forEach((v) => {
-        if (!v.el) return;
-        coverFrom(v.row, v.col, v.el);
-      });
-    }
-    // Altar de Sacrificios (js/altar.js) — mismo "objeto grande y fijo del
-    // tablero" que un tótem/tienda/Obelisco de arriba.
-    if (typeof Altar !== "undefined") {
-      Altar.list.forEach((a) => {
-        if (!a.el) return;
-        coverFrom(a.row, a.col, a.el);
-      });
-    }
-    // GnomOgro (js/gnomogro.js) — la única de estas fuentes que SE MUEVE
-    // (todas las demás son mobiliario fijo), pero geométricamente es el
-    // mismo problema: un sprite colosal más alto que su propia loseta que
-    // puede asomar dentro de una nube vecina todavía sin revelar.
-    if (typeof GnomOgro !== "undefined" && GnomOgro.current && GnomOgro.current.el) {
-      coverFrom(GnomOgro.current.row, GnomOgro.current.col, GnomOgro.current.el);
-    }
-  },
 };
 
 document.addEventListener("DOMContentLoaded", () => Fog.initAnimPref());

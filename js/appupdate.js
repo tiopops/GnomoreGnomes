@@ -214,7 +214,9 @@ const AppUpdate = {
     document.body.appendChild(btn);
     this._btn = btn;
     const menu = document.getElementById("main-menu");
-    const sync = () => { btn.hidden = !(menu && menu.classList.contains("screen--active")); };
+    // Solo se ve si hay una actualización pendiente (this._avail, ver run()).
+    const sync = () => { btn.hidden = !(this._avail && menu && menu.classList.contains("screen--active")); };
+    this._syncBtn = sync;
     sync();
     if (menu) new MutationObserver(sync).observe(menu, { attributes: true, attributeFilter: ["class"] });
   },
@@ -316,6 +318,8 @@ const AppUpdate = {
           this.localVersion = local && local.version;
           remote = await this._getRemote();
           if (!remote || !remote.version) throw new Error("respuesta vacía");
+          this._avail = remote.version !== local.version;
+          if (this._syncBtn) this._syncBtn();
           if (remote.version === local.version) {
             this._setStatus("al día (" + local.version + ")");
             this._icon(auto ? idle : "check");

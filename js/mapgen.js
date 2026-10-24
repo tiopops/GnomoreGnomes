@@ -166,12 +166,6 @@ const TerrainMap = {
 
   // Modo rendimiento: las losetas sin explorar no se pintan (ver
   // TerrainCanvas.render). Fog las marca como exploradas al revelarse.
-  setFogDeep(row, col, on) {
-    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.setFogDeep(row, col, on);
-  },
-  setAllFogDeep(on) {
-    if (typeof TerrainCanvas !== "undefined") TerrainCanvas.setAllFogDeep(on);
-  },
 
   markAllUnexplored() {
     if (typeof TerrainCanvas !== "undefined") TerrainCanvas.setAllUnexplored(true);
@@ -583,120 +577,6 @@ function generateMap(size, options) {
     }
   }
   return { size, tiles };
-}
-
-// Nube de niebla de UNA loseta (<img class="tile__fog">). Antes se creaban las
-// de todo el tablero en renderMap; ahora la niebla "profunda" (lejos de lo
-// explorado) la pinta TerrainCanvas en el canvas del suelo, y solo las nubes
-// cercanas a lo explorado existen como elemento del DOM — Fog las crea bajo
-// demanda con esto (ver Fog._enterDom en js/fog.js).
-function createFogEl(row, col, size) {
-    // Capa de niebla (ver comentario de FOG_SRC arriba) — visible por
-    // defecto en TODAS las losetas; js/fog.js la oculta loseta a loseta
-    // según se va revelando el mapa. Elemento HERMANO de .tile (no hijo:
-    // ver el comentario de FOG_SRC de por qué se centra con sus propias
-    // coordenadas en vez de heredar la caja de la loseta), con
-    // data-row/data-col propios para que Fog.init la encuentre igual que
-    // encontraría la de .tile.
-    //
-    // BUG encontrado y corregido: "el z-index de la niebla no funciona
-    // correctamente, debería estar detrás de mi personaje" — antes CADA
-    // nube usaba un z-index fijo y enorme (100000, en style.css) para
-    // garantizar que quedara por encima de cualquier unidad de pie en SU
-    // PROPIA loseta sin revelar. Pero FOG_OVERHANG hace que cada nube
-    // sobresalga sobre losetas VECINAS ya reveladas — y ese valor fijo
-    // ignoraba el orden normal (mayor fila+columna = más cerca de cámara),
-    // así que una nube de una loseta que está DETRÁS del jugador en la
-    // cuadrícula se seguía dibujando por delante de su propio personaje en
-    // cuanto el solapamiento la hacía asomar sobre esa casilla. Ahora usa
-    // el mismo patrón (fila+columna)*10 que unidades/marcadores (ver
-    // Units.addMarker/_placeInstant) — +6 porque una unidad de pie en ESTA
-    // MISMA loseta usa +5 (así la nube sigue tapándola mientras no se haya
-    // revelado), pero sin sobrepasar el rango de la SIGUIENTE loseta
-    // (arranca en +10), que es lo que ahora deja que el orden normal de
-    // dibujado decida correctamente si una nube vecina queda delante o
-    // detrás del jugador, según toque.
-    const fogImg = document.createElement("img");
-    fogImg.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando
-    // Pedido explícito: "la animacion de la niebla consume una cantidad de
-    // recursos ingente...optimiza esa caracteristica para que apenas
-    // consuma recursos" — causa real: CADA nube de niebla en reposo
-    // (fog-idle-drift, ver style.css) pide su propia capa de composición
-    // GPU (will-change:transform), y con un tablero grande (hasta 25x25 =
-    // 625 losetas, ver BOARD_SIZE_BY_OPPONENTS en js/matchsetup.js) puede
-    // haber más de un centenar visibles a la vez incluso con el recorte de
-    // fuera-de-pantalla (Fog.updateCulling) ya aplicado — ese es justo el
-    // patrón que ya causó "errores gráficos" en móvil antes (ver la nota
-    // larga de rendimiento móvil un poco más abajo en style.css), ahora
-    // agravado por tableros más grandes. La animación en sí (un derivado
-    // sutil, ver @keyframes) no es cara por fotograma; el coste real es
-    // "cuántas capas GPU separadas hay que mantener a la vez". En vez de
-    // animar TODAS las nubes en reposo, solo una fracción lleva la clase
-    // tile__fog--idle con la animación real; la otra se queda completamente
-    // estática (misma nube, mismo aspecto, cero coste de capa).
-    // Pedido explícito (pasada posterior): "si animar niebla fuese una
-    // animacion un poquito mas exagerada y afectase a menos losetas...en
-    // vez de un 50, un 30%, ganariamos rendimiento?" — bajado de la mitad
-    // (1 de cada 2) a 3 de cada 10 losetas, un 40% menos de capas GPU
-    // simultáneas como techo respecto a la versión anterior. Para
-    // compensar que se ve una nube animada menos a menudo al pasear la
-    // vista por el mapa, el propio movimiento de cada una que SÍ anima se
-    // sube un poco (ver @keyframes fog-idle-drift en style.css) — mismo
-    // criterio de "lo mas fiel posible" al aspecto de campo de niebla vivo
-    // que la vez anterior, con menos nubes pero cada una algo más notoria.
-    // Patrón determinista (fila/columna, no al azar) para que ese 30% siga
-    // repartido de forma pareja por todo el mapa, no en manchas —
-    // coeficientes 7/3 en vez de simplemente row%10<3 (eso dejaría columnas
-    // enteras iguales, un patrón de rayas verticales muy regular) para que
-    // el reparto no se lea como una cuadrícula obvia.
-    // Pedido explícito (tercera pasada): "la animacion de la niebla sigue
-    // siendo lo que mas fps se come...otro metodo que visualmente quede
-    // igual pero consuma muxhisimo menos?" — el tablero único de este
-    // juego es fijo a 25x25 = 625 losetas (OPPONENT_OPTIONS solo tiene la
-    // entrada "1", ver matchsetup.js), así que no hay forma de que esto
-    // varíe partida a partida: el 30% de capas GPU simultáneas de la
-    // pasada anterior (hasta ~187 losetas animando a la vez antes del
-    // recorte fuera-de-pantalla) seguía siendo el techo real en este
-    // tablero. Mismo criterio de siempre (nunca tocar la animación en sí,
-    // solo CUÁNTAS losetas la llevan) bajado otra vez, de 3 de cada 10 a 2
-    // de cada 10 — un tercio menos de capas GPU respecto a la versión
-    // anterior — y la propia deriva de las que SÍ animan sube un poco más
-    // (ver @keyframes fog-idle-drift) para que el campo de niebla se siga
-    // leyendo igual de "vivo" con menos nubes en movimiento.
-    fogImg.className = "tile__fog"; // la animación de reposo la asigna Fog._refreshIdle solo en la frontera
-    // La niebla pasa por SpriteQuality.register igual que cualquier otro
-    // sprite del tablero, pero NO sigue el zoom como el resto: pedido
-    // explícito (pasada posterior) "la niebla puedes ponerla siempre en
-    // baja resolucion estemos a la distancia que estemos?" — register()
-    // reconoce la clase "tile__fog" (fijada justo arriba) y la deja fija en
-    // "_lowres" para siempre, sin entrar en el Set que reacciona a cruces
-    // de zoom (ver _FOG_ALWAYS_LOWRES en spritequality.js, con instrucciones
-    // de cómo revertir esto si hiciera falta).
-    if (typeof SpriteQuality !== "undefined") {
-      SpriteQuality.register(fogImg, FOG_SRC);
-    } else {
-      fogImg.dataset.srcOrig = FOG_SRC;
-      fogImg.src = FOG_SRC;
-    }
-    fogImg.style.zIndex = String((row + col) * 10 + 6);
-    fogImg.draggable = false;
-    fogImg.alt = "";
-    fogImg.dataset.row = String(row);
-    fogImg.dataset.col = String(col);
-    const fogWidth = Math.round(TILE_WIDTH * FOG_OVERHANG);
-    fogImg.width = fogWidth;
-    fogImg.height = Math.round((fogWidth * FOG_NATIVE_HEIGHT) / FOG_NATIVE_WIDTH);
-    const center = getTileCenter(row, col, size);
-    fogImg.style.left = `${center.x}px`;
-    fogImg.style.top = `${center.y}px`;
-    // Fase de la animación de reposo (ver @keyframes fog-idle-drift en
-    // style.css) desfasada al azar por loseta — nivel Triple A / feedback
-    // (regla de oro del proyecto): un campo entero de nubes respirando
-    // exactamente a la vez se lee como un efecto de pantalla, no como niebla
-    // de verdad. Negativo para que arranque ya a mitad de ciclo en vez de
-    // hacer esperar a la primera loseta hasta que empiece su turno.
-    fogImg.style.animationDelay = `-${(NR() * 9).toFixed(2)}s`;
-  return fogImg;
 }
 
 function renderMap(map, container) {

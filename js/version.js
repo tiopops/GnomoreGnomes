@@ -12,10 +12,14 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001556";
+const GG_VERSION = "v.001561";
 
 const GG_CHANGELOG = [
-  { v: "v.001556", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001561", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Niebla: ya no tapa la interfaz de los objetos (indicador de población del obelisco, barras de vida, insignias, avisos y marcadores): la niebla va por debajo de todo eso, y solo la base de los objetos con nubes delante sigue quedando enterrada",
+    "Mantenimiento: eliminado el código y el CSS de la niebla antigua (nubes del DOM, animaciones y desenfoque, pasada de niebla profunda del suelo, restos en la resolución adaptativa y funciones sin uso); sin cambios visibles ni de comportamiento",
+    "Niebla rehecha: ahora se dibuja en UN solo lienzo en vez de decenas de nubes del DOM con animaciones CSS, z-index por nube y desenfoque. Menos consumo, sin parpadeos al revelar ni al hacer zoom, y la cámara, el suelo y la niebla se actualizan en el mismo fotograma. Los árboles, rocas y estructuras ya revelados junto a la niebla asoman por encima de ella (la base queda enterrada en la nube). Las nubes se disipan sin blur, y la respiración de las nubes de frontera se mantiene en escritorio y se apaga en móvil",
+    "APK: el botón de descargar del menú principal solo aparece cuando hay una actualización disponible (antes se veía siempre)",
     "Hierbajos (vegetación): parpadeo al alejar/acercar la cámara — ya no llevan sombra difusa por sprite (decenas de capas que se re-rasterizaban en cada paso del zoom), se decodifican de forma síncrona (no quedan en blanco al reaparecer) y cambian de calidad de golpe y a la vez, sin fantasmas de fundido escalonados",
     "Mando: para salir del test hay que mantener START pulsado 3 segundos seguidos; junto al mando aparece un indicador circular con la cuenta atrás (se reinicia si sueltas el botón)",
     "Mando: el icono de acción (pico, hacha, mano, bandera, puño...) ahora es más grande y se dibuja sobre el propio sprite (árbol, roca, gnomo, tótem...) en vez de sobre la loseta, y se ignoran los cursores genéricos para que nunca salga una flecha por error",

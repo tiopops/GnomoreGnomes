@@ -82,7 +82,7 @@ const FpsMeter = {
     if (this._dbgEl) {
       const bt = document.getElementById("board-tiles");
       const nodes = bt ? bt.getElementsByTagName("*").length : 0;
-      const fogVis = document.querySelectorAll(".tile__fog:not(.tile__fog--culled):not(.tile__fog--revealed)").length;
+      const fogVis = typeof FogCanvas !== "undefined" ? FogCanvas._stats.drawn : 0;
       const sc = typeof BoardView !== "undefined" ? BoardView.scale.toFixed(2) : "-";
       this._dbgEl.textContent = "fps " + fps + "   peor " + Math.round(this._worst) + " ms\nnodos " + nodes + "   niebla visible " + fogVis + "\nzoom " + sc +
         (document.body.classList.contains("perf-mode") ? "   modo rendimiento" : "");

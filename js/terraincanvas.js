@@ -72,7 +72,6 @@ const TerrainCanvas = {
         revealT0: 0,
         remembered: false,
         unexplored: false,
-        fogDeep: false,
         hFrom: 0,
         hTo: 0,
         hT0: 0,
@@ -219,21 +218,6 @@ const TerrainCanvas = {
   setAllUnexplored(on) {
     if (!this.tiles) return;
     this.tiles.forEach((t) => { if (t) t.unexplored = !!on; });
-    this.requestDraw();
-  },
-
-  // Niebla "profunda" (lejos de lo explorado): se pinta aquí, encima de todo
-  // el suelo, en vez de como elemento del DOM (ver Fog._enterDom en fog.js).
-  setFogDeep(row, col, on) {
-    const t = this._t(row, col);
-    if (!t || t.fogDeep === !!on) return;
-    t.fogDeep = !!on;
-    this.requestDraw();
-  },
-
-  setAllFogDeep(on) {
-    if (!this.tiles) return;
-    this.tiles.forEach((t) => { if (t) t.fogDeep = !!on; });
     this.requestDraw();
   },
 
@@ -397,28 +381,6 @@ const TerrainCanvas = {
             ctx.globalAlpha = 1;
           }
         }
-      }
-    }
-
-    // Pasada 2: nubes de niebla profunda, siempre POR ENCIMA de todo el suelo
-    // (igual que en el DOM: su z-index era mayor que el de cualquier loseta) y
-    // en el mismo orden (fila+columna, luego fila) que tenían los <img>.
-    if (typeof FOG_SRC !== "undefined") {
-      const fim = this._fogTex();
-      if (fim) {
-        const fw = Math.round(TILE_WIDTH * FOG_OVERHANG);
-        const fh = Math.round((fw * FOG_NATIVE_HEIGHT) / FOG_NATIVE_WIDTH);
-        ctx.globalAlpha = 0.96;
-        for (let d = minD; d <= maxD; d++) {
-          const rLo = Math.max(range.minRow, d - range.maxCol);
-          const rHi = Math.min(range.maxRow, d - range.minCol);
-          for (let r = rLo; r <= rHi; r++) {
-            const t = this.tiles[r * size + (d - r)];
-            if (!t || !t.fogDeep) continue;
-            ctx.drawImage(fim, t.x + TILE_WIDTH / 2 - fw / 2, t.y + TILE_TOP_HEIGHT / 2 - fh / 2, fw, fh);
-          }
-        }
-        ctx.globalAlpha = 1;
       }
     }
 
