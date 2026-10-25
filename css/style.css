@@ -12066,4 +12066,6 @@ body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }
 .gg-peek, .gg-peek * { animation-play-state: paused !important; }
 
 /* Niebla de calidad baja: los objetos que están sobre la niebla se ven al 66 % (ver FogCanvas._recomputeFade). */
-.gg-fogfade:not(.unit--fog-hidden):not(.gg-viewport-culled) { opacity: 0.66; transition: opacity 0.35s ease; }
+/* OJO: aquí NO se redefine "transition" (antes sí y pisaba la de .unit: left/top, así que las unidades y
+   gnomos junto a la niebla dejaban de deslizarse/saltar de loseta en loseta y se teletransportaban). */
+.gg-fogfade:not(.unit--fog-hidden):not(.gg-viewport-culled) { opacity: 0.66; }

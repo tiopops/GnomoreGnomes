@@ -12,15 +12,18 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001573";
+const GG_VERSION = "v.001574";
 
 const GG_CHANGELOG = [
-  { v: "v.001573", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001574", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "Corregido: las unidades y gnomos junto a la niebla (niebla de calidad baja) volvían a moverse sin deslizarse ni dar saltitos de loseta en loseta; el fundido al 66 % pisaba su animación de movimiento",
     "Tutoriales más ágiles y directos: el avance tras cada misión pasa de ~8 s a ~2 s, Nizak escribe más rápido, «mantener pulsada la cara» dura la mitad y todos los textos son más cortos, con la acción primero y el humor intacto (español e inglés)",
     "Resolución adaptativa: corregido el parpadeo real de los bumpers (desaparecían unos fotogramas al cambiar de calidad con zoom rápido): el fundido espera a que la textura nueva esté lista para pintar",
     "Resolución adaptativa: los bumpers (y cualquier sprite con brillo/saturación propios) ya no parpadean al cambiar de calidad con zoom rápido — el fundido conserva su filtro",
     "Resolución adaptativa: la subida a calidad normal espera a que termine el zoom, eliminando el tirón a mitad de un acercamiento rápido",
     "Setas del escenario: ahora usan la misma animación idle que el resto de elementos (respiran), cada una desfasada para que no latan a la vez",
+  ] },
+  { v: "v.001569", date: "24/10/2026", title: "APK y rendimiento", items: [
     "Niebla de calidad baja: los objetos que quedan sobre la niebla (junto a casillas sin revelar o disipándose) se ven al 66 % de opacidad, con un fundido suave al aparecer y desaparecer",
     "Niebla de alta calidad: ahora TODOS los objetos del mapa junto al borde se hunden en la niebla, en todos los niveles (huevo, objetos y trampas del suelo, bumpers, tótems de visión, manchas de sangre, unidades y gnomos, además de los que ya lo hacían). La niebla de un objeto ya no tapa a los objetos que tiene delante, y se quita el congelado de animaciones de los objetos del borde",
     "Niebla: con «Niebla de alta calidad» desactivada, la niebla se disipa con un simple fundido (como antes), sin crecer ni subir. Con ella activada, las setas sueltas y los tambores junto al borde también quedan hundidos en la niebla (antes la seta se veía por encima)",
