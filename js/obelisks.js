@@ -60,6 +60,7 @@ const OBELISK_SPRITES = {
   mushboom_forest: "assets/edificios/obelisco_mushboom_forest.png",
   colinas_rockntroll: "assets/edificios/obelisco_colinas_rockntroll.png",
   equipo_surcanubes: "assets/edificios/obelisco_surcanubes.png",
+  equipo_enmurallado: "assets/edificios/obelisco_enmurallado.png",
 };
 
 // Iconos de los dos botones que asoman sobre el Obelisco al seleccionarlo

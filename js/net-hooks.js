@@ -128,6 +128,17 @@
       (a) => { const u = U(a.u); return u ? [u] : null; });
   }
 
+  // Equipo Enmurallado (js/abilities-enmurallado.js)
+  if (typeof Enmurallado !== "undefined") {
+    const UT2 = (name, id) =>
+      Net.hook(Enmurallado, name, id,
+        (unit, t) => ({ u: R(unit), t: R(t) }),
+        (a) => { const u = U(a.u), t = U(a.t); return alive(u, t) ? [u, t] : null; });
+    UT2("resolveTrackerArrow", "ab.arrow");
+    UT2("resolveSwap", "ab.swap");
+    UT2("resolveCrush", "ab.crush");
+  }
+
   const placeHook = (name, id, withTeam) =>
     Net.hook(Backpack, name, id,
       (uid, r, c) => ({ r, c }),

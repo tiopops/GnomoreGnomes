@@ -56,4 +56,16 @@ const RACES = [
     available: true,
     gloryIcon: "assets/iconos/gloria_surcanubes.png",
   },
+  {
+    id: "equipo_enmurallado",
+    nameKey: "race_equipo_enmurallado",
+    flavorKey: "race_equipo_enmurallado_flavor",
+    virtuesKey: "race_equipo_enmurallado_virtues",
+    weaknessesKey: "race_equipo_enmurallado_weaknesses",
+    icon: "ph-castle-turret",
+    iconImg: "assets/iconos/equipo_enmurallado.png",
+    color: "#ff8a1f",
+    available: true,
+    gloryIcon: "assets/iconos/gloria_enmurallado.png",
+  },
 ];

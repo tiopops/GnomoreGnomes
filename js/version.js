@@ -12,10 +12,16 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001590";
+const GG_VERSION = "v.001592";
 
 const GG_CHANGELOG = [
-  { v: "v.001590", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+  { v: "v.001592", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "Nuevo equipo: Equipo Enmurallado (color naranja) con MagoNífico, TrazaFlechas y PortaMuros — Flecha Rastreadora (marca al rival y ves lo que ve), Cambiazo (intercambia sitio con un rival y al final del turno vuelven) y Muro Aplastante (1 de daño y deja inactivo al rival una ronda), con efectos y sonidos propios; también los usa la IA y se sincronizan en multijugador",
+    "Tutorial Poblado HurryCrane: diálogos actualizados con tus textos nuevos y el inglés revisado",
+    "Tutorial Colinas Rock'n Troll: diálogos actualizados con tus textos nuevos; el inglés de MushBoom y Rock'n Troll revisado para que coincida con el español (y las variantes con mando ajustadas)",
+    "Tutoriales: la selección de tutoriales marca con un check verde en la esquina los que ya has completado (saltarlos no cuenta); se pueden repetir siempre que quieras",
+    "Tutoriales: la cámara ya no se mueve entre diálogos sin necesidad — solo se desplaza cuando lo que hay que mirar queda tapado o fuera de pantalla, y entonces lo mínimo; ya no reacciona a que la viñeta cambie de tamaño ni a los marcadores que aparecen y desaparecen",
+    "Tutorial Bosque MushBoom: diálogos actualizados con tus textos nuevos (y las variantes con mando ajustadas)",
     "Tutoriales MushBoom, Rock'n Troll y HurryCrane: se aplican las mejoras de «Primeros pasos» — la flecha de la guía se apaga en cuanto estampas o lanzas al gnomo, y las réplicas, el botón «Saltar tutorial» y las correcciones generales ya valen para los cuatro",
     "Tutorial HurryCrane: corregido que la misión «Lánzale a Tinkle contra el huevo» no se pudiera completar (sin un rebote el huevo no se cargaba); ahora hay un bumper delante del huevo",
     "Tutorial HurryCrane: textos con mando (cruceta y botón de confirmar) para los pasos de coger y lanzar gnomos",

@@ -162,6 +162,9 @@ const GNOME_ATTACH_OFFSETS = {
   manos_largas: { right: 45, bottom: 7.3 },
   ala_fugaz: { right: 28, bottom: 6.7 },
   nidobot: { right: 76, bottom: 18.4 },
+  magonifico: { right: 30, bottom: 6 },
+  trazaflechas: { right: 30, bottom: 8 },
+  portamuros: { right: 70, bottom: 10 },
 };
 
 // Misma idea que GNOME_ATTACH_OFFSETS de arriba, pero para la pose

@@ -174,6 +174,7 @@ const TutorialFrame = {
       const u = this._union([acc, r]);
       if (fitsRoom(u)) acc = u;
     });
+    const core = acc; // lo imprescindible (objetivo + foco del paso), sin acompañantes opcionales
     const radius = Math.max(300, Math.min(window.innerWidth, window.innerHeight) * 0.9);
     const cands = this.companions(target)
       .filter((el) => el !== target && !(target && (target.contains(el) || el.contains(target))))
@@ -186,6 +187,7 @@ const TutorialFrame = {
       const u = this._union([acc, c.r]);
       if (u.w <= safe.w * roomC && u.h <= safe.h * roomC) acc = u;
     }
+    acc.core = core;
     return acc;
   },
 
@@ -207,16 +209,23 @@ const TutorialFrame = {
     if (this._forceNext) {
       force = true;
     }
-    const safe = this.safeRect(panelRect);
+    // La viñeta cambia de alto dentro de un mismo paso (aparece la barra de misión, el texto
+    // se alarga...): se encuadra contra la MAYOR que ha tenido en el paso, para que la cámara
+    // no reaccione a cada cambio de tamaño.
+    const pr = this._stablePanel(panelRect);
+    const safe = this.safeRect(pr);
     const fr = this.focusRect(target, safe);
     if (!fr) {
       this._forceNext = false;
       return;
     }
-    // Basta con que el conjunto (objetivo + foco) esté dentro de la zona libre y razonablemente centrado.
-    const fits = this._inside(fr, safe, 24);
-    const centered = Math.abs(fr.cx - safe.cx) < safe.w * 0.32 && Math.abs(fr.cy - safe.cy) < safe.h * 0.32;
-    if (fits && (!force || centered)) {
+    // Zona muerta, como en los juegos profesionales: si lo importante ya se ve dentro de la zona
+    // libre, la cámara NO se toca (ni siquiera al empezar un paso). Solo se mueve cuando algo
+    // queda tapado o fuera de pantalla.
+    // La zona muerta mira solo lo imprescindible: los acompañantes opcionales (marcadores que
+    // aparecen y desaparecen, otras entidades...) nunca mueven la cámara por sí solos.
+    const fits = this._inside(fr.core || fr, safe, 24);
+    if (fits) {
       this._forceNext = false;
       return;
     }
@@ -231,12 +240,39 @@ const TutorialFrame = {
       this._forceNext = true; // tras el zoom, se recoloca en la zona libre
       return;
     }
-    // 2) Desplazamiento: el centro de lo importante, al centro de la zona libre.
+    // 2) Desplazamiento. Si el centro de lo importante ya está dentro de la zona libre (solo
+    // asoma por un borde), se mueve lo MÍNIMO para meterlo con un poco de holgura; si está
+    // lejos o fuera, se lleva al centro de la zona libre.
     BoardView._zoomAnchor = null;
-    BoardView.targetPanX = BoardView.panX + (safe.cx - fr.cx);
-    BoardView.targetPanY = BoardView.panY + (safe.cy - fr.cy);
+    const centerIn = fr.cx > safe.left && fr.cx < safe.right && fr.cy > safe.top && fr.cy < safe.bottom;
+    let dx = safe.cx - fr.cx;
+    let dy = safe.cy - fr.cy;
+    if (centerIn && fr.w <= safe.w - 40 && fr.h <= safe.h - 40) {
+      const pad = 20;
+      dx = fr.left < safe.left + pad ? safe.left + pad - fr.left : fr.right > safe.right - pad ? safe.right - pad - fr.right : 0;
+      dy = fr.top < safe.top + pad ? safe.top + pad - fr.top : fr.bottom > safe.bottom - pad ? safe.bottom - pad - fr.bottom : 0;
+    }
+    BoardView.targetPanX = BoardView.panX + dx;
+    BoardView.targetPanY = BoardView.panY + dy;
     if (BoardView._clampTargetPan) BoardView._clampTargetPan();
     if (BoardView._startLoop) BoardView._startLoop();
+  },
+
+  // Mayor rect de viñeta visto en el paso actual (se reinicia en reset()).
+  _stablePanel(pr) {
+    if (!pr) return pr;
+    let m = this._panelMax;
+    // La viñeta cambió de sitio (se va arriba con una ventana abierta, o vuelve abajo): otro encuadre.
+    if (m && Math.abs(pr.top - m.top) > 80 && Math.abs(pr.bottom - m.bottom) > 80) m = this._panelMax = null;
+    if (!m) {
+      this._panelMax = { left: pr.left, right: pr.right, top: pr.top, bottom: pr.bottom };
+    } else {
+      m.left = Math.min(m.left, pr.left);
+      m.right = Math.max(m.right, pr.right);
+      m.top = Math.min(m.top, pr.top);
+      m.bottom = Math.max(m.bottom, pr.bottom);
+    }
+    return this._panelMax;
   },
 
   // Móvil vertical: la viñeta va arriba, justo debajo de la gloria/ajustes (no los tapa).
@@ -295,5 +331,6 @@ const TutorialFrame = {
     this._lastKey = "";
     this._userUntil = 0;
     this._forceNext = true;
+    this._panelMax = null;
   },
 };

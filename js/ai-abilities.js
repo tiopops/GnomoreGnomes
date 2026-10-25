@@ -193,6 +193,41 @@ const AIAbilities = {
     return true;
   },
 
+  // ---------- TrazaFlechas · Flecha Rastreadora: marca al rival más débil a su alcance ----------
+  async trazaflechas(unit) {
+    const foes = this.enemiesOf(unit).filter((u) => this.cheb(u, unit) <= Enmurallado.ARROW_RANGE);
+    if (foes.length === 0) return false;
+    foes.sort((a, b) => a.hp - b.hp);
+    await Enmurallado.resolveTrackerArrow(unit, foes[0]);
+    return true;
+  },
+
+  // ---------- MagoNífico · Cambiazo: se planta junto a un gnomo suelto o un tótem ajeno ----------
+  async magonifico(unit) {
+    if (unit.swapBond) return false;
+    const foes = this.enemiesOf(unit).filter((u) => this.cheb(u, unit) >= 2);
+    let best = null;
+    for (const f of foes) {
+      let score = 0;
+      if (typeof Gnome !== "undefined") score += 2 * Gnome.list.filter((g) => !g.heldBy && Math.max(Math.abs(g.row - f.row), Math.abs(g.col - f.col)) <= 1).length;
+      if (typeof Villages !== "undefined") score += 2 * Villages.list.filter((v) => v.owner !== unit.team && Math.max(Math.abs(v.row - f.row), Math.abs(v.col - f.col)) <= 1).length;
+      score += this.enemiesOf(f).filter((u) => u !== f && this.cheb(u, f) <= 1).length === 0 ? 0 : 1;
+      if (score >= 2 && (!best || score > best.score)) best = { f, score };
+    }
+    if (!best) return false;
+    await Enmurallado.resolveSwap(unit, best.f);
+    return true;
+  },
+
+  // ---------- PortaMuros · Muro Aplastante: aplasta al rival adyacente con más vida ----------
+  async portamuros(unit) {
+    const adj = this.enemiesOf(unit).filter((u) => this.cheb(u, unit) <= 1);
+    if (adj.length === 0) return false;
+    adj.sort((a, b) => b.hp - a.hp);
+    await Enmurallado.resolveCrush(unit, adj[0]);
+    return true;
+  },
+
   // ---------- NidoBot · Incubar: empieza a incubar con rivales cerca; suelta la explosión si compensa ----------
   async nidobot(unit) {
     const foes = this.enemiesOf(unit);

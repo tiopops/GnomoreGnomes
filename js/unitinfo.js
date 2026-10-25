@@ -55,6 +55,9 @@ const FACE_OFFSETS = {
   manos_largas: { x: 83, y: 29, zoom: 190 },
   ala_fugaz: { x: 85, y: 30, zoom: 225 },
   nidobot: { x: 67, y: 20, zoom: 190 },
+  magonifico: { x: 62, y: 40, zoom: 190 },
+  trazaflechas: { x: 40, y: 22, zoom: 200 },
+  portamuros: { x: 62, y: 24, zoom: 190 },
   default: { x: 72, y: 14, zoom: 225 },
 };
 
@@ -78,6 +81,9 @@ const UNIT_DESCRIPTIONS = {
   manos_largas: "Dicen que nunca ha robado nada... son las cosas las que se le pegan a los dedos. Difícil de creer cuando ocurre todos los días.",
   ala_fugaz: "Aterriza siempre donde quiere, aunque casi nunca como quiere. Necesita unos ajustes aquí y allá... o una buena colchoneta donde aterrizar.",
   nidobot: "Robot Incubador AlaTech 2.0. Modelo de última generación. Algunos clientes reportan que es algo inestable. Pero en el manual lo pone bien claro.",
+  magonifico: "Dicen que es el mago más magnífico del reino. Lo dicen él, su sombrero y su mochila de pociones. Los tres a la vez.",
+  trazaflechas: "Si te ha mirado, ya te ha apuntado. Si te ha apuntado, ya eres un dibujo en su cuaderno de blancos.",
+  portamuros: "Lleva el muro a todas partes por si acaso. Lo del «por si acaso» suele acabar encima de alguien.",
 };
 
 const UnitInfo = {

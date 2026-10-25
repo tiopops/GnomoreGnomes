@@ -983,8 +983,10 @@ const Tutorial = {
       E.btn.onclick = () => {
         if (this._finishTyping()) return;
         if (typeof SFX !== "undefined") SFX.click();
-        if (s.final) this.finish();
-        else this._goto(i + 1);
+        if (s.final) {
+          this._markDone(); // check verde en la selección de tutoriales (js/tutorial-levels.js)
+          this.finish();
+        } else this._goto(i + 1);
       };
       this._advance = E.btn.onclick;
     }

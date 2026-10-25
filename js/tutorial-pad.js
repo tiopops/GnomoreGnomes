@@ -126,7 +126,7 @@ const TUTORIAL_PAD_TEXTS = {
     null, // 1 historia
     { // 2 seta
       rep: [["con la manita (no gasta acción)", "con la manita (cursor sobre ella y {confirm}; no gasta acción)"]],
-      en: { rep: [["with the hand (costs no action)", "with the hand (cursor on it and {confirm}; costs no action)"]] },
+      en: { rep: [["with the little hand (it costs no action)", "with the little hand (cursor on it and {confirm}; costs no action)"]] },
     },
     { // 3 cuenta atrás
       rep: [["Pulsa PASAR TURNO y míralo.", "Pulsa {endTurn} (PASAR TURNO) y míralo."]],
@@ -141,8 +141,8 @@ const TUTORIAL_PAD_TEXTS = {
       en: { rep: [["Grab him.", "Grab him: unit selected, cursor on him and {confirm} on the little hand."]] },
     },
     { // 6 estampar
-      rep: [["Selecciona a tu unidad y pulsa la diana del altar.", "Selecciona a tu unidad, lleva el cursor al altar y pulsa {confirm} sobre su diana."]],
-      en: { rep: [["Select your unit and tap the altar's target.", "Select your unit, move the cursor to the altar and press {confirm} on its target icon."]] },
+      rep: [["Selecciona a tu unidad y pulsa sobre el altar.", "Selecciona a tu unidad, lleva el cursor al altar y pulsa {confirm} sobre su diana."]],
+      en: { rep: [["Select your unit and tap the altar.", "Select your unit, move the cursor to the altar and press {confirm} on its target icon."]] },
     },
     { // 7 GnomOgro
       rep: [["Pulsa PASAR TURNO y míralo.", "Pulsa {endTurn} (PASAR TURNO) y míralo."]],
@@ -156,8 +156,8 @@ const TUTORIAL_PAD_TEXTS = {
     null, // 0 historia
     null, // 1 historia
     { // 2 tambor
-      rep: [["Acerca tu unidad.", "Acerca tu unidad al tambor: selecciónala, lleva el cursor a una casilla pegada a él y pulsa {confirm}."]],
-      en: { rep: [["Move your unit close.", "Move your unit close: select it, move the cursor to a tile next to the drum and press {confirm}."]] },
+      rep: [["Acerca tu unidad y verás.", "Acerca tu unidad al tambor: selecciónala, lleva el cursor a una casilla pegada a él y pulsa {confirm}, y verás."]],
+      en: { rep: [["Move your unit closer and you'll see.", "Move your unit closer: select it, move the cursor to a tile next to the drum and press {confirm}, and you'll see."]] },
     },
     { // 3 Tinkle
       rep: [["Coge a Tinkle.", "Coge a Tinkle: unidad seleccionada, cursor sobre él y {confirm} en la manita."]],
@@ -174,23 +174,23 @@ const TUTORIAL_PAD_TEXTS = {
       en: { rep: [["Tap END TURN.", "Press {endTurn} (END TURN)."]], mission: "End turn with {endTurn} and watch the rock rain" },
     },
     { // 6 fragmento
-      rep: [["Pisa uno para recogerlo:", "Pisa uno (selecciona a tu unidad, lleva el cursor a la casilla marcada junto al fragmento y pulsa {confirm}) para recogerlo:"]],
-      en: { rep: [["Step on one to pick it up:", "Step on one (select your unit, move the cursor to the marked tile by the fragment and press {confirm}) to pick it up:"]] },
+      rep: [["Pasa por encima de uno para recogerlo:", "Pasa por encima de uno (selecciona a tu unidad, lleva el cursor a la casilla marcada junto al fragmento y pulsa {confirm}) para recogerlo:"]],
+      en: { rep: [["Walk over one to pick it up:", "Walk over one (select your unit, move the cursor to the marked tile by the fragment and press {confirm}) to pick it up:"]] },
     },
     { // 7 lanzar fragmento
-      rep: [["Abre la mochila, pulsa el fragmento dos veces y apunta al volcán.",
+      rep: [["Abre la mochila, elige una piedra y apunta al volcán.",
              "Abre la mochila ({actions} y elige «Mochila»), pulsa {confirm} sobre el fragmento dos veces (una elige, otra lo usa) y apunta al volcán: cursor sobre él y {confirm}. Con {back} cancelas el apuntado."]],
-      en: { rep: [["Open the backpack, tap the fragment twice and aim at the volcano.",
+      en: { rep: [["Open the backpack, pick a stone and aim at the volcano.",
                    "Open the backpack (press {actions} and choose \"Backpack\"), press {confirm} on the shard twice (once to pick, once to use it) and aim at the volcano: cursor on it and {confirm}. {back} cancels the aiming."]] },
     },
     { // 8 estampar volcán
-      rep: [["Estampa a Tinkle contra él y entrará en erupción.", "Estampa a Tinkle contra él (con quien lo lleva seleccionado, cursor sobre el volcán y {confirm} en su diana) y entrará en erupción."]],
-      en: { rep: [["Slam Tinkle into it and it erupts.", "Slam Tinkle into it (with the carrier selected, cursor on the volcano and {confirm} on its target icon) and it erupts."]] },
+      rep: [["Estampa a Tinkle contra él y prepárate", "Estampa a Tinkle contra él (con quien lo lleva seleccionado, cursor sobre el volcán y {confirm} en su diana) y prepárate"]],
+      en: { rep: [["Slam Tinkle into it and get ready", "Slam Tinkle into it (with the carrier selected, cursor on the volcano and {confirm} on its target icon) and get ready"]] },
     },
     { // 9 explosión
-      rep: [["Pulsa PASAR TURNO:", "Pulsa {endTurn} (PASAR TURNO):"]],
+      rep: [["pulsa PASAR TURNO:", "pulsa {endTurn} (PASAR TURNO):"]],
       mission: "Pasa turno con {endTurn} y mira la explosión",
-      en: { rep: [["Tap END TURN:", "Press {endTurn} (END TURN):"]], mission: "End turn with {endTurn} and watch the explosion" },
+      en: { rep: [["tap END TURN:", "press {endTurn} (END TURN):"]], mission: "End turn with {endTurn} and watch the explosion" },
     },
     null, // 10 final
   ],
@@ -207,7 +207,7 @@ const TUTORIAL_PAD_TEXTS = {
     },
     { // 4 carambola
       rep: [["Lanza otro gnomo y mira la carambola.", "Lanza otro gnomo ({confirm} en el icono de lanzar y luego en la flecha) y mira la carambola."]],
-      en: { rep: [["Throw another gnome and watch the chain.", "Throw another gnome ({confirm} on the throw icon, then on an arrow) and watch the chain."]] },
+      en: { rep: [["Throw another gnome and watch the carom.", "Throw another gnome ({confirm} on the throw icon, then on an arrow) and watch the carom."]] },
     },
     null, // 5 info
     { // 6 explotar

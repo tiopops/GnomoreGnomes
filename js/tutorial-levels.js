@@ -64,6 +64,27 @@ Object.assign(Tutorial, {
     },
   ],
 
+  // ---------- Tutoriales completados (check verde en la selección; se pueden repetir siempre) ----------
+  _DONE_KEY: "gg_tutorials_done",
+  _doneMap() {
+    try {
+      return JSON.parse(localStorage.getItem(this._DONE_KEY) || "{}") || {};
+    } catch (e) {
+      return {};
+    }
+  },
+  isDone(id) {
+    return !!this._doneMap()[id];
+  },
+  // Solo al llegar al final del guion (saltar el tutorial no lo marca).
+  _markDone() {
+    try {
+      const m = this._doneMap();
+      m[this._scenario] = true;
+      localStorage.setItem(this._DONE_KEY, JSON.stringify(m));
+    } catch (e) {}
+  },
+
   showMenu() {
     if (this.active) return;
     const list = document.getElementById("tutorial-list");
@@ -77,10 +98,14 @@ Object.assign(Tutorial, {
     ];
     list.innerHTML = items
       .map(
-        (it) => `<button type="button" class="menu-btn tut-menu__item" data-scenario="${it.id}">
+        (it) => {
+          const done = this.isDone(it.id);
+          return `<button type="button" class="menu-btn tut-menu__item${done ? " tut-menu__item--done" : ""}" data-scenario="${it.id}">
           <i class="ph ${it.icon}"></i>
           <span class="tut-menu__text"><span class="tut-menu__name">${tr(it.title)}</span><span class="tut-menu__sub">${tr(it.sub)}</span></span>
-        </button>`
+          ${done ? `<span class="tut-menu__done" title="${tr("Completado")}" aria-label="${tr("Completado")}"><i class="ph-bold ph-check"></i></span>` : ""}
+        </button>`;
+        }
       )
       .join("");
     list.querySelectorAll(".tut-menu__item").forEach((b) =>

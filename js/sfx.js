@@ -776,6 +776,62 @@ const SFX = {
     this._noiseBurst(0.12, "lowpass", 900, 200, 0.3);
   },
 
+  // ---------- Equipo Enmurallado (js/abilities-enmurallado.js) ----------
+  // Cuerda del arco que se tensa.
+  arrowDraw() {
+    this._tone(210, 430, 0.2, "triangle", 0.14);
+    this._noiseBurst(0.16, "bandpass", 500, 1300, 0.08);
+  },
+  // Suelta la flecha: chasquido de cuerda + silbido de vuelo.
+  arrowRelease(dur) {
+    this._tone(980, 190, 0.12, "triangle", 0.32);
+    this._noiseBurst(Math.max(0.2, dur || 0.4), "bandpass", 3400, 900, 0.2, 0.02);
+  },
+  // Clavada seca.
+  arrowImpact() {
+    this._tone(320, 110, 0.1, "square", 0.3);
+    this._noiseBurst(0.09, "highpass", 2600, 1500, 0.22);
+    this._tone(190, 70, 0.16, "sine", 0.3, 0.02);
+  },
+  // Sonar de rastreo: dos pings que suben.
+  trackPing() {
+    this._sweep("sine", 700, 1500, 0.26, 0.2);
+    this._sweep("sine", 1050, 2200, 0.3, 0.16, 170);
+    this._tone(1760, 0, 0.22, "triangle", 0.12, 0.42);
+  },
+  // Cambiazo: carga arcana, chispazo y reaparición.
+  swapCharge() {
+    this._sweep("sawtooth", 180, 900, 0.46, 0.1);
+    this._sweep("triangle", 360, 1800, 0.46, 0.12);
+  },
+  swapZap() {
+    this._noiseBurst(0.2, "bandpass", 4200, 800, 0.26);
+    this._tone(1500, 300, 0.2, "square", 0.14);
+  },
+  swapIn() {
+    this._tone(500, 1400, 0.16, "triangle", 0.28);
+    this._tone(800, 1900, 0.22, "sine", 0.16, 0.06);
+    this._tone(1200, 2400, 0.2, "triangle", 0.1, 0.14);
+  },
+  // Muro Aplastante: se alza, cae, golpea y se hunde.
+  wallLift() {
+    this._noiseBurst(0.45, "lowpass", 300, 700, 0.14);
+    this._tone(110, 190, 0.4, "sawtooth", 0.08);
+  },
+  wallFall(dur) {
+    this._noiseBurst(Math.max(0.25, dur || 0.3), "bandpass", 1100, 220, 0.24);
+  },
+  wallSlam() {
+    this._tone(95, 36, 0.4, "sine", 0.65);
+    this._noiseBurst(0.28, "lowpass", 1300, 140, 0.5);
+    this._tone(250, 90, 0.12, "square", 0.25);
+    this._noiseBurst(0.4, "lowpass", 500, 120, 0.2, 0.12);
+  },
+  wallSink() {
+    this._noiseBurst(0.38, "lowpass", 600, 110, 0.22);
+    this._tone(140, 60, 0.36, "sine", 0.2);
+  },
+
   // ---------- Tambores de Guerra: ritmo tribal-rockero (aprobado con demo) ----------
   // Solo percusión sintetizada (bombo, caja, toms, palillos): 2 compases a 148
   // ppm, groove de rock y redoble tribal final. Dura ~3,5 s; mientras suena, la

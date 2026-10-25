@@ -234,6 +234,42 @@ const UNIT_TYPES = {
     attackRange: 1,
     defaultFacing: "right",
   },
+  magonifico: {
+    name: "MagoNífico",
+    raceId: "equipo_enmurallado",
+    spriteUrl: "assets/equipos/EquipoEnmurallado/unidad_01.png",
+    aguante: 1,
+    movimiento: 3,
+    fuerza: 1,
+    agilidad: 3,
+    percepcion: 4,
+    attackRange: 1,
+    defaultFacing: "right",
+  },
+  trazaflechas: {
+    name: "TrazaFlechas",
+    raceId: "equipo_enmurallado",
+    spriteUrl: "assets/equipos/EquipoEnmurallado/unidad_02.png",
+    aguante: 1,
+    movimiento: 4,
+    fuerza: 2,
+    agilidad: 1,
+    percepcion: 4,
+    attackRange: 1,
+    defaultFacing: "right",
+  },
+  portamuros: {
+    name: "PortaMuros",
+    raceId: "equipo_enmurallado",
+    spriteUrl: "assets/equipos/EquipoEnmurallado/unidad_03.png",
+    aguante: 4,
+    movimiento: 2,
+    fuerza: 3,
+    agilidad: 1,
+    percepcion: 2,
+    attackRange: 1,
+    defaultFacing: "right",
+  },
 };
 
 // Tamaño visual de cada personaje EN EL TABLERO (multiplica el ancho base de
@@ -256,6 +292,9 @@ const SPRITE_SCALES = {
   manos_largas: 0.9,
   ala_fugaz: 1.35,
   nidobot: 1.7,
+  magonifico: 1.2,
+  trazaflechas: 1.4,
+  portamuros: 1.35,
 };
 
 // Tamaño de las poses "machaca"/"impacto" (ver machacaUrl/machacaImpactUrl
@@ -325,6 +364,9 @@ const RECRUIT_PRICES = {
   manos_largas: 2,
   ala_fugaz: 3,
   nidobot: 4,
+  magonifico: 2,
+  trazaflechas: 3,
+  portamuros: 4,
 };
 
 const Units = {

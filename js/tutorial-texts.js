@@ -261,242 +261,242 @@ const TUTORIAL_TEXTS = {
  ],
  "mush": [
   {
-   "say": "Bosque MushBoom, antes «de la Paz y la Armonía». Cambió de nombre cuando alguien descubrió que las setas explotan.",
-   "button": "Qué simpático",
+   "say": "Bosque MushBoom, antes llamado «El Bosque de la Paz y la Armonía». Cambió de nombre cuando alguien descubrió que las setas explotan. Ese alguien perdió una pierna...",
+   "button": "Qué simpática historia",
    "mood": "grunon",
    "en": {
-    "say": "MushBoom Forest, once \"of Peace and Harmony\". Renamed when someone discovered mushrooms explode.",
-    "button": "How charming"
+    "say": "MushBoom Forest, formerly known as “The Forest of Peace and Harmony”. It was renamed when someone discovered that the mushrooms explode. That someone lost a leg...",
+    "button": "What a lovely story"
    }
   },
   {
-   "say": "Hoy: setas explosivas, el Altar de Sacrificios y el GnomOgro. Empecemos por las setas.",
-   "button": "Estoy deseando",
+   "say": "En el menú de Hoy: setas explosivas, el Altar de Sacrificios y el GnomOgro. Empecemos por las setas.",
+   "button": "¿Y de postre?",
    "mood": "normal",
    "en": {
-    "say": "Today: explosive mushrooms, the Sacrifice Altar and the GnomOgro. Mushrooms first.",
-    "button": "Can't wait"
+    "say": "On today's menu: explosive mushrooms, the Sacrifice Altar and the GnomOgre. Let's start with the mushrooms.",
+    "button": "What about dessert?"
    }
   },
   {
-   "say": "Coge la seta explosiva con la manita (no gasta acción). Con ella encima empieza una cuenta atrás.",
+   "say": "Coge la seta explosiva con la manita (no gasta acción). Cuando la cojas empezará una cuenta atrás.",
    "mission": "Coge la seta explosiva",
-   "ok": "Fíjate en el número: turnos hasta que estalle. Sí, la cogiste tú. Yo no me hago responsable.",
+   "ok": "Fíjate en el número: son los turnos que restan hasta que estalle. Sí, la cogiste tú. Yo no me hago responsable y el seguro médico tampoco.",
    "mood": "normal",
    "en": {
-    "say": "Grab the explosive mushroom with the hand (costs no action). Carrying it starts a countdown.",
+    "say": "Grab the explosive mushroom with the little hand (it costs no action). Once you pick it up, a countdown starts.",
     "mission": "Pick up the explosive mushroom",
-    "ok": "See the number: turns until it blows. Yes, you grabbed it. Not my responsibility."
+    "ok": "Mind the number: it's how many turns are left until it blows. Yes, you picked it up. I take no responsibility, and neither does the health insurance."
    }
   },
   {
-   "say": "El número baja cuando TÚ acabas el turno; a cero, explota. Pulsa PASAR TURNO y míralo.",
+   "say": "El número baja con cada turno; cuando llegue a cero, explota. ¿No me crees? Pulsa PASAR TURNO y míralo.",
    "mission": "Pasa turno y mira la cuenta atrás",
-   "ok": "Un turno menos. Ya deberías pensar cómo librarte de ella.",
+   "ok": "Un turno menos. Ya deberías pensar cómo librarte de ella o pedir hora en el traumatólogo.",
    "mood": "grunon",
    "en": {
-    "say": "The number drops when YOU end your turn; at zero it explodes. Tap END TURN and watch.",
+    "say": "The number drops every turn; when it hits zero, it explodes. Don't believe me? Tap END TURN and watch.",
     "mission": "End turn and watch the countdown",
-    "ok": "One turn less. You should be thinking how to get rid of it."
+    "ok": "One turn less. You should start thinking about how to get rid of it, or book an appointment with the orthopedist."
    }
   },
   {
-   "say": "Ofrécela al altar: acaba junto a él o pulsa su diana. La seta se desactiva y llena su barra.",
+   "say": "Ofrécela al altar: acaba junto a él o pulsa su diana. La seta se desactiva y llena su barra de sacrificio.",
    "mission": "Ofrece la seta al altar",
-   "ok": "Puntos para el altar y cero heridos. El trato más justo del bosque.",
-   "mood": "normal",
+   "ok": "Puntos para el altar y cero heridos. El trato más justo que encontrarás en este bosque.",
+   "mood": "aplaude",
    "en": {
-    "say": "Offer it to the altar: end next to it or tap its target. The mushroom is defused and fills its bar.",
+    "say": "Offer it to the altar: end your move next to it or tap its target. The mushroom is defused and fills the altar's sacrifice bar.",
     "mission": "Offer the mushroom to the altar",
-    "ok": "Points for the altar and zero casualties. Fairest deal in the forest."
+    "ok": "Points for the altar and zero casualties. The fairest deal you'll find in this forest."
    }
   },
   {
-   "say": "El altar también come gnomos, y se llena con todos sus puntos. Tinkle, ven… será rápido. Para ti. Cógelo.",
+   "say": "El altar también acepta gnomos como sacrificio, y se llena con todos sus puntos. Tinkle, ven… será rápido. Para ti. Cógelo.",
    "mission": "Coge a Tinkle",
-   "ok": "Tinkle, te quiero. Lo suficiente como para que sufras pronto.",
+   "ok": "Tinkle, no te resistas, déjate llevar.",
    "mood": "grunon",
    "en": {
-    "say": "The altar eats gnomes too, filling with all their points. Tinkle, come here… it'll be quick. For you. Grab him.",
+    "say": "The altar also accepts gnomes as a sacrifice, and fills up with all their points. Tinkle, come here… it'll be quick. For you, anyway. Grab him.",
     "mission": "Grab Tinkle",
-    "ok": "Tinkle, I love you. Enough to make you suffer soon."
+    "ok": "Tinkle, don't resist, just let it happen."
    }
   },
   {
-   "say": "Tinkle ya trae puntos de sobra. Selecciona a tu unidad y pulsa la diana del altar.",
+   "say": "Tinkle ya trae acumulados puntos de sobra. Selecciona a tu unidad y pulsa sobre el altar.",
    "mission": "Estampa a Tinkle contra el altar",
-   "ok": "¡Altar lleno! Se oye un crujido. Corre. Bueno, corre tú: yo soy mayor.",
+   "ok": "¡Altar de sacrificios lleno! Se oye un crujido. Corre. Bueno, corre tú, Tinkle ha perdido la capacidad de correr.",
    "mood": "normal",
    "en": {
-    "say": "Tinkle already carries plenty of points. Select your unit and tap the altar's target.",
+    "say": "Tinkle already carries more than enough points. Select your unit and tap the altar.",
     "mission": "Smash Tinkle against the altar",
-    "ok": "Altar full! Hear that crack? Run. Well, you run: I'm old."
+    "ok": "Sacrifice altar full! I hear a crack. Run. Well, you run: Tinkle has lost the ability to."
    }
   },
   {
-   "say": "Ese es el GnomOgro: avanza solo hacia el Obelisco rival cada turno y mata de un golpe a quien tenga al lado. Pulsa PASAR TURNO y míralo.",
+   "say": "Este chicarrón es el GnomOgro: avanza solo hacia el Obelisco rival cada turno y mata de un golpe a quien tenga a su lado. Pulsa PASAR TURNO y míralo.",
    "mission": "Pasa turno y mira al GnomOgro",
-   "ok": "Un paso más cerca de la victoria. Da gusto verlo, mientras no vaya a por ti.",
+   "ok": "Un paso más cerca de la victoria. Da gusto verlo, mientras no vaya a por ti, claro.",
    "mood": "grunon",
    "en": {
-    "say": "That's the GnomOgro: it walks toward the rival Obelisk each turn and kills anyone next to it in one hit. Tap END TURN and watch.",
+    "say": "This big fellow is the GnomOgre: it walks toward the rival Obelisk by itself every turn and kills anyone next to it in one hit. Tap END TURN and watch.",
     "mission": "End turn and watch the GnomOgre",
-    "ok": "One step closer to victory. Lovely to watch, as long as he's not coming for you."
+    "ok": "One step closer to victory. Lovely to watch, as long as it isn't coming for you, of course."
    }
   },
   {
-   "say": "Resumen: coge setas pero no te las quedes, llena el altar y deja que el GnomOgro haga el trabajo sucio. ¡Suerte, la vas a necesitar!",
+   "say": "Resumen: coge setas, pero no te las quedes demasiado tiempo. Llena el altar de sacrificios con setas o gnomos y deja que el GnomOgro haga el trabajo sucio. ¡Suerte, la vas a necesitar!",
    "button": "TERMINAR TUTORIAL",
    "mood": "aplaude",
    "en": {
-    "say": "Recap: grab mushrooms but don't keep them, fill the altar and let the GnomOgro do the dirty work. Good luck, you'll need it!",
+    "say": "Recap: grab mushrooms, but don't hold on to them for too long. Fill the sacrifice altar with mushrooms or gnomes and let the GnomOgre do the dirty work. Good luck, you'll need it!",
     "button": "FINISH TUTORIAL"
    }
   }
  ],
  "rock": [
   {
-   "say": "Colinas Rock'n Troll. Unos trols dieron aquí un concierto tan ruidoso que las colinas aún tiemblan.",
-   "button": "Qué ambiente",
+   "say": "Colinas Rock'n Troll. Unos trols dieron aquí un concierto tan ruidoso que las colinas aún tiemblan del recuerdo de aquel día.",
+   "button": "Qué ambientazo",
    "mood": "grunon",
    "en": {
-    "say": "Rock'n Troll Hills. Some trolls gave a concert so loud the hills still tremble.",
-    "button": "What a vibe"
+    "say": "Rock'n Troll Hills. Some trolls gave a concert here so loud that the hills still tremble at the memory of that day.",
+    "button": "What an atmosphere"
    }
   },
   {
-   "say": "Hoy: Tambores de Guerra, Fragmentos y el Volcán. Primero, los tambores.",
+   "say": "En la lección de hoy: Tambores de Guerra, Fragmentos de piedra y el Volcán. Primero, los tambores.",
    "button": "A por ellos",
    "mood": "normal",
    "en": {
-    "say": "Today: War Drums, Fragments and the Volcano. Drums first.",
+    "say": "In today's lesson: War Drums, Stone Fragments and the Volcano. Drums first.",
     "button": "Let's go"
    }
   },
   {
-   "say": "Quien tenga más unidades pegadas a un tambor llena su ruleta al acabar el turno. Acerca tu unidad.",
+   "say": "Es sencillo, quien tenga más unidades pegadas a un tambor rellena el medidor de ruido al acabar el turno. Acerca tu unidad y verás.",
    "mission": "Acerca tu unidad al tambor",
-   "ok": "Bien pegadito. Con empate nadie puntúa, como en las reuniones familiares.",
+   "ok": "Bien pegadito. Si empatas a unidades con el rival nadie puntuará. Así que asegúrate de invitar a tus amigos.",
    "mood": "normal",
    "en": {
-    "say": "Whoever has the most units next to a drum fills their wheel at turn end. Move your unit close.",
+    "say": "It's simple: whoever has the most units next to a drum fills their noise meter at the end of the turn. Move your unit closer and you'll see.",
     "mission": "Bring your unit next to the drum",
-    "ok": "Nice and close. On a tie nobody scores, like family gatherings."
+    "ok": "Nice and close. If you tie with the rival on units, nobody scores. So make sure you invite your friends."
    }
   },
   {
-   "say": "Cada golpe a un gnomo junto al tambor suma extra. Coge a Tinkle.",
+   "say": "Puedes golpear a un gnomo cerca del tambor para sumar puntos de ruido extra. Al final lo importante es hacer más ruido que los demás. Coge a Tinkle.",
    "mission": "Coge a Tinkle",
-   "ok": "Tinkle, hoy de baquetas. Mejor no explicar.",
+   "ok": "Tinkle, hoy interpretas a unas baquetas. Mejor no dar más explicaciones.",
    "mood": "grunon",
    "en": {
-    "say": "Each hit on a gnome by the drum adds extra. Grab Tinkle.",
+    "say": "You can hit a gnome next to the drum to add extra noise points. In the end, what matters is making more noise than everyone else. Grab Tinkle.",
     "mission": "Grab Tinkle",
-    "ok": "Tinkle, drumsticks duty today. Better not explain."
+    "ok": "Tinkle, today you play the drumsticks. Better not to explain any further."
    }
   },
   {
    "say": "Golpéalo con el puño sin alejarte del tambor.",
    "mission": "Golpea a Tinkle junto al tambor",
-   "ok": "¡Rum-pum-pum! Qué talento desaprovechado.",
-   "mood": "normal",
+   "ok": "¡Rum-pum-pum! Qué talento desaprovechado. ¡Rock'n Troll!",
+   "mood": "aplaude",
    "en": {
     "say": "Hit him with the fist without leaving the drum.",
     "mission": "Hit Tinkle next to the drum",
-    "ok": "Rum-pum-pum! Such wasted talent."
+    "ok": "Rum-pum-pum! Such wasted talent. Rock'n Troll!"
    }
   },
   {
-   "say": "La ruleta está casi llena: al acabar el turno se completa y llueven rocas. Pulsa PASAR TURNO.",
+   "say": "El medidor de ruido está casi lleno: al acabar el turno se completa y llueven rocas del cielo. Pulsa PASAR TURNO.",
    "mission": "Pasa turno y mira la lluvia de rocas",
-   "ok": "¡Lluvia de rocas! Y los tambores, avergonzados, se mudaron.",
+   "ok": "¡Lluvia de rocas para tus enemigos! Y los tambores cambiarán de sitio: tendrás que volver a buscarlos por el mapa.",
    "mood": "normal",
    "en": {
-    "say": "The wheel is nearly full: at turn end it completes and rocks rain down. Tap END TURN.",
+    "say": "The noise meter is almost full: when your turn ends it fills up and rocks rain down from the sky. Tap END TURN.",
     "mission": "End turn and watch the rock rain",
-    "ok": "Raining rocks! And the drums, embarrassed, moved away."
+    "ok": "Rocks raining down on your enemies! And the drums will move to another spot, so you'll have to look for them around the map again."
    }
   },
   {
-   "say": "Las rocas sueltan Fragmentos. Pisa uno para recogerlo: cualquiera puede cogerlos, date prisa.",
+   "say": "Las rocas sueltan Fragmentos. Pasa por encima de uno para recogerlo: cualquiera puede cogerlos, date prisa, ¡son gratis!",
    "mission": "Recoge un fragmento",
-   "ok": "Una piedra en la mochila. Como tu carrera, pero más útil.",
+   "ok": "Una piedra en la mochila. Mejor en la mochila que dentro del zapato.",
    "mood": "normal",
    "en": {
-    "say": "Rocks drop Fragments. Step on one to pick it up: anyone can take them, hurry.",
+    "say": "Rocks drop Fragments. Walk over one to pick it up: anyone can take them, so hurry, they're free!",
     "mission": "Pick up a fragment",
-    "ok": "A stone in the backpack. Like your career, but more useful."
+    "ok": "A stone in the backpack. Better in the backpack than in your shoe."
    }
   },
   {
-   "say": "Los fragmentos alimentan al volcán (nunca se lanzan a rivales). Abre la mochila, pulsa el fragmento dos veces y apunta al volcán.",
+   "say": "Puedes lanzar fragmentos al volcán para que entre en erupción. Abre la mochila, elige una piedra y apunta al volcán.",
    "mission": "Lanza el fragmento al volcán",
-   "ok": "El volcán se enciende. Cuanto más lo alimentes, más cerca de erupcionar.",
+   "ok": "El volcán se enciende. Cuanto más lo alteres, antes entrará en erupción.",
    "mood": "grunon",
    "en": {
-    "say": "Fragments feed the volcano (never thrown at rivals). Open the backpack, tap the fragment twice and aim at the volcano.",
+    "say": "You can throw fragments at the volcano to make it erupt. Open the backpack, pick a stone and aim at the volcano.",
     "mission": "Throw the fragment at the volcano",
-    "ok": "The volcano lights up. The more you feed it, the closer it gets to erupting."
+    "ok": "The volcano lights up. The more you upset it, the sooner it will erupt."
    }
   },
   {
-   "say": "El volcán también come gnomos. Estampa a Tinkle contra él y entrará en erupción.",
+   "say": "Como era de esperar, el volcán también acepta gnomos como combustible. Estampa a Tinkle contra él y prepárate para unos fuegos artificiales.",
    "mission": "Estampa a Tinkle contra el volcán",
-   "ok": "¡Erupción! Mira correr al gnomo en llamas. La vida del rival es dura.",
+   "ok": "¡Erupción! Mira cómo corre ese gnomo envuelto en llamas. La vida de un gnomo es más dura de lo que crees.",
    "mood": "normal",
    "en": {
-    "say": "The volcano eats gnomes too. Slam Tinkle into it and it erupts.",
+    "say": "As expected, the volcano also takes gnomes as fuel. Slam Tinkle into it and get ready for some fireworks.",
     "mission": "Smash Tinkle against the volcano",
-    "ok": "Eruption! Watch that burning gnome run. A rival's life is hard."
+    "ok": "Eruption! Look at that gnome running, wrapped in flames. A gnome's life is tougher than you think."
    }
   },
   {
-   "say": "Pulsa PASAR TURNO: el gnomo en llamas explota y deja lava. Una piedra la apaga.",
+   "say": "Puedes quitarte a los gnomos de encima tirándoles piedras. Ahora pulsa PASAR TURNO: verás cómo el gnomo en llamas explota y deja lava a su alrededor. Puedes apagar esos charcos lanzando piedras sobre ellos.",
    "mission": "Pasa turno y mira la explosión",
    "ok": "Lava por todas partes. Hogar, dulce hogar… de los trols.",
    "mood": "grunon",
    "en": {
-    "say": "Tap END TURN: the burning gnome explodes and leaves lava. A rock puts it out.",
+    "say": "You can get rid of gnomes clinging to you by throwing stones at them. Now tap END TURN: you'll see the burning gnome explode and leave lava around it. You can put out those puddles by throwing stones on them.",
     "mission": "End turn and watch the explosion",
     "ok": "Lava everywhere. Home sweet home… for trolls."
    }
   },
   {
-   "say": "Resumen: pega gnomos junto a los tambores, recoge fragmentos antes que el rival y usa la roca con cabeza. ¡Suerte!",
+   "say": "Resumen del día: golpea a los gnomos junto a los tambores, recoge fragmentos de piedra y haz entrar el volcán en erupción antes que el rival. ¡Suerte! La cosa está calentita.",
    "button": "TERMINAR TUTORIAL",
    "mood": "aplaude",
    "en": {
-    "say": "Recap: hit gnomes by the drums, grab fragments before the rival and use rocks wisely. Good luck!",
+    "say": "Daily recap: hit gnomes next to the drums, collect stone fragments and make the volcano erupt before the rival does. Good luck! Things are heating up.",
     "button": "FINISH TUTORIAL"
    }
   }
  ],
  "crane": [
   {
-   "say": "Poblado HurryCrane: un pueblo en las nubes que espera a que eclosione un huevo de grulla gigante.",
+   "say": "Bienvenido al poblado HurryCrane: un pueblo en las nubes que lleva años esperando a que eclosione un huevo de grulla gigante.",
    "button": "Qué emoción",
    "mood": "grunon",
    "en": {
-    "say": "HurryCrane Village: a town in the clouds waiting for a giant crane egg to hatch.",
+    "say": "Welcome to HurryCrane Village: a town in the clouds that has spent years waiting for a giant crane egg to hatch.",
     "button": "How exciting"
    }
   },
   {
-   "say": "Aquí se juega al pinball: el huevo es la bola y los gnomos, la fuerza. Cada rebote lo carga. Mantén pulsado el huevo para ver su carga.",
+   "say": "Aquí se juega al pinball: el huevo es la bola y los gnomos no iban a ser menos. Cada rebote calienta el huevo. Mantén pulsado el huevo para ver cuantos puntos lleva acumulados.",
    "button": "A jugar",
    "mood": "normal",
    "en": {
-    "say": "This is pinball: the egg is the ball and gnomes are the force. Each bounce charges it. Hold the egg to see its charge.",
+    "say": "This is pinball: the egg is the ball, and the gnomes had to join in too. Each bounce heats the egg up. Hold the egg to see how many points it has stored.",
     "button": "Let's play"
    }
   },
   {
-   "say": "Al huevo se le da con un gnomo. Coge a Tinkle.",
+   "say": "Para hacer rebotar el huevo necesitaremos un gnomo. Coge a Tinkle.",
    "mission": "Coge a Tinkle",
    "ok": "Tinkle, hoy vuelas. No preguntes dónde aterrizas.",
    "mood": "normal",
    "en": {
-    "say": "You hit the egg with a gnome. Grab Tinkle.",
+    "say": "To bounce the egg we'll need a gnome. Grab Tinkle.",
     "mission": "Pick up Tinkle",
     "ok": "Tinkle, you fly today. Don't ask where you land."
    }
@@ -513,62 +513,62 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Los bumpers hacen rebotar el huevo entre ellos, uno por turno cada uno. Lanza otro gnomo y mira la carambola.",
+   "say": "Los bumpers hacen rebotar el huevo y se activan al ser golpeados. No puedes hacerlo rebotar contra el mismo bumper en el mismo turno. Lanza otro gnomo y mira la carambola.",
    "mission": "Lanza otro gnomo y provoca una carambola",
-   "ok": "¡Carambola! Cada golpe más agudo. Como una discoteca, pero con daño.",
+   "ok": "¡Carambola! Cada golpe calienta mas el huevo, no te pases, no queremos una tortilla.",
    "mood": "grunon",
    "en": {
-    "say": "Bumpers bounce the egg between them, once each per turn. Throw another gnome and watch the chain.",
+    "say": "Bumpers make the egg bounce and light up when they're hit. You can't bounce it off the same bumper twice in the same turn. Throw another gnome and watch the carom.",
     "mission": "Throw another gnome and cause a carom",
-    "ok": "Carom! Each hit higher-pitched. Like a nightclub, but with damage."
+    "ok": "Carom! Every hit heats the egg up more. Don't overdo it, we don't want an omelette."
    }
   },
   {
-   "say": "Obeliscos y tótems también lo rebotan, pero pagan: pierden vida según la carga. Y cada turno sin rebotar, lo enfría.",
+   "say": "Obeliscos y tótems también lo hacen rebotar, pero pierden vida según lo caliente que esté el huevo. Y cada turno sin rebotar, hace que se enfríe.",
    "button": "Entendido",
    "mood": "normal",
    "en": {
-    "say": "Obelisks and totems bounce it too, but they pay: they lose health based on the charge. And each turn without a bounce cools it.",
+    "say": "Obelisks and totems bounce it too, but they lose health depending on how hot the egg is. And every turn without a bounce cools it down.",
     "button": "Got it"
    }
   },
   {
-   "say": "Con la carga al máximo el huevo EXPLOTA y cada equipo cobra Gloria según sus rebotes. Lanza el último gnomo.",
+   "say": "Con la carga al máximo el huevo EXPLOTA y cada equipo recibe tantos puntos de Gloria como rebotes haya acumulado. Lanza el último gnomo.",
    "mission": "Haz estallar el huevo",
-   "ok": "¡BOOM! Plumas, luces… y mira quién viene a poner orden.",
+   "ok": "¡BOOM! Plumas, luces, trozos de cáscara… y mira quién viene a poner orden.",
    "mood": "grunon",
    "en": {
-    "say": "At max charge the egg EXPLODES and each team earns Glory based on its bounces. Throw the last gnome.",
+    "say": "At full charge the egg EXPLODES and each team receives as much Glory as bounces it has racked up. Throw the last gnome.",
     "mission": "Make the egg explode",
-    "ok": "BOOM! Feathers, lights… and look who's coming to restore order."
+    "ok": "BOOM! Feathers, lights, eggshell chunks… and look who's coming to restore order."
    }
   },
   {
-   "say": "La grulla se posa en el obelisco que más ganó y lo bloquea unos turnos: no puede reclutar ni mejorar.",
+   "say": "La grulla se posa en el obelisco del jugador que más puntos de Gloria recibió y lo bloquea unos turnos: durante ese tiempo no puede reclutar ni mejorar.",
    "button": "Vaya con la grulla",
    "mood": "normal",
    "en": {
-    "say": "The crane lands on the obelisk that earned most and blocks it for a few turns: no recruiting or upgrading.",
+    "say": "The crane lands on the obelisk of the player who received the most Glory and blocks it for a few turns: during that time it can't recruit or upgrade.",
     "button": "Wow, the crane"
    }
   },
   {
-   "say": "¿Obelisco bloqueado? Lánzale un gnomo a la grulla: se asusta y vuela al siguiente.",
+   "say": "¿Obelisco bloqueado? Lánzale un gnomo a la grulla: se asustará y volará al siguiente obelisco. Al final lanzar un gnomo es la solución para todo en este juego.",
    "mission": "Espanta a la grulla con un gnomo",
-   "ok": "¡Plumas por todas partes! Dos turnos en cada obelisco, salvo susto.",
+   "ok": "¡Plumas por todas partes! Se posa dos turnos en cada obelisco, salvo que le lances un Gnomo, tenlo en cuenta.",
    "mood": "grunon",
    "en": {
-    "say": "Obelisk blocked? Throw a gnome at the crane: it gets scared and flies to the next one.",
+    "say": "Obelisk blocked? Throw a gnome at the crane: it will get scared and fly to the next obelisk. In the end, throwing a gnome is the answer to everything in this game.",
     "mission": "Scare the crane away with a gnome",
-    "ok": "Feathers everywhere! Two turns per obelisk, unless someone scares her."
+    "ok": "Feathers everywhere! She perches for two turns on each obelisk, unless you throw a gnome at her. Keep that in mind."
    }
   },
   {
-   "say": "Resumen: cada rebote carga el huevo, al máximo explota y la grulla bloquea al que más ganó. ¡Suerte!",
+   "say": "Resumen: cada rebote carga el huevo, al máximo explota y la grulla equilibra la partida. ¡Suerte!",
    "button": "TERMINAR TUTORIAL",
    "mood": "aplaude",
    "en": {
-    "say": "Recap: each bounce charges the egg, at max it explodes and the crane blocks whoever earned most. Good luck!",
+    "say": "Recap: every bounce charges the egg, at full charge it explodes and the crane keeps the match balanced. Good luck!",
     "button": "FINISH TUTORIAL"
    }
   }

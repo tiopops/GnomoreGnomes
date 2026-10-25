@@ -12086,3 +12086,161 @@ body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }
   55% { transform: scale(1.18); }
   100% { transform: translateY(0) scale(1); }
 }
+
+/* Tutorial completado: check verde en la esquina de su botón (se puede repetir siempre). */
+.tut-menu__item--done { position: relative; }
+.tut-menu__list .menu-btn > .tut-menu__done {
+  position: absolute;
+  top: 7px;
+  right: 22px;
+  z-index: 4;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #3fb95a;
+  border: 2px solid #1d5e2e;
+  color: #fff;
+  font-size: 0.8rem;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+.tut-menu__item .tut-menu__done i { position: static; width: auto; height: auto; background: none; clip-path: none; font-size: inherit; text-shadow: none; }
+
+
+/* ---------- Equipo Enmurallado (js/abilities-enmurallado.js) ---------- */
+body.ability-targeting--aim,
+body.ability-targeting--aim * {
+  cursor:
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="9" fill="none" stroke="black" stroke-width="5"/><circle cx="16" cy="16" r="9" fill="none" stroke="%23ff8a1f" stroke-width="2.4"/><path d="M16 2v8M16 22v8M2 16h8M22 16h8" stroke="black" stroke-width="5" stroke-linecap="round"/><path d="M16 3v6M16 23v6M3 16h6M23 16h6" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>')
+      16 16,
+    pointer !important;
+}
+body.ability-targeting--swap,
+body.ability-targeting--swap * {
+  cursor:
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M5 11h19M19 5l6 6-6 6M27 21H8M13 15l-6 6 6 6" fill="none" stroke="black" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11h19M19 5l6 6-6 6M27 21H8M13 15l-6 6 6 6" fill="none" stroke="%23ff8a1f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+      16 16,
+    pointer !important;
+}
+.ew-ring {
+  position: absolute;
+  border: 6px solid #ff8a1f;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.ew-shard {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(45deg);
+  outline: 2px solid #1b1208;
+}
+.ew-spark {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  outline: 1.5px solid #1b1208;
+}
+.ew-arrow {
+  position: absolute;
+  width: 78px;
+  height: 20px;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.35));
+}
+.ew-arrow svg { display: block; }
+.ew-circle {
+  position: absolute;
+  width: 300px;
+  height: 168px;
+  border-radius: 50%;
+  border: 5px solid #ff8a1f;
+  box-sizing: border-box;
+  pointer-events: none;
+  outline: 3px solid #1b1208;
+  background: repeating-conic-gradient(rgba(255, 138, 31, 0.22) 0 10deg, transparent 10deg 30deg);
+}
+.ew-circle::after {
+  content: "";
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  border: 4px dashed #ffd27a;
+}
+.ew-rune {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+  outline: 2px solid #1b1208;
+}
+.ew-slab {
+  position: absolute;
+  width: 128px;
+  height: 176px;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.4));
+}
+.ew-slab svg { display: block; width: 100%; height: 100%; }
+.ew-slab-shadow {
+  position: absolute;
+  width: 130px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+/* Rival marcado por la flecha: retícula naranja sobre la cabeza. */
+.ew-track-mark {
+  position: absolute;
+  left: 50%;
+  top: -34px;
+  width: 46px;
+  height: 46px;
+  margin-left: -23px;
+  pointer-events: none;
+  z-index: 5;
+  animation: ew-track-spin 4s linear infinite, ew-track-pop 0.5s cubic-bezier(.3,1.8,.5,1) 1;
+}
+@keyframes ew-track-spin { to { rotate: 360deg; } }
+@keyframes ew-track-pop { from { scale: 2.4; opacity: 0; } to { scale: 1; opacity: 1; } }
+/* Pareja del Cambiazo: aro naranja discontinuo bajo los pies hasta que vuelvan a su sitio. */
+.unit.ew-bound::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  width: 96px;
+  height: 52px;
+  margin-left: -48px;
+  border: 4px dashed #ff8a1f;
+  border-radius: 50%;
+  outline: 2px solid #1b1208;
+  pointer-events: none;
+  animation: ew-bound-spin 1.6s ease-in-out infinite alternate;
+}
+@keyframes ew-bound-spin { from { scale: 0.92; opacity: 0.7; } to { scale: 1.08; opacity: 1; } }
+/* Rival aplastado: icono del muro sobre la cabeza durante su ronda inactiva. */
+.ew-crush-badge {
+  position: absolute;
+  left: 50%;
+  top: -30px;
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
+  pointer-events: none;
+  z-index: 5;
+  animation: ew-crush-bob 1.2s ease-in-out infinite alternate;
+}
+@keyframes ew-crush-bob { from { translate: 0 0; } to { translate: 0 -5px; } }
