@@ -46,8 +46,8 @@ const TUTORIAL_TEXTS = {
    "ok": "Qué sonrisa. Eso es que ya sabe a lo que ha venido.",
    "mood": "normal",
    "en": {
-    "say": "Pick TruenoEspora, the one with the mushroom on his head. His services are paid for with Glory points: that little yellow number at the top.",
-    "mission": "Pick TruenoEspora",
+    "say": "Pick ThunderSpore, the one with the mushroom on his head. His services are paid for with Glory points: that little yellow number at the top.",
+    "mission": "Pick ThunderSpore",
     "ok": "What a smile. He clearly knows what he's here for."
    }
   },
@@ -191,7 +191,7 @@ const TUTORIAL_TEXTS = {
    "en": {
     "say": "Now open the chest: it holds relics with perks that wear down when your units die.",
     "mission": "Open the relic chest",
-    "ok": "TrotaMontes Boots: more Movement. Mind their durability, I didn't keep the receipt."
+    "ok": "MountainTrotter Boots: more Movement. Mind their durability, I didn't keep the receipt."
    }
   },
   {
