@@ -781,7 +781,10 @@ function createGnomeInstance() {
       await wait(W);
       if (!unit.el || !unit.el.isConnected) { anims.forEach((a) => a.cancel()); return; }
       // 2a) Embestida con el sprite de pegar
-      const prevSrc = sprite ? sprite.src : null;
+      // OJO: sprite.src devuelve la variante de calidad (_midres/_lowres) y no la
+      // original; restaurar ESA dejaba dataset.srcOrig apuntando al sprite de pegar
+      // y, al cambiar la calidad después, la unidad se quedaba pegando para siempre.
+      const prevSrc = sprite ? (sprite.dataset && sprite.dataset.srcOrig) || sprite.src : null;
       let swapped = false;
       let prevW = "";
       if (sprite && typeof Units !== "undefined") {
@@ -821,7 +824,7 @@ function createGnomeInstance() {
       if (sprite) {
         sprite.style.transformOrigin = prevOrigin;
         if (swapped) {
-          sprite.src = prevSrc;
+          sprite.src = prevSrc; // URL original: el gancho de calidad le pone la variante que toque
           sprite.style.width = prevW;
         }
       }

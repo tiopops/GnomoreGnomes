@@ -16,6 +16,9 @@ const GG_VERSION = "v.001590";
 
 const GG_CHANGELOG = [
   { v: "v.001590", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "Corregido: una unidad podía quedarse para siempre con el sprite de «pegar al gnomo» estando en reposo (al cambiar la resolución adaptativa tras un golpe, la imagen de reposo no se restauraba bien)",
+    "Los botones de habilidad propia, golpear gnomo y lanzar gnomo ahora reaccionan al clic: se hunden al pulsar, rebotan con una pequeña animación y suenan al seleccionarlos (también con el mando)",
+    "Tutorial: al lanzar el gnomo (pase o sacrificio) la flecha que señalaba el icono de lanzar desaparece en cuanto sale volando, en vez de quedarse activa",
     "Tutoriales: el rótulo «Saltar tutorial» ahora queda pegado a la viñeta de Nizak (antes se quedaba lejos, anclado al retrato)",
     "Corregido: en el tutorial, al conquistar el tótem, el primer clic movía a la otra unidad (la del cofre seguía seleccionada); ahora el portador del gnomo entra ya seleccionado. Y el puntero del mazo de conquista ya es rojo de verdad",
     "Nuevo cartel central en el turno del rival: «TURNO DEL RIVAL» (con varios rivales, «TURNO DEL RIVAL 1», «2»... cada uno de su color: rojo, naranja y morado); en multijugador muestra el nombre del jugador que está en su turno, también cuando empieza él",

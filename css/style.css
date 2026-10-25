@@ -12075,3 +12075,14 @@ body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }
 
 /* Gnomo suelto con mira de "coger" activa: el puntero de mano también sale sobre su sprite (js/gnome.js). */
 .gnome--catchable, .gnome--catchable * { cursor: url("../assets/iconos/cursor_mano.png") 24 24, pointer !important; }
+
+/* Respuesta al clic de los botones de acción de la unidad (js/actionbtn-feedback.js):
+   se hunde mientras se pulsa y rebota al soltar. */
+.ability-btn.ability-btn--visible:active,
+.gnome-action-btn.gnome-action-btn--visible:active { transform: translateY(2px) scale(0.86); transition-duration: 0.06s; }
+.action-btn--pop { animation: action-btn-pop 0.34s cubic-bezier(0.34, 1.6, 0.64, 1); }
+@keyframes action-btn-pop {
+  0% { transform: scale(0.82); }
+  55% { transform: scale(1.18); }
+  100% { transform: translateY(0) scale(1); }
+}

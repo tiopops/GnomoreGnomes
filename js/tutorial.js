@@ -552,6 +552,8 @@ const Tutorial = {
         onStart: () => T._refill(),
         target: () => {
           const h = Units.list.find((u) => u.id === T._ctx.holderId);
+          // Lanzamiento hecho (el gnomo ya no lo lleva el que lo tenía): sin guía.
+          if (h && !Gnome.isHeldBy(h.id)) return null;
           if (h && Units.selectedId !== h.id) return T._unitEl(h);
           const g = T._gnome();
           if (g && g.passing) return T._anyMarker("pass-marker");
@@ -726,6 +728,9 @@ const Tutorial = {
         target: () => {
           const h = Units.list.find((u) => u.id === T._ctx.sacId);
           if (!h) return null;
+          // Ya lanzado (o sacrificio en marcha): el gnomo ya no está en sus manos, sin guía.
+          if (T._ctx.sacSeen || (typeof Sacrifice !== "undefined" && Sacrifice.busy > 0)) return null;
+          if (!Gnome.list.find((x) => x.heldBy === h.id)) return null;
           if (Units.selectedId !== h.id) return T._unitEl(h);
           const g = Gnome.list.find((x) => x.heldBy === h.id);
           if (g && g.passing) return T._anyMarker("range-marker--sacrifice") || T._anyMarker("pass-marker");
