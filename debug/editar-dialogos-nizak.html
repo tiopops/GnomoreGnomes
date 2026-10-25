@@ -61,7 +61,7 @@
     Elige el tutorial arriba y edita lo que quieras (español e inglés). Todo se guarda solo como borrador en este navegador.
     Marca «Usar mis cambios en el juego» para probar los textos al instante abriendo el juego en este mismo navegador
     (los jugadores no lo ven). Cuando te guste, pulsa «Copiar archivo» o «Descargar» y pásame el contenido (o sustituye
-    <code>js/tutorial-texts.js</code>). Si cambias el orden de los pasos en el código, este orden manda. Tutorial ligero: los contadores se ponen en rojo cuando un diálogo se pasa de largo; mejor frases cortas y directas, con su toque de humor.
+    <code>js/tutorial-texts.js</code>). Al abrir esta página se traen solos los textos nuevos del juego que tú no hayas tocado (tus ediciones se respetan). Si cambias el orden de los pasos en el código, este orden manda. Tutorial ligero: los contadores se ponen en rojo cuando un diálogo se pasa de largo; mejor frases cortas y directas, con su toque de humor.
   </div>
   <div id="list"></div>
 </main>
@@ -92,6 +92,44 @@
     try { return JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch (e) { return null; }
   })();
   const data = store || JSON.parse(JSON.stringify(original));
+  // Sincronía con el juego: si js/tutorial-texts.js cambió desde la última vez que abriste esta
+  // página (p. ej. Claude reescribió diálogos), los textos que TÚ no habías tocado se actualizan
+  // solos y los que sí editaste se conservan. Se compara con la copia del archivo guardada la
+  // última vez (BASE_KEY).
+  const BASE_KEY = "gg_tutorial_texts_base";
+  let syncMsg = "";
+  if (store) {
+    let base = null;
+    try { base = JSON.parse(localStorage.getItem(BASE_KEY)); } catch (e) {}
+    const eq = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+    const merge = (d, bs, o) => {
+      if (o && typeof o === "object" && !Array.isArray(o)) {
+        const out = {};
+        new Set([...Object.keys(d || {}), ...Object.keys(o)]).forEach((k) => {
+          const dv = d ? d[k] : undefined, bv = bs ? bs[k] : undefined, ov = o[k];
+          const r = (ov && typeof ov === "object") ? merge(dv, bv, ov) : (eq(dv, bv) ? ov : dv);
+          if (r !== undefined) out[k] = r;
+        });
+        return out;
+      }
+      return eq(d, bs) ? o : d;
+    };
+    let updated = 0, kept = 0;
+    SCEN.forEach((sc) => {
+      if (!original[sc.id]) return;
+      original[sc.id].forEach((o, i) => {
+        const d = (data[sc.id] || [])[i];
+        if (!d) return;
+        let m;
+        if (base && base[sc.id] && base[sc.id][i]) m = merge(d, base[sc.id][i], o);
+        else m = o; // sin copia previa (borrador antiguo): se trae la versión actual del juego
+        if (!eq(m, d)) { updated++; data[sc.id][i] = m; }
+        if (base && !eq(d, base[sc.id] && base[sc.id][i]) && !eq(d, o)) kept++;
+      });
+    });
+    if (updated) syncMsg = "Actualizados " + updated + " pasos con los textos nuevos del juego" + (kept ? " (tus ediciones se conservan)" : "") + ".";
+  }
+  try { localStorage.setItem(BASE_KEY, JSON.stringify(original)); } catch (e) {}
   // Por si el archivo original ganó pasos nuevos desde que se guardó el borrador.
   SCEN.forEach((s) => {
     if (!data[s.id]) data[s.id] = JSON.parse(JSON.stringify(original[s.id]));
@@ -238,7 +276,9 @@
     render(); toast("Borrador descartado");
   };
 
+  if (syncMsg) { save(); }
   render();
+  if (syncMsg) setTimeout(() => toast(syncMsg), 400);
 })();
 </script>
 </body>

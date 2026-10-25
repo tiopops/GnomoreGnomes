@@ -524,6 +524,16 @@ const SettingsMenu = {
   _syncPerfLock() {
     if (!this._shadowsBtn || !this._fogAnimBtn || !this._vegetationBtn || !this._spriteQualityBtn) return;
     const locked = typeof PerfMode !== "undefined" && PerfMode.enabled;
+    // Refresca cada interruptor con el estado REAL (el panel se crea una sola vez y otros
+    // sistemas —modo rendimiento automático, ajustes guardados— pueden cambiar el valor después).
+    const mark = (btn, on) => {
+      const t = btn && btn.querySelector(".settings-toggle");
+      if (t) t.dataset.checked = String(!!on);
+    };
+    if (typeof Hierbajos !== "undefined") mark(this._vegetationBtn, Hierbajos.enabled);
+    if (typeof SpriteQuality !== "undefined") mark(this._spriteQualityBtn, SpriteQuality.enabled);
+    if (typeof Shadows !== "undefined") mark(this._shadowsBtn, Shadows.enabled);
+    if (typeof Fog !== "undefined" && "animEnabled" in Fog) mark(this._fogAnimBtn, Fog.animEnabled);
     // Resolución adaptativa se bloquea igual que las otras tres mientras el
     // modo rendimiento esté activo (pintado como "deshabilitado", el jugador
     // no puede tocarla) — solo que a ella el modo rendimiento la deja

@@ -12,12 +12,15 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001579";
+const GG_VERSION = "v.001582";
 
 const GG_CHANGELOG = [
-  { v: "v.001579", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+  { v: "v.001582", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "Tutoriales: las réplicas de Nizak tras completar una misión ya NO se quitan solas — esperan a que pulses (clic, Enter, Espacio, flecha derecha o A del mando); las misiones que piden una acción siguen igual",
+    "Tutoriales: se quita el botón «Releer»; el editor de diálogos de Nizak (debug) trae solo los textos nuevos del juego sin pisar tus ediciones",
+    "Opciones gráficas: los interruptores (Vegetación, Sombras, Niebla, Resolución adaptativa) se refrescan al abrir el panel con su estado real — la Vegetación aparecía marcada estando desactivada",
     "Tutorial «Primeros pasos»: Nizak dice ahora que su tío Klink se esparció «por el césped»",
-    "Tutoriales: las réplicas de Nizak ya se pueden leer con calma — la cuenta atrás empieza cuando la frase está entera en pantalla, dura según las palabras (~215 por minuto), se congela con el ratón encima, un clic o tecla primero completa la frase y luego pasa, y el botón «↶ Releer» recupera la réplica anterior",
+    "Tutoriales: las réplicas de Nizak ya se pueden leer con calma — un clic o tecla primero completa la frase y luego pasa",
     "Corregido: en el tutorial «Primeros pasos» no se podía talar el pino — la zona reservada del centro bloqueaba la casilla desde la que se golpea (ahora el tutorial la ignora)",
     "Coger un gnomo: además del icono de la mano sobre su base, el puntero de mano aparece también al pasar el ratón por su sprite, y se puede pulsar el sprite para cogerlo",
     "Una unidad solo puede cargar UN gnomo: ya no se le puede pasar otro si ya lleva uno (ni a mano ni por la IA rival), y el intento no gasta acción",
