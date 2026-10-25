@@ -8685,7 +8685,7 @@ body.backpack-giving--katapum .unit--katapum-target * {
 .tut-portrait__img { display: none; height: 100%; width: auto; user-select: none; -webkit-user-drag: none; }
 .tut-portrait__img--on { display: block; animation: tut-mood-in 0.3s cubic-bezier(0.34, 1.6, 0.64, 1); }
 @keyframes tut-mood-in { 0% { transform: scale(0.88) rotate(-3deg); } 100% { transform: scale(1) rotate(0); } }
-.tut-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+.tut-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; position: relative; }
 .tut-bubble {
   position: relative;
   isolation: isolate;
@@ -12011,7 +12011,7 @@ body.tut-hush .tut-panel * { pointer-events: none; }
 .village-attack-marker,
 .village-attack-marker *,
 .village--targeted,
-.village--targeted * { cursor: url("../assets/iconos/cursor_mazo.png?v=2") 24 24, pointer !important; }
+.village--targeted * { cursor: url("../assets/iconos/cursor_mazo.png?v=3") 24 24, pointer !important; }
 
 /* Sacrificio del volcán (parodia de Terminator): charquito y máscara de la mano. */
 .sac-lavalip { position: absolute; border-radius: 50%; background: #ff9a22; border: 2px solid #c9460f; box-sizing: border-box; pointer-events: none; }

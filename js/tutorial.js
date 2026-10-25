@@ -677,6 +677,9 @@ const Tutorial = {
             Villages._placeInstant(v);
             if (typeof Fog !== "undefined") Fog.applyVisibility();
           }
+          // El portador entra ya seleccionado: si quedaba seleccionada la otra unidad (la del cofre),
+          // el primer clic movía a ESA unidad en vez de estampar al gnomo.
+          if (h && Units.selectedId !== h.id) Units.select(h);
         },
         target: () => {
           const h = Units.list.find((u) => u.id === T._ctx.captorId);
@@ -1197,8 +1200,8 @@ const Tutorial = {
           <span class="tut-mission__check">✔</span>
         </div>
         <div class="tut-progress"><div class="tut-progress__bar"></div></div>
-      </div>
-      <button type="button" class="tut-skip">Saltar tutorial</button>`;
+        <button type="button" class="tut-skip">Saltar tutorial</button>
+      </div>`;
     document.body.appendChild(panel);
     const hold = document.createElement("div");
     hold.className = "tut-hold";
