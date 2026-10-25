@@ -93,6 +93,7 @@ const Bushes = {
       if (typeof Obelisks !== "undefined" && Obelisks.at(row, col)) continue;
       if (typeof Obelisks !== "undefined" && Obelisks.isAdjacent(row, col)) continue; // el anillo del Obelisco debe quedar libre para reclutar
       if (typeof Altar !== "undefined" && Altar.at(row, col)) continue; // Altar de Sacrificios (js/altar.js)
+      if (typeof centerReserved === "function" && centerReserved(row, col, 2)) continue; // centro reservado (ver centerReserved, js/matchsetup.js)
       if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue; // GnomOgro (js/gnomogro.js): casilla ocupada
       if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) continue; // Recursos de escenario (js/resources.js)
       if (this.at(row, col)) continue;
@@ -118,6 +119,7 @@ const Bushes = {
           if (typeof Shops !== "undefined" && Shops.at(row, col)) continue;
           if (typeof Obelisks !== "undefined" && (Obelisks.at(row, col) || Obelisks.isAdjacent(row, col))) continue;
           if (typeof Altar !== "undefined" && Altar.at(row, col)) continue;
+          if (typeof centerReserved === "function" && centerReserved(row, col, 2)) continue; // centro reservado (ver centerReserved, js/matchsetup.js)
           if (typeof GnomOgro !== "undefined" && GnomOgro.at(row, col)) continue;
           if ((typeof Resources !== "undefined" && Resources.at(row, col)) || (typeof Drums !== "undefined" && Drums.at(row, col))) continue;
           if (this.at(row, col)) continue;

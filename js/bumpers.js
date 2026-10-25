@@ -60,7 +60,7 @@ const Bumpers = {
           const rr = r + dr, cc = c + dc;
           if (rr < 1 || cc < 1 || rr >= size - 1 || cc >= size - 1) continue;
           if (this.list.some((o) => Math.max(Math.abs(o.row - rr), Math.abs(o.col - cc)) < 3)) continue;
-          if (Egg._free(rr, cc, size, 3)) spot = { row: rr, col: cc };
+          if (Egg._free(rr, cc, size, 3) && !centerReserved(rr, cc, 2)) spot = { row: rr, col: cc };
         }
       }
       if (spot) this._create(spot.row, spot.col);

@@ -26,6 +26,16 @@ function getBoardSize(numOpponents) {
 }
 
 
+// Centro del mapa RESERVADO para el elemento propio del nivel (Altar en MushBoom, Volcán en Rock'n Troll,
+// Huevo en HurryCrane): ningún otro objeto (tienda, oráculo, poblados, bumpers, arbustos, recursos...)
+// puede colocarse a `radius` casillas (Chebyshev) del centro, para que ese elemento aparezca SIEMPRE en el centro.
+function centerReserved(row, col, radius) {
+  const size = (typeof Units !== "undefined" && Units.boardSize) || (typeof TerrainMap !== "undefined" && TerrainMap.size) || 0;
+  if (!size) return false;
+  const m = Math.floor(size / 2);
+  return Math.max(Math.abs(row - m), Math.abs(col - m)) <= (radius == null ? 2 : radius);
+}
+
 // Elige la loseta más EQUITATIVA para un punto de interés compartido (tienda, oráculo...):
 // la que deja la distancia al "punto útil más cercano" lo más parecida posible para todas las bases.
 // `valid(row, col)` filtra las losetas permitidas; `providers` son puntos ya colocados del mismo tipo
@@ -36,6 +46,7 @@ function pickFairSpot(boardSize, valid, bases, providers, penalty) {
   for (let row = 0; row < boardSize; row++) {
     for (let col = 0; col < boardSize; col++) {
       if (!valid(row, col)) continue;
+      if (centerReserved(row, col, 2)) continue; // el centro es del elemento del nivel
       const pts = (providers || []).concat([{ row, col }]);
       const d = bases.map((b) => Math.min(...pts.map((p) => ch(b, p))));
       const imb = Math.max(...d) - Math.min(...d);

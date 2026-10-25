@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001574";
+const GG_VERSION = "v.001575";
 
 const GG_CHANGELOG = [
-  { v: "v.001574", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+  { v: "v.001575", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "El Altar (MushBoom), el Volcán (Rock'n Troll) y el Huevo (HurryCrane) aparecen SIEMPRE en el centro exacto del mapa: el centro nunca lleva agua (ni con río) y tienda, oráculo, poblados, bumpers, arbustos y recursos respetan esa zona",
     "Corregido: las unidades y gnomos junto a la niebla (niebla de calidad baja) volvían a moverse sin deslizarse ni dar saltitos de loseta en loseta; el fundido al 66 % pisaba su animación de movimiento",
     "Tutoriales más ágiles y directos: el avance tras cada misión pasa de ~8 s a ~2 s, Nizak escribe más rápido, «mantener pulsada la cara» dura la mitad y todos los textos son más cortos, con la acción primero y el humor intacto (español e inglés)",
     "Resolución adaptativa: corregido el parpadeo real de los bumpers (desaparecían unos fotogramas al cambiar de calidad con zoom rápido): el fundido espera a que la textura nueva esté lista para pintar",

@@ -526,7 +526,11 @@ function generateMap(size, options) {
     { row: size - 1 - CORNER_INSET, col: CORNER_INSET },
     { row: size - 1 - CORNER_INSET, col: size - 1 - CORNER_INSET },
   ];
+  // El centro (donde va el Altar, el Volcán o el Huevo según el nivel) nunca lleva agua: así el elemento
+  // del nivel aparece SIEMPRE en el centro exacto, incluso con río (queda un paso de tierra por el centro).
+  const centerRadius = 2;
   const inSafeZone = (row, col) =>
+    Math.max(Math.abs(row - mid), Math.abs(col - mid)) <= centerRadius ||
     corners.some((c) => Math.max(Math.abs(row - c.row), Math.abs(col - c.col)) <= SAFE_RADIUS);
   const edgeDist = (row, col) => Math.min(row, col, size - 1 - row, size - 1 - col);
 
