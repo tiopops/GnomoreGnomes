@@ -391,10 +391,24 @@ const SpriteQuality = {
           return drop();
         }
       } catch (e) {}
-      this._nset(imgEl, url); // la nueva ya está decodificada: debajo del fantasma
-      const a = ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: this.FADE_MS, easing: "ease-out" });
-      a.onfinish = drop;
-      a.oncancel = drop;
+      this._nset(imgEl, url); // debajo del fantasma
+      // El fantasma se queda OPACO hasta que el sprite real tenga SU textura decodificada y lista
+      // para pintar (img.decode() de ESE elemento): la precarga aparte no basta, el navegador puede
+      // haber descartado el bitmap decodificado y el <img> real se pintaba en blanco unos
+      // fotogramas mientras el fantasma ya se desvanecía = el sprite "parpadeaba" (bumpers).
+      let started = false;
+      const start = () => {
+        if (started) return;
+        started = true;
+        if (!ghost.isConnected) return drop();
+        const a = ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: this.FADE_MS, easing: "ease-out" });
+        a.onfinish = drop;
+        a.oncancel = drop;
+      };
+      if (imgEl.decode) {
+        imgEl.decode().then(start, start);
+        setTimeout(start, 900); // tope: nunca dejar un fantasma colgado
+      } else start();
     };
     if (ghost.decode) ghost.decode().then(go, () => { this._nset(imgEl, url); drop(); });
     else go();

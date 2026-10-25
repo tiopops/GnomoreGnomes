@@ -215,7 +215,7 @@ const EN_DICT = {
 "Elige una casilla para colocarlo": "Pick a tile to place it",
 "¡Ya tienes un compañero leal! A ver si la lealtad le dura mucho cuando empiece a salpicar la sangre.": "You've got yourself a loyal companion! Let's see how long that loyalty lasts once the blood starts splattering.",
 "Antes de seguir, un truco útil: selecciona a TruenoEspora y mantén pulsada la cara de tu unidad, abajo a la izquierda, y verás todas sus estadísticas. Con las unidades enemigas funciona igual: selecciónalas y mira de qué pasta están hechas… antes de que te hagan pasta a ti.": "Before we go on, a handy trick: select TruenoEspora and hold down your unit's face, bottom left, and you'll see all its stats. It works the same with enemy units: select them and see what they're made of… before they make mincemeat of you.",
-"Mantén pulsada su cara (3 s)": "Hold its face (3 s)",
+"Mantén pulsada su cara": "Hold its face",
 "Ahora sabes cuánto aguanta, cuánto pega y cuánto le queda. Información de oro, y gratis.": "Now you know how much it can take, how hard it hits and how much it has left. Golden info, and free.",
 "Uno solo se aburre, y yo me aburro con él. Recluta otro igual: Obelisco, Reclutar, unidad, RECLUTAR y casilla. Necesitarás a alguien a quien lanzar cosas (sí, cosas: yo soy una de ellas).": "One alone gets bored, and I get bored with it. Recruit another one just like it: Obelisk, Recruit, unit, RECRUIT and tile. You'll need someone to throw things at (yes, things: I'm one of them).",
 "Recluta una segunda unidad": "Recruit a second unit",

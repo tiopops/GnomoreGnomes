@@ -12,10 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001571";
+const GG_VERSION = "v.001573";
 
 const GG_CHANGELOG = [
-  { v: "v.001571", date: "24/10/2026", title: "APK y rendimiento", items: [
+  { v: "v.001573", date: "24/10/2026", title: "APK y rendimiento", items: [
+    "Tutoriales más ágiles y directos: el avance tras cada misión pasa de ~8 s a ~2 s, Nizak escribe más rápido, «mantener pulsada la cara» dura la mitad y todos los textos son más cortos, con la acción primero y el humor intacto (español e inglés)",
+    "Resolución adaptativa: corregido el parpadeo real de los bumpers (desaparecían unos fotogramas al cambiar de calidad con zoom rápido): el fundido espera a que la textura nueva esté lista para pintar",
     "Resolución adaptativa: los bumpers (y cualquier sprite con brillo/saturación propios) ya no parpadean al cambiar de calidad con zoom rápido — el fundido conserva su filtro",
     "Resolución adaptativa: la subida a calidad normal espera a que termine el zoom, eliminando el tirón a mitad de un acercamiento rápido",
     "Setas del escenario: ahora usan la misma animación idle que el resto de elementos (respiran), cada una desfasada para que no latan a la vez",

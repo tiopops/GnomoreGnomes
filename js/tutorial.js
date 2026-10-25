@@ -75,7 +75,7 @@ const Tutorial = {
       _playInitialFogReveal(playerSpawnSpots);
       this._buildUI();
       // Pequeña pausa para que acabe el fundido y el revelado de niebla.
-      setTimeout(() => this._goto(0), 900);
+      setTimeout(() => this._goto(0), 350);
     } catch (err) {
       this.active = false;
       console.error("[Tutorial]", err);
@@ -350,7 +350,7 @@ const Tutorial = {
       },
       {
         say: `Antes de seguir, un truco útil: selecciona a TruenoEspora y mantén pulsada la cara de tu unidad, abajo a la izquierda, y verás todas sus estadísticas. Con las unidades enemigas funciona igual: selecciónalas y mira de qué pasta están hechas… antes de que te hagan pasta a ti.`,
-        mission: "Mantén pulsada su cara (3 s)",
+        mission: "Mantén pulsada su cara",
         hold: true,
         onStart: () => {
           T._ctx.infoSeen = false;
@@ -909,9 +909,10 @@ const Tutorial = {
     E.btn.classList.remove("tut-btn--final");
     E.btn.style.setProperty("--p", "0%");
     const len = s.ok ? s.ok.length : 0;
-    const typeMs = (len / 2) * 24;
-    // Tiempo de lectura generoso (antes los pasos "quick" saltaban sin dar tiempo a leer).
-    const total = typeMs + (s.quick ? 1800 + len * 60 : 2400 + len * 70);
+    const typeMs = (len / 3) * 20;
+    // Avance ágil: lo justo para leer la réplica (antes esperaba 8-10 s por misión). Pulsar la
+    // viñeta/botón, Enter o Espacio lo adelanta al instante, y pasar el ratón lo pausa.
+    const total = typeMs + Math.min(2600, Math.max(900, 650 + len * 16));
     let elapsed = 0;
     let last = performance.now();
     cancelAnimationFrame(this._okRaf);
@@ -975,12 +976,14 @@ const Tutorial = {
     let n = 0;
     el.textContent = "";
     this._fullText = text;
+    let ticks = 0;
     const tick = () => {
-      n += 2;
+      n += 3;
+      ticks++;
       el.textContent = text.slice(0, n);
       // Murmullo suave y agradable mientras habla (una nota cada pocas letras).
-      if (typeof SFX !== "undefined" && SFX.talk && (n / 2) % 2 === 1 && text[n - 1] !== " ") SFX.talk();
-      if (n < text.length) this._typeTimer = setTimeout(tick, 24);
+      if (typeof SFX !== "undefined" && SFX.talk && ticks % 2 === 1 && text[n - 1] !== " ") SFX.talk();
+      if (n < text.length) this._typeTimer = setTimeout(tick, 20);
       else if (this._els.portrait) this._els.portrait.classList.remove("tut-portrait--talk");
     };
     tick();
@@ -1065,7 +1068,7 @@ const Tutorial = {
     this._guard = null;
   },
 
-  // ---------- Contador: mantener pulsada la cara (3 s) ----------
+  // ---------- Contador: mantener pulsada la cara ----------
   _installHold() {
     if (this._holdInstalled) return;
     this._holdInstalled = true;
@@ -1095,10 +1098,10 @@ const Tutorial = {
     const loop = () => {
       if (!this._hold || !this.active) return;
       const el = performance.now() - this._hold.t0;
-      const left = Math.max(0, 3000 - el);
+      const left = Math.max(0, 1500 - el);
       this._els.holdNum.textContent = String(Math.ceil(left / 1000) || 0);
-      this._els.holdFill.style.width = `${Math.min(100, (el / 3000) * 100)}%`;
-      if (el >= 3000) {
+      this._els.holdFill.style.width = `${Math.min(100, (el / 1500) * 100)}%`;
+      if (el >= 1500) {
         this._hold.ok = true;
         this._els.holdNum.textContent = "✔";
         this._els.holdLabel.textContent = "¡Listo!";
