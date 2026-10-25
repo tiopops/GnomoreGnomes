@@ -12,12 +12,15 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001584";
+const GG_VERSION = "v.001588";
 
 const GG_CHANGELOG = [
-  { v: "v.001584", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+  { v: "v.001588", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "Nuevo cartel central en el turno del rival: «TURNO DEL RIVAL» (con varios rivales, «TURNO DEL RIVAL 1», «2»... cada uno de su color: rojo, naranja y morado); en multijugador muestra el nombre del jugador que está en su turno, también cuando empieza él",
+    "Tutorial «Primeros pasos»: el charco de agua del sacrificio ahora aparece a la altura de tus unidades, a su lado y bien a la vista, en vez de detrás de los iconos del Obelisco, para ver mejor la muerte del gnomo",
+    "Corregido: en el tutorial «Primeros pasos» se saltaba el diálogo de elegir a TruenoEspora al abrir Reclutar (venía preseleccionado y la misión se daba por hecha); ahora espera a que lo pulses",
     "Corregido: en el tutorial «Primeros pasos», si pulsabas fuera mientras esperabas a continuar, se cancelaba la colocación del recluta y no aparecía ninguna casilla — ahora el tutorial no la cancela y, si ocurriera, te guía de nuevo por Reclutar",
-    "Conquistar un tótem: el puntero pasa de la bandera roja a un mazo amarillo (mismo grosor de trazo que el resto de punteros), también con el cursor del mando",
+    "Conquistar un tótem: el puntero pasa de la bandera roja a un mazo rojo (mismo grosor de trazo que el resto de punteros), también con el cursor del mando",
     "Tutorial «Primeros pasos»: diálogos actualizados con corrección ortográfica y de inglés, y los textos de las variantes con mando de los tres tutoriales vuelven a coincidir con los diálogos",
     "Tutoriales: las réplicas de Nizak tras completar una misión ya NO se quitan solas — esperan a que pulses (clic, Enter, Espacio, flecha derecha o A del mando); las misiones que piden una acción siguen igual",
     "Tutoriales: se quita el botón «Releer»; el editor de diálogos de Nizak (debug) trae solo los textos nuevos del juego sin pisar tus ediciones",

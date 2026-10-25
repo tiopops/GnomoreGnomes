@@ -328,8 +328,26 @@ const Tutorial = {
         say: `Elige a TruenoEspora, el del sombrero de seta: no está nada mal, es bastante versátil y esconde una seta-trampa bajo la manga. Cada uno cuesta Puntos de Gloria, ese número amarillo y reluciente de arriba, lo único bonito de todo este asunto.`,
         mission: "Elige a TruenoEspora",
         quick: true,
+        // El popup trae a TruenoEspora preseleccionado: el paso solo se da por hecho cuando el jugador
+        // pulsa de verdad su hueco (si no, se saltaba este diálogo nada más abrir Reclutar).
+        onStart: () => {
+          T._ctx.truenoPicked = false;
+          if (T._ctx.truenoHandler) document.removeEventListener("click", T._ctx.truenoHandler, true);
+          T._ctx.truenoHandler = (e) => {
+            const slot = e.target && e.target.closest && e.target.closest(".backpack-slot");
+            if (slot && Obelisks._overlayEl && Obelisks._overlayEl.contains(slot)) T._ctx.truenoPicked = true;
+          };
+          document.addEventListener("click", T._ctx.truenoHandler, true);
+        },
         target: () => T._trueno(),
-        done: () => !!Obelisks._selectedTypeId || !!Obelisks._pendingRecruit || T._my().length > 0,
+        done: () => {
+          const ok = !!T._ctx.truenoPicked || !!Obelisks._pendingRecruit || T._my().length > 0;
+          if (ok && T._ctx.truenoHandler) {
+            document.removeEventListener("click", T._ctx.truenoHandler, true);
+            T._ctx.truenoHandler = null;
+          }
+          return ok;
+        },
         ok: "Mira qué sonrisa, ya sabe a lo que ha venido. Una lástima que los míos no estén tan contentos.",
       },
       {
@@ -698,7 +716,7 @@ const Tutorial = {
           }
           T._ctx.sacId = h && h.id;
           T._ctx.sacSeen = false;
-          const spot = h && T._findSpot(h, { minD: 2, maxD: 3, side: "above", minOb: 2 });
+          const spot = h && T._findSpot(h, { minD: 2, maxD: 3, side: "level", minOb: 3 });
           if (spot) T._makeWater(spot.row, spot.col);
           if (typeof Fog !== "undefined") Fog.applyVisibility();
         },
@@ -787,7 +805,15 @@ const Tutorial = {
           const p = getTileCenter(r, c, Units.boardSize);
           // "center": hacia el centro del mapa (el Obelisco puede estar en cualquier lado).
           const mid = getTileCenter(Math.floor(Units.boardSize / 2), Math.floor(Units.boardSize / 2), Units.boardSize);
-          const score = (side === "above" ? -p.y : side === "below" ? p.y : side === "right" ? p.x : -Math.hypot(p.x - mid.x, p.y - mid.y)) - d * 4;
+          // "level": a la misma altura en pantalla que la unidad y ~2 casillas a un lado (hacia el
+          // centro del mapa): a la vista, lejos de los iconos del Obelisco y del cuadro de diálogo.
+          let levelScore = 0;
+          if (side === "level") {
+            const o = getTileCenter(origin.row, origin.col, Units.boardSize);
+            const dirX = mid.x >= o.x ? 1 : -1;
+            levelScore = -Math.abs(p.y - o.y) * 1.5 - Math.abs(dirX * (p.x - o.x) - 230);
+          }
+          const score = side === "level" ? levelScore - d * 4 : (side === "above" ? -p.y : side === "below" ? p.y : side === "right" ? p.x : -Math.hypot(p.x - mid.x, p.y - mid.y)) - d * 4;
           if (!best || score > best.score) best = { row: r, col: c, score };
         }
       }

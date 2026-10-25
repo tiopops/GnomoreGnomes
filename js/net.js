@@ -390,6 +390,7 @@ const Net = {
     Turns._updateButtonState();
     if (this.onStatus) this.onStatus("go");
     if (this.seat === 0) setTimeout(() => this.showMyTurnBanner(), 300);
+    else if (typeof Banners !== "undefined") setTimeout(() => Banners.text(I18N.t("mp_turn_wait", { name: this.names.other }), 0, "red"), 300); // empieza el rival: su cartel con su nombre
   },
 
   // Botón "Pasar turno" local.

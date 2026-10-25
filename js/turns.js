@@ -428,6 +428,18 @@ const Turns = {
     return Banners.text(I18N.t("your_turn"), 0);
   },
 
+  // Cartel central "TURNO DEL RIVAL" (con varios rivales, "TURNO DEL RIVAL 2"...), del color de su bando.
+  // Devuelve la promesa de arranque del cartel (o null si no procede).
+  showRivalBanner(team) {
+    if (typeof Tutorial !== "undefined" && Tutorial.active) return null;
+    if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return null;
+    const multi = Teams.rivalCount > 1;
+    const n = Teams.rivalIndex(team);
+    const txt = multi ? I18N.t("rival_turn_n", { n }) : I18N.t("rival_turn");
+    const tone = n === 2 ? "orange" : n >= 3 ? "purple" : "red";
+    return Banners.text(txt, 1, tone, 1700).started;
+  },
+
   async endTurn() {
     // Multijugador online (js/net.js): el motor de turnos por asientos lleva el control.
     if (typeof Net !== "undefined" && Net.active) return Net.localEndTurn();
@@ -473,6 +485,12 @@ const Turns = {
       if (typeof Obelisks !== "undefined" && Obelisks.gameOver) {
         this._aiRunning = false;
         return;
+      }
+      const rivalBanner = this.showRivalBanner(aiTeam);
+      if (rivalBanner) {
+        await rivalBanner;
+        await new Promise((r) => setTimeout(r, 450));
+        if (gone()) return;
       }
       await this._runEnemyTurn(aiTeam);
       if (gone()) return;
