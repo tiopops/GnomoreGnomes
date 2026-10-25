@@ -48,7 +48,7 @@ const PRELOAD_ASSETS = [
  "assets/iconos/poblado_surcanubes_midres.png",
  "assets/edificios/obelisco_enmurallado.png",
  "assets/edificios/obelisco_enmurallado_midres.png",
- "assets/iconos/equipo_enmurallado.png",
+ "assets/iconos/equipo_enmurallado.png?v=logo1",
  "assets/iconos/gloria_enmurallado.png",
  "assets/iconos/poblado_enmurallado.png",
  "assets/iconos/poblado_enmurallado_midres.png",

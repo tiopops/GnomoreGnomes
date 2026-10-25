@@ -12,11 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001592";
+const GG_VERSION = "v.001593";
 
 const GG_CHANGELOG = [
-  { v: "v.001592", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
-    "Nuevo equipo: Equipo Enmurallado (color naranja) con MagoNífico, TrazaFlechas y PortaMuros — Flecha Rastreadora (marca al rival y ves lo que ve), Cambiazo (intercambia sitio con un rival y al final del turno vuelven) y Muro Aplastante (1 de daño y deja inactivo al rival una ronda), con efectos y sonidos propios; también los usa la IA y se sincronizan en multijugador",
+  { v: "v.001593", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "Equipo Enmurallado: TrazaFlechas y PortaMuros mucho más grandes en el tablero; Flecha Rastreadora y Cambiazo dejan elegir objetivo pulsando la casilla de cada rival válido; si el Cambiazo deja a un rival en el agua sin Anfibio, se ahoga",
+    "Nuevo equipo: Equipo Enmurallado (su logo es el trofeo de la muralla en la selección de equipo) (color naranja) con MagoNífico, TrazaFlechas y PortaMuros — Flecha Rastreadora (marca al rival y ves lo que ve), Cambiazo (intercambia sitio con un rival y al final del turno vuelven) y Muro Aplastante (1 de daño y deja inactivo al rival una ronda), con efectos y sonidos propios; también los usa la IA y se sincronizan en multijugador",
     "Tutorial Poblado HurryCrane: diálogos actualizados con tus textos nuevos y el inglés revisado",
     "Tutorial Colinas Rock'n Troll: diálogos actualizados con tus textos nuevos; el inglés de MushBoom y Rock'n Troll revisado para que coincida con el español (y las variantes con mando ajustadas)",
     "Tutoriales: la selección de tutoriales marca con un check verde en la esquina los que ya has completado (saltarlos no cuenta); se pueden repetir siempre que quieras",

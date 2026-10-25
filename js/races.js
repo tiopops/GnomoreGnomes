@@ -63,7 +63,7 @@ const RACES = [
     virtuesKey: "race_equipo_enmurallado_virtues",
     weaknessesKey: "race_equipo_enmurallado_weaknesses",
     icon: "ph-castle-turret",
-    iconImg: "assets/iconos/equipo_enmurallado.png",
+    iconImg: "assets/iconos/equipo_enmurallado.png?v=logo1",
     color: "#ff8a1f",
     available: true,
     gloryIcon: "assets/iconos/gloria_enmurallado.png",

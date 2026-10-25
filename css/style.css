@@ -12244,3 +12244,6 @@ body.ability-targeting--swap * {
   animation: ew-crush-bob 1.2s ease-in-out infinite alternate;
 }
 @keyframes ew-crush-bob { from { translate: 0 0; } to { translate: 0 -5px; } }
+
+/* Equipo Enmurallado: casillas de objetivo (flecha / cambiazo) en naranja. */
+.ew-target-marker { border-color: #ff8a1f !important; background: rgba(255, 138, 31, 0.28) !important; box-shadow: 0 0 0 3px #1b1208 !important; }

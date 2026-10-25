@@ -152,6 +152,30 @@ const Enmurallado = {
     Units.container.animate(frames, { duration: 360 });
   },
 
+  // Elegir objetivo: un marcador clicable en la casilla de cada rival válido (no depende de
+  // acertar con el sprite, que puede quedar tapado por árboles, rocas u otras unidades).
+  // También vale pulsar el propio sprite. Un clic en cualquier otro sitio cancela sin gastar.
+  pickTarget(unit, valid, hint, onPick) {
+    const targets = Units.list.filter(valid);
+    Units.clearRangeOverlays();
+    if (typeof UiHint !== "undefined") UiHint.show(hint);
+    targets.forEach((t, i) =>
+      Units.addMarker({
+        className: "range-marker ability-throw-marker ew-target-marker",
+        row: t.row,
+        col: t.col,
+        zOffset: 2,
+        alwaysOnTop: true,
+        delayMs: Units.staggerDelay(i, targets.length),
+        visibleClass: "range-marker--visible",
+        onClick: () => {
+          if (typeof UiHint !== "undefined") UiHint.hide();
+          onPick(t);
+        },
+      })
+    );
+  },
+
   // =====================================================================
   // TrazaFlechas · Flecha Rastreadora
   // =====================================================================
@@ -167,12 +191,7 @@ const Enmurallado = {
       return; // sin rival a la vista y al alcance, no se gasta
     }
     if (targets.length === 1) return this.resolveTrackerArrow(unit, targets[0]);
-    Abilities._startUnitPicking(unit, {
-      cursorClass: "ability-targeting--aim",
-      filter: valid,
-      hint: "Elige a quién disparar",
-      onPick: (t) => this.resolveTrackerArrow(unit, t),
-    });
+    this.pickTarget(unit, valid, "Elige a quién disparar", (t) => this.resolveTrackerArrow(unit, t));
   },
 
   async resolveTrackerArrow(unit, target) {
@@ -272,12 +291,7 @@ const Enmurallado = {
       if (typeof SFX !== "undefined") SFX.back();
       return;
     }
-    Abilities._startUnitPicking(unit, {
-      cursorClass: "ability-targeting--swap",
-      filter: valid,
-      hint: "Elige con quién intercambiar sitio",
-      onPick: (t) => this.resolveSwap(unit, t),
-    });
+    this.pickTarget(unit, valid, "Elige con quién intercambiar sitio", (t) => this.resolveSwap(unit, t));
   },
 
   // Círculo mágico plano bajo una casilla + runas que orbitan.
@@ -399,6 +413,14 @@ const Enmurallado = {
     await this.sleep(300);
   },
 
+  // Tras un cambio de sitio: quien acaba en agua sin Anfibio se ahoga (ver Combat._drown).
+  async drownIfWater(u, other) {
+    if (!Units.list.includes(u) || typeof TerrainMap === "undefined" || typeof Combat === "undefined") return;
+    if (TerrainMap.isWalkable(u.row, u.col)) return;
+    if (typeof Skills !== "undefined" && Skills.has(u.team, "anfibio")) return;
+    await Combat._drown(other, u);
+  },
+
   async resolveSwap(unit, target) {
     Units.clearRangeOverlays();
     if (typeof UiHint !== "undefined") UiHint.hide();
@@ -413,8 +435,10 @@ const Enmurallado = {
     if (unit.spriteEl)
       unit.spriteEl.animate([{ transform: "scale(1,1)" }, { transform: "scale(.9,1.16)", offset: 0.5 }, { transform: "scale(1,1)" }], { duration: 480, easing: "ease-out" });
     await this.doSwapMove(unit, target, bond.bHome, bond.aHome);
-    this.settle(unit);
-    this.settle(target);
+    await this.drownIfWater(unit, target);
+    await this.drownIfWater(target, unit);
+    if (Units.list.includes(unit)) this.settle(unit);
+    if (Units.list.includes(target)) this.settle(target);
   },
 
   // Fin del turno de quien lanzó el cambiazo: cada uno vuelve a su casilla.
@@ -447,8 +471,10 @@ const Enmurallado = {
     if (aTo.row === a.row && aTo.col === a.col && bTo.row === b.row && bTo.col === b.col) return this.clearBond(bond);
     this.clearBond(bond);
     await this.doSwapMove(a, b, aTo, bTo, { quick: true });
-    this.settle(a);
-    this.settle(b);
+    await this.drownIfWater(a, b);
+    await this.drownIfWater(b, a);
+    if (Units.list.includes(a)) this.settle(a);
+    if (Units.list.includes(b)) this.settle(b);
   },
 
   // =====================================================================
