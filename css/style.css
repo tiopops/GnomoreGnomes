@@ -12004,11 +12004,11 @@ body.tut-hush .tut-panel * { pointer-events: none; }
   .go-row .go-v { grid-row: 1 / 3; }
 }
 
-/* Estampar un gnomo contra un tótem: bandera roja (Phosphor flag-banner). */
+/* Estampar un gnomo contra un tótem: mazo amarillo (Phosphor gavel, trazo regular con contorno negro). */
 .village-attack-marker,
 .village-attack-marker *,
 .village--targeted,
-.village--targeted * { cursor: url("../assets/iconos/cursor_bandera.png?v=1") 24 24, pointer !important; }
+.village--targeted * { cursor: url("../assets/iconos/cursor_mazo.png?v=1") 24 24, pointer !important; }
 
 /* Sacrificio del volcán (parodia de Terminator): charquito y máscara de la mano. */
 .sac-lavalip { position: absolute; border-radius: 50%; background: #ff9a22; border: 2px solid #c9460f; box-sizing: border-box; pointer-events: none; }

@@ -12,10 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001582";
+const GG_VERSION = "v.001583";
 
 const GG_CHANGELOG = [
-  { v: "v.001582", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+  { v: "v.001583", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "Conquistar un tótem: el puntero pasa de la bandera roja a un mazo amarillo (mismo grosor de trazo que el resto de punteros), también con el cursor del mando",
+    "Tutorial «Primeros pasos»: diálogos actualizados con corrección ortográfica y de inglés, y los textos de las variantes con mando de los tres tutoriales vuelven a coincidir con los diálogos",
     "Tutoriales: las réplicas de Nizak tras completar una misión ya NO se quitan solas — esperan a que pulses (clic, Enter, Espacio, flecha derecha o A del mando); las misiones que piden una acción siguen igual",
     "Tutoriales: se quita el botón «Releer»; el editor de diálogos de Nizak (debug) trae solo los textos nuevos del juego sin pisar tus ediciones",
     "Opciones gráficas: los interruptores (Vegetación, Sombras, Niebla, Resolución adaptativa) se refrescan al abrir el panel con su estado real — la Vegetación aparecía marcada estando desactivada",

@@ -10,120 +10,120 @@
 const TUTORIAL_TEXTS = {
  "basic": [
   {
-   "say": "Soy Nizak, tu pelota oficial. Te enseño lo básico en un momento… para que me aplastes con elegancia.",
+   "say": "Soy Nizak, tu pelota oficial. Te enseño lo básico en un momento… ya que vas a aplastarme, al menos hazlo con elegancia.",
    "button": "Vale, viejales",
    "mood": "grunon",
    "en": {
-    "say": "I'm Nizak, your official ball. I'll teach you the basics in a minute… so you can squash me with style.",
-    "button": "Fine, oldie"
+    "say": "I'm Nizak, your official ball. I'll teach you the basics in a minute… since you're going to squash me anyway, at least do it with style.",
+    "button": "Fine, old-timer"
    }
   },
   {
-   "say": "Esa roca mugrienta es tu Obelisco: hogar, fábrica de reclutas y retrete. Púlsalo. No muerde (nosotros sí).",
+   "say": "Esa roca mugrienta de tres metros es tu Obelisco: hogar, fábrica de reclutas y retrete. Púlsalo sin miedo. No muerde (nosotros sí).",
    "mission": "Pulsa tu Obelisco",
-   "ok": "Has tocado una piedra. Han dado diplomas por menos.",
+   "ok": "Has tocado una piedra. Han dado diplomas por menos…",
    "mood": "normal",
    "en": {
-    "say": "That filthy rock is your Obelisk: home, recruit factory and toilet. Tap it. It doesn't bite (we do).",
+    "say": "That filthy ten-foot rock is your Obelisk: home, recruit factory and toilet. Tap it without fear. It doesn't bite (we do).",
     "mission": "Tap your Obelisk",
-    "ok": "You touched a rock. They've handed out diplomas for less."
+    "ok": "You touched a rock. People have been handed diplomas for less…"
    }
   },
   {
-   "say": "Ahora el icono de Reclutar, el primero de la izquierda.",
+   "say": "Ahora elige el icono de Reclutar, el primero de la izquierda.",
    "mission": "Pulsa el icono de Reclutar",
-   "ok": "Ya estás en la sala de entrenamiento. El presupuesto no dio para más.",
+   "ok": "Ya estás en la sala de entrenamiento. Íbamos a traer a los mejores guerreros, pero el presupuesto no dio para más.",
    "mood": "normal",
    "en": {
-    "say": "Now the Recruit icon, the first one on the left.",
+    "say": "Now pick the Recruit icon, the first one on the left.",
     "mission": "Tap the Recruit icon",
-    "ok": "Welcome to the training room. The budget didn't stretch further."
+    "ok": "Welcome to the training room. We were going to bring in the best warriors, but the budget didn't stretch any further."
    }
   },
   {
-   "say": "Elige a TruenoEspora, el de la seta. Se paga con Gloria: ese número amarillo de arriba.",
+   "say": "Elige a TruenoEspora, el de la seta en la cabeza. Sus servicios se pagan con puntos de Gloria: ese numerito amarillo de arriba.",
    "mission": "Elige a TruenoEspora",
-   "ok": "Qué sonrisa. Ya sabe a lo que ha venido.",
+   "ok": "Qué sonrisa. Eso es que ya sabe a lo que ha venido.",
    "mood": "normal",
    "en": {
-    "say": "Pick TruenoEspora, the mushroom guy. He's paid for with Glory: that yellow number up top.",
+    "say": "Pick TruenoEspora, the one with the mushroom on his head. His services are paid for with Glory points: that little yellow number at the top.",
     "mission": "Pick TruenoEspora",
-    "ok": "Look at that smile. He knows what he signed up for."
+    "ok": "What a smile. He clearly knows what he's here for."
    }
   },
   {
-   "say": "Pulsa RECLUTAR y otro pobre diablo firmará sin leer la letra pequeña.",
+   "say": "Pulsa RECLUTAR, necesitamos soldados para lo que vamos a hacer.",
    "mission": "Pulsa RECLUTAR",
-   "ok": "Has encontrado el botón. No despediremos al diseñador. De momento.",
+   "ok": "Otro pobre diablo que firma sin leer la letra pequeña…",
    "mood": "grunon",
    "en": {
-    "say": "Hit RECRUIT and another poor soul signs without reading the fine print.",
+    "say": "Tap RECRUIT: we need soldiers for what we're about to do.",
     "mission": "Tap RECRUIT",
-    "ok": "You found the button. We won't fire the designer. Yet."
+    "ok": "Another poor devil signing without reading the fine print…"
    }
   },
   {
-   "say": "Las casillas marcadas son los sitios libres junto al Obelisco. Elige una.",
+   "say": "Las casillas marcadas son los sitios libres junto al Obelisco donde puedes desplegar las unidades. Elige una.",
    "mission": "Elige una casilla para colocarlo",
-   "ok": "¡Compañero leal! Veremos cuánto le dura cuando salpique la sangre.",
+   "ok": "¡Un compañero leal! Veremos cuánto le dura la lealtad cuando empiece a salpicar la sangre.",
    "mood": "normal",
    "en": {
-    "say": "Highlighted tiles are free spots next to the Obelisk. Pick one.",
+    "say": "The highlighted tiles are the free spots next to the Obelisk where you can deploy your units. Pick one.",
     "mission": "Pick a tile to place it",
-    "ok": "A loyal companion! Let's see how long that lasts once blood starts splashing."
+    "ok": "A loyal companion! Let's see how long that loyalty lasts once the blood starts splashing."
    }
   },
   {
    "say": "Mantén pulsada su cara (abajo a la izquierda) para ver sus estadísticas. Con los enemigos funciona igual.",
    "mission": "Mantén pulsada su cara",
-   "ok": "Cuánto aguanta, cuánto pega… información de oro, y gratis.",
+   "ok": "Su vida, su fuerza, su habilidad… información de oro, y gratis.",
    "mood": "normal",
    "en": {
-    "say": "Hold its face (bottom left) to see its stats. Works on enemies too.",
+    "say": "Hold its face (bottom left) to see its stats. It works the same on enemies.",
     "mission": "Hold its face",
-    "ok": "What it can take, what it can dish out… free gold."
+    "ok": "Its health, its strength, its ability… pure gold information, and free."
    }
   },
   {
-   "say": "Recluta otra unidad igual: alguien tendrá que lanzarme cosas.",
+   "say": "Recluta otra unidad igual: necesitaremos a alguien a quien lanzarle las cosas. Sí, hay gente que nos llama «cosas».",
    "mission": "Recluta una segunda unidad",
-   "ok": "Dos pardillos mejor que uno. Los remordimientos se reparten.",
+   "ok": "Dos pardillos son mejor que uno. Así los remordimientos se reparten.",
    "mood": "grunon",
    "en": {
-    "say": "Recruit another one: somebody has to throw things at me.",
+    "say": "Recruit another one just like it: we'll need someone to throw things at. Yes, some people call us “things”.",
     "mission": "Recruit a second unit",
-    "ok": "Two fools are better than one. Guilt gets shared."
+    "ok": "Two fools are better than one. That way the guilt gets shared."
    }
   },
   {
-   "say": "Para dar órdenes hay que seleccionar: pulsa a uno de tus aliados. Con cariño.",
+   "say": "Para dar órdenes a una unidad hay que seleccionarla: pulsa a uno de tus aliados. Con cariño, no le saques un ojo.",
    "mission": "Selecciona una unidad",
    "ok": "¡Eso es! Qué sensación de poder. No te acostumbres.",
    "mood": "normal",
    "en": {
-    "say": "To give orders, select first: tap one of your allies. Gently.",
+    "say": "To give orders to a unit you have to select it first: tap one of your allies. Gently, don't poke an eye out.",
     "mission": "Select a unit",
-    "ok": "That's it! Feels powerful, huh? Don't get used to it."
+    "ok": "That's it! What a feeling of power. Don't get used to it."
    }
   },
   {
-   "say": "Pulsa el círculo que parpadea para moverla. Cada paso gasta una acción.",
-   "mission": "Mueve la unidad hasta la zona marcada.",
-   "ok": "¡Camina! Un milagro de la ingeniería orgánica. Casi sin tropezar.",
+   "say": "Pulsa el círculo que parpadea para que se mueva hasta allí. Cada movimiento gasta una acción.",
+   "mission": "Mueve la unidad hasta la zona marcada",
+   "ok": "¡Camina! Un milagro de la ingeniería orgánica. ¡Y sin tropezarse! Bueno, casi.",
    "mood": "grunon",
    "en": {
-    "say": "Tap the blinking circle to move it. Each step costs an action.",
-    "mission": "Move the unit to the marked spot.",
-    "ok": "It walks! A miracle of organic engineering. Barely tripped."
+    "say": "Tap the blinking circle to make it move there. Each move costs an action.",
+    "mission": "Move the unit to the marked area",
+    "ok": "It walks! A miracle of organic engineering. And without tripping! Well, almost."
    }
   },
   {
-   "say": "Ese arbusto es un escondite: dentro, nadie te ve. Entra en él.",
+   "say": "Ese arbusto es un escondite perfecto para hacer emboscadas o acercarte a los gnomos sin que te vean. Entra en él.",
    "mission": "Escóndete en el arbusto",
    "ok": "Invisible. Como mi cuenta bancaria.",
    "mood": "normal",
    "en": {
-    "say": "That bush is a hideout: inside, nobody can see you. Step into it.",
+    "say": "That bush is a perfect hideout for ambushes or for sneaking up on gnomes unseen. Step into it.",
     "mission": "Hide in the bush",
     "ok": "Invisible. Like my bank account."
    }
@@ -134,127 +134,127 @@ const TUTORIAL_TEXTS = {
    "ok": "Tinkle, perdóname. Eras tú o yo.",
    "mood": "grunon",
    "en": {
-    "say": "That trembling gnome is Tinkle, my cousin: \"the ball\". Tap the hand and your unit will go get him.",
+    "say": "That trembling gnome is Tinkle, my cousin: the “ball”. Tap the little hand and your unit will go get him.",
     "mission": "Grab Tinkle",
     "ok": "Tinkle, forgive me. It was you or me."
    }
   },
   {
-   "say": "¡Golpéalo! Cada golpe suma puntos, y esos puntos serán el daño de tu «estampada».",
+   "say": "¡Golpéalo! Cada golpe suma puntos al gnomo, y esos puntos aumentarán el daño de tu «estampada». Puedes consultar los puntos acumulados de un gnomo pulsando sobre él.",
    "mission": "Golpea al gnomo (icono del puño)",
-   "ok": "¡Puntos! Tinkle encaja bien. El tío Klink encajaba mejor… hasta que se esparció por el césped.",
+   "ok": "¡Puntos! Tinkle encaja bien los golpes. El tío Klink encajaba mejor los nudillos… hasta que terminó esparcido por el césped.",
    "mood": "grunon",
    "en": {
-    "say": "Hit him! Each hit adds points, and those points become the damage of your \"slam\".",
+    "say": "Hit him! Each hit adds points to the gnome, and those points will increase the damage of your “slam”. You can check a gnome's accumulated points by tapping on it.",
     "mission": "Hit the gnome (fist icon)",
-    "ok": "Points! Tinkle takes hits well. Uncle Klink took them better… until he got scattered across the grass."
+    "ok": "Points! Tinkle takes a beating well. Uncle Klink took knuckles even better… until he ended up scattered across the grass."
    }
   },
   {
-   "say": "Pásale el balón a tu aliado: pulsa lanzar y elígelo. También da puntos.",
-   "mission": "Lánzale el gnomo a otra unidad.",
+   "say": "Pásale el balón a tu aliado: pulsa lanzar y elígelo. También aumenta los puntos del gnomo.",
+   "mission": "Lánzale el gnomo a otra unidad",
    "ok": "¡Buen pase! Tinkle, ¿todo bien? Te veo mareado.",
    "mood": "normal",
    "en": {
-    "say": "Pass the ball to your ally: tap throw and pick them. It scores too.",
-    "mission": "Throw the gnome to another unit.",
-    "ok": "Nice pass! Tinkle, all good? You look dizzy."
+    "say": "Pass the ball to your ally: tap throw and pick them. That adds to the gnome's points too.",
+    "mission": "Throw the gnome to another unit",
+    "ok": "Nice pass! Tinkle, are you okay? You look dizzy."
    }
   },
   {
-   "say": "Quien carga al gnomo no ataca: usa a la unidad libre para golpear al enemigo.",
+   "say": "Quien carga con el gnomo no puede atacar: usa a la unidad con las manos libres para atacar a ese enemigo.",
    "mission": "Ataca al enemigo",
-   "ok": "Ahora le duele algo, y mañana también.",
+   "ok": "Ahora le duele algo, y mañana seguro que también.",
    "mood": "normal",
    "en": {
-    "say": "Whoever carries the gnome can't attack: use the free unit to hit the enemy.",
+    "say": "Whoever carries the gnome can't attack: use the unit with free hands to attack that enemy.",
     "mission": "Attack the enemy",
-    "ok": "Now something hurts, and tomorrow too."
+    "ok": "Now something hurts, and tomorrow it surely will too."
    }
   },
   {
-   "say": "Pinos, rocas y mena también se golpean y sueltan recursos. Tala el pino.",
+   "say": "Pinos, rocas y menas también pueden recogerse y sueltan recursos. Tala ese pino.",
    "mission": "Tala el pino (2 golpes)",
-   "ok": "¡Madera! Úsala en la armería de tu obelisco para mejorar el equipo.",
+   "ok": "¡Madera! Úsala en la Armería de tu Obelisco para mejorar el equipo de tus unidades.",
    "mood": "normal",
    "en": {
-    "say": "Pines, rocks and ore can be hit too and drop resources. Chop the pine.",
+    "say": "Pines, rocks and ore can be gathered too, and they drop resources. Chop that pine.",
     "mission": "Chop down the pine (2 hits)",
-    "ok": "Wood! Spend it at your obelisk's armory to upgrade gear."
+    "ok": "Wood! Spend it at your Obelisk's Armory to upgrade your units' gear."
    }
   },
   {
-   "say": "Abre el cofre: guarda reliquias con ventajas que se desgastan si mueren tus unidades.",
+   "say": "Ahora abre el cofre: guarda reliquias con ventajas que se desgastan si mueren tus unidades.",
    "mission": "Abre el cofre de reliquias",
-   "ok": "Botas TrotaMontes: más Movimiento. Cuida su durabilidad. Y no, no guardo el ticket.",
+   "ok": "Botas TrotaMontes: más Movimiento. Cuida su durabilidad, no conservo el ticket de compra.",
    "mood": "normal",
    "en": {
-    "say": "Open the chest: it holds relics with perks that wear down when your units die.",
+    "say": "Now open the chest: it holds relics with perks that wear down when your units die.",
     "mission": "Open the relic chest",
-    "ok": "TrotaMontes Boots: more Movement. Mind the durability. And no, I kept no receipt."
+    "ok": "TrotaMontes Boots: more Movement. Mind their durability, I didn't keep the receipt."
    }
   },
   {
-   "say": "Ahora conquista el tótem: pulsa la diana para estamparle al gnomo cargado de puntos. Sin vida, es tuyo y da Gloria cada turno.",
+   "say": "Ahora vamos a conquistar un tótem: pulsa sobre él para reventar al gnomo cargado de puntos. Los tótems dan puntos de Gloria cada turno.",
    "mission": "Haz una “estampada” con el gnomo contra el tótem",
-   "ok": "¡Tótem conquistado! ¿Alguien llama a emergencias por Tinkle? Empezar el turno junto a un tótem tuyo recarga tu habilidad.",
+   "ok": "¡Tótem conquistado! ¿Alguien puede llamar a emergencias? Tinkle no tiene buena cara… espera, ¡Tinkle ya no tiene cara! Si empiezas el turno junto a un tótem conquistado, recargarás las habilidades de tus unidades.",
    "mood": "grunon",
    "en": {
-    "say": "Now conquer the totem: tap the target to slam the point-loaded gnome into it. At zero health it's yours and gives Glory every turn.",
+    "say": "Now let's conquer a totem: tap it to slam the gnome loaded with points into it. Totems give Glory points every turn.",
     "mission": "Slam the gnome into the totem",
-    "ok": "Totem conquered! Anyone calling an ambulance for Tinkle? Starting your turn next to your totem recharges your ability."
+    "ok": "Totem conquered! Can somebody call an ambulance? Tinkle doesn't look well… wait, Tinkle doesn't have a face anymore! If you start your turn next to a conquered totem, your units' abilities will recharge."
    }
   },
   {
-   "say": "Último truco: el SACRIFICIO. Lanza al gnomo al agua (verás una calavera) y ganas Gloria al instante.",
+   "say": "Último truco: el SACRIFICIO. Lanza al gnomo al agua (verás una calavera en las zonas de sacrificio) y ganarás Gloria al instante.",
    "mission": "Sacrifica al gnomo en el agua",
-   "ok": "Gloria al instante. Tinkle dio su vida por la causa, aunque nadie le preguntó.",
+   "ok": "No es lo más bonito que puedes hacer con un gnomo, pero recibes Gloria al instante. Tinkle dio su vida por la causa, aunque nadie le preguntó si quería unirse a ella.",
    "mood": "aplaude",
    "en": {
-    "say": "Last trick: SACRIFICE. Throw the gnome into the water (you'll see a skull) and gain Glory instantly.",
+    "say": "Last trick: SACRIFICE. Throw the gnome into the water (you'll see a skull on the sacrifice zones) and you'll gain Glory instantly.",
     "mission": "Sacrifice the gnome in the water",
-    "ok": "Instant Glory. Tinkle gave his life for the cause, though nobody asked him."
+    "ok": "Not the prettiest thing you can do with a gnome, but you get Glory instantly. Tinkle gave his life for the cause, though nobody asked him if he wanted to join it."
    }
   },
   {
-   "say": "Tu Obelisco guarda más trucos: abre Habilidades, mejoras permanentes que se compran con Gloria. Mírala y ciérrala.",
+   "say": "Tu Obelisco guarda más trucos: las habilidades y mejoras para la partida se compran con Gloria. Abre Habilidades, échale un vistazo y ciérrala.",
    "mission": "Abre Habilidades y ciérrala",
-   "ok": "Demasiado árbol para tan poco bosque.",
+   "ok": "Demasiado árbol de habilidades para tan poco bosque… no me hagas caso, es un chiste malo de gnomos.",
    "mood": "normal",
    "en": {
-    "say": "Your Obelisk has more tricks: open Skills, permanent upgrades bought with Glory. Take a look and close it.",
+    "say": "Your Obelisk holds more tricks: skills and upgrades for the match, bought with Glory. Open Skills, take a look and close it.",
     "mission": "Open Skills and close it",
-    "ok": "Too much tree for so little forest."
+    "ok": "Too much skill tree for so little forest… ignore me, it's a bad gnome joke."
    }
   },
   {
-   "say": "Y la Armería: aquí gastas madera, roca y metal en mejorar Arma y Armadura de todos. Ábrela y ciérrala.",
+   "say": "Y la Armería: aquí gastas madera, roca y metal en mejorar las armas y armaduras de todas tus unidades. Ábrela y ciérrala.",
    "mission": "Abre la Armería y ciérrala",
    "ok": "Ya sabes dónde gastar los restos de la deforestación.",
    "mood": "normal",
    "en": {
-    "say": "And the Armory: spend wood, rock and metal to upgrade everyone's Weapon and Armor. Open it and close it.",
+    "say": "And the Armory: here you spend wood, rock and metal to upgrade the weapons and armor of all your units. Open it and close it.",
     "mission": "Open the Armory and close it",
-    "ok": "Now you know where to spend the leftovers of deforestation."
+    "ok": "Now you know where to spend the leftovers of the deforestation."
    }
   },
   {
-   "say": "Cuando no te queden acciones, pulsa PASAR TURNO. Juega el rival y vuelves tú.",
+   "say": "Cuando no te queden acciones, pulsa PASAR TURNO. Cuando termine su turno el rival, volverás a jugar tú.",
    "mission": "Pulsa PASAR TURNO",
-   "ok": "El rival no hizo nada. Es un tutorial.",
+   "ok": "El rival no ha hecho nada. Era de esperar: esto es un tutorial.",
    "mood": "grunon",
    "en": {
-    "say": "When you're out of actions, tap END TURN. The rival plays and you're back.",
+    "say": "When you have no actions left, tap END TURN. When the rival finishes their turn, it's your turn again.",
     "mission": "Tap END TURN",
-    "ok": "The rival did nothing. It's a tutorial."
+    "ok": "The rival did nothing. To be expected: this is a tutorial."
    }
   },
   {
-   "say": "¡Lo conseguiste! Ya sabes reclutar, mover, esconderte, lanzar, estampar, talar y conquistar. Oficialmente, eres un asesino de gnomos… y a mí me parte el lomo.",
+   "say": "¡Lo has conseguido! Ya sabes reclutar, mover, esconderte, lanzar, estampar, talar y conquistar. Oficialmente, tienes todo lo necesario para ser un asesino de gnomos licenciado… espero no volver a verte.",
    "button": "TERMINAR TUTORIAL",
    "mood": "aplaude",
    "en": {
-    "say": "You did it! You can recruit, move, hide, throw, slam, chop and conquer. Officially, you're a gnome killer… and it breaks my back.",
+    "say": "You did it! You now know how to recruit, move, hide, throw, slam, chop and conquer. Officially, you have everything you need to be a licensed gnome killer… I hope I never see you again.",
     "button": "FINISH TUTORIAL"
    }
   }
