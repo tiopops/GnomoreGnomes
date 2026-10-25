@@ -293,8 +293,8 @@ const SPRITE_SCALES = {
   ala_fugaz: 1.35,
   nidobot: 1.7,
   magonifico: 1.2,
-  trazaflechas: 1.85,
-  portamuros: 1.9,
+  trazaflechas: 1.6,
+  portamuros: 1.65,
 };
 
 // Tamaño de las poses "machaca"/"impacto" (ver machacaUrl/machacaImpactUrl

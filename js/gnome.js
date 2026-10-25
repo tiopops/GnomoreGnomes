@@ -99,13 +99,7 @@ const GNOME_VISION_RADIUS = 3;
 // right/bottom en GNOME_ATTACH_OFFSETS, que sí varían según el personaje):
 // cualquier gnomo debe verse siempre del mismo tamaño mientras lo llevan,
 // solo cambia dónde se engancha.
-const GNOME_SIZES = {
-  ground: 74,
-  flying: 93,
-  run: 86, // gnomo corriendo (huida), sprite gnomo_corre
-  sit: 78, // gnomo caído de culo, sprite gnomo_sentado
-  held: 85,
-};
+const GNOME_SIZES = { ground: 74, flying: 93, run: 86, sit: 78, held: 85 };
 
 // Duración (ms) del aplastón + rebote al caer tras un pase fallido — debe
 // coincidir con la de @keyframes gnome-land-impact en style.css.
@@ -162,9 +156,9 @@ const GNOME_ATTACH_OFFSETS = {
   manos_largas: { right: 45, bottom: 7.3 },
   ala_fugaz: { right: 28, bottom: 6.7 },
   nidobot: { right: 76, bottom: 18.4 },
-  magonifico: { right: 30, bottom: 6 },
-  trazaflechas: { right: 30, bottom: 8 },
-  portamuros: { right: 70, bottom: 10 },
+  magonifico: { right: 70, bottom: 34.4 },
+  trazaflechas: { right: 90, bottom: 41.1 },
+  portamuros: { right: -29, bottom: 68.9 },
 };
 
 // Misma idea que GNOME_ATTACH_OFFSETS de arriba, pero para la pose
@@ -188,6 +182,9 @@ const GNOME_ATTACH_OFFSETS_MACHACA = {
   manos_largas: { right: 64, bottom: 68.4 },
   ala_fugaz: { right: 89, bottom: 56.7 },
   nidobot: { right: -11, bottom: 77.9 },
+  magonifico: { right: -14, bottom: 40 },
+  trazaflechas: { right: -14, bottom: 40 },
+  portamuros: { right: -14, bottom: 40 },
 };
 
 // Pose "pegar al gnomo" (Gnome.hit): el personaje cambia a su sprite

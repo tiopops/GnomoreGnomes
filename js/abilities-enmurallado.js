@@ -547,6 +547,9 @@ const Enmurallado = {
       target.spriteEl.getAnimations().forEach((x) => x.cancel());
       target.spriteEl.animate([{ transform: "scale(1,1)" }, { transform: "scale(1.45,.12)", offset: 0.12 }, { transform: "scale(1.4,.14)" }], { duration: 760, fill: "forwards" });
     }
+    // El aplastado suelta el gnomo que llevara cogido.
+    const held = typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === target.id) : null;
+    if (held && Units.list.includes(target)) held.dropFromStunnedUnit(target);
     await this.hurt(target, 1, unit.team);
     await this.sleep(650);
 

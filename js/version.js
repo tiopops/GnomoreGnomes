@@ -12,10 +12,14 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001593";
+const GG_VERSION = "v.001596";
 
 const GG_CHANGELOG = [
-  { v: "v.001593", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+  { v: "v.001596", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "Calibración aplicada: recortes de cara (Enmurallado), botones de acción y posiciones del gnomo (idle, machaca y pegar) para todos los personajes",
+    "Equipo Enmurallado: TrazaFlechas y PortaMuros algo menos grandes en el tablero",
+    "Selección de equipo: la TrazaFlechas se dibuja por delante de MagoNífico y PortaMuros cuando no está seleccionada",
+    "Equipo Enmurallado: el rival aplastado por el Muro Aplastante suelta el gnomo que llevara cogido",
     "Equipo Enmurallado: TrazaFlechas y PortaMuros mucho más grandes en el tablero; Flecha Rastreadora y Cambiazo dejan elegir objetivo pulsando la casilla de cada rival válido; si el Cambiazo deja a un rival en el agua sin Anfibio, se ahoga",
     "Nuevo equipo: Equipo Enmurallado (su logo es el trofeo de la muralla en la selección de equipo) (color naranja) con MagoNífico, TrazaFlechas y PortaMuros — Flecha Rastreadora (marca al rival y ves lo que ve), Cambiazo (intercambia sitio con un rival y al final del turno vuelven) y Muro Aplastante (1 de daño y deja inactivo al rival una ronda), con efectos y sonidos propios; también los usa la IA y se sincronizan en multijugador",
     "Tutorial Poblado HurryCrane: diálogos actualizados con tus textos nuevos y el inglés revisado",

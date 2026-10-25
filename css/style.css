@@ -12247,3 +12247,7 @@ body.ability-targeting--swap * {
 
 /* Equipo Enmurallado: casillas de objetivo (flecha / cambiazo) en naranja. */
 .ew-target-marker { border-color: #ff8a1f !important; background: rgba(255, 138, 31, 0.28) !important; box-shadow: 0 0 0 3px #1b1208 !important; }
+
+/* Equipo Enmurallado: la arquera se dibuja por delante de sus vecinos cuando no está seleccionada. */
+.sel-un[data-t="trazaflechas"] { z-index: 2; }
+.sel-un--sel { z-index: 3; }

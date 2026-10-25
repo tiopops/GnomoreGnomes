@@ -55,9 +55,9 @@ const FACE_OFFSETS = {
   manos_largas: { x: 83, y: 29, zoom: 190 },
   ala_fugaz: { x: 85, y: 30, zoom: 225 },
   nidobot: { x: 67, y: 20, zoom: 190 },
-  magonifico: { x: 62, y: 40, zoom: 190 },
-  trazaflechas: { x: 40, y: 22, zoom: 200 },
-  portamuros: { x: 62, y: 24, zoom: 190 },
+  magonifico: { x: 62, y: 100, zoom: 190 },
+  trazaflechas: { x: 46, y: 19, zoom: 250 },
+  portamuros: { x: 65, y: 24, zoom: 195 },
   default: { x: 72, y: 14, zoom: 225 },
 };
 
