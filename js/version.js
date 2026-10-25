@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001583";
+const GG_VERSION = "v.001584";
 
 const GG_CHANGELOG = [
-  { v: "v.001583", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+  { v: "v.001584", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "Corregido: en el tutorial «Primeros pasos», si pulsabas fuera mientras esperabas a continuar, se cancelaba la colocación del recluta y no aparecía ninguna casilla — ahora el tutorial no la cancela y, si ocurriera, te guía de nuevo por Reclutar",
     "Conquistar un tótem: el puntero pasa de la bandera roja a un mazo amarillo (mismo grosor de trazo que el resto de punteros), también con el cursor del mando",
     "Tutorial «Primeros pasos»: diálogos actualizados con corrección ortográfica y de inglés, y los textos de las variantes con mando de los tres tutoriales vuelven a coincidir con los diálogos",
     "Tutoriales: las réplicas de Nizak tras completar una misión ya NO se quitan solas — esperan a que pulses (clic, Enter, Espacio, flecha derecha o A del mando); las misiones que piden una acción siguen igual",

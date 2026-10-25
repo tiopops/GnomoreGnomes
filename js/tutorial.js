@@ -343,7 +343,16 @@ const Tutorial = {
       {
         say: `Las casillas destacadas te indican los sitios disponibles donde colocarlo junto al Obelisco. Elige una y tu unidad aparecerá ahí, como un champiñón, pero con peor carácter.`,
         mission: "Elige una casilla para colocarlo",
-        target: () => T._placeMarker(),
+        // Si la colocación se cancela (p. ej. por pulsar fuera), la guía te devuelve al hilo de Reclutar.
+        target: () => {
+          if (Obelisks._pendingRecruit || T._my().length > 0) return T._placeMarker();
+          if (Obelisks._overlayEl) {
+            if (Obelisks._selectedTypeId) return Obelisks._recruitBtnEl;
+            return T._trueno();
+          }
+          if (Obelisks._selectedId === T._ob().id) return T._ob().el.querySelector(".obelisk__menu-btn--recruit");
+          return T._obTop();
+        },
         done: () => T._my().length >= 1,
         ok: "¡Ya tienes un compañero leal! A ver si la lealtad le dura mucho cuando empiece a salpicar la sangre.",
         onStart: () => T._refill(),

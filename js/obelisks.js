@@ -1659,6 +1659,8 @@ document.addEventListener(
   "click",
   (e) => {
     if (typeof Obelisks === "undefined" || !Obelisks._pendingRecruit) return;
+    // En el tutorial, los clics ajenos a la misión ya los bloquea su propia guardia: no cancelar la colocación.
+    if (typeof Tutorial !== "undefined" && Tutorial.active) return;
     const t = e.target;
     if (t && t.closest && t.closest(".obelisk-placement-marker, .tut-panel, .tut-skip, [class*='settings']")) return;
     // El botón Reclutar del Obelisco ya gestiona su propia cancelación.
