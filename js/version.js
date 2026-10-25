@@ -16,6 +16,9 @@ const GG_VERSION = "v.001590";
 
 const GG_CHANGELOG = [
   { v: "v.001590", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "Tutoriales MushBoom, Rock'n Troll y HurryCrane: se aplican las mejoras de «Primeros pasos» — la flecha de la guía se apaga en cuanto estampas o lanzas al gnomo, y las réplicas, el botón «Saltar tutorial» y las correcciones generales ya valen para los cuatro",
+    "Tutorial HurryCrane: corregido que la misión «Lánzale a Tinkle contra el huevo» no se pudiera completar (sin un rebote el huevo no se cargaba); ahora hay un bumper delante del huevo",
+    "Tutorial HurryCrane: textos con mando (cruceta y botón de confirmar) para los pasos de coger y lanzar gnomos",
     "Inglés: los nombres inventados de unidades y reliquias ahora tienen traducción con su juego de palabras (BarkGolem, ForestStrider, ThunderSpore, GnomeLauncher, BrainRummager, RockFist, StickyFingers, ShootingWing, NestBot, MountainTrotter Boots, GnomePetter, Pheromgnomes, Lucky Gnoin y el equipo CloudSailers); el español no cambia",
     "SurcaBosques: sprites con un poco menos de saturación (82 %) para que encaje mejor con el resto del equipo",
     "Corregido: una unidad podía quedarse para siempre con el sprite de «pegar al gnomo» estando en reposo (al cambiar la resolución adaptativa tras un golpe, la imagen de reposo no se restauraba bien)",

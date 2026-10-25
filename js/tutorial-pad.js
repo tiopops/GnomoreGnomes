@@ -1,7 +1,7 @@
 /* Gnomore Gnomes — Tutoriales con mando.
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
      - Las variantes "con mando" del diálogo, la misión y la réplica de CADA paso
-       de los tres tutoriales (Primeros pasos, MushBoom, Rock'n Troll), en español
+       de los cuatro tutoriales (Primeros pasos, MushBoom, Rock'n Troll, HurryCrane), en español
        e inglés. Se aplican sobre los textos de js/tutorial-texts.js.
      - Cuándo se usa el modo mando (el último dispositivo usado es el mando) y
        cómo se cambia de uno a otro en directo en mitad de un paso.
@@ -31,7 +31,7 @@ const TUTORIAL_PAD_TEXTS = {
     { // 3 TruenoEspora
       rep: [["Elige a TruenoEspora, el de la seta en la cabeza.", "Elige a TruenoEspora (muévete con la cruceta y pulsa {confirm}), el de la seta en la cabeza."]],
       mission: "Elige a TruenoEspora con {confirm}",
-      en: { rep: [["Pick TruenoEspora, the one with the mushroom on his head.", "Pick TruenoEspora (move with the D-pad and press {confirm}), the one with the mushroom on his head."]], mission: "Pick TruenoEspora with {confirm}" },
+      en: { rep: [["Pick ThunderSpore, the one with the mushroom on his head.", "Pick ThunderSpore (move with the D-pad and press {confirm}), the one with the mushroom on his head."]], mission: "Pick ThunderSpore with {confirm}" },
     },
     { // 4 RECLUTAR
       rep: [["Pulsa RECLUTAR, necesitamos", "Baja con la cruceta hasta RECLUTAR, pulsa {confirm}, necesitamos"]],
@@ -193,6 +193,33 @@ const TUTORIAL_PAD_TEXTS = {
       en: { rep: [["Tap END TURN:", "Press {endTurn} (END TURN):"]], mission: "End turn with {endTurn} and watch the explosion" },
     },
     null, // 10 final
+  ],
+  crane: [
+    null, // 0 historia
+    null, // 1 historia
+    { // 2 Tinkle
+      rep: [["Coge a Tinkle.", "Coge a Tinkle: unidad seleccionada, cursor sobre él y {confirm} en la manita."]],
+      en: { rep: [["Grab Tinkle.", "Grab Tinkle: unit selected, cursor on him and {confirm} on the little hand."]] },
+    },
+    { // 3 lanzar al huevo
+      rep: [["Pulsa lanzar y apunta al huevo:", "Con la unidad seleccionada, pulsa {confirm} sobre el icono de lanzar y elige con la cruceta la flecha hacia el huevo:"]],
+      en: { rep: [["Tap throw and aim at the egg:", "With the unit selected, press {confirm} on the throw icon and pick the arrow toward the egg with the D-pad:"]] },
+    },
+    { // 4 carambola
+      rep: [["Lanza otro gnomo y mira la carambola.", "Lanza otro gnomo ({confirm} en el icono de lanzar y luego en la flecha) y mira la carambola."]],
+      en: { rep: [["Throw another gnome and watch the chain.", "Throw another gnome ({confirm} on the throw icon, then on an arrow) and watch the chain."]] },
+    },
+    null, // 5 info
+    { // 6 explotar
+      rep: [["Lanza el último gnomo.", "Lanza el último gnomo: {confirm} en el icono de lanzar y luego en una flecha."]],
+      en: { rep: [["Throw the last gnome.", "Throw the last gnome: {confirm} on the throw icon, then on an arrow."]] },
+    },
+    null, // 7 info
+    { // 8 espantar a la grulla
+      rep: [["Lánzale un gnomo a la grulla:", "Lánzale un gnomo a la grulla ({confirm} en el icono de lanzar y luego sobre ella):"]],
+      en: { rep: [["Throw a gnome at the crane:", "Throw a gnome at the crane ({confirm} on the throw icon, then on it):"]] },
+    },
+    null, // 9 final
   ],
 };
 

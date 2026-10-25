@@ -221,14 +221,16 @@ Object.assign(Tutorial, {
   },
 
   // Dos bumpers sobre la línea del vuelo (uno por delante del huevo y otro por detrás de la unidad).
-  _placeCraneBumpers() {
+  // frontOnly: solo el de delante del huevo (para el primer lanzamiento: sin un rebote el
+  // huevo nunca se carga y la misión "Lánzale a Tinkle contra el huevo" no se podía completar).
+  _placeCraneBumpers(frontOnly) {
     const e = Egg.egg;
     const u = this._myUnit();
     if (!e || !u) return;
     const d = [e.row - u.row, e.col - u.col];
     const dr = Math.sign(d[0]), dc = Math.sign(d[1]);
     Bumpers.resetAll();
-    [[3, 0], [-4, 0]].forEach(([k]) => {
+    (frontOnly ? [[3, 0]] : [[3, 0], [-4, 0]]).forEach(([k]) => {
       const r = e.row + dr * k, c = e.col + dc * k;
       if (this._tileOk(r, c)) Bumpers._create(r, c);
     });
@@ -397,6 +399,8 @@ Object.assign(Tutorial, {
         target: () => {
           const u = unit();
           if (!u) return null;
+          // Ya estampado: el gnomo deja de estar en sus manos y la guía se apaga.
+          if (!Gnome.isHeldBy(u.id)) return null;
           if (Units.selectedId !== u.id) return T._unitEl(u);
           return T._anyMarker("altar-attack-marker") || T._unitEl(u);
         },
@@ -614,6 +618,7 @@ Object.assign(Tutorial, {
         target: () => {
           const u = unit();
           if (!u) return null;
+          if (!Gnome.isHeldBy(u.id)) return null; // ya estampado: sin guía durante la erupción
           if (Units.selectedId !== u.id) return T._unitEl(u);
           const v = vol();
           return T._anyMarker("altar-attack-marker") || (v && T._nearestRange(v.row, v.col)) || T._unitEl(u);
@@ -654,6 +659,8 @@ Object.assign(Tutorial, {
     const aimTarget = () => {
       const u = unit();
       if (!u) return null;
+      // Lanzamiento hecho (el gnomo ya vuela o se ha ido): la guía se apaga.
+      if (!Gnome.isHeldBy(u.id)) return null;
       if (Units.selectedId !== u.id) return T._unitEl(u);
       const g = Gnome.list.find((x) => x.passing);
       if (g) return T._anyMarker("egg-throw-marker") || T._anyMarker("pass-marker");
@@ -696,7 +703,9 @@ Object.assign(Tutorial, {
         mission: "Lánzale a Tinkle contra el huevo",
         onStart: () => {
           T._refill();
-          T._focus(unit(), Egg.egg);
+          T._placeCraneBumpers(true);
+          T._focus(unit(), Egg.egg, ...Bumpers.list);
+          if (typeof Fog !== "undefined") Fog.applyVisibility();
         },
         target: aimTarget,
         refillFor: () => unit() && unit().id,
@@ -774,6 +783,7 @@ Object.assign(Tutorial, {
         target: () => {
           const u = unit();
           if (!u) return null;
+          if (!Gnome.isHeldBy(u.id)) return null;
           if (Units.selectedId !== u.id) return T._unitEl(u);
           const g = Gnome.list.find((x) => x.passing);
           if (g) return T._anyMarker("crane-throw-marker") || T._anyMarker("pass-marker");
