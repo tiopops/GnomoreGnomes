@@ -12069,3 +12069,23 @@ body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }
 /* OJO: aquí NO se redefine "transition" (antes sí y pisaba la de .unit: left/top, así que las unidades y
    gnomos junto a la niebla dejaban de deslizarse/saltar de loseta en loseta y se teletransportaban). */
 .gg-fogfade:not(.unit--fog-hidden):not(.gg-viewport-culled) { opacity: 0.66; }
+
+/* Gnomo suelto con mira de "coger" activa: el puntero de mano también sale sobre su sprite (js/gnome.js). */
+.gnome--catchable, .gnome--catchable * { cursor: url("../assets/iconos/cursor_mano.png") 24 24, pointer !important; }
+
+/* Tutorial: botón para releer la réplica anterior */
+.tut-reread {
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  padding: 2px 9px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #ffe08a;
+  border: 1px solid rgba(255, 224, 138, 0.45);
+  border-radius: 3px;
+  font: 800 0.72rem "Russo One", sans-serif;
+  cursor: var(--cursor-pointer);
+  z-index: 3;
+}
+.tut-reread:hover { background: rgba(255, 224, 138, 0.22); color: #fff; }
+

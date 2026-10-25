@@ -444,6 +444,8 @@ const EN_DICT = {
 "Recompensa": "Reward",
 "Completada": "Completed",
 "Continuar ▸": "Continue ▸",
+"↶ Releer": "↶ Re-read",
+"↷ Volver": "↷ Back",
 "Sigue pulsando": "Keep holding",
 "Demasiado pronto": "Too soon",
 "Saltar tutorial": "Skip tutorial",

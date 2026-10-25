@@ -357,6 +357,22 @@ function createGnomeInstance() {
       // (mismo motivo que unit-info-btn en unitinfo.js).
       el.addEventListener("contextmenu", (e) => e.preventDefault());
 
+      // Coger un gnomo: además de la mira (icono de la mano sobre su base), también vale pasar el ratón
+      // por su SPRITE (sale el puntero de mano) y pulsarlo, mientras haya mira de coger sobre él.
+      const catchMarker = () => document.querySelector(`.catch-marker--visible[data-row="${this.row}"][data-col="${this.col}"]`);
+      const syncCatchCursor = () => el.classList.toggle("gnome--catchable", !!catchMarker() && !this.heldBy);
+      el.addEventListener("mouseover", syncCatchCursor);
+      el.addEventListener("mousemove", syncCatchCursor);
+      el.addEventListener("mouseleave", () => el.classList.remove("gnome--catchable"));
+      el.addEventListener("click", (e) => {
+        if (this.heldBy || e.target.closest(".catch-marker")) return;
+        const m = catchMarker();
+        if (!m) return;
+        e.stopPropagation();
+        m.click(); // mismo efecto que pulsar la mira de coger
+        el.classList.remove("gnome--catchable");
+      });
+
       this.el = el;
       this.flipEl = flipEl;
       this.spriteEl = spriteEl;
@@ -1010,6 +1026,11 @@ function createGnomeInstance() {
 
     async executePass(holder, target) {
       if (this.heldBy !== holder.id || this.busy) return;
+      // Una unidad solo puede cargar UN gnomo: no se le puede pasar otro si ya lleva uno (no gasta la acción).
+      if (target && Gnome.isHeldBy(target.id)) {
+        if (this._cancelPassAim) this._cancelPassAim();
+        return;
+      }
       // Turnos (js/turns.js) — pedido explícito: "pasar el gnomo una vez"
       // es una de las 2 acciones del turno (de QUIEN LANZA — recibirlo no
       // gasta ninguna acción de quien lo recibe, por eso Turns.useAction se

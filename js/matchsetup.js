@@ -30,6 +30,7 @@ function getBoardSize(numOpponents) {
 // Huevo en HurryCrane): ningún otro objeto (tienda, oráculo, poblados, bumpers, arbustos, recursos...)
 // puede colocarse a `radius` casillas (Chebyshev) del centro, para que ese elemento aparezca SIEMPRE en el centro.
 function centerReserved(row, col, radius) {
+  if (typeof Tutorial !== "undefined" && Tutorial.active) return false; // el tutorial coloca cosas donde le conviene
   const size = (typeof Units !== "undefined" && Units.boardSize) || (typeof TerrainMap !== "undefined" && TerrainMap.size) || 0;
   if (!size) return false;
   const m = Math.floor(size / 2);

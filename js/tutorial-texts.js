@@ -142,12 +142,12 @@ const TUTORIAL_TEXTS = {
   {
    "say": "¡Golpéalo! Cada golpe suma puntos, y esos puntos serán el daño de tu «estampada».",
    "mission": "Golpea al gnomo (icono del puño)",
-   "ok": "¡Puntos! Tinkle encaja bien. El tío Klink encajaba mejor… hasta que se esparció.",
+   "ok": "¡Puntos! Tinkle encaja bien. El tío Klink encajaba mejor… hasta que se esparció por el césped.",
    "mood": "grunon",
    "en": {
     "say": "Hit him! Each hit adds points, and those points become the damage of your \"slam\".",
     "mission": "Hit the gnome (fist icon)",
-    "ok": "Points! Tinkle takes hits well. Uncle Klink took them better… until he scattered."
+    "ok": "Points! Tinkle takes hits well. Uncle Klink took them better… until he got scattered across the grass."
    }
   },
   {

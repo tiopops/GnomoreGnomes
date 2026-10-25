@@ -12,13 +12,18 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001575";
+const GG_VERSION = "v.001579";
 
 const GG_CHANGELOG = [
-  { v: "v.001575", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+  { v: "v.001579", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "Tutorial «Primeros pasos»: Nizak dice ahora que su tío Klink se esparció «por el césped»",
+    "Tutoriales: las réplicas de Nizak ya se pueden leer con calma — la cuenta atrás empieza cuando la frase está entera en pantalla, dura según las palabras (~215 por minuto), se congela con el ratón encima, un clic o tecla primero completa la frase y luego pasa, y el botón «↶ Releer» recupera la réplica anterior",
+    "Corregido: en el tutorial «Primeros pasos» no se podía talar el pino — la zona reservada del centro bloqueaba la casilla desde la que se golpea (ahora el tutorial la ignora)",
+    "Coger un gnomo: además del icono de la mano sobre su base, el puntero de mano aparece también al pasar el ratón por su sprite, y se puede pulsar el sprite para cogerlo",
+    "Una unidad solo puede cargar UN gnomo: ya no se le puede pasar otro si ya lleva uno (ni a mano ni por la IA rival), y el intento no gasta acción",
     "El Altar (MushBoom), el Volcán (Rock'n Troll) y el Huevo (HurryCrane) aparecen SIEMPRE en el centro exacto del mapa: el centro nunca lleva agua (ni con río) y tienda, oráculo, poblados, bumpers, arbustos y recursos respetan esa zona",
     "Corregido: las unidades y gnomos junto a la niebla (niebla de calidad baja) volvían a moverse sin deslizarse ni dar saltitos de loseta en loseta; el fundido al 66 % pisaba su animación de movimiento",
-    "Tutoriales más ágiles y directos: el avance tras cada misión pasa de ~8 s a ~2 s, Nizak escribe más rápido, «mantener pulsada la cara» dura la mitad y todos los textos son más cortos, con la acción primero y el humor intacto (español e inglés)",
+    "Tutoriales más ágiles y directos: Nizak escribe más rápido, «mantener pulsada la cara» dura la mitad y todos los textos son más cortos, con la acción primero y el humor intacto (español e inglés)",
     "Resolución adaptativa: corregido el parpadeo real de los bumpers (desaparecían unos fotogramas al cambiar de calidad con zoom rápido): el fundido espera a que la textura nueva esté lista para pintar",
     "Resolución adaptativa: los bumpers (y cualquier sprite con brillo/saturación propios) ya no parpadean al cambiar de calidad con zoom rápido — el fundido conserva su filtro",
     "Resolución adaptativa: la subida a calidad normal espera a que termine el zoom, eliminando el tirón a mitad de un acercamiento rápido",

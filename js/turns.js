@@ -569,6 +569,7 @@ const Turns = {
     let bestValue = 0;
     Units.list.forEach((u) => {
       if (u.team !== unit.team || u.id === unit.id) return;
+      if (typeof Gnome !== "undefined" && Gnome.isHeldBy(u.id)) return; // ya carga un gnomo: no se le puede pasar otro
       const d = Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col));
       if (d > mov + 2) return;
       const value = held.computePassSuccess(type.agilidad, d, mov) * held.computePassPoints(d, mov);

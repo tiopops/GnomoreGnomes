@@ -93,6 +93,7 @@ const Tutorial = {
     clearTimeout(this._okTimer);
     cancelAnimationFrame(this._okRaf);
     this._advance = null;
+    this._prevMsg = null;
     if (this._keyHandler) document.removeEventListener("keydown", this._keyHandler);
     cancelAnimationFrame(this._raf);
     cancelAnimationFrame(this._holdRaf);
@@ -908,25 +909,35 @@ const Tutorial = {
     E.btn.textContent = "Continuar ▸";
     E.btn.classList.remove("tut-btn--final");
     E.btn.style.setProperty("--p", "0%");
-    const len = s.ok ? s.ok.length : 0;
-    const typeMs = (len / 3) * 20;
-    // Avance ágil: lo justo para leer la réplica (antes esperaba 8-10 s por misión). Pulsar la
-    // viñeta/botón, Enter o Espacio lo adelanta al instante, y pasar el ratón lo pausa.
-    const total = typeMs + Math.min(2600, Math.max(900, 650 + len * 16));
-    let elapsed = 0;
-    let last = performance.now();
+    // Lectura cómoda (como en los RPG): la cuenta atrás NO empieza hasta que la frase está
+    // entera en pantalla, dura según las palabras (~215/min), se congela mientras el ratón
+    // está sobre la viñeta o la pestaña está en segundo plano, y la barra del botón la muestra.
+    // Un primer clic/tecla completa la frase; el siguiente pasa a lo siguiente.
     cancelAnimationFrame(this._okRaf);
-    const tick = (now) => {
-      if (!this.active || this.stepIndex !== i) return;
-      const paused = E.panel.matches(":hover");
-      if (!paused) elapsed += now - last;
-      last = now;
-      E.btn.style.setProperty("--p", `${Math.min(100, (elapsed / total) * 100)}%`);
-      if (elapsed >= total) return go();
+    const startReading = () => {
+      const total = this._readMs(this._fullText);
+      let elapsed = 0;
+      let last = performance.now();
+      const tick = (now) => {
+        if (!this.active || this.stepIndex !== i) return;
+        const paused = E.panel.matches(":hover") || document.hidden || this._rereading;
+        if (!paused) elapsed += Math.min(100, now - last);
+        last = now;
+        E.btn.style.setProperty("--p", `${Math.min(100, (elapsed / total) * 100)}%`);
+        if (elapsed >= total) return go();
+        this._okRaf = requestAnimationFrame(tick);
+      };
       this._okRaf = requestAnimationFrame(tick);
     };
-    this._okRaf = requestAnimationFrame(tick);
+    if (s.ok) {
+      this._prevMsg = s.ok;
+      if (this._typing) this._onTyped = startReading;
+      else startReading();
+    } else {
+      this._okTimer = setTimeout(go, 900);
+    }
     this._advance = () => {
+      if (this._finishTyping()) return;
       if (typeof SFX !== "undefined") SFX.click();
       go();
     };
@@ -937,6 +948,11 @@ const Tutorial = {
     const E = this._els;
     cancelAnimationFrame(this._okRaf);
     this._advance = null;
+    this._rereading = false;
+    if (E.reread) {
+      E.reread.style.display = this._prevMsg ? "" : "none";
+      E.reread.textContent = (typeof I18N !== "undefined" && I18N.tr ? I18N.tr("↶ Releer") : "↶ Releer");
+    }
     this._setMood(s.mood || (this._scenario === "basic" ? this._MOODS[i] : null) || "normal");
     this._typeText(s.say);
     E.mission.classList.remove("tut-mission--done");
@@ -950,10 +966,12 @@ const Tutorial = {
       E.btn.textContent = s.button;
       E.btn.classList.toggle("tut-btn--final", !!s.final);
       E.btn.onclick = () => {
+        if (this._finishTyping()) return;
         if (typeof SFX !== "undefined") SFX.click();
         if (s.final) this.finish();
         else this._goto(i + 1);
       };
+      this._advance = E.btn.onclick;
     }
     E.skip.style.display = s.final ? "none" : "";
     const done = this._steps().slice(0, i).filter((x) => x.mission).length;
@@ -976,6 +994,7 @@ const Tutorial = {
     let n = 0;
     el.textContent = "";
     this._fullText = text;
+    this._typing = true;
     let ticks = 0;
     const tick = () => {
       n += 3;
@@ -984,10 +1003,34 @@ const Tutorial = {
       // Murmullo suave y agradable mientras habla (una nota cada pocas letras).
       if (typeof SFX !== "undefined" && SFX.talk && ticks % 2 === 1 && text[n - 1] !== " ") SFX.talk();
       if (n < text.length) this._typeTimer = setTimeout(tick, 20);
-      else if (this._els.portrait) this._els.portrait.classList.remove("tut-portrait--talk");
+      else this._typedDone();
     };
     tick();
     this._els.portrait.classList.add("tut-portrait--talk");
+  },
+
+  // Fin de la escritura animada: la boca se calla y arranca (si la hay) la cuenta de lectura.
+  _typedDone() {
+    this._typing = false;
+    if (this._els.portrait) this._els.portrait.classList.remove("tut-portrait--talk");
+    const cb = this._onTyped;
+    this._onTyped = null;
+    if (cb) cb();
+  },
+
+  // Completa de golpe la frase que se está escribiendo (primer clic / tecla = "mostrar todo").
+  _finishTyping() {
+    if (!this._typing) return false;
+    clearTimeout(this._typeTimer);
+    this._els.text.textContent = this._fullText || "";
+    this._typedDone();
+    return true;
+  },
+
+  // Tiempo de lectura cómodo: ~215 palabras/min más un margen, entre 2,4 y 9 s.
+  _readMs(text) {
+    const words = (String(text || "").trim().match(/\S+/g) || []).length;
+    return Math.min(9000, Math.max(2400, 900 + words * 280));
   },
 
   // Texto puntual de Nizak fuera del guion (p. ej. "inténtalo otra vez").
@@ -1144,6 +1187,7 @@ const Tutorial = {
       <div class="tut-main">
         <div class="tut-bubble">
           <div class="tut-name">${TUTORIAL_GUIDE_NAME}</div>
+          <button type="button" class="tut-reread" style="display:none">↶ Releer</button>
           <p class="tut-text"></p>
           <button type="button" class="tut-btn"></button>
         </div>
@@ -1171,6 +1215,17 @@ const Tutorial = {
     E.portrait = panel.querySelector(".tut-portrait");
     E.text = panel.querySelector(".tut-text");
     E.btn = panel.querySelector(".tut-btn");
+    E.reread = panel.querySelector(".tut-reread");
+    // "Releer": vuelve a mostrar la réplica anterior (se perdía al avanzar solo) y otro clic regresa.
+    E.reread.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      if (!this._prevMsg) return;
+      this._rereading = !this._rereading;
+      this._finishTyping();
+      const tr = (t) => (typeof I18N !== "undefined" && I18N.tr ? I18N.tr(t) : t);
+      E.text.textContent = this._rereading ? tr(this._prevMsg) : this._fullText || "";
+      E.reread.textContent = tr(this._rereading ? "↷ Volver" : "↶ Releer");
+    });
     E.mission = panel.querySelector(".tut-mission");
     E.missionLabel = panel.querySelector(".tut-mission__label");
     E.missionText = panel.querySelector(".tut-mission__text");
@@ -1178,10 +1233,8 @@ const Tutorial = {
     E.skip = panel.querySelector(".tut-skip");
     // Pulsar la viñeta salta la escritura animada.
     panel.querySelector(".tut-bubble").addEventListener("click", () => {
-      if (E.text.textContent !== (this._fullText || "")) {
-        clearTimeout(this._typeTimer);
-        E.text.textContent = this._fullText || "";
-      } else if (this._advance) this._advance();
+      if (this._finishTyping()) return;
+      if (this._advance) this._advance();
     });
     this._keyHandler = (e) => {
       if (!this.active || !this._advance) return;
