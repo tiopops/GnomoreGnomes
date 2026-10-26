@@ -12,13 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001604";
+const GG_VERSION = "v.001605";
 
 const GG_CHANGELOG = [
-  { v: "v.001604", date: "26/10/2026", title: "Muro Aplastante en área", items: [
-    "Colores de escenario: Colinas Rock'n Troll en rojo y WallForge en naranja (el de Reforjados)",
+  { v: "v.001605", date: "26/10/2026", title: "Muro Aplastante en área", items: [
+    "Colores de escenario: Colinas Rock'n Troll en rojo y Fortaleza WallForge en naranja (el de Reforjados)",
     "El Equipo Forjamuros pasa a llamarse Equipo Reforjados",
-    "Nuevo escenario WallForge en el selector de escenarios (aún bloqueado, con el botón en \"Próximamente\")",
+    "Nuevo escenario Fortaleza WallForge en el selector de escenarios (aún bloqueado, con el botón en \"Próximamente\")",
     "Equipo Reforjados: nueva Flecha Rastreadora de la TrazaFlechas: la flecha es idéntica a la de su sprite (contorno negro irregular), sale con estela de rayas y chispas, se queda clavada en el rival vibrando de vez en cuando y deja dos ondas naranjas concéntricas en bucle bajo sus pies en lugar de la retícula",
     "Equipo Reforjados: TrazaFlechas un poco menos grande en el tablero",
     "Equipo Reforjados: nuevos efectos del Cambiazo: ondas expansivas bajo los pies (detrás de los sprites) y chispas caóticas que nacen transparentes; los intercambiados llevan dos ondas azules concéntricas en bucle hasta que vuelven a su sitio",
