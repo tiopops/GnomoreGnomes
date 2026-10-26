@@ -14,6 +14,8 @@
 
 const EN_DICT = {
 "Completado": "Completed",
+"Pulsa atrás otra vez para salir": "Press back again to exit",
+"Ya estás en el menú principal": "You're already at the main menu",
 "GolemCorteza": "BarkGolem",
 "SurcaBosques": "ForestStrider",
 "TruenoEspora": "ThunderSpore",
@@ -27,7 +29,7 @@ const EN_DICT = {
 "MagoNífico": "MageNificent",
 "TrazaFlechas": "ArrowTracer",
 "PortaMuros": "WallPorter",
-"Equipo Enmurallado": "Team WallWardens",
+"Equipo Reforjados": "Team Reforged",
 "Flecha Rastreadora": "Tracker Arrow",
 "Cambiazo": "Switcheroo",
 "Muro Aplastante": "Crushing Wall",
@@ -39,7 +41,7 @@ const EN_DICT = {
 "Lleva el muro a todas partes por si acaso. Lo del «por si acaso» suele acabar encima de alguien.": "He carries the wall everywhere, just in case. The \"just in case\" usually ends up on top of somebody.",
 "Dispara una flecha a un rival que veas a un máximo de 3 casillas: le quita 1 punto de vida y lo marca. Mientras siga vivo, ves dónde está y todo lo que ve esa unidad. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.": "Fires an arrow at a rival you can see up to 3 tiles away: it takes 1 health point and gets marked. While it lives, you see where it is and everything that unit sees. Costs 1 action. One use per match: recharges if you start your turn next to one of your own totems.",
 "Intercambia su posición con la de un rival que estés viendo. Al final del turno, cada uno vuelve a la casilla donde estaba cuando se produjo el intercambio. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.": "Swaps places with a rival you can see. At the end of the turn, each one returns to the tile they were on when the swap happened. Costs 1 action. One use per match: recharges if you start your turn next to one of your own totems.",
-"Aplasta a un rival adyacente: le hace 1 punto de daño y lo deja inactivo durante una ronda. Su dueño no puede manejarlo hasta que termine el efecto, pero puedes seguir atacándolo o lanzándole habilidades. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.": "Flattens an adjacent rival: it takes 1 damage and is left idle for one round. Its owner can't control it until the effect ends, but you can keep attacking it or casting abilities on it. Costs 1 action. One use per match: recharges if you start your turn next to one of your own totems.",
+"Clava su escudo en el suelo y la onda aplasta a todos los rivales de las casillas que lo rodean: les hace 1 punto de daño y los deja inactivos durante una ronda. Su dueño no puede manejarlos hasta que termine el efecto, pero puedes seguir atacándolos o lanzándoles habilidades. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.": "Drives its shield into the ground and the shockwave flattens every rival on the surrounding tiles: each takes 1 damage and is left idle for one round. Their owner can't control them until the effect ends, but you can keep attacking them or casting abilities on them. Costs 1 action. One use per match: recharges if you start your turn next to one of your own totems.",
 "Soldados de la gran muralla, tan bien guardados como bien armados: MagoNífico, TrazaFlechas y PortaMuros.": "Soldiers of the great wall, as well guarded as they are well armed: MageNificent, ArrowTracer and WallPorter.",
 "Elige a quién disparar": "Choose who to shoot",
 "Elige con quién intercambiar sitio": "Choose who to swap places with",

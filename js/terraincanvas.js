@@ -208,6 +208,23 @@ const TerrainCanvas = {
     this.requestDraw();
   },
 
+  // Salto de una loseta (onda de choque del Muro Aplastante, etc.): sube `h` px y vuelve a su
+  // sitio con una parábola. Solo cambia dónde se pinta; la lógica sigue en fila/columna.
+  hopTile(row, col, h, ms, delay = 0) {
+    const t = this._t(row, col);
+    if (!t) return;
+    const t0 = performance.now() + delay;
+    const step = (now) => {
+      const k = (now - t0) / ms;
+      if (k < 0) { requestAnimationFrame(step); return; }
+      if (k >= 1) { t.hop = 0; this.requestDraw(); return; }
+      t.hop = h * 4 * k * (1 - k);
+      this.requestDraw();
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  },
+
   setUnexplored(row, col, on) {
     const t = this._t(row, col);
     if (!t || t.unexplored === !!on) return;
@@ -361,10 +378,11 @@ const TerrainCanvas = {
         if (!t) continue;
         if (perf && t.unexplored) continue;
         const rem = t.remembered;
-        if (!t.baseHidden) this._blit(ctx, t.baseSrc, t.x + br.ox, t.y + br.oy, br.w, br.h, rem, 1);
+        const hop = t.hop || 0; // salto puntual de la loseta (hopTile): solo la desplaza al pintarla
+        if (!t.baseHidden) this._blit(ctx, t.baseSrc, t.x + br.ox, t.y + br.oy - hop, br.w, br.h, rem, 1);
         if (t.reveal) {
           const a = this._revealAlpha(t, now);
-          if (a > 0) this._blit(ctx, t.reveal.src, t.x + t.reveal.ox, t.y + t.reveal.oy, t.reveal.w, t.reveal.h, rem, a);
+          if (a > 0) this._blit(ctx, t.reveal.src, t.x + t.reveal.ox, t.y + t.reveal.oy - hop, t.reveal.w, t.reveal.h, rem, a);
         }
         if (t.hTo > 0 || t.hFrom > 0) {
           const ha = this._hoverAlpha(t, now);

@@ -388,7 +388,11 @@ const SelectScreens = {
     document.getElementById("sel-ifl").textContent = this.t(l.flavorKey);
     document.getElementById("sel-feat").innerHTML = this._featHtml(l);
     const go = document.getElementById("sel-bLvl");
-    if (go) go.disabled = !l.available;
+    if (go) {
+      go.disabled = !l.available;
+      const lb = go.querySelector("span");
+      if (lb) lb.textContent = this.t(l.available ? "sel_btn_level" : "level_coming_soon").toUpperCase();
+    }
   },
 
   _place() {

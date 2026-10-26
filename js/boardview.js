@@ -109,9 +109,15 @@ const BoardView = {
   setContent(width, height, focusPoint) {
     this.contentWidth = width;
     this.contentHeight = height;
-    this.targetScale = 1;
+    // Móvil apaisado (pantalla muy baja): se empieza algo más alejado para que el Obelisco y
+    // lo de alrededor quepan enteros en vez de salirse por arriba. En cualquier otro caso, 1.
+    const vh = this.viewportEl ? this.viewportEl.clientHeight : window.innerHeight;
+    const vw = this.viewportEl ? this.viewportEl.clientWidth : window.innerWidth;
+    const shortLand = vh < 560 && vw > vh;
+    this.targetScale = shortLand ? Math.max(this.minScale, Math.min(1, vh / 560)) : 1;
     this._zoomAnchor = null;
-    if (focusPoint) this.centerOnContentPoint(focusPoint.x, focusPoint.y);
+    // Apaisado bajo: el punto de enfoque se sube un poco (el Obelisco es muy alto y su base es la casilla).
+    if (focusPoint) this.centerOnContentPoint(focusPoint.x, focusPoint.y - (shortLand ? 120 : 0));
     else this._centerContent();
   },
 
@@ -159,7 +165,9 @@ const BoardView = {
     if (!this.viewportEl) return;
     this._zoomAnchor = null;
     this.targetPanX = this.viewportEl.clientWidth / 2 - contentX * this.targetScale;
-    this.targetPanY = this.viewportEl.clientHeight / 2 - contentY * this.targetScale;
+    // Apaisado bajo: se sube el punto (el Obelisco es muy alto y su menú sale por encima).
+    const shortLand = this.viewportEl.clientHeight < 560 && this.viewportEl.clientWidth > this.viewportEl.clientHeight;
+    this.targetPanY = this.viewportEl.clientHeight / 2 - (contentY - (shortLand ? 120 : 0)) * this.targetScale;
     this._clampTargetPan();
     this._startLoop();
   },

@@ -12,10 +12,25 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001596";
+const GG_VERSION = "v.001603";
 
 const GG_CHANGELOG = [
-  { v: "v.001596", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+  { v: "v.001603", date: "26/10/2026", title: "Muro Aplastante en área", items: [
+    "El Equipo Forjamuros pasa a llamarse Equipo Reforjados",
+    "Nuevo escenario WallForge en el selector de escenarios (aún bloqueado, con el botón en \"Próximamente\")",
+    "Equipo Reforjados: nueva Flecha Rastreadora de la TrazaFlechas: la flecha es idéntica a la de su sprite (contorno negro irregular), sale con estela de rayas y chispas, se queda clavada en el rival vibrando de vez en cuando y deja dos ondas naranjas concéntricas en bucle bajo sus pies en lugar de la retícula",
+    "Equipo Reforjados: TrazaFlechas un poco menos grande en el tablero",
+    "Equipo Reforjados: nuevos efectos del Cambiazo: ondas expansivas bajo los pies (detrás de los sprites) y chispas caóticas que nacen transparentes; los intercambiados llevan dos ondas azules concéntricas en bucle hasta que vuelven a su sitio",
+    "Equipo Reforjados: los efectos del Cambiazo (círculo mágico, runas, chispas y aro bajo los intercambiados), el humo del Muro Aplastante y las esquirlas de las habilidades ya no llevan borde negro",
+    "Equipo Reforjados: el Muro Aplastante del PortaMuros ahora es en área: clava su nuevo escudo en el suelo y la onda aplasta a todos los rivales de las 8 casillas que lo rodean (1 de daño, sueltan el gnomo que lleven y quedan inactivos una ronda, tirados en el suelo hasta que se inflan de nuevo); el suelo salta en ondas y las piedras rebotan",
+  ] },
+  { v: "v.001599", date: "25/10/2026", title: "Tutoriales y rendimiento", items: [
+    "El Equipo Enmurallado pasa a llamarse Equipo Forjamuros",
+    "Móvil: atrás con el botón/gesto de Android y deslizando desde el borde izquierdo hacia el centro (cierra ventanas, vuelve en los menús, cancela la selección o abre la pausa; en el menú principal pide pulsar otra vez para salir)",
+    "Móvil en horizontal: la partida empieza algo más alejada con el Obelisco entero a la vista y las tarjetas de unidad de la selección de equipo ya no quedan cortadas",
+    "Equipo Enmurallado: nuevo sprite del obelisco",
+    "Tutoriales: la cámara encuadra cada paso con un único movimiento (zoom y desplazamiento a la vez), deja el plano centrado en la zona libre y ya no se corrige a saltos al ir descubriendo unidades lejanas",
+    "Tutoriales: el check de tutorial completado va dentro de un cuadrado irregular, y el indicador de gloria (30/30) no se anima durante el tutorial, así que ya no mueve la ventana de Nizak en móvil",
     "Calibración aplicada: recortes de cara (Enmurallado), botones de acción y posiciones del gnomo (idle, machaca y pegar) para todos los personajes",
     "Equipo Enmurallado: TrazaFlechas y PortaMuros algo menos grandes en el tablero",
     "Selección de equipo: la TrazaFlechas se dibuja por delante de MagoNífico y PortaMuros cuando no está seleccionada",

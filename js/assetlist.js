@@ -55,6 +55,7 @@ const PRELOAD_ASSETS = [
  "assets/iconos/flecha_rastreadora.png",
  "assets/iconos/intercambio_magico.png",
  "assets/iconos/muro_aplastante.png",
+ "assets/equipos/EquipoEnmurallado/escudo_muro.png",
  "assets/equipos/EquipoEnmurallado/unidad_01.png",
  "assets/equipos/EquipoEnmurallado/unidad_01_midres.png",
  "assets/equipos/EquipoEnmurallado/unidad_02.png",

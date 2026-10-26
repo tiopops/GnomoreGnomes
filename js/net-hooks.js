@@ -136,7 +136,9 @@
         (a) => { const u = U(a.u), t = U(a.t); return alive(u, t) ? [u, t] : null; });
     UT2("resolveTrackerArrow", "ab.arrow");
     UT2("resolveSwap", "ab.swap");
-    UT2("resolveCrush", "ab.crush");
+    Net.hook(Enmurallado, "resolveCrush", "ab.crush", // área: solo hace falta la PortaMuros
+      (unit) => ({ u: R(unit) }),
+      (a) => { const u = U(a.u); return u ? [u] : null; });
   }
 
   const placeHook = (name, id, withTeam) =>

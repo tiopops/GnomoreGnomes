@@ -293,7 +293,7 @@ const SPRITE_SCALES = {
   ala_fugaz: 1.35,
   nidobot: 1.7,
   magonifico: 1.2,
-  trazaflechas: 1.6,
+  trazaflechas: 1.45,
   portamuros: 1.65,
 };
 

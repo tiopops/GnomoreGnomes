@@ -6,7 +6,8 @@
      por jugador) y GnomOgro. Los arbustos NO son exclusivos de un nivel: todos
      los niveles los tendrán, así que no se anuncian en la descripción.
    - Colinas Rock'n Troll: se desarrollará más adelante con otras mecánicas
-     (available:false -> se muestra bloqueado como "Próximamente"). */
+     (available:false -> se muestra bloqueado como "Próximamente").
+   - WallForge: isla fortificada, de momento solo aparece en el selector (available:false). */
 
 const LEVELS = [
   {
@@ -41,6 +42,17 @@ const LEVELS = [
     logoImg: "assets/niveles/logo_hurrycrane_village.png",
     color: "#7fc8e8",
     available: true,
+  },
+  {
+    id: "wallforge",
+    nameKey: "level_wallforge",
+    flavorKey: "level_wallforge_flavor",
+    featureKeys: [],
+    featureIcons: [],
+    islandImg: "assets/niveles/isla_wallforge.png",
+    logoImg: "assets/niveles/isla_wallforge.png",
+    color: "#4f78c4",
+    available: false,
   },
 ];
 

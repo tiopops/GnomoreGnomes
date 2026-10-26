@@ -165,7 +165,8 @@ const TutorialFrame = {
     const fitsRoom = (u) => u.w <= safe.w * room && u.h <= safe.h * room;
     const foc = this._focusRects();
     // Lo imprescindible: el objetivo (o, si no hay, el primer foco).
-    let acc = onBoard ? this._union([target.getBoundingClientRect()]) : foc.length ? this._union([foc.shift()]) : null;
+    const tr = onBoard ? this._elRect(target) : null;
+    let acc = tr ? this._union([tr]) : foc.length ? this._union([foc.shift()]) : null;
     if (!acc) return null;
     const dist = (r) => Math.hypot(r.left + (r.right - r.left) / 2 - acc.cx, r.top + (r.bottom - r.top) / 2 - acc.cy);
     // Primero el foco que pide el paso (unidad + tambor...), luego los acompañantes cercanos:
@@ -204,57 +205,63 @@ const TutorialFrame = {
     // El jugador está arrastrando/pellizcando: no pelear con él.
     if (BoardView._dragState || BoardView._touchState) this._userUntil = now + 2500;
     if (!force && now < this._userUntil) return;
-    if (!force && now - this._lastMove < 450) return;
-    if (Math.abs(BoardView.scale - BoardView.targetScale) > 0.004) return; // zoom en curso
-    if (this._forceNext) {
-      force = true;
-    }
+    if (!force && now - this._lastMove < 700) return;
+    // Un solo movimiento a la vez: mientras la cámara sigue yendo a su destino (zoom o
+    // desplazamiento) no se vuelve a decidir nada, así nunca se persigue a sí misma.
+    if (Math.abs(BoardView.scale - BoardView.targetScale) > 0.004) return;
+    if (Math.hypot(BoardView.targetPanX - BoardView.panX, BoardView.targetPanY - BoardView.panY) > 3) return;
+    // Inicio de paso (o un objetivo que acaba de aparecer): se busca el PLANO PERFECTO. Durante el
+    // paso la cámara solo se corrige si lo importante se sale de la zona libre.
+    const start = !!(this._forceNext || force);
     // La viñeta cambia de alto dentro de un mismo paso (aparece la barra de misión, el texto
     // se alarga...): se encuadra contra la MAYOR que ha tenido en el paso, para que la cámara
     // no reaccione a cada cambio de tamaño.
     const pr = this._stablePanel(panelRect);
     const safe = this.safeRect(pr);
     const fr = this.focusRect(target, safe);
-    if (!fr) {
-      this._forceNext = false;
-      return;
-    }
-    // Zona muerta, como en los juegos profesionales: si lo importante ya se ve dentro de la zona
-    // libre, la cámara NO se toca (ni siquiera al empezar un paso). Solo se mueve cuando algo
-    // queda tapado o fuera de pantalla.
-    // La zona muerta mira solo lo imprescindible: los acompañantes opcionales (marcadores que
-    // aparecen y desaparecen, otras entidades...) nunca mueven la cámara por sí solos.
-    const fits = this._inside(fr.core || fr, safe, 24);
-    if (fits) {
-      this._forceNext = false;
-      return;
-    }
+    if (!fr) return; // sin objetivo todavía: se espera (el encuadre de inicio sigue pendiente)
     this._forceNext = false;
-    this._lastMove = now;
-    // 1) Zoom: si el conjunto no cabe, se aleja lo justo.
-    let factor = Math.min(safe.w / Math.max(fr.w, 60), safe.h / Math.max(fr.h, 60)) * 0.94;
-    const willZoom = factor < 1 && BoardView.targetScale > BoardView.minScale + 0.01;
-    if (willZoom) {
-      factor = Math.max(factor, BoardView.minScale / BoardView.targetScale);
-      BoardView._zoomAt(fr.cx, fr.cy, factor);
-      this._forceNext = true; // tras el zoom, se recoloca en la zona libre
+    const core = fr.core || fr;
+    // Zona muerta, como en los juegos profesionales: si lo importante ya se ve bien, la cámara NO
+    // se toca. Al empezar un paso "bien" es estar dentro de la zona central de la zona libre (con
+    // aire alrededor); durante el paso basta con que no se salga de ella.
+    if (start) {
+      const kx = safe.w * 0.14;
+      const ky = safe.h * 0.14;
+      const comfy = { left: safe.left + kx, right: safe.right - kx, top: safe.top + ky, bottom: safe.bottom - ky };
+      if (this._inside(core, comfy, 0)) return;
+    } else if (this._inside(core, safe, 24)) {
       return;
     }
-    // 2) Desplazamiento. Si el centro de lo importante ya está dentro de la zona libre (solo
-    // asoma por un borde), se mueve lo MÍNIMO para meterlo con un poco de holgura; si está
-    // lejos o fuera, se lleva al centro de la zona libre.
-    BoardView._zoomAnchor = null;
-    const centerIn = fr.cx > safe.left && fr.cx < safe.right && fr.cy > safe.top && fr.cy < safe.bottom;
-    let dx = safe.cx - fr.cx;
-    let dy = safe.cy - fr.cy;
-    if (centerIn && fr.w <= safe.w - 40 && fr.h <= safe.h - 40) {
-      const pad = 20;
-      dx = fr.left < safe.left + pad ? safe.left + pad - fr.left : fr.right > safe.right - pad ? safe.right - pad - fr.right : 0;
-      dy = fr.top < safe.top + pad ? safe.top + pad - fr.top : fr.bottom > safe.bottom - pad ? safe.bottom - pad - fr.bottom : 0;
+    this._lastMove = now;
+    // Un único movimiento que combina zoom y desplazamiento: si el conjunto no cabe se aleja lo
+    // justo (nunca se acerca) y a la vez se lleva al centro de la zona libre.
+    const sc0 = BoardView.targetScale;
+    let factor = Math.min(safe.w / Math.max(fr.w, 60), safe.h / Math.max(fr.h, 60)) * 0.94;
+    factor = factor < 1 ? Math.max(factor, BoardView.minScale / sc0) : 1;
+    const sc1 = BoardView._clampScale ? BoardView._clampScale(sc0 * factor) : sc0 * factor;
+    const vp = BoardView.viewportEl.getBoundingClientRect();
+    // Punto del contenido que hay bajo el centro de lo importante (con la cámara quieta).
+    const ccx = (fr.cx - vp.left - BoardView.panX) / BoardView.scale;
+    const ccy = (fr.cy - vp.top - BoardView.panY) / BoardView.scale;
+    let tx = safe.cx - vp.left - ccx * sc1;
+    let ty = safe.cy - vp.top - ccy * sc1;
+    if (!start && sc1 === sc0) {
+      // Corrección a mitad de paso sin zoom: si el centro ya está dentro, el mínimo desplazamiento.
+      const centerIn = fr.cx > safe.left && fr.cx < safe.right && fr.cy > safe.top && fr.cy < safe.bottom;
+      if (centerIn && fr.w <= safe.w - 40 && fr.h <= safe.h - 40) {
+        const pad = 20;
+        const dx = fr.left < safe.left + pad ? safe.left + pad - fr.left : fr.right > safe.right - pad ? safe.right - pad - fr.right : 0;
+        const dy = fr.top < safe.top + pad ? safe.top + pad - fr.top : fr.bottom > safe.bottom - pad ? safe.bottom - pad - fr.bottom : 0;
+        tx = BoardView.panX + dx;
+        ty = BoardView.panY + dy;
+      }
     }
-    BoardView.targetPanX = BoardView.panX + dx;
-    BoardView.targetPanY = BoardView.panY + dy;
-    if (BoardView._clampTargetPan) BoardView._clampTargetPan();
+    BoardView._zoomAnchor = null;
+    const c = BoardView._clampPanFor ? BoardView._clampPanFor(tx, ty, sc1) : { x: tx, y: ty };
+    BoardView.targetScale = sc1;
+    BoardView.targetPanX = c.x;
+    BoardView.targetPanY = c.y;
     if (BoardView._startLoop) BoardView._startLoop();
   },
 
@@ -304,21 +311,52 @@ const TutorialFrame = {
     this._focus = [];
   },
 
+  // Caja en pantalla de una casilla (para entidades que el motor oculta fuera de pantalla).
+  _tileBox(row, col) {
+    if (typeof getTileCenter !== "function" || typeof BoardView === "undefined" || !BoardView.viewportEl) return null;
+    const c = getTileCenter(row, col, Units.boardSize);
+    const vp = BoardView.viewportEl.getBoundingClientRect();
+    const x = vp.left + c.x * BoardView.scale + BoardView.panX;
+    const y = vp.top + c.y * BoardView.scale + BoardView.panY;
+    const h = 60 * BoardView.scale;
+    return { left: x - h, right: x + h, top: y - h * 1.6, bottom: y + h * 0.6, width: h * 2, height: h * 2.2 };
+  },
+
+  // Fila/columna lógicas de un elemento del tablero (marcadores, unidades, gnomos, edificios...).
+  _rowCol(el) {
+    if (el.dataset && el.dataset.row != null && el.dataset.col != null) return { row: +el.dataset.row, col: +el.dataset.col };
+    const lists = [typeof Units !== "undefined" ? Units.list : null, typeof Gnome !== "undefined" ? Gnome.list : null,
+      typeof Drums !== "undefined" ? Drums.list : null, typeof Villages !== "undefined" ? Villages.list : null,
+      typeof Altar !== "undefined" ? Altar.list : null, typeof Volcano !== "undefined" ? Volcano.list : null,
+      typeof Obelisks !== "undefined" ? Obelisks.list : null, typeof Shops !== "undefined" ? Shops.list : null];
+    for (const l of lists) {
+      const f = Array.isArray(l) && l.find((x) => x && x.el === el);
+      if (f && f.row != null) return { row: f.row, col: f.col };
+    }
+    return null;
+  },
+
+  // Rect en pantalla de un elemento. Las entidades lejanas se ocultan (display:none) y no miden
+  // nada: en ese caso se usa su casilla, para que el encuadre no dependa de lo que se ve YA y no
+  // haya que corregirlo cuando la cámara las vaya descubriendo.
+  _elRect(el) {
+    if (!el || !el.isConnected) return null;
+    const r = el.getBoundingClientRect();
+    if (r.width > 2 && r.height > 2) return r;
+    const rc = this._rowCol(el);
+    return rc ? this._tileBox(rc.row, rc.col) : null;
+  },
+
   // Rects en pantalla de las entidades de foco (con .el, o simples casillas {row,col}).
   _focusRects() {
     const out = [];
     this._focus.forEach((e) => {
       let r = null;
       if (e.el && e.el.isConnected) {
-        r = e.el.getBoundingClientRect();
-        if (!r.width && !r.height) r = null;
-      } else if (e.row != null && typeof getTileCenter === "function" && typeof BoardView !== "undefined" && BoardView.viewportEl) {
-        const c = getTileCenter(e.row, e.col, Units.boardSize);
-        const vp = BoardView.viewportEl.getBoundingClientRect();
-        const x = vp.left + c.x * BoardView.scale + BoardView.panX;
-        const y = vp.top + c.y * BoardView.scale + BoardView.panY;
-        const h = 60 * BoardView.scale;
-        r = { left: x - h, right: x + h, top: y - h * 1.6, bottom: y + h * 0.6, width: h * 2, height: h * 2.2 };
+        r = this._elRect(e.el);
+        if (!r && e.row != null) r = this._tileBox(e.row, e.col);
+      } else if (e.row != null) {
+        r = this._tileBox(e.row, e.col);
       }
       if (r) out.push(r);
     });

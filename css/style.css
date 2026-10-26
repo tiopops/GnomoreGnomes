@@ -12091,22 +12091,40 @@ body.gg-lod-far .egg__sprite:not(.gg-hover) { filter: none; }
 .tut-menu__item--done { position: relative; }
 .tut-menu__list .menu-btn > .tut-menu__done {
   position: absolute;
-  top: 7px;
-  right: 22px;
+  top: 6px;
+  right: 20px;
   z-index: 4;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: #3fb95a;
-  border: 2px solid #1d5e2e;
   color: #fff;
-  font-size: 0.8rem;
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+  font-size: 0.95rem;
+  pointer-events: none;
 }
-.tut-menu__item .tut-menu__done i { position: static; width: auto; height: auto; background: none; clip-path: none; font-size: inherit; text-shadow: none; }
+/* Cuadrado irregular como el resto de marcos del juego: sombra dura, borde oscuro y relleno verde. */
+.tut-menu__list .menu-btn > .tut-menu__done::before,
+.tut-menu__list .menu-btn > .tut-menu__done::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(6% 0, 100% 8%, 94% 100%, 0 92%);
+}
+.tut-menu__list .menu-btn > .tut-menu__done::after { background: rgba(0, 0, 0, 0.5); transform: translate(2px, 2px); z-index: -2; }
+.tut-menu__list .menu-btn > .tut-menu__done::before { background: #1d5e2e; z-index: -1; }
+.tut-menu__item .tut-menu__done i {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3fb95a;
+  clip-path: polygon(7% 0, 100% 9%, 93% 100%, 0 91%);
+  font-size: inherit;
+  text-shadow: none;
+}
 
 
 /* ---------- Equipo Enmurallado (js/abilities-enmurallado.js) ---------- */
@@ -12138,7 +12156,6 @@ body.ability-targeting--swap * {
   height: 12px;
   pointer-events: none;
   transform: translate(-50%, -50%) rotate(45deg);
-  outline: 2px solid #1b1208;
 }
 .ew-spark {
   position: absolute;
@@ -12146,7 +12163,6 @@ body.ability-targeting--swap * {
   height: 9px;
   pointer-events: none;
   transform: translate(-50%, -50%);
-  outline: 1.5px solid #1b1208;
 }
 .ew-arrow {
   position: absolute;
@@ -12157,85 +12173,76 @@ body.ability-targeting--swap * {
   filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.35));
 }
 .ew-arrow svg { display: block; }
-.ew-circle {
+.ew-bit { position: absolute; pointer-events: none; left: 0; top: 0; }
+/* Muro Aplastante: el contenedor del escudo (con la sombra dura) se queda quieto y solo se mueve la imagen. */
+.ew-shield {
   position: absolute;
-  width: 300px;
-  height: 168px;
-  border-radius: 50%;
-  border: 5px solid #ff8a1f;
-  box-sizing: border-box;
-  pointer-events: none;
-  outline: 3px solid #1b1208;
-  background: repeating-conic-gradient(rgba(255, 138, 31, 0.22) 0 10deg, transparent 10deg 30deg);
-}
-.ew-circle::after {
-  content: "";
-  position: absolute;
-  inset: 22px;
-  border-radius: 50%;
-  border: 4px dashed #ffd27a;
-}
-.ew-rune {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  pointer-events: none;
-  outline: 2px solid #1b1208;
-}
-.ew-slab {
-  position: absolute;
-  width: 128px;
-  height: 176px;
   pointer-events: none;
   transform: translate(-50%, -100%);
+  filter: drop-shadow(5px 6px 0 rgba(0, 0, 0, 0.45));
+}
+.ew-shield img {
+  display: block;
+  width: 100%;
+  height: 100%;
   transform-origin: 50% 100%;
-  filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.4));
+  user-select: none;
+  -webkit-user-drag: none;
 }
-.ew-slab svg { display: block; width: 100%; height: 100%; }
-.ew-slab-shadow {
-  position: absolute;
-  width: 130px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-}
-/* Rival marcado por la flecha: retícula naranja sobre la cabeza. */
-.ew-track-mark {
+.ew-fx { position: absolute; pointer-events: none; }
+.ew-fx svg { display: block; overflow: visible; }
+/* Rival marcado por la flecha: la flecha queda clavada en él y dos ondas naranjas concéntricas se expanden
+   en bucle bajo sus pies, por detrás del sprite. */
+.ew-track-arrow {
   position: absolute;
   left: 50%;
-  top: -34px;
-  width: 46px;
-  height: 46px;
-  margin-left: -23px;
+  top: calc(92% - 56px);
+  width: 78px;
+  height: 20px;
+  transform-origin: 85% 50%;
   pointer-events: none;
-  z-index: 5;
-  animation: ew-track-spin 4s linear infinite, ew-track-pop 0.5s cubic-bezier(.3,1.8,.5,1) 1;
+  z-index: 6;
 }
-@keyframes ew-track-spin { to { rotate: 360deg; } }
-@keyframes ew-track-pop { from { scale: 2.4; opacity: 0; } to { scale: 1; opacity: 1; } }
-/* Pareja del Cambiazo: aro naranja discontinuo bajo los pies hasta que vuelvan a su sitio. */
-.unit.ew-bound::before {
+.ew-track-arrow svg { display: block; }
+.ew-track-wave {
+  position: absolute;
+  left: 50%;
+  top: calc(92% - 4px);
+  translate: -50% -50%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  box-sizing: border-box;
+  opacity: 0;
+  animation: ew-track-wave 2.6s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+}
+.ew-track-wave--a { width: 200px; height: 104px; border: 10px solid rgba(255, 138, 31, 0.4); }
+.ew-track-wave--b { width: 120px; height: 62px; border: 4px solid rgba(255, 138, 31, 0.85); animation-delay: 0.4s; }
+@keyframes ew-track-wave { from { transform: scale(0.25); opacity: 1; } to { transform: scale(1.9); opacity: 0; } }
+/* Pareja del Cambiazo: dos ondas azules concéntricas (una ancha y gruesa, otra estrecha y fina) que se
+   expanden en bucle bajo los pies, por detrás del sprite, hasta que vuelvan a su sitio. */
+.unit.ew-bound::before,
+.unit.ew-bound::after {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: 4%;
-  width: 96px;
-  height: 52px;
-  margin-left: -48px;
-  border: 4px dashed #ff8a1f;
+  top: 92%;
+  translate: -50% -50%;
   border-radius: 50%;
-  outline: 2px solid #1b1208;
   pointer-events: none;
-  animation: ew-bound-spin 1.6s ease-in-out infinite alternate;
+  z-index: -1;
+  box-sizing: border-box;
+  opacity: 0;
+  animation: ew-bound-wave 2s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
 }
-@keyframes ew-bound-spin { from { scale: 0.92; opacity: 0.7; } to { scale: 1.08; opacity: 1; } }
+.unit.ew-bound::before { width: 200px; height: 104px; border: 12px solid rgba(76, 195, 255, 0.42); }
+.unit.ew-bound::after { width: 120px; height: 62px; border: 4px solid rgba(76, 195, 255, 0.85); }
+@keyframes ew-bound-wave { from { transform: scale(0.25); opacity: 1; } to { transform: scale(1.9); opacity: 0; } }
 /* Rival aplastado: icono del muro sobre la cabeza durante su ronda inactiva. */
 .ew-crush-badge {
   position: absolute;
   left: 50%;
-  top: -30px;
+  bottom: 30%;
   width: 44px;
   height: 44px;
   margin-left: -22px;
@@ -12251,3 +12258,40 @@ body.ability-targeting--swap * {
 /* Equipo Enmurallado: la arquera se dibuja por delante de sus vecinos cuando no está seleccionada. */
 .sel-un[data-t="trazaflechas"] { z-index: 2; }
 .sel-un--sel { z-index: 3; }
+
+/* Tutorial: el indicador de gloria no se anima (el pulso del 30/30 y el rebote al ganar puntos
+   movían la ventana de Nizak en móvil). */
+body.tut-on .glory-hud--full .glory-hud__main,
+body.tut-on .glory-hud--full .glory-hud__icon,
+body.tut-on .glory-hud--bump .glory-hud__icon,
+body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
+
+/* ---------- Atrás en móvil (js/backnav.js) ---------- */
+.backnav-hint {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  z-index: 99990;
+  width: 46px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 6px;
+  color: #ffc93c;
+  font-size: 22px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+.backnav-hint::before,
+.backnav-hint::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, 100% 10%, 88% 100%, 0 90%);
+  z-index: -1;
+}
+.backnav-hint::before { background: #2b2733; }
+.backnav-hint::after { background: rgba(0, 0, 0, 0.5); transform: translate(3px, 3px); z-index: -2; }
+.backnav-hint--out { transition: opacity 0.18s, transform 0.18s; }

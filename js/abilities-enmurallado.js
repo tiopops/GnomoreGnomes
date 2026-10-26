@@ -8,9 +8,10 @@
      - MagoNífico · Cambiazo: intercambia su posición con un rival que estés viendo.
        Al final del turno de quien lo usa, cada uno vuelve a la casilla donde estaba
        cuando se produjo el intercambio.
-     - PortaMuros · Muro Aplastante: aplasta a un rival adyacente: 1 de daño y lo deja
-       inactivo durante una ronda (su dueño no puede manejarlo, pero sí se le puede
-       atacar o lanzarle habilidades — mismo mecanismo que Nudillos Rocosos).
+     - PortaMuros · Muro Aplastante: clava su escudo en el suelo y la onda aplasta a TODOS los
+       rivales de las 8 casillas que lo rodean: 1 de daño y los deja inactivos durante una ronda
+       (su dueño no puede manejarlos, pero sí se les puede atacar o lanzarles habilidades — mismo
+       mecanismo que Nudillos Rocosos).
    Efectos: colores naranja del equipo, formas planas con sombra dura (sin brillos
    difusos), sonidos propios en js/sfx.js. */
 
@@ -34,7 +35,7 @@ Object.assign(ABILITIES, {
     icon: "ph-wall",
     iconImg: "assets/iconos/muro_aplastante.png",
     description:
-      "Aplasta a un rival adyacente: le hace 1 punto de daño y lo deja inactivo durante una ronda. Su dueño no puede manejarlo hasta que termine el efecto, pero puedes seguir atacándolo o lanzándole habilidades. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
+      "Clava su escudo en el suelo y la onda aplasta a todos los rivales de las casillas que lo rodean: les hace 1 punto de daño y los deja inactivos durante una ronda. Su dueño no puede manejarlos hasta que termine el efecto, pero puedes seguir atacándolos o lanzándoles habilidades. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
   },
 });
 
@@ -194,6 +195,12 @@ const Enmurallado = {
     this.pickTarget(unit, valid, "Elige a quién disparar", (t) => this.resolveTrackerArrow(unit, t));
   },
 
+  // Flecha del sprite de la TrazaFlechas: vara crema, punta plateada con púas, emplumado naranja y crema,
+  // contorno negro irregular (filtro de desplazamiento, sin desenfoque).
+  arrowSvg() {
+    return '<svg width="78" height="20" viewBox="-1 -1 80 22" style="overflow:visible"><defs><filter id="ew-irr" x="-20%" y="-60%" width="140%" height="220%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.9" result="d"/><feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="1" seed="7" result="n"/><feDisplacementMap in="d" in2="n" scale="3.5" result="w"/><feFlood flood-color="#1b1208"/><feComposite in2="w" operator="in" result="o"/><feMerge><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#ew-irr)"><rect x="7" y="8" width="55" height="4" fill="#efe3d5"/><polygon points="55,1.5 78,10 55,18.5 59,10" fill="#b9bcc2"/><polygon points="55,1.5 78,10 59,10" fill="#dfe1e5"/><polygon points="6,2 15,2 19,10 15,18 6,18 10,10" fill="#efe3d5"/><polygon points="0,2 6,2 10,10 6,18 0,18 4,10" fill="#f07a1e"/></g></svg>';
+  },
+
   async resolveTrackerArrow(unit, target) {
     Units.clearRangeOverlays();
     if (typeof UiHint !== "undefined") UiHint.hide();
@@ -231,18 +238,25 @@ const Enmurallado = {
       frames.push({ transform: `translate(${p.x - x0}px,${p.y - y0}px) translate(-50%,-50%) rotate(${ang}deg)`, offset: t });
     }
     const arrow = this.fxEl("ew-arrow", x0, y0, 2950);
-    arrow.innerHTML =
-      '<svg width="78" height="20" viewBox="0 0 78 20"><polygon points="0,3 14,3 18,10 14,17 0,17 5,10" fill="#ff8a1f" stroke="#1b1208" stroke-width="2" stroke-linejoin="round"/><rect x="14" y="8" width="42" height="4" fill="#8a5a2b" stroke="#1b1208" stroke-width="1.5"/><polygon points="54,2 78,10 54,18 58,10" fill="#d7dbe2" stroke="#1b1208" stroke-width="2" stroke-linejoin="round"/></svg>';
+    arrow.innerHTML = this.arrowSvg();
     if (typeof SFX !== "undefined") SFX.arrowRelease(dur / 1000);
     const tFly = performance.now();
     const trail = setInterval(() => {
-      const t = Math.min(1, (performance.now() - tFly) / dur), p = P(t);
-      const s = this.fxEl("ew-spark", p.x, p.y, 2940);
-      s.style.background = this.ORANGE[Math.floor(this.rnd() * 3)];
-      this.done(s.animate([{ transform: "translate(-50%,-50%) scale(1)", opacity: 1 }, { transform: `translate(-50%,calc(-50% + ${6 + this.rnd() * 10}px)) scale(.1)`, opacity: 0 }], { duration: 380, fill: "both" }), s);
+      const t = Math.min(1, (performance.now() - tFly) / dur), p = P(t), q = P(Math.min(1, t + 0.02)), p0 = P(Math.max(0, t - 0.02));
+      const ang = (Math.atan2(q.y - p0.y, q.x - p0.x) * 180) / Math.PI;
+      const st = this.fxEl("ew-fx", p.x - 17, p.y - 3.5, 2940);
+      st.innerHTML = '<svg width="34" height="7" viewBox="0 0 34 7"><polygon points="0,3.5 34,0 34,7" fill="' + (this.rnd() < 0.5 ? "#ff8a1f" : "#ffd27a") + '"/></svg>';
+      st.style.transformOrigin = "100% 50%";
+      this.done(st.animate([{ transform: `rotate(${ang}deg) scaleX(1)`, opacity: 1 }, { transform: `rotate(${ang}deg) scaleX(.15)`, opacity: 0 }], { duration: 260, easing: "ease-out", fill: "both" }), st);
+      if (this.rnd() < 0.5) {
+        const s2 = this.fxEl("ew-spark", p.x, p.y, 2940);
+        s2.style.background = this.ORANGE[Math.floor(this.rnd() * 3)];
+        this.done(s2.animate([{ transform: "translate(-50%,-50%) scale(1)", opacity: 1 }, { transform: `translate(calc(-50% + ${(this.rnd() - 0.5) * 32}px),calc(-50% + ${4 + this.rnd() * 18}px)) scale(.1)`, opacity: 0 }], { duration: 250 + this.rnd() * 170, fill: "both" }), s2);
+      }
     }, 28);
     await arrow.animate(frames, { duration: dur, easing: "linear", fill: "forwards" }).finished;
     clearInterval(trail);
+    const hitAng = (Math.atan2(P(1).y - P(0.98).y, P(1).x - P(0.98).x) * 180) / Math.PI;
     arrow.remove();
 
     // 3) impacto: ráfaga de esquirlas, anillo y daño
@@ -254,7 +268,7 @@ const Enmurallado = {
     if (!Units.list.includes(target)) return;
 
     // 4) marca de rastreo: sonar naranja por el suelo + retícula sobre la cabeza
-    this.markTracked(target, unit.team);
+    this.markTracked(target, unit.team, hitAng);
     if (typeof SFX !== "undefined") SFX.trackPing();
     this.ring(b.x, b.y + 4, { w: 520, h: 290, ms: 900, bw: 5, delay: 120 });
     this.ring(b.x, b.y + 4, { w: 520, h: 290, ms: 900, bw: 3, color: "#ffd27a", delay: 380 });
@@ -262,14 +276,42 @@ const Enmurallado = {
     if (Units.list.includes(unit)) Units.refreshRange(unit);
   },
 
-  markTracked(target, byTeam) {
+  markTracked(target, byTeam, hitAng) {
     target.trackedBy = byTeam;
-    if (!target.el || target.el.querySelector(".ew-track-mark")) return;
-    const m = document.createElement("div");
-    m.className = "ew-track-mark";
-    m.innerHTML =
-      '<svg viewBox="0 0 48 48" width="46" height="46"><circle cx="24" cy="24" r="14" fill="none" stroke="#1b1208" stroke-width="7"/><circle cx="24" cy="24" r="14" fill="none" stroke="#ff8a1f" stroke-width="3.5"/><path d="M24 2v12M24 34v12M2 24h12M34 24h12" stroke="#1b1208" stroke-width="7" stroke-linecap="round"/><path d="M24 3v10M24 35v10M3 24h10M35 24h10" stroke="#ffd27a" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="24" r="3" fill="#ff8a1f"/></svg>';
-    target.el.appendChild(m);
+    if (!target.el || target.el.querySelector(".ew-track-arrow")) return;
+    const ang = hitAng == null ? 20 : hitAng;
+    // Dos ondas naranjas concéntricas en bucle bajo sus pies (detrás del sprite).
+    ["ew-track-wave ew-track-wave--a", "ew-track-wave ew-track-wave--b"].forEach((c) => {
+      const w = document.createElement("div");
+      w.className = c;
+      target.el.appendChild(w);
+    });
+    // La flecha se queda clavada en el rival (se mueve con él) y vibra al clavarse y de vez en cuando.
+    const st = document.createElement("div");
+    st.className = "ew-track-arrow";
+    st.style.transform = `translate(-85%,-50%) rotate(${ang}deg)`;
+    st.innerHTML = this.arrowSvg();
+    target.el.appendChild(st);
+    const R = (d) => `translate(-85%,-50%) rotate(${ang + d}deg)`;
+    const vib = (m) => st.animate([{ transform: R(0) }, { transform: R(m) }, { transform: R(-m * 0.75) }, { transform: R(m * 0.5) }, { transform: R(-m * 0.25) }, { transform: R(0) }], { duration: 520, easing: "ease-out" });
+    vib(11);
+    const loop = () => {
+      if (!st.isConnected) return;
+      vib(6);
+      setTimeout(loop, 2200 + Math.random() * 900);
+    };
+    setTimeout(loop, 2600);
+  },
+
+  // Quita la marca: la flecha se desvanece y las ondas dejan de repetirse.
+  unmarkTracked(target) {
+    target.trackedBy = null;
+    if (!target.el) return;
+    target.el.querySelectorAll(".ew-track-wave").forEach((w) => w.remove());
+    target.el.querySelectorAll(".ew-track-arrow").forEach((a) => {
+      a.getAnimations().forEach((x) => x.cancel());
+      a.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, easing: "ease-out", fill: "forwards" }).onfinish = () => a.remove();
+    });
   },
 
   // Fuente de percepción de las unidades marcadas por el jugador (ver envoltorio de Fog más abajo).
@@ -294,64 +336,101 @@ const Enmurallado = {
     this.pickTarget(unit, valid, "Elige con quién intercambiar sitio", (t) => this.resolveSwap(unit, t));
   },
 
-  // Círculo mágico plano bajo una casilla + runas que orbitan.
-  magicCircle(row, col, ms = 640) {
-    const c = getTileCenter(row, col, Units.boardSize);
-    const e = this.fxEl("ew-circle", c.x, c.y + 4, 2790);
-    this.done(
-      e.animate(
-        [
-          { transform: "translate(-50%,-50%) scale(.2)", opacity: 0 },
-          { transform: "translate(-50%,-50%) scale(1)", opacity: 1, offset: 0.25 },
-          { transform: "translate(-50%,-50%) scale(1)", opacity: 1, offset: 0.75 },
-          { transform: "translate(-50%,-50%) scale(1.25)", opacity: 0 },
-        ],
-        { duration: ms, easing: "ease-out", fill: "both" }
-      ),
-      e
-    );
-    const runes = [];
-    for (let i = 0; i < 6; i++) {
-      const r = this.fxEl("ew-rune", c.x, c.y, 2960);
-      r.style.background = i % 2 ? "#ffd27a" : "#ff8a1f";
-      runes.push({ r, ph: (i / 6) * Math.PI * 2 });
-    }
-    const t0 = performance.now();
-    const step = (t) => {
-      const k = (t - t0) / ms;
-      if (k >= 1) { runes.forEach((o) => o.r.remove()); return; }
-      const rad = 62 * Math.sin(Math.min(1, k * 1.4) * Math.PI * 0.5) * (1 - Math.max(0, k - 0.7) / 0.3);
-      runes.forEach((o) => {
-        const a = o.ph + (t - t0) / 150;
-        o.r.style.transform = `translate(${Math.cos(a) * rad - 6}px,${Math.sin(a) * rad * 0.55 - 6 - 30 * k}px) rotate(45deg) scale(${1 - k * 0.4})`;
-      });
-      requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
+  // Pedacito de chispa irregular (círculo, triángulo o esquirla), de color plano y sin contorno.
+  bit(x, y, sz, color, z = 2960) {
+    const e = this.fxEl("ew-bit", x, y, z);
+    e.style.width = e.style.height = `${sz}px`;
+    e.style.background = color;
+    const k = Math.random();
+    e.style.clipPath =
+      k < 0.3 ? "circle(50%)" : k < 0.55 ? "polygon(50% 0,100% 100%,0 100%)" : k < 0.8 ? "polygon(8% 12%,92% 28%,68% 96%,0 66%)" : "polygon(20% 0,100% 40%,60% 100%,0 55%)";
+    return e;
+  },
+  bitColor() {
+    const c = [this.ORANGE[0], this.ORANGE[1], this.ORANGE[2], this.BLUE, this.ORANGE[0]];
+    return c[(Math.random() * c.length) | 0];
+  },
+  rr(a, b) {
+    return a + Math.random() * (b - a);
   },
 
-  // Hilo de chispas que viaja de una casilla a otra (en arco).
-  sparkStream(from, to, color) {
-    const S = Units.boardSize;
-    const a = getTileCenter(from.row, from.col, S), b = getTileCenter(to.row, to.col, S);
-    for (let i = 0; i < 16; i++) {
-      const e = this.fxEl("ew-shard", a.x, a.y - 50, 2955);
-      const sz = 8 + this.rnd() * 8;
-      e.style.width = e.style.height = `${sz}px`;
-      e.style.background = i % 3 === 0 ? this.BLUE : color;
-      const side = (i % 2 ? 1 : -1) * (30 + this.rnd() * 40);
-      const dx = b.x - a.x, dy = b.y - a.y;
-      const L = Math.hypot(dx, dy) || 1;
-      const nx = -dy / L, ny = dx / L;
-      const mid = { x: dx / 2 + nx * side, y: dy / 2 + ny * side * 0.6 - 40 };
+  // Chispas que brotan desordenadas de los pies y suben a la deriva (cada una a su ritmo).
+  // Nacen transparentes y pequeñas para no quedarse paradas esperando su turno.
+  embers(x, y, n, spreadMs) {
+    for (let i = 0; i < n; i++) {
+      const e = this.bit(0, 0, this.rr(5, 12), this.bitColor());
+      const x0 = x + this.rr(-55, 55), y0 = y + this.rr(-14, 16), h = this.rr(50, 140);
+      const w1 = this.rr(-26, 26), w2 = this.rr(-30, 30), w3 = this.rr(-22, 22), r = this.rr(-200, 200);
       this.done(
         e.animate(
           [
-            { transform: "translate(-50%,-50%) rotate(45deg) scale(1)", opacity: 1 },
-            { transform: `translate(calc(-50% + ${mid.x}px),calc(-50% + ${mid.y}px)) rotate(200deg) scale(1.1)`, opacity: 1, offset: 0.5 },
-            { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) rotate(400deg) scale(.4)`, opacity: 0.2 },
+            { transform: `translate(${x0}px,${y0}px) scale(.3) rotate(0)`, opacity: 0 },
+            { transform: `translate(${x0 + w1}px,${y0 - h * 0.3}px) scale(1) rotate(${r * 0.3}deg)`, opacity: 1, offset: 0.15 },
+            { transform: `translate(${x0 + w2}px,${y0 - h * 0.65}px) scale(.85) rotate(${r * 0.6}deg)`, opacity: 1, offset: 0.55 },
+            { transform: `translate(${x0 + w3}px,${y0 - h}px) scale(.2) rotate(${r}deg)`, opacity: 0 },
           ],
-          { duration: 460, delay: i * 18, easing: "cubic-bezier(.4,0,.6,1)", fill: "both" }
+          { duration: this.rr(650, 1150), delay: Math.random() * spreadMs, easing: "ease-out", fill: "both" }
+        ),
+        e
+      );
+    }
+  },
+
+  // Cargando el hechizo: ondas expansivas bajo los pies (DETRÁS del sprite) + chispas caóticas.
+  magicCircle(row, col, ms = 640) {
+    const c = getTileCenter(row, col, Units.boardSize);
+    this.ring(c.x, c.y, { color: "#ff8a1f", w: 330, h: 185, ms: 620, bw: 12, z: 2 });
+    this.ring(c.x, c.y, { color: "#ffd27a", w: 330, h: 185, ms: 620, bw: 9, z: 2, delay: 150 });
+    this.ring(c.x, c.y, { color: "#ff8a1f", w: 330, h: 185, ms: 620, bw: 7, z: 2, delay: 300 });
+    this.embers(c.x, c.y, 26, ms * 0.8);
+  },
+
+  // Chispas que viajan de una casilla a otra, dispersas y cada una por su camino.
+  sparkStream(from, to, color) {
+    const S = Units.boardSize;
+    const a = getTileCenter(from.row, from.col, S), b = getTileCenter(to.row, to.col, S);
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const L = Math.hypot(dx, dy) || 1;
+    const nx = -dy / L, ny = dx / L;
+    for (let i = 0; i < 30; i++) {
+      const e = this.bit(0, 0, this.rr(5, 13), this.bitColor(), 2955);
+      const sx = a.x + this.rr(-26, 26), sy = a.y - this.rr(20, 70);
+      const pts = [0, 1, 2, 3].map((k) => {
+        const t = (k + 1) / 5;
+        return { x: sx + dx * t + nx * this.rr(-60, 60), y: sy + dy * t + ny * this.rr(-40, 40) - Math.sin(Math.PI * t) * this.rr(20, 90) };
+      });
+      const end = { x: b.x + this.rr(-20, 20), y: b.y - this.rr(20, 60) };
+      const rot = this.rr(-300, 300);
+      this.done(
+        e.animate(
+          [
+            { transform: `translate(${sx}px,${sy}px) scale(.2) rotate(0)`, opacity: 0 },
+            { transform: `translate(${pts[0].x}px,${pts[0].y}px) scale(1.1) rotate(${rot * 0.25}deg)`, opacity: 1, offset: 0.25 },
+            { transform: `translate(${pts[1].x}px,${pts[1].y}px) scale(.9) rotate(${rot * 0.5}deg)`, opacity: 1, offset: 0.5 },
+            { transform: `translate(${pts[2].x}px,${pts[2].y}px) scale(1) rotate(${rot * 0.75}deg)`, opacity: 1, offset: 0.75 },
+            { transform: `translate(${end.x}px,${end.y}px) scale(.3) rotate(${rot}deg)`, opacity: 0 },
+          ],
+          { duration: this.rr(420, 640), delay: Math.random() * 380, easing: "cubic-bezier(.4,0,.6,1)", fill: "both" }
+        ),
+        e
+      );
+    }
+  },
+
+  // Estallido al reaparecer: trozos de distinto tamaño que salen despedidos y caen.
+  bitsBurst(x, y, n) {
+    for (let i = 0; i < n * 2; i++) {
+      const e = this.bit(0, 0, this.rr(5, 14), this.bitColor(), 2960);
+      const an = Math.random() * Math.PI * 2, v = this.rr(30, 110);
+      const tx = Math.cos(an) * v, ty = Math.sin(an) * v * 0.55, up = this.rr(30, 90), r = this.rr(-360, 360);
+      this.done(
+        e.animate(
+          [
+            { transform: `translate(${x}px,${y}px) scale(.2) rotate(0)`, opacity: 0 },
+            { transform: `translate(${x + tx * 0.7}px,${y + ty - up}px) scale(1) rotate(${r * 0.5}deg)`, opacity: 1, offset: 0.45 },
+            { transform: `translate(${x + tx}px,${y + ty + 14}px) scale(.3) rotate(${r}deg)`, opacity: 0 },
+          ],
+          { duration: this.rr(450, 950), delay: Math.random() * 120, easing: "cubic-bezier(.3,.6,.5,1)", fill: "both" }
         ),
         e
       );
@@ -406,8 +485,9 @@ const Enmurallado = {
     if (typeof SFX !== "undefined") SFX.swapIn();
     [a, b].forEach((u) => {
       const c = getTileCenter(u.row, u.col, S);
-      this.ring(c.x, c.y + 4, { w: 300, h: 168, ms: 560 });
-      this.shards(c.x, c.y - 50, 8, { speed: 70, lift: 50, size: 10, colors: [this.ORANGE[0], this.ORANGE[2], this.BLUE] });
+      this.ring(c.x, c.y, { color: "#ff8a1f", w: 400, h: 225, ms: 640, bw: 12, z: 2 });
+      this.ring(c.x, c.y, { color: "#ffd27a", w: 400, h: 225, ms: 640, bw: 8, z: 2, delay: 130 });
+      this.bitsBurst(c.x, c.y - 50, 8);
     });
     this.shakeBoard(3);
     await this.sleep(300);
@@ -478,100 +558,259 @@ const Enmurallado = {
   },
 
   // =====================================================================
-  // PortaMuros · Muro Aplastante
+  // PortaMuros · Muro Aplastante (en área: las 8 casillas que lo rodean)
   // =====================================================================
-  activateCrush(unit) {
-    const valid = (u) => u.team !== unit.team && this.cheb(u, unit) <= 1;
-    const targets = Units.list.filter(valid);
-    if (targets.length === 0) return; // sin rival adyacente no se gasta
-    if (targets.length === 1) return this.resolveCrush(unit, targets[0]);
-    Abilities._startUnitPicking(unit, {
-      cursorClass: "ability-targeting--punch",
-      filter: valid,
-      hint: "Elige a quién aplastar",
-      onPick: (t) => this.resolveCrush(unit, t),
-    });
+  SHIELD_SRC: "assets/equipos/EquipoEnmurallado/escudo_muro.png",
+  SHIELD_W: 132, // ancho en pantalla del escudo (px del tablero)
+  SHIELD_RATIO: 409 / 380, // alto / ancho de la imagen
+  SHIELD_DX: 54, // dónde clava el escudo respecto a sus pies
+
+  crushVictims(unit) {
+    return Units.list.filter((u) => u.team !== unit.team && this.cheb(u, unit) <= 1);
   },
 
-  slabSvg() {
-    return (
-      '<svg width="96" height="132" viewBox="0 0 96 132"><rect x="5" y="5" width="86" height="122" rx="6" fill="#8d93a0" stroke="#1b1208" stroke-width="5"/>' +
-      '<path d="M5 44H91M5 86H91M48 5V44M26 44V86M70 44V86M48 86V127" stroke="#1b1208" stroke-width="3.5" fill="none"/>' +
-      '<rect x="5" y="5" width="86" height="12" fill="#b4b9c4"/>' +
-      '<polygon points="30,52 66,52 66,98 48,112 30,98" fill="#ff8a1f" stroke="#1b1208" stroke-width="4" stroke-linejoin="round"/>' +
-      '<polygon points="42,60 56,60 50,74 58,74 44,94 47,78 39,78" fill="#fff3d6"/></svg>'
+  activateCrush(unit) {
+    if (this.crushVictims(unit).length === 0) {
+      if (typeof SFX !== "undefined") SFX.back();
+      return; // sin rivales alrededor no se gasta
+    }
+    return this.resolveCrush(unit);
+  },
+
+  // Elemento plano centrado en (x,y) con tamaño propio (polvo, estrella de impacto...).
+  flatFx(x, y, w, h, z, html) {
+    const e = this.fxEl("ew-fx", x, y, z);
+    e.style.width = `${w}px`;
+    e.style.height = `${h}px`;
+    e.style.marginLeft = `${-w / 2}px`;
+    e.style.marginTop = `${-h / 2}px`;
+    e.innerHTML = html;
+    return e;
+  },
+
+  // Nubes de polvo planas que salen disparadas por el suelo.
+  dust(x, y, n, spread, big) {
+    for (let i = 0; i < n; i++) {
+      const s = (big ? 26 : 16) + Math.random() * 14, a = Math.random() * Math.PI * 2;
+      const e = this.flatFx(x, y, s, s, 2940, `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><circle cx="${s / 2}" cy="${s / 2}" r="${s / 2 - 1}" fill="#efe3cd"/></svg>`);
+      this.done(
+        e.animate(
+          [
+            { transform: "translate(0,0) scale(.3)", opacity: 1 },
+            { transform: `translate(${Math.cos(a) * spread}px,${Math.sin(a) * spread * 0.45 - 14}px) scale(1.15)`, opacity: 1, offset: 0.6 },
+            { transform: `translate(${Math.cos(a) * spread * 1.25}px,${Math.sin(a) * spread * 0.55 - 24}px) scale(.9)`, opacity: 0 },
+          ],
+          { duration: 520 + Math.random() * 180, easing: "cubic-bezier(.2,.8,.3,1)", fill: "both" }
+        ),
+        e
+      );
+    }
+  },
+
+  // Estrella de impacto plana.
+  burst(x, y) {
+    const s = 96, pts = [];
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2, r = i % 2 ? s * 0.24 : s * 0.5;
+      pts.push(`${(s / 2 + Math.cos(a) * r).toFixed(1)},${(s / 2 + Math.sin(a) * r * 0.7).toFixed(1)}`);
+    }
+    const e = this.flatFx(x, y - 30, s, s, 2960, `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><polygon points="${pts.join(" ")}" fill="#ffd84a" stroke="#1b1208" stroke-width="4" stroke-linejoin="round"/></svg>`);
+    this.done(
+      e.animate(
+        [{ transform: "scale(.2)" }, { transform: "scale(1.15)", offset: 0.45 }, { transform: "scale(1)", offset: 0.7 }, { transform: "scale(.9)", opacity: 0 }],
+        { duration: 380, easing: "cubic-bezier(.2,.8,.3,1)", fill: "both" }
+      ),
+      e
     );
   },
 
-  async resolveCrush(unit, target) {
+  // Trozos de piedra (grises, sin contorno): salen disparados, caen y REBOTAN por el suelo
+  // (cada rebote más bajo y corto) hasta quedarse quietos y desvanecerse.
+  rockChips(x, y, n) {
+    for (let i = 0; i < n; i++) {
+      const s = 14 + Math.random() * 16, a = Math.random() * Math.PI * 2, dist = 90 + Math.random() * 190;
+      const e = this.flatFx(x, y, s, s, 2950, `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><polygon points="${s * 0.1},${s * 0.9} ${s * 0.3},${s * 0.1} ${s * 0.9},${s * 0.35} ${s * 0.7},${s * 0.95}" fill="${i % 3 ? "#6f7786" : "#9aa2b0"}"/></svg>`);
+      const dirx = Math.cos(a), diry = Math.sin(a) * 0.5;
+      const first = { x0: 0, y0: 0, x1: dirx * dist, y1: diry * dist, h: 70 + Math.random() * 110, t: 520 };
+      const segs = [first];
+      let cx = first.x1, cy = first.y1, hh = first.h, dd = dist * 0.32;
+      for (let k = 0; k < 4; k++) {
+        hh *= 0.45;
+        const nx = cx + dirx * dd, ny = cy + diry * dd;
+        segs.push({ x0: cx, y0: cy, x1: nx, y1: ny, h: hh, t: 300 - k * 45 });
+        cx = nx; cy = ny; dd *= 0.5;
+      }
+      const total = segs.reduce((q, z) => q + z.t, 0);
+      const rot0 = Math.random() * 60, spin = (Math.random() < 0.5 ? -1 : 1) * (500 + Math.random() * 500);
+      const kf = [{ transform: `translate(0px,0px) rotate(${rot0}deg)`, opacity: 1, offset: 0 }];
+      let acc = 0;
+      segs.forEach((sg) => {
+        for (let j = 1; j <= 8; j++) {
+          const u = j / 8;
+          const off = (acc + sg.t * u) / total;
+          kf.push({
+            transform: `translate(${sg.x0 + (sg.x1 - sg.x0) * u}px,${sg.y0 + (sg.y1 - sg.y0) * u - 4 * sg.h * u * (1 - u)}px) rotate(${rot0 + spin * off}deg)`,
+            opacity: 1,
+            offset: off,
+          });
+        }
+        acc += sg.t;
+      });
+      e.animate(kf, { duration: total, easing: "linear", fill: "forwards" }).onfinish = () => {
+        const f = e.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 450, delay: 350, fill: "forwards" });
+        f.onfinish = () => e.remove();
+      };
+    }
+  },
+
+  async resolveCrush(unit) {
     Units.clearRangeOverlays();
     if (typeof UiHint !== "undefined") UiHint.hide();
-    Units.faceTowardsTile(unit, target.row, target.col);
     Abilities._consume(unit);
     const S = Units.boardSize;
-    const a = getTileCenter(unit.row, unit.col, S);
-    const b = getTileCenter(target.row, target.col, S);
-    const L = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-    const ux = ((b.x - a.x) / L) * 22, uy = ((b.y - a.y) / L) * 22;
+    const c = getTileCenter(unit.row, unit.col, S);
+    const sw = this.SHIELD_W, sh = Math.round(sw * this.SHIELD_RATIO), dx = this.SHIELD_DX;
+    const footY = c.y + 20, plantY = c.y + 48;
+    const unitH = unit.spriteEl ? unit.spriteEl.offsetHeight : 160;
+    const headDy = footY - unitH + sh * 0.45 - plantY; // sobre su cabeza, relativo al punto donde se clava
+    const H = `${-dx}px ${headDy}px`;
+    const up = `${-dx}px ${headDy - 100}px`;
+    const OUT = "cubic-bezier(.2,.8,.3,1)", IN = "cubic-bezier(.6,0,.9,.4)";
+    const spr = unit.spriteEl;
+    const squash = (from, to, ms, easing, hold) => {
+      if (!spr) return;
+      spr.getAnimations().forEach((x) => x.cancel());
+      spr.animate([{ transform: from }, { transform: to }], { duration: ms, easing, fill: hold ? "forwards" : "none" });
+    };
 
-    // 1) el PortaMuros se echa atrás y levanta el muro
+    // Escudo: el contenedor (con la sombra dura) se queda quieto; solo se mueve la imagen.
+    const wrap = this.fxEl("ew-shield", c.x + dx, plantY, 2990);
+    wrap.style.width = `${sw}px`;
+    wrap.style.height = `${sh}px`;
+    const img = document.createElement("img");
+    img.src = this.SHIELD_SRC;
+    img.alt = "";
+    img.draggable = false;
+    img.style.translate = H;
+    img.style.transform = "scale(0)";
+    wrap.appendChild(img);
+
+    // 1) se agacha y el escudo aparece de golpe sobre su cabeza (goma)
     if (typeof SFX !== "undefined") SFX.wallLift();
-    if (unit.spriteEl)
-      unit.spriteEl.animate(
-        [{ transform: "scale(1,1)" }, { transform: "scale(1.08,.9)", offset: 0.3 }, { transform: "scale(.88,1.22)", offset: 0.75 }, { transform: "scale(.88,1.22)" }],
-        { duration: 480, easing: "ease-out", fill: "forwards" }
-      );
-    unit.el.animate([{ translate: "0 0" }, { translate: `${-ux * 0.4}px ${-uy * 0.4 - 8}px` }], { duration: 480, easing: "ease-out", fill: "forwards" });
-    await this.sleep(470);
+    squash("scale(1,1)", "scale(1.12,.84)", 300, OUT, true);
+    img.animate(
+      [
+        { translate: H, transform: "scale(0)" },
+        { translate: H, transform: "scale(1.3)", offset: 0.55 },
+        { translate: H, transform: "scale(.94)", offset: 0.8 },
+        { translate: H, transform: "scale(1)" },
+      ],
+      { duration: 420, delay: 140, easing: "ease-out", fill: "both" }
+    );
+    await this.sleep(560);
 
-    // 2) el muro cae del cielo sobre el rival
-    const slab = this.fxEl("ew-slab", b.x, b.y + 6, 2960);
-    slab.innerHTML = this.slabSvg();
-    if (typeof SFX !== "undefined") SFX.wallFall(0.3);
-    const shadow = this.fxEl("ew-slab-shadow", b.x, b.y + 4, 2780);
-    shadow.animate([{ transform: "translate(-50%,-50%) scale(.2)", opacity: 0.1 }, { transform: "translate(-50%,-50%) scale(1)", opacity: 0.55 }], { duration: 300, easing: "ease-in", fill: "forwards" });
-    unit.el.animate([{ translate: `${-ux * 0.4}px ${-uy * 0.4 - 8}px` }, { translate: `${ux}px ${uy}px` }, { translate: "0 0" }], { duration: 300, easing: "ease-in" });
-    if (unit.spriteEl) {
-      unit.spriteEl.getAnimations().forEach((x) => x.cancel());
-      unit.spriteEl.animate([{ transform: "scale(.88,1.22)" }, { transform: "scale(1.2,.84)", offset: 0.7 }, { transform: "scale(1,1)" }], { duration: 300, easing: "ease-in" });
-    }
-    await slab.animate([{ transform: "translate(-50%,-420px)" }, { transform: "translate(-50%,-100%)" }], { duration: 300, easing: "cubic-bezier(.5,0,1,.7)", fill: "forwards" }).finished;
+    // 2) se estira y lo sube bien alto
+    squash("scale(1.12,.84)", "scale(.9,1.16)", 200, OUT, true);
+    img.animate([{ translate: H, transform: "scale(1)" }, { translate: up, transform: "scale(1.15)" }], { duration: 220, easing: OUT, fill: "both" });
+    await this.sleep(300);
 
-    // 3) impacto: el rival queda aplastado bajo el muro
+    // 3) cae recto y lo clava en el suelo, a sus pies
+    if (typeof SFX !== "undefined") SFX.wallFall(0.13);
+    squash("scale(.9,1.16)", "scale(1.18,.78)", 130, IN, true);
+    img.animate([{ translate: up, transform: "scale(1.15)" }, { translate: "0px 0px", transform: "scale(1.12)" }], { duration: 130, easing: IN, fill: "both" });
+    await this.sleep(130);
+
+    // ---- IMPACTO ----
+    const ip = { x: c.x + dx, y: c.y + 34 };
     if (typeof SFX !== "undefined") SFX.wallSlam();
-    Abilities._punchImpactFx(target.row, target.col);
-    this.ring(b.x, b.y + 4, { w: 420, h: 236, ms: 640, color: "#ffb347" });
     this.shakeBoard(9);
-    slab.animate([{ transform: "translate(-50%,-100%) scale(1,1)" }, { transform: "translate(-50%,-96%) scale(1.06,.92)", offset: 0.3 }, { transform: "translate(-50%,-100%) scale(1,1)" }], { duration: 320 });
-    if (target.spriteEl) {
-      target.spriteEl.getAnimations().forEach((x) => x.cancel());
-      target.spriteEl.animate([{ transform: "scale(1,1)" }, { transform: "scale(1.45,.12)", offset: 0.12 }, { transform: "scale(1.4,.14)" }], { duration: 760, fill: "forwards" });
+    this.burst(ip.x, ip.y);
+    this.ring(c.x, c.y, { color: "#ff9a2e", w: 620, h: 386, ms: 640, bw: 14 });
+    this.ring(c.x, c.y, { color: "#ffd84a", w: 620, h: 386, ms: 640, bw: 9, delay: 120 });
+    this.dust(ip.x, ip.y, 10, 120, true);
+    this.rockChips(ip.x, ip.y, 16);
+    if (spr) {
+      spr.getAnimations().forEach((x) => x.cancel());
+      spr.animate([{ transform: "scale(1.18,.78)" }, { transform: "scale(.94,1.1)", offset: 0.5 }, { transform: "scale(1,1)" }], { duration: 520, easing: "cubic-bezier(.34,1.6,.64,1)" });
     }
-    // El aplastado suelta el gnomo que llevara cogido.
-    const held = typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === target.id) : null;
-    if (held && Units.list.includes(target)) held.dropFromStunnedUnit(target);
-    await this.hurt(target, 1, unit.team);
-    await this.sleep(650);
+    const T = (sx, sy, r) => ({ translate: "0px 0px", transform: `scale(${sx},${sy}) rotate(${r}deg)` });
+    img.animate([T(1.12, 1.12, 0), T(1.04, 1.14, 0), T(1.1, 0.95, 0), T(1.06, 1.04, 0), T(1.08, 1.08, 0)], { duration: 620, easing: "ease-out", fill: "both" });
 
-    // 4) el muro se hunde en el suelo y el rival se despega como una pegatina, mareado
-    const gone = !Units.list.includes(target);
-    slab.animate([{ opacity: 1, transform: "translate(-50%,-100%)" }, { opacity: 0, transform: "translate(-50%,-62%)" }], { duration: 420, easing: "ease-in", fill: "forwards" }).onfinish = () => slab.remove();
-    shadow.animate([{ opacity: 0.55 }, { opacity: 0 }], { duration: 420, fill: "forwards" }).onfinish = () => shadow.remove();
-    if (typeof SFX !== "undefined") SFX.wallSink();
-    if (!gone) {
-      target.forcedRestNextTurn = true;
-      target.crushedRound = 1;
-      this.addCrushBadge(target);
-      if (target.spriteEl) {
-        target.spriteEl.getAnimations().forEach((x) => x.cancel());
-        target.spriteEl.animate(
-          [{ transform: "scale(1.4,.14)" }, { transform: "scale(.8,1.3)", offset: 0.5 }, { transform: "scale(1.08,.94)", offset: 0.78 }, { transform: "scale(1,1)" }],
-          { duration: 620, easing: "cubic-bezier(.3,1.6,.5,1)" }
-        );
+    // Onda por las 8 casillas: primero las de los lados, luego las diagonales.
+    const victims = this.crushVictims(unit);
+    const jobs = [];
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (!dr && !dc) continue;
+        const r = unit.row + dr, cc = unit.col + dc;
+        if (r < 0 || cc < 0 || r >= S || cc >= S) continue;
+        const d = 130 + (dr && dc ? 120 : 0);
+        if (typeof TerrainCanvas !== "undefined") TerrainCanvas.hopTile(r, cc, 22, 420, d);
+        const tc = getTileCenter(r, cc, S);
+        jobs.push(this.sleep(d + 60).then(() => this.dust(tc.x, tc.y, 4, 70, false)));
+        const v = victims.find((u) => u.row === r && u.col === cc);
+        if (v) jobs.push(this.crushVictim(unit, v, d));
       }
-      Abilities._dizzyStars(target);
     }
+    jobs.push(this.sleep(1250));
+    await Promise.all(jobs);
+
+    // 4) el escudo vuelve a las manos del PortaMuros
+    if (typeof SFX !== "undefined") SFX.wallSink();
+    const back = img.animate(
+      [
+        { translate: "0px 0px", transform: "scale(1.08)", opacity: 1 },
+        { translate: "0px -30px", transform: "scale(.8,1.15)", opacity: 1, offset: 0.3 },
+        { translate: H, transform: "scale(.35)", opacity: 1, offset: 0.85 },
+        { translate: H, transform: "scale(0)", opacity: 0 },
+      ],
+      { duration: 520, easing: IN, fill: "both" }
+    );
+    if (spr && Units.list.includes(unit)) {
+      spr.getAnimations().forEach((x) => x.cancel());
+      spr.animate([{ transform: "scale(1,1)" }, { transform: "scale(1.1,.9)", offset: 0.7 }, { transform: "scale(1,1)" }], { duration: 520 });
+    }
+    await this.sleep(560);
+    wrap.remove();
     if (Units.list.includes(unit)) Units.refreshRange(unit);
+  },
+
+  // Un rival de las casillas de alrededor: salta, cae hecho una tortita, pierde 1 de vida y
+  // queda inactivo (aplastado) hasta que termine su ronda.
+  async crushVictim(unit, v, delay) {
+    await this.sleep(delay);
+    if (!Units.list.includes(v)) return;
+    const spr = v.spriteEl;
+    v.el.animate([{ translate: "0 0" }, { translate: "0 -24px", offset: 0.45 }, { translate: "0 0" }], { duration: 420, easing: "ease-out" });
+    const held = typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === v.id) : null;
+    if (held) held.dropFromStunnedUnit(v); // suelta el gnomo que llevara cogido
+    let anim = null;
+    if (spr) {
+      spr.getAnimations().forEach((x) => x.cancel());
+      anim = spr.animate(
+        [
+          { transform: "translateY(0) scale(1,1)", easing: "cubic-bezier(.2,.8,.3,1)" },
+          { transform: "translateY(0) scale(.86,1.2)", offset: 0.29, easing: "cubic-bezier(.2,.8,.3,1)" },
+          { transform: "translateY(-70px) scale(.92,1.12)", offset: 0.61, easing: "cubic-bezier(.6,0,.9,.4)" },
+          { transform: "translateY(0) scale(1.1,.9)", offset: 0.8 },
+          { transform: "translateY(0) scale(1.5,.2)", offset: 0.92 },
+          { transform: "translateY(0) scale(1.3,.27)" },
+        ],
+        { duration: 680, fill: "forwards" }
+      );
+    }
+    await this.sleep(640);
+    const c = getTileCenter(v.row, v.col, Units.boardSize);
+    this.shakeBoard(5);
+    this.dust(c.x, c.y + 14, 7, 90, false);
+    await this.hurt(v, 1, unit.team);
+    if (Units.list.includes(v)) {
+      v.forcedRestNextTurn = true;
+      v.crushedRound = 1;
+      v.crushAnim = anim; // se queda aplastado hasta que acabe su ronda inactiva
+      this.addCrushBadge(v);
+      Abilities._dizzyStars(v);
+    } else if (anim) anim.cancel();
   },
 
   addCrushBadge(target) {
@@ -583,9 +822,21 @@ const Enmurallado = {
     m.draggable = false;
     target.el.appendChild(m);
   },
+  // Fin de su ronda inactiva: se infla de vuelta (goma) y quita el icono.
   removeCrushBadge(target) {
     target.crushedRound = 0;
     if (target.el) target.el.querySelectorAll(".ew-crush-badge").forEach((n) => n.remove());
+    if (target.crushAnim) {
+      target.crushAnim.cancel();
+      target.crushAnim = null;
+      if (target.spriteEl && Units.list.includes(target)) {
+        target.spriteEl.animate(
+          [{ transform: "scale(1.3,.27)" }, { transform: "scale(.8,1.3)", offset: 0.5 }, { transform: "scale(1.08,.94)", offset: 0.78 }, { transform: "scale(1,1)" }],
+          { duration: 620, easing: "cubic-bezier(.3,1.6,.5,1)" }
+        );
+        if (typeof SFX !== "undefined" && SFX.wallRecover) SFX.wallRecover();
+      }
+    }
   },
 
   // ---------- Enganches con el motor de turnos ----------

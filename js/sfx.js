@@ -827,6 +827,11 @@ const SFX = {
     this._tone(250, 90, 0.12, "square", 0.25);
     this._noiseBurst(0.4, "lowpass", 500, 120, 0.2, 0.12);
   },
+  // El aplastado se infla de vuelta (goma).
+  wallRecover() {
+    this._tone(180, 520, 0.22, "sine", 0.22);
+    this._tone(300, 760, 0.16, "triangle", 0.1, 0.05);
+  },
   wallSink() {
     this._noiseBurst(0.38, "lowpass", 600, 110, 0.22);
     this._tone(140, 60, 0.36, "sine", 0.2);

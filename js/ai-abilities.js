@@ -219,12 +219,12 @@ const AIAbilities = {
     return true;
   },
 
-  // ---------- PortaMuros · Muro Aplastante: aplasta al rival adyacente con más vida ----------
+  // ---------- PortaMuros · Muro Aplastante (área): con 2+ rivales alrededor, o uno al que remata ----------
   async portamuros(unit) {
     const adj = this.enemiesOf(unit).filter((u) => this.cheb(u, unit) <= 1);
     if (adj.length === 0) return false;
-    adj.sort((a, b) => b.hp - a.hp);
-    await Enmurallado.resolveCrush(unit, adj[0]);
+    if (adj.length < 2 && adj[0].hp > 1) return false; // un solo rival que no muere: se guarda el muro
+    await Enmurallado.resolveCrush(unit);
     return true;
   },
 

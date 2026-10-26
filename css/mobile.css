@@ -295,9 +295,21 @@
 /* EQUIPO en horizontal: unidades más grandes, sin tapar el texto; vale también para móviles de menos de 721px de ancho */
 @media (max-height: 560px) and (orientation: landscape) {
   #race-list.sel-root > .sel-info2 { height: auto; min-height: 160px; padding: 8px 14px; }
-  #race-list.sel-root > .sel-team { --us: 0.78; margin-top: 104px; gap: 8px; }
+  #race-list.sel-root > .sel-team { --us: 0.72; margin-top: 64px; gap: 8px; }
   #race-list.sel-root > .sel-team .sel-un { width: 108px; }
   #race-list.sel-root > .sel-steps { position: absolute !important; top: calc(var(--m-top) + 6px); left: 50%; transform: translateX(-50%); margin: 0 !important; }
+}
+/* EQUIPO en horizontal en móviles estrechos (<= 780 px): columna izquierda más fina y texto más pequeño
+   para que la descripción no llegue hasta las tarjetas de unidad. */
+@media (max-height: 560px) and (max-width: 780px) and (orientation: landscape) {
+  #race-list.sel-root { grid-template-columns: minmax(150px, 24%) 1fr; column-gap: 8px; }
+  #race-list.sel-root > .sel-hero { height: 104px; }
+  #race-list.sel-root > .sel-rname { font-size: 15px; }
+  #race-list.sel-root > .sel-info2 { min-height: 0; padding: 6px 10px; }
+  #race-list.sel-root > .sel-info2 .sel-col p, #race-list.sel-root > .sel-info2 .sel-ud p { font-size: 10.5px; line-height: 1.18; }
+  #race-list.sel-root > .sel-info2 .sel-col h3 { font-size: 11px; }
+  #race-list.sel-root > .sel-team { --us: 0.66; margin-top: 44px; }
+  #race-list.sel-root > .sel-team .sel-un { width: 96px; }
 }
 @media (max-width: 720px) and (max-height: 560px) {
   #race-list.sel-root { grid-template-columns: minmax(170px, 28%) 1fr; }
