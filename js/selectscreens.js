@@ -20,7 +20,7 @@ const SelectScreens = {
     manos_largas: 90, ala_fugaz: 112, nidobot: 135,
     magonifico: 100, trazaflechas: 120, portamuros: 140,
   },
-  LEVEL_TEXT_COLOR: { colinas_rockntroll: "#c9ced8" },
+  LEVEL_TEXT_COLOR: { colinas_rockntroll: "#e0262a", wallforge: "#ff8a1f" },
   STAT_ROWS: [["aguante", "sel_stat_aguante"], ["fuerza", "sel_stat_fuerza"], ["movimiento", "sel_stat_movimiento"], ["agilidad", "sel_stat_agilidad"], ["percepcion", "sel_stat_percepcion"]],
 
   _raf: 0,

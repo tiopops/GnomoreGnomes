@@ -29,7 +29,7 @@ const LEVELS = [
     featureIcons: ["ph-music-notes", "ph-cube", "ph-fire"],
     islandImg: "assets/niveles/isla_colinas_rockntroll.png",
     logoImg: "assets/niveles/logo_colinas_rockntroll.png",
-    color: "#8a8f99",
+    color: "#e0262a",
     available: true,
   },
   {
@@ -51,7 +51,7 @@ const LEVELS = [
     featureIcons: [],
     islandImg: "assets/niveles/isla_wallforge.png",
     logoImg: "assets/niveles/isla_wallforge.png",
-    color: "#4f78c4",
+    color: "#ff8a1f",
     available: false,
   },
 ];
