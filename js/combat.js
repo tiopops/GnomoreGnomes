@@ -152,7 +152,7 @@ const Combat = {
     const damage = UNIT_TYPES[unit.typeId].fuerza + (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0);
     this.attackableEnemies(unit).forEach(({ target, approach }, i) => {
       const tile = this.attackMarkerTile(target);
-      Units.addMarker({
+      const atkMarker = Units.addMarker({
         className: "attack-marker",
         row: tile.row,
         col: tile.col,
@@ -166,6 +166,7 @@ const Combat = {
         },
         onClick: () => this.approachAndAttack(unit, target),
       });
+      atkMarker._overlayFor = target.el; // icono también sobre el sprite (Units._addAttackOverlays)
 
       target.el.classList.add("unit--targeted");
       this.targetedIds.push(target.id);

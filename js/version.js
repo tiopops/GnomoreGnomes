@@ -12,10 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001611";
+const GG_VERSION = "v.001612";
 
 const GG_CHANGELOG = [
-  { v: "v.001611", date: "27/10/2026", title: "La Reliquia Paranoica de WallForge", items: [
+  { v: "v.001612", date: "27/10/2026", title: "La Reliquia Paranoica de WallForge", items: [
+    "Icono de pegar a una unidad: ahora también se muestra sobre el sprite del rival (salvo que estorbe a un círculo de movimiento); pulsarlo equivale a pulsar la mira del suelo",
+    "TrazaFlechas: retrato del círculo de información recolocado y con el mismo encuadre que el resto de personajes",
+    "Guardias de WallForge: se les puede lanzar un gnomo para aturdirlos (+5 al gnomo); animación idle de guardias y altar; la marcha de soldados suena sin fanfarria",
     "Equipo Reforjados: el círculo de selección de objetivo de la habilidad del MagoNífico (y de la flecha) ya no tiene borde negro y aparece por debajo del sprite del rival",
     "Reliquia de WallForge: más pequeña (2/3), con sombra, resolución adaptativa, reacción al ratón y niebla como el resto del escenario; solo se ve (junto a sus guardias) dentro del campo de visión; para abrirla hay que estrellar 3 gnomos contra ella (rompen una cadena, la otra y la desencadenan); emite ondas naranjas en perspectiva que se aceleran con cada golpe y cesan al cogerla; marcha de soldados al moverse los guardias; quien lleve la Reliquia, y lo que ve, es visible para todos",
     "Guardias de WallForge: nuevo sprite de guardia mareado, con estrellitas girando sobre su cabeza mientras dura el aturdimiento",

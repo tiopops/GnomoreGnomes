@@ -193,6 +193,7 @@ const Reliquia = {
     el.className = "unit board-item reliquia-altar";
     const img = document.createElement("img");
     img.className = "reliquia-altar__sprite";
+    img.style.animationDelay = `-${(Math.random() * 4).toFixed(2)}s`; // idle desfasado
     img.alt = "";
     img.draggable = false;
     img.decoding = "async";
@@ -230,6 +231,7 @@ const Reliquia = {
     el.className = "unit board-item reliquia-guard";
     const img = document.createElement("img");
     img.className = "reliquia-guard__sprite";
+    img.style.animationDelay = `-${(Math.random() * 4).toFixed(2)}s`; // idle desfasado
     img.alt = "";
     img.draggable = false;
     img.decoding = "async";
@@ -599,8 +601,8 @@ const Reliquia = {
     if (Units.list.includes(unit)) Units.refreshRange(unit);
   },
 
-  _marker(row, col, icon, onClick) {
-    Units.addMarker({
+  _marker(row, col, icon, onClick, overlayEl) {
+    const mk = Units.addMarker({
       className: "attack-marker reliquia-marker",
       row, col, zOffset: 2,
       visibleClass: "attack-marker--visible",
@@ -613,6 +615,7 @@ const Reliquia = {
         m.appendChild(i);
       },
     });
+    if (overlayEl) mk._overlayFor = overlayEl; // icono también sobre el sprite (Units._addAttackOverlays)
   },
 
   // Proveedor de rango (Units.registerRangeProvider): marcas sobre los guardias (con un gnomo en la mano)
@@ -623,7 +626,7 @@ const Reliquia = {
     if (this._heldGnome(unit)) {
       this.guards.forEach((g) => {
         if (g.stun > 0 || !this._visible(g) || !this._canReach(unit, g)) return;
-        this._marker(g.row, g.col, "ph-crosshair-simple", () => this._approachAnd(unit, g, () => this.hitGuard(unit, g)));
+        this._marker(g.row, g.col, "ph-crosshair-simple", () => this._approachAnd(unit, g, () => this.hitGuard(unit, g)), g.el);
       });
     }
     if (this.relic.state === "altar" && this.altar.hits >= RELIQUIA_HITS_TO_OPEN && !this._carrier() && this._visible(this.altar) && this._canReach(unit, this.altar)) {
@@ -632,31 +635,43 @@ const Reliquia = {
   },
 
   // ---------- Lanzar un gnomo al altar ----------
+  // Objetivos a los que se puede lanzar un gnomo: el altar (mientras queden cadenas) y los guardias despiertos.
+  _throwTargets(unit) {
+    if (!this.altar || !this.relic || this.busy) return [];
+    const inRange = (o) => {
+      const d = this._cheb(unit, o);
+      return d >= 1 && d <= GNOME_THROW_MAX_RANGE && this._visible(o);
+    };
+    const out = [];
+    if (this.altar.hits < RELIQUIA_HITS_TO_OPEN && inRange(this.altar)) out.push(this.altar);
+    this.guards.forEach((g) => { if (g.stun <= 0 && inRange(g)) out.push(g); });
+    return out;
+  },
+
   canThrowAt(unit) {
-    if (!this.altar || !this.relic || this.busy || this.altar.hits >= RELIQUIA_HITS_TO_OPEN || !this._visible(this.altar)) return false;
-    const d = this._cheb(unit, this.altar);
-    return d >= 1 && d <= GNOME_THROW_MAX_RANGE;
+    return this._throwTargets(unit).length > 0;
   },
 
   addThrowMarker(unit, gnome) {
-    if (!this.canThrowAt(unit)) return;
-    Units.addMarker({
-      className: "pass-marker reliquia-throw-marker",
-      row: this.altar.row, col: this.altar.col, zOffset: 12,
-      visibleClass: "pass-marker--visible",
-      owner: "gnome", alwaysOnTop: true,
-      buildContent: (m) => {
-        const i = document.createElement("i");
-        i.className = "ph ph-paper-plane-tilt pass-marker__icon";
-        i.style.transform = "translateY(-60px)";
-        m.appendChild(i);
-      },
-      onClick: () => this.throwGnome(unit, gnome),
+    this._throwTargets(unit).forEach((t) => {
+      Units.addMarker({
+        className: "pass-marker reliquia-throw-marker",
+        row: t.row, col: t.col, zOffset: 12,
+        visibleClass: "pass-marker--visible",
+        owner: "gnome", alwaysOnTop: true,
+        buildContent: (m) => {
+          const i = document.createElement("i");
+          i.className = "ph ph-paper-plane-tilt pass-marker__icon";
+          i.style.transform = t === this.altar ? "translateY(-60px)" : "translateY(-70px)";
+          m.appendChild(i);
+        },
+        onClick: () => this.throwGnome(unit, gnome, t),
+      });
     });
   },
 
-  _landCell(holder) {
-    const a = this.altar, cands = [];
+  _landCell(holder, center) {
+    const a = center || this.altar, cands = [];
     for (let dr = -3; dr <= 3; dr++)
       for (let dc = -3; dc <= 3; dc++) {
         if (Math.max(Math.abs(dr), Math.abs(dc)) !== 3) continue;
@@ -673,10 +688,11 @@ const Reliquia = {
     return { row: holder.row, col: holder.col };
   },
 
-  async throwGnome(holder, gnome) {
-    if (!this.canThrowAt(holder) || gnome.heldBy !== holder.id || gnome.busy) return;
+  async throwGnome(holder, gnome, target) {
+    target = target || this.altar;
+    if (!this._throwTargets(holder).includes(target) || gnome.heldBy !== holder.id || gnome.busy) return;
     if (typeof Turns !== "undefined" && !Turns.canAct(holder)) return;
-    const a = this.altar;
+    const a = target;
     if (typeof Turns !== "undefined") Turns.useAction(holder);
     Units.clearRangeOverlays();
     gnome.passing = false;
@@ -698,12 +714,22 @@ const Reliquia = {
       gnome.spriteEl.src = GNOME_ASSETS.grita;
       await gnome.animateThrowTo(holder.row, holder.col, a.row, a.col);
       this._sfx("hit");
-      this._clang(a);
-      await this._hitAltar();
-      // Atacar el altar manda a los guardias tras el atacante.
-      this.alert = { unitId: holder.id };
+      if (a === this.altar) {
+        this._clang(a);
+        await this._hitAltar();
+        // Atacar el altar manda a los guardias tras el atacante.
+        this.alert = { unitId: holder.id };
+      } else {
+        // Gnomazo a un guardia: se queda aturdido y el gnomo se carga.
+        this._shake(false);
+        if (a.imgEl.animate) a.imgEl.animate([{ transform: "scale(1,1)" }, { transform: "scale(1.2,.78)", offset: 0.25 }, { transform: "scale(.92,1.1)", offset: 0.6 }, { transform: "scale(1,1)" }], { duration: 420, easing: "cubic-bezier(.2,1.5,.4,1)" });
+        this._stun(a);
+        if (gnome._addPoints) gnome._addPoints(RELIQUIA_HIT_CHARGE);
+        Units.spawnFloatingText(holder, `+${RELIQUIA_HIT_CHARGE}`, { className: "dmg-popup gnome-points-popup" });
+        await this._wait(300);
+      }
       // El gnomo cae cerca del altar (y se queda).
-      const cell = this._landCell(holder);
+      const cell = this._landCell(holder, a);
       await gnome.animateThrowTo(a.row, a.col, cell.row, cell.col);
       const catcher = cell.unit && Units.list.includes(cell.unit) && !Gnome.isHeldBy(cell.unit.id) ? cell.unit : null;
       if (catcher) {

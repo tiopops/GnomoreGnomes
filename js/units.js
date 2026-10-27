@@ -1022,6 +1022,45 @@ const Units = {
       if (hidden) m.remove();
       return !hidden;
     });
+    this._addAttackOverlays();
+  },
+
+  // Pedido explícito: el icono de pegar a una unidad también se muestra SOBRE el sprite del rival (además
+  // de la mira del suelo), salvo que estorbe a algún círculo de movimiento. Las mecánicas marcan su mira
+  // con `marker._overlayFor = <elemento del objetivo>`; el clic del icono reenvía el de la mira.
+  _addAttackOverlays() {
+    const rings = this.markerEls
+      .filter((m) => m.classList.contains("range-marker") && m.isConnected)
+      .map((m) => {
+        const c = getTileCenter(+m.dataset.row, +m.dataset.col, this.boardSize);
+        return { x: c.x, y: c.y, rx: m.offsetWidth / 2 || 50, ry: m.offsetHeight / 2 || 27 };
+      });
+    const R = 24; // radio efectivo del icono (68px de fuente, glifo ~48px)
+    const samples = [[0, 0]];
+    for (let i = 0; i < 8; i++) samples.push([Math.cos((i * Math.PI) / 4) * R, Math.sin((i * Math.PI) / 4) * R]);
+    this.markerEls.slice().forEach((m) => {
+      const tgt = m._overlayFor;
+      if (!tgt || !tgt.isConnected) return;
+      const c = getTileCenter(+m.dataset.row, +m.dataset.col, this.boardSize);
+      const x = c.x, y = c.y - 0.42 * (tgt.offsetHeight || 150);
+      const clash = rings.some((r) => samples.some(([dx, dy]) => ((x + dx - r.x) / r.rx) ** 2 + ((y + dy - r.y) / r.ry) ** 2 <= 1));
+      if (clash) return;
+      const o = document.createElement("div");
+      o.className = "board-marker attack-overlay";
+      const i = document.createElement("i");
+      i.className = "ph ph-crosshair-simple attack-overlay__icon";
+      o.appendChild(i);
+      o.style.left = `${x}px`;
+      o.style.top = `${y}px`;
+      o.style.zIndex = "5003";
+      o.addEventListener("click", (e) => {
+        e.stopPropagation();
+        m.click();
+      });
+      this.container.appendChild(o);
+      this.markerEls.push(o);
+      requestAnimationFrame(() => setTimeout(() => o.classList.add("attack-overlay--visible"), 120));
+    });
   },
 
   // ---------- Desplazamiento paso a paso: lo usa cualquier mecánica que

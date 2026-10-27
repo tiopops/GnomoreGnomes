@@ -755,8 +755,7 @@ const SFX = {
   },
 
   // ---------- Guardias de la Fortaleza WallForge (js/reliquia.js) ----------
-  // Marcha de soldados pegadiza: pisadas (bombo grave + chasquido de armadura) a tempo de marcha y una
-  // fanfarria corta de metales que repite "ta-ta-TAA".
+  // Marcha de soldados: pisadas (bombo grave + chasquido de armadura) a tempo de marcha.
   reliquiaMarch() {
     const B = 0.16; // un tiempo
     for (let i = 0; i < 8; i++) {
@@ -769,11 +768,6 @@ const SFX = {
         this._tone(900, 500, 0.05, "square", 0.04, t);
       }
     }
-    const horn = [[196, 0, 0.12], [196, 2, 0.12], [262, 4, 0.34], [196, 6, 0.12]];
-    horn.forEach(([f, k, d]) => {
-      this._tone(f, f, d, "sawtooth", 0.07, k * B);
-      this._tone(f * 1.5, f * 1.5, d, "square", 0.025, k * B);
-    });
   },
 
   // ---------- Lanzamiento con tirachinas (Abilities._slingTension) ----------
