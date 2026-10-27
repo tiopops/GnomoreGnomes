@@ -242,6 +242,8 @@ const Fog = {
     if (typeof GnomOgro !== "undefined" && GnomOgro.current) {
       markAround(GnomOgro.current.row, GnomOgro.current.col, GNOMOGRO_PERCEPTION_RADIUS);
     }
+    // Reliquia de WallForge (js/reliquia.js): quien la lleva, y lo que ve, es visible para todos.
+    if (typeof Reliquia !== "undefined") Reliquia.markPerception(markAround);
     // Pedido explícito: "cuando la surcabosques usa vision lejana...la
     // zona se revela...durante 4 segundos" — fuentes de percepción
     // temporales (ver addTemporaryPerception), que expiran solas. Un

@@ -12253,7 +12253,7 @@ body.ability-targeting--swap * {
 @keyframes ew-crush-bob { from { translate: 0 0; } to { translate: 0 -5px; } }
 
 /* Equipo Enmurallado: casillas de objetivo (flecha / cambiazo) en naranja. */
-.ew-target-marker { border-color: #ff8a1f !important; background: rgba(255, 138, 31, 0.28) !important; box-shadow: 0 0 0 3px #1b1208 !important; }
+.ew-target-marker { border-color: #ff8a1f !important; background: rgba(255, 138, 31, 0.28) !important; box-shadow: none !important; }
 
 /* Equipo Enmurallado: la arquera se dibuja por delante de sus vecinos cuando no está seleccionada. */
 .sel-un[data-t="trazaflechas"] { z-index: 2; }
@@ -12298,25 +12298,54 @@ body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
 
 /* ===== La Reliquia Paranoica (js/reliquia.js) — Fortaleza WallForge ===== */
 .reliquia-altar,
-.reliquia-guard,
+.reliquia-guard {
+  pointer-events: auto;
+}
 .reliquia-floor {
   pointer-events: none;
 }
 .reliquia-altar {
   transform: translate(-50%, -82.5%);
 }
-.reliquia-altar__img {
+.reliquia-altar:hover {
+  transform: translate(-50%, -82.5%) scale(1.04);
+  filter: brightness(1.1);
+}
+.reliquia-altar__sprite {
   display: block;
-  width: 262px;
+  width: 175px;
   height: auto;
   user-select: none;
   -webkit-user-drag: none;
   transform-origin: 50% 82%;
 }
+.reliquia-waves {
+  position: absolute;
+  left: 50%;
+  top: 82.5%;
+  width: 0;
+  height: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.reliquia-wave {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  border: 6px solid #ff8a1f;
+  border-radius: 50%;
+  pointer-events: none;
+}
 .reliquia-guard {
   transform: translate(-50%, -88%);
 }
-.reliquia-guard__img {
+.reliquia-guard:hover {
+  transform: translate(-50%, -88%) scale(1.05);
+  filter: brightness(1.1);
+}
+.reliquia-guard__sprite {
   display: block;
   width: 150px;
   height: auto;

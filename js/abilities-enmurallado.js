@@ -160,16 +160,32 @@ const Enmurallado = {
     const targets = Units.list.filter(valid);
     Units.clearRangeOverlays();
     if (typeof UiHint !== "undefined") UiHint.show(hint);
+    // El círculo va POR DEBAJO del sprite del rival, así que pulsar el propio sprite también elige.
+    if (this._pickCleanup) this._pickCleanup();
+    const subs = targets.map((t) => {
+      const h = (e) => {
+        if (!Units.markerEls.some((m) => m.classList.contains("ew-target-marker"))) return;
+        e.stopPropagation();
+        e.preventDefault();
+        this._pickCleanup();
+        if (typeof UiHint !== "undefined") UiHint.hide();
+        Units.clearRangeOverlays();
+        onPick(t);
+      };
+      if (t.el) t.el.addEventListener("click", h, true);
+      return () => t.el && t.el.removeEventListener("click", h, true);
+    });
+    this._pickCleanup = () => { subs.forEach((f) => f()); this._pickCleanup = null; };
     targets.forEach((t, i) =>
       Units.addMarker({
         className: "range-marker ability-throw-marker ew-target-marker",
         row: t.row,
         col: t.col,
-        zOffset: 2,
-        alwaysOnTop: true,
+        zOffset: 1, // por debajo del sprite del rival (su z-index es +5)
         delayMs: Units.staggerDelay(i, targets.length),
         visibleClass: "range-marker--visible",
         onClick: () => {
+          if (this._pickCleanup) this._pickCleanup();
           if (typeof UiHint !== "undefined") UiHint.hide();
           onPick(t);
         },

@@ -25,7 +25,8 @@ const RELIQUIA_SRC = {
   vacio: RELIQUIA_DIR + "altar_vacio.png",
   icono: RELIQUIA_DIR + "reliquia.png",
 };
-const RELIQUIA_OPEN_POINTS = 10; // puntos que debe llevar el gnomo lanzado para romper las cadenas
+const RELIQUIA_HITS_TO_OPEN = 3; // gnomos que hay que estrellar contra el altar: rompen una cadena, la otra y, el tercero, desencadena la Reliquia
+const RELIQUIA_WAVE_MS = [2400, 1600, 1000, 620]; // cada cuánto sale una onda naranja según los golpes recibidos (más rápido con menos cadenas)
 const RELIQUIA_HIT_CHARGE = 5; // puntos que gana el gnomo al pegar a un guardia
 const RELIQUIA_STUN_TURNS = 3; // turnos (de cualquier bando) que dura el aturdimiento
 const RELIQUIA_GUARD_DAMAGE = 1;
@@ -34,7 +35,7 @@ const RELIQUIA_RING = 2; // radio (Chebyshev) del círculo de patrulla
 const RELIQUIA_GUARD_OFFSETS = [0, 5, 11]; // posiciones de los 3 guardias en el círculo de 16 casillas
 const RELIQUIA_ALTAR_W = 262; // ancho del altar en pantalla (px)
 const RELIQUIA_ALTAR_H = (638 / 560) * RELIQUIA_ALTAR_W;
-const RELIQUIA_RELIC_Y = 140; // altura (px sobre el centro de la casilla) a la que flota la Reliquia sobre el altar
+const RELIQUIA_RELIC_Y = 93; // altura (px sobre el centro de la casilla) a la que flota la Reliquia sobre el altar
 
 const Reliquia = {
   altar: null, // { row, col, el, imgEl, state: "sellado" | "abierto" | "vacio" }
@@ -60,6 +61,21 @@ const Reliquia = {
     this.busy = false;
   },
 
+  // Percepción: quien lleve la Reliquia (de cualquier bando) y lo que él ve es visible para TODOS.
+  markPerception(markAround) {
+    const c = this._carrier();
+    if (!c) return;
+    const type = typeof UNIT_TYPES !== "undefined" ? UNIT_TYPES[c.typeId] : null;
+    markAround(c.row, c.col, (type ? type.percepcion : 1) + 1);
+  },
+
+  _revealCarrier() {
+    const c = this._carrier();
+    if (!c || typeof Fog === "undefined" || !Fog.revealAround) return;
+    const type = typeof UNIT_TYPES !== "undefined" ? UNIT_TYPES[c.typeId] : null;
+    Fog.revealAround(c.row, c.col, (type ? type.percepcion : 1) + 1);
+  },
+
   // Casilla ocupada por el altar o por un guardia (Drums.at lo consulta, ver el final del archivo).
   blocks(row, col) {
     if (!this.altar) return null;
@@ -81,6 +97,45 @@ const Reliquia = {
     void v.offsetWidth;
     v.classList.add(cls);
     setTimeout(() => v.classList.remove(cls), 420);
+  },
+
+  // Resolución adaptativa (js/spritequality.js): todo sprite del tablero se asigna por aquí.
+  _src(img, src) {
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(img, src);
+    else img.src = src;
+  },
+
+  // Ondas naranjas en perspectiva detrás del altar: más rápidas cuanto menos cadenas quedan; cesan al coger la Reliquia.
+  _startWaves() {
+    this._stopWaves();
+    const a = this.altar;
+    if (!a || !a.wavesEl) return;
+    const tick = () => {
+      a._waveT = null;
+      if (!this.altar || a !== this.altar || this.relic.state !== "altar" || a.state === "vacio") return;
+      if (!document.hidden && a.el.isConnected && !a.el.classList.contains("unit--fog-hidden")) this._wave();
+      a._waveT = setTimeout(tick, RELIQUIA_WAVE_MS[Math.min(a.hits, RELIQUIA_WAVE_MS.length - 1)]);
+    };
+    tick();
+  },
+
+  _stopWaves() {
+    const a = this.altar;
+    if (a && a._waveT) clearTimeout(a._waveT);
+    if (a) a._waveT = null;
+  },
+
+  _wave() {
+    const a = this.altar;
+    const w = document.createElement("div");
+    w.className = "reliquia-wave";
+    a.wavesEl.appendChild(w);
+    const fast = RELIQUIA_WAVE_MS[Math.min(a.hits, RELIQUIA_WAVE_MS.length - 1)];
+    const an = w.animate(
+      [{ width: "90px", height: "50px", opacity: 0.95, borderWidth: "7px" }, { width: "470px", height: "260px", opacity: 0, borderWidth: "2px" }],
+      { duration: 1500 + fast * 0.4, easing: "ease-out", fill: "forwards" }
+    );
+    an.onfinish = () => w.remove();
   },
 
   _wait(ms) {
@@ -123,6 +178,7 @@ const Reliquia = {
     if (!spot) return;
     this._createAltar(spot.row, spot.col);
     this.relic = { state: "altar", carrier: null, team: null, points: 0, row: spot.row, col: spot.col, el: null };
+    this._startWaves();
     const ring = this._ring();
     RELIQUIA_GUARD_OFFSETS.forEach((off, i) => this._createGuard(i, off, ring[off % ring.length]));
     this.refreshFog();
@@ -136,24 +192,28 @@ const Reliquia = {
     const el = document.createElement("div");
     el.className = "unit board-item reliquia-altar";
     const img = document.createElement("img");
-    img.className = "reliquia-altar__img";
+    img.className = "reliquia-altar__sprite";
     img.alt = "";
     img.draggable = false;
     img.decoding = "async";
-    img.src = RELIQUIA_SRC.sellado;
+    const waves = document.createElement("div");
+    waves.className = "reliquia-waves";
+    el.appendChild(waves);
+    this._src(img, RELIQUIA_SRC.sellado);
     el.appendChild(img);
     Units.container.appendChild(el);
+    if (typeof Shadows !== "undefined") Shadows.attach(img);
     const { x, y } = this._px(row, col);
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
     el.style.zIndex = String((row + col) * 10 + 5);
-    this.altar = { row, col, el, imgEl: img, state: "sellado" };
+    this.altar = { row, col, el, imgEl: img, wavesEl: waves, state: "sellado", hits: 0 };
   },
 
   _setAltar(state) {
     if (!this.altar) return;
     this.altar.state = state;
-    this.altar.imgEl.src = RELIQUIA_SRC[state];
+    this._src(this.altar.imgEl, RELIQUIA_SRC[state]);
   },
 
   _ring() {
@@ -169,13 +229,14 @@ const Reliquia = {
     const el = document.createElement("div");
     el.className = "unit board-item reliquia-guard";
     const img = document.createElement("img");
-    img.className = "reliquia-guard__img";
+    img.className = "reliquia-guard__sprite";
     img.alt = "";
     img.draggable = false;
     img.decoding = "async";
-    img.src = RELIQUIA_SRC.guardia;
+    this._src(img, RELIQUIA_SRC.guardia);
     el.appendChild(img);
     Units.container.appendChild(el);
+    if (typeof Shadows !== "undefined") Shadows.attach(img);
     const g = { id: `guardia-${i + 1}`, team: "guardia", row: cell.row, col: cell.col, off, el, imgEl: img, stun: 0, flip: false, starsEl: null, hp: 99, maxHp: 99 };
     this._place(g);
     this.guards.push(g);
@@ -197,7 +258,7 @@ const Reliquia = {
 
   refreshFog() {
     if (typeof Fog === "undefined" || !this.altar) return;
-    const f = (o) => Fog.isFoggedReal(o.row, o.col);
+    const f = (o) => Fog.isFoggedReal(o.row, o.col) || !Fog.isPerceived(o.row, o.col);
     this.altar.el.classList.toggle("unit--fog-hidden", f(this.altar));
     this.guards.forEach((g) => g.el.classList.toggle("unit--fog-hidden", f(g)));
     const r = this.relic;
@@ -205,7 +266,7 @@ const Reliquia = {
   },
 
   _visible(o) {
-    return !(typeof Fog !== "undefined" && Fog.isFoggedReal(o.row, o.col));
+    return !(typeof Fog !== "undefined" && (Fog.isFoggedReal(o.row, o.col) || !Fog.isPerceived(o.row, o.col)));
   },
 
   // ---------- Casillas libres para los guardias y búsqueda de camino ----------
@@ -268,6 +329,7 @@ const Reliquia = {
         if (u) Units.spawnFloatingText(u, `+1`, { className: "dmg-popup gnome-points-popup" });
         if (u) await this.checkDelivery(u);
       }
+      this._revealCarrier();
       await this._guardsTurn();
     } catch (e) {
       console.warn("[Reliquia] turno", e);
@@ -320,6 +382,8 @@ const Reliquia = {
     } else {
       this._patrol(awake, anims);
     }
+    // Marcha de soldados: solo suena si el jugador ve a algún guardia moverse.
+    if (anims.length && this.guards.some((g) => g.stun <= 0 && this._visible(g))) this._sfx("reliquiaMarch");
     await Promise.all(anims);
     if (typeof Fog !== "undefined") Fog.applyVisibility();
   },
@@ -364,6 +428,7 @@ const Reliquia = {
     g.row = cell.row;
     g.col = cell.col;
     this._place(g);
+    if (typeof Fog !== "undefined" && Fog.applyVisibility) Fog.applyVisibility();
     if (g.imgEl.animate)
       g.imgEl.animate(
         [{ transform: "translateY(0) scale(1,1)" }, { transform: "translateY(-14px) scale(.96,1.06)", offset: 0.45 }, { transform: "translateY(0) scale(1.08,.9)", offset: 0.8 }, { transform: "translateY(0) scale(1,1)" }],
@@ -400,13 +465,13 @@ const Reliquia = {
   _stun(g) {
     g.stun = RELIQUIA_STUN_TURNS;
     g.el.classList.add("reliquia-guard--stun");
-    g.imgEl.src = RELIQUIA_SRC.mareado;
+    this._src(g.imgEl, RELIQUIA_SRC.mareado);
     this._stars(g);
   },
 
   _clearStun(g) {
     g.el.classList.remove("reliquia-guard--stun");
-    g.imgEl.src = RELIQUIA_SRC.guardia;
+    this._src(g.imgEl, RELIQUIA_SRC.guardia);
   },
 
   // Estrellitas girando sobre la cabeza mientras dura el aturdimiento (mismas que Abilities._dizzyStars).
@@ -561,14 +626,14 @@ const Reliquia = {
         this._marker(g.row, g.col, "ph-crosshair-simple", () => this._approachAnd(unit, g, () => this.hitGuard(unit, g)));
       });
     }
-    if (this.relic.state === "altar" && this.altar.state === "abierto" && !this._carrier() && this._visible(this.altar) && this._canReach(unit, this.altar)) {
+    if (this.relic.state === "altar" && this.altar.hits >= RELIQUIA_HITS_TO_OPEN && !this._carrier() && this._visible(this.altar) && this._canReach(unit, this.altar)) {
       this._marker(this.altar.row, this.altar.col, "ph-hand-grabbing", () => this._approachAnd(unit, this.altar, () => this.takeRelic(unit)));
     }
   },
 
   // ---------- Lanzar un gnomo al altar ----------
   canThrowAt(unit) {
-    if (!this.altar || !this.relic || this.busy || this.altar.state !== "sellado" || !this._visible(this.altar)) return false;
+    if (!this.altar || !this.relic || this.busy || this.altar.hits >= RELIQUIA_HITS_TO_OPEN || !this._visible(this.altar)) return false;
     const d = this._cheb(unit, this.altar);
     return d >= 1 && d <= GNOME_THROW_MAX_RANGE;
   },
@@ -632,11 +697,9 @@ const Reliquia = {
       gnome.detachFrom();
       gnome.spriteEl.src = GNOME_ASSETS.grita;
       await gnome.animateThrowTo(holder.row, holder.col, a.row, a.col);
-      const charged = (gnome.points || 0) >= RELIQUIA_OPEN_POINTS;
       this._sfx("hit");
-      this._shake(charged);
       this._clang(a);
-      if (charged) await this._breakChains();
+      await this._hitAltar();
       // Atacar el altar manda a los guardias tras el atacante.
       this.alert = { unitId: holder.id };
       // El gnomo cae cerca del altar (y se queda).
@@ -664,18 +727,21 @@ const Reliquia = {
       a.imgEl.animate([{ transform: "scale(1,1)" }, { transform: "scale(1.05,.95)", offset: 0.3 }, { transform: "scale(.98,1.03)", offset: 0.65 }, { transform: "scale(1,1)" }], { duration: 360, easing: "ease-out" });
   },
 
-  async _breakChains() {
+  // Cada gnomo estrellado rompe una cadena; el tercero desencadena la Reliquia y se puede coger.
+  async _hitAltar() {
     const a = this.altar;
-    this._setAltar("rompiendo");
-    await this._wait(170);
-    this._setAltar("abierto");
-    this._sfx("explosion");
-    this._shake(true);
-    if (a.imgEl.animate)
-      a.imgEl.animate([{ transform: "scale(.94,1.06)" }, { transform: "scale(1.07,.93)", offset: 0.4 }, { transform: "scale(1,1)" }], { duration: 480, easing: "cubic-bezier(.2,1.5,.4,1)" });
+    if (a.hits >= RELIQUIA_HITS_TO_OPEN) return;
+    a.hits++;
     const { x, y } = this._px(a.row, a.col);
-    if (typeof Enmurallado !== "undefined" && Enmurallado.shards) Enmurallado.shards(x, y - 90, 14, { speed: 110, lift: 60, size: 12 });
-    await this._wait(420);
+    this._shake(a.hits >= 2);
+    if (a.hits === 1) this._setAltar("rompiendo");
+    else if (a.hits === 2) this._setAltar("abierto");
+    else this._sfx("explosion");
+    if (typeof Enmurallado !== "undefined" && Enmurallado.shards) Enmurallado.shards(x, y - 70, a.hits >= 3 ? 16 : 8, { speed: 100, lift: 60, size: 11 });
+    if (a.hits >= 2 && a.imgEl.animate)
+      a.imgEl.animate([{ transform: "scale(.94,1.06)" }, { transform: "scale(1.07,.93)", offset: 0.4 }, { transform: "scale(1,1)" }], { duration: 480, easing: "cubic-bezier(.2,1.5,.4,1)" });
+    this._startWaves(); // las ondas se aceleran
+    await this._wait(a.hits >= 3 ? 420 : 260);
   },
 
   // ---------- Coger y llevar la Reliquia ----------
@@ -702,7 +768,7 @@ const Reliquia = {
 
   async takeRelic(unit) {
     const r = this.relic;
-    if (!r || r.state !== "altar" || this.altar.state !== "abierto" || this.busy) return;
+    if (!r || r.state !== "altar" || this.altar.hits < RELIQUIA_HITS_TO_OPEN || this.busy) return;
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
     if (this._carrier()) return;
     if (typeof Turns !== "undefined") Turns.useAction(unit);
@@ -711,6 +777,7 @@ const Reliquia = {
     try {
       Units.faceTowardsTile(unit, this.altar.row, this.altar.col);
       this._setAltar("vacio");
+      this._stopWaves();
       this._sfx("itemPlace");
       const u = this._px(unit.row, unit.col);
       await this._fly(this._relicAnchor(), { x: u.x, y: u.y - 120 }, 520);
@@ -794,7 +861,13 @@ const Reliquia = {
       this._sfx("passSuccess");
       Units.spawnFloatingText(unit, "0", { className: "dmg-popup gnome-points-popup" });
     }
-    if (r.state === "carried" && r.carrier === unit.id) this.checkDelivery(unit, row, col);
+    if (r.state === "carried" && r.carrier === unit.id) {
+      if (unit.team !== "player" && typeof Fog !== "undefined" && Fog.revealAround) {
+        const type = typeof UNIT_TYPES !== "undefined" ? UNIT_TYPES[unit.typeId] : null;
+        Fog.revealAround(row, col, (type ? type.percepcion : 1) + 1);
+      }
+      this.checkDelivery(unit, row, col);
+    }
   },
 
   async checkDelivery(unit, row, col) {
@@ -827,7 +900,9 @@ const Reliquia = {
     r.points = 0;
     this.alert = null;
     await this._fly(from, this._relicAnchor(), 700);
+    this.altar.hits = 0;
     this._setAltar("sellado");
+    this._startWaves();
     this._sfx("itemPlace");
     this._clang(this.altar);
     this._shake(false);

@@ -359,6 +359,7 @@ const FogCanvas = {
     if (typeof TotemVision !== "undefined") add("totem", TotemVision.list);
     if (typeof BloodSplat !== "undefined") add("blood", BloodSplat.list);
     if (typeof Egg !== "undefined" && Egg.egg && !Egg.egg.exploded) add("egg", [Egg.egg]);
+    if (typeof Reliquia !== "undefined" && Reliquia.altar) { add("reliquia", [Reliquia.altar]); add("guard", Reliquia.guards); }
     if (typeof Backpack !== "undefined") { add("item", Backpack.placedItems); add("trap", Backpack.traps); }
     // Móviles (se vuelven a medir en cada repintado): unidades y gnomos
     if (typeof Units !== "undefined") add("unit", Units.list);
@@ -392,7 +393,7 @@ const FogCanvas = {
               if (cc >= 0 && cc < n && !F.revealedGrid[rr][cc]) { edge = true; break; }
             }
           }
-          if (edge) next.push({ el: o.el, row: o.row, col: o.col, kind, rect: null, src: "", flip: false, dyn: kind === "unit" || kind === "gnome" });
+          if (edge) next.push({ el: o.el, row: o.row, col: o.col, kind, rect: null, src: "", flip: false, dyn: kind === "unit" || kind === "gnome" || kind === "guard" });
         }
       }
     }

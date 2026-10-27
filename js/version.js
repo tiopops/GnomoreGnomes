@@ -12,10 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001609";
+const GG_VERSION = "v.001611";
 
 const GG_CHANGELOG = [
-  { v: "v.001609", date: "27/10/2026", title: "La Reliquia Paranoica de WallForge", items: [
+  { v: "v.001611", date: "27/10/2026", title: "La Reliquia Paranoica de WallForge", items: [
+    "Equipo Reforjados: el círculo de selección de objetivo de la habilidad del MagoNífico (y de la flecha) ya no tiene borde negro y aparece por debajo del sprite del rival",
+    "Reliquia de WallForge: más pequeña (2/3), con sombra, resolución adaptativa, reacción al ratón y niebla como el resto del escenario; solo se ve (junto a sus guardias) dentro del campo de visión; para abrirla hay que estrellar 3 gnomos contra ella (rompen una cadena, la otra y la desencadenan); emite ondas naranjas en perspectiva que se aceleran con cada golpe y cesan al cogerla; marcha de soldados al moverse los guardias; quien lleve la Reliquia, y lo que ve, es visible para todos",
     "Guardias de WallForge: nuevo sprite de guardia mareado, con estrellitas girando sobre su cabeza mientras dura el aturdimiento",
     "Fortaleza WallForge jugable (en pruebas, solo partida local) con su banda sonora y la mecánica La Reliquia Paranoica: tres guardias inmortales custodian el altar sellado; lanza un gnomo con 10 puntos para romper las cadenas, llévate la Reliquia hasta tu obelisco y sé el blanco de todos los guardias",
     "Fortaleza WallForge: nueva ilustración de la isla (con los estandartes naranjas de Reforjados) en la selección de escenario",
