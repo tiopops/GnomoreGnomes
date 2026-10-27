@@ -237,7 +237,7 @@ const Progress = {
     day = day || this._today();
     const rnd = this._rng("gg-" + day);
     const races = (typeof RACES !== "undefined" ? RACES : []).filter((r) => r.available);
-    const levels = (typeof LEVELS !== "undefined" ? LEVELS : []).filter((l) => l.available);
+    const levels = (typeof LEVELS !== "undefined" ? LEVELS : []).filter((l) => l.available && !l.experimental);
     const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
     const pool = PROGRESS_POOL.filter((p) => !(p.param === "race" && !races.length) && !(p.param === "level" && !levels.length));
     const out = [];

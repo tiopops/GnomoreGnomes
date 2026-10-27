@@ -15,6 +15,15 @@ const LevelAssets = {
       bush: "arbusto.png",
       hierbajos: "hierbajos.png",
     },
+    // Fortaleza WallForge (experimental): losetas de Rock'n Troll y vegetación de MushBoom hasta tener las propias.
+    wallforge: {
+      dir: "assets/niveles/rockntroll/",
+      grassZones: ["tierra.png", "piedra.png"],
+      water: ["agua_1.png", "agua_2.png"],
+      nodes: null,
+      bush: null,
+      hierbajos: null,
+    },
     hurrycrane_village: {
       dir: "assets/niveles/hurrycrane/",
       grassZones: ["madera.png", "piedra.png"],
@@ -50,16 +59,17 @@ const LevelAssets = {
     TILE_TYPES.grass.zones = set.grassZones.map(full);
     this.newZoneSeed();
     TILE_TYPES.water.variants = set.water.map(full);
-    Object.keys(set.nodes).forEach((k) => (RESOURCE_NODE_TYPES[k].spriteUrl = full(set.nodes[k])));
+    if (set.nodes) Object.keys(set.nodes).forEach((k) => (RESOURCE_NODE_TYPES[k].spriteUrl = full(set.nodes[k])));
+    else Object.keys(d.nodes).forEach((k) => (RESOURCE_NODE_TYPES[k].spriteUrl = d.nodes[k]));
   },
 
   bushSprite() {
     const s = this._sets[this.current];
-    return s ? s.dir + s.bush : "assets/iconos/arbusto.png";
+    return s && s.bush ? s.dir + s.bush : "assets/iconos/arbusto.png";
   },
   hierbajosSprite() {
     const s = this._sets[this.current];
-    return s ? s.dir + s.hierbajos : "assets/escenario/hierbajos.png";
+    return s && s.hierbajos ? s.dir + s.hierbajos : "assets/escenario/hierbajos.png";
   },
 
   // Ruido de valor suave: zonas de tierra y piedra concentradas, otras

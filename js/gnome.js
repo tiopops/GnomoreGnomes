@@ -905,6 +905,7 @@ function createGnomeInstance() {
       if (typeof Volcano !== "undefined") Volcano.addThrowMarker(unit, this); // lanzar al volcán (js/volcano.js)
       if (typeof Egg !== "undefined") Egg.addThrowMarker(unit, this); // lanzar contra el huevo (js/egg.js)
       if (typeof Crane !== "undefined") Crane.addThrowMarker(unit, this); // espantar a la grulla (js/crane.js)
+      if (typeof Reliquia !== "undefined") Reliquia.addThrowMarker(unit, this); // lanzar al altar de la Reliquia (js/reliquia.js)
       if (typeof Sacrifice !== "undefined") Sacrifice.addThrowMarkers(unit, this); // agua, charcos de lava, setas y cepos (js/sacrifice.js)
       const movimiento = Units.moveRangeOf(unit);
       const tiles = this._throwableTiles(unit).filter((t) => !(typeof Sacrifice !== "undefined" && Sacrifice.isSacrificeTile(unit, t.row, t.col)));
@@ -2154,6 +2155,7 @@ const Gnome = {
       const ob = Crane._ob(Crane.st.team);
       if (ob && !Crane._hiddenAt(ob) && inRange(ob)) return true;
     }
+    if (typeof Reliquia !== "undefined" && Reliquia.canThrowAt(unit)) return true;
     if (typeof Bumpers !== "undefined" && Bumpers.list && Bumpers.list.length && typeof Egg !== "undefined" && Egg.isActive && Egg.isActive()) {
       if (Bumpers.list.some((b) => !(typeof Fog !== "undefined" && Fog.isFoggedReal(b.row, b.col)) && inRange(b))) return true;
     }

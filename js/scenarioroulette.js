@@ -14,7 +14,7 @@ const ScenarioRoulette = {
   _el: null,
 
   _levels() {
-    return (typeof LEVELS !== "undefined" ? LEVELS : []).filter((l) => l.available);
+    return (typeof LEVELS !== "undefined" ? LEVELS : []).filter((l) => l.available && !l.experimental);
   },
 
   _cardHtml(l) {

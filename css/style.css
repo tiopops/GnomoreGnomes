@@ -12295,3 +12295,84 @@ body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
 .backnav-hint::before { background: #2b2733; }
 .backnav-hint::after { background: rgba(0, 0, 0, 0.5); transform: translate(3px, 3px); z-index: -2; }
 .backnav-hint--out { transition: opacity 0.18s, transform 0.18s; }
+
+/* ===== La Reliquia Paranoica (js/reliquia.js) — Fortaleza WallForge ===== */
+.reliquia-altar,
+.reliquia-guard,
+.reliquia-floor {
+  pointer-events: none;
+}
+.reliquia-altar {
+  transform: translate(-50%, -82.5%);
+}
+.reliquia-altar__img {
+  display: block;
+  width: 262px;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  transform-origin: 50% 82%;
+}
+.reliquia-guard {
+  transform: translate(-50%, -88%);
+}
+.reliquia-guard__img {
+  display: block;
+  width: 150px;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  transform-origin: 50% 100%;
+}
+.reliquia-floor {
+  transform: translate(-50%, -50%);
+}
+.reliquia-floor img {
+  display: block;
+  width: 64px;
+  height: auto;
+  animation: reliquia-bob 1.6s ease-in-out infinite;
+}
+@keyframes reliquia-bob {
+  0%, 100% { transform: translateY(-34px); }
+  50% { transform: translateY(-48px); }
+}
+.reliquia-fly {
+  position: absolute;
+  width: 64px;
+  height: auto;
+  pointer-events: none;
+}
+.reliquia-carried {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  width: 76px;
+  pointer-events: none;
+  z-index: 5;
+}
+.reliquia-carried img {
+  display: block;
+  width: 100%;
+  height: auto;
+  animation: reliquia-bob-small 1.6s ease-in-out infinite;
+}
+@keyframes reliquia-bob-small {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.reliquia-carried b {
+  position: absolute;
+  right: -14px;
+  bottom: -4px;
+  min-width: 26px;
+  padding: 1px 6px;
+  border-radius: 12px;
+  background: #ff8a1f;
+  color: #1a1a1a;
+  font-family: "Russo One", sans-serif;
+  font-size: 18px;
+  text-align: center;
+  border: 2px solid #1a1a1a;
+}

@@ -489,7 +489,7 @@ const Fog = {
       if (typeof Egg !== "undefined") Egg.refreshFog();
       if (typeof Crane !== "undefined") Crane.refreshFog();
       if (typeof Bumpers !== "undefined") Bumpers.refreshFog();
-      if (typeof Volcano !== "undefined") Volcano.refreshFog();
+      if (typeof Volcano !== "undefined") Volcano.refreshFog(); if (typeof Reliquia !== "undefined") Reliquia.refreshFog();
     }
     if (typeof Gnome !== "undefined") {
       const veo = Gnome.veoGnomes("player"); // GnomeVeo: gnomos siempre visibles

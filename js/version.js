@@ -12,10 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001607";
+const GG_VERSION = "v.001609";
 
 const GG_CHANGELOG = [
-  { v: "v.001607", date: "27/10/2026", title: "Nueva isla de HurryCrane", items: [
+  { v: "v.001609", date: "27/10/2026", title: "La Reliquia Paranoica de WallForge", items: [
+    "Guardias de WallForge: nuevo sprite de guardia mareado, con estrellitas girando sobre su cabeza mientras dura el aturdimiento",
+    "Fortaleza WallForge jugable (en pruebas, solo partida local) con su banda sonora y la mecánica La Reliquia Paranoica: tres guardias inmortales custodian el altar sellado; lanza un gnomo con 10 puntos para romper las cadenas, llévate la Reliquia hasta tu obelisco y sé el blanco de todos los guardias",
     "Fortaleza WallForge: nueva ilustración de la isla (con los estandartes naranjas de Reforjados) en la selección de escenario",
     "Poblado HurryCrane: nueva ilustración de la isla en la selección de escenario",
   ] },

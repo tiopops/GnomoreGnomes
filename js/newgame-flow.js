@@ -373,7 +373,7 @@ function spawnTestUnits(size, raceId, opponents, mp) {
   // libre durante el resto de la partida, esto es solo el reparto inicial.
   if (typeof Gnome !== "undefined") {
     Gnome.resetAll();
-    const initialGnomes = typeof LevelAssets !== "undefined" && LevelAssets.current === "hurrycrane_village" ? 7 : 3;
+    const initialGnomes = typeof LevelAssets !== "undefined" && LevelAssets.current === "hurrycrane_village" ? 7 : LevelAssets.current === "wallforge" ? 5 : 3;
     for (let i = 0; i < initialGnomes; i++) {
       const row = Math.floor(Math.random() * size);
       const col = Math.floor(Math.random() * size);
@@ -424,6 +424,12 @@ function spawnTestUnits(size, raceId, opponents, mp) {
     Egg.resetAll();
     if (typeof Bumpers !== "undefined") Bumpers.spawn(size);
     Egg.spawn(size);
+  }
+
+  // Altar de la Reliquia y sus 3 guardias (js/reliquia.js) — solo en WallForge. Antes de arbustos/recursos.
+  if (typeof Reliquia !== "undefined") {
+    Reliquia.resetAll();
+    Reliquia.spawn(size);
   }
 
   // Arbustos (js/bushes.js) — pedido explícito: "los arbustos... reparti-

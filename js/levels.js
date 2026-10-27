@@ -52,7 +52,8 @@ const LEVELS = [
     islandImg: "assets/niveles/isla_wallforge.png?v=2",
     logoImg: "assets/niveles/isla_wallforge.png?v=2",
     color: "#ff8a1f",
-    available: false,
+    available: true,
+    experimental: true, // solo partida local: sin multijugador, ruleta ni progreso
   },
 ];
 

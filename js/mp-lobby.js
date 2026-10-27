@@ -222,7 +222,7 @@ const MPLobby = {
     if (!this._uid || this._roomId || this._inMatch()) return;
     try {
       const ref = this._db.collection("rooms").doc();
-      const lv = (typeof LEVELS !== "undefined" ? LEVELS : []).find((l) => l.available);
+      const lv = (typeof LEVELS !== "undefined" ? LEVELS : []).find((l) => l.available && !l.experimental);
       await ref.set({
         hostUid: this._uid,
         hostName: this._name,
@@ -340,7 +340,7 @@ const MPLobby = {
     return (typeof RACES !== "undefined" ? RACES : []).filter((r) => r.available);
   },
   _levels() {
-    return (typeof LEVELS !== "undefined" ? LEVELS : []).filter((l) => l.available);
+    return (typeof LEVELS !== "undefined" ? LEVELS : []).filter((l) => l.available && !l.experimental);
   },
 
   _slotHtml(role) {

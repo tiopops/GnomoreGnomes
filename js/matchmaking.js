@@ -136,7 +136,7 @@ const Matchmaking = {
     const db = this._db, me = this._info;
     const roomRef = db.collection("rooms").doc();
     const candRef = db.collection("mmQueue").doc(c.uid);
-    const levels = (typeof LEVELS !== "undefined" ? LEVELS : []).filter((l) => l.available);
+    const levels = (typeof LEVELS !== "undefined" ? LEVELS : []).filter((l) => l.available && !l.experimental);
     const level = levels.length ? levels[Math.floor(Math.random() * levels.length)].id : "mushboom_forest";
     try {
       await db.runTransaction(async (tx) => {

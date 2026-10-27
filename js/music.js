@@ -12,11 +12,12 @@ const Music = {
     match: "assets/musica/MushBoomForestMainTheme.mp3",
     rock: "assets/musica/RocknTrollaMainTheme.mp3", // Colinas Rock'n Troll
     crane: "assets/musica/HurryCraneVillageMainTheme.mp3", // Poblado HurryCrane
+    wall: "assets/musica/WallForgeMainTheme.mp3", // Fortaleza WallForge
   },
   enabled: true,
   volume: 0.2,
   _els: {},
-  _gain: { menu: 0, match: 0, rock: 0, crane: 0 },
+  _gain: { menu: 0, match: 0, rock: 0, crane: 0, wall: 0 },
   _duck: 1,
   _duckGoal: 1,
   _duckTimer: null,
@@ -37,7 +38,7 @@ const Music = {
       const a = new Audio();
       a.src = this.TRACKS[k];
       a.loop = true;
-      a.preload = k === "rock" || k === "crane" ? "metadata" : "auto";
+      a.preload = k === "rock" || k === "crane" || k === "wall" ? "metadata" : "auto";
       a.volume = 0;
       this._els[k] = a;
     }
@@ -107,7 +108,7 @@ const Music = {
     const board = document.getElementById("screen-board");
     if (!(board && board.classList.contains("screen--active"))) return "menu";
     const lvl = typeof LevelAssets !== "undefined" ? LevelAssets.current : null;
-    return lvl === "colinas_rockntroll" ? "rock" : lvl === "hurrycrane_village" ? "crane" : "match";
+    return lvl === "colinas_rockntroll" ? "rock" : lvl === "hurrycrane_village" ? "crane" : lvl === "wallforge" ? "wall" : "match";
   },
 
   _refresh() {
