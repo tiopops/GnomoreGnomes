@@ -12,9 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001605";
+const GG_VERSION = "v.001607";
 
 const GG_CHANGELOG = [
+  { v: "v.001607", date: "27/10/2026", title: "Nueva isla de HurryCrane", items: [
+    "Fortaleza WallForge: nueva ilustración de la isla (con los estandartes naranjas de Reforjados) en la selección de escenario",
+    "Poblado HurryCrane: nueva ilustración de la isla en la selección de escenario",
+  ] },
   { v: "v.001605", date: "26/10/2026", title: "Muro Aplastante en área", items: [
     "Colores de escenario: Colinas Rock'n Troll en rojo y Fortaleza WallForge en naranja (el de Reforjados)",
     "El Equipo Forjamuros pasa a llamarse Equipo Reforjados",

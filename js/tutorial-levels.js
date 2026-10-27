@@ -54,7 +54,7 @@ Object.assign(Tutorial, {
       id: "crane",
       name: "Poblado HurryCrane",
       color: "#7fc8e8",
-      island: "assets/niveles/isla_hurrycrane_village.png",
+      island: "assets/niveles/isla_hurrycrane_village.png?v=2",
       flavor: "Las reglas propias del Poblado HurryCrane.",
       feats: [
         ["ph-egg", "Huevo de Grulla: cada rebote lo carga hasta explotar"],
