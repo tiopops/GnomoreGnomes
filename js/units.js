@@ -1050,7 +1050,7 @@ const Units = {
       const c = getTileCenter(+m.dataset.row, +m.dataset.col, this.boardSize);
       const x = c.x, y = c.y - (m._overlayY != null ? m._overlayY : 0.42 * (tgt.offsetHeight || 150)); // _overlayY: altura fija sobre la casilla (p. ej. la Reliquia que flota)
       const clash = rings.some((r) => samples.some(([dx, dy]) => ((x + dx - r.x) / r.rx) ** 2 + ((y + dy - r.y) / r.ry) ** 2 <= 1));
-      if (clash) return;
+      if (clash && m._overlayY == null) return; // el icono fijo sobre la Reliquia flotante se muestra siempre
       const o = document.createElement("div");
       o.className = "board-marker attack-overlay" + (m._overlayClass ? " " + m._overlayClass : "");
       const i = document.createElement("i");

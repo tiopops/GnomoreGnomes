@@ -40,7 +40,7 @@ const RELIQUIA_ALTAR_H = (638 / 560) * RELIQUIA_ALTAR_W;
 const RELIQUIA_MAX_POINTS = 30; // tope de puntos acumulables
 const RELIQUIA_PAGES_START = 15; // páginas que salen por el mapa al desencadenar la Reliquia
 const RELIQUIA_PAGES_TOTAL = 30; // páginas que pueden aparecer en total (al recoger una sale otra hasta llegar a este número)
-const RELIQUIA_PAGE_OBELISK_RADIUS = 4; // las páginas nunca salen a esta distancia (Chebyshev) o menos de un obelisco
+const RELIQUIA_PAGE_OBELISK_RADIUS = 1; // las páginas nunca salen en casillas adyacentes a un obelisco (Chebyshev)
 const RELIQUIA_PAGE_POINTS = 2; // puntos que suma al portador cada página que pisa
 const RELIQUIA_FLOAT_Y = 150; // altura de la Reliquia flotando sobre el altar vacío (ya sin cadenas)
 const RELIQUIA_RELIC_Y = 93; // altura (px sobre el centro de la casilla) a la que flota la Reliquia sobre el altar
@@ -715,6 +715,73 @@ const Reliquia = {
     }
   },
 
+  // ---------- IA (js/turns.js la llama al principio de _aiActOnce) ----------
+  // Devuelve true si la unidad hizo algo. Solo unos pocos de cada equipo se ocupan de la Reliquia
+  // para que el resto siga con su economía: el más cercano al altar/Reliquia y, si lleva un gnomo, el que lo lanza.
+  _aiGoer(unit) {
+    const r = this.relic;
+    const tgt = r.state === "carried" ? this._carrier() : r.state === "floor" ? r : this.altar;
+    if (!tgt) return false;
+    const mates = Units.list.filter((u) => u.team === unit.team && u.el);
+    mates.sort((a, b) => this._cheb(a, tgt) - this._cheb(b, tgt) || String(a.id).localeCompare(String(b.id)));
+    const n = r.state === "carried" && r.team !== unit.team ? 2 : 1; // cazar al portador rival: dos unidades
+    return mates.slice(0, n).some((u) => u.id === unit.id);
+  },
+
+  async aiAct(unit) {
+    const r = this.relic;
+    if (!this.altar || !r || this.busy || !this.isActive()) return false;
+    if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return false;
+    const T = Turns;
+    const go = async (target, byPath) => {
+      const d = (byPath && T._aiPickMoveTileByPath(unit, target)) || T._aiPickMoveTileToward(unit, target);
+      if (!d) return false;
+      await Movement.moveTo(unit, d.row, d.col);
+      return true;
+    };
+    const held = this._heldGnome(unit);
+
+    // 1) Portador: recoger páginas cercanas y entregar en su obelisco.
+    if (r.state === "carried" && r.carrier === unit.id) {
+      const ob = typeof Obelisks !== "undefined" ? Obelisks.byTeam(unit.team) : null;
+      if (ob && this._cheb(unit, ob) <= 1 && r.points >= 1) { await this.checkDelivery(unit, unit.row, unit.col); return true; }
+      const near = this.pages
+        .filter((p) => this._cheb(unit, p) <= 5)
+        .sort((a, b) => this._cheb(unit, a) - this._cheb(unit, b))[0];
+      if (near && r.points < 6 && (await go(near, true))) return true;
+      if (ob && r.points >= 1 && (await go(ob, true))) return true;
+      const any = this.pages.slice().sort((a, b) => this._cheb(unit, a) - this._cheb(unit, b))[0];
+      if (any && (await go(any, true))) return true;
+      return false;
+    }
+    if (!this._aiGoer(unit)) return false;
+
+    // 2) Reliquia libre en el altar: cogerla.
+    if (r.state === "altar" && this.altar.hits >= RELIQUIA_HITS_TO_OPEN && !this._carrier()) {
+      if (this._canReach(unit, this.altar)) { await this._approachAnd(unit, this.altar, () => this.takeRelic(unit)); return true; }
+      return go(this.altar, true);
+    }
+    // 3) Reliquia en el suelo: ir a por ella.
+    if (r.state === "floor" && !this._carrier()) return go(r, true);
+    // 4) Portador rival: ir a por él (el ataque normal lo remata al llegar).
+    const carrier = this._carrier();
+    if (carrier && carrier.team !== unit.team) {
+      if (typeof Combat !== "undefined" && Combat.attackableEnemies(unit).some((e) => e.target === carrier)) {
+        await Combat.approachAndAttack(unit, carrier);
+        return true;
+      }
+      return go(carrier, true);
+    }
+    // 5) Altar sellado: llevar un gnomo y lanzarlo para romper las cadenas.
+    if (r.state === "altar" && this.altar.hits < RELIQUIA_HITS_TO_OPEN) {
+      if (held) {
+        if (this._throwTargets(unit).includes(this.altar)) { await this.throwGnome(unit, held, this.altar); return true; }
+        return go(this.altar, true);
+      }
+    }
+    return false;
+  },
+
   // ---------- Lanzar un gnomo al altar ----------
   // Objetivos a los que se puede lanzar un gnomo: el altar (mientras queden cadenas) y los guardias despiertos.
   _throwTargets(unit) {
@@ -893,8 +960,21 @@ const Reliquia = {
       [cells[i], cells[j]] = [cells[j], cells[i]];
     }
     const count = Math.min(n, RELIQUIA_PAGES_TOTAL - this.pagesSpawned, cells.length);
-    for (let i = 0; i < count; i++) this._createPage(cells[i].row, cells[i].col, i * 70);
-    this.pagesSpawned += count;
+    // Repartidas por todo el mapa: se prefieren casillas lejos de las demás páginas (separación 4, 3, 2...).
+    const chosen = [];
+    const all = this.pages.concat(chosen);
+    for (const sep of [4, 3, 2, 1, 0]) {
+      for (const cl of cells) {
+        if (chosen.length >= count) break;
+        if (chosen.includes(cl)) continue;
+        if (all.concat(chosen).some((p) => Math.max(Math.abs(p.row - cl.row), Math.abs(p.col - cl.col)) < sep)) continue;
+        chosen.push(cl);
+      }
+      if (chosen.length >= count) break;
+    }
+    chosen.forEach((cl, i) => this._createPage(cl.row, cl.col, i * 70));
+    const made = chosen.length;
+    this.pagesSpawned += made;
     this.refreshFog();
   },
 

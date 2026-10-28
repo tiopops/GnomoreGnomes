@@ -819,6 +819,9 @@ const Turns = {
       }
     }
 
+    // Reliquia de WallForge (js/reliquia.js): la IA libera, coge, carga y entrega la Reliquia.
+    if (typeof Reliquia !== "undefined" && Reliquia.isActive() && (await Reliquia.aiAct(unit))) return true;
+
     if (typeof Gnome !== "undefined") {
       const held = Gnome.list.find((g) => g.heldBy === unit.id);
       if (held) {
