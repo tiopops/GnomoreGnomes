@@ -53,6 +53,9 @@ const STRINGS = {
     level_hurrycrane_village_f3: "La Grulla: si el huevo explota, cada equipo cobra Gloria según sus rebotes; luego se posa 2 turnos en un obelisco y lo bloquea; un gnomazo la espanta.",
     level_wallforge: "Fortaleza WallForge",
     level_wallforge_flavor: "Una fortaleza flotante de muros y torres donde la reliquia cautiva suelta páginas por todo el mapa: recógelas y llévalas a tu obelisco.",
+    level_wallforge_f1: "La Reliquia: aprisionada en el altar del centro; libérala y llévala a cuestas. Al soltarse, 15 páginas aparecen flotando por el mapa (hasta 30 en total).",
+    level_wallforge_f2: "Páginas: solo el portador de la reliquia las recoge al pisarlas, y cada una suma +2 puntos. Los soldados no se golpean: solo se marean lanzándoles un gnomo.",
+    level_wallforge_f3: "Entrega: junto a tu obelisco cobras toda la Gloria acumulada y se la restas a tus rivales; las páginas desaparecen, los soldados vuelven a su puesto y todo se reinicia.",
     level_coming_soon: "Próximamente",
 
     choose_opponents: "Elige el número de rivales",
@@ -246,6 +249,9 @@ const STRINGS = {
     level_hurrycrane_village_f3: "The Crane: if the egg explodes, each team earns Glory per bounce; then it lands on an obelisk for 2 turns and blocks it; a gnome smash scares it off.",
     level_wallforge: "WallForge Fortress",
     level_wallforge_flavor: "A floating fortress of walls and towers where the captive relic scatters pages across the map: collect them and bring them to your obelisk.",
+    level_wallforge_f1: "The Relic: imprisoned on the central altar; free it and carry it around. Once released, 15 pages appear floating across the map (up to 30 in total).",
+    level_wallforge_f2: "Pages: only the relic carrier collects them by stepping on them, and each is worth +2 points. Guards can't be hit: they only get dizzy when a gnome is thrown at them.",
+    level_wallforge_f3: "Delivery: next to your obelisk you cash in all the accumulated Glory and subtract it from your rivals; the pages vanish, the guards return to their posts and everything resets.",
     level_coming_soon: "Coming soon",
 
     choose_opponents: "Choose number of opponents",
