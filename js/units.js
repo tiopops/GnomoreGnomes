@@ -1052,9 +1052,9 @@ const Units = {
       const clash = rings.some((r) => samples.some(([dx, dy]) => ((x + dx - r.x) / r.rx) ** 2 + ((y + dy - r.y) / r.ry) ** 2 <= 1));
       if (clash) return;
       const o = document.createElement("div");
-      o.className = "board-marker attack-overlay";
+      o.className = "board-marker attack-overlay" + (m._overlayClass ? " " + m._overlayClass : "");
       const i = document.createElement("i");
-      i.className = "ph ph-crosshair-simple attack-overlay__icon";
+      i.className = "ph " + (m._overlayIcon || "ph-crosshair-simple") + " attack-overlay__icon";
       o.appendChild(i);
       o.style.left = `${x}px`;
       o.style.top = `${y}px`;

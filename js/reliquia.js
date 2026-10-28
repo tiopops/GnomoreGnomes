@@ -40,6 +40,7 @@ const RELIQUIA_ALTAR_H = (638 / 560) * RELIQUIA_ALTAR_W;
 const RELIQUIA_MAX_POINTS = 30; // tope de puntos acumulables
 const RELIQUIA_PAGES_START = 15; // páginas que salen por el mapa al desencadenar la Reliquia
 const RELIQUIA_PAGES_TOTAL = 30; // páginas que pueden aparecer en total (al recoger una sale otra hasta llegar a este número)
+const RELIQUIA_PAGE_OBELISK_RADIUS = 4; // las páginas nunca salen a esta distancia (Chebyshev) o menos de un obelisco
 const RELIQUIA_PAGE_POINTS = 2; // puntos que suma al portador cada página que pisa
 const RELIQUIA_FLOAT_Y = 150; // altura de la Reliquia flotando sobre el altar vacío (ya sin cadenas)
 const RELIQUIA_RELIC_Y = 93; // altura (px sobre el centro de la casilla) a la que flota la Reliquia sobre el altar
@@ -685,9 +686,9 @@ const Reliquia = {
     if (Units.list.includes(unit)) Units.refreshRange(unit);
   },
 
-  _marker(row, col, icon, onClick, overlayEl) {
+  _marker(row, col, icon, onClick, overlayEl, extraClass) {
     const mk = Units.addMarker({
-      className: "attack-marker reliquia-marker",
+      className: "attack-marker reliquia-marker" + (extraClass ? " " + extraClass : ""),
       row, col, zOffset: 2,
       visibleClass: "attack-marker--visible",
       owner: "reliquia",
@@ -699,7 +700,10 @@ const Reliquia = {
         m.appendChild(i);
       },
     });
-    if (overlayEl) mk._overlayFor = overlayEl; // icono también sobre el sprite (Units._addAttackOverlays)
+    if (overlayEl) {
+      mk._overlayFor = overlayEl; // icono también sobre el sprite (Units._addAttackOverlays)
+      if (extraClass) { mk._overlayIcon = icon; mk._overlayClass = extraClass + "-overlay"; }
+    }
   },
 
   // Proveedor de rango (Units.registerRangeProvider): marcas sobre los guardias (con un gnomo en la mano)
@@ -714,7 +718,8 @@ const Reliquia = {
       });
     }
     if (this.relic.state === "altar" && this.altar.hits >= RELIQUIA_HITS_TO_OPEN && !this._carrier() && this._visible(this.altar) && this._canReach(unit, this.altar)) {
-      this._marker(this.altar.row, this.altar.col, "ph-hand-grabbing", () => this._approachAnd(unit, this.altar, () => this.takeRelic(unit)));
+      // Mano de coger AMARILLA (como el pico de recolectar) en la loseta y sobre la Reliquia que flota.
+      this._marker(this.altar.row, this.altar.col, "ph-hand-grabbing", () => this._approachAnd(unit, this.altar, () => this.takeRelic(unit)), this.altar.el, "reliquia-grab-marker");
     }
   },
 
@@ -870,6 +875,7 @@ const Reliquia = {
     if (r < 0 || c < 0 || r >= size || c >= size) return false;
     if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) return false;
     if (this.altar && Math.max(Math.abs(r - this.altar.row), Math.abs(c - this.altar.col)) <= RELIQUIA_RING) return false;
+    if (typeof Obelisks !== "undefined" && Obelisks.list.some((o) => Math.max(Math.abs(r - o.row), Math.abs(c - o.col)) <= RELIQUIA_PAGE_OBELISK_RADIUS)) return false;
     if (this._pageAt(r, c)) return false;
     if (Units.unitAt(r, c)) return false;
     if (typeof Gnome !== "undefined" && Gnome.isAt(r, c)) return false;
@@ -900,12 +906,10 @@ const Reliquia = {
   _createPage(row, col, delay) {
     const el = document.createElement("div");
     el.className = "unit board-item reliquia-page";
-    const img = document.createElement("img");
-    img.alt = "";
-    img.draggable = false;
-    img.style.animationDelay = `-${(Math.random() * 3).toFixed(2)}s`; // flotan desfasadas
-    this._src(img, RELIQUIA_SRC.pagina);
-    el.appendChild(img);
+    el.style.setProperty("--pd", `-${(Math.random() * 2.8).toFixed(2)}s`); // cada página va desfasada
+    el.innerHTML = '<div class="reliquia-page__floor"></div><div class="reliquia-page__ring"></div><div class="reliquia-page__ring"></div><div class="reliquia-page__ring"></div>' +
+      '<div class="reliquia-page__fly"><div class="reliquia-page__halo"></div><img alt="" draggable="false"></div>';
+    this._src(el.querySelector("img"), RELIQUIA_SRC.pagina);
     Units.container.appendChild(el);
     const { x, y } = this._px(row, col);
     el.style.left = `${x}px`;

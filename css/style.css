@@ -12468,30 +12468,98 @@ body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
   filter: drop-shadow(0 4px 0 #4a0a0a);
 }
 
-/* Páginas de la Reliquia (WallForge): flotan sobre la casilla con una sombra plana en el suelo */
+/* Páginas de la Reliquia (WallForge): flotan sobre su casilla con ondas naranjas en el suelo y un brillo suave pulsante.
+   El elemento es un punto en el centro de la casilla; todo lo demás cuelga de él. */
 .reliquia-page {
+  position: absolute;
+  width: 0;
+  height: 0;
   pointer-events: none;
-  transform: translate(-50%, -50%);
+  transform: none;
 }
-.reliquia-page img {
+.reliquia-page__floor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 64px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 138, 31, 0.2);
+  transform: translate(-50%, -50%);
+  animation: reliquia-page-floor 2s ease-in-out infinite;
+  animation-delay: var(--pd, 0s);
+}
+.reliquia-page__ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  border: 3px solid #ff8a1f;
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  animation: reliquia-page-ring 2.8s ease-out infinite;
+}
+.reliquia-page__ring:nth-of-type(2) { animation-delay: calc(var(--pd, 0s) - 0s); }
+.reliquia-page__ring:nth-of-type(3) { animation-delay: calc(var(--pd, 0s) + 0.8s); }
+.reliquia-page__ring:nth-of-type(4) { animation-delay: calc(var(--pd, 0s) + 1.6s); }
+.reliquia-page__fly {
+  position: absolute;
+  left: 0;
+  top: -50px;
+  width: 0;
+  height: 0;
+}
+.reliquia-page__halo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 96px;
+  height: 96px;
+  margin: -48px 0 0 -48px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 170, 60, 0.75) 0%, rgba(255, 138, 31, 0.34) 38%, rgba(255, 138, 31, 0) 70%);
+  animation: reliquia-page-halo 2s ease-in-out infinite;
+  animation-delay: var(--pd, 0s);
+}
+.reliquia-page__fly img {
+  position: absolute;
+  left: -36px;
+  top: -31px;
   display: block;
   width: 72px;
   height: auto;
+  filter: drop-shadow(0 0 3px rgba(255, 160, 50, 0.5));
   animation: reliquia-page-bob 1.8s ease-in-out infinite;
+  animation-delay: var(--pd, 0s);
 }
-.reliquia-page::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 44px;
-  height: 18px;
-  margin: -2px 0 0 -22px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.28);
-  z-index: -1;
+@keyframes reliquia-page-ring {
+  0% { width: 24px; height: 14px; opacity: 0.75; border-width: 3px; }
+  100% { width: 130px; height: 78px; opacity: 0; border-width: 1px; }
+}
+@keyframes reliquia-page-floor {
+  0%, 100% { opacity: 0.35; transform: translate(-50%, -50%) scale(0.9); }
+  50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.05); }
+}
+@keyframes reliquia-page-halo {
+  0%, 100% { opacity: 0.55; transform: scale(0.88); }
+  50% { opacity: 0.9; transform: scale(1.08); }
 }
 @keyframes reliquia-page-bob {
-  0%, 100% { transform: translateY(-36px) rotate(-5deg); }
-  50% { transform: translateY(-48px) rotate(5deg); }
+  0%, 100% { transform: translateY(5px) rotate(-5deg); }
+  50% { transform: translateY(-7px) rotate(5deg); }
+}
+
+/* Mano de coger de la Reliquia liberada: amarilla (como la mira de recolectar), en la loseta y sobre su sprite. */
+.reliquia-grab-marker .attack-marker__icon {
+  color: #ffcf3f;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 207, 63, 0.85);
+}
+.reliquia-grab-marker.attack-marker--visible:hover .attack-marker__icon {
+  color: #ffe07a;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.75), 0 0 22px rgba(255, 224, 122, 1);
+}
+.attack-overlay.reliquia-grab-marker-overlay .attack-overlay__icon {
+  color: #ffcf3f;
+  filter: drop-shadow(0 4px 0 #5a4300);
 }
