@@ -35,12 +35,14 @@ const RELIQUIA_RING = 2; // radio (Chebyshev) del círculo de patrulla
 const RELIQUIA_GUARD_OFFSETS = [0, 5, 11]; // posiciones de los 3 guardias en el círculo de 16 casillas
 const RELIQUIA_ALTAR_W = 262; // ancho del altar en pantalla (px)
 const RELIQUIA_ALTAR_H = (638 / 560) * RELIQUIA_ALTAR_W;
+const RELIQUIA_POINTS_PER_TURN = 3; // puntos que suma la Reliquia por turno en manos de un jugador
+const RELIQUIA_FLOAT_Y = 150; // altura de la Reliquia flotando sobre el altar vacío (ya sin cadenas)
 const RELIQUIA_RELIC_Y = 93; // altura (px sobre el centro de la casilla) a la que flota la Reliquia sobre el altar
 
 const Reliquia = {
   altar: null, // { row, col, el, imgEl, state: "sellado" | "abierto" | "vacio" }
   guards: [],
-  relic: null, // { state: "altar" | "carried" | "floor", carrier, team, points, row, col, el }
+  relic: null, // { state: "altar" | "carried" | "guard" | "floor", carrier, guard, team, points, row, col, el }
   alert: null, // { unitId }
   base: 0, // giro actual de la patrulla
   busy: false,
@@ -53,6 +55,7 @@ const Reliquia = {
     if (this.altar && this.altar.el) this.altar.el.remove();
     this.guards.forEach((g) => g.el && g.el.remove());
     if (this.relic && this.relic.el) this.relic.el.remove();
+    this._hideFloat();
     this.altar = null;
     this.guards = [];
     this.relic = null;
@@ -262,6 +265,7 @@ const Reliquia = {
     if (typeof Fog === "undefined" || !this.altar) return;
     const f = (o) => Fog.isFoggedReal(o.row, o.col) || !Fog.isPerceived(o.row, o.col);
     this.altar.el.classList.toggle("unit--fog-hidden", f(this.altar));
+    if (this.altar.floatEl) this.altar.floatEl.classList.toggle("unit--fog-hidden", f(this.altar));
     this.guards.forEach((g) => g.el.classList.toggle("unit--fog-hidden", f(g)));
     const r = this.relic;
     if (r && r.state === "floor" && r.el) r.el.classList.toggle("unit--fog-hidden", f(r));
@@ -325,10 +329,10 @@ const Reliquia = {
     try {
       const r = this.relic;
       if (r.state === "carried" && r.team === team) {
-        r.points += 1;
+        r.points += RELIQUIA_POINTS_PER_TURN;
         this._updateBadge();
         const u = this._carrier();
-        if (u) Units.spawnFloatingText(u, `+1`, { className: "dmg-popup gnome-points-popup" });
+        if (u) Units.spawnFloatingText(u, `+${RELIQUIA_POINTS_PER_TURN}`, { className: "dmg-popup gnome-points-popup" });
         if (u) await this.checkDelivery(u);
       }
       this._revealCarrier();
@@ -346,6 +350,7 @@ const Reliquia = {
   _chaseTarget() {
     const c = this._carrier();
     if (c) return c;
+    if (this.relic && (this.relic.state === "floor" || this.relic.state === "guard")) return null; // los guardias van a por la Reliquia
     if (this.alert) {
       const u = Units.list.find((x) => x.id === this.alert.unitId);
       if (u && this._cheb(u, this.altar) <= RELIQUIA_LEASH) return u;
@@ -376,11 +381,8 @@ const Reliquia = {
           if (step) anims.push(this._guardStep(g, step));
         }
       }
-    } else if (r.state === "floor") {
-      for (const g of awake) {
-        const step = this._bfs(g, (rr, cc) => rr === r.row && cc === r.col);
-        if (step) anims.push(this._guardStep(g, step));
-      }
+    } else if (r.state === "floor" || r.state === "guard") {
+      this._relicMission(awake, anims);
     } else {
       this._patrol(awake, anims);
     }
@@ -388,6 +390,78 @@ const Reliquia = {
     if (anims.length && this.guards.some((g) => g.stun <= 0 && this._visible(g))) this._sfx("reliquiaMarch");
     await Promise.all(anims);
     if (typeof Fog !== "undefined") Fog.applyVisibility();
+  },
+
+  // La Reliquia está en manos de un guardia o en el suelo: el guardia más cercano la recoge y la lleva al altar
+  // mientras los otros dos le cubren (y golpean a quien se acerque).
+  _relicMission(awake, anims) {
+    const r = this.relic;
+    let leader = null;
+    if (r.state === "guard") leader = awake.includes(r.guard) ? r.guard : null;
+    else {
+      let bd = Infinity;
+      awake.forEach((g) => {
+        const d = this._cheb(g, r);
+        if (d < bd) { bd = d; leader = g; }
+      });
+    }
+    // Si el portador está aturdido no se mueve (al aturdirse suelta la Reliquia, ver _stun).
+    const ref = r.state === "guard" ? r.guard : leader;
+    if (leader) {
+      if (r.state === "guard") {
+        if (this._cheb(leader, this.altar) <= 1) anims.push(this._guardDeliver(leader));
+        else {
+          const step = this._bfs(leader, (rr, cc) => Math.max(Math.abs(rr - this.altar.row), Math.abs(cc - this.altar.col)) <= 1);
+          if (step) anims.push(this._guardStep(leader, step));
+        }
+      } else {
+        const step = this._bfs(leader, (rr, cc) => rr === r.row && cc === r.col);
+        if (step) anims.push(this._guardStep(leader, step));
+      }
+    }
+    awake.forEach((g) => {
+      if (g === leader || !ref) return;
+      if (this._cheb(g, ref) <= 1) {
+        const foe = Units.list.find((u) => this._cheb(g, u) <= 1);
+        if (foe) anims.push(this._guardHit(g, foe));
+        return;
+      }
+      const step = this._bfs(g, (rr, cc) => Math.max(Math.abs(rr - ref.row), Math.abs(cc - ref.col)) <= 1);
+      if (step) anims.push(this._guardStep(g, step));
+    });
+  },
+
+  // Un guardia pisa la Reliquia del suelo: se la echa a la cabeza y la lleva de vuelta al altar.
+  _guardTake(g) {
+    const r = this.relic;
+    if (!r || r.state !== "floor") return;
+    if (r.el) { r.el.remove(); r.el = null; }
+    r.state = "guard";
+    r.guard = g;
+    r.carrier = null;
+    r.team = null;
+    r.points = 0;
+    const el = document.createElement("div");
+    el.className = "reliquia-carried reliquia-carried--guard";
+    el.innerHTML = `<img src="${RELIQUIA_SRC.icono}" alt="" draggable="false">`;
+    g.el.appendChild(el);
+    r.el = el;
+    r.row = g.row;
+    r.col = g.col;
+    this._sfx("passSuccess");
+  },
+
+  // El guardia portador llega al altar: la Reliquia vuelve, el altar se resella y la patrulla se recompone.
+  async _guardDeliver(g) {
+    const r = this.relic;
+    if (!r || r.state !== "guard" || r.guard !== g || this._recovering) return;
+    this._recovering = true;
+    try {
+      r.guard = null;
+      await this._returnToAltar(g);
+    } finally {
+      this._recovering = false;
+    }
   },
 
   _slot(g, base) {
@@ -438,7 +512,12 @@ const Reliquia = {
       );
     await this._wait(260);
     const r = this.relic;
-    if (r && r.state === "floor" && r.row === g.row && r.col === g.col) await this._recover(g);
+    if (r && r.state === "floor" && r.row === g.row && r.col === g.col && !this._carrier()) this._guardTake(g);
+    else if (r && r.state === "guard" && r.guard === g) {
+      r.row = g.row;
+      r.col = g.col;
+      if (this._cheb(g, this.altar) <= 1) await this._guardDeliver(g);
+    }
   },
 
   async _guardHit(g, unit) {
@@ -466,6 +545,8 @@ const Reliquia = {
 
   _stun(g) {
     g.stun = RELIQUIA_STUN_TURNS;
+    // Un guardia portador mareado suelta la Reliquia (a los jugadores portadores no les pasa).
+    if (this.relic && this.relic.state === "guard" && this.relic.guard === g) this.dropAt(g.row, g.col);
     g.el.classList.add("reliquia-guard--stun");
     this._src(g.imgEl, RELIQUIA_SRC.mareado);
     this._stars(g);
@@ -762,18 +843,46 @@ const Reliquia = {
     this._shake(a.hits >= 2);
     if (a.hits === 1) this._setAltar("rompiendo");
     else if (a.hits === 2) this._setAltar("abierto");
-    else this._sfx("explosion");
+    else {
+      this._sfx("explosion");
+      this._setAltar("vacio"); // sin cadenas: altar vacío y la Reliquia flotando encima
+      this._stopWaves();
+      this._showFloat();
+    }
     if (typeof Enmurallado !== "undefined" && Enmurallado.shards) Enmurallado.shards(x, y - 70, a.hits >= 3 ? 16 : 8, { speed: 100, lift: 60, size: 11 });
     if (a.hits >= 2 && a.imgEl.animate)
       a.imgEl.animate([{ transform: "scale(.94,1.06)" }, { transform: "scale(1.07,.93)", offset: 0.4 }, { transform: "scale(1,1)" }], { duration: 480, easing: "cubic-bezier(.2,1.5,.4,1)" });
-    this._startWaves(); // las ondas se aceleran
+    if (a.hits < RELIQUIA_HITS_TO_OPEN) this._startWaves(); // las ondas se aceleran
     await this._wait(a.hits >= 3 ? 420 : 260);
   },
 
   // ---------- Coger y llevar la Reliquia ----------
-  _relicAnchor() {
+  _relicAnchor(open) {
     const { x, y } = this._px(this.altar.row, this.altar.col);
-    return { x, y: y - RELIQUIA_RELIC_Y };
+    return { x, y: y - (open ? RELIQUIA_FLOAT_Y : RELIQUIA_RELIC_Y) };
+  },
+
+  // Altar sin cadenas: la Reliquia flota sobre el altar vacío esperando a que alguien la coja.
+  _showFloat() {
+    this._hideFloat();
+    const a = this.altar;
+    if (!a) return;
+    const el = document.createElement("div");
+    el.className = "unit board-item reliquia-floatrelic";
+    el.innerHTML = `<img src="${RELIQUIA_SRC.icono}" alt="" draggable="false">`;
+    const { x, y } = this._px(a.row, a.col);
+    el.style.left = `${x}px`;
+    el.style.top = `${y - RELIQUIA_FLOAT_Y}px`;
+    el.style.zIndex = String((a.row + a.col) * 10 + 8);
+    Units.container.appendChild(el);
+    a.floatEl = el;
+    if (el.animate) el.animate([{ scale: "0.4", opacity: 0 }, { scale: "1.15", opacity: 1, offset: 0.55 }, { scale: "1", opacity: 1 }], { duration: 520, easing: "ease-out" });
+    this.refreshFog();
+  },
+
+  _hideFloat() {
+    const a = this.altar;
+    if (a && a.floatEl) { a.floatEl.remove(); a.floatEl = null; }
   },
 
   _fly(from, to, ms) {
@@ -804,9 +913,10 @@ const Reliquia = {
       Units.faceTowardsTile(unit, this.altar.row, this.altar.col);
       this._setAltar("vacio");
       this._stopWaves();
+      this._hideFloat();
       this._sfx("itemPlace");
       const u = this._px(unit.row, unit.col);
-      await this._fly(this._relicAnchor(), { x: u.x, y: u.y - 120 }, 520);
+      await this._fly(this._relicAnchor(true), { x: u.x, y: u.y - 120 }, 520);
       r.state = "carried";
       r.carrier = unit.id;
       r.team = unit.team;
@@ -845,7 +955,7 @@ const Reliquia = {
   // Al morir el portador (o perderla por cualquier otro motivo): cae al suelo y pierde los puntos.
   dropAt(row, col) {
     const r = this.relic;
-    if (!r || r.state !== "carried") return;
+    if (!r || (r.state !== "carried" && r.state !== "guard")) return;
     if (r.el) r.el.remove();
     if (typeof Combat !== "undefined" && Combat._findDryTileNear && typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(row, col)) {
       const dry = Combat._findDryTileNear(row, col);
@@ -853,6 +963,7 @@ const Reliquia = {
     }
     r.state = "floor";
     r.carrier = null;
+    r.guard = null;
     r.team = null;
     r.points = 0;
     r.row = row;
@@ -906,7 +1017,10 @@ const Reliquia = {
     this._delivering = true;
     try {
       const pts = r.points;
-      if (typeof Glory !== "undefined") Glory.addNow(unit.team, pts);
+      if (typeof Glory !== "undefined") {
+        Glory.addNow(unit.team, pts);
+        if (Glory.stealNow) Glory.stealNow(unit.team, pts); // los rivales pierden lo mismo
+      }
       Units.spawnFloatingText(unit, `+${pts}`, { className: "dmg-popup gnome-points-popup" });
       this._sfx("glory");
       await this._returnToAltar(unit);
@@ -922,9 +1036,11 @@ const Reliquia = {
     if (r.el) { r.el.remove(); r.el = null; }
     r.state = "altar";
     r.carrier = null;
+    r.guard = null;
     r.team = null;
     r.points = 0;
     this.alert = null;
+    this._hideFloat();
     await this._fly(from, this._relicAnchor(), 700);
     this.altar.hits = 0;
     this._setAltar("sellado");
@@ -932,18 +1048,6 @@ const Reliquia = {
     this._sfx("itemPlace");
     this._clang(this.altar);
     this._shake(false);
-  },
-
-  // Un guardia pisa la Reliquia del suelo: vuelve al altar y se resella.
-  async _recover(g) {
-    if (this._recovering) return;
-    this._recovering = true;
-    try {
-      this._sfx("passSuccess");
-      await this._returnToAltar(null);
-    } finally {
-      this._recovering = false;
-    }
   },
 };
 

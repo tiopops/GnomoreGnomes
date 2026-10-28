@@ -12360,19 +12360,33 @@ body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
 }
 .reliquia-floor img {
   display: block;
-  width: 64px;
+  width: 105px;
   height: auto;
   animation: reliquia-bob 1.6s ease-in-out infinite;
 }
 @keyframes reliquia-bob {
-  0%, 100% { transform: translateY(-34px); }
-  50% { transform: translateY(-48px); }
+  0%, 100% { transform: translateY(-52px); }
+  50% { transform: translateY(-68px); }
 }
 .reliquia-fly {
   position: absolute;
-  width: 64px;
+  width: 105px;
   height: auto;
   pointer-events: none;
+}
+.reliquia-floatrelic {
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.reliquia-floatrelic img {
+  display: block;
+  width: 105px;
+  height: auto;
+  animation: reliquia-bob-small 1.8s ease-in-out infinite;
+}
+.reliquia-carried--guard {
+  width: 84px;
+  bottom: calc(100% - 4px);
 }
 .reliquia-carried {
   position: absolute;

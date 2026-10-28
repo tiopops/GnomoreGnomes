@@ -12,9 +12,16 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001612";
+const GG_VERSION = "v.001613";
 
 const GG_CHANGELOG = [
+  { v: "v.001613", date: "28/10/2026", title: "Reliquia: guardias que la recuperan", items: [
+    "Reliquia de WallForge: al entregarla, los rivales pierden la misma Gloria que gana quien la entrega (sin bajar de 0, con un \"-N\" junto a tu marcador)",
+    "Reliquia de WallForge: lanzar un gnomo al soldado que lleva la Reliquia lo marea y la suelta; a los jugadores portadores no les afecta",
+    "Reliquia de WallForge: si cae al suelo, el guardia más cercano la recoge y la lleva al altar mientras los otros dos le cubren; al llegar el altar se resella y el minijuego se reinicia",
+    "Reliquia de WallForge: la Reliquia suma 3 puntos por turno en manos de un jugador y su número se ve junto al icono",
+    "Reliquia de WallForge: el tercer gnomo deja el altar vacío con la Reliquia flotando encima, más grande, lista para cogerla",
+  ] },
   { v: "v.001612", date: "27/10/2026", title: "La Reliquia Paranoica de WallForge", items: [
     "Icono de pegar a una unidad: ahora también se muestra sobre el sprite del rival (salvo que estorbe a un círculo de movimiento); pulsarlo equivale a pulsar la mira del suelo",
     "TrazaFlechas: retrato del círculo de información recolocado y con el mismo encuadre que el resto de personajes",

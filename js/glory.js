@@ -105,6 +105,34 @@ const Glory = {
     return added;
   },
 
+  // La Reliquia Paranoica (js/reliquia.js): al entregarla, los RIVALES pierden la misma Gloria que gana quien la entrega
+  // (sin bajar de 0). Muestra "-N" junto al marcador del jugador si es él quien pierde.
+  stealNow(fromTeam, amount) {
+    if (amount <= 0) return;
+    Object.keys(this.points).forEach((team) => {
+      if (team === fromTeam) return;
+      const lost = Math.min(amount, this.points[team]);
+      if (lost <= 0) return;
+      this.points[team] -= lost;
+      this._render(team);
+      this._renderPreview(team);
+      this._showStolen(team, lost);
+    });
+  },
+
+  _showStolen(team, lost) {
+    const hud = this._els[team];
+    if (!hud || team !== "player") return;
+    const r = hud.getBoundingClientRect();
+    const e = document.createElement("div");
+    e.className = "glory-lost";
+    e.textContent = `-${lost}`;
+    e.style.left = `${Math.round(r.left + r.width * 0.55)}px`;
+    e.style.top = `${Math.round(r.bottom - 6)}px`;
+    document.body.appendChild(e);
+    setTimeout(() => e.remove(), 1700);
+  },
+
   // Gastar puntos — pedido explícito (js/shops.js, Tienda Goblin): "al
   // comprar un objeto, se descuentan los puntos de gloria". Primer (y de
   // momento único) sitio del juego que RESTA puntos en vez de sumarlos, así
