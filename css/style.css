@@ -12409,17 +12409,39 @@ body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
 }
 .reliquia-carried b {
   position: absolute;
-  right: -14px;
-  bottom: -4px;
-  min-width: 26px;
-  padding: 1px 6px;
-  border-radius: 12px;
+  right: -22px;
+  bottom: -6px;
+  width: 50px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  transform: rotate(var(--gg-badge-tilt));
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.5));
+}
+.reliquia-carried b::before,
+.reliquia-carried b::after {
+  content: "";
+  position: absolute;
+  clip-path: var(--gg-badge-clip);
+}
+.reliquia-carried b::before {
+  inset: 0;
+  background: #000;
+}
+.reliquia-carried b::after {
+  inset: var(--gg-frame-outline-width);
   background: #ff8a1f;
-  color: #1a1a1a;
+}
+.reliquia-carried b span {
+  position: relative;
+  z-index: 2;
   font-family: "Russo One", sans-serif;
-  font-size: 18px;
-  text-align: center;
-  border: 2px solid #1a1a1a;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #1a1a1a;
+  transform: rotate(calc(-1 * var(--gg-badge-tilt)));
 }
 
 /* Icono de pegar sobre el sprite del rival (Units._addAttackOverlays): plano, sombra dura, sin brillos. */

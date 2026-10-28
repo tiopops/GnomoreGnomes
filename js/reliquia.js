@@ -35,6 +35,7 @@ const RELIQUIA_RING = 2; // radio (Chebyshev) del círculo de patrulla
 const RELIQUIA_GUARD_OFFSETS = [0, 5, 11]; // posiciones de los 3 guardias en el círculo de 16 casillas
 const RELIQUIA_ALTAR_W = 262; // ancho del altar en pantalla (px)
 const RELIQUIA_ALTAR_H = (638 / 560) * RELIQUIA_ALTAR_W;
+const RELIQUIA_MAX_POINTS = 30; // tope de puntos acumulables
 const RELIQUIA_POINTS_PER_TURN = 3; // puntos que suma la Reliquia por turno en manos de un jugador
 const RELIQUIA_FLOAT_Y = 150; // altura de la Reliquia flotando sobre el altar vacío (ya sin cadenas)
 const RELIQUIA_RELIC_Y = 93; // altura (px sobre el centro de la casilla) a la que flota la Reliquia sobre el altar
@@ -329,10 +330,11 @@ const Reliquia = {
     try {
       const r = this.relic;
       if (r.state === "carried" && r.team === team) {
-        r.points += RELIQUIA_POINTS_PER_TURN;
+        const gain = Math.min(RELIQUIA_POINTS_PER_TURN, RELIQUIA_MAX_POINTS - r.points);
+        r.points += gain;
         this._updateBadge();
         const u = this._carrier();
-        if (u) Units.spawnFloatingText(u, `+${RELIQUIA_POINTS_PER_TURN}`, { className: "dmg-popup gnome-points-popup" });
+        if (u) Units.spawnFloatingText(u, `+${gain}`, { className: "dmg-popup gnome-points-popup" });
         if (u) await this.checkDelivery(u);
       }
       this._revealCarrier();
@@ -935,7 +937,7 @@ const Reliquia = {
     if (r.el) r.el.remove();
     const el = document.createElement("div");
     el.className = "reliquia-carried";
-    el.innerHTML = `<img src="${RELIQUIA_SRC.icono}" alt="" draggable="false"><b>${r.points}</b>`;
+    el.innerHTML = `<img src="${RELIQUIA_SRC.icono}" alt="" draggable="false"><b><span>${r.points}</span></b>`;
     unit.el.appendChild(el);
     r.el = el;
     r.row = unit.row;
@@ -945,7 +947,7 @@ const Reliquia = {
   _updateBadge() {
     const r = this.relic;
     if (!r || !r.el) return;
-    const b = r.el.querySelector("b");
+    const b = r.el.querySelector("b span");
     if (b) {
       b.textContent = r.points;
       if (b.animate) b.animate([{ transform: "scale(1.5)" }, { transform: "scale(1)" }], { duration: 260, easing: "cubic-bezier(.2,1.6,.4,1)" });
