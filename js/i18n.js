@@ -52,7 +52,7 @@ const STRINGS = {
     level_hurrycrane_village_f2: "Bumpers, tótems y obeliscos: rebotes de pinball; los tótems y obeliscos pierden 2, 5 o 10 de vida según la carga.",
     level_hurrycrane_village_f3: "La Grulla: si el huevo explota, cada equipo cobra Gloria según sus rebotes; luego se posa 2 turnos en un obelisco y lo bloquea; un gnomazo la espanta.",
     level_wallforge: "Fortaleza WallForge",
-    level_wallforge_flavor: "Una fortaleza flotante de muros, torres y estandartes azules.",
+    level_wallforge_flavor: "Una fortaleza flotante de muros y torres donde la reliquia cautiva suelta páginas por todo el mapa: recógelas y llévalas a tu obelisco.",
     level_coming_soon: "Próximamente",
 
     choose_opponents: "Elige el número de rivales",
@@ -245,7 +245,7 @@ const STRINGS = {
     level_hurrycrane_village_f2: "Bumpers, totems and obelisks: pinball bounces; totems and obelisks lose 2, 5 or 10 health depending on the charge.",
     level_hurrycrane_village_f3: "The Crane: if the egg explodes, each team earns Glory per bounce; then it lands on an obelisk for 2 turns and blocks it; a gnome smash scares it off.",
     level_wallforge: "WallForge Fortress",
-    level_wallforge_flavor: "A floating fortress of walls, towers and blue banners.",
+    level_wallforge_flavor: "A floating fortress of walls and towers where the captive relic scatters pages across the map: collect them and bring them to your obelisk.",
     level_coming_soon: "Coming soon",
 
     choose_opponents: "Choose number of opponents",
