@@ -6,10 +6,11 @@
        con un gnomo en la mano lo aturde y carga el gnomo con +5 puntos (el gnomo se queda).
      - Abrir el altar: lanzarle un gnomo cargado con 10 puntos rompe las cadenas (con menos, solo rebota).
        Atacar el altar manda a los guardias tras el atacante hasta que se aleje más de 4 casillas.
-     - La Reliquia: quien la coge del altar la lleva sobre la cabeza y acumula 1 punto por cada turno que la
-       lleva; los guardias van a por él (siempre al portador, sea del bando que sea). Si llega a una casilla
-       pegada a su obelisco cobra todos los puntos de Gloria y el minijuego se reinicia (Reliquia al altar,
-       sellado). Si la pierde (muere), cae al suelo y pierde los puntos: cualquier unidad que la pise la coge;
+     - La Reliquia: quien la coge del altar la lleva sobre la cabeza con 0 puntos; al desencadenarla salen 15
+       PÁGINAS flotando en casillas libres al azar (cuando se recoge una sale otra, hasta 30 en total) y cada
+       página que pisa el portador le suma +2 puntos. Los guardias van a por él (siempre al portador, sea del
+       bando que sea). Si llega a una casilla pegada a su obelisco cobra todos los puntos de Gloria, las
+       páginas se desvanecen y el minijuego se reinicia (Reliquia al altar, sellado). Si la pierde (muere), cae al suelo y pierde los puntos: cualquier unidad que la pise la coge;
        si la pisa un guardia, vuelve al altar y se resella.
    Solo existe en el nivel "wallforge" (experimental, sin multijugador). El resto del juego solo la ve a través
    de Reliquia.blocks (casillas ocupadas, vía Drums.at), Reliquia.addThrowMarker (js/gnome.js), Reliquia.refreshFog
@@ -24,6 +25,7 @@ const RELIQUIA_SRC = {
   abierto: RELIQUIA_DIR + "altar_abierto.png",
   vacio: RELIQUIA_DIR + "altar_vacio.png",
   icono: RELIQUIA_DIR + "reliquia.png",
+  pagina: RELIQUIA_DIR + "pagina.png",
 };
 const RELIQUIA_HITS_TO_OPEN = 3; // gnomos que hay que estrellar contra el altar: rompen una cadena, la otra y, el tercero, desencadena la Reliquia
 const RELIQUIA_WAVE_MS = [2400, 1600, 1000, 620]; // cada cuánto sale una onda naranja según los golpes recibidos (más rápido con menos cadenas)
@@ -36,13 +38,17 @@ const RELIQUIA_GUARD_OFFSETS = [0, 5, 11]; // posiciones de los 3 guardias en el
 const RELIQUIA_ALTAR_W = 262; // ancho del altar en pantalla (px)
 const RELIQUIA_ALTAR_H = (638 / 560) * RELIQUIA_ALTAR_W;
 const RELIQUIA_MAX_POINTS = 30; // tope de puntos acumulables
-const RELIQUIA_POINTS_PER_TURN = 3; // puntos que suma la Reliquia por turno en manos de un jugador
+const RELIQUIA_PAGES_START = 15; // páginas que salen por el mapa al desencadenar la Reliquia
+const RELIQUIA_PAGES_TOTAL = 30; // páginas que pueden aparecer en total (al recoger una sale otra hasta llegar a este número)
+const RELIQUIA_PAGE_POINTS = 2; // puntos que suma al portador cada página que pisa
 const RELIQUIA_FLOAT_Y = 150; // altura de la Reliquia flotando sobre el altar vacío (ya sin cadenas)
 const RELIQUIA_RELIC_Y = 93; // altura (px sobre el centro de la casilla) a la que flota la Reliquia sobre el altar
 
 const Reliquia = {
   altar: null, // { row, col, el, imgEl, state: "sellado" | "abierto" | "vacio" }
   guards: [],
+  pages: [], // páginas flotando por el mapa: { row, col, el }
+  pagesSpawned: 0, // páginas que han salido desde que se desencadenó la Reliquia
   relic: null, // { state: "altar" | "carried" | "guard" | "floor", carrier, guard, team, points, row, col, el }
   alert: null, // { unitId }
   base: 0, // giro actual de la patrulla
@@ -55,6 +61,9 @@ const Reliquia = {
   resetAll() {
     if (this.altar && this.altar.el) this.altar.el.remove();
     this.guards.forEach((g) => g.el && g.el.remove());
+    this.pages.forEach((p) => p.el && p.el.remove());
+    this.pages = [];
+    this.pagesSpawned = 0;
     if (this.relic && this.relic.el) this.relic.el.remove();
     this._hideFloat();
     this.altar = null;
@@ -268,6 +277,7 @@ const Reliquia = {
     this.altar.el.classList.toggle("unit--fog-hidden", f(this.altar));
     if (this.altar.floatEl) this.altar.floatEl.classList.toggle("unit--fog-hidden", f(this.altar));
     this.guards.forEach((g) => g.el.classList.toggle("unit--fog-hidden", f(g)));
+    this.pages.forEach((p) => p.el.classList.toggle("unit--fog-hidden", f(p)));
     const r = this.relic;
     if (r && r.state === "floor" && r.el) r.el.classList.toggle("unit--fog-hidden", f(r));
   },
@@ -328,15 +338,6 @@ const Reliquia = {
     if (!this.altar || !this.relic) return;
     if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return;
     try {
-      const r = this.relic;
-      if (r.state === "carried" && r.team === team) {
-        const gain = Math.min(RELIQUIA_POINTS_PER_TURN, RELIQUIA_MAX_POINTS - r.points);
-        r.points += gain;
-        this._updateBadge();
-        const u = this._carrier();
-        if (u) Units.spawnFloatingText(u, `+${gain}`, { className: "dmg-popup gnome-points-popup" });
-        if (u) await this.checkDelivery(u);
-      }
       this._revealCarrier();
       await this._guardsTurn();
     } catch (e) {
@@ -850,12 +851,95 @@ const Reliquia = {
       this._setAltar("vacio"); // sin cadenas: altar vacío y la Reliquia flotando encima
       this._stopWaves();
       this._showFloat();
+      this._spawnPages(RELIQUIA_PAGES_START); // la Reliquia se libera: salen las páginas por todo el mapa
     }
     if (typeof Enmurallado !== "undefined" && Enmurallado.shards) Enmurallado.shards(x, y - 70, a.hits >= 3 ? 16 : 8, { speed: 100, lift: 60, size: 11 });
     if (a.hits >= 2 && a.imgEl.animate)
       a.imgEl.animate([{ transform: "scale(.94,1.06)" }, { transform: "scale(1.07,.93)", offset: 0.4 }, { transform: "scale(1,1)" }], { duration: 480, easing: "cubic-bezier(.2,1.5,.4,1)" });
     if (a.hits < RELIQUIA_HITS_TO_OPEN) this._startWaves(); // las ondas se aceleran
     await this._wait(a.hits >= 3 ? 420 : 260);
+  },
+
+  // ---------- Páginas de la Reliquia ----------
+  _pageAt(row, col) {
+    return this.pages.find((p) => p.row === row && p.col === col) || null;
+  },
+
+  _pageTileOk(r, c) {
+    const size = Units.boardSize;
+    if (r < 0 || c < 0 || r >= size || c >= size) return false;
+    if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) return false;
+    if (this.altar && Math.max(Math.abs(r - this.altar.row), Math.abs(c - this.altar.col)) <= RELIQUIA_RING) return false;
+    if (this._pageAt(r, c)) return false;
+    if (Units.unitAt(r, c)) return false;
+    if (typeof Gnome !== "undefined" && Gnome.isAt(r, c)) return false;
+    if (typeof Villages !== "undefined" && Villages.at(r, c)) return false;
+    if (typeof Shops !== "undefined" && Shops.at(r, c)) return false;
+    if (typeof Obelisks !== "undefined" && Obelisks.at(r, c)) return false;
+    if (typeof Resources !== "undefined" && Resources.at(r, c)) return false;
+    if (typeof Oracle !== "undefined" && Oracle.at && Oracle.at(r, c)) return false;
+    if (typeof Bushes !== "undefined" && Bushes.at && Bushes.at(r, c)) return false;
+    if (typeof Drums !== "undefined" && Drums.at(r, c)) return false;
+    return true;
+  },
+
+  // Hace salir n páginas en casillas libres al azar (sin pasarse de las 30 totales).
+  _spawnPages(n) {
+    const size = Units.boardSize, cells = [];
+    for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) if (this._pageTileOk(r, c)) cells.push({ row: r, col: c });
+    for (let i = cells.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cells[i], cells[j]] = [cells[j], cells[i]];
+    }
+    const count = Math.min(n, RELIQUIA_PAGES_TOTAL - this.pagesSpawned, cells.length);
+    for (let i = 0; i < count; i++) this._createPage(cells[i].row, cells[i].col, i * 70);
+    this.pagesSpawned += count;
+    this.refreshFog();
+  },
+
+  _createPage(row, col, delay) {
+    const el = document.createElement("div");
+    el.className = "unit board-item reliquia-page";
+    const img = document.createElement("img");
+    img.alt = "";
+    img.draggable = false;
+    img.style.animationDelay = `-${(Math.random() * 3).toFixed(2)}s`; // flotan desfasadas
+    this._src(img, RELIQUIA_SRC.pagina);
+    el.appendChild(img);
+    Units.container.appendChild(el);
+    const { x, y } = this._px(row, col);
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.zIndex = String((row + col) * 10 + 7);
+    this.pages.push({ row, col, el });
+    if (el.animate) el.animate([{ scale: "0.2", opacity: 0 }, { scale: "1.25", opacity: 1, offset: 0.6 }, { scale: "1", opacity: 1 }], { duration: 420, delay: delay || 0, easing: "ease-out", fill: "backwards" });
+  },
+
+  // El portador pisa una casilla: si hay una página, la recoge (+2 puntos) y sale otra en otro sitio.
+  _collectPageAt(unit, row, col) {
+    const r = this.relic, page = this._pageAt(row, col);
+    if (!page || !r || r.state !== "carried" || r.carrier !== unit.id) return;
+    this.pages = this.pages.filter((p) => p !== page);
+    const gain = Math.min(RELIQUIA_PAGE_POINTS, RELIQUIA_MAX_POINTS - r.points);
+    r.points += gain;
+    this._updateBadge();
+    Units.spawnFloatingText(unit, `+${gain}`, { className: "dmg-popup gnome-points-popup" });
+    this._sfx("passSuccess");
+    const el = page.el;
+    if (el.animate) el.animate([{ scale: "1", opacity: 1 }, { scale: "1.5", opacity: 0 }], { duration: 260, easing: "ease-out", fill: "forwards" }).finished.catch(() => {}).then(() => el.remove());
+    else el.remove();
+    if (this.pagesSpawned < RELIQUIA_PAGES_TOTAL) setTimeout(() => { if (this.altar && this.relic && this.relic.state !== "altar") this._spawnPages(1); }, 450);
+  },
+
+  _clearPages() {
+    const old = this.pages;
+    this.pages = [];
+    this.pagesSpawned = 0;
+    old.forEach((p) => {
+      const el = p.el;
+      if (el.animate) el.animate([{ scale: "1", opacity: 1 }, { scale: "0.3", opacity: 0 }], { duration: 380, easing: "ease-in", fill: "forwards" }).finished.catch(() => {}).then(() => el.remove());
+      else el.remove();
+    });
   },
 
   // ---------- Coger y llevar la Reliquia ----------
@@ -1001,6 +1085,7 @@ const Reliquia = {
       Units.spawnFloatingText(unit, "0", { className: "dmg-popup gnome-points-popup" });
     }
     if (r.state === "carried" && r.carrier === unit.id) {
+      this._collectPageAt(unit, row, col);
       if (unit.team !== "player" && typeof Fog !== "undefined" && Fog.revealAround) {
         const type = typeof UNIT_TYPES !== "undefined" ? UNIT_TYPES[unit.typeId] : null;
         Fog.revealAround(row, col, (type ? type.percepcion : 1) + 1);
@@ -1043,6 +1128,7 @@ const Reliquia = {
     r.points = 0;
     this.alert = null;
     this._hideFloat();
+    this._clearPages(); // el minijuego se reinicia: las páginas se desvanecen
     await this._fly(from, this._relicAnchor(), 700);
     this.altar.hits = 0;
     this._setAltar("sellado");

@@ -16,12 +16,12 @@ const GG_VERSION = "v.001614";
 
 const GG_CHANGELOG = [
   { v: "v.001614", date: "28/10/2026", title: "Fortaleza WallForge", items: [
-    "Fortaleza WallForge: suelo propio con losetas de piedra y de madera mezcladas por zonas, dos aguas nuevas y nuevo obelisco para el Equipo Reforjados",
+    "Reliquia de WallForge, nueva mecánica: al liberarla salen 15 páginas flotando por el mapa en casillas libres (al recoger una sale otra, hasta 30); el portador empieza con 0 puntos y cada página que pisa le suma +2; ya no suma puntos por turno. Al llegar junto a su obelisco cobra los puntos, se los resta a los rivales y las páginas se desvanecen",
+    "Fortaleza WallForge: suelo propio por zonas (tierra junto al agua, empedrado como base y suelo metálico alrededor de la Reliquia), dos aguas nuevas y nuevo obelisco para el Equipo Reforjados",
     "Reliquia de WallForge: el indicador de puntos va en un cuadrado irregular como el resto de contadores y la Reliquia acumula como máximo 30 puntos",
     "Reliquia de WallForge: al entregarla, los rivales pierden la misma Gloria que gana quien la entrega (sin bajar de 0, con un \"-N\" junto a tu marcador)",
     "Reliquia de WallForge: lanzar un gnomo al soldado que lleva la Reliquia lo marea y la suelta; a los jugadores portadores no les afecta",
     "Reliquia de WallForge: si cae al suelo, el guardia más cercano la recoge y la lleva al altar mientras los otros dos le cubren; al llegar el altar se resella y el minijuego se reinicia",
-    "Reliquia de WallForge: la Reliquia suma 3 puntos por turno en manos de un jugador y su número se ve junto al icono",
     "Reliquia de WallForge: el tercer gnomo deja el altar vacío con la Reliquia flotando encima, más grande, lista para cogerla",
   ] },
   { v: "v.001612", date: "27/10/2026", title: "La Reliquia Paranoica de WallForge", items: [

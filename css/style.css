@@ -12467,3 +12467,31 @@ body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
   color: #ff2323;
   filter: drop-shadow(0 4px 0 #4a0a0a);
 }
+
+/* Páginas de la Reliquia (WallForge): flotan sobre la casilla con una sombra plana en el suelo */
+.reliquia-page {
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.reliquia-page img {
+  display: block;
+  width: 72px;
+  height: auto;
+  animation: reliquia-page-bob 1.8s ease-in-out infinite;
+}
+.reliquia-page::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 18px;
+  margin: -2px 0 0 -22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.28);
+  z-index: -1;
+}
+@keyframes reliquia-page-bob {
+  0%, 100% { transform: translateY(-36px) rotate(-5deg); }
+  50% { transform: translateY(-48px) rotate(5deg); }
+}

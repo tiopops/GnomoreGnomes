@@ -572,6 +572,7 @@ function generateMap(size, options) {
   // encima no se notaría).
   if (opts.rivers) generateRiver(grid, size, inSafeZone);
 
+  if (typeof LevelAssets !== "undefined") LevelAssets.prepareTerrain(size, (r, c) => grid[r][c] === "water"); // suelo por zonas (WallForge)
   const tiles = [];
   for (let row = 0; row < size; row++) {
     for (let col = 0; col < size; col++) {
@@ -612,6 +613,11 @@ function renderMap(map, container) {
     h: Math.floor(TILE_RENDER_HEIGHT * grassAdjust.scale),
   };
   const tileDefs = [];
+  if (typeof LevelAssets !== "undefined") {
+    const wat = new Set();
+    map.tiles.forEach((t) => { if (t.type === "water") wat.add(t.row * map.size + t.col); });
+    LevelAssets.prepareTerrain(map.size, (r, c) => wat.has(r * map.size + c)); // también al reanudar una partida guardada
+  }
 
   map.tiles.forEach((t) => {
     const baseSrc = t.type === "grass" ? t.src : pickVariant(TILE_TYPES.grass, t.row, t.col);
