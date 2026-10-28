@@ -146,6 +146,7 @@ async function startMatch({ modeId, raceId, levelId, opponents, mp }) {
   // click en un botón no espera a que la función async termine.
   try {
     if (typeof Preload !== "undefined") await Preload.run();
+    if (typeof TeamColors !== "undefined") await TeamColors.beforeMatch(!!mp); // colores de equipo personalizados
     if (typeof Banners !== "undefined") Banners.clear();
     const size = getBoardSize(opponents);
     // Ríos (pedido explícito) — de momento solo el modo 1v1 los pide, así
@@ -203,6 +204,7 @@ async function resumeMatch() {
     // Ver la nota larga de Preload en startMatch, justo arriba — mismo
     // criterio aquí.
     if (typeof Preload !== "undefined") await Preload.run();
+    if (typeof TeamColors !== "undefined") await TeamColors.beforeMatch(false);
     if (typeof LevelAssets !== "undefined") LevelAssets.apply(saved.levelId || "mushboom_forest");
     if (typeof Music !== "undefined") Music._refresh();
     const map = { size: saved.size, tiles: saved.tiles };

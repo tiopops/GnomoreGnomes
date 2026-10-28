@@ -147,7 +147,7 @@ const SpriteQuality = {
   // navegador = menos parpadeos negros al hacer zoom repetidamente.
   _srcForTier(originalSrc, tier, shift) {
     const suffix = this._TIER_SUFFIX[Math.min(tier + (shift || 0), this._TIER_SUFFIX.length - 1)];
-    if (!suffix) return originalSrc;
+    if (!suffix || /^(blob|data):/.test(originalSrc)) return originalSrc; // sprites recoloreados (js/teamcolors.js): sin variantes
     return originalSrc.replace(/(\.[a-zA-Z0-9]+)(\?.*)?$/, `${suffix}$1$2`);
   },
 

@@ -745,8 +745,8 @@ const Volcano = {
     if (typeof Turns !== "undefined") Turns.useAction(unit);
 
     const typeId = unit.typeId;
-    const idleSrc = (typeof UNIT_TYPES !== "undefined" && UNIT_TYPES[typeId] && UNIT_TYPES[typeId].spriteUrl) || "";
-    const machacaSrc = Units.machacaSpriteFor(typeId);
+    const idleSrc = typeof Units !== "undefined" ? Units.idleSpriteFor(typeId, unit.team) : (typeof UNIT_TYPES !== "undefined" && UNIT_TYPES[typeId] && UNIT_TYPES[typeId].spriteUrl) || "";
+    const machacaSrc = Units.machacaSpriteFor(typeId, unit.team);
     if (unit.spriteEl && machacaSrc) {
       unit.spriteEl.src = machacaSrc;
       unit.spriteEl.style.width = Math.round(120 * Units.machacaScaleFor(typeId)) + "px";
@@ -760,7 +760,7 @@ const Volcano = {
     const TOTAL_MS = 1450;
     await new Promise((r) => setTimeout(r, IMPACT_DELAY_MS));
 
-    const impactSrc = Units.impactSpriteFor(typeId);
+    const impactSrc = Units.impactSpriteFor(typeId, unit.team);
     if (unit.spriteEl && impactSrc) {
       unit.spriteEl.src = impactSrc;
       unit.spriteEl.style.width = Math.round(120 * Units.impactScaleFor(typeId)) + "px";

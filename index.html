@@ -10,6 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Gnomore Gnomes</title>
 <link rel="stylesheet" href="css/style.css?v=1793787000">
+<link rel="stylesheet" href="css/coloreditor.css?v=1793787100">
 <link rel="stylesheet" href="css/mobile.css?v=1793502810">
 <link rel="stylesheet" href="assets/fonts/phosphor/regular.css">
 <link rel="stylesheet" href="assets/fonts/phosphor/light.css">
@@ -88,10 +89,17 @@
         <i class="ph ph-users"></i>
         <span data-i18n="menu_multiplayer">Multijugador</span>
       </button>
+      <button id="btn-colors" class="menu-btn">
+        <i class="ph ph-palette"></i>
+        <span data-i18n="menu_colors">Colores de equipo</span>
+      </button>
     </nav>
 
     <button type="button" id="btn-version" class="menu-footer menu-version">v.001501</button>
   </main>
+
+  <!-- Editor de colores de equipo (js/coloreditor.js) -->
+  <main class="screen" id="screen-colors"></main>
 
   <!-- Selección de modo de juego -->
   <main class="screen" id="screen-mode-select">
@@ -143,7 +151,7 @@
   </main>
 
   <script src="js/rand.js?v=1791415445"></script>
-  <script src="js/i18n.js?v=1793503200"></script>
+  <script src="js/i18n.js?v=1793787100"></script>
   <script src="js/banners.js?v=1793500710"></script>
   <script src="js/teams.js?v=1791042260"></script>
   <script src="js/translate.js?v=1793600100"></script>
@@ -154,30 +162,31 @@
   <script src="js/races.js?v=1791600001"></script>
   <script src="js/levels.js?v=1793700000"></script>
   <script src="js/matchsetup.js?v=1793500600"></script>
-  <script src="js/levelassets.js?v=1793700000"></script>
+  <script src="js/levelassets.js?v=1793790000"></script>
   <script src="js/mapgen.js?v=1793500570"></script>
   <script src="js/terraincanvas.js?v=1793600100"></script>
   <script src="js/fpsmeter.js?v=1793500113"></script>
   <script src="js/fogcanvas.js?v=1793700200"></script>
   <script src="js/fog.js?v=1793700200"></script>
   <script src="js/entitycull.js?v=1791500001"></script>
-  <script src="js/spritequality.js?v=1793500540"></script>
+  <script src="js/spritequality.js?v=1793787100"></script>
   <script src="js/boardview.js?v=1793502900"></script>
   <script src="js/uiconfig.js?v=1793502500"></script>
   <script src="js/uihint.js?v=1791042260"></script>
   <script src="js/tooltip.js?v=1791042260"></script>
   <script src="js/attackcursor.js?v=1793000010"></script>
   <script src="js/shadows.js?v=1793500040"></script>
-  <script src="js/units.js?v=1793700400"></script>
+  <script src="js/teamcolors.js?v=1793787100"></script>
+  <script src="js/units.js?v=1793787100"></script>
   <script src="js/bloodsplat.js?v=1791412743"></script>
   <script src="js/movement.js?v=1791413601"></script>
   <script src="js/combat.js?v=1793700400"></script>
-  <script src="js/gnome.js?v=1793700000"></script>
-  <script src="js/villages.js?v=1793500570"></script>
+  <script src="js/gnome.js?v=1793787100"></script>
+  <script src="js/villages.js?v=1793787100"></script>
   <script src="js/glory.js?v=66"></script>
   <script src="js/turns.js?v=1793500710"></script>
-  <script src="js/obelisks.js?v=1793500670"></script>
-  <script src="js/altar.js?v=1791407481"></script>
+  <script src="js/obelisks.js?v=1793787100"></script>
+  <script src="js/altar.js?v=1793787100"></script>
   <script src="js/gnomogro.js?v=1791042260"></script>
   <script src="js/skills.js?v=1791280000"></script>
   <script src="js/skillsui.js?v=1791042260"></script>
@@ -187,7 +196,7 @@
   <script src="js/perfmode.js?v=1793100001"></script>
   <script src="js/settingsmenu.js?v=1793500620"></script>
   <script src="js/gnomecalib.js?v=1791319383"></script>
-  <script src="js/unitinfo.js?v=1793700400"></script>
+  <script src="js/unitinfo.js?v=1793787100"></script>
   <script src="js/backpack.js?v=1793300001"></script>
   <script src="js/sacrifice.js?v=1793300030"></script>
   <script src="js/totemvision.js?v=1791042261"></script>
@@ -202,11 +211,11 @@
   <script src="js/reliquia.js?v=1793787000"></script>
   <script src="js/eggprize.js?v=1793000107"></script>
   <script src="js/crane.js?v=1793300026"></script>
-  <script src="js/volcano.js?v=1793300003"></script>
+  <script src="js/volcano.js?v=1793787100"></script>
   <script src="js/armory.js?v=1793500001"></script>
   <script src="js/bushes.js?v=1793500570"></script>
   <script src="js/hierbajos.js?v=1793500570"></script>
-  <script src="js/abilities.js?v=1791500005"></script>
+  <script src="js/abilities.js?v=1793787100"></script>
   <script src="js/actionbtn-feedback.js?v=1793501300"></script>
   <script src="js/abilities-surcanubes.js?v=1793200006"></script>
   <script src="js/abilities-enmurallado.js?v=1793700300"></script>
@@ -218,23 +227,24 @@
   <script src="js/auth.js?v=1793000500"></script>
   <script src="js/friends.js?v=1793000500"></script>
   <script src="js/net.js?v=1793500710"></script>
-  <script src="js/net-hooks.js?v=1793600100"></script>
-  <script src="js/mp-lobby.js?v=1793700000"></script>
+  <script src="js/net-hooks.js?v=1793787100"></script>
+  <script src="js/mp-lobby.js?v=1793787100"></script>
   <script src="js/turntimer.js?v=1793000400"></script>
   <script src="js/scenarioroulette.js?v=1793700000"></script>
   <script src="js/matchmaking.js?v=1793700000"></script>
   <script src="js/tutorial-frame.js?v=1793502700"></script>
-  <script src="js/tutorial.js?v=1793501500"></script>
+  <script src="js/tutorial.js?v=1793787100"></script>
   <script src="js/tutorial-texts.js?v=1793502100"></script>
   <script src="js/tutorial-levels.js?v=1793501500"></script>
   <script src="js/tutorial-pad.js?v=1793502100"></script>
-  <script src="js/version.js?v=1793786800"></script>
+  <script src="js/version.js?v=1793787100"></script>
   <script src="js/menu.js?v=1793200002"></script>
+  <script src="js/coloreditor.js?v=1793787100"></script>
   <script src="js/appupdate.js?v=1793500090"></script>
-  <script src="js/assetlist.js?v=1793600100"></script>
+  <script src="js/assetlist.js?v=1793790000"></script>
   <script src="js/preload.js?v=1793500001"></script>
-  <script src="js/selectscreens.js?v=1793300010"></script>
-  <script src="js/newgame-flow.js?v=1793700000"></script>
+  <script src="js/selectscreens.js?v=1793787100"></script>
+  <script src="js/newgame-flow.js?v=1793787100"></script>
   <script src="js/gamepad.js?v=1793500070"></script>
   <script src="js/backnav.js?v=1793503000"></script>
   <script src="js/matchcleanup.js?v=1"></script>

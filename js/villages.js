@@ -762,8 +762,8 @@ const Villages = {
   // cualquier otra acción, no hace falta más sincronización.
   async _playEpicSmash(unit, village, damage, big) {
     const typeId = unit.typeId;
-    const idleSrc = (typeof UNIT_TYPES !== "undefined" && UNIT_TYPES[typeId] && UNIT_TYPES[typeId].spriteUrl) || "";
-    const machacaSrc = typeof Units !== "undefined" ? Units.machacaSpriteFor(typeId) : idleSrc;
+    const idleSrc = typeof Units !== "undefined" ? Units.idleSpriteFor(typeId, unit.team) : (typeof UNIT_TYPES !== "undefined" && UNIT_TYPES[typeId] && UNIT_TYPES[typeId].spriteUrl) || "";
+    const machacaSrc = typeof Units !== "undefined" ? Units.machacaSpriteFor(typeId, unit.team) : idleSrc;
     const gnome = typeof Gnome !== "undefined" ? Gnome.list.find((g) => g.heldBy === unit.id) : null;
 
     // Sube al personaje por encima de todo lo demás mientras dura el salto
@@ -808,7 +808,7 @@ const Villages = {
     // gnomo se desintegra asi que cuando se muestre este sprite el gnomo no
     // tiene que aparecer", por eso este cambio de sprite va JUSTO ANTES de
     // Gnome.destroyInstance(gnome) más abajo, no después.
-    const impactSrc = typeof Units !== "undefined" ? Units.impactSpriteFor(typeId) : machacaSrc;
+    const impactSrc = typeof Units !== "undefined" ? Units.impactSpriteFor(typeId, unit.team) : machacaSrc;
     if (unit.spriteEl && impactSrc) {
       unit.spriteEl.src = impactSrc;
       unit.spriteEl.style.width = Math.round(120 * Units.impactScaleFor(typeId)) + "px";

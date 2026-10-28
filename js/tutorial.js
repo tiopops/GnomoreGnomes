@@ -36,6 +36,7 @@ const Tutorial = {
     this._scenario = scenario;
     try {
       if (typeof Preload !== "undefined") await Preload.run();
+      if (typeof TeamColors !== "undefined") await TeamColors.beforeMatch(false);
       if (typeof LevelAssets !== "undefined") LevelAssets.apply(scenario === "rock" ? "colinas_rockntroll" : scenario === "crane" ? "hurrycrane_village" : "mushboom_forest");
       if (typeof Music !== "undefined" && Music._refresh) Music._refresh(); // pista del nivel
       const size = getBoardSize(1);

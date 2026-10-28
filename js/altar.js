@@ -626,8 +626,8 @@ const Altar = {
   // mismo temblor de cámara que ya dispara cualquier golpe contra un tótem.
   async _playSacrificeSmash(unit, altar, gnome, mush) {
     const typeId = unit.typeId;
-    const idleSrc = (typeof UNIT_TYPES !== "undefined" && UNIT_TYPES[typeId] && UNIT_TYPES[typeId].spriteUrl) || "";
-    const machacaSrc = typeof Units !== "undefined" ? Units.machacaSpriteFor(typeId) : idleSrc;
+    const idleSrc = typeof Units !== "undefined" ? Units.idleSpriteFor(typeId, unit.team) : (typeof UNIT_TYPES !== "undefined" && UNIT_TYPES[typeId] && UNIT_TYPES[typeId].spriteUrl) || "";
+    const machacaSrc = typeof Units !== "undefined" ? Units.machacaSpriteFor(typeId, unit.team) : idleSrc;
 
     if (unit.spriteEl && machacaSrc) {
       unit.spriteEl.src = machacaSrc;
@@ -648,7 +648,7 @@ const Altar = {
     await new Promise((resolve) => setTimeout(resolve, IMPACT_DELAY_MS));
 
     // ---- Momento del impacto ----
-    const impactSrc = typeof Units !== "undefined" ? Units.impactSpriteFor(typeId) : machacaSrc;
+    const impactSrc = typeof Units !== "undefined" ? Units.impactSpriteFor(typeId, unit.team) : machacaSrc;
     if (unit.spriteEl && impactSrc) {
       unit.spriteEl.src = impactSrc;
       unit.spriteEl.style.width = Math.round(120 * Units.impactScaleFor(typeId)) + "px";

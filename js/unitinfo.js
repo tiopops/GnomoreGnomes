@@ -150,7 +150,7 @@ const UnitInfo = {
     // aplica inline porque el resto de reglas de .unit-info-btn__face sí
     // son fijas en el CSS.
     const face = FACE_OFFSETS[unit.typeId] || FACE_OFFSETS.default;
-    this.faceEl.style.backgroundImage = `url(${type.spriteUrl})`;
+    this.faceEl.style.backgroundImage = `url(${Units.skinUrl(type.spriteUrl, unit.typeId, unit.team)})`;
     this.faceEl.style.backgroundPosition = `${face.x}% ${face.y}%`;
     this.faceEl.style.backgroundSize = `${face.zoom}% auto`;
     // Si ya estaba visible (cambio directo de una unidad seleccionada a
@@ -268,7 +268,7 @@ const UnitInfo = {
         <div class="unit-info-card__content">
           <div class="unit-info-head">
             <div class="unit-info-portrait${unit.team !== "player" ? " unit-info-portrait--enemy" : ""}">
-              <img src="${type.spriteUrl}" alt="">
+              <img src="${Units.skinUrl(type.spriteUrl, unit.typeId, unit.team)}" alt="">
             </div>
             <div class="unit-info-head__text">
               <h2 class="unit-info-name">${type.name}</h2>

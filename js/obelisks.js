@@ -1344,7 +1344,7 @@ const Obelisks = {
       const slotEl = document.createElement("button");
       slotEl.className = "backpack-slot";
       slotEl.innerHTML =
-        `<img src="${def.spriteUrl}" class="backpack-slot__icon backpack-slot__icon--unit" style="width:${this._recruitIconPct(typeId)}%;height:${this._recruitIconPct(typeId)}%;top:${50 - ((typeof RECRUIT_ICON_LIFT !== 'undefined' && RECRUIT_ICON_LIFT[typeId]) || 0)}%" alt="${def.name}">` +
+        `<img src="${Units.skinUrl(def.spriteUrl, typeId, obelisk.team)}" class="backpack-slot__icon backpack-slot__icon--unit" style="width:${this._recruitIconPct(typeId)}%;height:${this._recruitIconPct(typeId)}%;top:${50 - ((typeof RECRUIT_ICON_LIFT !== 'undefined' && RECRUIT_ICON_LIFT[typeId]) || 0)}%" alt="${def.name}">` +
         `<span class="shop-slot__price"><span class="shop-slot__price__num">${price}</span></span>`;
       slotEl.classList.toggle("backpack-slot--selected", typeId === this._selectedTypeId);
       // Tutorial (js/tutorial.js): solo TruenoEspora se puede elegir; el

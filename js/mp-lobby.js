@@ -461,6 +461,7 @@ const MPLobby = {
         levelId: d.level,
         myRace: host ? d.hostRace : d.guestRace,
         otherRace: host ? d.guestRace : d.hostRace,
+        otherUid: host ? d.guestUid : d.hostUid,
         me: this._uid,
         myName: host ? d.hostName : d.guestName,
         otherName: other,

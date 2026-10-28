@@ -788,7 +788,7 @@ function createGnomeInstance() {
       let swapped = false;
       let prevW = "";
       if (sprite && typeof Units !== "undefined") {
-        const hitSrc = Units.pegarGnomoSpriteFor(unit.typeId);
+        const hitSrc = Units.pegarGnomoSpriteFor(unit.typeId, unit.team);
         if (hitSrc && sprite.src.indexOf(hitSrc) === -1) {
           sprite.src = hitSrc;
           prevW = sprite.style.width;
