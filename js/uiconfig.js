@@ -64,7 +64,13 @@ const UI_LAYOUT = {
   // entre sí sin tocar su distancia al círculo de información (el radio no
   // cambia). Con el tamaño ya subido a la vez, quedan ligeramente
   // solapados — es justo lo que se pidió ("juntalos"), no un fallo.
-  actionButtons: { hitSize: 51, passSize: 51, radius: 94, startAngle: -22, endAngle: 18 },
+  actionButtons: {
+    hitSize: 68,
+    passSize: 68,
+    radius: 94,
+    startAngle: -21,
+    endAngle: 17,
+  },
   // Botón de habilidad especial (js/abilities.js) — mismo círculo de
   // información como centro y mismo radio que actionButtons, pero en su
   // PROPIO ángulo, bastante más arriba que el abanico de golpear/pasar

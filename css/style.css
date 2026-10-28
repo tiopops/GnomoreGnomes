@@ -12563,3 +12563,10 @@ body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
   color: #ffcf3f;
   filter: drop-shadow(0 4px 0 #5a4300);
 }
+/* Puntero de mano al pasar por la Reliquia liberada, igual que al poder coger un gnomo (.catch-marker). */
+.reliquia-grab-marker,
+.reliquia-grab-marker *,
+.reliquia-grab-marker-overlay,
+.reliquia-grab-marker-overlay * { cursor: url("../assets/iconos/cursor_mano.png") 24 24, pointer !important; }
+/* Guardia mareado (sentado): más grande que de pie, para que se lea igual de imponente. */
+.reliquia-guard--stun .reliquia-guard__sprite { width: 175px; }

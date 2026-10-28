@@ -2,8 +2,8 @@
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
      - El Altar de la Reliquia (centro del mapa, sellado con cadenas) y sus 3 guardias inmortales.
      - Los guardias: patrullan el altar al unísono en círculo; se mueven 1 casilla al FINAL de cada turno
-       (el de cada bando), pegan 1 de daño y solo se aturden (3 turnos) con un gnomazo: pegar a un guardia
-       con un gnomo en la mano lo aturde y carga el gnomo con +5 puntos (el gnomo se queda).
+       (el de cada bando), pegan 1 de daño y solo se aturden (3 turnos) con un gnomazo: lanzarle un gnomo
+       a un guardia lo aturde y carga el gnomo con +5 puntos (no se les puede pegar directamente).
      - Abrir el altar: lanzarle un gnomo cargado con 10 puntos rompe las cadenas (con menos, solo rebota).
        Atacar el altar manda a los guardias tras el atacante hasta que se aleje más de 4 casillas.
      - La Reliquia: quien la coge del altar la lleva sobre la cabeza con 0 puntos; al desencadenarla salen 15
@@ -468,6 +468,27 @@ const Reliquia = {
     }
   },
 
+  // Reinicio del minijuego: cada guardia se desvanece, reaparece en su puesto inicial del círculo (sin aturdimiento).
+  async _resetGuards() {
+    const fade = (g, to, ms) => g.el.animate && g.el.animate([{ opacity: to ? 0 : 1, scale: to ? "0.6" : "1" }, { opacity: to ? 1 : 0, scale: to ? "1" : "0.6" }], { duration: ms, easing: "ease-in-out", fill: "forwards" }).finished.catch(() => {});
+    await Promise.all(this.guards.map((g) => fade(g, false, 360)));
+    this.base = 0;
+    const ring = this._ring();
+    this.guards.forEach((g) => {
+      const c = ring[g.off % ring.length];
+      g.row = c.row;
+      g.col = c.col;
+      if (g.stun > 0) { g.stun = 0; this._clearStun(g); }
+      g.imgEl.style.scale = "1 1";
+      g.flip = false;
+      this._place(g);
+    });
+    if (typeof Fog !== "undefined" && Fog.applyVisibility) Fog.applyVisibility();
+    await Promise.all(this.guards.map((g) => fade(g, true, 420)));
+    this.guards.forEach((g) => g.el.getAnimations && g.el.getAnimations().forEach((a) => a.cancel()));
+    this.refreshFog();
+  },
+
   _slot(g, base) {
     const ring = this._ring();
     return ring[(base + g.off) % ring.length];
@@ -592,7 +613,7 @@ const Reliquia = {
         const a = o.ph + (t - t0) / 380;
         const x = Math.cos(a) * 52, y = Math.sin(a) * 15;
         o.e.style.left = `${c.x + x}px`;
-        o.e.style.top = `${c.y - 92 + y}px`;
+        o.e.style.top = `${c.y - 112 + y}px`;
         o.e.style.zIndex = y > 0 ? "2950" : "1";
         o.e.style.opacity = hidden ? "0" : "1";
         o.e.style.transform = `translate(-50%,-50%) rotate(${o.rot + (t - t0) / 3}deg) scale(${0.85 + 0.2 * Math.sin(a)})`;
@@ -602,32 +623,8 @@ const Reliquia = {
     requestAnimationFrame(frame);
   },
 
-  // ---------- Pegar a un guardia con un gnomo ----------
   _heldGnome(unit) {
     return typeof Gnome !== "undefined" ? Gnome.list.find((x) => x.heldBy === unit.id) || null : null;
-  },
-
-  async hitGuard(unit, g) {
-    const gnome = this._heldGnome(unit);
-    if (!gnome || g.stun > 0 || (typeof Turns !== "undefined" && !Turns.canAct(unit))) return;
-    Units.clearRangeOverlays();
-    Units.faceTowardsTile(unit, g.row, g.col);
-    if (typeof Turns !== "undefined") Turns.useAction(unit);
-    if (unit.el) {
-      unit.el.classList.remove("unit--punching");
-      void unit.spriteEl.offsetWidth;
-      unit.el.classList.add("unit--punching");
-      setTimeout(() => unit.el && unit.el.classList.remove("unit--punching"), 320);
-    }
-    this._sfx("hit");
-    this._shake(false);
-    this._face(g, unit.row, unit.col);
-    if (g.imgEl.animate)
-      g.imgEl.animate([{ transform: "scale(1,1)" }, { transform: "scale(1.2,.78)", offset: 0.25 }, { transform: "scale(.92,1.1)", offset: 0.6 }, { transform: "scale(1,1)" }], { duration: 420, easing: "cubic-bezier(.2,1.5,.4,1)" });
-    this._stun(g);
-    if (gnome._addPoints) gnome._addPoints(RELIQUIA_HIT_CHARGE);
-    Units.spawnFloatingText(unit, `+${RELIQUIA_HIT_CHARGE}`, { className: "dmg-popup gnome-points-popup" });
-    await this._wait(380);
   },
 
   // ---------- Acercarse y actuar (mismo patrón que GnomOgro) ----------
@@ -702,7 +699,7 @@ const Reliquia = {
     });
     if (overlayEl) {
       mk._overlayFor = overlayEl; // icono también sobre el sprite (Units._addAttackOverlays)
-      if (extraClass) { mk._overlayIcon = icon; mk._overlayClass = extraClass + "-overlay"; }
+      if (extraClass) { mk._overlayIcon = icon; mk._overlayClass = extraClass + "-overlay"; mk._overlayY = RELIQUIA_FLOAT_Y; } // el icono va pegado a la Reliquia flotante
     }
   },
 
@@ -711,12 +708,7 @@ const Reliquia = {
   showFor(unit) {
     if (!this.altar || !this.relic || this.busy) return;
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
-    if (this._heldGnome(unit)) {
-      this.guards.forEach((g) => {
-        if (g.stun > 0 || !this._visible(g) || !this._canReach(unit, g)) return;
-        this._marker(g.row, g.col, "ph-crosshair-simple", () => this._approachAnd(unit, g, () => this.hitGuard(unit, g)), g.el);
-      });
-    }
+    // A los guardias NO se les pega: solo se marean lanzándoles un gnomo (ver _throwTargets).
     if (this.relic.state === "altar" && this.altar.hits >= RELIQUIA_HITS_TO_OPEN && !this._carrier() && this._visible(this.altar) && this._canReach(unit, this.altar)) {
       // Mano de coger AMARILLA (como el pico de recolectar) en la loseta y sobre la Reliquia que flota.
       this._marker(this.altar.row, this.altar.col, "ph-hand-grabbing", () => this._approachAnd(unit, this.altar, () => this.takeRelic(unit)), this.altar.el, "reliquia-grab-marker");
@@ -751,7 +743,10 @@ const Reliquia = {
         buildContent: (m) => {
           const i = document.createElement("i");
           i.className = "ph ph-paper-plane-tilt pass-marker__icon";
-          i.style.transform = t === this.altar ? "translateY(-60px)" : "translateY(-70px)";
+          // El icono va en el CENTRO del sprite (altar: ancla al 82,5 % de su alto; guardia: al 88 %).
+          // La mira normal está centrada 45 px por encima del centro de la casilla.
+          const h = t.el.offsetHeight || (t === this.altar ? RELIQUIA_ALTAR_H : 170);
+          i.style.transform = `translateY(${Math.round(45 - ((t === this.altar ? 0.825 : 0.88) - 0.5) * h)}px)`;
           m.appendChild(i);
         },
         onClick: () => this.throwGnome(unit, gnome, t),
@@ -1133,7 +1128,9 @@ const Reliquia = {
     this.alert = null;
     this._hideFloat();
     this._clearPages(); // el minijuego se reinicia: las páginas se desvanecen
+    const guardsBack = this._resetGuards(); // los soldados se desvanecen y vuelven a sus posiciones iniciales
     await this._fly(from, this._relicAnchor(), 700);
+    await guardsBack;
     this.altar.hits = 0;
     this._setAltar("sellado");
     this._startWaves();
