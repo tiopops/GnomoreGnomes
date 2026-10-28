@@ -183,12 +183,6 @@
 // cfg: { role, seed, roomId, levelId, myRace, otherRace, me, myName, otherName, transport }
 Net.launch = async function (cfg) {
   Net.begin(cfg);
-  // Colores de equipo: los míos y los del rival (skins/{uid}); cada jugador ve a los dos con sus colores.
-  if (typeof TeamColors !== "undefined") {
-    TeamColors.clearTeams();
-    TeamColors.applyLocalToPlayer();
-    if (cfg.otherUid) TeamColors.setTeam(Net.otherTeam, await TeamColors.fetchOf(cfg.otherUid));
-  }
   await startMatch({
     modeId: "quick",
     raceId: cfg.myRace,

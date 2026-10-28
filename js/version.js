@@ -15,10 +15,8 @@
 const GG_VERSION = "v.001614";
 
 const GG_CHANGELOG = [
-  { v: "v.001614", date: "28/10/2026", title: "Editor de colores de equipo", items: [
-    "Fortaleza WallForge: suelo propio con tres losetas (piedra, acero y tierra pisada) mezcladas por zonas, dos aguas (una con nenúfares) y nuevo obelisco para el Equipo Reforjados",
-    "Nuevo Editor de colores de equipo (abajo del menú principal): personaliza pelo, piel, mejillas, ropa, botas, flor y ojos de la SurcaBosques sobre su sprite real, con aleatorio, restablecer a los colores originales y guardar",
-    "Los colores guardados se usan en todas las partidas (idle, golpes y animaciones épicas), se guardan en tu cuenta (Firebase, colección skins) y en online tu rival te ve con tus colores",
+  { v: "v.001614", date: "28/10/2026", title: "Fortaleza WallForge", items: [
+    "Fortaleza WallForge: suelo propio con losetas de piedra y de madera mezcladas por zonas, dos aguas nuevas y nuevo obelisco para el Equipo Reforjados",
     "Reliquia de WallForge: el indicador de puntos va en un cuadrado irregular como el resto de contadores y la Reliquia acumula como máximo 30 puntos",
     "Reliquia de WallForge: al entregarla, los rivales pierden la misma Gloria que gana quien la entrega (sin bajar de 0, con un \"-N\" junto a tu marcador)",
     "Reliquia de WallForge: lanzar un gnomo al soldado que lleva la Reliquia lo marea y la suelta; a los jugadores portadores no les afecta",

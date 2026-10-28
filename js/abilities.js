@@ -1525,7 +1525,7 @@ const Abilities = {
       // asignar .src, para que SpriteQuality recuerde de nuevo la textura
       // normal de GolemCorteza como reposo.
       if (type && unit.spriteEl) {
-        const idleUrl = Units.skinUrl(type.spriteUrl, unit.typeId, unit.team);
+        const idleUrl = type.spriteUrl;
         if (typeof SpriteQuality !== "undefined") SpriteQuality.register(unit.spriteEl, idleUrl);
         else unit.spriteEl.src = idleUrl;
       }

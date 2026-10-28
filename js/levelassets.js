@@ -15,10 +15,10 @@ const LevelAssets = {
       bush: "arbusto.png",
       hierbajos: "hierbajos.png",
     },
-    // Fortaleza WallForge: suelo propio (patio de piedra, planchas de acero y tierra pisada) y dos aguas; vegetación de MushBoom hasta tener la propia.
+    // Fortaleza WallForge: suelo propio (patio de piedra y tablones de madera) y dos aguas; vegetación de MushBoom hasta tener la propia.
     wallforge: {
       dir: "assets/niveles/wallforge/",
-      grassZones: ["piedra.png", "acero.png", "tierra.png"],
+      grassZones: ["piedra.png", "madera.png"],
       water: ["agua_1.png", "agua_2.png"],
       nodes: null,
       bush: null,
@@ -89,22 +89,8 @@ const LevelAssets = {
     const a = this._h(x0, y0), b = this._h(x0 + 1, y0), c = this._h(x0, y0 + 1), d = this._h(x0 + 1, y0 + 1);
     return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
   },
-  // Tres materiales (WallForge): 0 piedra (base), 1 acero (manchas), 2 tierra
-  // (zonas exteriores). Mismo ruido de valor: biomas grandes y alguna loseta suelta.
-  _zone3(row, col) {
-    const big = this._vn(row / 8 + 20, col / 8 + 20);
-    const mid = this._vn(row / 3.4 + 90, col / 3.4 + 90);
-    const fine = this._h(row, col);
-    let z = 0;
-    if (big < 0.40) z = 2;
-    else if (mid > 0.52) z = 1;
-    if (fine > 0.93) z = (z + 1 + Math.floor(this._h(col, row) * 2)) % 3;
-    return z;
-  },
   // Devuelve 0 (tierra) o 1 (piedra) para la loseta.
   zoneIndex(row, col) {
-    const zs = TILE_TYPES.grass.zones;
-    if (zs && zs.length === 3) return this._zone3(row, col);
     // El "bioma" grande decide cuánto se mezcla: en zonas con valor bajo
     // manda un solo material, en las medias se dispersan.
     const big = this._vn(row / 9, col / 9);

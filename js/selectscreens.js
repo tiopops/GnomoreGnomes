@@ -234,7 +234,7 @@ const SelectScreens = {
       .map((u, k) => {
         const T = UNIT_TYPES[u.id];
         const h = this.UNIT_H[u.id] || 110;
-        return `<button type="button" class="sel-un sel-unit" data-k="${k}" data-t="${u.id}"><span class="sel-fr sel-un__box"></span><img class="sel-un__sp" style="--h:${h}px" src="${typeof TeamColors !== "undefined" ? TeamColors.url(T.spriteUrl, u.id, "player") : T.spriteUrl}" alt=""><span class="sel-un__nm">${T.name}</span></button>`;
+        return `<button type="button" class="sel-un sel-unit" data-k="${k}" data-t="${u.id}"><span class="sel-fr sel-un__box"></span><img class="sel-un__sp" style="--h:${h}px" src="${T.spriteUrl}" alt=""><span class="sel-un__nm">${T.name}</span></button>`;
       })
       .join("");
     const units = this.units(r);

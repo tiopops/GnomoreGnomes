@@ -518,7 +518,7 @@ const Units = {
     // ver js/spritequality.js) — en vez de asignar .src a mano, se
     // registra para que se adapte solo, ahora y en cualquier cambio de
     // zoom futuro.
-    const skinnedIdle = this.skinUrl(type.spriteUrl, typeId, team); // colores de equipo personalizados (js/teamcolors.js)
+    const skinnedIdle = type.spriteUrl;
     if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, skinnedIdle);
     else spriteEl.src = skinnedIdle;
     spriteEl.draggable = false;
@@ -682,19 +682,15 @@ const Units = {
   // todavía: "para los que no tengan el sprite de machaganomos usa el
   // normal de iddle" (pedido explícito). Único sitio que conoce este
   // relleno, igual que spriteFor(owner) en villages.js con su propia tabla.
-  // Ruta de sprite con los colores personalizados del equipo (js/teamcolors.js). Sin colores: la ruta original.
-  skinUrl(url, typeId, team) {
-    return typeof TeamColors !== "undefined" && team ? TeamColors.url(url, typeId, team) : url;
-  },
   idleSpriteFor(typeId, team) {
     const def = UNIT_TYPES[typeId];
-    return def ? this.skinUrl(def.spriteUrl || "", typeId, team) : "";
+    return def ? def.spriteUrl || "" : "";
   },
 
   machacaSpriteFor(typeId, team) {
     const def = UNIT_TYPES[typeId];
     if (!def) return "";
-    return this.skinUrl(def.machacaUrl || def.spriteUrl || "", typeId, team);
+    return def.machacaUrl || def.spriteUrl || "";
   },
 
   // Sprite del INSTANTE del impacto contra el suelo, dentro de esa misma
@@ -705,7 +701,7 @@ const Units = {
   impactSpriteFor(typeId, team) {
     const def = UNIT_TYPES[typeId];
     if (!def) return "";
-    return this.skinUrl(def.machacaImpactUrl || def.machacaUrl || def.spriteUrl || "", typeId, team);
+    return def.machacaImpactUrl || def.machacaUrl || def.spriteUrl || "";
   },
 
   // Sprite del instante de golpear al gnomo (Gnome.hit, js/gnome.js) —
@@ -714,7 +710,7 @@ const Units = {
   pegarGnomoSpriteFor(typeId, team) {
     const def = UNIT_TYPES[typeId];
     if (!def) return "";
-    return this.skinUrl(def.pegarGnomoUrl || def.spriteUrl || "", typeId, team);
+    return def.pegarGnomoUrl || def.spriteUrl || "";
   },
 
   pegarGnomoScaleFor(typeId) {
