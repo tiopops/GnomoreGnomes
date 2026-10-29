@@ -432,8 +432,6 @@ function spawnTestUnits(size, raceId, opponents, mp) {
     Reliquia.spawn(size);
   }
 
-  // Efectos ambientales del escenario (js/ambiente.js): tono, rayos, partículas. Los apaga la opción o el modo rendimiento.
-  if (typeof Ambient !== "undefined") Ambient.start();
 
   // Arbustos (js/bushes.js) — pedido explícito: "los arbustos... reparti-
   // dos por el mapa... en zonas cercanas a totems, tiendas goblin y algunos
@@ -547,6 +545,10 @@ function spawnTestUnits(size, raceId, opponents, mp) {
   // de "vacío" ya al día desde el primer fotograma (ambos arrancan en 0
   // unidades reclutadas, así que el pulso debe verse ya mismo).
   if (typeof Obelisks !== "undefined") Obelisks.refreshAll();
+
+  // Efectos ambientales del escenario (js/ambiente.js): tono, rayos, partículas. Al final, cuando ya existen obeliscos,
+  // recursos y demás. Los apaga la opción o el modo rendimiento.
+  if (typeof Ambient !== "undefined") Ambient.start();
 
   return { playerSpawnSpots };
 }

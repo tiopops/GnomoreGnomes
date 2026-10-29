@@ -21,6 +21,8 @@ const LevelAssets = {
       grassZones: ["piedra.png", "metal.png", "tierra.png"],
       water: ["agua_1.png", "agua_2.png"],
       nodes: { roca: "roca.png", pino: "arbol.png", mena: "mena.png" },
+      // Variantes extra de un recurso (se elige una al azar al crearlo): archivo y ancho en px (misma altura que la principal).
+      nodeVariants: { pino: [{ file: "arbol_2.png", width: 127 }] },
       bush: null,
       hierbajos: null,
     },
@@ -47,6 +49,7 @@ const LevelAssets = {
     this.current = id;
     const set = this._sets[id];
     const d = this._defaults;
+    Object.keys(RESOURCE_NODE_TYPES).forEach((k) => (RESOURCE_NODE_TYPES[k].variants = null)); // sin variantes salvo que el escenario las defina
     if (!set) {
       TILE_TYPES.grass.variants = d.grass.slice();
       TILE_TYPES.grass.zones = null;
@@ -60,6 +63,7 @@ const LevelAssets = {
     this.newZoneSeed();
     TILE_TYPES.water.variants = set.water.map(full);
     if (set.nodes) Object.keys(set.nodes).forEach((k) => (RESOURCE_NODE_TYPES[k].spriteUrl = full(set.nodes[k])));
+    if (set.nodeVariants) Object.keys(set.nodeVariants).forEach((k) => (RESOURCE_NODE_TYPES[k].variants = set.nodeVariants[k].map((v) => ({ url: full(v.file), width: v.width }))));
     else Object.keys(d.nodes).forEach((k) => (RESOURCE_NODE_TYPES[k].spriteUrl = d.nodes[k]));
   },
 

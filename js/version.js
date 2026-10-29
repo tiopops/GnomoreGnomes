@@ -16,7 +16,9 @@ const GG_VERSION = "v.001618";
 
 const GG_CHANGELOG = [
   { v: "v.001618", date: "29/10/2026", title: "Páginas de la Reliquia", items: [
-    "Efectos ambientales: cada escenario tiene su ambiente sutil (MushBoom: tono verdoso, rayos de luz y polen; Rock'n Troll: tono rojizo, ceniza, humo y brasas del volcán; HurryCrane: degradado amarillo/celeste que se desplaza con puntitos de viento; WallForge: tono de acero y pequeños destellos suaves en obeliscos y altar). Se activan o desactivan en Opciones gráficas y el modo rendimiento los apaga solos",
+    "Fortaleza WallForge: segunda variante de árbol (más alto y fino, con troncos retorcidos y rocas reforzadas); salen mezclados al azar",
+    "Opciones gráficas reordenadas: modo rendimiento, sombras, efectos ambientales, vegetación, niebla, resolución adaptativa y mostrar FPS",
+    "Efectos ambientales: cada escenario tiene su ambiente sutil (MushBoom: tono verdoso, rayos de luz y polen; Rock'n Troll: tono rojizo, ceniza, humo y brasas del volcán; HurryCrane: degradado amarillo/celeste que se desplaza con puntitos de viento; WallForge: tono de acero y pequeños destellos suaves sobre el suelo metálico, las menas, los árboles y las rocas). Se activan o desactivan en Opciones gráficas y el modo rendimiento los apaga solos",
     "Fortaleza WallForge: rocas, árboles y menas de metal propios, reforzados con placas de hierro y refuerzos de madera",
     "Fortaleza WallForge: ambiente de forja, con tono cálido y oscuro sobre el tablero, charcos de luz naranja bajo el altar y los obeliscos y brasas y humo planos (las brasas solo se ven donde hay visión y se apagan con el modo rendimiento); se adapta solo a cualquier tamaño de ventana",
     "Reliquia de WallForge: la IA ahora juega la Reliquia (rompe las cadenas del altar lanzando un gnomo, la coge, recoge páginas, la entrega en su obelisco y persigue al portador rival)",

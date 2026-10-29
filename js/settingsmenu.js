@@ -427,6 +427,10 @@ const SettingsMenu = {
       ambientBtn.querySelector(".settings-toggle").dataset.checked = String(next);
     });
     colVisual.appendChild(ambientBtn);
+
+    // Orden coherente de Opciones gráficas: primero el interruptor general (el modo rendimiento manda sobre los demás),
+    // luego los efectos visuales de más a menos llamativos, después lo técnico y, al final, el contador de FPS.
+    [perfModeBtn, shadowsBtn, ambientBtn, vegetationBtn, fogAnimBtn, spriteQualityBtn, fpsBtn].forEach((b) => colVisual.appendChild(b));
     this._shadowsBtn = shadowsBtn;
     this._ambientBtn = ambientBtn;
     this._fogAnimBtn = fogAnimBtn;

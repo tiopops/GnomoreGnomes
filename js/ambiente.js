@@ -136,30 +136,50 @@ const Ambient = {
     }
   },
 
-  // WallForge: pequeños destellos de sol, suaves, sobre el acero de los obeliscos y el altar.
-  // Cuelgan de cada edificio (posiciones en fracción de su sprite), así siguen a la cámara y su tamaño.
+  // WallForge: pequeños destellos de sol, suaves, sobre el metal: suelo metálico, menas, árboles y rocas
+  // (nunca en tótems ni obeliscos). Los del suelo viven en el mundo del tablero; los de menas/árboles/rocas
+  // cuelgan de su recurso (posiciones en fracción de su sprite), así siguen a la cámara y desaparecen con él.
   _steelGlints() {
-    const spots = [[0.38, 0.2], [0.62, 0.3], [0.5, 0.1], [0.42, 0.5], [0.6, 0.62]];
-    const targets = [];
-    if (typeof Obelisks !== "undefined" && Obelisks.list) Obelisks.list.forEach((o) => { if (o.el && o.spriteEl) targets.push({ el: o.el, sp: o.spriteEl, spots }); });
-    if (typeof Reliquia !== "undefined" && Reliquia.altar && Reliquia.altar.el) {
-      const sp = Reliquia.altar.imgEl || Reliquia.altar.el.querySelector("img");
-      if (sp) targets.push({ el: Reliquia.altar.el, sp, spots: [[0.3, 0.55], [0.7, 0.5], [0.5, 0.35]] });
-    }
+    if (typeof Units === "undefined" || !Units.container) return;
     let n = 0;
-    targets.forEach((t) => {
-      const w = t.sp.offsetWidth, h = t.sp.offsetHeight, ox = t.sp.offsetLeft, oy = t.sp.offsetTop;
-      if (!w || !h) return;
-      t.spots.forEach(([fx, fy]) => {
-        const e = document.createElement("div");
-        e.className = "amb-gl";
-        const sz = 9 + Math.random() * 6;
-        e.style.cssText = `left:${ox + w * fx}px;top:${oy + h * fy}px;--s:${sz.toFixed(0)}px;--d:${(6 + (n * 1.37) % 5).toFixed(1)}s;--l:-${(n * 1.9).toFixed(1)}s`;
-        t.el.appendChild(e);
-        this.worldEls.push(e);
-        n++;
-      });
+    const add = (parent, left, top, z) => {
+      const e = document.createElement("div");
+      e.className = "amb-gl";
+      e.style.cssText = `left:${left}px;top:${top}px;--s:${(13 + Math.random() * 7).toFixed(0)}px;--d:${(6 + (n * 1.37) % 5).toFixed(1)}s;--l:-${(n * 1.9).toFixed(1)}s` + (z != null ? `;z-index:${z}` : "");
+      parent.appendChild(e);
+      this.worldEls.push(e);
+      n++;
+    };
+    // Suelo metálico: casillas libres de la zona de metal (fuera del anillo del altar).
+    const size = Units.boardSize, alt = typeof Reliquia !== "undefined" ? Reliquia.altar : null;
+    const cand = [];
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (typeof TerrainMap !== "undefined" && TerrainMap.grid && TerrainMap.grid[r] && TerrainMap.grid[r][c] !== "grass") continue;
+        if (typeof LevelAssets === "undefined" || LevelAssets.zoneIndex(r, c) !== 1) continue;
+        if (alt && Math.max(Math.abs(r - alt.row), Math.abs(c - alt.col)) <= 2) continue;
+        cand.push({ r, c });
+      }
+    }
+    for (let i = cand.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cand[i], cand[j]] = [cand[j], cand[i]];
+    }
+    cand.slice(0, 10).forEach(({ r, c }) => {
+      const t = getTileCenter(r, c, size);
+      add(Units.container, t.x + this._r(-34, 34), t.y + this._r(-12, 14), (r + c) * 10 + 3);
     });
+    // Menas, árboles y rocas: destellos sobre sus placas de hierro.
+    const spots = { mena: [[0.4, 0.35], [0.62, 0.52]], pino: [[0.5, 0.36]], roca: [[0.46, 0.4]] };
+    if (typeof Resources !== "undefined" && Resources.list) {
+      Resources.list.forEach((nd) => {
+        const sp = nd.spriteEl, list = spots[nd.kind];
+        if (!list || !nd.el || !sp) return;
+        const w = sp.offsetWidth, h = sp.offsetHeight;
+        if (!w || !h) return;
+        list.forEach(([fx, fy]) => add(nd.el, sp.offsetLeft + w * fx, sp.offsetTop + h * fy));
+      });
+    }
   },
 
   // Brasas que suben desde el volcán (en el mundo del tablero: la cámara las mueve y escala con él).

@@ -315,8 +315,14 @@ const Resources = {
     spriteEl.className = "resource-node__sprite";
     // Calidad de sprite dinámica según el zoom (pedido explícito, ver
     // js/spritequality.js).
-    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, def.spriteUrl);
-    else spriteEl.src = def.spriteUrl;
+    // Variantes de aspecto (p. ej. dos árboles distintos en WallForge): la principal más las extra del escenario.
+    let url = def.spriteUrl;
+    if (kind !== "cofre" && def.variants && def.variants.length) {
+      const pick = Math.floor(NR() * (def.variants.length + 1));
+      if (pick > 0) { url = def.variants[pick - 1].url; spriteEl.style.width = `${def.variants[pick - 1].width}px`; }
+    }
+    if (typeof SpriteQuality !== "undefined") SpriteQuality.register(spriteEl, url);
+    else spriteEl.src = url;
     spriteEl.alt = "";
     spriteEl.draggable = false;
     if (kind !== "cofre" && NR() < 0.5) spriteEl.style.scale = "-1 1"; // volteo aleatorio

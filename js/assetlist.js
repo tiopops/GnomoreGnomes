@@ -12,6 +12,7 @@ const PRELOAD_ASSETS = [
  "assets/niveles/wallforge/agua_2_midres.png",
  "assets/niveles/wallforge/roca_midres.png",
  "assets/niveles/wallforge/arbol_midres.png",
+ "assets/niveles/wallforge/arbol_2_midres.png",
  "assets/niveles/wallforge/mena_midres.png",
  "assets/niveles/rockntroll/pino_midres.png",
  "assets/niveles/rockntroll/roca_midres.png",
