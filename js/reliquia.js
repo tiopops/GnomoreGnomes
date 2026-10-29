@@ -38,8 +38,9 @@ const RELIQUIA_GUARD_OFFSETS = [0, 5, 11]; // posiciones de los 3 guardias en el
 const RELIQUIA_ALTAR_W = 262; // ancho del altar en pantalla (px)
 const RELIQUIA_ALTAR_H = (638 / 560) * RELIQUIA_ALTAR_W;
 const RELIQUIA_MAX_POINTS = 30; // tope de puntos acumulables
-const RELIQUIA_PAGES_START = 15; // páginas que salen por el mapa al desencadenar la Reliquia
-const RELIQUIA_PAGES_TOTAL = 30; // páginas que pueden aparecer en total (al recoger una sale otra hasta llegar a este número)
+const RELIQUIA_PAGES_MIN = 20; // mínimo de páginas que salen al desencadenar la Reliquia (en mapas grandes salen más, ver _pagesStart)
+const RELIQUIA_PAGES_PER_TILES = 9; // una página por cada tantas casillas libres del mapa
+const RELIQUIA_PAGES_TOTAL_MULT = 2; // páginas totales = iniciales x esto (al recoger/sacrificar una sale otra hasta llegar a este número)
 const RELIQUIA_PAGE_OBELISK_RADIUS = 1; // las páginas nunca salen en casillas adyacentes a un obelisco (Chebyshev)
 const RELIQUIA_PAGE_POINTS = 2; // puntos que suma al portador cada página que pisa
 const RELIQUIA_FLOAT_Y = 150; // altura de la Reliquia flotando sobre el altar vacío (ya sin cadenas)
@@ -49,6 +50,7 @@ const Reliquia = {
   altar: null, // { row, col, el, imgEl, state: "sellado" | "abierto" | "vacio" }
   guards: [],
   pages: [], // páginas flotando por el mapa: { row, col, el }
+  pagesTotal: 40, // tope de páginas de esta partida (se recalcula al liberar la Reliquia)
   pagesSpawned: 0, // páginas que han salido desde que se desencadenó la Reliquia
   relic: null, // { state: "altar" | "carried" | "guard" | "floor", carrier, guard, team, points, row, col, el }
   alert: null, // { unitId }
@@ -793,6 +795,8 @@ const Reliquia = {
     const out = [];
     if (this.altar.hits < RELIQUIA_HITS_TO_OPEN && inRange(this.altar)) out.push(this.altar);
     this.guards.forEach((g) => { if (g.stun <= 0 && inRange(g)) out.push(g); });
+    // Páginas: se pueden sacrificar gnomos en ellas mientras alguien lleve la Reliquia (ver _sacrificeOnPage).
+    if (this._carrier()) this.pages.forEach((pg) => { if (inRange(pg)) out.push(pg); });
     return out;
   },
 
@@ -812,8 +816,11 @@ const Reliquia = {
           i.className = "ph ph-paper-plane-tilt pass-marker__icon";
           // El icono va en el CENTRO del sprite (altar: ancla al 82,5 % de su alto; guardia: al 88 %).
           // La mira normal está centrada 45 px por encima del centro de la casilla.
+          if (this.pages.includes(t)) { i.style.transform = "translateY(-6px)"; } // la página flota ~50 px sobre la casilla
+          else {
           const h = t.el.offsetHeight || (t === this.altar ? RELIQUIA_ALTAR_H : 170);
           i.style.transform = `translateY(${Math.round(45 - ((t === this.altar ? 0.825 : 0.88) - 0.5) * h)}px)`;
+          }
           m.appendChild(i);
         },
         onClick: () => this.throwGnome(unit, gnome, t),
@@ -865,6 +872,10 @@ const Reliquia = {
       gnome.spriteEl.src = GNOME_ASSETS.grita;
       await gnome.animateThrowTo(holder.row, holder.col, a.row, a.col);
       this._sfx("hit");
+      if (this.pages.includes(a)) {
+        await this._sacrificeOnPage(holder, gnome, a);
+        return;
+      }
       if (a === this.altar) {
         this._clang(a);
         await this._hitAltar();
@@ -899,6 +910,82 @@ const Reliquia = {
     }
   },
 
+  // ---------- Sacrificio en una página ----------
+  // El gnomo lanzado se deshace en ceniza sobre la página (desaparece entero); la página se consume y el portador de la
+  // Reliquia gana +2 si es de tu bando (el de quien lanza) o pierde 2 si es rival. Sale otra página en otro sitio.
+  async _sacrificeOnPage(holder, gnome, page) {
+    const carrier = this._carrier(), r = this.relic;
+    const ally = !!carrier && carrier.team === holder.team;
+    this.pages = this.pages.filter((p) => p !== page);
+    const img = await this._loadImg(GNOME_ASSETS.grita);
+    const { x, y } = this._px(page.row, page.col);
+    gnome.el.style.display = "none";
+    const W = 93, H = Math.round(W * (img.naturalHeight / img.naturalWidth));
+    const cx = x - W / 2, cy = y - 50 - H / 2;
+    this._shake(false);
+    if (page.el.animate) page.el.animate([{ scale: "1" }, { scale: "1.35 .7", offset: 0.25 }, { scale: ".92 1.12", offset: 0.55 }, { scale: "1" }], { duration: 480, easing: "cubic-bezier(.2,1.5,.4,1)" });
+    await this._ashGnome(img, cx, cy, W, H, (y + 20));
+    if (carrier && r && r.state === "carried") {
+      const before = r.points;
+      r.points = Math.max(0, Math.min(RELIQUIA_MAX_POINTS, before + (ally ? RELIQUIA_PAGE_POINTS : -RELIQUIA_PAGE_POINTS)));
+      this._updateBadge();
+      const d = r.points - before;
+      if (d) Units.spawnFloatingText(carrier, d > 0 ? `+${d}` : `${d}`, { className: "dmg-popup gnome-points-popup" });
+      this._sfx(ally ? "passSuccess" : "hit");
+    }
+    const el = page.el;
+    if (el.animate) el.animate([{ scale: "1", opacity: 1 }, { scale: "1.5", opacity: 0 }], { duration: 260, easing: "ease-out", fill: "forwards" }).finished.catch(() => {}).then(() => el.remove());
+    else el.remove();
+    if (typeof Gnome !== "undefined" && Gnome.list.includes(gnome)) Gnome.destroyInstance(gnome);
+    if (this.pagesSpawned < this.pagesTotal) setTimeout(() => { if (this.altar && this.relic && this.relic.state !== "altar") this._spawnPages(1); }, 450);
+  },
+
+  _loadImg(src) {
+    return new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(im); im.src = src; });
+  },
+
+  // Ceniza: el sprite del gnomo se deshace de izquierda a derecha en el viento, sin dejar nada.
+  _ashGnome(img, left, top, W, H, z) {
+    const CW = 252, CH = Math.round(CW * (img.naturalHeight / img.naturalWidth)), B = 3;
+    const sc = document.createElement("canvas");
+    sc.width = CW; sc.height = CH;
+    const sx = sc.getContext("2d", { willReadFrequently: true });
+    sx.drawImage(img, 0, 0, CW, CH);
+    const data = sx.getImageData(0, 0, CW, CH).data;
+    const px = [];
+    for (let y = 0; y < CH; y += B) for (let x = 0; x < CW; x += B) {
+      const i = ((y + 1) * CW + x + 1) * 4;
+      if (data[i + 3] > 140) px.push({ x, y, c: `rgb(${data[i]},${data[i + 1]},${data[i + 2]})` });
+    }
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    px.forEach((p) => { p.t = (p.x / CW) * 0.62 + rnd(0, 0.16); p.vx = rnd(70, 200); p.vy = rnd(-110, 20); p.s = rnd(0.5, 1); });
+    const cv = document.createElement("canvas");
+    cv.width = CW; cv.height = CH;
+    cv.style.cssText = `position:absolute;left:${left}px;top:${top}px;width:${W}px;height:${H}px;pointer-events:none;z-index:${5000}`;
+    Units.container.appendChild(cv);
+    const x = cv.getContext("2d");
+    return new Promise((resolve) => {
+      const t0 = performance.now(), D = 2400;
+      const f = (now) => {
+        const k = Math.min(1, (now - t0) / D), T = k * 1.55;
+        x.clearRect(0, 0, CW, CH);
+        px.forEach((p) => {
+          if (T < p.t) { x.fillStyle = p.c; x.fillRect(p.x, p.y, B, B); return; }
+          const q = T - p.t;
+          if (q > 1) return;
+          x.globalAlpha = Math.max(0, 1 - q);
+          x.fillStyle = q < 0.25 ? p.c : "#8d8478";
+          const sz = B * p.s * (1 - q * 0.5) + 1;
+          x.fillRect(p.x + p.vx * q * 0.9, p.y + p.vy * q + q * q * 40, sz, sz);
+          x.globalAlpha = 1;
+        });
+        if (k < 1) requestAnimationFrame(f);
+        else { cv.remove(); resolve(); }
+      };
+      requestAnimationFrame(f);
+    });
+  },
+
   _clang(a) {
     if (a.imgEl.animate)
       a.imgEl.animate([{ transform: "scale(1,1)" }, { transform: "scale(1.05,.95)", offset: 0.3 }, { transform: "scale(.98,1.03)", offset: 0.65 }, { transform: "scale(1,1)" }], { duration: 360, easing: "ease-out" });
@@ -918,7 +1005,7 @@ const Reliquia = {
       this._setAltar("vacio"); // sin cadenas: altar vacío y la Reliquia flotando encima
       this._stopWaves();
       this._showFloat();
-      this._spawnPages(RELIQUIA_PAGES_START); // la Reliquia se libera: salen las páginas por todo el mapa
+      this._spawnPages(this._pagesStart()); // la Reliquia se libera: salen las páginas por todo el mapa
     }
     if (typeof Enmurallado !== "undefined" && Enmurallado.shards) Enmurallado.shards(x, y - 70, a.hits >= 3 ? 16 : 8, { speed: 100, lift: 60, size: 11 });
     if (a.hits >= 2 && a.imgEl.animate)
@@ -951,6 +1038,16 @@ const Reliquia = {
     return true;
   },
 
+  // Cuántas páginas salen al empezar: crece con el tamaño del mapa (casillas libres de páginas).
+  _pagesStart() {
+    const size = Units.boardSize;
+    let free = 0;
+    for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) if (this._pageTileOk(r, c)) free++;
+    const n = Math.max(RELIQUIA_PAGES_MIN, Math.round(free / RELIQUIA_PAGES_PER_TILES));
+    this.pagesTotal = n * RELIQUIA_PAGES_TOTAL_MULT;
+    return n;
+  },
+
   // Hace salir n páginas en casillas libres al azar (sin pasarse de las 30 totales).
   _spawnPages(n) {
     const size = Units.boardSize, cells = [];
@@ -959,7 +1056,7 @@ const Reliquia = {
       const j = Math.floor(Math.random() * (i + 1));
       [cells[i], cells[j]] = [cells[j], cells[i]];
     }
-    const count = Math.min(n, RELIQUIA_PAGES_TOTAL - this.pagesSpawned, cells.length);
+    const count = Math.min(n, this.pagesTotal - this.pagesSpawned, cells.length);
     // Repartidas por todo el mapa: se prefieren casillas lejos de las demás páginas (separación 4, 3, 2...).
     const chosen = [];
     const all = this.pages.concat(chosen);
@@ -1007,7 +1104,7 @@ const Reliquia = {
     const el = page.el;
     if (el.animate) el.animate([{ scale: "1", opacity: 1 }, { scale: "1.5", opacity: 0 }], { duration: 260, easing: "ease-out", fill: "forwards" }).finished.catch(() => {}).then(() => el.remove());
     else el.remove();
-    if (this.pagesSpawned < RELIQUIA_PAGES_TOTAL) setTimeout(() => { if (this.altar && this.relic && this.relic.state !== "altar") this._spawnPages(1); }, 450);
+    if (this.pagesSpawned < this.pagesTotal) setTimeout(() => { if (this.altar && this.relic && this.relic.state !== "altar") this._spawnPages(1); }, 450);
   },
 
   _clearPages() {

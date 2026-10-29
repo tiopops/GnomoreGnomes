@@ -12,9 +12,18 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001614";
+const GG_VERSION = "v.001615";
 
 const GG_CHANGELOG = [
+  { v: "v.001615", date: "29/10/2026", title: "Páginas de la Reliquia", items: [
+    "Reliquia de WallForge: la IA ahora juega la Reliquia (rompe las cadenas del altar lanzando un gnomo, la coge, recoge páginas, la entrega en su obelisco y persigue al portador rival)",
+    "Reliquia de WallForge: las páginas son más numerosas y crecen con el tamaño del mapa (el doble de ese número en total), repartidas con separación y nunca junto a un obelisco",
+    "Reliquia de WallForge: lanzar un gnomo a una página lo deshace en ceniza; la página se consume (y sale otra) y el portador de la Reliquia gana 2 puntos si es de tu bando o pierde 2 si es rival",
+    "Reliquia de WallForge: descripción del escenario y sus tres mecánicas en la selección de escenario",
+    "Reliquia de WallForge: el icono de la mano amarilla se muestra siempre sobre la Reliquia libre; el icono de lanzar sale centrado sobre el sprite del objetivo; el soldado sentado es más grande",
+    "Reliquia de WallForge: a los soldados ya no se les puede pegar (solo se marean lanzándoles un gnomo) y al volver la Reliquia al altar se desvanecen y regresan a su posición inicial",
+    "Iconos de pegar y lanzar al gnomo recuperan su tamaño y posición anteriores, conservando la animación al pulsarlos",
+  ] },
   { v: "v.001614", date: "28/10/2026", title: "Fortaleza WallForge", items: [
     "Reliquia de WallForge, nueva mecánica: al liberarla salen 15 páginas flotando por el mapa en casillas libres (al recoger una sale otra, hasta 30); el portador empieza con 0 puntos y cada página que pisa le suma +2; ya no suma puntos por turno. Al llegar junto a su obelisco cobra los puntos, se los resta a los rivales y las páginas se desvanecen",
     "Fortaleza WallForge: suelo propio por zonas (tierra junto al agua, empedrado como base y suelo metálico alrededor de la Reliquia), dos aguas nuevas y nuevo obelisco para el Equipo Reforjados",
