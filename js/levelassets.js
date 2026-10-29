@@ -63,8 +63,8 @@ const LevelAssets = {
     this.newZoneSeed();
     TILE_TYPES.water.variants = set.water.map(full);
     if (set.nodes) Object.keys(set.nodes).forEach((k) => (RESOURCE_NODE_TYPES[k].spriteUrl = full(set.nodes[k])));
-    if (set.nodeVariants) Object.keys(set.nodeVariants).forEach((k) => (RESOURCE_NODE_TYPES[k].variants = set.nodeVariants[k].map((v) => ({ url: full(v.file), width: v.width }))));
     else Object.keys(d.nodes).forEach((k) => (RESOURCE_NODE_TYPES[k].spriteUrl = d.nodes[k]));
+    if (set.nodeVariants) Object.keys(set.nodeVariants).forEach((k) => (RESOURCE_NODE_TYPES[k].variants = set.nodeVariants[k].map((v) => ({ url: full(v.file), width: v.width }))));
   },
 
   bushSprite() {

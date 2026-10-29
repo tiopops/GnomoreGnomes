@@ -16,6 +16,8 @@ const GG_VERSION = "v.001618";
 
 const GG_CHANGELOG = [
   { v: "v.001618", date: "29/10/2026", title: "Páginas de la Reliquia", items: [
+    "Botón de pasar turno: en \"¡Todos listos!\" el icono también gira al pasar el ratón y el botón vuelve a reaccionar al ratón y al pulsarlo mientras palpita",
+    "Recursos de escenario: al pasar el puntero por un árbol, roca o mena aparece encima del sprite una pequeña etiqueta plana con su nombre (Árbol, Roca, Metal)",
     "Fortaleza WallForge: segunda variante de árbol (más alto y fino, con troncos retorcidos y rocas reforzadas); salen mezclados al azar",
     "Opciones gráficas reordenadas: modo rendimiento, sombras, efectos ambientales, vegetación, niebla, resolución adaptativa y mostrar FPS",
     "Efectos ambientales: cada escenario tiene su ambiente sutil (MushBoom: tono verdoso, rayos de luz y polen; Rock'n Troll: tono rojizo, ceniza, humo y brasas del volcán; HurryCrane: degradado amarillo/celeste que se desplaza con puntitos de viento; WallForge: tono de acero y pequeños destellos suaves sobre el suelo metálico, las menas, los árboles y las rocas). Se activan o desactivan en Opciones gráficas y el modo rendimiento los apaga solos",

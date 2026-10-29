@@ -145,7 +145,8 @@ const Ambient = {
     const add = (parent, left, top, z) => {
       const e = document.createElement("div");
       e.className = "amb-gl";
-      e.style.cssText = `left:${left}px;top:${top}px;--s:${(13 + Math.random() * 7).toFixed(0)}px;--d:${(6 + (n * 1.37) % 5).toFixed(1)}s;--l:-${(n * 1.9).toFixed(1)}s` + (z != null ? `;z-index:${z}` : "");
+      const u = (v) => (typeof v === "number" ? `${v}px` : v);
+      e.style.cssText = `left:${u(left)};top:${u(top)};--s:${(13 + Math.random() * 7).toFixed(0)}px;--d:${(6 + (n * 1.37) % 5).toFixed(1)}s;--l:-${(n * 1.9).toFixed(1)}s` + (z != null ? `;z-index:${z}` : "");
       parent.appendChild(e);
       this.worldEls.push(e);
       n++;
@@ -169,15 +170,14 @@ const Ambient = {
       const t = getTileCenter(r, c, size);
       add(Units.container, t.x + this._r(-34, 34), t.y + this._r(-12, 14), (r + c) * 10 + 3);
     });
-    // Menas, árboles y rocas: destellos sobre sus placas de hierro.
+    // Menas, árboles y rocas: destellos sobre sus placas de hierro. Van en % del propio recurso (su caja mide lo que
+    // su sprite), así no dependen de que la imagen ya esté cargada ni de que el tablero ya se vea al montarlos.
     const spots = { mena: [[0.4, 0.35], [0.62, 0.52]], pino: [[0.5, 0.36]], roca: [[0.46, 0.4]] };
     if (typeof Resources !== "undefined" && Resources.list) {
       Resources.list.forEach((nd) => {
-        const sp = nd.spriteEl, list = spots[nd.kind];
-        if (!list || !nd.el || !sp) return;
-        const w = sp.offsetWidth, h = sp.offsetHeight;
-        if (!w || !h) return;
-        list.forEach(([fx, fy]) => add(nd.el, sp.offsetLeft + w * fx, sp.offsetTop + h * fy));
+        const list = spots[nd.kind];
+        if (!list || !nd.el) return;
+        list.forEach(([fx, fy]) => add(nd.el, `${(fx * 100).toFixed(0)}%`, `${(fy * 100).toFixed(0)}%`));
       });
     }
   },

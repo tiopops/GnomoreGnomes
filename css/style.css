@@ -2459,7 +2459,8 @@ body.team-markers--visible .unit__team-marker {
    aparte al rombo con este modificador cuando el reloj de arena está
    activo, para poder seguir enganchando aquí la misma animación de
    siempre. */
-.end-turn-btn:hover .end-turn-btn__icon--hourglass {
+/* El giro al pasar el ratón vale para cualquier icono del botón con el turno propio (reloj de arena y también "¡Todos listos!"). */
+.end-turn-btn:hover:not(:disabled) .end-turn-btn__icon {
   animation: end-turn-hourglass-spin 0.85s cubic-bezier(0.1, 0.82, 0.25, 1) 1;
 }
 
@@ -2516,9 +2517,21 @@ body.team-markers--visible .unit__team-marker {
   animation: end-turn-pulse-shadow 1.3s ease-in-out infinite;
 }
 
+/* Al pasar el ratón o pulsar, la sombra obedece a la reacción del botón (la animación del latido la pisaría). */
+.end-turn-btn--ready:hover:not(:disabled) .end-turn-btn__bg {
+  animation: none;
+  filter: drop-shadow(8px 8px 0 rgba(0, 0, 0, 0.6));
+}
+.end-turn-btn--ready:active:not(:disabled) .end-turn-btn__bg {
+  animation: none;
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.6));
+}
+
+/* Con las propiedades individuales translate/scale (no transform) el pulso SE SUMA al transform de :hover/:active en vez de
+   anularlo, así el botón sigue reaccionando al ratón y al toque mientras palpita. */
 @keyframes end-turn-pulse {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-2px) scale(1.03); }
+  0%, 100% { translate: 0 0; scale: 1; }
+  50% { translate: 0 -2px; scale: 1.03; }
 }
 
 /* CORRECCIÓN: ya no puede ser box-shadow con spread (0 0 0 Npx) — el
@@ -12657,3 +12670,42 @@ body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
   100% { opacity: 0; }
 }
 body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
+
+/* Etiqueta del recurso al pasar el puntero (js/resources.js): pequeña, plana, sin colores, encima del sprite. */
+.resource-node__label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 20px); /* por encima de la barra de vida */
+  transform: translateX(-50%);
+  min-width: 56px;
+  height: 24px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  font-style: italic;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 5;
+}
+.resource-node__label::before,
+.resource-node__label::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  clip-path: polygon(3% 0, 100% 4%, 97% 100%, 0 94%);
+}
+.resource-node__label::before { inset: 0; background: #000; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4); }
+.resource-node__label::after { inset: 2px; background: #2c2435; }
+.resource-node:hover .resource-node__label {
+  opacity: 1;
+  animation: resource-label-pop 0.22s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+@keyframes resource-label-pop { 0% { scale: 0.55; opacity: 0; } 100% { scale: 1; opacity: 1; } }

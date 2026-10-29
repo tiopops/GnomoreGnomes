@@ -339,6 +339,15 @@ const Resources = {
     el.appendChild(spriteEl);
     if (typeof Shadows !== "undefined") Shadows.attach(spriteEl);
 
+    // Etiqueta con el nombre del recurso (Árbol / Roca / Metal): pequeña, plana y neutra, justo encima del sprite;
+    // solo se ve al pasar el puntero por encima (todo en CSS, ver .resource-node__label en style.css).
+    if (kind !== "cofre" && typeof I18N !== "undefined") {
+      const labelEl = document.createElement("div");
+      labelEl.className = "resource-node__label";
+      labelEl.textContent = I18N.t("resource_label_" + kind);
+      el.appendChild(labelEl);
+    }
+
     // Barra de vida SIEMPRE visible (2 segmentos), mismo patrón que
     // Villages (.village .unit__hpbar en style.css) — una fuente nunca se
     // "selecciona", así que no tiene sentido ocultarla hasta apuntar.
