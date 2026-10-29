@@ -368,6 +368,7 @@ const SettingsMenu = {
         // directamente" (vegetación/hierbajos) — mismo refresco visual
         // inmediato que ya hacían Sombras/Niebla justo arriba.
         vegetationBtn.querySelector(".settings-toggle").dataset.checked = "false";
+        ambientBtn.querySelector(".settings-toggle").dataset.checked = "false";
         // Resolución adaptativa va al REVÉS que las tres de arriba: el modo
         // rendimiento la ENCIENDE (ver perfmode.js), así que aquí se refresca
         // a "true" en vez de a "false".
@@ -407,7 +408,27 @@ const SettingsMenu = {
       fpsBtn.querySelector(".settings-toggle").dataset.checked = String(next);
     });
     colVisual.appendChild(fpsBtn);
+    // Efectos ambientales (js/ambiente.js): tono, rayos de luz y partículas de cada escenario.
+    // Bloqueado y apagado mientras el modo rendimiento esté activo (ver _syncPerfLock).
+    const ambientBtn = document.createElement("button");
+    ambientBtn.className = "p5-banner p5-banner--action settings-panel__option settings-panel__option--toggle";
+    const ambientChecked = typeof Ambient !== "undefined" ? Ambient.enabled : true;
+    ambientBtn.innerHTML =
+      '<span class="settings-panel__option-main">' +
+      '<i class="ph ph-wind settings-panel__option-icon"></i>' +
+      '<span class="p5-banner__label">' + I18N.t("settings_ambient") + '</span>' +
+      "</span>" +
+      `<span class="settings-toggle" data-checked="${ambientChecked}"><i class="ph ph-check settings-toggle__check"></i></span>`;
+    ambientBtn.addEventListener("click", () => {
+      if (typeof PerfMode !== "undefined" && PerfMode.enabled) return;
+      SFX.click();
+      const next = typeof Ambient !== "undefined" ? !Ambient.enabled : true;
+      if (typeof Ambient !== "undefined") Ambient.setEnabled(next);
+      ambientBtn.querySelector(".settings-toggle").dataset.checked = String(next);
+    });
+    colVisual.appendChild(ambientBtn);
     this._shadowsBtn = shadowsBtn;
+    this._ambientBtn = ambientBtn;
     this._fogAnimBtn = fogAnimBtn;
     this._vegetationBtn = vegetationBtn;
     this._spriteQualityBtn = spriteQualityBtn;
@@ -522,7 +543,7 @@ const SettingsMenu = {
   // opciones existen, solo que no se pueden tocar mientras el modo
   // rendimiento las esté forzando apagadas.
   _syncPerfLock() {
-    if (!this._shadowsBtn || !this._fogAnimBtn || !this._vegetationBtn || !this._spriteQualityBtn) return;
+    if (!this._shadowsBtn || !this._fogAnimBtn || !this._vegetationBtn || !this._spriteQualityBtn || !this._ambientBtn) return;
     const locked = typeof PerfMode !== "undefined" && PerfMode.enabled;
     // Refresca cada interruptor con el estado REAL (el panel se crea una sola vez y otros
     // sistemas —modo rendimiento automático, ajustes guardados— pueden cambiar el valor después).
@@ -533,12 +554,13 @@ const SettingsMenu = {
     if (typeof Hierbajos !== "undefined") mark(this._vegetationBtn, Hierbajos.enabled);
     if (typeof SpriteQuality !== "undefined") mark(this._spriteQualityBtn, SpriteQuality.enabled);
     if (typeof Shadows !== "undefined") mark(this._shadowsBtn, Shadows.enabled);
+    if (typeof Ambient !== "undefined") mark(this._ambientBtn, Ambient.enabled);
     if (typeof Fog !== "undefined" && "animEnabled" in Fog) mark(this._fogAnimBtn, Fog.animEnabled);
     // Resolución adaptativa se bloquea igual que las otras tres mientras el
     // modo rendimiento esté activo (pintado como "deshabilitado", el jugador
     // no puede tocarla) — solo que a ella el modo rendimiento la deja
     // encendida en vez de apagada (ver perfmode.js/spriteQualityBtn).
-    [this._shadowsBtn, this._fogAnimBtn, this._vegetationBtn, this._spriteQualityBtn].forEach((btn) => {
+    [this._shadowsBtn, this._fogAnimBtn, this._vegetationBtn, this._spriteQualityBtn, this._ambientBtn].forEach((btn) => {
       btn.classList.toggle("settings-panel__option--locked", locked);
       btn.setAttribute("aria-disabled", String(locked));
     });

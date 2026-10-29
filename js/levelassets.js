@@ -15,12 +15,12 @@ const LevelAssets = {
       bush: "arbusto.png",
       hierbajos: "hierbajos.png",
     },
-    // Fortaleza WallForge: suelo propio por zonas (empedrado de base, metal alrededor de la Reliquia, tierra junto al agua) y dos aguas; vegetación de MushBoom hasta tener la propia.
+    // Fortaleza WallForge: suelo propio por zonas (empedrado de base, metal alrededor de la Reliquia, tierra junto al agua) y dos aguas; rocas, árboles y menas propios reforzados con metal; arbustos y hierbajos de MushBoom hasta tener los propios.
     wallforge: {
       dir: "assets/niveles/wallforge/",
       grassZones: ["piedra.png", "metal.png", "tierra.png"],
       water: ["agua_1.png", "agua_2.png"],
-      nodes: null,
+      nodes: { roca: "roca.png", pino: "arbol.png", mena: "mena.png" },
       bush: null,
       hierbajos: null,
     },

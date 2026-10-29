@@ -12570,3 +12570,90 @@ body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
 .reliquia-grab-marker-overlay * { cursor: url("../assets/iconos/cursor_mano.png") 24 24, pointer !important; }
 /* Guardia mareado (sentado): más grande que de pie, para que se lea igual de imponente. */
 .reliquia-guard--stun .reliquia-guard__sprite { width: 175px; }
+
+/* ---------- Efectos ambientales (js/ambiente.js) ---------- */
+/* Solo transform/opacity: los anima la tarjeta gráfica. Nada depende del tamaño de la ventana. */
+.amb-layer, .amb-tint { position: absolute; inset: 0; pointer-events: none; }
+.amb-layer { z-index: 5; overflow: hidden; }
+.amb-ray {
+  position: absolute;
+  top: -10vh;
+  height: 140vh;
+  transform-origin: 50% 0;
+  transform: rotate(22deg);
+  background: linear-gradient(to bottom, rgba(255, 244, 170, 0.5), rgba(255, 244, 170, 0) 85%);
+  opacity: 0.08;
+  animation: amb-ray var(--rd) ease-in-out var(--rl) infinite alternate;
+}
+@keyframes amb-ray { from { opacity: 0.08; } to { opacity: 0.22; } }
+.amb-p {
+  position: absolute;
+  opacity: 0;
+  animation: amb-drift var(--d) linear var(--l) infinite;
+}
+@keyframes amb-drift {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  10% { opacity: var(--a); }
+  50% { transform: translate3d(calc(var(--dx) * 0.5), calc(var(--dy) * 0.5 + var(--sw)), 0); }
+  90% { opacity: var(--a); }
+  100% { transform: translate3d(var(--dx), var(--dy), 0); opacity: 0; }
+}
+.amb-smoke {
+  position: absolute;
+  border-radius: 50%;
+  background: #3a2620;
+  opacity: 0;
+  animation: amb-smoke var(--d) linear var(--l) infinite;
+}
+@keyframes amb-smoke {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  15% { opacity: 0.14; }
+  85% { opacity: 0.14; }
+  100% { transform: translate3d(var(--dx), var(--dy), 0); opacity: 0; }
+}
+.amb-ember { pointer-events: none; }
+
+/* HurryCrane: degradado amarillo/celeste que se desplaza muy despacio (solo transform). */
+.amb-sky {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 224, 130, 0.13) 0%, rgba(140, 200, 255, 0.15) 25%, rgba(255, 224, 130, 0.13) 50%, rgba(140, 200, 255, 0.15) 75%, rgba(255, 224, 130, 0.13) 100%);
+  animation: amb-sky 46s linear infinite;
+}
+@keyframes amb-sky { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-66.6667%, 0, 0); } }
+/* WallForge: destello suave de sol sobre el acero (halo difuso + estrella pequeña). */
+.amb-gl {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 40;
+  animation: amb-gl var(--d) ease-out var(--l) infinite;
+}
+.amb-gl::before {
+  content: "";
+  position: absolute;
+  inset: -70%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0, rgba(235, 245, 255, 0.18) 38%, rgba(255, 255, 255, 0) 70%);
+}
+.amb-gl::after {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  background: rgba(255, 255, 255, 0.85);
+  clip-path: polygon(50% 0, 57% 43%, 100% 50%, 57% 57%, 50% 100%, 43% 57%, 0 50%, 43% 43%);
+}
+@keyframes amb-gl {
+  0% { opacity: 0; transform: scale(0.1) rotate(0); }
+  6% { opacity: 1; transform: scale(1.1) rotate(12deg); }
+  12% { opacity: 0.9; transform: scale(0.85) rotate(22deg); }
+  22% { opacity: 0; transform: scale(0.2) rotate(40deg); }
+  100% { opacity: 0; }
+}
+body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }

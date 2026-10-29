@@ -12,10 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001615";
+const GG_VERSION = "v.001618";
 
 const GG_CHANGELOG = [
-  { v: "v.001615", date: "29/10/2026", title: "Páginas de la Reliquia", items: [
+  { v: "v.001618", date: "29/10/2026", title: "Páginas de la Reliquia", items: [
+    "Efectos ambientales: cada escenario tiene su ambiente sutil (MushBoom: tono verdoso, rayos de luz y polen; Rock'n Troll: tono rojizo, ceniza, humo y brasas del volcán; HurryCrane: degradado amarillo/celeste que se desplaza con puntitos de viento; WallForge: tono de acero y pequeños destellos suaves en obeliscos y altar). Se activan o desactivan en Opciones gráficas y el modo rendimiento los apaga solos",
+    "Fortaleza WallForge: rocas, árboles y menas de metal propios, reforzados con placas de hierro y refuerzos de madera",
+    "Fortaleza WallForge: ambiente de forja, con tono cálido y oscuro sobre el tablero, charcos de luz naranja bajo el altar y los obeliscos y brasas y humo planos (las brasas solo se ven donde hay visión y se apagan con el modo rendimiento); se adapta solo a cualquier tamaño de ventana",
     "Reliquia de WallForge: la IA ahora juega la Reliquia (rompe las cadenas del altar lanzando un gnomo, la coge, recoge páginas, la entrega en su obelisco y persigue al portador rival)",
     "Reliquia de WallForge: las páginas son más numerosas y crecen con el tamaño del mapa (el doble de ese número en total), repartidas con separación y nunca junto a un obelisco",
     "Reliquia de WallForge: lanzar un gnomo a una página lo deshace en ceniza; la página se consume (y sale otra) y el portador de la Reliquia gana 2 puntos si es de tu bando o pierde 2 si es rival",

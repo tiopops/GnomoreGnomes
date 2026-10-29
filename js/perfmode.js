@@ -82,6 +82,8 @@ const PerfMode = {
       // (refiriéndose a la vegetación/hierbajos) — mismo criterio que
       // Shadows/Fog justo arriba.
       if (typeof Hierbajos !== "undefined") Hierbajos.setEnabled(false);
+      // Efectos ambientales (js/ambiente.js): el modo rendimiento los apaga.
+      if (typeof Ambient !== "undefined") Ambient.setEnabled(false);
       // Pedido explícito (Resolución adaptativa, js/spritequality.js):
       // "estará activada por defecto en el modo alto rendimiento" — al
       // contrario que las tres de arriba (que el modo rendimiento APAGA

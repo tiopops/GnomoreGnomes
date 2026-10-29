@@ -432,6 +432,9 @@ function spawnTestUnits(size, raceId, opponents, mp) {
     Reliquia.spawn(size);
   }
 
+  // Efectos ambientales del escenario (js/ambiente.js): tono, rayos, partículas. Los apaga la opción o el modo rendimiento.
+  if (typeof Ambient !== "undefined") Ambient.start();
+
   // Arbustos (js/bushes.js) — pedido explícito: "los arbustos... reparti-
   // dos por el mapa... en zonas cercanas a totems, tiendas goblin y algunos
   // puntos de interes". DESPUÉS de Villages/Shops/Obelisks.spawn (necesita
