@@ -12593,12 +12593,16 @@ body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
   top: -10vh;
   height: 140vh;
   transform-origin: 50% 0;
-  transform: rotate(22deg);
   background: linear-gradient(to bottom, rgba(255, 244, 170, 0.5), rgba(255, 244, 170, 0) 85%);
-  opacity: 0.08;
-  animation: amb-ray var(--rd) ease-in-out var(--rl) infinite alternate;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: amb-ray var(--rd) ease-in-out var(--rl) infinite;
 }
-@keyframes amb-ray { from { opacity: 0.08; } to { opacity: 0.22; } }
+@keyframes amb-ray {
+  0% { opacity: 0; transform: translateX(0) rotate(22deg); }
+  50% { opacity: 0.2; }
+  100% { opacity: 0; transform: translateX(5vw) rotate(22deg); }
+}
 .amb-p {
   position: absolute;
   opacity: 0;
