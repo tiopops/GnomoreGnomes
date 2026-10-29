@@ -12590,8 +12590,8 @@ body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
 .amb-layer { z-index: 5; overflow: hidden; }
 .amb-ray {
   position: absolute;
-  top: -10vh;
-  height: 140vh;
+  pointer-events: none;
+  height: 1000px;
   transform-origin: 50% 0;
   background: linear-gradient(to bottom, rgba(255, 244, 170, 0.5), rgba(255, 244, 170, 0) 85%);
   opacity: 0;
@@ -12601,7 +12601,7 @@ body.tut-on .glory-hud--bump .glory-hud__value { animation: none !important; }
 @keyframes amb-ray {
   0% { opacity: 0; transform: translateX(0) rotate(22deg); }
   50% { opacity: 0.2; }
-  100% { opacity: 0; transform: translateX(5vw) rotate(22deg); }
+  100% { opacity: 0; transform: translateX(120px) rotate(22deg); }
 }
 .amb-p {
   position: absolute;

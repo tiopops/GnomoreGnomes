@@ -98,27 +98,38 @@ const Ambient = {
     this.layer = L;
     if (id === "colinas_rockntroll") this._volcanoEmbers();
     else if (id === "wallforge") this._steelGlints();
+    else if (id === "mushboom_forest") this._mushRays();
   },
 
   // MushBoom: rayos de luz diagonales entre las copas y polen/esporas que lleva el viento.
   _mushboom(L) {
-    // Rayos que nacen, derivan despacio y se esfuman del todo; al acabar cada ciclo reaparecen en otro sitio.
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 22; i++) {
+      this._p(L, { x: this._r(0, 80), y: this._r(30, 100), s: Math.random() < 0.3 ? 4 : 3, c: Math.random() < 0.5 ? "#f7f3b0" : "#cfe98a", a: this._r(0.5, 0.9).toFixed(2), d: this._r(14, 26).toFixed(1), l: this._r(0, 26).toFixed(1), dx: `${this._r(22, 38).toFixed(0)}vw`, dy: `-${this._r(8, 22).toFixed(0)}vh`, sw: this._r(-20, 20).toFixed(0) });
+    }
+  },
+
+  // MushBoom: rayos de luz que viven en el MUNDO del tablero (se mueven con la cámara y el zoom, no quedan
+  // fijos en pantalla). Nacen, derivan despacio, se esfuman del todo y reaparecen en otro punto del mapa.
+  _mushRays() {
+    if (typeof Units === "undefined" || !Units.container) return;
+    const size = Units.boardSize;
+    for (let i = 0; i < 6; i++) {
       const e = document.createElement("div");
       e.className = "amb-ray";
       const place = () => {
-        e.style.left = `${this._r(2, 88).toFixed(1)}%`;
-        e.style.width = `${this._r(6, 12).toFixed(1)}vw`;
+        const t = getTileCenter(Math.floor(this._r(0, size)), Math.floor(this._r(0, size)), size);
+        e.style.left = `${(t.x - 60).toFixed(0)}px`;
+        e.style.top = `${(t.y - 520).toFixed(0)}px`;
+        e.style.width = `${this._r(130, 250).toFixed(0)}px`;
       };
       place();
       const d = this._r(11, 16);
       e.style.setProperty("--rd", `${d.toFixed(1)}s`);
-      e.style.setProperty("--rl", `-${(i * d / 5).toFixed(1)}s`);
+      e.style.setProperty("--rl", `-${(i * d / 6).toFixed(1)}s`);
+      e.style.zIndex = String(size * 40);
       e.addEventListener("animationiteration", place);
-      L.appendChild(e);
-    }
-    for (let i = 0; i < 22; i++) {
-      this._p(L, { x: this._r(0, 80), y: this._r(30, 100), s: Math.random() < 0.3 ? 4 : 3, c: Math.random() < 0.5 ? "#f7f3b0" : "#cfe98a", a: this._r(0.5, 0.9).toFixed(2), d: this._r(14, 26).toFixed(1), l: this._r(0, 26).toFixed(1), dx: `${this._r(22, 38).toFixed(0)}vw`, dy: `-${this._r(8, 22).toFixed(0)}vh`, sw: this._r(-20, 20).toFixed(0) });
+      Units.container.appendChild(e);
+      this.worldEls.push(e);
     }
   },
 
