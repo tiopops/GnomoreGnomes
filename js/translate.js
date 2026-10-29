@@ -159,6 +159,7 @@ const EN_DICT = {
 "¡ALERTA! ¡Se acerca una plaga Gnoma!": "ALERT! A Gnome plague is coming!",
 "Los gnomos se están escondiendo…": "The gnomes are hiding…",
 "Roca": "Rock",
+"Árbol": "Tree",
 "Pino": "Pine",
 "Mena de Hierro": "Iron Ore",
 "Madera": "Wood",

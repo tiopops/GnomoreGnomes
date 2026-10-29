@@ -341,10 +341,11 @@ const Resources = {
 
     // Etiqueta con el nombre del recurso (Árbol / Roca / Metal): pequeña, plana y neutra, justo encima del sprite;
     // solo se ve al pasar el puntero por encima (todo en CSS, ver .resource-node__label en style.css).
-    if (kind !== "cofre" && typeof I18N !== "undefined") {
+    // El texto va en español; el traductor del juego (js/translate.js, EN_DICT) lo pasa a inglés y lo devuelve al cambiar de idioma.
+    if (kind !== "cofre") {
       const labelEl = document.createElement("div");
       labelEl.className = "resource-node__label";
-      labelEl.textContent = I18N.t("resource_label_" + kind);
+      labelEl.textContent = { pino: "Árbol", roca: "Roca", mena: "Metal" }[kind] || "";
       el.appendChild(labelEl);
     }
 
