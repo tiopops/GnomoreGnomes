@@ -243,6 +243,12 @@ const Gnomoteca = {
         </div>
       </div>`;
     const back = document.querySelector("#screen-gnomoteca .back-btn");
+    // Clic fuera del libro (ni libro, ni pestañas, ni título, ni el propio botón): se cierra, igual que Volver.
+    const scr = document.getElementById("screen-gnomoteca");
+    if (scr) scr.addEventListener("click", (e) => {
+      if (e.target.closest(".gnomo-stage, .back-btn")) return;
+      if (back) back.click();
+    });
     if (back) { back.addEventListener("click", () => this._snd()); back.addEventListener("mouseenter", () => this._hov()); }
     ["#gt-tabs", "#gt-list"].forEach((sel) => root.querySelector(sel).addEventListener("mouseover", (e) => {
       const t = e.target.closest(".gnomo-tab, .gnomo-it");

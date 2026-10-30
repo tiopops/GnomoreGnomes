@@ -564,7 +564,7 @@ h2 {
 #btn-tutorial { --c: #5d93e0; --c2: #274d82; }
 #btn-resume-game { --c: #5d93e0; --c2: #274d82; }
 #btn-multiplayer { --c: #d9566b; --c2: #7a2a3a; }
-#btn-gnomoteca { --c: #4fae5a; --c2: #1f5a2c; }
+#btn-gnomoteca { --c: #8f7bb8; --c2: #4b3a66; }
 .main-menu .menu-btn:disabled { --c: #4a4352; --c2: #2b2731; }
 .main-menu .menu-btn:disabled::after { background: #2b2731; }
 
