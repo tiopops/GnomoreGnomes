@@ -12802,3 +12802,5 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
   background: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 40' preserveAspectRatio='none'%3E%3Cpolygon points='3,1 16,0 15,40 1,38' fill='%238f7bb8' stroke='%23000' stroke-width='2.5' vector-effect='non-scaling-stroke' stroke-linejoin='miter'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
 }
 .gnomo-list::-webkit-scrollbar-button, .gnomo-scroll::-webkit-scrollbar-button { display: none; height: 0; }
+
+.gnomo-plate img { transform-origin: 50% 100%; }
