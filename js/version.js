@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001620";
+const GG_VERSION = "v.001621";
 
 const GG_CHANGELOG = [
-  { v: "v.001620", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001621", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Gnomoteca: barra de scroll con el diseño irregular del juego, marcapáginas más ancho y sonido al pulsar pestañas, fichas y el botón de volver",
     "Gnomoteca: lo descubierto se guarda en tu cuenta (un solo documento, escrituras agrupadas) y te sigue a cualquier dispositivo",
     "Gnomoteca: nuevo libro del saber en el menú principal con unidades, recursos, edificios, objetos, equipos, mecánicas y escenarios; lo que aún no has visto sale como \"???\" con una sombra oscura y la descripción en blanco, y se desvela al verlo en partida",
     "Barra espaciadora: centra la vista en tu base principal",

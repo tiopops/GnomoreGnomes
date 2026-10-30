@@ -242,6 +242,12 @@ const Gnomoteca = {
           </div>
         </div>
       </div>`;
+    const back = document.querySelector("#screen-gnomoteca .back-btn");
+    if (back) { back.addEventListener("click", () => this._snd()); back.addEventListener("mouseenter", () => this._hov()); }
+    ["#gt-tabs", "#gt-list"].forEach((sel) => root.querySelector(sel).addEventListener("mouseover", (e) => {
+      const t = e.target.closest(".gnomo-tab, .gnomo-it");
+      if (t && !t.contains(e.relatedTarget)) this._hov();
+    }));
     root.querySelector("#gt-tabs").addEventListener("click", (e) => {
       const t = e.target.closest(".gnomo-tab");
       if (t) { this.cat = t.dataset.c; this.sel = 0; this._render(true); }
@@ -266,6 +272,9 @@ const Gnomoteca = {
     });
   },
 
+  _snd() { try { if (typeof SFX !== "undefined" && SFX.enabled) SFX.click(); } catch (e) {} },
+  _hov() { try { if (typeof SFX !== "undefined" && SFX.enabled) SFX.hover(); } catch (e) {} },
+
   _esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   },
@@ -273,6 +282,17 @@ const Gnomoteca = {
   _render(flip) {
     const $ = (id) => document.getElementById(id);
     if (!$("gt-tabs")) return;
+    // Fundido cruzado: una copia de las páginas anteriores se queda encima y se desvanece mientras debajo ya está lo nuevo.
+    const pages = document.querySelector("#gnomoteca-root .gnomo-pages");
+    let ghost = null;
+    if (flip && pages && !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+      ghost = pages.cloneNode(true);
+      ghost.removeAttribute("id");
+      ghost.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
+      ghost.style.cssText = "position:absolute;left:0;top:0;width:100%;height:100%;z-index:6;pointer-events:none;filter:none;";
+      pages.style.position = "relative";
+      pages.appendChild(ghost);
+    }
     const list = this.entries(this.cat);
     if (this.sel >= list.length) this.sel = 0;
     $("gt-tabs").innerHTML = this.CATS.map((c) => `<button type="button" class="gnomo-tab dl ${c.id === this.cat ? "gnomo-tab--active" : ""}" data-c="${c.id}">${c.label}</button>`).join("");
@@ -296,12 +316,10 @@ const Gnomoteca = {
     const ci = this.CATS.findIndex((c) => c.id === this.cat);
     $("gt-pl").textContent = ci * 2 + 1;
     $("gt-pr").textContent = ci * 2 + 2;
-    if (flip) {
-      const r = $("gt-right");
-      r.classList.remove("gnomo-flip");
-      void r.offsetWidth;
-      r.classList.add("gnomo-flip");
-      if (typeof SFX !== "undefined" && SFX.uiClick) { try { SFX.uiClick(); } catch (er) {} }
+    if (flip) this._snd();
+    if (ghost) {
+      const an = ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, easing: "ease-out", fill: "forwards" });
+      an.onfinish = () => ghost.remove();
     }
   },
 };
