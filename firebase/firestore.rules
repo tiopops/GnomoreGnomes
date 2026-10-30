@@ -218,6 +218,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Gnomoteca (js/gnomoteca.js): lo que el jugador ha descubierto, en UN documento por usuario
+    // con todos los ids en un solo texto. Solo su dueño lo lee y lo escribe.
+    match /gnomoteca/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['v', 'ids'])
+        && request.resource.data.v == 1
+        && request.resource.data.ids is string && request.resource.data.ids.size() <= 6000;
+      allow delete: if false;
+    }
+
     // Cola de la Partida Rápida (js/matchmaking.js): un ticket por jugador buscando rival.
     //   - Cualquier jugador con sesión puede LEER los tickets (para buscar rival por SK).
     //   - Solo el dueño crea / refresca / borra el suyo.

@@ -124,6 +124,22 @@ const Crane = {
     try {
       this._ensureEl();
       const hidden = this._hiddenAt(ob);
+      // Si el siguiente obelisco está en la niebla, la grulla NO desaparece de golpe: se la sigue viendo despegar y alejarse
+      // volando hacia el siguiente jugador (como cuando se marcha sola) y se esfuma al perderse de vista.
+      if (hidden && fromOb && this._pos && this.el.isConnected && !this.el.classList.contains("unit--fog-hidden")) {
+        const tp = this._perch(ob);
+        const from = { x: this._pos.bx, y: this._pos.by };
+        const flip = tp.x < from.x;
+        this.el.classList.remove("crane--perched");
+        this.el.style.zIndex = "9000";
+        const lift = { x: from.x, y: from.y - 40 };
+        await this._glide(from, lift, 260, this._flip, 0);
+        const dx = tp.x - from.x, dy = tp.y - from.y, d = Math.hypot(dx, dy) || 1, k = Math.min(1100, d * 0.7) / d;
+        const away = { x: from.x + dx * k, y: from.y + dy * k - 700 };
+        if (this.el.animate) this.el.animate([{ opacity: 1 }, { opacity: 1, offset: 0.45 }, { opacity: 0 }], { duration: 1700, fill: "forwards" });
+        await this._glide(lift, away, 1700, flip, 100);
+        if (this.el.getAnimations) this.el.getAnimations().forEach((a) => a.cancel());
+      }
       this.el.classList.toggle("unit--fog-hidden", hidden);
       const to = this._perch(ob);
       if (hidden || !this.el.isConnected) {

@@ -62,6 +62,18 @@ Object.assign(Tutorial, {
         ["ph-trophy", "La Grulla: equilibra la partida y bloquea un obelisco"],
       ],
     },
+    {
+      id: "wall",
+      name: "Fortaleza WallForge",
+      color: "#ff8a1f",
+      island: "assets/niveles/isla_wallforge.png",
+      flavor: "Las reglas propias de la Fortaleza WallForge.",
+      feats: [
+        ["ph-lock-key", "Cámara sellada: mareando guardias y rompiendo cadenas"],
+        ["ph-scroll", "Reliquia Paranoica: coge la Reliquia y pisa páginas"],
+        ["ph-flag-checkered", "Entrega y sacrificio: cobra junto a tu obelisco"],
+      ],
+    },
   ],
 
   // ---------- Tutoriales completados (check verde en la selección; se pueden repetir siempre) ----------
@@ -95,6 +107,7 @@ Object.assign(Tutorial, {
       { id: "mush", icon: "ph-tree", title: "Tutorial Bosque MushBoom", sub: "Setas explosivas, Altar de Sacrificios y GnomOgro" },
       { id: "rock", icon: "ph-mountains", title: "Tutorial Colinas Rock'n Troll", sub: "Tambores de Guerra, fragmentos y Volcán" },
       { id: "crane", icon: "ph-egg", title: "Tutorial Poblado HurryCrane", sub: "Huevo de Grulla, bumpers y la Grulla" },
+      { id: "wall", icon: "ph-castle-turret", title: "Tutorial Fortaleza WallForge", sub: "Guardias, cámara sellada y Reliquia Paranoica" },
     ];
     list.innerHTML = items
       .map(
@@ -129,6 +142,12 @@ Object.assign(Tutorial, {
       Villages.list = [];
     }
     this._ctx.villageId = null;
+    if (this._scenario === "wall") {
+      this._buildWallScene();
+      if (typeof Fog !== "undefined") Fog.applyVisibility();
+      this._refill();
+      return;
+    }
     // Una unidad propia ya lista junto al Obelisco (en estos tutoriales no se recluta).
     const spot = this._spotAt(2, [[1, 1], [1, 0], [0, 1], [1, -1], [-1, 1]]);
     const u = Units.spawnUnit({ typeId: "seta_artificiero", row: spot.row, col: spot.col, team: "player" });
@@ -193,6 +212,51 @@ Object.assign(Tutorial, {
       Egg.egg = Egg._createEgg(es.row, es.col);
       this._ctx.eggSpot = { row: es.row, col: es.col };
     }
+  },
+
+  // Fortaleza WallForge: cámara sellada con sus guardias en el centro y una unidad propia a tiro (3 casillas del altar).
+  _buildWallScene() {
+    if (typeof Drums !== "undefined") Drums.resetAll();
+    if (typeof Volcano !== "undefined") Volcano.resetAll();
+    Reliquia.resetAll();
+    Reliquia.spawn(Units.boardSize);
+    const a = Reliquia.altar;
+    const ob = Obelisks.byTeam("player");
+    let best = null, any = null;
+    for (let r = 0; r < Units.boardSize; r++) {
+      for (let c = 0; c < Units.boardSize; c++) {
+        if (!a || !this._tileOk(r, c) || Reliquia._cheb({ row: r, col: c }, a) !== 3) continue;
+        const d = Math.hypot(r - ob.row, c - ob.col);
+        const gd = Math.min(...Reliquia.guards.map((g) => Reliquia._cheb({ row: r, col: c }, g)));
+        if (!any || d < any.d) any = { row: r, col: c, d };
+        if (gd >= 2 && gd <= 4 && (!best || d < best.d)) best = { row: r, col: c, d };
+      }
+    }
+    const spot = best || any || this._spotAt(2);
+    const u = Units.spawnUnit({ typeId: "portamuros", row: spot.row, col: spot.col, team: "player" });
+    this._ctx.unitId = u.id;
+    if (typeof Fog !== "undefined") {
+      Fog.revealForUnit(u);
+      if (a && Fog.revealAround) Fog.revealAround(a.row, a.col, 5, true);
+    }
+  },
+
+  // Crea una página flotante a minD..maxD casillas de la unidad (para que la misión siempre se alcance).
+  _wallPageNear(unit, minD, maxD) {
+    if (!unit) return null;
+    let best = null;
+    for (let r = 0; r < Units.boardSize; r++) {
+      for (let c = 0; c < Units.boardSize; c++) {
+        const d = Math.max(Math.abs(r - unit.row), Math.abs(c - unit.col));
+        if (d < minD || d > maxD || !Reliquia._pageTileOk(r, c)) continue;
+        if (!best || d < best.d || (d === best.d && Math.random() < 0.3)) best = { row: r, col: c, d };
+      }
+    }
+    if (!best) return null;
+    Reliquia._createPage(best.row, best.col, 0);
+    Reliquia.pagesSpawned++;
+    if (typeof Fog !== "undefined") Fog.applyVisibility();
+    return { row: best.row, col: best.col };
   },
 
   // Charco de práctica: convierte una loseta de hierba en agua REAL (terreno,
@@ -821,6 +885,154 @@ Object.assign(Tutorial, {
       {
         mood: "aplaude",
         say: "Y eso es todo del Poblado HurryCrane. Resumen: cada rebote carga el huevo; obeliscos y tótems pagan el golpe según la carga; con la carga al máximo, explota; entonces la grulla se posa donde más puntos se ganaron y bloquea ese obelisco hasta que se vaya. ¡Suerte, la vas a necesitar!",
+        button: "TERMINAR TUTORIAL",
+        final: true,
+      },
+    ];
+  },
+
+  // ---------- Guion: Fortaleza WallForge ----------
+  _stepsWall() {
+    const T = this;
+    const unit = () => T._myUnit();
+    // Señala primero al lanzador, luego el icono de lanzar y por último el marcador del objetivo.
+    const aim = (markerFn) => () => {
+      const u = unit();
+      if (!u || !Gnome.isHeldBy(u.id)) return null;
+      if (Units.selectedId !== u.id) return T._unitEl(u);
+      const g = Gnome.list.find((x) => x.passing);
+      if (g) return markerFn() || T._anyMarker("pass-marker");
+      return Gnome._passBtn || T._unitEl(u);
+    };
+    return [
+      {
+        mood: "grunon",
+        say: "Fortaleza WallForge. Una isla blindada de arriba abajo, habitada por gente tan obsesionada con proteger su gran Reliquia que hasta las paredes llevan armadura. Lo gracioso es que nadie sabe qué es.",
+        button: "Qué paranoia",
+        onStart: () => { T._focus(unit(), Reliquia.altar); },
+      },
+      {
+        mood: "normal",
+        say: "En el centro duerme la Reliquia, sellada con cadenas y vigilada por tres guardias paranoicos. A los guardias no se les pega: se les lanza un gnomo, y ya. Para variar, coge a Tinkle.",
+        mission: "Coge a Tinkle",
+        onStart: () => {
+          T._refill();
+          T._focus(unit(), Reliquia.altar);
+          if (Units.selectedId) Units.deselect();
+          T._gnomeBeside(unit());
+        },
+        target: () => {
+          const g = T._gnome();
+          const u = unit();
+          if (!g || !u) return null;
+          return T._unitThen(u, () => T._marker("catch-marker", g.row, g.col));
+        },
+        refillFor: () => unit() && unit().id,
+        done: () => Gnome.isHeldBy(unit().id),
+        ok: "Tinkle, hoy te toca ser munición. Otra vez.",
+      },
+      {
+        mood: "normal",
+        say: "Pulsa lanzar y apunta a un guardia. El gnomo lo deja mareado un buen rato y, de paso, se lleva puntos encima. Mareado, el guardia es una estatua blindada. Muy decorativa.",
+        mission: "Lánzale a Tinkle contra un guardia",
+        onStart: () => {
+          T._refill();
+          T._focus(unit(), ...Reliquia.guards);
+        },
+        target: aim(() => T._anyMarker("reliquia-throw-marker")),
+        refillFor: () => unit() && unit().id,
+        done: () => Reliquia.guards.some((g) => g.stun > 0) && !Reliquia.busy,
+        ok: "Mareado y sin dignidad. El guardia, digo. Tinkle hace tiempo que no tiene.",
+      },
+      {
+        mood: "grunon",
+        say: "Ahora la cámara sellada. Cada gnomo que le estampes rompe una cadena, y cuando no queden, suelta la Reliquia. Te presto los gnomos necesarios: Tinkle tiene muchos primos.",
+        mission: "Rompe las cadenas de la cámara",
+        onStart: () => {
+          T._refill();
+          T._focus(unit(), Reliquia.altar);
+          T._giveGnome(unit());
+        },
+        target: aim(() => { const a = Reliquia.altar; return a && T._marker("reliquia-throw-marker", a.row, a.col); }),
+        refillFor: () => unit() && unit().id,
+        done: () => {
+          const u = unit();
+          const open = Reliquia.altar.hits >= RELIQUIA_HITS_TO_OPEN;
+          // Un gnomo nuevo en la mano tras cada estampada, hasta que ceda la última cadena.
+          if (!open && u && !Reliquia.busy && !Gnome.isHeldBy(u.id) && !Gnome.list.some((x) => x.busy || x.passing)) {
+            T._giveGnome(u);
+            T._refill();
+          }
+          return open && !Reliquia.busy;
+        },
+        ok: "Libre. Y por el estruendo, ya lo sabe toda la isla.",
+      },
+      {
+        mood: "normal",
+        say: "Ahí flota. Acércate y cógela: ahora eres el portador, y eso trae responsabilidades. Y enemigos. Muchos enemigos.",
+        mission: "Coge la Reliquia",
+        onStart: () => {
+          T._refill();
+          T._focus(unit(), Reliquia.altar);
+        },
+        target: () => T._unitThen(unit(), () => T._anyMarker("reliquia-grab-marker")),
+        refillFor: () => unit() && unit().id,
+        done: () => !!Reliquia.relic && Reliquia.relic.state === "carried" && !Reliquia.busy,
+        ok: "Es tuya. Mientras la lleves, claro.",
+      },
+      {
+        mood: "grunon",
+        say: "Quien lleva la Reliquia deja ondas en los pies, y todos lo ven: a él y todo lo que él ve. Esconderse no vale. Los guardias van a por el portador, sea del equipo que sea, y si cae, la Reliquia queda en el suelo para quien la quiera. Los puntos se ganan pisando páginas: pisa esa de ahí.",
+        mission: "Pisa una página",
+        onStart: () => {
+          T._refill();
+          T._ctx.page = T._wallPageNear(unit(), 1, 2);
+          T._focus(unit(), T._ctx.page);
+        },
+        target: () => {
+          const pg = T._ctx.page;
+          if (!pg) return null;
+          return T._unitThen(unit(), () => T._nearestRange(pg.row, pg.col));
+        },
+        refillFor: () => unit() && unit().id,
+        done: () => !!Reliquia.relic && Reliquia.relic.state === "carried" && Reliquia.relic.points >= RELIQUIA_PAGE_POINTS,
+        ok: "Puntos. Pocos, pero tuyos.",
+      },
+      {
+        mood: "normal",
+        say: "Y si te sobra un gnomo: lánzalo contra una página y se convierte en ceniza, con página y todo. Suma puntos al portador de tu equipo y se los resta al del rival. Humor negro con propósito, mi especialidad.",
+        mission: "Convierte a Tinkle en ceniza",
+        onStart: () => {
+          T._refill();
+          T._ctx.page2 = T._wallPageNear(unit(), 2, 3);
+          T._ctx.pts = Reliquia.relic ? Reliquia.relic.points : 0;
+          T._giveGnome(unit());
+          T._focus(unit(), T._ctx.page2);
+        },
+        target: aim(() => { const p = T._ctx.page2; return p && T._marker("reliquia-throw-marker", p.row, p.col); }),
+        refillFor: () => unit() && unit().id,
+        done: () => !!Reliquia.relic && !Reliquia.busy && (Reliquia.relic.points >= T._ctx.pts + RELIQUIA_PAGE_POINTS || Reliquia.relic.points >= RELIQUIA_MAX_POINTS),
+        ok: "Ceniza al viento. Tinkle siempre quiso volar.",
+      },
+      {
+        mood: "grunon",
+        say: "Para cobrar, llévala junto a tu obelisco: se te abonan todos los puntos y tu rival pierde los mismos. La Reliquia vuelve a su cámara, que se resella, y vuelta a empezar.",
+        mission: "Entrega la Reliquia en tu obelisco",
+        onStart: () => {
+          T._refill();
+          T._focus(unit(), Obelisks.byTeam("player"));
+        },
+        target: () => {
+          const ob = Obelisks.byTeam("player");
+          return T._unitThen(unit(), () => T._nearestRange(ob.row + 1, ob.col + 1) || T._nearestRange(ob.row, ob.col));
+        },
+        refillFor: () => unit() && unit().id,
+        done: () => !!Reliquia.relic && Reliquia.relic.state === "altar" && !Reliquia.busy && !Reliquia._delivering,
+        ok: "¡Cobrado! Y el rival, un poco más pobre.",
+      },
+      {
+        mood: "aplaude",
+        say: "Y eso es todo de la Fortaleza WallForge. Resumen: marea guardias con gnomos, rompe las cadenas, coge la Reliquia, pisa páginas, sacrifica gnomos para sumar o restar, y cobra junto a tu obelisco. ¡Suerte, la vas a necesitar!",
         button: "TERMINAR TUTORIAL",
         final: true,
       },

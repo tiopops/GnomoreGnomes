@@ -586,7 +586,7 @@ const GamepadCtl = {
   // Pestañas de la ventana (las de Ajustes/Habilidades mandan sobre las de entrar/registrarse).
   _tabsIn(root) {
     const vis = (q) => [...root.querySelectorAll(q)].filter((t) => this._isVisible(t));
-    const main = vis(".skills-tab");
+    const main = vis(".skills-tab, .gnomo-tab");
     return main.length > 1 ? main : vis(".account-tab, .settings-tab");
   },
   _uiTab(mode, dir) {
@@ -681,7 +681,7 @@ const GamepadCtl = {
     const PRIMARY = ".mp-overlay--confirm [data-act=\"no\"], .opp-stepper__go, [data-primary]";
     const prim = list.find((el) => el.matches(PRIMARY));
     if (prim) { this._focusEl = prim; return prim; }
-    const skip = ".backpack-close-btn, .back-btn, [data-back], .settings-gear-btn, .skills-tab, .account-tab, .settings-tab, .main-logo-hit, .opp-stepper__arrow, .sel-arrow";
+    const skip = ".backpack-close-btn, .back-btn, [data-back], .settings-gear-btn, .skills-tab, .gnomo-tab, .account-tab, .settings-tab, .main-logo-hit, .opp-stepper__arrow, .sel-arrow";
     const notSkip = list.filter((el) => !el.matches(skip));
     const pool = notSkip.length ? notSkip : list;
     // Primera fila (la más alta) y, dentro de ella, la opción más a la izquierda.

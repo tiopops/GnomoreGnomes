@@ -68,6 +68,7 @@ const Reliquia = {
     this.pages = [];
     this.pagesSpawned = 0;
     if (this.relic && this.relic.el) this.relic.el.remove();
+    this._stopCarrierWaves();
     this._hideFloat();
     this.altar = null;
     this.guards = [];
@@ -258,6 +259,7 @@ const Reliquia = {
     const g = { id: `guardia-${i + 1}`, team: "guardia", row: cell.row, col: cell.col, off, el, imgEl: img, stun: 0, flip: false, starsEl: null, hp: 99, maxHp: 99 };
     this._place(g);
     this.guards.push(g);
+    this._occTrack();
   },
 
   _place(g) {
@@ -1192,6 +1194,36 @@ const Reliquia = {
     }
   },
 
+  // ---------- Transparencia de los guardias (igual que rocas, árboles, tótems...) ----------
+  // Si una unidad queda detrás de un guardia, este se vuelve semitransparente (y deja pasar el ratón) mientras el puntero esté
+  // sobre él o sobre quien hay detrás, para poder seleccionarla.
+  _GUARD_OCC_OFFSETS: [[-1, -1], [-1, 0], [0, -1], [-2, -2]],
+  _occTrack() {
+    if (this._occReady) return;
+    this._occReady = true;
+    window.addEventListener("mousemove", (e) => { this._mx = e.clientX; this._my = e.clientY; this.refreshOcclusion(e.clientX, e.clientY); });
+    const tc = (e) => { const t = e.touches && e.touches[0]; if (!t) return; this._mx = t.clientX; this._my = t.clientY; this.refreshOcclusion(t.clientX, t.clientY); };
+    window.addEventListener("touchstart", tc, { passive: true });
+    window.addEventListener("touchmove", tc, { passive: true });
+  },
+  refreshOcclusion(mouseX, mouseY) {
+    this._occTrack();
+    const mx = typeof mouseX === "number" ? mouseX : this._mx, my = typeof mouseY === "number" ? mouseY : this._my;
+    this.guards.forEach((g) => {
+      if (!g.el) return;
+      if (g.el.classList.contains("unit--fog-hidden") || mx == null || my == null) { g.el.classList.remove("reliquia-guard--occluding"); return; }
+      const behind = Units.list.filter((u) => u.el && !u.el.classList.contains("unit--fog-hidden") && this._GUARD_OCC_OFFSETS.some(([dr, dc]) => u.row === g.row + dr && u.col === g.col + dc));
+      let occ = false;
+      if (behind.length) {
+        const r0 = (g.imgEl || g.el).getBoundingClientRect();
+        const overG = mx >= r0.left && mx <= r0.right && my >= r0.top && my <= r0.bottom;
+        const overB = behind.some((u) => { const r = (u.spriteEl || u.el).getBoundingClientRect(); return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom; });
+        occ = overG || overB;
+      }
+      g.el.classList.toggle("reliquia-guard--occluding", occ);
+    });
+  },
+
   _attach(unit) {
     const r = this.relic;
     if (r.el) r.el.remove();
@@ -1202,6 +1234,38 @@ const Reliquia = {
     r.el = el;
     r.row = unit.row;
     r.col = unit.col;
+    this._startCarrierWaves(unit);
+  },
+
+  // Ondas en los pies del portador (detrás del sprite): se ve a simple vista quién lleva la Reliquia.
+  _startCarrierWaves(unit) {
+    this._stopCarrierWaves();
+    if (!unit.el) return;
+    const box = document.createElement("div");
+    box.className = "reliquia-waves reliquia-waves--carrier";
+    unit.el.appendChild(box);
+    this._cwBox = box;
+    const tick = () => {
+      if (!box.isConnected || this._carrier() !== unit) { this._stopCarrierWaves(); return; }
+      if (document.hidden) return;
+      const w = document.createElement("div");
+      w.className = "reliquia-wave";
+      box.appendChild(w);
+      const an = w.animate(
+        [{ width: "110px", height: "60px", opacity: 0.95, borderWidth: "7px" }, { width: "560px", height: "310px", opacity: 0, borderWidth: "2px" }],
+        { duration: 2100, easing: "ease-out", fill: "forwards" }
+      );
+      an.onfinish = () => w.remove();
+    };
+    tick();
+    this._cwT = setInterval(tick, 1300);
+  },
+
+  _stopCarrierWaves() {
+    if (this._cwT) clearInterval(this._cwT);
+    this._cwT = 0;
+    if (this._cwBox) this._cwBox.remove();
+    this._cwBox = null;
   },
 
   _updateBadge() {

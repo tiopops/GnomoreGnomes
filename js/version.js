@@ -12,9 +12,20 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001618";
+const GG_VERSION = "v.001620";
 
 const GG_CHANGELOG = [
+  { v: "v.001620", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Gnomoteca: lo descubierto se guarda en tu cuenta (un solo documento, escrituras agrupadas) y te sigue a cualquier dispositivo",
+    "Gnomoteca: nuevo libro del saber en el menú principal con unidades, recursos, edificios, objetos, equipos, mecánicas y escenarios; lo que aún no has visto sale como \"???\" con una sombra oscura y la descripción en blanco, y se desvela al verlo en partida",
+    "Barra espaciadora: centra la vista en tu base principal",
+    "Poblado HurryCrane: si lanzas un gnomo a la grulla y se marcha hacia un obelisco en la niebla, ahora se la ve despegar y alejarse volando hacia el siguiente jugador",
+    "Reliquia Paranoica: el portador deja ondas en los pies, por detrás del sprite, más grandes que las del altar",
+    "Fortaleza WallForge: los guardias de la Reliquia ya se vuelven semitransparentes cuando una unidad queda detrás, como las rocas y los árboles",
+    "Recursos de escenario: el letrero de nombre también se mantiene (semitransparente) cuando una unidad queda detrás del recurso",
+    "MushBoom: los rayos de luz nacen, derivan despacio, se esfuman del todo y reaparecen en otro sitio",
+    "Fortaleza WallForge: nueva roca reforzada con placas de acero y remaches",
+  ] },
   { v: "v.001618", date: "29/10/2026", title: "Páginas de la Reliquia", items: [
     "Botón de pasar turno: en \"¡Todos listos!\" el icono también gira al pasar el ratón y el botón vuelve a reaccionar al ratón y al pulsarlo mientras palpita",
     "Recursos de escenario: al pasar el puntero por un árbol, roca o mena aparece encima del sprite una pequeña etiqueta plana con su nombre (Árbol, Roca, Metal)",
@@ -22,8 +33,6 @@ const GG_CHANGELOG = [
     "Opciones gráficas reordenadas: modo rendimiento, sombras, efectos ambientales, vegetación, niebla, resolución adaptativa y mostrar FPS",
     "Efectos ambientales: cada escenario tiene su ambiente sutil (MushBoom: tono verdoso, rayos de luz y polen; Rock'n Troll: tono rojizo, ceniza, humo y brasas del volcán; HurryCrane: degradado amarillo/celeste que se desplaza con puntitos de viento; WallForge: tono de acero y pequeños destellos suaves sobre el suelo metálico, las menas, los árboles y las rocas). Se activan o desactivan en Opciones gráficas y el modo rendimiento los apaga solos",
     "Fortaleza WallForge: rocas, árboles y menas de metal propios, reforzados con placas de hierro y refuerzos de madera",
-    "MushBoom: los rayos de luz nacen, derivan despacio, se esfuman del todo y reaparecen en otro sitio",
-    "Fortaleza WallForge: nueva roca reforzada con placas de acero y remaches",
     "Fortaleza WallForge: ambiente de forja, con tono cálido y oscuro sobre el tablero, charcos de luz naranja bajo el altar y los obeliscos y brasas y humo planos (las brasas solo se ven donde hay visión y se apagan con el modo rendimiento); se adapta solo a cualquier tamaño de ventana",
     "Reliquia de WallForge: la IA ahora juega la Reliquia (rompe las cadenas del altar lanzando un gnomo, la coge, recoge páginas, la entrega en su obelisco y persigue al portador rival)",
     "Reliquia de WallForge: las páginas son más numerosas y crecen con el tamaño del mapa (el doble de ese número en total), repartidas con separación y nunca junto a un obelisco",

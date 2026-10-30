@@ -700,6 +700,19 @@ const BoardView = {
   _bindKeyboard() {
     window.addEventListener("keydown", (e) => {
       const key = e.key.toLowerCase();
+      // Barra espaciadora: centra la vista en la base principal (el Obelisco propio), igual que al pulsarlo.
+      if (e.code === "Space" && !e.repeat && this.viewportEl && this.viewportEl.offsetParent) {
+        const tg = document.activeElement && document.activeElement.tagName;
+        if (tg !== "INPUT" && tg !== "TEXTAREA" && typeof Obelisks !== "undefined" && typeof Units !== "undefined" && typeof getTileCenter === "function") {
+          const ob = Obelisks.byTeam("player");
+          if (ob) {
+            e.preventDefault();
+            const c = getTileCenter(ob.row, ob.col, Units.boardSize);
+            this.panToContentPoint(c.x, c.y);
+          }
+        }
+        return;
+      }
       if (!(key in BOARD_PAN_KEYS)) return;
       // No robar la tecla si el foco está en un campo de texto de verdad
       // (el juego no tiene ninguno ahora mismo, pero es la comprobación

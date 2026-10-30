@@ -481,11 +481,11 @@ const Resources = {
     this.list.forEach((node) => {
       if (!node.spriteEl) return;
       if (node.el.classList.contains("unit--fog-hidden") || mx === null || my === null) {
-        node.el.classList.remove("resource-node--occluding");
+        node.el.classList.remove("resource-node--occluding", "resource-node--labeled");
         return;
       }
       const behindEls = this._behindElsFor(node);
-      let occluding = false;
+      let occluding = false, overNode = false;
       if (behindEls.length) {
         const nRect = node.spriteEl.getBoundingClientRect();
         const mouseOverNode = mx >= nRect.left && mx <= nRect.right && my >= nRect.top && my <= nRect.bottom;
@@ -494,8 +494,11 @@ const Resources = {
           return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom;
         });
         occluding = mouseOverNode || mouseOverBehind;
+        overNode = mouseOverNode;
       }
       node.el.classList.toggle("resource-node--occluding", occluding);
+      // Con una unidad detrás el recurso es transparente y no recibe :hover; el letrero se mantiene (también semitransparente).
+      node.el.classList.toggle("resource-node--labeled", occluding && overNode);
     });
   },
 

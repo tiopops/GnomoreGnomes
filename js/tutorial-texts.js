@@ -572,5 +572,102 @@ const TUTORIAL_TEXTS = {
     "button": "FINISH TUTORIAL"
    }
   }
+ ],
+ "wall": [
+  {
+   "say": "Fortaleza WallForge. Una isla blindada de arriba abajo, habitada por gente tan obsesionada con proteger su gran Reliquia que hasta las paredes llevan armadura. Lo gracioso es que nadie sabe qué es.",
+   "button": "Qué paranoia",
+   "mood": "grunon",
+   "en": {
+    "say": "WallForge Fortress. An island armored from top to bottom, home to people so obsessed with protecting their great Relic that even the walls wear armor. The funny part is that nobody knows what it is.",
+    "button": "How paranoid"
+   }
+  },
+  {
+   "say": "En el centro duerme la Reliquia, sellada con cadenas y vigilada por tres guardias paranoicos. A los guardias no se les pega: se les lanza un gnomo, y ya. Para variar, coge a Tinkle.",
+   "mission": "Coge a Tinkle",
+   "ok": "Tinkle, hoy te toca ser munición. Otra vez.",
+   "mood": "normal",
+   "en": {
+    "say": "At the centre sleeps the Relic, sealed with chains and watched by three paranoid guards. You don't hit the guards: you throw a gnome at them, and that's it. For a change, grab Tinkle.",
+    "mission": "Pick up Tinkle",
+    "ok": "Tinkle, today you're ammunition. Again."
+   }
+  },
+  {
+   "say": "Pulsa lanzar y apunta a un guardia. El gnomo lo deja mareado un buen rato y, de paso, se lleva puntos encima. Mareado, el guardia es una estatua blindada. Muy decorativa.",
+   "mission": "Lánzale a Tinkle contra un guardia",
+   "ok": "Mareado y sin dignidad. El guardia, digo. Tinkle hace tiempo que no tiene.",
+   "mood": "normal",
+   "en": {
+    "say": "Press throw and aim at a guard. The gnome leaves it dizzy for a good while and picks up some points along the way. Dizzy, the guard is an armored statue. Very decorative.",
+    "mission": "Throw Tinkle at a guard",
+    "ok": "Dizzy and undignified. The guard, I mean. Tinkle lost his dignity ages ago."
+   }
+  },
+  {
+   "say": "Ahora la cámara sellada. Cada gnomo que le estampes rompe una cadena, y cuando no queden, suelta la Reliquia. Te presto los gnomos necesarios: Tinkle tiene muchos primos.",
+   "mission": "Rompe las cadenas de la cámara",
+   "ok": "Libre. Y por el estruendo, ya lo sabe toda la isla.",
+   "mood": "grunon",
+   "en": {
+    "say": "Now the sealed chamber. Every gnome you smash into it breaks a chain, and when none are left, it releases the Relic. I'll lend you as many gnomes as needed: Tinkle has plenty of cousins.",
+    "mission": "Break the chamber's chains",
+    "ok": "Free. And judging by the racket, the whole island knows."
+   }
+  },
+  {
+   "say": "Ahí flota. Acércate y cógela: ahora eres el portador, y eso trae responsabilidades. Y enemigos. Muchos enemigos.",
+   "mission": "Coge la Reliquia",
+   "ok": "Es tuya. Mientras la lleves, claro.",
+   "mood": "normal",
+   "en": {
+    "say": "There it floats. Walk over and grab it: you're the carrier now, and that comes with responsibilities. And enemies. Lots of enemies.",
+    "mission": "Take the Relic",
+    "ok": "It's yours. For as long as you carry it, of course."
+   }
+  },
+  {
+   "say": "Quien lleva la Reliquia deja ondas en los pies, y todos lo ven: a él y todo lo que él ve. Esconderse no vale. Los guardias van a por el portador, sea del equipo que sea, y si cae, la Reliquia queda en el suelo para quien la quiera. Los puntos se ganan pisando páginas: pisa esa de ahí.",
+   "mission": "Pisa una página",
+   "ok": "Puntos. Pocos, pero tuyos.",
+   "mood": "grunon",
+   "en": {
+    "say": "Whoever carries the Relic leaves ripples at their feet, and everyone can see them, and everything they see. Hiding doesn't work. The guards go after the carrier, whatever their team, and if the carrier falls, the Relic lies on the ground for whoever wants it. Points come from stepping on pages: step on that one.",
+    "mission": "Step on a page",
+    "ok": "Points. Few, but yours."
+   }
+  },
+  {
+   "say": "Y si te sobra un gnomo: lánzalo contra una página y se convierte en ceniza, con página y todo. Suma puntos al portador de tu equipo y se los resta al del rival. Humor negro con propósito, mi especialidad.",
+   "mission": "Convierte a Tinkle en ceniza",
+   "ok": "Ceniza al viento. Tinkle siempre quiso volar.",
+   "mood": "normal",
+   "en": {
+    "say": "And if you have a spare gnome: throw it at a page and it turns to ash, page and all. It adds points to your team's carrier and takes them from the rival's. Black humour with a purpose, my specialty.",
+    "mission": "Turn Tinkle to ash",
+    "ok": "Ash on the wind. Tinkle always wanted to fly."
+   }
+  },
+  {
+   "say": "Para cobrar, llévala junto a tu obelisco: se te abonan todos los puntos y tu rival pierde los mismos. La Reliquia vuelve a su cámara, que se resella, y vuelta a empezar.",
+   "mission": "Entrega la Reliquia en tu obelisco",
+   "ok": "¡Cobrado! Y el rival, un poco más pobre.",
+   "mood": "grunon",
+   "en": {
+    "say": "To cash in, bring it next to your obelisk: all your points are credited and your rival loses the same. The Relic returns to its chamber, which reseals, and it all starts over.",
+    "mission": "Deliver the Relic to your obelisk",
+    "ok": "Cashed in! And the rival, a little poorer."
+   }
+  },
+  {
+   "say": "Y eso es todo de la Fortaleza WallForge. Resumen: marea guardias con gnomos, rompe las cadenas, coge la Reliquia, pisa páginas, sacrifica gnomos para sumar o restar, y cobra junto a tu obelisco. ¡Suerte, la vas a necesitar!",
+   "button": "TERMINAR TUTORIAL",
+   "mood": "aplaude",
+   "en": {
+    "say": "And that's all for WallForge Fortress. Recap: stun guards with gnomes, break the chains, take the Relic, step on pages, sacrifice gnomes to add or subtract, and cash in next to your obelisk. Good luck, you'll need it!",
+    "button": "FINISH TUTORIAL"
+   }
+  }
  ]
 };
