@@ -245,10 +245,18 @@ const Gnomoteca = {
     const back = document.querySelector("#screen-gnomoteca .back-btn");
     // Clic fuera del libro (ni libro, ni pestañas, ni título, ni el propio botón): se cierra, igual que Volver.
     const scr = document.getElementById("screen-gnomoteca");
-    if (scr) scr.addEventListener("click", (e) => {
-      if (e.target.closest(".gnomo-stage, .back-btn")) return;
-      if (back) back.click();
-    });
+    // Se decide al PULSAR (no al soltar): al hacer clic en una pestaña o ficha el libro se repinta y el elemento
+    // pulsado ya no existe cuando llega el "click", así que mirar entonces cerraría el libro por error.
+    let outDown = false;
+    const inside = (t) => !!(t && t.closest && t.closest(".gnomo-stage, .back-btn, button, a, input, select, textarea, [role=button]"));
+    if (scr) {
+      scr.addEventListener("pointerdown", (e) => { outDown = !inside(e.target); });
+      scr.addEventListener("click", (e) => {
+        const wasOut = outDown && !inside(e.target) && e.target.isConnected;
+        outDown = false;
+        if (wasOut && back) back.click();
+      });
+    }
     if (back) { back.addEventListener("click", () => this._snd()); back.addEventListener("mouseenter", () => this._hov()); }
     ["#gt-tabs", "#gt-list"].forEach((sel) => root.querySelector(sel).addEventListener("mouseover", (e) => {
       const t = e.target.closest(".gnomo-tab, .gnomo-it");
