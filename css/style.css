@@ -12967,3 +12967,6 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
   50% { transform: translate(5px, -2px); }
   75% { transform: translate(-4px, 0); }
 }
+
+/* Reliquia flotando sobre el altar: se vuelve translúcida si tapa a una unidad o al puntero (igual que los guardias). */
+.reliquia-float--occluding { opacity: 0.45; pointer-events: none !important; transition: opacity 0.15s ease; }

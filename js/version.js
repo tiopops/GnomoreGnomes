@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001636";
+const GG_VERSION = "v.001637";
 
 const GG_CHANGELOG = [
-  { v: "v.001636", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001637", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Reliquia: la que flota sobre el altar vacío ya se vuelve translúcida si tapa a una unidad o al puntero; y al abrirse el altar, la unidad seleccionada ve enseguida la mano para cogerla",
     "Destrucción del Obelisco: tras una sacudida se parte en trozos con grosor y esquirlas de sus propios colores que salen despedidos, rebotan por el suelo y se desvanecen",
     "Eliminación de un equipo: todos sus tótems pasan a neutrales también cuando quien cae es el jugador",
     "Tienda Goblin y Oráculo: al pasar el ratón se amplían y muestran su cartel (se había perdido ese estilo); ya no se levantan al hacer clic",

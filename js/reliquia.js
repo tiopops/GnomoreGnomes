@@ -912,6 +912,9 @@ const Reliquia = {
       this.busy = false;
       gnome.busy = false;
       if (holder.el && Units.list.includes(holder)) Units.refreshRange(holder);
+      // Si el altar acaba de abrirse, quien esté seleccionado (aunque no sea el lanzador) ve ya la mano de coger.
+      const sel = Units.selectedId && Units.list.find((u) => u.id === Units.selectedId);
+      if (sel && sel !== holder) Units.refreshRange(sel);
     }
   },
 
@@ -1201,6 +1204,7 @@ const Reliquia = {
   // Si una unidad queda detrás de un guardia, este se vuelve semitransparente (y deja pasar el ratón) mientras el puntero esté
   // sobre él o sobre quien hay detrás, para poder seleccionarla.
   _GUARD_OCC_OFFSETS: [[-1, -1], [-1, 0], [0, -1], [-2, -2]],
+  _FLOAT_OCC_OFFSETS: [[-1, -1], [-1, 0], [0, -1], [-2, -2], [-2, -1], [-1, -2], [-2, 0], [0, -2]],
   _occTrack() {
     if (this._occReady) return;
     this._occReady = true;
@@ -1245,6 +1249,22 @@ const Reliquia = {
       }
       g.el.classList.toggle("reliquia-guard--occluding", occ);
     });
+    // La Reliquia que flota sobre el altar vacío: misma transparencia que los guardias/rocas/árboles.
+    const fe = this.altar && this.altar.floatEl;
+    if (fe) {
+      let occ = false;
+      if (mx != null && my != null && !fe.classList.contains("unit--fog-hidden")) {
+        const a = this.altar;
+        const behind = Units.list.filter((u) => u.el && !u.el.classList.contains("unit--fog-hidden") && this._FLOAT_OCC_OFFSETS.some(([dr, dc]) => u.row === a.row + dr && u.col === a.col + dc));
+        if (behind.length) {
+          const r0 = fe.getBoundingClientRect();
+          const overF = mx >= r0.left && mx <= r0.right && my >= r0.top && my <= r0.bottom;
+          const overB = behind.some((u) => { const r = (u.spriteEl || u.el).getBoundingClientRect(); return mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom; });
+          occ = overF || overB;
+        }
+      }
+      fe.classList.toggle("reliquia-float--occluding", occ);
+    }
   },
 
   _attach(unit) {
