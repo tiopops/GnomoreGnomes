@@ -818,20 +818,18 @@ const Gnomoteca = {
     const isAch = this.cat === "logros";
     $("gt-tabs").innerHTML = this.CATS.map((c) => `<button type="button" class="gnomo-tab dl ${c.id === "logros" ? "gnomo-tab--gold" : ""} ${c.id === this.cat ? "gnomo-tab--active" : ""}" data-c="${c.id}">${c.label}</button>`).join("");
     $("gt-cat").textContent = this.CATS.find((c) => c.id === this.cat).label;
-    // Barra de logros conseguidos respecto al total.
+    // Barra de lo conseguido respecto al total (logros desbloqueados, o entradas descubiertas de la categoría).
     const tot = $("gt-total");
-    if (isAch) {
-      const got = list.filter((e) => e.done).length;
-      tot.hidden = false;
-      tot.innerHTML = `<div class="gnomo-bar gnomo-bar--gold"><i style="width:${list.length ? Math.round((got / list.length) * 100) : 0}%"></i></div><b>${got} / ${list.length}</b>`;
-    } else { tot.hidden = true; tot.innerHTML = ""; }
+    const got = isAch ? list.filter((e) => e.done).length : list.filter((e) => this.seen.has(e.id)).length;
+    tot.hidden = false;
+    tot.innerHTML = `<div class="gnomo-bar gnomo-bar--gold"><i style="width:${list.length ? Math.round((got / list.length) * 100) : 0}%"></i></div><b>${got} / ${list.length}</b>`;
     $("gt-list").classList.toggle("gnomo-list--ach", isAch);
     $("gt-list").innerHTML = list.map((e, k) => {
       if (e.ach) {
         return `<div class="gnomo-it gnomo-it--ach dl ${k === this.sel ? "gnomo-it--on" : ""} ${e.done ? "gnomo-it--got" : "gnomo-it--off"}" data-k="${k}" role="button" tabindex="0"><i class="ph-bold ph-${this._esc(e.icon)} gnomo-ico"></i><span>${this._esc(e.name)}</span><em class="gnomo-xp"><b>+${e.xp}</b> XP</em></div>`;
       }
       const lock = !this.seen.has(e.id);
-      return `<div class="gnomo-it dl ${k === this.sel ? "gnomo-it--on" : ""} ${lock ? "gnomo-it--lock" : ""}" data-k="${k}" role="button" tabindex="0"><img src="${this._esc(e.img)}" alt="" draggable="false"><span>${lock ? "???" : this._esc(e.name)}</span></div>`;
+      return `<div class="gnomo-it dl ${k === this.sel ? "gnomo-it--on" : ""} ${lock ? "gnomo-it--lock" : ""}" data-k="${k}" role="button" tabindex="0"><img src="${this._esc(e.img)}" alt="" draggable="false"><span>${lock ? "???" : this._esc(e.name)}</span><em class="gnomo-xp ${lock ? "" : "gnomo-xp--got"}"><b>+${GNOMOTECA_XP_ENTRY}</b> XP</em></div>`;
     }).join("");
     const e = list[this.sel];
     if (!e) return;
@@ -864,7 +862,8 @@ const Gnomoteca = {
       $("gt-desc").textContent = lock ? "" : e.desc || "";
       $("gt-stats").innerHTML = lock || !e.stats ? "" : e.stats.map((s) => `<div class="gnomo-st"><span>${s[0]}</span><div class="gnomo-bar"><i style="width:${Math.min(100, Math.round((s[1] / s[2]) * 100))}%"></i></div><b>${s[1]}</b></div>`).join("");
       $("gt-extra").innerHTML = lock || !e.extra ? "" : e.extra.filter((x) => x[1]).map((x) => `<div class="gnomo-ex"><b>${this._esc(x[0])}</b><p>${this._esc(x[1])}</p></div>`).join("");
-      $("gt-chips").innerHTML = lock || !e.chips ? "" : e.chips.map((c) => `<span class="gnomo-chip">${this._esc(c)}</span>`).join("");
+      const xpChip = `<span class="gnomo-chip gnomo-chip--gold ${lock ? "gnomo-chip--off" : ""}"><b>+${GNOMOTECA_XP_ENTRY}</b> XP</span>`;
+      $("gt-chips").innerHTML = xpChip + (lock || !e.chips ? "" : e.chips.map((c) => `<span class="gnomo-chip ${c.length > 38 ? "gnomo-chip--long" : ""}">${this._esc(c)}</span>`).join(""));
     }
     const ci = this.CATS.findIndex((c) => c.id === this.cat);
     $("gt-pl").textContent = ci * 2 + 1;

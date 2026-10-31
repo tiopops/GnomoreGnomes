@@ -12885,3 +12885,41 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 
 .gnomo-list--ach { grid-template-columns: 1fr !important; }
 @media (max-width: 820px), (max-aspect-ratio: 1/1) { .gnomo-toast { top: 58px; min-width: 0; max-width: 88vw; padding: 8px 16px 8px 10px; gap: 8px; } .gnomo-toast__tx strong { font-size: 13px; } .gnomo-toast__ico { width: 36px; height: 36px; font-size: 22px; } .gnomo-it--ach { padding-right: 10px; } .gnomo-it--ach span { font-size: 12px; } }
+
+/* Gnomoteca: tamaños de texto legibles en cualquier pantalla (nada por debajo de ~11 px) y fichas largas en bloque. */
+.gnomo-desc { font-size: 14px; line-height: 1.5; }
+.gnomo-st { font-size: 13px; grid-template-columns: 104px 1fr 30px; }
+.gnomo-st--p { grid-template-columns: 86px 1fr auto; }
+.gnomo-ex b { font-size: 12px; }
+.gnomo-ex p { font-size: 13.5px; line-height: 1.5; }
+.gnomo-chip { font-size: 12.5px; }
+.gnomo-chip--long { display: block; width: 100%; box-sizing: border-box; padding: 9px 16px; line-height: 1.45; font-size: 13px; clip-path: polygon(0 0, 100% 0, 99% 100%, 1% 100%) !important; }
+.gnomo-chips { gap: 8px; }
+.gnomo-chip--off { opacity: 0.6; }
+.gnomo-pn { font-size: 12px; }
+.gnomo-tag { font-size: 11px; }
+.gnomo-tab { font-size: 11px; }
+.gnomo-it { font-size: 14px; }
+.gnomo-xp { font-size: 12px; }
+.gnomo-xp--got { color: #5a3f08; background: #f0c850; }
+.gnomo-total { font-size: 13px; }
+.gnomo-toast__tx small { font-size: 11px; }
+@media (max-width: 820px), (max-aspect-ratio: 1/1) {
+  .gnomo-tab { font-size: 11px; flex: none; min-width: 0; padding: 0 12px 0 10px; height: 40px; }
+  .gnomo-list { grid-template-columns: 1fr !important; }
+  .gnomo-it { font-size: 13px; padding: 4px 12px 4px 10px; }
+  .gnomo-desc { font-size: 14px; }
+  .gnomo-it--ach span { font-size: 13px; }
+}
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  .gnomo-stage { margin-left: 108px; width: calc(100vw - 128px); }
+  .gnomo-tabs { left: -104px; }
+  .gnomo-tab { width: 100px; font-size: 11px; padding: 0 10px 0 8px; }
+  .gnomo-tab--active { width: 108px; }
+  .gnomo-it { font-size: 13px; }
+  .gnomo-desc { font-size: 13px; line-height: 1.4; }
+  .gnomo-ex p, .gnomo-chip, .gnomo-chip--long { font-size: 12.5px; }
+  .gnomo-xp { font-size: 11px; }
+}
+
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) { .gnomo-ribbon { height: 44px; } }
