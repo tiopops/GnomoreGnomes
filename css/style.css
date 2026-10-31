@@ -12934,3 +12934,6 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .gnomo-bar i { clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%); min-width: 8px; }
 .gnomo-total .gnomo-bar { padding: 5px 12px; }
 .gnomo-bar i[style*="width:0%"] { display: none; }
+
+/* Menú de tutoriales: el icono de "Primeros pasos" en gris muy oscuro. */
+.tut-menu__list .menu-btn[data-scenario="basic"] > i { color: #26262b; text-shadow: none; }
