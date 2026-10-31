@@ -48,6 +48,7 @@ const GLORY_CAP = 30;
 
 const Glory = {
   points: { player: 0, enemy: 0 },
+  _disp: { player: null, enemy: null }, // valor mostrado mientras vuelan puntos hacia el marcador (null = el real)
   // Bonus ya "ganado" (bajas conseguidas) pero todavía sin sumar a points —
   // se vuelca entero en el próximo grantTurnStart de ESE equipo y se vacía.
   pendingBonus: { player: 0, enemy: 0 },
@@ -102,6 +103,59 @@ const Glory = {
     this._render(team, { bump: added > 0, gained: added });
     if (amount - added > 0) this._showLost(team, amount - added);
     this._renderPreview(team);
+    return added;
+  },
+
+  // Suma con efecto: las páginas salen de la unidad (o del punto dado) y vuelan una a una hasta el marcador
+  // del jugador; el contador sube con cada una que llega. La lógica (this.points) suma de golpe; solo cambia lo que se ve.
+  // Devuelve los puntos añadidos. Sin marcador visible (rival, pantalla sin HUD) suma como addNow.
+  addFlying(team, amount, fromEl, imgSrc) {
+    const hud = this._els[team];
+    const icon = hud && hud.querySelector(".glory-hud__icon");
+    if (team !== "player" || !icon || !fromEl || !fromEl.getBoundingClientRect || !(amount > 0)) return this.addNow(team, amount);
+    const before = this.points[team];
+    const added = Math.min(amount, Math.max(0, GLORY_CAP - before));
+    if (added <= 0) return this.addNow(team, amount);
+    this.points[team] += added;
+    if (amount - added > 0) this._showLost(team, amount - added);
+    this._disp[team] = before;
+    const n = Math.min(added, document.body.classList.contains("perf-mode") ? 3 : 6);
+    const base = Math.floor(added / n);
+    let extra = added - base * n;
+    const sr = fromEl.getBoundingClientRect();
+    const sx = sr.left + sr.width / 2, sy = sr.top + sr.height * 0.35;
+    let done = 0;
+    const finish = () => { this._disp[team] = null; this._render(team); this._renderPreview(team); };
+    for (let i = 0; i < n; i++) {
+      const part = base + (extra > 0 ? 1 : 0);
+      if (extra > 0) extra--;
+      const el = document.createElement("img");
+      el.src = imgSrc || "assets/niveles/wallforge/pagina.png";
+      el.alt = "";
+      el.draggable = false;
+      el.style.cssText = `position:fixed;left:${sx}px;top:${sy}px;width:34px;height:34px;object-fit:contain;pointer-events:none;z-index:9000;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.55));will-change:transform`;
+      document.body.appendChild(el);
+      const ang = Math.random() * Math.PI * 2, r = 50 + Math.random() * 40;
+      const ox = Math.cos(ang) * r, oy = Math.sin(ang) * r - 30;
+      const ir = icon.getBoundingClientRect();
+      const dx = ir.left + ir.width / 2 - sx, dy = ir.top + ir.height / 2 - sy;
+      const a = el.animate(
+        [
+          { transform: "translate(-50%,-50%) scale(.2) rotate(0deg)", offset: 0 },
+          { transform: `translate(calc(-50% + ${ox}px),calc(-50% + ${oy}px)) scale(1.1) rotate(${ox}deg)`, offset: 0.3, easing: "ease-in" },
+          { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.6) rotate(${ox * 3}deg)` },
+        ],
+        { duration: 900 + i * 70, delay: i * 90 + 250, fill: "both", easing: "cubic-bezier(.5,0,.7,1)" }
+      );
+      const arrive = () => {
+        el.remove();
+        this._disp[team] = (this._disp[team] != null ? this._disp[team] : before) + part;
+        this._render(team, { bump: true, gained: 0 });
+        if (typeof SFX !== "undefined" && SFX.gloryCoin) { try { SFX.gloryCoin(3 + done * 2); } catch (e) {} }
+        if (++done >= n) finish();
+      };
+      a.finished.then(arrive, arrive);
+    }
     return added;
   },
 
@@ -272,7 +326,8 @@ const Glory = {
   _render(team, { bump = false, gained = 0 } = {}) {
     const valueEl = this._valueEls[team];
     if (!valueEl) return;
-    valueEl.innerHTML = `${this.points[team]}<small class="glory-hud__cap">/${GLORY_CAP}</small>`;
+    const shown = this._disp[team] != null ? this._disp[team] : this.points[team];
+    valueEl.innerHTML = `${shown}<small class="glory-hud__cap">/${GLORY_CAP}</small>`;
     const full = this.points[team] >= GLORY_CAP;
     if (this._els[team]) this._els[team].classList.toggle("glory-hud--full", full);
     if (this._previewEls[team]) this._renderPreview(team);

@@ -12941,16 +12941,9 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 /* Reliquia recogible: puntero de mano al pasar por su sprite (la mano ya no flota encima de ella). */
 .reliquia-altar--grab, .reliquia-altar--grab * { cursor: url("../assets/iconos/cursor_mano.png") 24 24, pointer !important; }
 
-/* Ajustes > Controles: tecla asignada (misma letra del juego, casilla irregular plana). */
-.gp-key{display:inline-block;min-width:34px;padding:4px 12px;background:#ffcf3d;color:#000;font:inherit;font-size:15px;text-align:center;clip-path:polygon(0 8%,100% 0,97% 100%,3% 92%);box-shadow:none}
-
-/* Tienda Goblin y Oráculo: al tocarlos se amplían un poco y muestran su nombre arriba, como un árbol. */
-.shop:hover, .shop.shop--labeled {
-  transform: translate(-50%, -92%) translateY(30px) scale(1.05);
-  filter: brightness(1.12);
-}
-.shop .shop__label { bottom: calc(100% + 6px); }
-.shop:hover .resource-node__label, .shop--labeled .resource-node__label {
-  opacity: 1;
-  animation: resource-label-pop 0.22s cubic-bezier(0.2, 1.5, 0.4, 1);
-}
+/* Ajustes > Controles: tecla asignada. Casilla irregular de doble capa, texto blanco centrado. */
+.kb-cap{--fill:#4a4553;position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:54px;height:42px;padding:0 20px;color:#fff;font-family:"Russo One",system-ui,sans-serif;font-weight:400;font-size:17px;line-height:1;letter-spacing:.04em;white-space:nowrap;text-align:center;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.5))}
+.kb-cap::before,.kb-cap::after{content:"";position:absolute;z-index:-1;pointer-events:none;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.kb-cap::before{inset:0;background:#000}
+.kb-cap::after{inset:3px;background:var(--fill)}
+.gp-map__row--listen .kb-cap{--fill:#c99a2a}

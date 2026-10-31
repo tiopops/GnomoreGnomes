@@ -1368,7 +1368,8 @@ const Reliquia = {
     try {
       const pts = r.points;
       if (typeof Glory !== "undefined") {
-        Glory.addNow(unit.team, pts);
+        if (Glory.addFlying) Glory.addFlying(unit.team, pts, unit.el, RELIQUIA_SRC.pagina);
+        else Glory.addNow(unit.team, pts);
         if (Glory.stealNow) Glory.stealNow(unit.team, pts); // los rivales pierden lo mismo
       }
       Units.spawnFloatingText(unit, `+${pts}`, { className: "dmg-popup gnome-points-popup" });

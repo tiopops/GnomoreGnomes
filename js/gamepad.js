@@ -1486,7 +1486,7 @@ const GamepadCtl = {
       const on = KeyBinds.listening === a.id;
       return `<button type="button" class="p5-banner p5-banner--action gp-map__row${on ? " gp-map__row--listen" : ""}" data-kb="${a.id}" style="--p5-tone:#2b2733">
         <span class="p5-banner__label gp-map__label">${a.label}</span>
-        <span class="gp-map__btn">${on ? '<span class="gp-map__wait">Pulsa…</span>' : '<span class="gp-key">' + this._esc(KeyBinds.label(KeyBinds.map[a.id])) + "</span>"}</span>
+        <span class="gp-map__btn">${on ? '<span class="gp-map__wait">Pulsa…</span>' : '<span class="kb-cap">' + this._esc(KeyBinds.label(KeyBinds.map[a.id])) + "</span>"}</span>
       </button>`;
     }).join("") : "";
     const kbHtml = kbOn ? `<div class="gp-sec">Teclado</div>
