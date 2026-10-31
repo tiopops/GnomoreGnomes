@@ -11824,7 +11824,7 @@ body.tut-on .settings-gear-btn--update { display: none; }
 .tut-menu__list .menu-btn > i { font-size: 1.6rem; }
 .tut-menu__list .tut-menu__name { font-size: 0.95rem; }
 .tut-menu__list .tut-menu__sub { font-size: 0.68rem; white-space: normal; line-height: 1.15; }
-.tut-menu__list .menu-btn[data-scenario="basic"] { --c: #f0a21a; --c2: #8a4a12; }
+.tut-menu__list .menu-btn[data-scenario="basic"] { --c: #34343b; --c2: #17171b; }
 .tut-menu__list .menu-btn[data-scenario="mush"] { --c: #5fa84a; --c2: #2d5a22; }
 .tut-menu__list .menu-btn[data-scenario="rock"] { --c: #d9433a; --c2: #7a1f1a; }
 .tut-menu__list .menu-btn[data-scenario="crane"] { --c: #5d93e0; --c2: #274d82; }
@@ -12936,7 +12936,7 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .gnomo-bar i[style*="width:0%"] { display: none; }
 
 /* Menú de tutoriales: el icono de "Primeros pasos" en gris muy oscuro. */
-.tut-menu__list .menu-btn[data-scenario="basic"] > i { color: #26262b; text-shadow: none; }
+.tut-menu__list .menu-btn[data-scenario="basic"] > i { color: #fff; text-shadow: none; }
 
 /* Reliquia recogible: puntero de mano al pasar por su sprite (la mano ya no flota encima de ella). */
 .reliquia-altar--grab, .reliquia-altar--grab * { cursor: url("../assets/iconos/cursor_mano.png") 24 24, pointer !important; }
