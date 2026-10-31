@@ -177,9 +177,6 @@ const Oracle = {
       // Mismo comportamiento que la Tienda Goblin (ver Shops._create).
       if (el.classList.contains("shop--interactive")) {
         e.stopPropagation();
-        el.classList.remove("shop--click-pulse");
-        void el.offsetWidth;
-        el.classList.add("shop--click-pulse");
         this.tryOpen(oracle);
         return;
       }

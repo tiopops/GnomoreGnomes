@@ -12,10 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001634";
+const GG_VERSION = "v.001636";
 
 const GG_CHANGELOG = [
-  { v: "v.001634", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001636", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Destrucción del Obelisco: tras una sacudida se parte en trozos con grosor y esquirlas de sus propios colores que salen despedidos, rebotan por el suelo y se desvanecen",
+    "Eliminación de un equipo: todos sus tótems pasan a neutrales también cuando quien cae es el jugador",
+    "Tienda Goblin y Oráculo: al pasar el ratón se amplían y muestran su cartel (se había perdido ese estilo); ya no se levantan al hacer clic",
     "Reliquia Paranoica: al entregarla, las páginas salen volando del gnomo hasta el marcador de Gloria de arriba a la izquierda y el contador sube con cada una que llega",
     "Ambiente de Colinas Rock'n Troll: quitadas las manchas oscuras de humo que parecían sombras de nubes",
     "Tienda Goblin y Oráculo: al tocarlos se amplían un poco y muestran su nombre arriba, igual que un árbol",

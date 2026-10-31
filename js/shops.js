@@ -134,9 +134,6 @@ function attachShopTouchFx(el, text) {
   el.appendChild(labelEl);
   let t = null;
   el.addEventListener("click", () => {
-    el.classList.remove("shop--click-pulse");
-    void el.offsetWidth;
-    el.classList.add("shop--click-pulse");
     el.classList.add("shop--labeled");
     clearTimeout(t);
     t = setTimeout(() => el.classList.remove("shop--labeled"), 1800);
@@ -271,9 +268,6 @@ const Shops = {
         // style.css); la tienda no tiene un estado "seleccionada" propio, así
         // que se dispara como una clase de un solo uso, reiniciando la
         // animación con un reflow forzado por si se pulsa varias veces.
-        el.classList.remove("shop--click-pulse");
-        void el.offsetWidth;
-        el.classList.add("shop--click-pulse");
         this.openPopup(shop);
         return;
       }

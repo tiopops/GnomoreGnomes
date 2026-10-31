@@ -865,9 +865,15 @@ const Obelisks = {
   // _playEpicSmash si fue un golpe mortal de un solo tiro) y se comprueba
   // si con esto ya solo queda un equipo en pie.
   async _destroy(obelisk) {
-    obelisk.el.classList.add("obelisk--destroyed");
+    // Sacudida seca y estallido en trozos con grosor que rebotan y se desvanecen (js/obeliskdebris.js).
+    obelisk.el.classList.add("obelisk--shatter");
     if (typeof SFX !== "undefined") SFX.death();
-    await new Promise((resolve) => setTimeout(resolve, 420));
+    await new Promise((resolve) => setTimeout(resolve, 240));
+    if (typeof ObeliskDebris !== "undefined") {
+      try { ObeliskDebris.play(obelisk); } catch (e) { console.warn("[ObeliskDebris]", e); }
+      obelisk.el.style.visibility = "hidden";
+    } else obelisk.el.classList.add("obelisk--destroyed");
+    await new Promise((resolve) => setTimeout(resolve, 200));
     obelisk.el.remove();
     this.list = this.list.filter((o) => o.id !== obelisk.id);
     this._checkWinLose(obelisk.team);
@@ -879,6 +885,7 @@ const Obelisks = {
   // de 2 equipos (cuenta cuántos siguen vivos, no asume "el otro" a ciegas).
   _checkWinLose(destroyedTeam) {
     if (this.gameOver) return;
+    this._neutralizeTotems(destroyedTeam);
     const alive = Teams.all.filter((team) => this.byTeam(team));
     if (!this.byTeam("player") || alive.length <= 1) {
       this._endGame(this.byTeam("player") && alive.length === 1 ? alive[0] : alive.find((t) => t !== "player") || null);
@@ -887,19 +894,25 @@ const Obelisks = {
     if (destroyedTeam && destroyedTeam !== "player") this._eliminateTeam(destroyedTeam);
   },
 
+  // Al ser eliminado un equipo (también el jugador), todos sus tótems pasan a neutrales.
+  _neutralizeTotems(team) {
+    if (typeof Villages === "undefined" || !team) return;
+    Villages.list.filter((v) => v.owner === team).forEach((v) => {
+      v.owner = "neutral";
+      v.hp = v.maxHp || v.hp;
+      v.el.classList.remove(...Teams.cls("village", team), "team-variant-1", "team-variant-2", "team-variant-3");
+      v.el.classList.add("village--neutral");
+      if (typeof SpriteQuality !== "undefined") SpriteQuality.register(v.spriteEl, Villages.spriteFor("neutral"));
+      if (typeof Units !== "undefined" && Units.updateHpBar) Units.updateHpBar(v);
+    });
+    if (typeof Glory !== "undefined" && Glory._renderPreview) Object.keys(Glory.points).forEach((t) => Glory._renderPreview(t));
+  },
+
   // Un rival sin Obelisco queda eliminado: sus unidades caen y sus tótems
   // vuelven a ser neutrales. La partida continúa con el resto.
   _eliminateTeam(team) {
     Units.list.filter((u) => u.team === team).forEach((u) => Units.removeUnit(u));
-    if (typeof Villages !== "undefined") {
-      Villages.list.filter((v) => v.owner === team).forEach((v) => {
-        v.owner = "neutral";
-        v.hp = v.maxHp || v.hp;
-        v.el.classList.remove(...Teams.cls("village", team), "team-variant-1", "team-variant-2", "team-variant-3");
-        v.el.classList.add("village--neutral");
-        if (typeof SpriteQuality !== "undefined") SpriteQuality.register(v.spriteEl, Villages.spriteFor("neutral"));
-      });
-    }
+    this._neutralizeTotems(team);
     if (typeof Turns !== "undefined" && typeof Turns.showBanner === "function") {
       Turns.showBanner("RIVAL " + Teams.rivalIndex(team) + " ELIMINADO");
     }
