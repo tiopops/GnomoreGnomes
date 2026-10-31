@@ -122,16 +122,10 @@ const Ambient = {
     }
   },
 
-  // Rock'n Troll: ceniza que cae en diagonal y velos bajos de humo.
+  // Rock'n Troll: ceniza que cae en diagonal (sin velos de humo: parecían sombras de nubes).
   _rock(L) {
     for (let i = 0; i < 26; i++) {
       this._p(L, { x: this._r(-10, 90), y: this._r(-8, 20), s: Math.random() < 0.35 ? 5 : 3, c: Math.random() < 0.5 ? "#9a8f86" : "#c9bdb2", a: this._r(0.45, 0.8).toFixed(2), d: this._r(9, 16).toFixed(1), l: this._r(0, 16).toFixed(1), dx: `${this._r(10, 22).toFixed(0)}vw`, dy: `${this._r(55, 80).toFixed(0)}vh`, sw: this._r(-30, 30).toFixed(0) });
-    }
-    for (let i = 0; i < 3; i++) {
-      const e = document.createElement("div");
-      e.className = "amb-smoke";
-      e.style.cssText = `left:${this._r(0, 30)}%;top:${this._r(20, 60)}%;width:${this._r(34, 46)}vw;height:${this._r(12, 18)}vh;--d:${this._r(22, 34).toFixed(0)}s;--l:-${this._r(0, 30).toFixed(0)}s;--dx:${this._r(30, 45).toFixed(0)}vw;--dy:${this._r(-4, 4).toFixed(0)}vh`;
-      L.appendChild(e);
     }
   },
 

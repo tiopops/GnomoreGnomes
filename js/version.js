@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001631";
+const GG_VERSION = "v.001632";
 
 const GG_CHANGELOG = [
-  { v: "v.001631", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001632", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Ambiente de Colinas Rock'n Troll: quitadas las manchas oscuras de humo que parecían sombras de nubes",
     "Tienda Goblin y Oráculo: al tocarlos se amplían un poco y muestran su nombre arriba, igual que un árbol",
     "Ajustes: la pestaña Mando pasa a llamarse Controles y añade los atajos de teclado (cámara, centrar vista, pegar, lanzar y habilidad) para cambiarlos a tu gusto",
     "Tutorial de WallForge: la unidad de ejemplo pasa a ser TruenoEspora (mueve 3, llega a todas partes en una acción)",
