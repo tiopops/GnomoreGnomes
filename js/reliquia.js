@@ -795,7 +795,8 @@ const Reliquia = {
       return d >= 1 && d <= GNOME_THROW_MAX_RANGE && this._visible(o);
     };
     const out = [];
-    if (this.altar.hits < RELIQUIA_HITS_TO_OPEN && inRange(this.altar)) out.push(this.altar);
+    const soloGuardias = typeof Tutorial !== "undefined" && Tutorial.active && Tutorial._ctx && Tutorial._ctx.wallOnlyGuards;
+    if (!soloGuardias && this.altar.hits < RELIQUIA_HITS_TO_OPEN && inRange(this.altar)) out.push(this.altar);
     this.guards.forEach((g) => { if (g.stun <= 0 && inRange(g)) out.push(g); });
     // Páginas: se pueden sacrificar gnomos en ellas mientras alguien lleve la Reliquia (ver _sacrificeOnPage).
     if (this._carrier()) this.pages.forEach((pg) => { if (inRange(pg)) out.push(pg); });

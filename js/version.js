@@ -12,14 +12,16 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001622";
+const GG_VERSION = "v.001623";
 
 const GG_CHANGELOG = [
-  { v: "v.001622", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001623", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Gnomoteca: nueva pestaña dorada de Logros (30 coleccionables con icono, explicación y XP, y una barra con los que llevas respecto al total); descubrir entradas de la Gnomoteca también da experiencia; todas las descripciones con el tono de Nizak; la Gnomoteca ya no incluye Mecánicas; el tutorial de WallForge señala bien el guardia y la Reliquia",
+    "Menú de tutoriales: Colinas Rock'n Troll en rojo y Fortaleza WallForge en naranja",
     "Gnomoteca: pulsar fuera del libro lo cierra; pasa a ser la última opción del menú principal, en morado como el libro, y al cambiar de pestaña o ficha el sprite rebota como de goma",
     "Gnomoteca: barra de scroll con el diseño irregular del juego, marcapáginas más ancho y sonido al pulsar pestañas, fichas y el botón de volver",
     "Gnomoteca: lo descubierto se guarda en tu cuenta (un solo documento, escrituras agrupadas) y te sigue a cualquier dispositivo",
-    "Gnomoteca: nuevo libro del saber en el menú principal con unidades, recursos, edificios, objetos, equipos, mecánicas y escenarios; lo que aún no has visto sale como \"???\" con una sombra oscura y la descripción en blanco, y se desvela al verlo en partida",
+    "Gnomoteca: nuevo libro del saber en el menú principal con unidades, recursos, edificios, objetos, equipos y escenarios; lo que aún no has visto sale como \"???\" con una sombra oscura y la descripción en blanco, y se desvela al verlo en partida",
     "Barra espaciadora: centra la vista en tu base principal",
     "Poblado HurryCrane: si lanzas un gnomo a la grulla y se marcha hacia un obelisco en la niebla, ahora se la ve despegar y alejarse volando hacia el siguiente jugador",
     "Reliquia Paranoica: el portador deja ondas en los pies, por detrás del sprite, más grandes que las del altar",

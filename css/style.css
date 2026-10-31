@@ -11826,8 +11826,9 @@ body.tut-on .settings-gear-btn--update { display: none; }
 .tut-menu__list .tut-menu__sub { font-size: 0.68rem; white-space: normal; line-height: 1.15; }
 .tut-menu__list .menu-btn[data-scenario="basic"] { --c: #f0a21a; --c2: #8a4a12; }
 .tut-menu__list .menu-btn[data-scenario="mush"] { --c: #5fa84a; --c2: #2d5a22; }
-.tut-menu__list .menu-btn[data-scenario="rock"] { --c: #d9703a; --c2: #7a3a18; }
+.tut-menu__list .menu-btn[data-scenario="rock"] { --c: #d9433a; --c2: #7a1f1a; }
 .tut-menu__list .menu-btn[data-scenario="crane"] { --c: #5d93e0; --c2: #274d82; }
+.tut-menu__list .menu-btn[data-scenario="wall"] { --c: #ff8a1f; --c2: #8a4a0c; }
 .tut-menu__list .menu-btn { height: auto; min-height: var(--mb-h, 66px); padding-top: 8px; padding-bottom: 8px; white-space: normal; }
 .tut-menu__list .tut-menu__name { line-height: 1.1; }
 @media (max-width: 720px) { .tut-menu__list .tut-menu__name { font-size: 0.82rem; } .tut-menu__list .menu-btn { --mb-rib: 56px; } }
@@ -12804,3 +12805,83 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .gnomo-list::-webkit-scrollbar-button, .gnomo-scroll::-webkit-scrollbar-button { display: none; height: 0; }
 
 .gnomo-plate img { transform-origin: 50% 100%; }
+
+/* Gnomoteca — ajuste móvil: vertical (título entre Volver y los botones de cuenta, 6 pestañas, marcapáginas pequeño)... */
+@media (max-width: 820px), (max-aspect-ratio: 1/1) {
+  .gnomo-title { left: 118px; right: auto; margin: 0; width: 150px; height: 34px; top: -98px; font-size: 14px; letter-spacing: 2px; }
+  .gnomo-tab { min-width: 0; flex: 1 0 auto; font-size: 7.5px; letter-spacing: 0; padding: 0 8px 0 5px; height: 38px; }
+  .gnomo-ribbon { width: 34px; height: 58px; right: 16px; top: -8px; }
+  .gnomo-pg--l { flex: 0 0 44%; }
+}
+/* ...y horizontal con poca altura (móvil tumbado): libro a lo ancho, pestañas en columna compacta a la izquierda. */
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  #screen-gnomoteca { padding: 44px 8px 8px; }
+  .gnomo-stage { margin: 0 0 0 84px; width: calc(100vw - 104px); height: min(calc(100vh - 62px), 560px); }
+  .gnomo-book { padding: 14px 14px 12px 18px; }
+  .gnomo-tabs { left: -80px; right: auto; top: 34px; flex-direction: column; overflow: visible; gap: 5px; padding: 0; filter: drop-shadow(4px 4px 0 #0a070c); }
+  .gnomo-tab { width: 80px; min-width: 0; height: 36px; flex: none; font-size: 8px; padding: 0 8px 0 6px; transform: rotate(-1.2deg) !important; }
+  .gnomo-tab:nth-child(even) { transform: rotate(1deg) translateX(-3px) !important; }
+  .gnomo-tab--active { width: 90px; transform: translateX(8px) !important; }
+  .gnomo-title { left: 50%; right: auto; margin-left: -100px; width: 200px; height: 34px; top: -20px; font-size: 16px; letter-spacing: 2px; }
+  .gnomo-ribbon { right: 60px; top: -8px; width: 34px; height: 62px; }
+  .gnomo-pages { flex-direction: row; gap: 10px; }
+  .gnomo-pg { padding: 10px 14px 16px; }
+  .gnomo-pg--l { flex: 1; }
+  .gnomo-h { padding: 6px 12px; font-size: 14px; margin-bottom: 8px; }
+  .gnomo-list { grid-template-columns: 1fr; gap: 6px; }
+  .gnomo-it { padding: 3px 14px 3px 12px; font-size: 12px; gap: 8px; }
+  .gnomo-it img { width: 34px; height: 34px; }
+  .gnomo-plate { height: clamp(70px, 24vh, 130px); margin-bottom: 8px; }
+  .gnomo-desc { font-size: 11px; line-height: 1.4; }
+}
+
+/* ===== Gnomoteca: pestaña dorada de Logros, barra de total, iconos y aviso de desbloqueo ===== */
+.gnomo-tab--gold { --o: #f0c850; --f: #7a5a12; color: #fff2c0; }
+.gnomo-tab--gold.gnomo-tab--active { --f: #f0c850; color: #241c2d; }
+.gnomo-total { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; margin: 0 6px 10px; flex: none; font-size: 12px; color: var(--g-ink); }
+.gnomo-total[hidden] { display: none; }
+.gnomo-bar--gold { background: var(--g-ink); }
+.gnomo-bar--gold i { background: #f0c850; }
+.gnomo-total .gnomo-bar { height: 20px; padding: 4px; }
+.gnomo-it--ach { gap: 12px; }
+.gnomo-ico { width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #5a3f08; background: #f0c850; clip-path: polygon(8% 0, 100% 6%, 92% 100%, 0 94%); }
+.gnomo-it--got { --o: #7a5a12; --f: #f8e9b0; }
+.gnomo-it--off { --f: #d9cba0; color: #7a6a8a; }
+.gnomo-it--off .gnomo-ico { background: #b9a982; color: #7a6a8a; }
+.gnomo-xp { margin-left: auto; flex: none; font-style: normal; font-size: 11px; background: var(--g-ink); color: #f0c850; padding: 4px 14px 4px 10px; clip-path: polygon(0 0, 100% 0, 90% 100%, 0 100%); white-space: nowrap; }
+.gnomo-xp b { font-weight: 400; }
+.gnomo-it--off .gnomo-xp { color: var(--g-lav); }
+.gnomo-plate--gold { --f: #f0c850; }
+.gnomo-plate--gold.gnomo-plate--off { --f: #c9b988; }
+.gnomo-bigico { font-size: clamp(54px, 15vh, 112px); line-height: 1; color: #5a3f08; position: relative; z-index: 1; margin-bottom: 14px; filter: drop-shadow(4px 4px 0 rgba(36, 28, 45, 0.45)); transform-origin: 50% 100%; }
+.gnomo-bigico[hidden], #gt-img[hidden] { display: none; }
+.gnomo-plate--off .gnomo-bigico { color: #7a6a8a; }
+.gnomo-plate--gold::after { display: none; }
+.gnomo-st--p { grid-template-columns: 78px 1fr auto; }
+.gnomo-st--p b { white-space: nowrap; }
+.gnomo-chip--gold { background: #7a5a12; color: #fff2c0; }
+.gnomo-chip--gold b, .gnomo-xp b, .gnomo-toast__xp b { font-weight: 400; }
+.gnomo-chip--ok { background: #f0c850; color: var(--g-ink); }
+/* Aviso de logro / XP de la Gnomoteca (arriba, centrado, irregular, plano). */
+.gnomo-toast { position: fixed; left: 50%; top: 14px; z-index: 100000; transform: translateX(-50%); pointer-events: none; display: flex; align-items: center; gap: 12px; min-width: 240px; max-width: min(92vw, 460px); padding: 10px 22px 10px 14px; color: #fff; font-family: "Russo One", system-ui, sans-serif; isolation: isolate; background: #241c2d; clip-path: polygon(2% 0, 100% 6%, 98% 100%, 0 94%); filter: drop-shadow(5px 5px 0 #0a070c); }
+.gnomo-toast::before { content: ""; position: absolute; inset: 4px; background: #4b3a66; clip-path: polygon(2% 0, 100% 6%, 98% 100%, 0 94%); z-index: -1; }
+.gnomo-toast--gold { background: #3a2a08; }
+.gnomo-toast--gold::before { background: #7a5a12; }
+.gnomo-toast__ico { width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #5a3f08; background: #f0c850; clip-path: polygon(8% 0, 100% 6%, 92% 100%, 0 94%); }
+.gnomo-toast:not(.gnomo-toast--gold) .gnomo-toast__ico { background: var(--g-lav, #8f7bb8); color: #241c2d; }
+.gnomo-toast__tx { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.gnomo-toast__tx small { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #f0c850; }
+.gnomo-toast:not(.gnomo-toast--gold) .gnomo-toast__tx small { color: #d9c9f5; font-size: 13px; }
+.gnomo-toast__tx strong { font-weight: 400; font-size: 15px; }
+.gnomo-toast__xp { margin-left: auto; font-style: normal; font-size: 13px; background: #241c2d; color: #f0c850; padding: 5px 14px 5px 10px; clip-path: polygon(0 0, 100% 0, 90% 100%, 0 100%); white-space: nowrap; flex: none; }
+@media (max-width: 820px), (max-aspect-ratio: 1/1) { .gnomo-tab--gold { flex: 1 0 auto; } .gnomo-toast { top: 64px; } }
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  .gnomo-tab { height: 31px; }
+  .gnomo-tabs { gap: 4px; top: 30px; }
+  .gnomo-it--ach .gnomo-ico { width: 34px; height: 34px; font-size: 20px; }
+  .gnomo-xp { font-size: 10px; padding: 3px 10px 3px 8px; }
+  .gnomo-toast { top: 6px; }
+}
+
+.gnomo-list--ach { grid-template-columns: 1fr !important; }
+@media (max-width: 820px), (max-aspect-ratio: 1/1) { .gnomo-toast { top: 58px; min-width: 0; max-width: 88vw; padding: 8px 16px 8px 10px; gap: 8px; } .gnomo-toast__tx strong { font-size: 13px; } .gnomo-toast__ico { width: 36px; height: 36px; font-size: 22px; } .gnomo-it--ach { padding-right: 10px; } .gnomo-it--ach span { font-size: 12px; } }

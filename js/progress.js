@@ -187,6 +187,15 @@ const Progress = {
     try { await db.collection("progress").doc(uid).set(this._s); } catch (e) { console.warn("progress:", e && e.code); }
   },
 
+  // XP suelta (la Gnomoteca: entradas descubiertas y logros). Solo con sesión y progreso ya cargado.
+  addXp(n) {
+    n = Math.floor(n);
+    if (!this._uid || !this._loaded || !(n > 0)) return false;
+    this.s.xp += n;
+    this._persist();
+    return true;
+  },
+
   // ---------- Nivel ----------
   need(level) { return 500 + 100 * level; }, // XP para pasar de `level` al siguiente
   info(xp) {

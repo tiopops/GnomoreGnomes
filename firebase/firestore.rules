@@ -218,14 +218,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Gnomoteca (js/gnomoteca.js): lo que el jugador ha descubierto, en UN documento por usuario
-    // con todos los ids en un solo texto. Solo su dueño lo lee y lo escribe.
+    // Gnomoteca (js/gnomoteca.js): lo descubierto, los logros y sus contadores, en UN documento por usuario.
+    // ids y a son textos con los identificadores separados por comas; st es un mapa de contadores.
+    // Solo su dueño lo lee y lo escribe.
     match /gnomoteca/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['v', 'ids'])
+        && request.resource.data.keys().hasOnly(['v', 'ids', 'a', 'st'])
         && request.resource.data.v == 1
-        && request.resource.data.ids is string && request.resource.data.ids.size() <= 6000;
+        && request.resource.data.ids is string && request.resource.data.ids.size() <= 6000
+        && request.resource.data.a is string && request.resource.data.a.size() <= 3000
+        && request.resource.data.st is map && request.resource.data.st.size() <= 40;
       allow delete: if false;
     }
 

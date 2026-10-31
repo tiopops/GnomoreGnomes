@@ -936,10 +936,15 @@ Object.assign(Tutorial, {
         say: "Pulsa lanzar y apunta a un guardia. El gnomo lo deja mareado un buen rato y, de paso, se lleva puntos encima. Mareado, el guardia es una estatua blindada. Muy decorativa.",
         mission: "Lánzale a Tinkle contra un guardia",
         onStart: () => {
+          T._ctx.wallOnlyGuards = true; // en esta misión la cámara no se puede atacar: solo guardias
           T._refill();
           T._focus(unit(), ...Reliquia.guards);
         },
-        target: aim(() => T._anyMarker("reliquia-throw-marker")),
+        target: aim(() => {
+          // La señal va al marcador de un GUARDIA (no al primero que haya, que podía ser el de la cámara).
+          for (const g of Reliquia.guards) { const m = T._marker("reliquia-throw-marker", g.row, g.col); if (m) return m; }
+          return null;
+        }),
         refillFor: () => unit() && unit().id,
         done: () => Reliquia.guards.some((g) => g.stun > 0) && !Reliquia.busy,
         ok: "Mareado y sin dignidad. El guardia, digo. Tinkle hace tiempo que no tiene.",
@@ -949,6 +954,7 @@ Object.assign(Tutorial, {
         say: "Ahora la cámara sellada. Cada gnomo que le estampes rompe una cadena, y cuando no queden, suelta la Reliquia. Te presto los gnomos necesarios: Tinkle tiene muchos primos.",
         mission: "Rompe las cadenas de la cámara",
         onStart: () => {
+          T._ctx.wallOnlyGuards = false;
           T._refill();
           T._focus(unit(), Reliquia.altar);
           T._giveGnome(unit());
@@ -975,7 +981,8 @@ Object.assign(Tutorial, {
           T._refill();
           T._focus(unit(), Reliquia.altar);
         },
-        target: () => T._unitThen(unit(), () => T._anyMarker("reliquia-grab-marker")),
+        // Sin mano de coger a la vista, la unidad aún no está pegada a la cámara: señala la casilla de movimiento más cercana a ella.
+        target: () => T._unitThen(unit(), () => T._anyMarker("reliquia-grab-marker") || T._nearestRange(Reliquia.altar.row, Reliquia.altar.col)),
         refillFor: () => unit() && unit().id,
         done: () => !!Reliquia.relic && Reliquia.relic.state === "carried" && !Reliquia.busy,
         ok: "Es tuya. Mientras la lleves, claro.",
