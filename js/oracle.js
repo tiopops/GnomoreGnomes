@@ -156,6 +156,7 @@ const Oracle = {
   _create(row, col) {
     const el = document.createElement("div");
     el.className = "unit shop oracle";
+    attachShopTouchFx(el, "Oráculo");
     const spriteEl = document.createElement("img");
     spriteEl.decoding = "async";
     spriteEl.className = "shop__sprite oracle__sprite";

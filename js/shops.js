@@ -124,6 +124,25 @@ const SHOP_RESTOCK_POOL = [
 ];
 const SHOP_RESTOCK_INTERVAL = 5; // turnos
 
+// Reacción al tocar un edificio de comercio (Tienda Goblin, Oráculo): se amplía (CSS .shop:hover) y
+// muestra arriba su nombre, como al tocar un árbol; al hacer clic el nombre se queda un momento
+// (por si es táctil, donde no hay hover). El texto va en español y lo traduce translate.js.
+function attachShopTouchFx(el, text) {
+  const labelEl = document.createElement("div");
+  labelEl.className = "resource-node__label shop__label";
+  labelEl.textContent = text;
+  el.appendChild(labelEl);
+  let t = null;
+  el.addEventListener("click", () => {
+    el.classList.remove("shop--click-pulse");
+    void el.offsetWidth;
+    el.classList.add("shop--click-pulse");
+    el.classList.add("shop--labeled");
+    clearTimeout(t);
+    t = setTimeout(() => el.classList.remove("shop--labeled"), 1800);
+  });
+}
+
 const Shops = {
   list: [],
   _nextId: 1,
@@ -202,6 +221,7 @@ const Shops = {
     // combate/movimiento la confunde con una unidad real.
     const el = document.createElement("div");
     el.className = "unit shop";
+    attachShopTouchFx(el, "Tienda Goblin");
 
     const spriteEl = document.createElement("img");
     spriteEl.decoding = "async"; // pedido de rendimiento: no bloquear el hilo principal decodificando

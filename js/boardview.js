@@ -701,10 +701,12 @@ const BoardView = {
     window.addEventListener("keydown", (e) => {
       const key = e.key.toLowerCase();
       // Barra espaciadora: centra la vista en la base principal (el Obelisco propio), igual que al pulsarlo.
-      if (e.code === "Space" && !e.repeat && this.viewportEl && this.viewportEl.offsetParent) {
+      if (KeyBinds.is(e, "center") && !e.repeat && this.viewportEl && this.viewportEl.offsetParent) {
         const tg = document.activeElement && document.activeElement.tagName;
         if (tg !== "INPUT" && tg !== "TEXTAREA" && typeof Obelisks !== "undefined" && typeof Units !== "undefined" && typeof getTileCenter === "function") {
-          const ob = Obelisks.byTeam("player");
+          // Con una unidad seleccionada centra en ella; si no, en la base.
+          const sel = Units.selectedId ? Units.list.find((u) => u.id === Units.selectedId) : null;
+          const ob = sel || Obelisks.byTeam("player");
           if (ob) {
             e.preventDefault();
             const c = getTileCenter(ob.row, ob.col, Units.boardSize);
@@ -713,7 +715,23 @@ const BoardView = {
         }
         return;
       }
-      if (!(key in BOARD_PAN_KEYS)) return;
+      // Q = pegar al gnomo, E = lanzarlo, R = habilidad especial (pulsan el botón si está visible).
+      const QER = {};
+      QER[KeyBinds.map.hit] = ".gnome-action-btn--hit.gnome-action-btn--visible";
+      QER[KeyBinds.map.throw] = ".gnome-action-btn--pass.gnome-action-btn--visible";
+      QER[KeyBinds.map.ability] = ".ability-btn.ability-btn--visible";
+      if (QER[key] && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && this.viewportEl && this.viewportEl.offsetParent) {
+        const t = document.activeElement && document.activeElement.tagName;
+        if (t !== "INPUT" && t !== "TEXTAREA") {
+          const b = document.querySelector(QER[key]);
+          if (b) {
+            e.preventDefault();
+            b.click();
+          }
+        }
+        return;
+      }
+      if (!KeyBinds.panDir(key)) return;
       // No robar la tecla si el foco está en un campo de texto de verdad
       // (el juego no tiene ninguno ahora mismo, pero es la comprobación
       // estándar por si algún día lo hay) — así nunca compite con escribir.
@@ -756,7 +774,7 @@ const BoardView = {
         let dx = 0;
         let dy = 0;
         this._keysPressed.forEach((key) => {
-          const dir = BOARD_PAN_KEYS[key];
+          const dir = KeyBinds.panDir(key);
           if (!dir) return;
           dx += dir[0];
           dy += dir[1];

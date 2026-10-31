@@ -12940,3 +12940,17 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 
 /* Reliquia recogible: puntero de mano al pasar por su sprite (la mano ya no flota encima de ella). */
 .reliquia-altar--grab, .reliquia-altar--grab * { cursor: url("../assets/iconos/cursor_mano.png") 24 24, pointer !important; }
+
+/* Ajustes > Controles: tecla asignada (misma letra del juego, casilla irregular plana). */
+.gp-key{display:inline-block;min-width:34px;padding:4px 12px;background:#ffcf3d;color:#000;font:inherit;font-size:15px;text-align:center;clip-path:polygon(0 8%,100% 0,97% 100%,3% 92%);box-shadow:none}
+
+/* Tienda Goblin y Oráculo: al tocarlos se amplían un poco y muestran su nombre arriba, como un árbol. */
+.shop:hover, .shop.shop--labeled {
+  transform: translate(-50%, -92%) translateY(30px) scale(1.05);
+  filter: brightness(1.12);
+}
+.shop .shop__label { bottom: calc(100% + 6px); }
+.shop:hover .resource-node__label, .shop--labeled .resource-node__label {
+  opacity: 1;
+  animation: resource-label-pop 0.22s cubic-bezier(0.2, 1.5, 0.4, 1);
+}

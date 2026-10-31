@@ -12,10 +12,14 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001627";
+const GG_VERSION = "v.001631";
 
 const GG_CHANGELOG = [
-  { v: "v.001627", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001631", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Tienda Goblin y Oráculo: al tocarlos se amplían un poco y muestran su nombre arriba, igual que un árbol",
+    "Ajustes: la pestaña Mando pasa a llamarse Controles y añade los atajos de teclado (cámara, centrar vista, pegar, lanzar y habilidad) para cambiarlos a tu gusto",
+    "Tutorial de WallForge: la unidad de ejemplo pasa a ser TruenoEspora (mueve 3, llega a todas partes en una acción)",
+    "Atajos de teclado: Q pega al gnomo, E lo lanza y R usa la habilidad especial; la barra espaciadora centra la vista en la unidad seleccionada (o en la base si no hay ninguna)",
     "Menú de tutoriales: el recuadro de Primeros pasos ahora es gris muy oscuro (antes solo el dibujo)",
     "Reliquia recogible: la mano ya no flota sobre su sprite; queda la de la loseta y el puntero de mano al pasar por la Reliquia, y pulsar el sprite la coge",
     "Menú de tutoriales: el icono de Primeros pasos en gris muy oscuro",

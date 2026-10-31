@@ -13,6 +13,22 @@
    Para añadir un texto nuevo: añade su línea "español": "inglés" abajo. */
 
 const EN_DICT = {
+"Teclado": "Keyboard",
+"Mando": "Gamepad",
+"Botones del mando": "Gamepad buttons",
+"Cámara arriba": "Camera up",
+"Cámara abajo": "Camera down",
+"Cámara izquierda": "Camera left",
+"Cámara derecha": "Camera right",
+"Centrar vista": "Center view",
+"Pegar al gnomo": "Hit the gnome",
+"Lanzar al gnomo": "Throw the gnome",
+"Habilidad especial": "Special ability",
+"ESPACIO": "SPACE",
+"Pulsa…": "Press…",
+"Restablecer teclado": "Reset keyboard",
+"Restablecer": "Reset",
+"Las flechas también mueven la cámara. Pulsa una fila y luego la tecla nueva (Esc cancela).": "The arrow keys also move the camera. Press a row, then the new key (Esc cancels).",
 "Primer vistazo": "First Glance",
 "Descubres tu primera entrada de la Gnomoteca. Has aprendido a mirar. Solo te falta entender lo que ves.": "You discover your first Gnomotheque entry. You have learned to look. You only need to understand what you see.",
 "Ojo de lince": "Eagle Eye",

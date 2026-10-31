@@ -1481,7 +1481,20 @@ const GamepadCtl = {
         <span class="gp-map__btn">${on ? '<span class="gp-map__wait">Pulsa…</span>' : this.glyph(this.map[a.id])}</span>
       </button>`;
     }).join("");
-    pane.innerHTML = `
+    const kbOn = typeof KeyBinds !== "undefined";
+    const kbRows = kbOn ? KB_ACTIONS.map((a) => {
+      const on = KeyBinds.listening === a.id;
+      return `<button type="button" class="p5-banner p5-banner--action gp-map__row${on ? " gp-map__row--listen" : ""}" data-kb="${a.id}" style="--p5-tone:#2b2733">
+        <span class="p5-banner__label gp-map__label">${a.label}</span>
+        <span class="gp-map__btn">${on ? '<span class="gp-map__wait">Pulsa…</span>' : '<span class="gp-key">' + this._esc(KeyBinds.label(KeyBinds.map[a.id])) + "</span>"}</span>
+      </button>`;
+    }).join("") : "";
+    const kbHtml = kbOn ? `<div class="gp-sec">Teclado</div>
+      <div class="gp-map">${kbRows}</div>
+      <div class="gp-note">Las flechas también mueven la cámara. Pulsa una fila y luego la tecla nueva (Esc cancela).</div>
+      <button type="button" class="p5-banner p5-banner--action gp-kbreset" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">Restablecer teclado</span></button>
+      <div class="gp-sec">Mando</div>` : "";
+    pane.innerHTML = `${kbHtml}
       <div class="gp-status ${this.connected ? "gp-status--ok" : ""}">
         <i class="ph-fill ph-game-controller"></i>
         <span>${this.connected ? "Mando conectado: " + this._esc(this.padName) : "Sin mando. Conecta uno y pulsa cualquier botón."}</span>
@@ -1496,7 +1509,7 @@ const GamepadCtl = {
         <span class="settings-toggle" data-checked="${this.hints}"><i class="ph ph-check settings-toggle__check"></i></span>
       </button>
       ${this._testerSvg()}
-      <div class="gp-sec">Controles</div>
+      <div class="gp-sec">Botones del mando</div>
       <div class="gp-map">${rows}</div>
       <div class="gp-note">Cruceta o stick izquierdo: mover cursor y navegar. Stick derecho: cámara.</div>
       <button type="button" class="p5-banner p5-banner--action gp-reset" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">Restablecer</span></button>`;
@@ -1519,6 +1532,18 @@ const GamepadCtl = {
         else { this._listening = { action: b.dataset.gp }; this._refreshPane(); }
       })
     );
+    pane.querySelectorAll("[data-kb]").forEach((b) =>
+      b.addEventListener("click", () => {
+        if (typeof SFX !== "undefined") SFX.click();
+        const same = KeyBinds.listening === b.dataset.kb;
+        if (KeyBinds._cancel) KeyBinds._cancel();
+        if (same) { this._refreshPane(); return; }
+        KeyBinds.listen(b.dataset.kb, () => this._refreshPane());
+        this._refreshPane();
+      })
+    );
+    const kbr = pane.querySelector(".gp-kbreset");
+    if (kbr) kbr.addEventListener("click", () => { if (typeof SFX !== "undefined") SFX.click(); if (KeyBinds._cancel) KeyBinds._cancel(); KeyBinds.reset(); this._refreshPane(); });
     pane.querySelector(".gp-reset").addEventListener("click", () => { if (typeof SFX !== "undefined") SFX.click(); this._listening = null; this.resetMap(); });
   },
   // Salir del test: START mantenido 3 s, con un indicador junto al mando.

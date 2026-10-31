@@ -233,7 +233,7 @@ Object.assign(Tutorial, {
       }
     }
     const spot = best || any || this._spotAt(2);
-    const u = Units.spawnUnit({ typeId: "portamuros", row: spot.row, col: spot.col, team: "player" });
+    const u = Units.spawnUnit({ typeId: "seta_artificiero", row: spot.row, col: spot.col, team: "player" });
     this._ctx.unitId = u.id;
     if (typeof Fog !== "undefined") {
       Fog.revealForUnit(u);
