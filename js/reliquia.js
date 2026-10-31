@@ -208,6 +208,7 @@ const Reliquia = {
   _createAltar(row, col) {
     const el = document.createElement("div");
     el.className = "unit board-item reliquia-altar";
+    this._bindGrabClick();
     const img = document.createElement("img");
     img.className = "reliquia-altar__sprite";
     img.style.animationDelay = `-${(Math.random() * 4).toFixed(2)}s`; // idle desfasado
@@ -715,7 +716,8 @@ const Reliquia = {
     // A los guardias NO se les pega: solo se marean lanzándoles un gnomo (ver _throwTargets).
     if (this.relic.state === "altar" && this.altar.hits >= RELIQUIA_HITS_TO_OPEN && !this._carrier() && this._visible(this.altar) && this._canReach(unit, this.altar)) {
       // Mano de coger AMARILLA (como el pico de recolectar) en la loseta y sobre la Reliquia que flota.
-      this._marker(this.altar.row, this.altar.col, "ph-hand-grabbing", () => this._approachAnd(unit, this.altar, () => this.takeRelic(unit)), this.altar.el, "reliquia-grab-marker");
+      // Mano solo en la loseta (y, vía CSS, como puntero al pasar por el sprite): NADA flotando sobre la Reliquia.
+      this._marker(this.altar.row, this.altar.col, "ph-hand-grabbing", () => this._approachAnd(unit, this.altar, () => this.takeRelic(unit)), null, "reliquia-grab-marker");
     }
   },
 
@@ -1207,8 +1209,28 @@ const Reliquia = {
     window.addEventListener("touchstart", tc, { passive: true });
     window.addEventListener("touchmove", tc, { passive: true });
   },
+  // Pulsar el sprite de la Reliquia recogible = pulsar la mano del suelo. Se escucha en CAPTURA a nivel de documento y se actúa
+  // al PULSAR (antes de que el tablero trate el toque como "clic en vacío" y borre las marcas); el resto de eventos de ese
+  // mismo toque se tragan para que no deseleccionen a la unidad.
+  _bindGrabClick() {
+    if (this._grabBound) return;
+    this._grabBound = true;
+    const onAltar = (e) => !!(e.target && e.target.closest && e.target.closest(".reliquia-altar"));
+    document.addEventListener("pointerdown", (e) => {
+      if (!onAltar(e) || (e.button != null && e.button !== 0)) return;
+      const m = document.querySelector(".board-marker.reliquia-grab-marker");
+      if (!m) return;
+      this._grabAt = performance.now();
+      e.stopPropagation();
+      m.click();
+    }, true);
+    ["mousedown", "pointerup", "mouseup", "click", "touchstart", "touchend"].forEach((t) => document.addEventListener(t, (e) => {
+      if (this._grabAt && performance.now() - this._grabAt < 800 && onAltar(e)) e.stopPropagation();
+    }, true));
+  },
   refreshOcclusion(mouseX, mouseY) {
     this._occTrack();
+    if (this.altar && this.altar.el) this.altar.el.classList.toggle("reliquia-altar--grab", !!document.querySelector(".board-marker.reliquia-grab-marker"));
     const mx = typeof mouseX === "number" ? mouseX : this._mx, my = typeof mouseY === "number" ? mouseY : this._my;
     this.guards.forEach((g) => {
       if (!g.el) return;

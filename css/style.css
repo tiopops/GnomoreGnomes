@@ -12937,3 +12937,6 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 
 /* Menú de tutoriales: el icono de "Primeros pasos" en gris muy oscuro. */
 .tut-menu__list .menu-btn[data-scenario="basic"] > i { color: #26262b; text-shadow: none; }
+
+/* Reliquia recogible: puntero de mano al pasar por su sprite (la mano ya no flota encima de ella). */
+.reliquia-altar--grab, .reliquia-altar--grab * { cursor: url("../assets/iconos/cursor_mano.png") 24 24, pointer !important; }
