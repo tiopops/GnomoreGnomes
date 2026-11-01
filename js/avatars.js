@@ -14,21 +14,21 @@ const AVATAR_DEFAULT = "u:gnomo";
 // Encuadre de la cara de cada retrato: [desplazamiento X %, desplazamiento Y %, zoom] sobre el recuadro.
 // Se ajusta a mano con debug/editar-retratos.html y se pega aquí el resultado.
 const AVATAR_CROPS = {
-  "u:gnomo": [-0.0, 43.2, 1.8],
-  "u:hombre_arbol": [-2.4, 46.3, 1.88],
-  "u:surcabosques": [-0.0, 43.7, 1.88],
-  "u:seta_artificiero": [-4.5, 41.0, 1.81],
-  "u:goblin_lanzador": [-0.0, 39.7, 1.82],
-  "u:urgamentes": [6.7, 42.1, 1.83],
-  "u:punoroca": [0.4, 43.5, 1.81],
-  "u:manos_largas": [-0.0, 41.6, 1.8],
-  "u:ala_fugaz": [-0.0, 40.6, 1.8],
-  "u:nidobot": [-0.0, 43.2, 1.8],
-  "u:magonifico": [-0.0, 33.8, 1.8],
-  "u:trazaflechas": [-0.0, 28.5, 1.8],
-  "u:portamuros": [-0.0, 35.9, 1.8],
-  "u:guardia": [-0.0, 43.2, 1.8],
-  "u:nizak": [-0.0, 38.5, 1.84],
+  "u:gnomo": [-8, 23.4, 1.8],
+  "u:hombre_arbol": [-21.8, 32.8, 1.9],
+  "u:surcabosques": [-25.7, 19.3, 1.9],
+  "u:seta_artificiero": [-15.4, 18.7, 1.8],
+  "u:goblin_lanzador": [-15.2, 22.9, 1.8],
+  "u:urgamentes": [-13.5, 41.3, 1.8],
+  "u:punoroca": [-31.6, 35.9, 1.8],
+  "u:manos_largas": [-22.3, 18.9, 1.8],
+  "u:ala_fugaz": [-58.1, 17.4, 2.1],
+  "u:nidobot": [-13.1, 28.5, 2],
+  "u:magonifico": [-17.7, -10.8, 1.7],
+  "u:trazaflechas": [-5.9, 18.8, 2],
+  "u:portamuros": [-14.3, 22.8, 1.8],
+  "u:guardia": [-3.4, 13.7, 1.8],
+  "u:nizak": [15.6, 8.2, 1.8],
 };
 const AVATAR_TUTORIALS = ["basic", "mush", "rock", "crane", "wall"];
 
