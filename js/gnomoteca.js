@@ -370,6 +370,9 @@ const GNOMOTECA_ACH = [
 
 // Descripciones con el tono de Nizak (por id de entrada) y virtudes/debilidades de los equipos.
 const GNOMOTECA_DESC = {
+"o:oraculo_vigilante": "Carta del Oráculo. Disipa la niebla de todo el mapa durante 3 segundos y luego todo vuelve a cubrirse, como si nada. No va a la mochila, pero tampoco se queja. Tres segundos para espiar lo que no deberías.",
+"o:oraculo_maldicion": "Carta del Oráculo. Si das la vuelta a una de estas, el Oráculo se bloquea unos turnos y las cartas se queman. Nadie la quiere, pero tampoco te preguntan si la quieres. Yo ya te avisé.",
+"u:nizak": "El que te explica todo, aunque nadie se lo haya pedido. Escribe los textos del juego, cuenta los chistes malos y lleva la Gnomoteca como si fuera suya, que lo es. No se le puede pegar, no se le puede lanzar y créeme que lo he intentado.",
 "o:seta_trampa": "La planta el SurcaBosques y se camufla de maravilla, sobre todo para sus propios compañeros. Quien la pisa descubre por qué se llama trampa. Nadie la ha visto venir, ni siquiera quien la puso.",
 "b:muro": "El PortaMuros lo planta delante de sí por si acaso. Y el «por si acaso» suele caer encima de alguien. Es más resistente que la media y más ruidoso que la media.",
 "o:pagina": "Se esparcen por todo el mapa cuando se libera la Reliquia. Quien lleve la Reliquia y pise una suma puntos que luego cobrará junto a su obelisco. Nadie sabe qué pone, y es mejor así.",
@@ -695,6 +698,7 @@ const Gnomoteca = {
   _scanBoard() {
     // Escenario y equipo elegidos, y las mecánicas propias del escenario.
     if (typeof LevelAssets !== "undefined" && LevelAssets.current) { this.discover("l:" + LevelAssets.current); }
+    if (typeof Tutorial !== "undefined" && Tutorial.active) this.discover("u:nizak");
     if (typeof matchDraft !== "undefined" && matchDraft.raceId) this.discover("t:" + matchDraft.raceId);
     // Unidades (de cualquier bando) mientras no estén en la niebla.
     if (typeof Units !== "undefined" && Units.list) {
@@ -801,6 +805,7 @@ const Gnomoteca = {
       });
       out.push({ id: "u:grulla", name: "La Grulla", type: "Neutral · HurryCrane", img: "assets/niveles/hurrycrane/grulla_posada.png", desc: "Aparece cuando el huevo explota y se posa en el obelisco del que más puntos sacó. Mientras esté ahí, nada de reclutar ni mejorar. Si le lanzas un gnomo se asusta y se va a molestar a otro. Muy profesional.", chips: ["Bloquea un obelisco", "Se asusta si le lanzas un gnomo"] });
       out.push({ id: "u:gnomo_fuego", name: "Gnomo en llamas", type: "Neutral · Rock'n Troll", img: "assets/niveles/rockntroll/gnomo_fuego_corre.png", desc: "Cuando el volcán erupciona, suelta uno por cada unidad rival y todos salen corriendo hacia ellas. No dice nada, seguramente porque está ocupado ardiendo. Nunca se le pregunta si estaba de acuerdo.", chips: ["Sale con la erupción", "Corre hacia las unidades rivales"] });
+      out.push({ id: "u:nizak", name: "Nizak", type: "Narrador · Tutoriales", img: "assets/tutorial/nizak_normal.png", desc: "El que te explica todo, aunque nadie se lo haya pedido. Escribe los textos del juego, cuenta los chistes malos y lleva la Gnomoteca como si fuera suya, que lo es. No se le puede pegar, no se le puede lanzar y créeme que lo he intentado.", chips: ["No combate", "Da los tutoriales"] });
     } else if (cat === "recursos") {
       const R = typeof RESOURCE_NODE_TYPES !== "undefined" ? RESOURCE_NODE_TYPES : {};
       const txt = {
@@ -851,6 +856,8 @@ const Gnomoteca = {
       out.push({ id: "o:oraculo_renacido", name: "El Renacido", type: "Carta del Oráculo", img: "assets/oraculo/carta_renacido.webp", desc: "Carta del Oráculo. Cuando una de tus unidades muere, ganas tantos puntos de Gloria como costó reclutarla. Beneficio pasivo, siempre activo. Morir sale rentable, al fin.", chips: ["Pasiva", "Gloria al morir una unidad"] });
       out.push({ id: "o:oraculo_afortunado", name: "El Afortunado", type: "Carta del Oráculo", img: "assets/oraculo/carta_afortunado.webp", desc: "Carta del Oráculo. Recibes 1 punto de Gloria por turno por cada tótem que controlen tus rivales. Cuanto peor te vaya, mejor te va.", chips: ["Pasiva", "Gloria por tótems rivales"] });
       out.push({ id: "o:oraculo_eterno", name: "El Eterno", type: "Carta del Oráculo", img: "assets/oraculo/carta_eterno.webp", desc: "Carta del Oráculo. Cuando una de tus unidades golpea a un gnomo, gana 1 punto de vida por golpe hasta su máximo. Pegar a gnomos es la mejor terapia.", chips: ["Pasiva", "Cura al golpear gnomos"] });
+      out.push({ id: "o:oraculo_vigilante", name: "El Vigilante", type: "Carta del Oráculo", img: "assets/oraculo/carta_vigilante.webp", desc: "Disipa la niebla de todo el mapa durante 3 segundos; después todo vuelve a cubrirse.", chips: ["Disipa la niebla 3 segundos", "Se activa al cerrar el Oráculo"] });
+      out.push({ id: "o:oraculo_maldicion", name: "La Maldición", type: "Carta del Oráculo", img: "assets/oraculo/carta_maldicion.webp", desc: "Bloquea el Oráculo unos turnos y quema las cartas afectadas.", chips: ["Bloquea el Oráculo unos turnos", "Quema cartas"] });
     } else if (cat === "equipos") {
       (typeof RACES !== "undefined" ? RACES : []).forEach((r) => out.push({
         id: "t:" + r.id, name: this._tr(r.nameKey), type: "Equipo", img: r.iconImg, desc: this._tr(r.flavorKey),

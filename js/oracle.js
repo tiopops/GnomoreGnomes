@@ -855,6 +855,7 @@ const Oracle = {
       this._render();
     };
     if (out.res === "curse") {
+      if (typeof Gnomoteca !== "undefined" && Gnomoteca.discover) Gnomoteca.discover("o:oraculo_maldicion");
       out.trap.forEach((i) => {
         ui.els[i].classList.add("curs");
         this._burst(ui.els[i], 18, "#ff3040");
@@ -895,6 +896,7 @@ const Oracle = {
       void ui.panel.offsetWidth;
       ui.panel.classList.add("pop");
       const info = ORACLE_INFO[out.kind];
+      if (out.kind === "vigilante" && typeof Gnomoteca !== "undefined" && Gnomoteca.discover) Gnomoteca.discover("o:oraculo_vigilante"); // no va a la mochila: se apunta al ganarla
       this._toast("¡" + info.n.toUpperCase() + "!", out.kind === "vigilante" ? "Se activará al cerrar el oráculo" : "Va a tu mochila", false);
       setTimeout(() => this._flyToBag(out.kind, a), 1700);
       return;

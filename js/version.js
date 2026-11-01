@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001644";
+const GG_VERSION = "v.001645";
 
 const GG_CHANGELOG = [
-  { v: "v.001644", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001645", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Gnomoteca: Nizak tiene su propia entrada en Unidades (se apunta al hacer un tutorial) y las cartas del Oráculo que faltaban, El Vigilante y La Maldición, se apuntan al ganarlas o sufrirlas",
     "Gnomoteca: los objetos de la Tienda Goblin y las cartas del Oráculo se apuntan al comprarlos o conseguirlos, no al verlos",
     "Ajustes > Controles: sin mando conectado, el teclado sale arriba; con mando conectado, el mando arriba y el teclado debajo",
     "Gnomoteca: más elementos de todos los escenarios: Seta trampa, Muro aplastante, Cofre de Reliquias, Páginas de la Reliquia, Agua, Lava, Gnomo en llamas, los objetos de la mochila y de la Tienda Goblin, las cartas del Oráculo y los recursos Madera, Piedra y Metal",
