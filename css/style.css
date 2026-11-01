@@ -12970,3 +12970,14 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 
 /* Reliquia flotando sobre el altar: se vuelve translúcida si tapa a una unidad o al puntero (igual que los guardias). */
 .reliquia-float--occluding { opacity: 0.45; pointer-events: none !important; transition: opacity 0.15s ease; }
+
+/* Gnomoteca > Logros: recuadro pequeño con el icono y, a su derecha, cómo se consigue (página derecha). */
+.gnomo-achrow{display:flex;gap:16px;align-items:flex-start;margin:2px 0 14px}
+.gnomo-achrow[hidden], .gnomo-plate[hidden], .gnomo-desc[hidden]{display:none}
+.gnomo-abox{--o:var(--g-ink);--f:linear-gradient(#ffe083,#f0c850);--cp:polygon(7% 0,100% 4%,93% 100%,0 96%);flex:none;width:104px;height:104px;display:flex;align-items:center;justify-content:center;font-size:56px;color:#5a3f08;transform:rotate(-2deg);filter:drop-shadow(4px 4px 0 rgba(36,28,45,.45))}
+.gnomo-abox--off{--f:linear-gradient(#cdbf95,#b6a77a);color:#7a6a8a}
+.gnomo-abox i{position:relative;z-index:1}
+.gnomo-achtxt{flex:1;min-width:0}
+.gnomo-achtxt .gnomo-tag{position:static;display:inline-block;margin-bottom:8px}
+.gnomo-achtxt .gnomo-desc{margin:0;font-size:15px;line-height:1.5}
+@media(max-width:700px){.gnomo-achrow{flex-direction:column}.gnomo-abox{width:84px;height:84px;font-size:44px}}

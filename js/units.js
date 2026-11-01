@@ -238,6 +238,9 @@ const UNIT_TYPES = {
     name: "MagoNífico",
     raceId: "equipo_enmurallado",
     spriteUrl: "assets/equipos/EquipoEnmurallado/unidad_01.png",
+    machacaUrl: "assets/equipos/EquipoEnmurallado/machacagnomos_magonifico.png?v=enm3",
+    machacaImpactUrl: "assets/equipos/EquipoEnmurallado/machacagnomos_magonifico_impacto.png?v=enm3",
+    pegarGnomoUrl: "assets/equipos/EquipoEnmurallado/pegargnomo_magonifico.png?v=enm3",
     aguante: 1,
     movimiento: 3,
     fuerza: 1,
@@ -250,6 +253,9 @@ const UNIT_TYPES = {
     name: "TrazaFlechas",
     raceId: "equipo_enmurallado",
     spriteUrl: "assets/equipos/EquipoEnmurallado/unidad_02.png",
+    machacaUrl: "assets/equipos/EquipoEnmurallado/machacagnomos_trazaflechas.png?v=enm3",
+    machacaImpactUrl: "assets/equipos/EquipoEnmurallado/machacagnomos_trazaflechas_impacto.png?v=enm3",
+    pegarGnomoUrl: "assets/equipos/EquipoEnmurallado/pegargnomo_trazaflechas.png?v=enm3",
     aguante: 1,
     movimiento: 4,
     fuerza: 2,
@@ -262,6 +268,9 @@ const UNIT_TYPES = {
     name: "PortaMuros",
     raceId: "equipo_enmurallado",
     spriteUrl: "assets/equipos/EquipoEnmurallado/unidad_03.png",
+    machacaUrl: "assets/equipos/EquipoEnmurallado/machacagnomos_portamuros.png?v=enm3",
+    machacaImpactUrl: "assets/equipos/EquipoEnmurallado/machacagnomos_portamuros_impacto.png?v=enm3",
+    pegarGnomoUrl: "assets/equipos/EquipoEnmurallado/pegargnomo_portamuros.png?v=enm3",
     aguante: 4,
     movimiento: 2,
     fuerza: 3,
@@ -318,6 +327,9 @@ const SPRITE_SCALES_MACHACA = {
   manos_largas: 1,
   ala_fugaz: 1.7,
   nidobot: 2.15,
+  magonifico: 1,
+  trazaflechas: 1.37,
+  portamuros: 1.57,
 };
 const SPRITE_SCALES_IMPACT = {
   hombre_arbol: 1.5,
@@ -329,6 +341,9 @@ const SPRITE_SCALES_IMPACT = {
   manos_largas: 1,
   ala_fugaz: 1.55,
   nidobot: 2.4,
+  magonifico: 1.1,
+  trazaflechas: 1.25,
+  portamuros: 1.5,
 };
 // Tamaño de la pose "pegar al gnomo" (pegarGnomoUrl). Sin entrada = mismo
 // tamaño que iddle (Units.pegarGnomoScaleFor).
@@ -342,6 +357,9 @@ const SPRITE_SCALES_PEGAR = {
   manos_largas: 0.85,
   ala_fugaz: 1.35,
   nidobot: 2.15,
+  magonifico: 1,
+  trazaflechas: 1.35,
+  portamuros: 1.35,
 };
 
 // Precio de reclutar cada tipo de personaje desde el Obelisco Ancestral de

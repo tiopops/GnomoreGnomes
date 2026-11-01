@@ -24,7 +24,7 @@ const GNOMOTECA_ACH = [
 "goal": 1,
 "xp": 10,
 "name": "Primer vistazo",
-"desc": "Descubres tu primera entrada de la Gnomoteca. Has aprendido a mirar. Solo te falta entender lo que ves."
+"desc": "Descubre tu primera entrada de la Gnomoteca: basta con ver algo nuevo en una partida, sea una unidad, un recurso o un edificio, y mi libro lo apunta solo. Cuesta lo mismo que respirar, pero no te acostumbres."
 },
 {
 "id": "c10",
@@ -34,7 +34,7 @@ const GNOMOTECA_ACH = [
 "goal": 10,
 "xp": 25,
 "name": "Ojo de lince",
-"desc": "Diez entradas descubiertas. Empiezas a fijarte en las cosas, que es el primer paso para que dejen de sorprenderte."
+"desc": "Llega a 10 entradas descubiertas viendo cosas nuevas en tus partidas. No es difícil: solo hace falta tener ojos y un mínimo de curiosidad, dos cosas que de momento te he visto usar a ratos."
 },
 {
 "id": "c25",
@@ -44,7 +44,7 @@ const GNOMOTECA_ACH = [
 "goal": 25,
 "xp": 50,
 "name": "Rata de biblioteca",
-"desc": "Veinticinco entradas. Ya sabes más de este mundo que la mayoría de sus habitantes, lo cual tampoco era muy difícil."
+"desc": "Alcanza las 25 entradas descubiertas. Para eso tendrás que jugar en escenarios distintos y mirar a tu alrededor; quedarte en tu base admirando el obelisco no cuenta, por mucho que lo adores."
 },
 {
 "id": "c50",
@@ -54,7 +54,7 @@ const GNOMOTECA_ACH = [
 "goal": 50,
 "xp": 100,
 "name": "Cronista del caos",
-"desc": "Cincuenta entradas descubiertas. Alguien tenía que apuntar todo esto, y has sido tú. Nadie te ha dado las gracias."
+"desc": "Descubre 50 entradas. Sí, es muchísimo; el libro tiene páginas de sobra y yo, paciencia, ninguna. Prueba razas, escenarios y objetos distintos y vete apuntando."
 },
 {
 "id": "call",
@@ -64,7 +64,7 @@ const GNOMOTECA_ACH = [
 "goal": 0,
 "xp": 300,
 "name": "Gnomoteca completa",
-"desc": "Todo descubierto. Lo has visto, tocado y probablemente roto. El libro ya no tiene secretos, pero tú tampoco tienes vida social."
+"desc": "Descubre TODAS las entradas de la Gnomoteca, de la primera a la última. Es la tarea más larga del juego y la única que me impresionaría un poco. Un poco."
 },
 {
 "id": "cu",
@@ -74,7 +74,7 @@ const GNOMOTECA_ACH = [
 "goal": 0,
 "xp": 60,
 "name": "Pasar lista",
-"desc": "Conoces a todas las unidades del juego. Sabes quién pega, quién huye y quién se lanza solo a por una muerte heroica."
+"desc": "Descubre todas las unidades del libro: las tuyas, las del rival y hasta las que preferirías no haber visto. Hay que cruzártelas en partida; leer sus fichas desde el sofá no vale."
 },
 {
 "id": "cr",
@@ -84,7 +84,7 @@ const GNOMOTECA_ACH = [
 "goal": 0,
 "xp": 30,
 "name": "Saqueador profesional",
-"desc": "Todos los recursos vistos. Roca, madera y hierro: el sueño de cualquier gnomo con ganas de romper cosas."
+"desc": "Descubre todos los recursos: árboles, rocas, metal y compañía. Tienes que verlos con tus propios ojos, así que sal a explorar en vez de esperar a que lleguen solos a tu puerta."
 },
 {
 "id": "ce",
@@ -94,7 +94,7 @@ const GNOMOTECA_ACH = [
 "goal": 0,
 "xp": 40,
 "name": "Arquitecto de ruinas",
-"desc": "Has visto todos los edificios. Algunos siguen en pie, y no por mucho tiempo."
+"desc": "Descubre todos los edificios: obeliscos, tótems, tiendas y demás ruinas. Algunos solo aparecen en ciertos escenarios, así que te toca viajar, que para eso tienes piernas."
 },
 {
 "id": "co",
@@ -104,7 +104,7 @@ const GNOMOTECA_ACH = [
 "goal": 0,
 "xp": 50,
 "name": "Mochila de coleccionista",
-"desc": "Todos los objetos descubiertos. Tu mochila pesa más que tú y aun así sigues pidiendo sitio."
+"desc": "Descubre todos los objetos del libro: cada uno se apunta al verlo o encontrarlo en una partida. Abre cofres y visita la Tienda Goblin, que algo tendrá a la venta, aunque sea mala leche."
 },
 {
 "id": "ct",
@@ -114,7 +114,7 @@ const GNOMOTECA_ACH = [
 "goal": 0,
 "xp": 40,
 "name": "Fichaje de lujo",
-"desc": "Conoces a todos los equipos. Sabes con quién aliarte y a quién ni mirar a los ojos."
+"desc": "Descubre todos los equipos: para verlos en acción tendrás que jugar con ellos o plantarles cara en partida. Uno a uno, que nadie va a presentarse solo y menos con educación."
 },
 {
 "id": "cl",
@@ -124,7 +124,7 @@ const GNOMOTECA_ACH = [
 "goal": 0,
 "xp": 40,
 "name": "Turista del caos",
-"desc": "Has visto todos los escenarios. Ninguno es recomendable para las vacaciones, pero las vistas son geniales."
+"desc": "Descubre todos los escenarios: hay que pisar cada mapa en una partida, aunque sea para perder estrepitosamente. Llévate la cámara y, si puedes, el sentido de la orientación."
 },
 {
 "id": "g1",
@@ -134,7 +134,7 @@ const GNOMOTECA_ACH = [
 "goal": 1,
 "xp": 15,
 "name": "Bautizo de barro",
-"desc": "Tu primera partida. Lo importante es participar, dicen los que pierden."
+"desc": "Termina tu primera partida, ganes o pierdas, que eso es lo de menos. Lo importante es llegar hasta el final y no abandonar a medias como quien deja una novela mala."
 },
 {
 "id": "g10",
@@ -144,7 +144,7 @@ const GNOMOTECA_ACH = [
 "goal": 10,
 "xp": 40,
 "name": "Vicio confirmado",
-"desc": "Diez partidas jugadas. Ya no es curiosidad, es costumbre. Y de las malas."
+"desc": "Termina 10 partidas. Ganando, perdiendo o dando pena: todas cuentan igual para este logro. Solo hay que acabarlas y no dejarme a mí con la mesa puesta."
 },
 {
 "id": "g50",
@@ -154,7 +154,7 @@ const GNOMOTECA_ACH = [
 "goal": 50,
 "xp": 100,
 "name": "Esto ya es un estilo de vida",
-"desc": "Cincuenta partidas. Tus gnomos te conocen por tu nombre. Y por tus gritos."
+"desc": "Termina 50 partidas en total. A estas alturas ya no es afición, es una rutina, y yo soy tu testigo involuntario. Se van sumando entre sesiones, así que tranquilo."
 },
 {
 "id": "w1",
@@ -164,7 +164,7 @@ const GNOMOTECA_ACH = [
 "goal": 1,
 "xp": 25,
 "name": "Esto no estaba previsto",
-"desc": "Tu primera victoria. Ni tú te lo esperabas, y tu rival mucho menos."
+"desc": "Gana tu primera partida: destruye el obelisco rival o acaba por delante cuando se agoten los turnos. Alguien tenía que ganar alguna vez, estadísticamente hablando."
 },
 {
 "id": "w10",
@@ -174,7 +174,7 @@ const GNOMOTECA_ACH = [
 "goal": 10,
 "xp": 75,
 "name": "Racha de suerte",
-"desc": "Diez victorias. Tú lo llamas talento; el resto del mundo, mucha suerte."
+"desc": "Gana 10 partidas en total. No hace falta que sean seguidas; bastante milagro es que lleguen a diez. Cada victoria suma, venga de donde venga."
 },
 {
 "id": "w50",
@@ -184,7 +184,7 @@ const GNOMOTECA_ACH = [
 "goal": 50,
 "xp": 200,
 "name": "Leyenda de barrio",
-"desc": "Cincuenta victorias. Hay gnomos que cuentan tu nombre para asustar a los pequeños. Y no es un cuento bonito."
+"desc": "Gana 50 partidas. A partir de aquí la gente empezará a evitar tu obelisco, así que prepárate para la soledad del campeón. Yo ya estoy acostumbrado."
 },
 {
 "id": "k25",
@@ -194,7 +194,7 @@ const GNOMOTECA_ACH = [
 "goal": 25,
 "xp": 40,
 "name": "Ni un gnomo a salvo",
-"desc": "Veinticinco bajas enemigas. Alguien tenía que hacer el trabajo sucio y a ti se te da de maravilla."
+"desc": "Acaba con 25 unidades rivales sumando todas tus partidas. Pegar, lanzar, estrellar… el método me da igual; el recuento, en cambio, lo llevo yo con mucho cariño."
 },
 {
 "id": "k100",
@@ -204,7 +204,7 @@ const GNOMOTECA_ACH = [
 "goal": 100,
 "xp": 100,
 "name": "Carnicería con estilo",
-"desc": "Cien bajas enemigas. Lo haces con tanto estilo que casi da pena verlos caer. Casi."
+"desc": "Acaba con 100 unidades rivales en total. Se va acumulando de partida en partida, así que no hace falta hacerlo todo en un único día de furia, aunque se agradece."
 },
 {
 "id": "t20",
@@ -214,7 +214,7 @@ const GNOMOTECA_ACH = [
 "goal": 20,
 "xp": 40,
 "name": "Coleccionista de tótems",
-"desc": "Veinte tótems capturados. Los guardas en una estantería imaginaria, junto a tus remordimientos."
+"desc": "Conquista 20 tótems en total: destruye uno neutral o rival y hazlo tuyo. Cada uno cuenta, aunque luego te lo roben, y se apunta al terminar la partida."
 },
 {
 "id": "o1",
@@ -224,7 +224,7 @@ const GNOMOTECA_ACH = [
 "goal": 1,
 "xp": 40,
 "name": "Hablando se entiende la gente",
-"desc": "Tu primera partida online. Hablando se entiende la gente, pero con gnomos de por medio, mucho menos."
+"desc": "Termina una partida online contra otras personas. Con gente de verdad, que se ríe de ti en tiempo real y sin ningún respeto por tu dignidad."
 },
 {
 "id": "ow1",
@@ -234,7 +234,7 @@ const GNOMOTECA_ACH = [
 "goal": 1,
 "xp": 80,
 "name": "Gana a un humano",
-"desc": "Una victoria online. Un humano de verdad ha perdido contra ti. Disfruta del momento, que dura poco."
+"desc": "Gana una partida online contra otro jugador humano. Las personas reales no se dejan ganar, y las que se dejan suelen ser familia, así que no cuentan como mérito."
 },
 {
 "id": "mw1",
@@ -244,7 +244,7 @@ const GNOMOTECA_ACH = [
 "goal": 1,
 "xp": 60,
 "name": "Uno contra todos",
-"desc": "Ganas una partida contra varios rivales a la vez. Ahora a ver quién te invita a la próxima fiesta."
+"desc": "Gana una partida contra dos o más rivales a la vez. Tienes que sobrevivir a todos, no solo a uno, y conservar la calma. Un reto que mi paciencia no aguantaría."
 },
 {
 "id": "lv",
@@ -254,7 +254,7 @@ const GNOMOTECA_ACH = [
 "goal": 0,
 "xp": 70,
 "name": "Trotamundos",
-"desc": "Has jugado en todos los escenarios. Conoces cada rincón del caos y ya no te queda sitio donde esconderte."
+"desc": "Juega al menos una partida en cada escenario disponible, uno por uno. El truco está en no elegir siempre el mismo mapa por comodidad, que te veo venir."
 },
 {
 "id": "tut",
@@ -264,7 +264,7 @@ const GNOMOTECA_ACH = [
 "goal": 5,
 "xp": 60,
 "name": "Alumno de Nizak",
-"desc": "Completas todos los tutoriales. Nizak no lo admitirá nunca, pero está orgulloso. Mucho. A su manera."
+"desc": "Completa los 5 tutoriales hasta el final: Primeros pasos, Mushboom, Rock'n Troll, Hurrycrane y WallForge. Los doy yo, así que no te saltes ninguno que me ofendo."
 },
 {
 "id": "s3",
@@ -274,7 +274,7 @@ const GNOMOTECA_ACH = [
 "goal": 3,
 "xp": 30,
 "name": "Constancia de gnomo",
-"desc": "Tres días seguidos jugando. Tu familia empieza a echarte de menos."
+"desc": "Entra a jugar 3 días seguidos, sin saltarte ninguno. La constancia es la mitad del arte; la otra mitad no la tengo clara, pero seguro que implica café."
 },
 {
 "id": "s7",
@@ -284,7 +284,7 @@ const GNOMOTECA_ACH = [
 "goal": 7,
 "xp": 80,
 "name": "Obsesión saludable",
-"desc": "Una semana entera de racha. Es oficial: esto es más que una afición."
+"desc": "Entra a jugar 7 días seguidos: una semana entera sin fallar. Es la prueba definitiva de que esto ya es algo más que un vicio y menos que un trabajo."
 },
 {
 "id": "n5",
@@ -294,7 +294,7 @@ const GNOMOTECA_ACH = [
 "goal": 5,
 "xp": 50,
 "name": "Subiendo escalones",
-"desc": "Nivel 5 alcanzado. Poco a poco dejas de ser carne de cañón para ser carne de cañón con experiencia."
+"desc": "Alcanza el nivel 5 de jugador. La experiencia se gana jugando partidas, descubriendo entradas del libro y desbloqueando logros como este. Todo suma, hasta lo que haces sin querer."
 },
 {
 "id": "n10",
@@ -304,7 +304,7 @@ const GNOMOTECA_ACH = [
 "goal": 10,
 "xp": 120,
 "name": "Veterano",
-"desc": "Nivel 10. Has sobrevivido a más partidas que la mayoría de gnomos a un martes."
+"desc": "Alcanza el nivel 10. Para llegar necesitarás bastante experiencia: juega, descubre, desbloquea logros… y ya de paso hazme caso alguna vez, que te iría mejor."
 },
 {
 "id": "n20",
@@ -314,7 +314,7 @@ const GNOMOTECA_ACH = [
 "goal": 20,
 "xp": 250,
 "name": "Gnomo de leyenda",
-"desc": "Nivel 20. Los gnomos jóvenes te señalan por la calle. Y luego se esconden."
+"desc": "Alcanza el nivel 20: el más alto de los logros de nivel. Solo llegará quien no tenga vida social, o sea, tú y yo. Hay que pasar por muchas partidas, aviso."
 }
 ];
 
@@ -754,7 +754,7 @@ const Gnomoteca = {
             <section class="gnomo-pg gnomo-pg--l dl"><h3 class="gnomo-h" id="gt-cat"></h3><div class="gnomo-total" id="gt-total" hidden></div><div class="gnomo-list" id="gt-list"></div><span class="gnomo-pn gnomo-pn--l" id="gt-pl"></span></section>
             <section class="gnomo-pg gnomo-pg--r dl" id="gt-right"><h3 class="gnomo-h" id="gt-name"></h3>
               <div class="gnomo-plate dl"><span class="gnomo-tag" id="gt-tag"></span><img id="gt-img" alt="" draggable="false" /><i id="gt-ico" class="gnomo-bigico" hidden></i></div>
-              <div class="gnomo-scroll"><p class="gnomo-desc" id="gt-desc"></p><div id="gt-stats"></div><div id="gt-extra"></div><div class="gnomo-chips" id="gt-chips"></div></div>
+              <div class="gnomo-scroll"><div class="gnomo-achrow" id="gt-achrow" hidden><div class="gnomo-abox dl" id="gt-abox"><i id="gt-aico" class="ph-bold"></i></div><div class="gnomo-achtxt"><span class="gnomo-tag" id="gt-atag"></span><p class="gnomo-desc" id="gt-adesc"></p></div></div><p class="gnomo-desc" id="gt-desc"></p><div id="gt-stats"></div><div id="gt-extra"></div><div class="gnomo-chips" id="gt-chips"></div></div>
               <span class="gnomo-pn gnomo-pn--r" id="gt-pr"></span></section>
           </div>
         </div>
@@ -835,21 +835,23 @@ const Gnomoteca = {
     if (!e) return;
     const plate = document.querySelector("#gt-right .gnomo-plate");
     if (e.ach) {
-      plate.classList.add("gnomo-plate--gold");
-      plate.classList.toggle("gnomo-plate--off", !e.done);
-      $("gt-img").hidden = true;
-      const ic = $("gt-ico");
-      ic.hidden = false;
-      ic.className = `ph-bold ph-${e.icon} gnomo-bigico`;
+      // Logro: sin el recuadro grande; un recuadro pequeño con el icono y, a su derecha, cómo se consigue.
+      plate.hidden = true;
+      $("gt-achrow").hidden = false;
+      $("gt-abox").className = "gnomo-abox dl" + (e.done ? "" : " gnomo-abox--off");
+      $("gt-aico").className = `ph-bold ph-${e.icon}`;
       $("gt-name").textContent = e.name;
-      $("gt-tag").textContent = e.type;
-      $("gt-tag").style.display = "";
-      $("gt-desc").textContent = e.desc;
+      $("gt-atag").textContent = "Cómo se consigue";
+      $("gt-adesc").textContent = e.desc;
+      $("gt-desc").hidden = true;
       const pct = e.goal ? Math.min(100, Math.round((e.cur / e.goal) * 100)) : 0;
       $("gt-stats").innerHTML = `<div class="gnomo-st gnomo-st--p"><span>Progreso</span><div class="gnomo-bar gnomo-bar--gold"><i style="width:${pct}%"></i></div><b>${e.cur} / ${e.goal}</b></div>`;
       $("gt-extra").innerHTML = "";
       $("gt-chips").innerHTML = `<span class="gnomo-chip gnomo-chip--gold"><b>+${e.xp}</b> XP</span><span class="gnomo-chip ${e.done ? "gnomo-chip--ok" : ""}">${e.done ? "Desbloqueado" : "Bloqueado"}</span>`;
     } else {
+      plate.hidden = false;
+      $("gt-achrow").hidden = true;
+      $("gt-desc").hidden = false;
       plate.classList.remove("gnomo-plate--gold", "gnomo-plate--off");
       $("gt-ico").hidden = true;
       $("gt-img").hidden = false;
@@ -871,7 +873,7 @@ const Gnomoteca = {
     if (flip) this._snd();
     if (flip && !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) {
       // Efecto de goma (el del demo): el sprite se estira y se aplasta al caer, y el texto sube con un pequeño rebote.
-      const img = e.ach ? $("gt-ico") : $("gt-img"), sc = document.querySelector("#gt-right .gnomo-scroll");
+      const img = e.ach ? $("gt-abox") : $("gt-img"), sc = document.querySelector("#gt-right .gnomo-scroll");
       if (img && img.animate) img.animate([
         { transform: "scale(.8,1.18)", offset: 0 }, { transform: "scale(1.1,.9)", offset: .4 },
         { transform: "scale(.97,1.04)", offset: .7 }, { transform: "scale(1)", offset: 1 },

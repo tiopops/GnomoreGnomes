@@ -182,9 +182,9 @@ const GNOME_ATTACH_OFFSETS_MACHACA = {
   manos_largas: { right: 64, bottom: 68.4 },
   ala_fugaz: { right: 89, bottom: 56.7 },
   nidobot: { right: -11, bottom: 77.9 },
-  magonifico: { right: -14, bottom: 40 },
-  trazaflechas: { right: -14, bottom: 40 },
-  portamuros: { right: -14, bottom: 40 },
+  magonifico: { right: -36, bottom: 65.1 },
+  trazaflechas: { right: -33, bottom: 76.6 },
+  portamuros: { right: -26, bottom: 82.9 },
 };
 
 // Pose "pegar al gnomo" (Gnome.hit): el personaje cambia a su sprite
@@ -202,6 +202,9 @@ const GNOME_ATTACH_OFFSETS_PEGAR = {
   manos_largas: { right: -35, bottom: 14.1 },
   ala_fugaz: { right: 30, bottom: 28.6 },
   nidobot: { right: 54, bottom: 31.7 },
+  magonifico: { right: 32, bottom: -9.2 },
+  trazaflechas: { right: 5, bottom: 24.6 },
+  portamuros: { right: -24, bottom: -8.8 },
 };
 
 // ---------- Cada gnomo individual ----------
