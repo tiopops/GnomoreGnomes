@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001639";
+const GG_VERSION = "v.001640";
 
 const GG_CHANGELOG = [
-  { v: "v.001639", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001640", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Tutorial WallForge: la mano de coger la Reliquia aparece nada más abrirse el altar (antes había que reseleccionar la unidad) y, al cobrar, las páginas vuelan hasta el contador de Gloria (antes la Gloria de práctica estaba al tope y no se veía)",
     "Reforjados (Equipo Enmurallado): MagoNífico, TrazaFlechas y PortaMuros estrenan sus poses de machacar, impacto y golpear gnomos (tamaños ajustados de partida; afinables en los debugs, que las detectan solas)",
     "Gnomoteca > Logros: al elegir un logro, la página derecha muestra un recuadro pequeño con su icono y, a su derecha, cómo se consigue (explicación detallada en tono de Nizak, reescrita para los 30 logros)",
     "Reliquia: la que flota sobre el altar vacío ya se vuelve translúcida si tapa a una unidad o al puntero; y al abrirse el altar, la unidad seleccionada ve enseguida la mano para cogerla",

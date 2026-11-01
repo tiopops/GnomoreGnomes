@@ -144,6 +144,11 @@ Object.assign(Tutorial, {
     this._ctx.villageId = null;
     if (this._scenario === "wall") {
       this._buildWallScene();
+      // Gloria de práctica al tope (30) no deja sumar nada: se baja para que se vea volar cada punto hasta el contador.
+      if (typeof Glory !== "undefined") {
+        Glory.points.player = 10;
+        if (Glory.refresh) Glory.refresh();
+      }
       if (typeof Fog !== "undefined") Fog.applyVisibility();
       this._refill();
       return;

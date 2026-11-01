@@ -197,6 +197,9 @@ const Tutorial = {
     if (typeof Turns === "undefined") return;
     Turns._resetTeamActions("player");
     Turns._updateButtonState && Turns._updateButtonState();
+    // Con las acciones recargadas, las marcas de la unidad seleccionada (mano de coger, objetivos…) se rehacen: si no, se quedaban las de antes.
+    const sel = typeof Units !== "undefined" && Units.selectedId && Units.list.find((u) => u.id === Units.selectedId);
+    if (sel && sel.el && Units.refreshRange) Units.refreshRange(sel);
   },
   _marker(cls, row, col) {
     return [...document.querySelectorAll(`.board-marker.${cls}`)].find(

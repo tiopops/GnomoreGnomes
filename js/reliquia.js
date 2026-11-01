@@ -1020,6 +1020,10 @@ const Reliquia = {
       a.imgEl.animate([{ transform: "scale(.94,1.06)" }, { transform: "scale(1.07,.93)", offset: 0.4 }, { transform: "scale(1,1)" }], { duration: 480, easing: "cubic-bezier(.2,1.5,.4,1)" });
     if (a.hits < RELIQUIA_HITS_TO_OPEN) this._startWaves(); // las ondas se aceleran
     await this._wait(a.hits >= 3 ? 420 : 260);
+    if (a.hits >= 3) {
+      const sel = Units.selectedId && Units.list.find((u) => u.id === Units.selectedId);
+      if (sel && sel.el) Units.refreshRange(sel); // recién abierto: la mano de coger aparece sin reseleccionar
+    }
   },
 
   // ---------- Páginas de la Reliquia ----------
