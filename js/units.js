@@ -300,7 +300,7 @@ const SPRITE_SCALES = {
   punoroca: 1.5,
   manos_largas: 0.9,
   ala_fugaz: 1.35,
-  nidobot: 1.7,
+  nidobot: 1.5,
   magonifico: 1.2,
   trazaflechas: 1.45,
   portamuros: 1.65,
@@ -326,10 +326,10 @@ const SPRITE_SCALES_MACHACA = {
   punoroca: 1.75,
   manos_largas: 1,
   ala_fugaz: 1.7,
-  nidobot: 2.15,
-  magonifico: 1,
-  trazaflechas: 1.37,
-  portamuros: 1.57,
+  nidobot: 1.9,
+  magonifico: 1.3,
+  trazaflechas: 1.1,
+  portamuros: 1.5,
 };
 const SPRITE_SCALES_IMPACT = {
   hombre_arbol: 1.5,
@@ -340,8 +340,8 @@ const SPRITE_SCALES_IMPACT = {
   punoroca: 1.8,
   manos_largas: 1,
   ala_fugaz: 1.55,
-  nidobot: 2.4,
-  magonifico: 1.1,
+  nidobot: 2.1,
+  magonifico: 1.35,
   trazaflechas: 1.25,
   portamuros: 1.5,
 };
@@ -356,10 +356,10 @@ const SPRITE_SCALES_PEGAR = {
   punoroca: 1.5,
   manos_largas: 0.85,
   ala_fugaz: 1.35,
-  nidobot: 2.15,
-  magonifico: 1,
-  trazaflechas: 1.35,
-  portamuros: 1.35,
+  nidobot: 1.9,
+  magonifico: 1.25,
+  trazaflechas: 1.05,
+  portamuros: 1.7,
 };
 
 // Precio de reclutar cada tipo de personaje desde el Obelisco Ancestral de
