@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editar retratos — Gnomore Gnomes</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: #1c1824; color: #fff; font-family: "Russo One", system-ui, sans-serif; overflow: auto !important; height: auto !important; }
+  h1 { margin: 0; padding: 14px 20px; font-size: 1.05rem; background: #2c2435; }
+  h1 small { display: block; font-size: .8rem; opacity: .7; font-weight: 400; margin-top: 3px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 22px; padding: 22px; }
+  .card { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .card .av-tile { width: 190px; height: 190px; aspect-ratio: auto; cursor: grab; touch-action: none; }
+  .card .av-tile:active { cursor: grabbing; }
+  .card .av-tile:hover { transform: none; }
+  .card .av-tile::before { background: #f0c850; }
+  .card b { font-weight: 400; font-size: .95rem; }
+  .row { display: flex; gap: 8px; align-items: center; font-size: .85rem; }
+  .row button { background: #4b3a66; color: #fff; border: 0; padding: 6px 12px; font: inherit; cursor: pointer; }
+  .row button:hover { background: #6b5c86; }
+  .out { padding: 0 22px 30px; display: flex; flex-direction: column; gap: 10px; }
+  textarea { width: 100%; height: 280px; background: #120e18; color: #e9e2f7; border: 2px solid #4b3a66; padding: 10px; font: 13px/1.4 ui-monospace, Consolas, monospace; }
+  .out button { align-self: flex-start; background: #f0c850; color: #241c2d; border: 0; padding: 10px 22px; font: inherit; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Editar retratos<small>Arrastra cada imagen para moverla y usa la rueda del ratón (o − / +) para ampliar. Cuando todos estén bien, pulsa Copiar y pégamelo.</small></h1>
+<div class="grid" id="grid"></div>
+<div class="out"><textarea id="out" readonly></textarea><button id="copy">Copiar</button></div>
+<script src="../js/i18n.js"></script>
+<script src="../js/translate.js"></script>
+<script src="../js/races.js"></script>
+<script src="../js/units.js"></script>
+<script src="../js/unitinfo.js"></script>
+<script src="../js/abilities.js"></script>
+<script src="../js/gnomoteca.js"></script>
+<script src="../js/avatars.js"></script>
+<script>
+  // Las rutas de los sprites del juego son relativas a la raíz; aquí se suben un nivel.
+  const crops = JSON.parse(JSON.stringify(AVATAR_CROPS));
+  const list = Avatars.list();
+  const grid = document.getElementById("grid"), out = document.getElementById("out");
+  const apply = (id, tile) => { const c = crops[id]; tile.style.setProperty("--tx", c[0] + "%"); tile.style.setProperty("--ty", c[1] + "%"); tile.style.setProperty("--s", c[2]); };
+  const dump = () => {
+    out.value = "const AVATAR_CROPS = {\n" + list.map((a) => `  "${a.id}": [${crops[a.id].map((n) => Math.round(n * 10) / 10).join(", ")}]`).join(",\n") + ",\n};";
+  };
+  list.forEach((a) => {
+    if (!crops[a.id]) crops[a.id] = [0, 0, 1.8];
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `<b>${a.name}</b><div class="av-tile"><span class="av-tile__img"><img src="../${a.img}" alt="" draggable="false"></span></div>
+      <div class="row"><button data-z="-1">−</button><span class="zv"></span><button data-z="1">+</button></div>`;
+    const tile = card.querySelector(".av-tile"), zv = card.querySelector(".zv");
+    const upd = () => { apply(a.id, tile.querySelector(".av-tile__img")); zv.textContent = "x" + crops[a.id][2].toFixed(2); dump(); };
+    let drag = null;
+    tile.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY, c: crops[a.id].slice() }; tile.setPointerCapture(e.pointerId); });
+    tile.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      const w = tile.clientWidth;
+      crops[a.id][0] = drag.c[0] + ((e.clientX - drag.x) / w) * 100;
+      crops[a.id][1] = drag.c[1] + ((e.clientY - drag.y) / w) * 100;
+      upd();
+    });
+    tile.addEventListener("pointerup", () => { drag = null; });
+    const zoom = (d) => { crops[a.id][2] = Math.max(0.6, Math.min(6, crops[a.id][2] * (d > 0 ? 1.06 : 1 / 1.06))); upd(); };
+    tile.addEventListener("wheel", (e) => { e.preventDefault(); zoom(e.deltaY < 0 ? 1 : -1); }, { passive: false });
+    card.querySelectorAll("[data-z]").forEach((b) => b.addEventListener("click", () => zoom(+b.dataset.z)));
+    grid.appendChild(card);
+    upd();
+  });
+  document.getElementById("copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(out.value); } catch (e) { out.select(); document.execCommand("copy"); }
+  });
+</script>
+</body>
+</html>

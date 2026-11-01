@@ -13019,7 +13019,7 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 
 /* ===== Imágenes de perfil (js/avatars.js) ===== */
 .av-face { position: relative; display: inline-block; overflow: hidden; width: 100%; height: 100%; vertical-align: middle; clip-path: polygon(4% 0, 100% 3%, 96% 100%, 0 97%); background: #4b3a66; }
-.av-face img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; transform: scale(var(--fs, 1.75)); transform-origin: var(--fo, 50% 20%); pointer-events: none; }
+.av-face img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; transform: translate(var(--tx, 0%), var(--ty, 0%)) scale(var(--s, 1)); transform-origin: 50% 50%; pointer-events: none; }
 .av-face--profile { position: absolute; inset: 3px; width: auto; height: auto; z-index: 0; }
 .pf-av--pick { cursor: var(--cursor-pointer, pointer); transition: transform .15s; }
 .pf-av--pick:hover, .pf-av--pick:focus-visible { transform: rotate(-2deg) scale(1.05); outline: none; }
@@ -13038,7 +13038,7 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .av-panel::after { inset: 5px; background: linear-gradient(100deg, #4b3a66, #2c2435); }
 .av-title { align-self: center; font-size: 1.25rem; letter-spacing: .06em; text-transform: uppercase; text-shadow: 2px 2px 0 #000; }
 .av-count { align-self: center; font-size: .95rem; color: #f0c850; text-shadow: 2px 2px 0 #000; margin-top: -6px; }
-.av-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 14px; padding: 6px 8px 10px 4px; overflow-y: auto; min-height: 0; }
+.av-grid { overflow-x: hidden; display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 14px; padding: 10px 14px 14px 10px; overflow-y: auto; min-height: 0; }
 .av-tile { position: relative; isolation: isolate; aspect-ratio: 1; cursor: var(--cursor-pointer, pointer); outline: none; transition: transform .15s; filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, .6)); }
 .av-tile:nth-child(odd) { transform: rotate(-1.2deg); }
 .av-tile:nth-child(even) { transform: rotate(1deg); }
@@ -13046,7 +13046,7 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .av-tile::before { inset: 0; background: #000; }
 .av-tile::after { inset: 3px; background: #3a3050; }
 .av-tile__img { position: absolute; inset: 3px; overflow: hidden; clip-path: polygon(4% 0, 100% 3%, 96% 100%, 0 97%); }
-.av-tile__img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transform: scale(var(--fs, 1.75)); transform-origin: var(--fo, 50% 20%); pointer-events: none; }
+.av-tile__img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transform: translate(var(--tx, 0%), var(--ty, 0%)) scale(var(--s, 1)); transform-origin: 50% 50%; pointer-events: none; }
 .av-tile:hover, .av-tile:focus-visible { transform: rotate(0) scale(1.07); }
 .av-tile--sel::before { background: #f0c850; }
 .av-tile--focus::before { background: #b9a6dc; }
@@ -13058,9 +13058,7 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .av-info { min-height: 52px; display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center; font-size: 1rem; }
 .av-info b { font-weight: 400; color: #f0c850; text-shadow: 2px 2px 0 #000; font-size: 1.1rem; }
 .av-info span { color: #e9e2f7; font-size: .95rem; }
-.av-close { align-self: center; position: relative; isolation: isolate; border: 0; background: none; color: #fff; font: inherit; font-size: 1rem; padding: 10px 34px; cursor: var(--cursor-pointer, pointer); text-shadow: 2px 2px 0 #000; }
-.av-close::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #1f6b34; clip-path: polygon(4% 0, 100% 6%, 96% 100%, 0 94%); }
-.av-close:hover, .av-close:focus-visible { outline: none; filter: brightness(1.15); }
+.av-close { align-self: center; }
 @media (max-width: 560px) { .av-panel { padding: 26px 16px 16px; } .av-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 12px; } }
 
 /* El nivel no tapa el retrato: insignia más pequeña y más hacia la esquina */

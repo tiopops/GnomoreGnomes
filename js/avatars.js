@@ -11,6 +11,25 @@
 
 const AVATARS_KEY = "gnomoregnomes_avatars_";
 const AVATAR_DEFAULT = "u:gnomo";
+// Encuadre de la cara de cada retrato: [desplazamiento X %, desplazamiento Y %, zoom] sobre el recuadro.
+// Se ajusta a mano con debug/editar-retratos.html y se pega aquí el resultado.
+const AVATAR_CROPS = {
+  "u:gnomo": [-0.0, 43.2, 1.8],
+  "u:hombre_arbol": [-2.4, 46.3, 1.88],
+  "u:surcabosques": [-0.0, 43.7, 1.88],
+  "u:seta_artificiero": [-4.5, 41.0, 1.81],
+  "u:goblin_lanzador": [-0.0, 39.7, 1.82],
+  "u:urgamentes": [6.7, 42.1, 1.83],
+  "u:punoroca": [0.4, 43.5, 1.81],
+  "u:manos_largas": [-0.0, 41.6, 1.8],
+  "u:ala_fugaz": [-0.0, 40.6, 1.8],
+  "u:nidobot": [-0.0, 43.2, 1.8],
+  "u:magonifico": [-0.0, 33.8, 1.8],
+  "u:trazaflechas": [-0.0, 28.5, 1.8],
+  "u:portamuros": [-0.0, 35.9, 1.8],
+  "u:guardia": [-0.0, 43.2, 1.8],
+  "u:nizak": [-0.0, 38.5, 1.84],
+};
 const AVATAR_TUTORIALS = ["basic", "mush", "rock", "crane", "wall"];
 
 const Avatars = {
@@ -41,8 +60,8 @@ const Avatars = {
   has(id) { return this.u.has(id); },
   // Ajuste del recorte de cara por retrato (origen y zoom); los que no figuran usan el recorte estándar.
   _crop(id) {
-    const C = { "u:magonifico": "--fo:50% 42%;--fs:1.55" };
-    return C[id] ? ` style="${C[id]}"` : "";
+    const c = AVATAR_CROPS[id];
+    return c ? ` style="--tx:${c[0]}%;--ty:${c[1]}%;--s:${c[2]}"` : "";
   },
 
   // ---------- Estado ----------
@@ -166,7 +185,7 @@ const Avatars = {
       <div class="av-count" id="av-count"></div>
       <div class="av-grid" id="av-grid"></div>
       <div class="av-info" id="av-info"></div>
-      <button type="button" class="av-close" id="av-close">${this._tr("Cerrar")}</button>
+      <button type="button" class="p5-banner p5-banner--action av-close" id="av-close" style="--p5-tone:#2b2733"><span class="p5-banner__label">${this._tr("Cerrar")}</span></button>
     </div>`;
     document.body.appendChild(o);
     this._overlay = o;
