@@ -592,6 +592,8 @@ const Backpack = {
   // de gastar el recurso que sea) — simplemente añade y refresca el icono.
   addItem(itemId) {
     this.inventory.push({ uid: this._nextUid++, itemId });
+    // Gnomoteca: el objeto (o la carta del Oráculo) se apunta al conseguirlo o comprarlo, no antes.
+    if (typeof Gnomoteca !== "undefined" && Gnomoteca.discover) Gnomoteca.discover("o:" + itemId);
   },
 
   // Piedras (fragmentos): el jugador puede lanzar todas las que tenga en cada

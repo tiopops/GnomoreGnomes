@@ -1492,9 +1492,9 @@ const GamepadCtl = {
     const kbHtml = kbOn ? `<div class="gp-sec">Teclado</div>
       <div class="gp-map">${kbRows}</div>
       <div class="gp-note">Las flechas también mueven la cámara. Pulsa una fila y luego la tecla nueva (Esc cancela).</div>
-      <button type="button" class="p5-banner p5-banner--action gp-kbreset" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">Restablecer teclado</span></button>
-      <div class="gp-sec">Mando</div>` : "";
-    pane.innerHTML = `${kbHtml}
+      <button type="button" class="p5-banner p5-banner--action gp-kbreset" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">Restablecer teclado</span></button>` : "";
+    // Sin mando conectado: teclado arriba y mando debajo. Con mando conectado: mando arriba y teclado debajo.
+    const padHtml = `<div class="gp-sec">Mando</div>
       <div class="gp-status ${this.connected ? "gp-status--ok" : ""}">
         <i class="ph-fill ph-game-controller"></i>
         <span>${this.connected ? "Mando conectado: " + this._esc(this.padName) : "Sin mando. Conecta uno y pulsa cualquier botón."}</span>
@@ -1513,6 +1513,7 @@ const GamepadCtl = {
       <div class="gp-map">${rows}</div>
       <div class="gp-note">Cruceta o stick izquierdo: mover cursor y navegar. Stick derecho: cámara.</div>
       <button type="button" class="p5-banner p5-banner--action gp-reset" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">Restablecer</span></button>`;
+    pane.innerHTML = this.connected ? padHtml + kbHtml : kbHtml + padHtml;
     pane.querySelector(".gp-rescan").addEventListener("click", () => { if (typeof SFX !== "undefined") SFX.click(); this.rescan(); });
     pane.querySelector(".gp-testbtn").addEventListener("click", () => {
       if (typeof SFX !== "undefined") SFX.click();

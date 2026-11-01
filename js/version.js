@@ -12,10 +12,15 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001640";
+const GG_VERSION = "v.001644";
 
 const GG_CHANGELOG = [
-  { v: "v.001640", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001644", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Gnomoteca: los objetos de la Tienda Goblin y las cartas del Oráculo se apuntan al comprarlos o conseguirlos, no al verlos",
+    "Ajustes > Controles: sin mando conectado, el teclado sale arriba; con mando conectado, el mando arriba y el teclado debajo",
+    "Gnomoteca: más elementos de todos los escenarios: Seta trampa, Muro aplastante, Cofre de Reliquias, Páginas de la Reliquia, Agua, Lava, Gnomo en llamas, los objetos de la mochila y de la Tienda Goblin, las cartas del Oráculo y los recursos Madera, Piedra y Metal",
+    "Gnomoteca: entradas nuevas para el Volcán, el Tambor de Guerra, el Bumper, la Grulla, el Huevo de Grulla, el Fragmento de roca, la Seta explosiva, el Arbusto y los Hierbajos; y un Obelisco por equipo, que se descubre al verlo con una unidad o al elegir ese equipo",
+    "Gnomoteca > Logros: 5 logros nuevos, uno por cada tutorial completado (Primeros pasos, MushBoom, Rock'n Troll, HurryCrane y WallForge); «Alumno de Nizak» sigue premiando haberlos hecho todos",
     "Tutorial WallForge: la mano de coger la Reliquia aparece nada más abrirse el altar (antes había que reseleccionar la unidad) y, al cobrar, las páginas vuelan hasta el contador de Gloria (antes la Gloria de práctica estaba al tope y no se veía)",
     "Reforjados (Equipo Enmurallado): MagoNífico, TrazaFlechas y PortaMuros estrenan sus poses de machacar, impacto y golpear gnomos (tamaños ajustados de partida; afinables en los debugs, que las detectan solas)",
     "Gnomoteca > Logros: al elegir un logro, la página derecha muestra un recuadro pequeño con su icono y, a su derecha, cómo se consigue (explicación detallada en tono de Nizak, reescrita para los 30 logros)",

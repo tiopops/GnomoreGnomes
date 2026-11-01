@@ -14,7 +14,7 @@ const GNOMOTECA_XP_ENTRY = 10; // XP por cada entrada descubierta (se cobra una 
 
 // Logros (coleccionables): icono Phosphor, explicación, XP que dan y cómo se mide el progreso.
 //   kind: seen (entradas vistas) · all (todo el libro) · cat (una categoría completa) · st (contador de partidas)
-//         lv (escenarios jugados) · tut (tutoriales hechos) · streak (racha de días) · level (nivel de cuenta)
+//         lv (escenarios jugados) · tut (tutoriales hechos) · tut1 (un tutorial concreto, arg = id) · streak (racha de días) · level (nivel de cuenta)
 const GNOMOTECA_ACH = [
 {
 "id": "c1",
@@ -257,6 +257,56 @@ const GNOMOTECA_ACH = [
 "desc": "Juega al menos una partida en cada escenario disponible, uno por uno. El truco está en no elegir siempre el mismo mapa por comodidad, que te veo venir."
 },
 {
+"id": "tut_basic",
+"icon": "student",
+"kind": "tut1",
+"arg": "basic",
+"goal": 1,
+"xp": 20,
+"name": "Primeros tropiezos",
+"desc": "Termina el tutorial «Primeros pasos» hasta el final, el de reclutar, mover, coger gnomos y pegar. Lo encuentras en Tutorial, en el menú principal. Es lo básico, y aun así ya te he visto fallar."
+},
+{
+"id": "tut_mush",
+"icon": "tree",
+"kind": "tut1",
+"arg": "mush",
+"goal": 1,
+"xp": 20,
+"name": "Setas con mala idea",
+"desc": "Completa el tutorial del Bosque MushBoom: setas explosivas, Altar de Sacrificios y GnomOgro. Lo encuentras en Tutorial, en el menú principal. Nadie ha salido de allí con las cejas intactas."
+},
+{
+"id": "tut_rock",
+"icon": "mountains",
+"kind": "tut1",
+"arg": "rock",
+"goal": 1,
+"xp": 20,
+"name": "Piedra, papel y troll",
+"desc": "Completa el tutorial de las Colinas Rock'n Troll: Tambores de Guerra, fragmentos y Volcán. Lo encuentras en Tutorial, en el menú principal. Hay mucho ruido, pero tú aguanta hasta el final."
+},
+{
+"id": "tut_crane",
+"icon": "egg",
+"kind": "tut1",
+"arg": "crane",
+"goal": 1,
+"xp": 20,
+"name": "Huevo, rebote y a correr",
+"desc": "Completa el tutorial del Poblado HurryCrane: Huevo de Grulla, bumpers y la Grulla. Lo encuentras en Tutorial, en el menú principal. Cuida del huevo, que luego pide cuentas."
+},
+{
+"id": "tut_wall",
+"icon": "castle-turret",
+"kind": "tut1",
+"arg": "wall",
+"goal": 1,
+"xp": 20,
+"name": "Allanamiento de morada",
+"desc": "Completa el tutorial de la Fortaleza WallForge: guardias, cámara sellada y Reliquia Paranoica. Lo encuentras en Tutorial, en el menú principal. Ojo: ahí hasta las paredes llevan armadura."
+},
+{
 "id": "tut",
 "icon": "graduation-cap",
 "kind": "tut",
@@ -320,12 +370,43 @@ const GNOMOTECA_ACH = [
 
 // Descripciones con el tono de Nizak (por id de entrada) y virtudes/debilidades de los equipos.
 const GNOMOTECA_DESC = {
+"o:seta_trampa": "La planta el SurcaBosques y se camufla de maravilla, sobre todo para sus propios compañeros. Quien la pisa descubre por qué se llama trampa. Nadie la ha visto venir, ni siquiera quien la puso.",
+"b:muro": "El PortaMuros lo planta delante de sí por si acaso. Y el «por si acaso» suele caer encima de alguien. Es más resistente que la media y más ruidoso que la media.",
+"o:pagina": "Se esparcen por todo el mapa cuando se libera la Reliquia. Quien lleve la Reliquia y pise una suma puntos que luego cobrará junto a su obelisco. Nadie sabe qué pone, y es mejor así.",
+"b:cofre": "Hay uno por jugador, escondido en un rincón apartado. Un toque y se abre, y de dentro sale una reliquia para la mochila. Nunca falla: siempre llega justo cuando ya no te queda sitio en ella.",
+"r:agua": "Mojada y poco recomendable para quien no sepa nadar. Ni las unidades ni los gnomos aprecian el chapuzón, pero siempre queda bien en el paisaje. Y alguna vez se le ha tirado algo a propósito.",
+"r:lava": "Aparece cuando el volcán se enfada, y se enfada a menudo. Le da igual de qué equipo seas: todo lo que toca queda en una versión más oscura de sí mismo.",
+"u:gnomo_fuego": "Cuando el volcán erupciona, suelta uno por cada unidad rival y todos salen corriendo hacia ellas. No dice nada, seguramente porque está ocupado ardiendo. Nunca se le pregunta si estaba de acuerdo.",
+"o:madera": "La suelta un árbol tras dos golpes. Vale para subir cosas en el obelisco y para mirarla con orgullo. Hay gente que dice haber visto un árbol llorando, pero seguro que era resina.",
+"o:piedra": "La suelta una roca tras dos golpes. Ni siente, ni padece, ni protesta: el material perfecto, y también el que más pesa en la mochila.",
+"o:metal": "La suelta la mena de hierro, escasa a propósito para que te pelees por ella. Imprescindible para subir la armería al máximo y para hacerte el interesante.",
+"o:setarcoiris": "Una seta a la que no se le puede negar nada: si se la dejas junto a una unidad, en dos turnos aparece un gnomo con hambre. La comida favorita de los gnomos, y de los que los lanzan.",
+"o:bevida": "Un brebaje revitalizante del que nadie quiere conocer los ingredientes. Se lo das a una unidad aliada y recupera toda su vida. Tiene efectos secundarios, pero no los hemos probado.",
+"o:atrapapinreles": "Un cepo goblin oxidado de los de toda la vida. Quien pisa su casilla pierde el turno y suelta lo que lleve. Se vende solo, porque nadie puede jurar que no lo pisará.",
+"o:katapum": "Un cohete goblin casero y teledirigido, hasta cierto punto. Elige a un rival a la vista y vuela hacia él. Al explotar tira un dado, y el resultado depende de tu suerte, que ya conocemos.",
+"o:totemvision": "Un tótem tallado con un ojo en la punta que ve más que tú. Colócalo en una casilla libre y da visión permanente alrededor. Lo único que no ve es que le estés dando órdenes.",
+"o:senuelo": "Un muñeco de madera con forma de gnomo, cargado de pólvora. Tú lo ves como lo que es; el rival, como un gnomo suelto de lo más tentador. Quien se acerca, vuela.",
+"o:oraculo_renacido": "Carta del Oráculo. Cuando una de tus unidades muere, ganas tantos puntos de Gloria como costó reclutarla. Beneficio pasivo, siempre activo. Morir sale rentable, al fin.",
+"o:oraculo_afortunado": "Carta del Oráculo. Recibes 1 punto de Gloria por turno por cada tótem que controlen tus rivales. Cuanto peor te vaya, mejor te va.",
+"o:oraculo_eterno": "Carta del Oráculo. Cuando una de tus unidades golpea a un gnomo, gana 1 punto de vida por golpe hasta su máximo. Pegar a gnomos es la mejor terapia.",
+"b:volcan": "Se alimenta con gnomos sacrificados y piedras lanzadas. Apagado, es decoración; encendido, es un problema; en erupción, es un problema con gnomos en llamas corriendo hacia tus unidades. Nadie ha reclamado nunca el seguro.",
+"b:tambor": "Un tambor neutral que da puntos a quien tenga más unidades pegadas a él al acabar el turno. Cada golpe a un gnomo junto al tambor también suma. Tocarlo no hace falta; con rodearlo basta, que para eso están los trolls.",
+"b:bumper": "Un pinball con ínfulas de edificio. Cuando el huevo lo golpea rebota y sube el combo, y cada carambola suena más aguda que la anterior. Solo rebota una vez por turno, que tampoco hay que abusar.",
+"u:grulla": "Aparece cuando el huevo explota y se posa en el obelisco del que más puntos sacó. Mientras esté ahí, nada de reclutar ni mejorar. Si le lanzas un gnomo se asusta y se va a molestar a otro. Muy profesional.",
+"o:huevo": "Lánzale un gnomo y sale disparado en esa dirección, rebotando en bumpers, tótems y obeliscos. Cada rebote lo carga más, hasta que explota y reparte puntos. Nadie sabe qué hay dentro, pero tiene prisa por salir.",
+"o:fragmento": "Astilla de roca que sueltan los Tambores de Guerra. Por ahora no sirve para nada, pero se apila en la mochila con una dignidad admirable.",
+"o:seta": "Aparece suelta por el bosque de vez en cuando. Se coge, se lleva a la espalda y se lanza. Tiene mecha. No la sueltes de cualquier manera, a menos que odies a alguien.",
+"r:arbusto": "Si te metes dentro, desapareces del radar y puedes dar la sorpresa a quien pase cerca. Los hay cerca de tótems y tiendas, que casualidad. Que nadie se fíe de un arbusto.",
+"r:hierbajos": "Matojos de hierba y florecillas sin ninguna utilidad. No se pegan, no se cogen, no se lanzan. Aun así, el escenario sería más triste sin ellos y yo también.",
 "u:gnomo": "Pequeño, barbudo y de una utilidad inmensa como proyectil. Nunca ha pedido que lo lancen, pero tampoco ha dicho que no. Cada golpe lo deja más cargado de puntos y más mareado de vida.",
 "u:guardia": "Paranoico profesional, con armadura hasta en los pensamientos. Vigila la cámara sellada y persigue sin descanso a quien lleve la Reliquia, sea del equipo que sea. Lo único que lo detiene es un gnomo en la cara.",
 "r:roca": "Una roca. Con dos golpes se rompe y suelta piedra para la mochila. Ni siente, ni padece, ni protesta: el recurso ideal.",
 "r:pino": "Un árbol de los de toda la vida. Con dos golpes cae y suelta madera para la mochila. Tardó siglos en crecer y tú tardarás dos turnos en arreglarlo.",
 "r:mena": "Mena de hierro, escasa a propósito para que te pelees por ella. Con dos golpes suelta metal, imprescindible para subir la armería al máximo.",
-"b:obelisco": "Tu base y tu único motivo para seguir vivo. Desde él reclutas unidades, eliges habilidades y mejoras en la armería. Si cae, pierdes la partida, así que cuídalo como cuidas todo lo que no sabes defender.",
+"b:obelisco_mushboom_forest": "Tronco hueco, setas de adorno y una base más acogedora de lo que merece. Desde aquí los GuardaBosques reclutan, aprenden trucos y hacen la contabilidad de bajas. Si cae, la partida también.",
+"b:obelisco_colinas_rockntroll": "Roca sobre roca y mucho ruido de fondo. Aquí los MascaRrocas reclutan, mejoran su armería y planean a gritos su próxima salvajada. Si cae, se acabó el concierto.",
+"b:obelisco_equipo_surcanubes": "Una base con aires de aeropuerto y papeleo de aerolínea. Los SurcaNubes reclutan, mejoran y despegan desde aquí, siempre con el seguro de vida sin firmar. Si cae, se pierde la partida y el equipaje.",
+"b:obelisco_equipo_enmurallado": "Un obelisco reforjado a martillazos, con más muralla que gusto. Los Reforjados reclutan, mejoran y se esconden detrás. Si cae, la muralla ya no sirve para nada.",
 "b:totem": "Capturarlo da Puntos de Gloria cada turno. Se defiende a flechazos y los ataques normales le hacen cosquillas. Cae simpático a todo el mundo, hasta que se lo quedan.",
 "b:altar": "Aquí se ofrecen gnomos para ganar Gloria al instante. Nadie pregunta a los gnomos si están de acuerdo.",
 "b:tienda": "Un goblin con muy mala leche y precios discretos. Repone el género cada cierto número de turnos y no da las gracias jamás.",
@@ -537,6 +618,7 @@ const Gnomoteca = {
         const T = typeof Tutorial !== "undefined" && Tutorial.isDone ? Tutorial : null;
         return { cur: T ? ["basic", "mush", "rock", "crane", "wall"].filter((id) => T.isDone(id)).length : 0, goal: g };
       }
+      case "tut1": return { cur: typeof Tutorial !== "undefined" && Tutorial.isDone && Tutorial.isDone(a.arg) ? 1 : 0, goal: 1 };
       case "streak": return { cur: Math.min(g, typeof Progress !== "undefined" && Progress._s ? Progress.s.streak || 0 : 0), goal: g };
       case "level": return { cur: Math.min(g, typeof Progress !== "undefined" && Progress._s ? Progress.level : 0), goal: g };
     }
@@ -630,13 +712,41 @@ const Gnomoteca = {
     }
     // Edificios y estructuras.
     const q = (sel, id) => { const e = document.querySelector(sel); if (e && this._visible(e)) this.discover(id); };
-    q(".obelisk__sprite", "b:obelisco");
+    if (typeof Obelisks !== "undefined" && Obelisks.list && typeof Teams !== "undefined") {
+      Obelisks.list.forEach((o) => { const rid = Teams.raceIds && Teams.raceIds[o.team]; if (rid && o.el && this._visible(o.el)) this.discover("b:obelisco_" + rid); });
+    }
+    if (typeof matchDraft !== "undefined" && matchDraft.raceId) this.discover("b:obelisco_" + matchDraft.raceId);
     q(".village__sprite", "b:totem");
     q(".altar__sprite", "b:altar");
     q(".shop__sprite:not(.oracle__sprite)", "b:tienda");
     q(".oracle__sprite", "b:oraculo");
     q(".reliquia-altar", "b:camara");
     q(".reliquia-guard", "u:guardia");
+    const qa = (sel, id) => { if ([...document.querySelectorAll(sel)].some((e) => this._visible(e))) this.discover(id); };
+    qa(".volcano__sprite", "b:volcan");
+    qa(".drum__sprite", "b:tambor"); // los tambores sueltan fragmentos de roca
+    qa(".drum__sprite", "o:fragmento");
+    qa(".bumper__sprite", "b:bumper");
+    qa(".crane", "u:grulla");
+    qa(".egg", "o:huevo");
+    qa(".mushroom-loose", "o:seta");
+    qa(".bush__sprite", "r:arbusto");
+    qa(".hierbajo__sprite", "r:hierbajos");
+    qa(".ability-mine", "o:seta_trampa");
+    qa(".ew-shield", "b:muro");
+    qa(".reliquia-page", "o:pagina");
+    if (typeof Volcano !== "undefined" && Volcano.lava && Volcano.lava.some((l) => l.el && this._visible(l.el))) this.discover("r:lava");
+    if (typeof Volcano !== "undefined" && Volcano.burners && Volcano.burners.length) this.discover("u:gnomo_fuego");
+    if (typeof LevelAssets !== "undefined" && LevelAssets.current) this.discover("r:agua");
+    if (typeof Resources !== "undefined" && Resources.list) {
+      Resources.list.forEach((n) => {
+        if (!n.el || !this._visible(n.el)) return;
+        if (n.kind === "cofre") this.discover("b:cofre");
+        const rid = { pino: "o:madera", roca: "o:piedra", mena: "o:metal" }[n.kind];
+        if (rid) this.discover(rid);
+      });
+    }
+    if (typeof Backpack !== "undefined" && Backpack.inventory) Backpack.inventory.forEach((it) => this.discover("o:" + it.itemId));
     // Objetos: reliquias de la mochila y la Reliquia Paranoica.
     if (typeof Relics !== "undefined" && Relics.byTeam && Relics.byTeam.player) Relics.byTeam.player.forEach((r) => this.discover("o:" + r.relicId));
     if (typeof Reliquia !== "undefined" && Reliquia.relic && Reliquia.relic.state && Reliquia.relic.state !== "altar") this.discover("o:reliquia_paranoica");    this._check();
@@ -648,6 +758,18 @@ const Gnomoteca = {
   },
   _tr(key) {
     return typeof I18N !== "undefined" ? I18N.t(key) : key;
+  },
+
+  // Un Obelisco por equipo: se descubre al verlo con la visión de una unidad o al elegir ese equipo.
+  _obeliscos() {
+    const files = { mushboom_forest: "mushboom_forest", colinas_rockntroll: "colinas_rockntroll", equipo_surcanubes: "surcanubes", equipo_enmurallado: "enmurallado" };
+    const pre = typeof I18N !== "undefined" && I18N.tr ? I18N.tr("Obelisco") : "Obelisco";
+    return (typeof RACES !== "undefined" ? RACES : []).filter((r) => files[r.id]).map((r) => ({
+      id: "b:obelisco_" + r.id, name: pre + " " + this._tr(r.nameKey).replace(/^(Equipo|Team)\s+/, ""), type: "Estructura · base",
+      img: "assets/edificios/obelisco_" + files[r.id] + "_midres.png",
+      desc: "Tu base. Desde él reclutas unidades, eliges habilidades y mejoras en la armería. Si cae, pierdes la partida.",
+      chips: ["Si cae, pierdes", "Recluta y mejora"],
+    }));
   },
 
   entries(cat) {
@@ -677,6 +799,8 @@ const Gnomoteca = {
         desc: "Paranoico profesional. Vigila la cámara sellada y persigue sin descanso a quien lleve la Reliquia, sea del equipo que sea.",
         chips: ["Inmortal", "Solo se marea con un gnomo lanzado"],
       });
+      out.push({ id: "u:grulla", name: "La Grulla", type: "Neutral · HurryCrane", img: "assets/niveles/hurrycrane/grulla_posada.png", desc: "Aparece cuando el huevo explota y se posa en el obelisco del que más puntos sacó. Mientras esté ahí, nada de reclutar ni mejorar. Si le lanzas un gnomo se asusta y se va a molestar a otro. Muy profesional.", chips: ["Bloquea un obelisco", "Se asusta si le lanzas un gnomo"] });
+      out.push({ id: "u:gnomo_fuego", name: "Gnomo en llamas", type: "Neutral · Rock'n Troll", img: "assets/niveles/rockntroll/gnomo_fuego_corre.png", desc: "Cuando el volcán erupciona, suelta uno por cada unidad rival y todos salen corriendo hacia ellas. No dice nada, seguramente porque está ocupado ardiendo. Nunca se le pregunta si estaba de acuerdo.", chips: ["Sale con la erupción", "Corre hacia las unidades rivales"] });
     } else if (cat === "recursos") {
       const R = typeof RESOURCE_NODE_TYPES !== "undefined" ? RESOURCE_NODE_TYPES : {};
       const txt = {
@@ -688,19 +812,45 @@ const Gnomoteca = {
         id: "r:" + k, name: k === "pino" ? "Árbol" : k === "mena" ? "Mena de Hierro" : "Roca", type: "Recurso · neutral",
         img: R[k].spriteUrl.replace(/\.png$/, "_midres.png"), desc: txt[k] || "", chips: ["Bloquea el paso", "Se rompe con dos golpes"],
       }));
+      out.push({ id: "r:arbusto", name: "Arbusto", type: "Escenario · escondite", img: "assets/iconos/arbusto.png", desc: "Si te metes dentro, desapareces del radar y puedes dar la sorpresa a quien pase cerca. Los hay cerca de tótems y tiendas, que casualidad. Que nadie se fíe de un arbusto.", chips: ["Esconde unidades", "Bloquea la vista"] });
+      out.push({ id: "r:hierbajos", name: "Hierbajos", type: "Escenario · decoración", img: "assets/escenario/hierbajos.png", desc: "Matojos de hierba y florecillas sin ninguna utilidad. No se pegan, no se cogen, no se lanzan. Aun así, el escenario sería más triste sin ellos y yo también.", chips: ["Solo decoración"] });
+      out.push({ id: "r:agua", name: "Agua", type: "Terreno", img: "assets/losetas/agua_02.png", desc: "Mojada y poco recomendable para quien no sepa nadar. Ni las unidades ni los gnomos aprecian el chapuzón, pero siempre queda bien en el paisaje. Y alguna vez se le ha tirado algo a propósito.", chips: ["No se puede pisar", "Sacrificio de gnomos"] });
+      out.push({ id: "r:lava", name: "Lava", type: "Terreno · Rock'n Troll", img: "assets/niveles/rockntroll/lava_1.png", desc: "Aparece cuando el volcán se enfada, y se enfada a menudo. Le da igual de qué equipo seas: todo lo que toca queda en una versión más oscura de sí mismo.", chips: ["Sale con la erupción", "Quema"] });
     } else if (cat === "edificios") {
       out.push(
-        { id: "b:obelisco", name: "Obelisco", type: "Estructura · base", img: "assets/edificios/obelisco_mushboom_forest_midres.png", desc: "Tu base. Desde él reclutas unidades, eliges habilidades y mejoras en la armería. Si cae, pierdes la partida.", chips: ["Reclutar", "Habilidades", "Armería"] },
+        ...this._obeliscos(),
         { id: "b:totem", name: "Tótem", type: "Estructura · capturable", img: "assets/iconos/poblado_neutral_midres.png", desc: "Capturarlo da Puntos de Gloria cada turno. Se defiende con flechas y no sufre daño de ataques normales.", chips: ["Da Gloria", "Capturable"] },
         { id: "b:altar", name: "Altar de Sacrificios", type: "Estructura · MushBoom", img: "assets/edificios/altar_sacrificios_lleno_midres.png", desc: "Aquí se ofrecen gnomos para ganar Gloria al instante.", chips: ["Sacrificio"] },
         { id: "b:tienda", name: "Tienda Goblin", type: "Estructura · comercio", img: "assets/edificios/tienda_goblin_midres.png", desc: "Un goblin con muy mala leche y buenos precios. Se repone cada cierto número de turnos.", chips: ["Compra con Gloria"] },
         { id: "b:oraculo", name: "Oráculo", type: "Estructura · cartas", img: "assets/edificios/oraculo_midres.png", desc: "Ocho cartas boca abajo, las mismas para todos. Paga para girar dos; si coinciden, ganas su beneficio.", chips: ["Cartas", "Coste creciente"] },
         { id: "b:camara", name: "Cámara de la Reliquia", type: "Estructura · WallForge", img: "assets/niveles/wallforge/altar_sellado.png", desc: "Cámara sellada con cadenas en el centro del mapa. Las cadenas ceden cuando se lanza contra ella un gnomo cargado.", chips: ["Centro del mapa", "Se resella al devolver la Reliquia"] },
       );
+      out.push({ id: "b:volcan", name: "Volcán", type: "Estructura · Rock'n Troll", img: "assets/niveles/rockntroll/volcan_encendido.png", desc: "Se alimenta con gnomos sacrificados y piedras lanzadas. Apagado, es decoración; encendido, es un problema; en erupción, es un problema con gnomos en llamas corriendo hacia tus unidades. Nadie ha reclamado nunca el seguro.", chips: ["Centro del mapa", "Se carga hasta 20"] });
+      out.push({ id: "b:tambor", name: "Tambor de Guerra", type: "Estructura · Rock'n Troll", img: "assets/niveles/rockntroll/tambor.png", desc: "Un tambor neutral que da puntos a quien tenga más unidades pegadas a él al acabar el turno. Cada golpe a un gnomo junto al tambor también suma. Tocarlo no hace falta; con rodearlo basta, que para eso están los trolls.", chips: ["Neutral", "Gana quien tenga más unidades al lado"] });
+      out.push({ id: "b:bumper", name: "Bumper", type: "Estructura · HurryCrane", img: "assets/niveles/hurrycrane/bumper.png", desc: "Un pinball con ínfulas de edificio. Cuando el huevo lo golpea rebota y sube el combo, y cada carambola suena más aguda que la anterior. Solo rebota una vez por turno, que tampoco hay que abusar.", chips: ["Bloquea el paso", "Rebota el huevo"] });
+      out.push({ id: "b:muro", name: "Muro aplastante", type: "Habilidad · Reforjados", img: "assets/equipos/EquipoEnmurallado/escudo_muro.png", desc: "El PortaMuros lo planta delante de sí por si acaso. Y el «por si acaso» suele caer encima de alguien. Es más resistente que la media y más ruidoso que la media.", chips: ["Bloquea el paso", "Aplasta a quien pille debajo"] });
+      out.push({ id: "b:cofre", name: "Cofre de Reliquias", type: "Estructura · neutral", img: "assets/iconos/cofre_cerrado.png", desc: "Hay uno por jugador, escondido en un rincón apartado. Un toque y se abre, y de dentro sale una reliquia para la mochila. Nunca falla: siempre llega justo cuando ya no te queda sitio en ella.", chips: ["Un toque lo abre", "Suelta una reliquia"] });
     } else if (cat === "objetos") {
       const RT = typeof RELIC_TYPES !== "undefined" ? RELIC_TYPES : {};
       Object.keys(RT).forEach((id) => out.push({ id: "o:" + id, name: RT[id].name, type: "Reliquia de la mochila", img: RT[id].iconUrl, desc: RT[id].description, chips: ["Aguanta " + RT[id].durability + " bajas"] }));
       out.push({ id: "o:reliquia_paranoica", name: "Reliquia Paranoica", type: "Objeto único · WallForge", img: "assets/niveles/wallforge/reliquia.png", desc: "Quien la lleva deja ondas en los pies y todos lo ven, a él y lo que ve. Gana puntos con las páginas y los cobra al llegar junto a su obelisco.", chips: ["Visible para todos", "Si el portador cae, queda en el suelo"] });
+      out.push({ id: "o:huevo", name: "Huevo de Grulla", type: "Objeto único · HurryCrane", img: "assets/niveles/hurrycrane/huevo.png", desc: "Lánzale un gnomo y sale disparado en esa dirección, rebotando en bumpers, tótems y obeliscos. Cada rebote lo carga más, hasta que explota y reparte puntos. Nadie sabe qué hay dentro, pero tiene prisa por salir.", chips: ["Rebota por el mapa", "Explota al nivel 10"] });
+      out.push({ id: "o:fragmento", name: "Fragmento de roca", type: "Recurso · Rock'n Troll", img: "assets/niveles/rockntroll/fragmento.png", desc: "Astilla de roca que sueltan los Tambores de Guerra. Por ahora no sirve para nada, pero se apila en la mochila con una dignidad admirable.", chips: ["Se apila en la mochila"] });
+      out.push({ id: "o:seta", name: "Seta explosiva", type: "Objeto · MushBoom", img: "assets/iconos/seta_suelta.png", desc: "Aparece suelta por el bosque de vez en cuando. Se coge, se lleva a la espalda y se lanza. Tiene mecha. No la sueltes de cualquier manera, a menos que odies a alguien.", chips: ["Se coge como un gnomo", "Explota"] });
+      out.push({ id: "o:seta_trampa", name: "Seta trampa", type: "Habilidad · SurcaBosques", img: "assets/iconos/seta_trampa.png", desc: "La planta el SurcaBosques y se camufla de maravilla, sobre todo para sus propios compañeros. Quien la pisa descubre por qué se llama trampa. Nadie la ha visto venir, ni siquiera quien la puso.", chips: ["Se planta en una casilla", "Explota al pisarla"] });
+      out.push({ id: "o:pagina", name: "Página de la Reliquia", type: "Objeto · WallForge", img: "assets/niveles/wallforge/pagina.png", desc: "Se esparcen por todo el mapa cuando se libera la Reliquia. Quien lleve la Reliquia y pise una suma puntos que luego cobrará junto a su obelisco. Nadie sabe qué pone, y es mejor así.", chips: ["Pisarla da puntos al portador", "Salen al abrir la cámara"] });
+      out.push({ id: "o:madera", name: "Madera", type: "Recurso de la mochila", img: "assets/iconos/recurso_madera.png", desc: "La suelta un árbol tras dos golpes. Vale para subir cosas en el obelisco y para mirarla con orgullo. Hay gente que dice haber visto un árbol llorando, pero seguro que era resina.", chips: ["Se apila en la mochila"] });
+      out.push({ id: "o:piedra", name: "Piedra", type: "Recurso de la mochila", img: "assets/iconos/recurso_roca.png", desc: "La suelta una roca tras dos golpes. Ni siente, ni padece, ni protesta: el material perfecto, y también el que más pesa en la mochila.", chips: ["Se apila en la mochila"] });
+      out.push({ id: "o:metal", name: "Metal", type: "Recurso de la mochila", img: "assets/iconos/recurso_metal.png", desc: "La suelta la mena de hierro, escasa a propósito para que te pelees por ella. Imprescindible para subir la armería al máximo y para hacerte el interesante.", chips: ["Se apila en la mochila"] });
+      out.push({ id: "o:setarcoiris", name: "Setarcoiris", type: "Objeto de la mochila", img: "assets/iconos/setarcoiris.png", desc: "Una seta a la que no se le puede negar nada: si se la dejas junto a una unidad, en dos turnos aparece un gnomo con hambre. La comida favorita de los gnomos, y de los que los lanzan.", chips: ["Se coloca en una casilla", "Atrae a un gnomo"] });
+      out.push({ id: "o:bevida", name: "BebeVida", type: "Objeto de la mochila", img: "assets/iconos/bevida.png", desc: "Un brebaje revitalizante del que nadie quiere conocer los ingredientes. Se lo das a una unidad aliada y recupera toda su vida. Tiene efectos secundarios, pero no los hemos probado.", chips: ["Cura a una unidad aliada"] });
+      out.push({ id: "o:atrapapinreles", name: "AtrapaPinreles", type: "Objeto de la mochila", img: "assets/iconos/atrapapinreles.png", desc: "Un cepo goblin oxidado de los de toda la vida. Quien pisa su casilla pierde el turno y suelta lo que lleve. Se vende solo, porque nadie puede jurar que no lo pisará.", chips: ["Se coloca junto a una unidad", "El enemigo pierde el turno"] });
+      out.push({ id: "o:katapum", name: "KataPum!", type: "Objeto de la mochila", img: "assets/iconos/katapum.png", desc: "Un cohete goblin casero y teledirigido, hasta cierto punto. Elige a un rival a la vista y vuela hacia él. Al explotar tira un dado, y el resultado depende de tu suerte, que ya conocemos.", chips: ["Elige a un rival a la vista", "Explota con dado"] });
+      out.push({ id: "o:totemvision", name: "TotemVision", type: "Objeto de la mochila", img: "assets/iconos/totemvision.png", desc: "Un tótem tallado con un ojo en la punta que ve más que tú. Colócalo en una casilla libre y da visión permanente alrededor. Lo único que no ve es que le estés dando órdenes.", chips: ["Visión en un radio de 3", "Se coloca en una casilla"] });
+      out.push({ id: "o:senuelo", name: "Señuelo Explosivo", type: "Objeto de la mochila", img: "assets/iconos/senuelo_clavado.png", desc: "Un muñeco de madera con forma de gnomo, cargado de pólvora. Tú lo ves como lo que es; el rival, como un gnomo suelto de lo más tentador. Quien se acerca, vuela.", chips: ["Se coloca en una casilla", "Explota al acercarse"] });
+      out.push({ id: "o:oraculo_renacido", name: "El Renacido", type: "Carta del Oráculo", img: "assets/oraculo/carta_renacido.webp", desc: "Carta del Oráculo. Cuando una de tus unidades muere, ganas tantos puntos de Gloria como costó reclutarla. Beneficio pasivo, siempre activo. Morir sale rentable, al fin.", chips: ["Pasiva", "Gloria al morir una unidad"] });
+      out.push({ id: "o:oraculo_afortunado", name: "El Afortunado", type: "Carta del Oráculo", img: "assets/oraculo/carta_afortunado.webp", desc: "Carta del Oráculo. Recibes 1 punto de Gloria por turno por cada tótem que controlen tus rivales. Cuanto peor te vaya, mejor te va.", chips: ["Pasiva", "Gloria por tótems rivales"] });
+      out.push({ id: "o:oraculo_eterno", name: "El Eterno", type: "Carta del Oráculo", img: "assets/oraculo/carta_eterno.webp", desc: "Carta del Oráculo. Cuando una de tus unidades golpea a un gnomo, gana 1 punto de vida por golpe hasta su máximo. Pegar a gnomos es la mejor terapia.", chips: ["Pasiva", "Cura al golpear gnomos"] });
     } else if (cat === "equipos") {
       (typeof RACES !== "undefined" ? RACES : []).forEach((r) => out.push({
         id: "t:" + r.id, name: this._tr(r.nameKey), type: "Equipo", img: r.iconImg, desc: this._tr(r.flavorKey),
@@ -720,8 +870,10 @@ const Gnomoteca = {
     // Todas las descripciones con el tono de Nizak. Lo que era una regla seca (objetos) se conserva como "Efecto".
     out.forEach((e) => {
       const d = GNOMOTECA_DESC[e.id];
+      const rule = e.id.indexOf("o:") === 0 && typeof ITEM_DESCRIPTIONS !== "undefined" ? ITEM_DESCRIPTIONS[e.id.slice(2)] : null;
+      if (rule) e.desc = rule; // la regla seca va a "Efecto"; la descripción larga es la de Nizak
       if (d) {
-        if (e.id.indexOf("o:") === 0 && e.desc) e.extra = [["Efecto", e.desc]].concat(e.extra || []);
+        if (e.id.indexOf("o:") === 0 && e.desc && e.desc !== d) e.extra = [["Efecto", e.desc]].concat(e.extra || []);
         e.desc = d;
       }
       const x = GNOMOTECA_EXTRA[e.id];
