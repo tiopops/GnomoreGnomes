@@ -60,7 +60,7 @@ const Matchmaking = {
     const db = this._db;
     if (!db) { MPLobby._toast(this.t("mm_err")); return; }
     if (typeof Progress !== "undefined" && !Progress._loaded) { try { await Progress.load(); } catch (e) {} }
-    this._info = { uid: MPLobby._uid, name: MPLobby._name, sk: typeof Progress !== "undefined" ? Progress.sk : 1000 };
+    this._info = { uid: MPLobby._uid, name: MPLobby._name, sk: typeof Progress !== "undefined" ? Progress.sk : 1000, lv: typeof Progress !== "undefined" ? Progress.level : 1 };
     this._active = true;
     this._handled = false;
     this._busy = false;
@@ -68,7 +68,7 @@ const Matchmaking = {
     this._show();
     try {
       this._ref = db.collection("mmQueue").doc(this._info.uid);
-      await this._ref.set({ uid: this._info.uid, name: this._info.name, sk: this._info.sk, ts: Date.now(), status: "searching", roomId: null });
+      await this._ref.set({ uid: this._info.uid, name: this._info.name, sk: this._info.sk, lv: this._info.lv, ts: Date.now(), status: "searching", roomId: null });
     } catch (e) {
       console.warn("mm:", e && e.code);
       this._abort(this.t("mm_err"));
@@ -122,8 +122,10 @@ const Matchmaking = {
       const cands = [];
       snap.forEach((d) => { const c = d.data(); if (c && c.uid !== me.uid && c.status === "searching" && typeof c.sk === "number") cands.push(c); });
       if (!cands.length || this._handled) return;
-      // El SK más cercano al mío (el mismo si lo hay); a igualdad, quien lleva más esperando.
-      cands.sort((a, b) => Math.abs(a.sk - me.sk) - Math.abs(b.sk - me.sk) || a.ts - b.ts);
+      // El SK más cercano al mío (el mismo si lo hay); a igualdad, el nivel más cercano; y a igualdad, quien lleva más esperando.
+      // Un ticket sin nivel (versión anterior del juego) cuenta como de mi mismo nivel: ni suma ni resta.
+      const dl = (c) => Math.abs((typeof c.lv === "number" ? c.lv : me.lv) - me.lv);
+      cands.sort((a, b) => Math.abs(a.sk - me.sk) - Math.abs(b.sk - me.sk) || dl(a) - dl(b) || a.ts - b.ts);
       await this._tryMatch(cands[0]);
     } catch (e) {
       console.warn("mm:", e && e.code);

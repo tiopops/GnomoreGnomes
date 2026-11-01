@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001654";
+const GG_VERSION = "v.001655";
 
 const GG_CHANGELOG = [
-  { v: "v.001654", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001655", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Partida Rápida: a igualdad de SK, el emparejamiento elige al rival con el nivel de cuenta más cercano al tuyo",
     "Imágenes de perfil: encuadre de las caras ajustado a mano para cada retrato",
     "Imágenes de perfil: caras encuadradas por retrato (editables con debug/editar-retratos.html), botón Cerrar con el estilo del juego y sin barra de scroll horizontal fugaz",
     "Imágenes de perfil: el selector se abre al hacer clic en la foto del perfil y la insignia de nivel ya no tapa el retrato",

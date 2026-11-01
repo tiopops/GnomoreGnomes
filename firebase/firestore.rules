@@ -252,10 +252,11 @@ service cloud.firestore {
     match /mmQueue/{uid} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['uid', 'name', 'sk', 'ts', 'status', 'roomId'])
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'sk', 'lv', 'ts', 'status', 'roomId'])
         && request.resource.data.uid == uid
         && request.resource.data.status == 'searching'
         && request.resource.data.sk is number && request.resource.data.ts is number
+        && request.resource.data.get('lv', 1) is number
         && request.resource.data.name is string && request.resource.data.name.size() <= 16;
       allow update: if request.auth != null
         && ((request.auth.uid == uid
