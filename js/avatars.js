@@ -252,7 +252,7 @@ const Avatars = {
     this._touch();
     this._renderPicker();
     this._refreshProfile();
-    const t = this._overlay.querySelector(".av-tile--sel img");
+    const t = this._overlay.querySelector(".av-tile--sel .av-tile__img"); // el contenedor, no la <img>: la <img> lleva el encuadre en su propio transform y la animación lo pisaría
     if (t && t.animate) t.animate([{ transform: "scale(.8,1.18)" }, { transform: "scale(1.1,.9)", offset: 0.4 }, { transform: "scale(1)" }], { duration: 340, easing: "ease-out" });
   },
 };
