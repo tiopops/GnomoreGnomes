@@ -969,13 +969,25 @@ const Gnomoteca = {
     return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   },
 
+  // ¿Categoría completa? Logros: todos desbloqueados; el resto: todas las entradas vistas.
+  _complete(cat) {
+    const list = this.entries(cat);
+    if (!list.length) return false;
+    return cat === "logros" ? list.every((e) => e.done) : list.every((e) => this.seen.has(e.id));
+  },
+
   _render(flip) {
     const $ = (id) => document.getElementById(id);
     if (!$("gt-tabs")) return;
     const list = this.entries(this.cat);
     if (this.sel >= list.length) this.sel = 0;
     const isAch = this.cat === "logros";
-    $("gt-tabs").innerHTML = this.CATS.map((c) => `<button type="button" class="gnomo-tab dl ${c.id === "logros" ? "gnomo-tab--gold" : ""} ${c.id === this.cat ? "gnomo-tab--active" : ""}" data-c="${c.id}">${c.label}</button>`).join("");
+    // Página completa (todo descubierto / todos los logros) = dorada; mientras no lo esté, morada como las demás.
+    const done = {};
+    this.CATS.forEach((c) => { done[c.id] = this._complete(c.id); });
+    const book = document.querySelector("#screen-gnomoteca .gnomo-book");
+    if (book) book.classList.toggle("gnomo-book--gold", !!done[this.cat]);
+    $("gt-tabs").innerHTML = this.CATS.map((c) => `<button type="button" class="gnomo-tab dl ${done[c.id] ? "gnomo-tab--gold" : ""} ${c.id === this.cat ? "gnomo-tab--active" : ""}" data-c="${c.id}">${c.label}</button>`).join("");
     $("gt-cat").textContent = this.CATS.find((c) => c.id === this.cat).label;
     // Barra de lo conseguido respecto al total (logros desbloqueados, o entradas descubiertas de la categoría).
     const tot = $("gt-total");

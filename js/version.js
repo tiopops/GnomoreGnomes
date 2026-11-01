@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001645";
+const GG_VERSION = "v.001646";
 
 const GG_CHANGELOG = [
-  { v: "v.001645", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001646", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Gnomoteca: cada página completa (todo descubierto o todos los logros) se muestra en dorado, con su pestaña, cabeceras, filas y recuadros; mientras no esté completa es morada como las demás, también Logros",
     "Gnomoteca: Nizak tiene su propia entrada en Unidades (se apunta al hacer un tutorial) y las cartas del Oráculo que faltaban, El Vigilante y La Maldición, se apuntan al ganarlas o sufrirlas",
     "Gnomoteca: los objetos de la Tienda Goblin y las cartas del Oráculo se apuntan al comprarlos o conseguirlos, no al verlos",
     "Ajustes > Controles: sin mando conectado, el teclado sale arriba; con mando conectado, el mando arriba y el teclado debajo",

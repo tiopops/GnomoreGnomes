@@ -12981,3 +12981,17 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .gnomo-achtxt .gnomo-tag{position:static;display:inline-block;margin-bottom:8px}
 .gnomo-achtxt .gnomo-desc{margin:0;font-size:15px;line-height:1.5}
 @media(max-width:700px){.gnomo-achrow{flex-direction:column}.gnomo-abox{width:84px;height:84px;font-size:44px}}
+
+/* Gnomoteca: una página completa se pinta en dorado (libro, cabeceras, filas, recuadros y chips); sin completar, morada. */
+.gnomo-book--gold { --o: #f0c850; --f: linear-gradient(100deg, #7a5a12, #3a2a08); }
+.gnomo-book--gold .gnomo-h::before { background: linear-gradient(100deg, #7a5a12, #3a2a08); }
+.gnomo-book--gold .gnomo-it { --o: #7a5a12; --f: #f8e9b0; }
+.gnomo-book--gold .gnomo-it--on { --o: #3a2a08; --f: #f0c850; }
+.gnomo-book--gold .gnomo-it--lock { --f: #d9cba0; }
+.gnomo-book--gold .gnomo-plate { --o: #3a2a08; --f: #f0c850; }
+.gnomo-book--gold .gnomo-plate::after { background: #7a5a12; }
+.gnomo-book--gold .gnomo-bar i { background: #f0c850; }
+.gnomo-book--gold .gnomo-ex b, .gnomo-book--gold .gnomo-chip { background: #7a5a12; color: #fff2c0; }
+.gnomo-book--gold .gnomo-chip--ok { background: #f0c850; color: var(--g-ink); }
+.gnomo-book--gold .gnomo-tag { background: #3a2a08; color: #f0c850; }
+.gnomo-book--gold .gnomo-pn { color: #7a5a12; }
