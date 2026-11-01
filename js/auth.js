@@ -168,6 +168,7 @@ const Account = {
       const ni = document.getElementById("acc-newnick");
       if (ni) ni.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); this._rename(); } });
       if (typeof PlayerStats !== "undefined") PlayerStats.mount(B.querySelector("#acc-stats"));
+      if (typeof Avatars !== "undefined") Avatars._refreshProfile();
       return;
     }
     const m = this._mode;

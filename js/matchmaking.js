@@ -145,7 +145,7 @@ const Matchmaking = {
         if (!a.exists || a.data().status !== "searching") throw new Error("self");
         if (!b.exists || b.data().status !== "searching" || Date.now() - b.data().ts > MM_STALE_MS + 5000) throw new Error("gone");
         tx.set(roomRef, {
-          hostUid: me.uid, hostName: me.name, guestUid: c.uid, guestName: b.data().name,
+          hostUid: me.uid, hostName: me.name, hostAv: typeof Avatars !== "undefined" ? Avatars.currentId() : "u:gnomo", guestUid: c.uid, guestName: b.data().name,
           status: "lobby", level, hostRace: null, guestRace: null, hostReady: false, guestReady: false,
           guestJoined: false, guestDeclined: false, createdAt: Date.now(),
           mm: true, hostSk: me.sk, guestSk: b.data().sk,

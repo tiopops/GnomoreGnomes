@@ -195,7 +195,7 @@ const MPLobby = {
       const ref = this._db.collection("rooms").doc(id);
       const snap = await ref.get();
       if (!snap.exists) { this._toast(this.t("mp_closed")); return; }
-      await ref.update({ guestJoined: true });
+      await ref.update({ guestJoined: true, guestAv: typeof Avatars !== "undefined" ? Avatars.currentId() : "u:gnomo" });
       if (typeof Friends !== "undefined") Friends.close(); // el invitado también deja el panel de amigos
       this._enter(id, false);
     } catch (e) {
@@ -208,7 +208,7 @@ const MPLobby = {
   async joinMatched(id, isHost) {
     if (this._roomId || this._inMatch()) return;
     try {
-      if (!isHost) await this._db.collection("rooms").doc(id).update({ guestJoined: true });
+      if (!isHost) await this._db.collection("rooms").doc(id).update({ guestJoined: true, guestAv: typeof Avatars !== "undefined" ? Avatars.currentId() : "u:gnomo" });
       if (typeof Friends !== "undefined") Friends.close();
       this._enter(id, isHost);
     } catch (e) {
@@ -226,6 +226,7 @@ const MPLobby = {
       await ref.set({
         hostUid: this._uid,
         hostName: this._name,
+        hostAv: typeof Avatars !== "undefined" ? Avatars.currentId() : "u:gnomo",
         guestUid: friendUid,
         guestName: friendName,
         status: "lobby",
@@ -359,7 +360,7 @@ const MPLobby = {
     return `<div class="mp-slot ${mine ? "mp-slot--me" : ""} ${ready ? "mp-slot--ready" : ""} ${joined ? "" : "mp-slot--empty"}">
       <div class="mp-slot__role">${this.t(host ? "mp_host" : "mp_guest")}</div>
       <div class="mp-slot__art">${r ? `<img src="${r.iconImg}" alt="" draggable="false">` : '<i class="ph ph-question"></i>'}</div>
-      <div class="mp-slot__name">${this._esc(name || "")}</div>
+      <div class="mp-slot__name">${joined && typeof Avatars !== "undefined" ? Avatars.faceHtml(Avatars.safeId(host ? d.hostAv : d.guestAv), "av-face--slot") : ""}${this._esc(name || "")}</div>
       <div class="mp-slot__race">${r ? this._esc(this.t(r.nameKey)) : "&nbsp;"}</div>
       ${state}
     </div>`;
@@ -464,6 +465,8 @@ const MPLobby = {
         me: this._uid,
         myName: host ? d.hostName : d.guestName,
         otherName: other,
+        myAv: typeof Avatars !== "undefined" ? Avatars.safeId(host ? d.hostAv : d.guestAv) : "u:gnomo",
+        otherAv: typeof Avatars !== "undefined" ? Avatars.safeId(host ? d.guestAv : d.hostAv) : "u:gnomo",
         mm: !!d.mm,
         oppSk: d.mm ? (host ? d.guestSk : d.hostSk) : null,
         transport: NetFirestoreTransport(this._db, roomId, this._uid),

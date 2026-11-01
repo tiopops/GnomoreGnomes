@@ -154,7 +154,7 @@ service cloud.firestore {
         && request.resource.data.status == 'lobby'
         && request.resource.data.keys().hasOnly(['hostUid', 'hostName', 'guestUid', 'guestName', 'status', 'level',
              'hostRace', 'guestRace', 'hostReady', 'guestReady', 'guestJoined', 'guestDeclined', 'createdAt',
-             'mm', 'hostSk', 'guestSk'])
+             'mm', 'hostSk', 'guestSk', 'hostAv'])
         && (
           // Sala entre amigos: la pareja debe ser amiga aceptada.
           (request.resource.data.get('mm', false) != true
@@ -172,7 +172,7 @@ service cloud.firestore {
                    .hasOnly(['level', 'hostRace', 'hostReady', 'status', 'seed', 'startedAt']))
             || (resource.data.guestUid == request.auth.uid
               && request.resource.data.diff(resource.data).affectedKeys()
-                   .hasOnly(['guestJoined', 'guestDeclined', 'guestRace', 'guestReady'])));
+                   .hasOnly(['guestJoined', 'guestDeclined', 'guestRace', 'guestReady', 'guestAv'])));
       allow delete: if request.auth != null && resource.data.hostUid == request.auth.uid;
 
       match /msgs/{msgId} {
@@ -229,6 +229,18 @@ service cloud.firestore {
         && request.resource.data.ids is string && request.resource.data.ids.size() <= 6000
         && request.resource.data.a is string && request.resource.data.a.size() <= 3000
         && request.resource.data.st is map && request.resource.data.st.size() <= 40;
+      allow delete: if false;
+    }
+
+    // Imágenes de perfil (js/avatars.js): desbloqueadas ("u", ids separados por comas) y la elegida ("sel").
+    // Solo su dueño la lee y la escribe.
+    match /avatars/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['v', 'u', 'sel'])
+        && request.resource.data.v == 1
+        && request.resource.data.u is string && request.resource.data.u.size() <= 1500
+        && request.resource.data.sel is string && request.resource.data.sel.size() <= 40;
       allow delete: if false;
     }
 

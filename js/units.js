@@ -1590,6 +1590,8 @@ const Units = {
       // "MUERTES" en el resumen comparativo de fin de partida.
       if (typeof Obelisks.recordDeath === "function") Obelisks.recordDeath(unit.team);
     }
+    // Imágenes de perfil (js/avatars.js): aniquilar a un rival desbloquea su retrato.
+    if (unit.team !== "player" && typeof Avatars !== "undefined") { try { Avatars.onRivalDied(unit); } catch (e) {} }
   },
 };
 

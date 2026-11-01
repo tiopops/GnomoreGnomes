@@ -630,6 +630,7 @@ const Gnomoteca = {
   },
   // Cobra XP por entradas nuevas y desbloquea logros. Solo con sesión iniciada y la nube ya leída.
   _check() {
+    if (typeof Avatars !== "undefined") { try { Avatars.check(); } catch (e) {} }
     if (!this._uid || !this._cloud || typeof Progress === "undefined" || !Progress._loaded || Progress._uid !== this._uid) return;
     let tut = 0;
     try { tut = typeof Tutorial !== "undefined" && Tutorial.isDone ? ["basic", "mush", "rock", "crane", "wall"].filter((id) => Tutorial.isDone(id)).length : 0; } catch (e) {}

@@ -118,6 +118,7 @@ const Net = {
     this.myTeam = "player";
     this.otherTeam = "enemy";
     this.names = { me: cfg.myName || "", other: cfg.otherName || "" };
+    this.avatars = { me: cfg.myAv || "u:gnomo", other: cfg.otherAv || "u:gnomo" };
     this.seed = cfg.seed;
     this.roomId = cfg.roomId;
     this.levelId = cfg.levelId;

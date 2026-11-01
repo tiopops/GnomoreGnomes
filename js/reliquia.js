@@ -891,6 +891,7 @@ const Reliquia = {
         this._shake(false);
         if (a.imgEl.animate) a.imgEl.animate([{ transform: "scale(1,1)" }, { transform: "scale(1.2,.78)", offset: 0.25 }, { transform: "scale(.92,1.1)", offset: 0.6 }, { transform: "scale(1,1)" }], { duration: 420, easing: "cubic-bezier(.2,1.5,.4,1)" });
         this._stun(a);
+        if (holder.team === "player" && typeof Avatars !== "undefined") { try { Avatars.onGuardStunned(); } catch (e) {} }
         if (gnome._addPoints) gnome._addPoints(RELIQUIA_HIT_CHARGE);
         Units.spawnFloatingText(holder, `+${RELIQUIA_HIT_CHARGE}`, { className: "dmg-popup gnome-points-popup" });
         await this._wait(300);

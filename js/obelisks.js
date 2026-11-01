@@ -1014,7 +1014,12 @@ const Obelisks = {
       ["paper-plane-tilt", "Pases de gnomo logrados", this._passes.player || 0, this._passes[ai] || 0, "", "", false],
       ["skull", "Bajas sufridas", this._deaths.player || 0, this._deaths[ai] || 0, "", "", true],
     ];
-    const head = `<div class="go-head"><span>TÚ</span><span>${Teams.rivalCount > 1 ? "RIVAL" : "RIVAL"}</span></div>`;
+    let head = `<div class="go-head"><span>TÚ</span><span>${Teams.rivalCount > 1 ? "RIVAL" : "RIVAL"}</span></div>`;
+    // Partida online: retrato y nombre de cada jugador (js/avatars.js).
+    if (typeof Net !== "undefined" && Net.active && Net.names && typeof Avatars !== "undefined") {
+      const esc = (x) => String(x).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+      head = `<div class="go-head go-head--av"><span>${Avatars.faceHtml(Net.avatars && Net.avatars.me, "av-face--go")}<b>${esc(Net.names.me || "TÚ")}</b></span><span><b>${esc(Net.names.other || "RIVAL")}</b>${Avatars.faceHtml(Net.avatars && Net.avatars.other, "av-face--go")}</span></div>`;
+    }
     return head + rows.map(([ic, lab, p, e, tp, te, low], i) => {
       const m = Math.max(p, e, 1);
       const better = p === e ? 0 : ((low ? p < e : p > e) ? 1 : -1);
