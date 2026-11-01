@@ -241,6 +241,7 @@ const EN_DICT = {
 "Narrador · Tutoriales": "Narrator · Tutorials",
 "No combate": "Doesn't fight",
 "Da los tutoriales": "Gives the tutorials",
+"Gana una partida con este equipo para desbloquearlo.": "Win a match with this team to unlock it.",
 "Alumno de Nizak": "Nizak's Pupil",
 "Completas todos los tutoriales. Nizak no lo admitirá nunca, pero está orgulloso. Mucho. A su manera.": "You complete every tutorial. Nizak will never admit it, but he is proud. Very. In his own way.",
 "Constancia de gnomo": "Gnome Persistence",

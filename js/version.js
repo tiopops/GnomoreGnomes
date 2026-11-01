@@ -12,10 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001646";
+const GG_VERSION = "v.001648";
 
 const GG_CHANGELOG = [
-  { v: "v.001646", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001648", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Gnomoteca > Equipos: un equipo solo se desbloquea al ganar una partida con él (antes bastaba con verlo o elegirlo)",
+    "Gnomoteca: los sliders (barras de desplazamiento) de las páginas completas también son dorados, y cuando todas las páginas están al 100% el título GNOMOTECA se vuelve dorado",
     "Gnomoteca: cada página completa (todo descubierto o todos los logros) se muestra en dorado, con su pestaña, cabeceras, filas y recuadros; mientras no esté completa es morada como las demás, también Logros",
     "Gnomoteca: Nizak tiene su propia entrada en Unidades (se apunta al hacer un tutorial) y las cartas del Oráculo que faltaban, El Vigilante y La Maldición, se apuntan al ganarlas o sufrirlas",
     "Gnomoteca: los objetos de la Tienda Goblin y las cartas del Oráculo se apuntan al comprarlos o conseguirlos, no al verlos",

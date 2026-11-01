@@ -12995,3 +12995,9 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .gnomo-book--gold .gnomo-chip--ok { background: #f0c850; color: var(--g-ink); }
 .gnomo-book--gold .gnomo-tag { background: #3a2a08; color: #f0c850; }
 .gnomo-book--gold .gnomo-pn { color: #7a5a12; }
+/* Gnomoteca: scrollbars dorados en las páginas completas y título dorado con todo al 100% */
+.gnomo-book--gold .gnomo-list::-webkit-scrollbar-thumb, .gnomo-book--gold .gnomo-scroll::-webkit-scrollbar-thumb {
+  min-height: 48px;
+  background: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 40' preserveAspectRatio='none'%3E%3Cpolygon points='3,1 16,0 15,40 1,38' fill='%23f0c850' stroke='%23000' stroke-width='2.5' vector-effect='non-scaling-stroke' stroke-linejoin='miter'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+.gnomo-title--gold { --o: #f0c850; --f: linear-gradient(100deg, #7a5a12, #3a2a08); }

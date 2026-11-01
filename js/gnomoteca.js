@@ -594,6 +594,7 @@ const Gnomoteca = {
     add("onlineWins", m.online && win ? 1 : 0);
     add("multiWin", win && (m.rivals || 1) >= 2 ? 1 : 0);
     if (m.level) st["lv:" + m.level] = 1;
+    if (win && m.race) this.discover("t:" + m.race); // un equipo se desbloquea ganando una partida con él
     this._touch();
     this._sig = "";
     this._check();
@@ -699,14 +700,12 @@ const Gnomoteca = {
     // Escenario y equipo elegidos, y las mecánicas propias del escenario.
     if (typeof LevelAssets !== "undefined" && LevelAssets.current) { this.discover("l:" + LevelAssets.current); }
     if (typeof Tutorial !== "undefined" && Tutorial.active) this.discover("u:nizak");
-    if (typeof matchDraft !== "undefined" && matchDraft.raceId) this.discover("t:" + matchDraft.raceId);
     // Unidades (de cualquier bando) mientras no estén en la niebla.
     if (typeof Units !== "undefined" && Units.list) {
       Units.list.forEach((u) => {
         if (!u.el || !this._visible(u.el)) return;
         this.discover("u:" + u.typeId);
         const t = typeof UNIT_TYPES !== "undefined" ? UNIT_TYPES[u.typeId] : null;
-        if (t && t.raceId) this.discover("t:" + t.raceId);
       });
     }
     if (typeof Gnome !== "undefined" && Gnome.list && Gnome.list.some((g) => g.el && this._visible(g.el))) this.discover("u:gnomo");
@@ -987,6 +986,8 @@ const Gnomoteca = {
     this.CATS.forEach((c) => { done[c.id] = this._complete(c.id); });
     const book = document.querySelector("#screen-gnomoteca .gnomo-book");
     if (book) book.classList.toggle("gnomo-book--gold", !!done[this.cat]);
+    const ttl = document.querySelector("#screen-gnomoteca .gnomo-title");
+    if (ttl) ttl.classList.toggle("gnomo-title--gold", this.CATS.every((c) => done[c.id])); // todo al 100%
     $("gt-tabs").innerHTML = this.CATS.map((c) => `<button type="button" class="gnomo-tab dl ${done[c.id] ? "gnomo-tab--gold" : ""} ${c.id === this.cat ? "gnomo-tab--active" : ""}" data-c="${c.id}">${c.label}</button>`).join("");
     $("gt-cat").textContent = this.CATS.find((c) => c.id === this.cat).label;
     // Barra de lo conseguido respecto al total (logros desbloqueados, o entradas descubiertas de la categoría).
@@ -1032,7 +1033,7 @@ const Gnomoteca = {
       $("gt-tag").style.display = lock ? "none" : "";
       $("gt-img").src = e.img;
       $("gt-img").classList.toggle("gnomo-shadow", lock);
-      $("gt-desc").textContent = lock ? "" : e.desc || "";
+      $("gt-desc").textContent = lock ? (e.id.indexOf("t:") === 0 ? (typeof I18N !== "undefined" && I18N.tr ? I18N.tr("Gana una partida con este equipo para desbloquearlo.") : "Gana una partida con este equipo para desbloquearlo.") : "") : e.desc || "";
       $("gt-stats").innerHTML = lock || !e.stats ? "" : e.stats.map((s) => `<div class="gnomo-st"><span>${s[0]}</span><div class="gnomo-bar"><i style="width:${Math.min(100, Math.round((s[1] / s[2]) * 100))}%"></i></div><b>${s[1]}</b></div>`).join("");
       $("gt-extra").innerHTML = lock || !e.extra ? "" : e.extra.filter((x) => x[1]).map((x) => `<div class="gnomo-ex"><b>${this._esc(x[0])}</b><p>${this._esc(x[1])}</p></div>`).join("");
       const xpChip = `<span class="gnomo-chip gnomo-chip--gold ${lock ? "gnomo-chip--off" : ""}"><b>+${GNOMOTECA_XP_ENTRY}</b> XP</span>`;
