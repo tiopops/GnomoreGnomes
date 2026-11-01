@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001648";
+const GG_VERSION = "v.001649";
 
 const GG_CHANGELOG = [
-  { v: "v.001648", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001649", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Gnomoteca: lo que aún no se ha descubierto ya no deja la descripción en blanco; muestra una pista de Nizak sobre cómo descubrirlo",
     "Gnomoteca > Equipos: un equipo solo se desbloquea al ganar una partida con él (antes bastaba con verlo o elegirlo)",
     "Gnomoteca: los sliders (barras de desplazamiento) de las páginas completas también son dorados, y cuando todas las páginas están al 100% el título GNOMOTECA se vuelve dorado",
     "Gnomoteca: cada página completa (todo descubierto o todos los logros) se muestra en dorado, con su pestaña, cabeceras, filas y recuadros; mientras no esté completa es morada como las demás, también Logros",

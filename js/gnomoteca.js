@@ -888,6 +888,20 @@ const Gnomoteca = {
     return out;
   },
 
+  // Pista (con el tono de Nizak) para lo que todavía no se ha descubierto: nunca queda la descripción en blanco.
+  _lockHint(id) {
+    const H = {
+      t: "Gana una partida con este equipo para desbloquearlo.",
+      u: "Aún no has visto a esta criatura. Ponla en el campo, o deja que alguien la vea en combate, y Nizak apuntará lo que sepa.",
+      r: "Todavía no has encontrado este recurso. Sigue explorando el tablero con la vista de tus unidades.",
+      b: "Este lugar sigue oculto. Acércate con una unidad para que lo vea con sus propios ojos.",
+      o: "Aún no tienes este objeto. Consíguelo en la tienda, en la mochila o en el oráculo y quedará anotado.",
+      l: "Este escenario aún no se ha pisado. Juega una partida en él para descubrirlo.",
+    };
+    const t = H[id.charAt(0)] || H.u;
+    return typeof I18N !== "undefined" && I18N.tr ? I18N.tr(t) : t;
+  },
+
   // ---------- Interfaz ----------
   open() {
     this._build();
@@ -1033,7 +1047,7 @@ const Gnomoteca = {
       $("gt-tag").style.display = lock ? "none" : "";
       $("gt-img").src = e.img;
       $("gt-img").classList.toggle("gnomo-shadow", lock);
-      $("gt-desc").textContent = lock ? (e.id.indexOf("t:") === 0 ? (typeof I18N !== "undefined" && I18N.tr ? I18N.tr("Gana una partida con este equipo para desbloquearlo.") : "Gana una partida con este equipo para desbloquearlo.") : "") : e.desc || "";
+      $("gt-desc").textContent = lock ? this._lockHint(e.id) : e.desc || "";
       $("gt-stats").innerHTML = lock || !e.stats ? "" : e.stats.map((s) => `<div class="gnomo-st"><span>${s[0]}</span><div class="gnomo-bar"><i style="width:${Math.min(100, Math.round((s[1] / s[2]) * 100))}%"></i></div><b>${s[1]}</b></div>`).join("");
       $("gt-extra").innerHTML = lock || !e.extra ? "" : e.extra.filter((x) => x[1]).map((x) => `<div class="gnomo-ex"><b>${this._esc(x[0])}</b><p>${this._esc(x[1])}</p></div>`).join("");
       const xpChip = `<span class="gnomo-chip gnomo-chip--gold ${lock ? "gnomo-chip--off" : ""}"><b>+${GNOMOTECA_XP_ENTRY}</b> XP</span>`;
