@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001651";
+const GG_VERSION = "v.001652";
 
 const GG_CHANGELOG = [
-  { v: "v.001651", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001652", date: "30/10/2026", title: "Gnomoteca", items: [
+    "Imágenes de perfil: el selector se abre al hacer clic en la foto del perfil y la insignia de nivel ya no tapa el retrato",
     "Imágenes de perfil: clic en la foto del perfil para elegir el retrato de cualquier unidad, Nizak o el guardia de WallForge; se desbloquean aniquilando a esa unidad rival, completando todos los tutoriales (Nizak) y mareando a un guardia con un gnomo; las bloqueadas salen en gris con candado; se ve en el lobby online y en el resultado de la partida",
     "Gnomoteca > Logros: el dorado (iconos, barras, fichas, recuadro del logro) solo aparece cuando están TODOS los logros completados; mientras tanto la página es morada",
     "Gnomoteca: lo que aún no se ha descubierto ya no deja la descripción en blanco; muestra una pista de Nizak sobre cómo descubrirlo",

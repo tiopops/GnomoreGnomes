@@ -13062,3 +13062,8 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .av-close::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #1f6b34; clip-path: polygon(4% 0, 100% 6%, 96% 100%, 0 94%); }
 .av-close:hover, .av-close:focus-visible { outline: none; filter: brightness(1.15); }
 @media (max-width: 560px) { .av-panel { padding: 26px 16px 16px; } .av-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 12px; } }
+
+/* El nivel no tapa el retrato: insignia más pequeña y más hacia la esquina */
+.pf-av .pf-av__lv { right: -22px; bottom: -20px; width: 34px; height: 34px; z-index: 3; }
+.pf-av .pf-av__lv small { font-size: .42rem; }
+.pf-av .pf-av__lv b { font-size: 1rem; }

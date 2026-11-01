@@ -51,10 +51,6 @@ const Avatars = {
     document.addEventListener("gg:authchange", (e) => this._onAuth(e.detail && e.detail.user));
     document.addEventListener("visibilitychange", () => { if (document.hidden) this._push(); });
     window.addEventListener("pagehide", () => this._push());
-    document.addEventListener("click", (e) => {
-      const av = e.target.closest && e.target.closest(".pf-av");
-      if (av && av.closest(".pf-hero")) this.open();
-    });
   },
   get _db() { return typeof Account !== "undefined" ? Account._db : null; },
   _key() { return AVATARS_KEY + (this._uid || "guest"); },
@@ -148,6 +144,12 @@ const Avatars = {
     [...av.children].forEach((n) => { if (n.tagName === "I" || n.classList.contains("av-face")) n.remove(); });
     av.insertAdjacentHTML("afterbegin", this.faceHtml(this.currentId(), "av-face--profile"));
     av.classList.add("pf-av--pick");
+    if (!av._avBound) {
+      av._avBound = true;
+      // Directo sobre el recuadro: el panel de Mi Cuenta corta la propagación de los clics.
+      av.addEventListener("click", (e) => { e.stopPropagation(); this.open(); });
+      av.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); this.open(); } });
+    }
     av.setAttribute("role", "button");
     av.setAttribute("tabindex", "0");
     av.setAttribute("title", this._tr("Cambiar imagen de perfil"));
