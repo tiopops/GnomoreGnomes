@@ -107,7 +107,7 @@ async function applyOsResolution() {
   const onPrimary = win && !win.isDestroyed() && E.screen.getDisplayMatching(win.getBounds()).id === E.screen.getPrimaryDisplay().id;
   if (display.mode !== "full" && !dm.changed) return;
   const started = await dm.start();
-  dlog(`helper ${started ? "ok" : "FALLO"} cur=${dm.cur ? dm.cur.w + "x" + dm.cur.h + "@" + dm.cur.f : "?"} modos=${dm.modes.length}`);
+  dlog(`helper ${started ? "ok" : "FALLO " + String(dm.err || "").replace(/\s+/g, " ")} cur=${dm.cur ? dm.cur.w + "x" + dm.cur.h + "@" + dm.cur.f : "?"} modos=${dm.modes.length}`);
   if (!started) { dm.failed = true; notifyDisplay(); }
   if (!started || seq !== osSeq) return;
   const want = display.mode === "full" && onPrimary && display.fw ? dm.pick(display.fw, display.fh) : null;
@@ -205,7 +205,7 @@ function start() {
   ipcMain.on("retry", () => runFlow());
   ipcMain.on("proceed", () => launch());
   ipcMain.on("quit", () => app.quit());
-  ipcMain.handle("display:get", () => { if (dm && !dm.ready) dm.start().then((ok) => { if (!ok) dm.failed = true; notifyDisplay(); }); return displayState(); });
+  ipcMain.handle("display:get", () => { if (dm && !dm.ready) dm.start().then((ok) => { if (!ok) { dm.failed = true; dlog("helper FALLO " + String(dm.err || "").replace(/\s+/g, " ")); } notifyDisplay(); }); return displayState(); });
   ipcMain.handle("display:set", (_e, patch) => setDisplay(patch));
   win.loadFile(path.join(__dirname, "launcher.html"));
 }

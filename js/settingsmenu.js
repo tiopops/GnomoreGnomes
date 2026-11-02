@@ -530,9 +530,9 @@ const SettingsMenu = {
       [["full", "display_full"], ["window", "display_window"], ["framed", "display_framed"]].forEach(([m, k]) =>
         btn(modes, I18N.t(k), d.mode === m, false, () => { if (d.mode !== m) D.setDisplay({ mode: m }).then(render); }));
       // Pantalla completa: resoluciones REALES del monitor (cambia la resolución de Windows, menos píxeles = más rendimiento).
-      // Ventana: tamaño de la ventana.
-      if (d.mode === "full") {
-        const f = d.full || {};
+      // Ventana: tamaño de la ventana. (Una app de escritorio antigua no envía d.full: se le da la lista de siempre.)
+      if (d.mode === "full" && d.full) {
+        const f = d.full;
         (f.resolutions || []).forEach(([w, h]) =>
           btn(ress, `${w}×${h}`, !!f.current && f.current[0] === w && f.current[1] === h, false, () => D.setDisplay({ full: [w, h] }).then(render)));
       } else {

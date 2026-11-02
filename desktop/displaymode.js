@@ -95,7 +95,8 @@ class DisplayMode {
           fs.writeFileSync(f, "﻿" + PS);
           cmd = "powershell.exe"; args = ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", f];
         }
-        this.proc = spawn(cmd, args, { windowsHide: true, stdio: ["pipe", "pipe", "ignore"] });
+        this.proc = spawn(cmd, args, { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+        this.err = ""; this.proc.stderr.setEncoding("utf8"); this.proc.stderr.on("data", (d) => { this.err = (this.err + d).slice(-800); });
       } catch (e) { return resolve(false); }
       this.proc.on("error", () => { this._die(); resolve(false); });
       this.proc.on("exit", () => { this._die(); resolve(false); });
