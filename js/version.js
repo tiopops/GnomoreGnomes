@@ -12,13 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001662";
+const GG_VERSION = "v.001663";
 
 const GG_CHANGELOG = [
-  { v: "v.001662", date: "02/11/2026", title: "App de Windows", items: [
+  { v: "v.001663", date: "02/11/2026", title: "App de Windows", items: [
     "Aviso de descarga para Windows: al cerrarlo con la X solo se oculta mientras dure la pestaña; al cerrarla y volver a abrir el juego reaparece",
     "Menú principal: desaparece la barra de scroll vertical que asomaba a la derecha (tanto en el navegador como en la app de Windows)",
-    "App de Windows: en pantalla completa la resolución elegida cambia de verdad la resolución del monitor (menos píxeles = más rendimiento); se restaura sola al salir de pantalla completa o al cerrar el juego, y si el monitor no admite esa resolución se escala la interfaz",
+    "App de Windows: en pantalla completa la lista de resoluciones muestra las resoluciones REALES del monitor y al elegir una baja de verdad la resolución de Windows (menos píxeles = más rendimiento y una imagen más basta); se restaura sola al salir de pantalla completa o al cerrar el juego",
     "App de Windows: el instalador, si el juego ya está instalado, pregunta si quieres repararlo o desinstalarlo; su pantalla final usa el fondo del menú y el icono del juego tiene fondo transparente",
     "App de Windows: cambiar la resolución ahora funciona también con la ventana maximizada, en ventana sin bordes y estando en pantalla completa (pasa a ventana con ese tamaño)",
   ] },

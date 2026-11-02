@@ -38,7 +38,8 @@ function send(s) { if (win && !win.isDestroyed()) win.webContents.send("status",
 // ---------- Pantalla: modo y resolución (se eligen en Ajustes > Opciones gráficas, ver js/settingsmenu.js) ----------
 //   full  = pantalla completa · window = ventana SIN bordes · framed = ventana CON bordes (barra de título)
 const RESOLUTIONS = [[1280, 720], [1366, 768], [1600, 900], [1920, 1080], [2560, 1440], [3840, 2160]];
-let display = { mode: "framed", width: 1280, height: 720 };
+// width/height = ventana (en píxeles de interfaz) · fw/fh = resolución REAL del monitor en pantalla completa (0 = la nativa)
+let display = { mode: "framed", width: 1280, height: 720, fw: 0, fh: 0 };
 let lastWindowMode = "framed"; // al salir de pantalla completa con F11 se vuelve a este
 let displayFile = null;
 const { DisplayMode } = require("./displaymode");
@@ -64,7 +65,8 @@ function sanitize(d) {
   let w = Math.round(+(d && d.width)) || 1280, h = Math.round(+(d && d.height)) || 720;
   // Una ventana nunca debe ser mayor que la pantalla (ni menor que lo jugable).
   w = Math.max(800, Math.min(w, sz.full.width)); h = Math.max(500, Math.min(h, sz.full.height));
-  return { mode, width: w, height: h };
+  const fw = Math.max(0, Math.round(+(d && d.fw)) || 0), fh = Math.max(0, Math.round(+(d && d.fh)) || 0);
+  return { mode, width: w, height: h, fw: fw && fh ? fw : 0, fh: fw && fh ? fh : 0 };
 }
 // Resoluciones que caben en la pantalla, más la nativa.
 function resolutionList() {
@@ -73,14 +75,28 @@ function resolutionList() {
   if (!list.some(([w, h]) => w === sz.width && h === sz.height)) list.push([sz.width, sz.height]);
   return list;
 }
-function displayState() { return { ...display, screen: screenSize().full, resolutions: resolutionList() }; }
-// En pantalla completa se baja DE VERDAD la resolución del monitor (desktop/displaymode.js) y el juego se dibuja con menos píxeles.
-// Lo que el monitor no admita se completa con escala de la interfaz: el juego se maqueta como en una ventana de esa resolución
-// (ej. 1280x720) y se estira a toda la pantalla.
+// Resoluciones REALES del monitor para pantalla completa (las que Windows admite con la misma proporción que la nativa).
+function fullState() {
+  if (!dm || !dm.cur) return { status: dm && dm.failed ? "unavailable" : "loading", resolutions: [], current: null };
+  const asp = dm.cur.w / dm.cur.h, seen = new Set(), list = [];
+  for (const m of dm.modes) {
+    const k = m.w + "x" + m.h;
+    if (m.w < 1024 || Math.abs(m.w / m.h - asp) > 0.02 || seen.has(k)) continue;
+    seen.add(k); list.push([m.w, m.h]);
+  }
+  list.sort((a, b) => a[0] - b[0]);
+  return { status: "ok", resolutions: list, current: display.fw ? [display.fw, display.fh] : [dm.cur.w, dm.cur.h] };
+}
+function displayState() { return { ...display, screen: screenSize().full, resolutions: resolutionList(), full: fullState() }; }
+function dlog(m) { try { fs.appendFileSync(path.join(path.dirname(displayFile), "display.log"), new Date().toISOString() + " " + m + "\n"); } catch (e) {} }
+// En pantalla completa se baja DE VERDAD la resolución del monitor (desktop/displaymode.js): menos píxeles que dibujar = más
+// rendimiento y una imagen más basta. Al bajar los píxeles, Windows reduce también el tamaño de la interfaz (en píxeles de
+// interfaz), así que se compensa con el zoom para que el juego mantenga la MISMA maquetación que a resolución nativa.
 function applyScale() {
   if (!win || win.isDestroyed()) return;
   const sz = require("electron").screen.getPrimaryDisplay().size; // tamaño ACTUAL (puede ser menor que el nativo si se bajó la resolución)
-  const z = display.mode === "full" ? Math.min(sz.width / display.width, sz.height / display.height) : 1;
+  const nat = screenSize().full;
+  const z = display.mode === "full" ? Math.min(sz.width / nat.width, sz.height / nat.height) : 1;
   win.webContents.setZoomFactor(Math.max(0.5, Math.min(z, 4)));
 }
 // Pone el monitor en la resolución pedida (solo en pantalla completa y en el monitor principal) o lo devuelve a la nativa.
@@ -90,12 +106,15 @@ async function applyOsResolution() {
   const E = require("electron");
   const onPrimary = win && !win.isDestroyed() && E.screen.getDisplayMatching(win.getBounds()).id === E.screen.getPrimaryDisplay().id;
   if (display.mode !== "full" && !dm.changed) return;
-  if (!(await dm.start()) || seq !== osSeq) return;
-  const sf = screenSize().sf;
-  const want = display.mode === "full" && onPrimary ? dm.pick(Math.round(display.width * sf), Math.round(display.height * sf)) : null;
+  const started = await dm.start();
+  dlog(`helper ${started ? "ok" : "FALLO"} cur=${dm.cur ? dm.cur.w + "x" + dm.cur.h + "@" + dm.cur.f : "?"} modos=${dm.modes.length}`);
+  if (!started) { dm.failed = true; notifyDisplay(); }
+  if (!started || seq !== osSeq) return;
+  const want = display.mode === "full" && onPrimary && display.fw ? dm.pick(display.fw, display.fh) : null;
   const key = want && !(want.w === dm.cur.w && want.h === dm.cur.h) ? `${want.w}x${want.h}@${want.f}` : "native";
   if (key === lastOs) return;
   const ok = key === "native" ? await dm.reset() : await dm.set(want);
+  dlog(`aplicar ${key} -> ${ok ? "ok" : "ERROR"}`);
   if (seq !== osSeq) return;
   lastOs = ok ? key : "native";
   setTimeout(() => { applyScale(); notifyDisplay(); }, 900);
@@ -139,6 +158,11 @@ function makeWindow() {
 // reabre la ventana (el juego se recarga); entre pantalla completa y ventana con bordes es inmediato.
 function setDisplay(patch) {
   const prev = display;
+  // {full:[w,h]} = resolución real del monitor en pantalla completa (la nativa se guarda como 0).
+  if (patch && Array.isArray(patch.full)) {
+    const [w, h] = patch.full, nat = dm && dm.cur;
+    patch = { ...patch, fw: nat && w === nat.w && h === nat.h ? 0 : w, fh: nat && w === nat.w && h === nat.h ? 0 : h };
+  }
   display = sanitize({ ...display, ...(patch || {}) });
   if (display.mode !== "full") lastWindowMode = display.mode;
   if ((prev.mode === "window") !== (display.mode === "window")) {
@@ -181,7 +205,7 @@ function start() {
   ipcMain.on("retry", () => runFlow());
   ipcMain.on("proceed", () => launch());
   ipcMain.on("quit", () => app.quit());
-  ipcMain.handle("display:get", () => displayState());
+  ipcMain.handle("display:get", () => { if (dm && !dm.ready) dm.start().then((ok) => { if (!ok) dm.failed = true; notifyDisplay(); }); return displayState(); });
   ipcMain.handle("display:set", (_e, patch) => setDisplay(patch));
   win.loadFile(path.join(__dirname, "launcher.html"));
 }

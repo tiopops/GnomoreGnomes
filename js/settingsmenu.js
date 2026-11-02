@@ -529,9 +529,16 @@ const SettingsMenu = {
       modes.innerHTML = ""; ress.innerHTML = "";
       [["full", "display_full"], ["window", "display_window"], ["framed", "display_framed"]].forEach(([m, k]) =>
         btn(modes, I18N.t(k), d.mode === m, false, () => { if (d.mode !== m) D.setDisplay({ mode: m }).then(render); }));
-      // En pantalla completa la resolución escala la interfaz a toda la pantalla (ver applyScale en desktop/main.js).
-      (d.resolutions || []).forEach(([w, h]) =>
-        btn(ress, `${w}×${h}`, d.width === w && d.height === h, false, () => D.setDisplay({ width: w, height: h }).then(render)));
+      // Pantalla completa: resoluciones REALES del monitor (cambia la resolución de Windows, menos píxeles = más rendimiento).
+      // Ventana: tamaño de la ventana.
+      if (d.mode === "full") {
+        const f = d.full || {};
+        (f.resolutions || []).forEach(([w, h]) =>
+          btn(ress, `${w}×${h}`, !!f.current && f.current[0] === w && f.current[1] === h, false, () => D.setDisplay({ full: [w, h] }).then(render)));
+      } else {
+        (d.resolutions || []).forEach(([w, h]) =>
+          btn(ress, `${w}×${h}`, d.width === w && d.height === h, false, () => D.setDisplay({ width: w, height: h }).then(render)));
+      }
     };
     D.getDisplay().then(render).catch(() => {});
     if (D.onDisplay) D.onDisplay(render);
