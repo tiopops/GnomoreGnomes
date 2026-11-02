@@ -41,6 +41,8 @@ const RESOLUTIONS = [[1280, 720], [1366, 768], [1600, 900], [1920, 1080], [2560,
 let display = { mode: "framed", width: 1280, height: 720 };
 let lastWindowMode = "framed"; // al salir de pantalla completa con F11 se vuelve a este
 let displayFile = null;
+const { DisplayMode } = require("./displaymode");
+let dm = null;
 
 function loadDisplay() {
   try {
@@ -50,7 +52,12 @@ function loadDisplay() {
   } catch (e) {}
 }
 function saveDisplay() { try { fs.writeFileSync(displayFile, JSON.stringify(display)); } catch (e) {} }
-function screenSize() { const d = require("electron").screen.getPrimaryDisplay(); return { full: d.size, work: d.workAreaSize }; }
+// Tamaño NATIVO del monitor (se guarda al primer uso, antes de cambiar nunca la resolución del sistema).
+let native = null;
+function screenSize() {
+  if (!native) { const d = require("electron").screen.getPrimaryDisplay(); native = { size: d.size, work: d.workAreaSize, sf: d.scaleFactor || 1 }; }
+  return { full: native.size, work: native.work, sf: native.sf };
+}
 function sanitize(d) {
   const mode = ["full", "window", "framed"].includes(d && d.mode) ? d.mode : "framed";
   const sz = screenSize();
@@ -67,13 +74,31 @@ function resolutionList() {
   return list;
 }
 function displayState() { return { ...display, screen: screenSize().full, resolutions: resolutionList() }; }
-// En pantalla completa la ventana ocupa toda la pantalla, así que la resolución se aplica como escala de la interfaz:
-// el juego se maqueta exactamente como en una ventana de esa resolución (ej. 1280x720) y se estira a toda la pantalla.
+// En pantalla completa se baja DE VERDAD la resolución del monitor (desktop/displaymode.js) y el juego se dibuja con menos píxeles.
+// Lo que el monitor no admita se completa con escala de la interfaz: el juego se maqueta como en una ventana de esa resolución
+// (ej. 1280x720) y se estira a toda la pantalla.
 function applyScale() {
   if (!win || win.isDestroyed()) return;
-  const sz = screenSize().full;
+  const sz = require("electron").screen.getPrimaryDisplay().size; // tamaño ACTUAL (puede ser menor que el nativo si se bajó la resolución)
   const z = display.mode === "full" ? Math.min(sz.width / display.width, sz.height / display.height) : 1;
   win.webContents.setZoomFactor(Math.max(0.5, Math.min(z, 4)));
+}
+// Pone el monitor en la resolución pedida (solo en pantalla completa y en el monitor principal) o lo devuelve a la nativa.
+let osSeq = 0, lastOs = "native";
+async function applyOsResolution() {
+  const seq = ++osSeq;
+  const E = require("electron");
+  const onPrimary = win && !win.isDestroyed() && E.screen.getDisplayMatching(win.getBounds()).id === E.screen.getPrimaryDisplay().id;
+  if (display.mode !== "full" && !dm.changed) return;
+  if (!(await dm.start()) || seq !== osSeq) return;
+  const sf = screenSize().sf;
+  const want = display.mode === "full" && onPrimary ? dm.pick(Math.round(display.width * sf), Math.round(display.height * sf)) : null;
+  const key = want && !(want.w === dm.cur.w && want.h === dm.cur.h) ? `${want.w}x${want.h}@${want.f}` : "native";
+  if (key === lastOs) return;
+  const ok = key === "native" ? await dm.reset() : await dm.set(want);
+  if (seq !== osSeq) return;
+  lastOs = ok ? key : "native";
+  setTimeout(() => { applyScale(); notifyDisplay(); }, 900);
 }
 function notifyDisplay() { if (win && !win.isDestroyed()) win.webContents.send("display", displayState()); }
 
@@ -87,7 +112,7 @@ function makeWindow() {
     webPreferences: { preload: path.join(__dirname, "preload.js"), contextIsolation: true, nodeIntegration: false, autoplayPolicy: "no-user-gesture-required", backgroundThrottling: false },
   });
   w.once("ready-to-show", () => w.show());
-  w.webContents.on("did-finish-load", applyScale);
+  w.webContents.on("did-finish-load", () => { applyScale(); if (display.mode === "full") applyOsResolution(); });
   w.webContents.on("did-navigate", applyScale);
   // F11 = pantalla completa y de vuelta al modo de ventana anterior.
   w.webContents.on("before-input-event", (e, input) => {
@@ -136,6 +161,7 @@ function setDisplay(patch) {
   }
   saveDisplay();
   applyScale();
+  applyOsResolution();
   win.webContents.once("did-finish-load", notifyDisplay);
   notifyDisplay();
   return displayState();
@@ -145,6 +171,9 @@ function start() {
   Menu.setApplicationMenu(null);
   updater = new Updater(path.join(app.getPath("userData"), "game"), process.env.GG_RELEASE_BASE); // GG_RELEASE_BASE: solo para pruebas
   displayFile = path.join(app.getPath("userData"), "display.json");
+  dm = new DisplayMode(path.join(app.getPath("userData"), "helper"));
+  app.on("will-quit", () => dm.shutdown());
+  require("electron").screen.on("display-metrics-changed", () => { clearTimeout(start._mt); start._mt = setTimeout(applyScale, 500); });
   loadDisplay();
   serveGame();
   win = makeWindow();
