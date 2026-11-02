@@ -438,6 +438,10 @@ const SettingsMenu = {
     this._spriteQualityBtn = spriteQualityBtn;
     this._syncPerfLock();
 
+    // App de escritorio (Windows, ver desktop/): modo de pantalla y resolución.
+    const displayRow = this._buildDisplayRow();
+    if (displayRow) colVisual.insertBefore(displayRow, colVisual.firstChild); // lo primero de la pestaña Gráficos
+
     // Selector de idioma (ES por defecto / EN), con su bandera.
     colAudio.appendChild(this._buildLanguageRow());
 
@@ -496,6 +500,42 @@ const SettingsMenu = {
     input.addEventListener("input", () => { paint(); onInput(input.value / 100); });
     if (onChange) input.addEventListener("change", onChange);
     return row;
+  },
+
+  // Solo existe en la app de escritorio (window.ggDesktop lo pone desktop/preload.js). Mismo formato que el selector de idioma.
+  _buildDisplayRow() {
+    const D = window.ggDesktop;
+    if (!D || !D.getDisplay) return null;
+    const wrap = document.createElement("div");
+    wrap.className = "settings-display";
+    const mk = (label) => {
+      const row = document.createElement("div");
+      row.className = "settings-lang";
+      row.innerHTML = `<div class="p5-banner__label settings-lang__label">${label}</div><div class="settings-lang__btns"></div>`;
+      wrap.appendChild(row);
+      return row.querySelector(".settings-lang__btns");
+    };
+    const modes = mk(I18N.t("settings_display"));
+    const ress = mk(I18N.t("settings_resolution"));
+    const btn = (host, html, active, disabled, fn) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "p5-banner p5-banner--action settings-lang__btn" + (active ? " settings-lang__btn--active" : "") + (disabled ? " settings-lang__btn--off" : "");
+      b.innerHTML = `<span class="p5-banner__label">${html}</span>`;
+      if (!disabled) b.addEventListener("click", () => { if (typeof SFX !== "undefined") SFX.click(); fn(); });
+      host.appendChild(b);
+    };
+    const render = (d) => {
+      modes.innerHTML = ""; ress.innerHTML = "";
+      [["full", "display_full"], ["window", "display_window"], ["framed", "display_framed"]].forEach(([m, k]) =>
+        btn(modes, I18N.t(k), d.mode === m, false, () => { if (d.mode !== m) D.setDisplay({ mode: m }).then(render); }));
+      // En pantalla completa se usa la resolución de la pantalla: la lista se ve apagada.
+      (d.resolutions || []).forEach(([w, h]) =>
+        btn(ress, `${w}×${h}`, d.mode !== "full" && d.width === w && d.height === h, d.mode === "full", () => D.setDisplay({ width: w, height: h }).then(render)));
+    };
+    D.getDisplay().then(render).catch(() => {});
+    if (D.onDisplay) D.onDisplay(render);
+    return wrap;
   },
 
   _buildLanguageRow() {

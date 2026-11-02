@@ -19,9 +19,30 @@
   "build": {
     "appId": "com.gnomoregnomes.desktop",
     "productName": "Gnomore Gnomes",
-    "directories": { "output": "dist", "buildResources": "build" },
-    "files": ["main.js", "updater.js", "preload.js", "launcher.html", "assets/**", "build/icon.png", "package.json"],
-    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "build/icon.png" },
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "updater.js",
+      "preload.js",
+      "launcher.html",
+      "assets/**",
+      "package.json",
+      "build/icon.png"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
@@ -29,7 +50,9 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Gnomore Gnomes",
-      "artifactName": "GnomoreGnomes-Setup.exe"
+      "artifactName": "GnomoreGnomes-Setup.exe",
+      "installerSidebar": "build/installerSidebar.bmp",
+      "uninstallerSidebar": "build/uninstallerSidebar.bmp"
     }
   }
 }

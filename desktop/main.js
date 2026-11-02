@@ -35,32 +35,108 @@ app.on("window-all-closed", () => app.quit());
 
 function send(s) { if (win && !win.isDestroyed()) win.webContents.send("status", s); }
 
-function start() {
-  Menu.setApplicationMenu(null);
-  updater = new Updater(path.join(app.getPath("userData"), "game"), process.env.GG_RELEASE_BASE); // GG_RELEASE_BASE: solo para pruebas
-  serveGame();
-  win = new BrowserWindow({
-    width: 1280, height: 720, minWidth: 800, minHeight: 500,
+// ---------- Pantalla: modo y resolución (se eligen en Ajustes > Opciones gráficas, ver js/settingsmenu.js) ----------
+//   full  = pantalla completa · window = ventana SIN bordes · framed = ventana CON bordes (barra de título)
+const RESOLUTIONS = [[1280, 720], [1366, 768], [1600, 900], [1920, 1080], [2560, 1440], [3840, 2160]];
+let display = { mode: "framed", width: 1280, height: 720 };
+let lastWindowMode = "framed"; // al salir de pantalla completa con F11 se vuelve a este
+let displayFile = null;
+
+function loadDisplay() {
+  try {
+    const d = JSON.parse(fs.readFileSync(displayFile, "utf8"));
+    display = sanitize(d);
+    lastWindowMode = display.mode === "full" ? "framed" : display.mode;
+  } catch (e) {}
+}
+function saveDisplay() { try { fs.writeFileSync(displayFile, JSON.stringify(display)); } catch (e) {} }
+function screenSize() { const d = require("electron").screen.getPrimaryDisplay(); return { full: d.size, work: d.workAreaSize }; }
+function sanitize(d) {
+  const mode = ["full", "window", "framed"].includes(d && d.mode) ? d.mode : "framed";
+  const sz = screenSize();
+  let w = Math.round(+(d && d.width)) || 1280, h = Math.round(+(d && d.height)) || 720;
+  // Una ventana nunca debe ser mayor que la pantalla (ni menor que lo jugable).
+  w = Math.max(800, Math.min(w, sz.full.width)); h = Math.max(500, Math.min(h, sz.full.height));
+  return { mode, width: w, height: h };
+}
+// Resoluciones que caben en la pantalla, más la nativa.
+function resolutionList() {
+  const sz = screenSize().full;
+  const list = RESOLUTIONS.filter(([w, h]) => w <= sz.width && h <= sz.height);
+  if (!list.some(([w, h]) => w === sz.width && h === sz.height)) list.push([sz.width, sz.height]);
+  return list;
+}
+function displayState() { return { ...display, screen: screenSize().full, resolutions: resolutionList() }; }
+function notifyDisplay() { if (win && !win.isDestroyed()) win.webContents.send("display", displayState()); }
+
+function makeWindow() {
+  const framed = display.mode !== "window";
+  const w = new BrowserWindow({
+    width: display.width, height: display.height, useContentSize: true, minWidth: 800, minHeight: 500,
+    frame: framed, resizable: display.mode === "framed", fullscreen: display.mode === "full",
     backgroundColor: "#14161f", show: false, autoHideMenuBar: true, title: "Gnomore Gnomes",
     icon: path.join(__dirname, "build", "icon.png"),
     webPreferences: { preload: path.join(__dirname, "preload.js"), contextIsolation: true, nodeIntegration: false, autoplayPolicy: "no-user-gesture-required", backgroundThrottling: false },
   });
-  win.once("ready-to-show", () => win.show());
-  // F11 = pantalla completa (y F11 de nuevo para salir).
-  win.webContents.on("before-input-event", (e, input) => {
-    if (input.type === "keyDown" && input.key === "F11") { win.setFullScreen(!win.isFullScreen()); e.preventDefault(); }
+  w.once("ready-to-show", () => w.show());
+  // F11 = pantalla completa y de vuelta al modo de ventana anterior.
+  w.webContents.on("before-input-event", (e, input) => {
+    if (input.type === "keyDown" && input.key === "F11") { e.preventDefault(); setDisplay({ mode: display.mode === "full" ? lastWindowMode : "full" }); }
+  });
+  // En ventana con bordes, lo que el jugador arrastra con el ratón también se recuerda como resolución.
+  let rt = 0;
+  w.on("resize", () => {
+    if (display.mode !== "framed" || w.isFullScreen() || w.isMaximized() || w !== win) return;
+    clearTimeout(rt);
+    rt = setTimeout(() => { const [cw, ch] = w.getContentSize(); display.width = cw; display.height = ch; saveDisplay(); notifyDisplay(); }, 400);
   });
   // Lo externo (enlaces http/https que no son el juego) se abre en el navegador; el juego nunca navega fuera de sí mismo.
-  win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/i.test(url) && !isGame(url)) shell.openExternal(url); return { action: "deny" }; });
-  win.webContents.on("will-navigate", (e, url) => {
+  w.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/i.test(url) && !isGame(url)) shell.openExternal(url); return { action: "deny" }; });
+  w.webContents.on("will-navigate", (e, url) => {
     if (isGame(url) || url.startsWith("file:")) return;
     e.preventDefault();
     if (/^https?:/i.test(url)) shell.openExternal(url);
   });
+  return w;
+}
+
+// Aplica un cambio de pantalla. Una ventana sin bordes solo se puede crear así desde cero, por eso pasar a/desde "window"
+// reabre la ventana (el juego se recarga); entre pantalla completa y ventana con bordes es inmediato.
+function setDisplay(patch) {
+  const prev = display;
+  display = sanitize({ ...display, ...(patch || {}) });
+  if (display.mode !== "full") lastWindowMode = display.mode;
+  if ((prev.mode === "window") !== (display.mode === "window")) {
+    const url = win.webContents.getURL();
+    const old = win;
+    win = makeWindow();
+    win.loadURL(url.startsWith("file:") ? url : GAME_URL);
+    old.destroy();
+  } else if (display.mode === "full") {
+    win.setFullScreen(true);
+  } else {
+    const resize = () => { win.setContentSize(display.width, display.height); win.center(); };
+    if (win.isFullScreen()) { win.once("leave-full-screen", () => setTimeout(resize, 60)); win.setFullScreen(false); } else resize();
+  }
+  saveDisplay();
+  win.webContents.once("did-finish-load", notifyDisplay);
+  notifyDisplay();
+  return displayState();
+}
+
+function start() {
+  Menu.setApplicationMenu(null);
+  updater = new Updater(path.join(app.getPath("userData"), "game"), process.env.GG_RELEASE_BASE); // GG_RELEASE_BASE: solo para pruebas
+  displayFile = path.join(app.getPath("userData"), "display.json");
+  loadDisplay();
+  serveGame();
+  win = makeWindow();
   ipcMain.on("launcher-ready", () => runFlow());
   ipcMain.on("retry", () => runFlow());
   ipcMain.on("proceed", () => launch());
   ipcMain.on("quit", () => app.quit());
+  ipcMain.handle("display:get", () => displayState());
+  ipcMain.handle("display:set", (_e, patch) => setDisplay(patch));
   win.loadFile(path.join(__dirname, "launcher.html"));
 }
 

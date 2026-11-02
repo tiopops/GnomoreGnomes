@@ -8,4 +8,8 @@ contextBridge.exposeInMainWorld("ggDesktop", {
   retry: () => ipcRenderer.send("retry"),
   proceed: () => ipcRenderer.send("proceed"),
   quit: () => ipcRenderer.send("quit"),
+  // Pantalla: { mode: "full" | "window" | "framed", width, height, screen, resolutions } (ver desktop/main.js)
+  getDisplay: () => ipcRenderer.invoke("display:get"),
+  setDisplay: (patch) => ipcRenderer.invoke("display:set", patch),
+  onDisplay: (cb) => ipcRenderer.on("display", (_e, d) => cb(d)),
 });

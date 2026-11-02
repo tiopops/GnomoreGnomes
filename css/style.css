@@ -13078,3 +13078,10 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .dt-promo__go:focus-visible, .dt-promo__x:focus-visible { outline: none; }
 .dt-promo i { font-size: 18px; }
 @media (max-width: 700px) { .dt-promo { display: none; } }
+
+/* Pantalla y resolución (solo app de escritorio): mismas filas que el idioma */
+.settings-display { display: flex; flex-direction: column; gap: 10px; margin: 0 0 8px; }
+.settings-display .settings-lang { gap: 6px; }
+.settings-display .settings-lang__btns { gap: 8px; }
+.settings-display .settings-lang__btn { padding: 7px 14px; }
+.settings-lang__btn--off { opacity: .45; cursor: default; }
