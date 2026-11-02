@@ -13085,3 +13085,8 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .settings-display .settings-lang__btns { gap: 8px; }
 .settings-display .settings-lang__btn { padding: 7px 14px; }
 .settings-lang__btn--off { opacity: .45; cursor: default; }
+
+
+/* Sin barra de scroll en la página: cada pantalla ya gestiona su propio scroll (las pantallas ocultas se desplazan 10px y,
+   al ser el tablero "relative", alargaban la página y asomaba una barra a la derecha). */
+html, body { overflow: hidden; }

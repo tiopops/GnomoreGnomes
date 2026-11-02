@@ -529,9 +529,9 @@ const SettingsMenu = {
       modes.innerHTML = ""; ress.innerHTML = "";
       [["full", "display_full"], ["window", "display_window"], ["framed", "display_framed"]].forEach(([m, k]) =>
         btn(modes, I18N.t(k), d.mode === m, false, () => { if (d.mode !== m) D.setDisplay({ mode: m }).then(render); }));
-      // En pantalla completa, elegir una resolución pasa a ventana con ese tamaño (como hacen los juegos de PC al salir de exclusivo).
+      // En pantalla completa la resolución escala la interfaz a toda la pantalla (ver applyScale en desktop/main.js).
       (d.resolutions || []).forEach(([w, h]) =>
-        btn(ress, `${w}×${h}`, d.mode !== "full" && d.width === w && d.height === h, false, () => D.setDisplay({ width: w, height: h }).then(render)));
+        btn(ress, `${w}×${h}`, d.width === w && d.height === h, false, () => D.setDisplay({ width: w, height: h }).then(render)));
     };
     D.getDisplay().then(render).catch(() => {});
     if (D.onDisplay) D.onDisplay(render);

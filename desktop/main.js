@@ -67,6 +67,14 @@ function resolutionList() {
   return list;
 }
 function displayState() { return { ...display, screen: screenSize().full, resolutions: resolutionList() }; }
+// En pantalla completa la ventana ocupa toda la pantalla, así que la resolución se aplica como escala de la interfaz:
+// el juego se maqueta exactamente como en una ventana de esa resolución (ej. 1280x720) y se estira a toda la pantalla.
+function applyScale() {
+  if (!win || win.isDestroyed()) return;
+  const sz = screenSize().full;
+  const z = display.mode === "full" ? Math.min(sz.width / display.width, sz.height / display.height) : 1;
+  win.webContents.setZoomFactor(Math.max(0.5, Math.min(z, 4)));
+}
 function notifyDisplay() { if (win && !win.isDestroyed()) win.webContents.send("display", displayState()); }
 
 function makeWindow() {
@@ -79,6 +87,8 @@ function makeWindow() {
     webPreferences: { preload: path.join(__dirname, "preload.js"), contextIsolation: true, nodeIntegration: false, autoplayPolicy: "no-user-gesture-required", backgroundThrottling: false },
   });
   w.once("ready-to-show", () => w.show());
+  w.webContents.on("did-finish-load", applyScale);
+  w.webContents.on("did-navigate", applyScale);
   // F11 = pantalla completa y de vuelta al modo de ventana anterior.
   w.webContents.on("before-input-event", (e, input) => {
     if (input.type === "keyDown" && input.key === "F11") { e.preventDefault(); setDisplay({ mode: display.mode === "full" ? lastWindowMode : "full" }); }
@@ -104,8 +114,6 @@ function makeWindow() {
 // reabre la ventana (el juego se recarga); entre pantalla completa y ventana con bordes es inmediato.
 function setDisplay(patch) {
   const prev = display;
-  // Elegir una resolución estando en pantalla completa = volver al modo de ventana anterior con esa resolución.
-  if (patch && !patch.mode && (patch.width || patch.height) && display.mode === "full") patch = { ...patch, mode: lastWindowMode };
   display = sanitize({ ...display, ...(patch || {}) });
   if (display.mode !== "full") lastWindowMode = display.mode;
   if ((prev.mode === "window") !== (display.mode === "window")) {
@@ -127,6 +135,7 @@ function setDisplay(patch) {
     if (win.isFullScreen()) { win.once("leave-full-screen", () => setTimeout(resize, 60)); win.setFullScreen(false); } else resize();
   }
   saveDisplay();
+  applyScale();
   win.webContents.once("did-finish-load", notifyDisplay);
   notifyDisplay();
   return displayState();
