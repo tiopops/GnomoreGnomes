@@ -254,6 +254,7 @@ const EN_DICT = {
 "Completa todos los tutoriales de Nizak.": "Complete all of Nizak's tutorials.",
 "Marea a un guardia de WallForge lanzándole un gnomo.": "Make a WallForge guard dizzy by throwing a gnome at it.",
 "Aniquila a un {0} rival.": "Annihilate a rival {0}.",
+"Descargar para Windows": "Download for Windows",
 "Alumno de Nizak": "Nizak's Pupil",
 "Completas todos los tutoriales. Nizak no lo admitirá nunca, pero está orgulloso. Mucho. A su manera.": "You complete every tutorial. Nizak will never admit it, but he is proud. Very. In his own way.",
 "Constancia de gnomo": "Gnome Persistence",

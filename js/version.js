@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001656";
+const GG_VERSION = "v.001657";
 
 const GG_CHANGELOG = [
-  { v: "v.001656", date: "30/10/2026", title: "Gnomoteca", items: [
+  { v: "v.001657", date: "30/10/2026", title: "Gnomoteca", items: [
+    "App para Windows: launcher de escritorio (carpeta desktop/) que comprueba y descarga la última versión del juego antes de abrirlo y no deja jugar sin actualizar; el navegador de PC muestra un aviso discreto en el menú principal para descargar el instalador",
     "Imágenes de perfil: al elegir un retrato ya no se aleja y se vuelve a acercar el sprite; el rebote se aplica al recuadro y respeta el encuadre",
     "Partida Rápida: a igualdad de SK, el emparejamiento elige al rival con el nivel de cuenta más cercano al tuyo",
     "Imágenes de perfil: encuadre de las caras ajustado a mano para cada retrato",

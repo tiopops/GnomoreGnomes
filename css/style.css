@@ -13065,3 +13065,16 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .pf-av .pf-av__lv { right: -22px; bottom: -20px; width: 34px; height: 34px; z-index: 3; }
 .pf-av .pf-av__lv small { font-size: .42rem; }
 .pf-av .pf-av__lv b { font-size: 1rem; }
+
+/* ===== Aviso de la app de Windows (js/appupdate.js): chip pequeño en el menú principal, estilo de los botones oscuros ===== */
+.dt-promo { position: fixed; left: 14px; bottom: 14px; z-index: 50; display: flex; align-items: stretch; gap: 0; opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity .25s, transform .25s; filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, .6)); }
+.dt-promo--on { opacity: 1; transform: none; pointer-events: auto; }
+.dt-promo__go, .dt-promo__x { position: relative; isolation: isolate; display: flex; align-items: center; gap: 8px; color: #fff; text-decoration: none; font: inherit; font-size: 14px; border: 0; background: none; cursor: var(--cursor-pointer, pointer); text-shadow: 2px 2px 0 #000; }
+.dt-promo__go { padding: 10px 14px 10px 14px; }
+.dt-promo__x { padding: 10px 12px; }
+.dt-promo__go::before, .dt-promo__x::before { content: ""; position: absolute; inset: 0; z-index: -2; background: #000; clip-path: polygon(3% 0, 100% 4%, 97% 100%, 0 96%); }
+.dt-promo__go::after, .dt-promo__x::after { content: ""; position: absolute; inset: 3px; z-index: -1; background: #2b2733; clip-path: polygon(3% 0, 100% 4%, 97% 100%, 0 96%); }
+.dt-promo__go:hover::after, .dt-promo__go:focus-visible::after, .dt-promo__x:hover::after, .dt-promo__x:focus-visible::after { background: #4b3a66; }
+.dt-promo__go:focus-visible, .dt-promo__x:focus-visible { outline: none; }
+.dt-promo i { font-size: 18px; }
+@media (max-width: 700px) { .dt-promo { display: none; } }

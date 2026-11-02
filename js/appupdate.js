@@ -123,8 +123,16 @@ const AppUpdate = {
   // principal; la APK la publica el workflow en la release "mobile-latest".
   APK_URL: "https://github.com/tiopops/GnomoreGnomes/releases/download/mobile-latest/GnomoreGnomes.apk",
 
+  DESKTOP_URL: "https://github.com/tiopops/GnomoreGnomes/releases/download/desktop-latest/GnomoreGnomes-Setup.exe",
+  DESKTOP_PROMO_KEY: "gg_desktop_promo_off",
+
   _initPromo() {
-    if (!/Android/i.test(navigator.userAgent || "")) return;
+    const ua = navigator.userAgent || "";
+    // En la app de escritorio (Electron, ver desktop/) no se ofrece descargar nada.
+    if (window.ggDesktop) return;
+    // Navegador de Windows (no móvil): aviso discreto para descargar el instalador.
+    if (/Windows/i.test(ua) && !/Mobi|Android/i.test(ua)) { this._initDesktopPromo(); return; }
+    if (!/Android/i.test(ua)) return;
     const menu = document.getElementById("main-menu");
     if (!menu) return;
     const check = () => {
@@ -362,6 +370,50 @@ const AppUpdate = {
       this._busy = false;
       this._gateHide();
     }
+  },
+
+  // ---------- Aviso de la app de Windows (solo en el navegador del PC) ----------
+  // Un chip pequeño en una esquina del menú principal, sin bloquear nada. La X lo oculta 30 días.
+  _initDesktopPromo() {
+    try {
+      const t = +localStorage.getItem(this.DESKTOP_PROMO_KEY) || 0;
+      if (t && Date.now() - t < 30 * 86400000) return;
+    } catch (e) {}
+    const menu = document.getElementById("main-menu");
+    if (!menu) return;
+    const check = () => {
+      if (!menu.classList.contains("screen--active")) return false;
+      this._showDesktopPromo();
+      return true;
+    };
+    if (check()) return;
+    const mo = new MutationObserver(() => { if (check()) mo.disconnect(); });
+    mo.observe(menu, { attributes: true, attributeFilter: ["class"] });
+  },
+
+  _showDesktopPromo() {
+    if (this._dtPromo) return;
+    const tr = (t) => (typeof I18N !== "undefined" && I18N.tr ? I18N.tr(t) : t);
+    const el = document.createElement("div");
+    el.className = "dt-promo";
+    el.innerHTML = `<a class="dt-promo__go" href="${this.DESKTOP_URL}" rel="noopener"><i class="ph-bold ph-desktop"></i><span>${tr("Descargar para Windows")}</span></a><button type="button" class="dt-promo__x" aria-label="${tr("Cerrar")}"><i class="ph-bold ph-x"></i></button>`;
+    const hide = () => {
+      el.classList.remove("dt-promo--on");
+      setTimeout(() => el.remove(), 250);
+    };
+    el.querySelector(".dt-promo__x").addEventListener("click", (e) => {
+      e.stopPropagation();
+      try { localStorage.setItem(this.DESKTOP_PROMO_KEY, String(Date.now())); } catch (er) {}
+      hide();
+    });
+    el.querySelector(".dt-promo__go").addEventListener("click", () => { try { if (typeof SFX !== "undefined" && SFX.click) SFX.click(); } catch (er) {} });
+    document.body.appendChild(el);
+    this._dtPromo = el;
+    // Solo mientras el menú principal está en pantalla.
+    const menu = document.getElementById("main-menu");
+    const sync = () => el.classList.toggle("dt-promo--on", !!(menu && menu.classList.contains("screen--active")));
+    sync();
+    if (menu) new MutationObserver(sync).observe(menu, { attributes: true, attributeFilter: ["class"] });
   },
 };
 

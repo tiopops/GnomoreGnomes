@@ -5,7 +5,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 SRC="${1:-$HERE/..}"
 rm -rf "$HERE/www" && mkdir -p "$HERE/www"
-( cd "$SRC" && tar cf - --exclude=.git --exclude=.github --exclude=mobile --exclude=debug --exclude=firebase \
+( cd "$SRC" && tar cf - --exclude=.git --exclude=.github --exclude=mobile --exclude=debug --exclude=firebase --exclude=desktop \
     --exclude="Claude outputs" --exclude=CLAUDE.md --exclude=node_modules --exclude="*.bat" . ) | ( cd "$HERE/www" && tar xf - )
 VER="${GG_VERSION:-$(date -u +%Y%m%d%H%M%S)}"
 NAME="$(grep -o 'GG_VERSION = "[^"]*"' "$SRC/js/version.js" | head -1 | cut -d'"' -f2 || true)"
