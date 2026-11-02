@@ -104,6 +104,8 @@ function makeWindow() {
 // reabre la ventana (el juego se recarga); entre pantalla completa y ventana con bordes es inmediato.
 function setDisplay(patch) {
   const prev = display;
+  // Elegir una resolución estando en pantalla completa = volver al modo de ventana anterior con esa resolución.
+  if (patch && !patch.mode && (patch.width || patch.height) && display.mode === "full") patch = { ...patch, mode: lastWindowMode };
   display = sanitize({ ...display, ...(patch || {}) });
   if (display.mode !== "full") lastWindowMode = display.mode;
   if ((prev.mode === "window") !== (display.mode === "window")) {
@@ -115,7 +117,13 @@ function setDisplay(patch) {
   } else if (display.mode === "full") {
     win.setFullScreen(true);
   } else {
-    const resize = () => { win.setContentSize(display.width, display.height); win.center(); };
+    // Maximizada o sin redimensionar (ventana sin bordes), Windows ignora el cambio de tamaño: se libera un instante.
+    const resize = () => {
+      if (win.isMaximized()) win.unmaximize();
+      const was = win.isResizable(); win.setResizable(true);
+      win.setContentSize(display.width, display.height); win.center();
+      win.setResizable(was);
+    };
     if (win.isFullScreen()) { win.once("leave-full-screen", () => setTimeout(resize, 60)); win.setFullScreen(false); } else resize();
   }
   saveDisplay();

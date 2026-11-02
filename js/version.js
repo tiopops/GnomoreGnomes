@@ -12,9 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001658";
+const GG_VERSION = "v.001659";
 
 const GG_CHANGELOG = [
+  { v: "v.001659", date: "02/11/2026", title: "App de Windows", items: [
+    "App de Windows: el instalador, si el juego ya está instalado, pregunta si quieres repararlo o desinstalarlo; su pantalla final usa el fondo del menú y el icono del juego tiene fondo transparente",
+    "App de Windows: cambiar la resolución ahora funciona también con la ventana maximizada, en ventana sin bordes y estando en pantalla completa (pasa a ventana con ese tamaño)",
+  ] },
   { v: "v.001658", date: "30/10/2026", title: "Gnomoteca", items: [
     "App de Windows: en Ajustes > Opciones gráficas se elige el modo de pantalla (completa, ventana sin bordes o ventana con bordes) y la resolución; F11 alterna pantalla completa y se recuerda entre sesiones",
     "App para Windows: launcher de escritorio (carpeta desktop/) que comprueba y descarga la última versión del juego antes de abrirlo y no deja jugar sin actualizar; el navegador de PC muestra un aviso discreto en el menú principal para descargar el instalador",
