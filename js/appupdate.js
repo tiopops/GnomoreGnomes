@@ -375,10 +375,8 @@ const AppUpdate = {
   // ---------- Aviso de la app de Windows (solo en el navegador del PC) ----------
   // Un chip pequeño en una esquina del menú principal, sin bloquear nada. La X lo oculta 30 días.
   _initDesktopPromo() {
-    try {
-      const t = +localStorage.getItem(this.DESKTOP_PROMO_KEY) || 0;
-      if (t && Date.now() - t < 30 * 86400000) return;
-    } catch (e) {}
+    // Cerrar el aviso solo lo oculta mientras dure esta pestaña: al cerrarla y volver a abrir el juego, reaparece.
+    try { if (sessionStorage.getItem(this.DESKTOP_PROMO_KEY)) return; } catch (e) {}
     const menu = document.getElementById("main-menu");
     if (!menu) return;
     const check = () => {
@@ -403,7 +401,7 @@ const AppUpdate = {
     };
     el.querySelector(".dt-promo__x").addEventListener("click", (e) => {
       e.stopPropagation();
-      try { localStorage.setItem(this.DESKTOP_PROMO_KEY, String(Date.now())); } catch (er) {}
+      try { sessionStorage.setItem(this.DESKTOP_PROMO_KEY, "1"); } catch (er) {}
       hide();
     });
     el.querySelector(".dt-promo__go").addEventListener("click", () => { try { if (typeof SFX !== "undefined" && SFX.click) SFX.click(); } catch (er) {} });
