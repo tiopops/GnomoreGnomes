@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001668";
+const GG_VERSION = "v.001669";
 
 const GG_CHANGELOG = [
-  { v: "v.001668", date: "03/11/2026", title: "Instalador de Windows", items: [
+  { v: "v.001669", date: "03/11/2026", title: "Instalador de Windows", items: [
+      "Ajustes > Controles: teclado y mando se ordenan según el control que estés usando en ese momento; el actual aparece arriba.",
       "Resolución adaptativa: tiendas, rocas y demás elementos del escenario cambian de textura sin fundido (adiós parpadeos y rarezas).",
     "Resolución adaptativa: la mena ya no se ve un instante por encima de la niebla y se evitan parpadeos en el personaje que lleva un gnomo cogido, en la mena de metal y en los objetos tapados por la niebla (el cambio de calidad es directo en esos casos)",
     "Gnomos: cuando un personaje deja de andar, sea por lo que sea (acercarse a un cofre, un recurso, una tienda, un tótem, atacar, coger un gnomo...), los gnomos que lo ven dentro de su área de alerta huyen igual que tras un movimiento normal",

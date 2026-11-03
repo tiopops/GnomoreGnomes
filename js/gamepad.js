@@ -229,6 +229,9 @@ const GamepadCtl = {
     // Con el mando: se oculta el puntero del ratón; al mover el ratón vuelve y
     // desaparece toda la interfaz del mando (anillo, cursor, ayudas).
     document.body.classList.toggle("gp-active", !!v);
+    // Reordena teclado/mando según el control en uso. Al pasar a ratón, si el puntero ya está sobre la lista no se
+    // reordena en ese instante (las filas se moverían bajo el cursor justo antes del clic); se aplica en el siguiente refresco.
+    if (this._pane && this._pane.isConnected && (v || !this._pane.matches(":hover"))) this._refreshPane();
     if (!v) {
       this._ringEl && this._ringEl.classList.remove("gp-focus--on");
       this._markFocus(null);
@@ -1493,7 +1496,8 @@ const GamepadCtl = {
       <div class="gp-map">${kbRows}</div>
       <div class="gp-note">Las flechas también mueven la cámara. Pulsa una fila y luego la tecla nueva (Esc cancela).</div>
       <button type="button" class="p5-banner p5-banner--action gp-kbreset" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">Restablecer teclado</span></button>` : "";
-    // Sin mando conectado: teclado arriba y mando debajo. Con mando conectado: mando arriba y teclado debajo.
+    // Pedido explícito: el orden se adapta al control que se está usando AHORA MISMO: el actual va arriba
+    // (mando si el último input ha sido el mando; teclado/ratón en caso contrario).
     const padHtml = `<div class="gp-sec">Mando</div>
       <div class="gp-status ${this.connected ? "gp-status--ok" : ""}">
         <i class="ph-fill ph-game-controller"></i>
@@ -1513,7 +1517,7 @@ const GamepadCtl = {
       <div class="gp-map">${rows}</div>
       <div class="gp-note">Cruceta o stick izquierdo: mover cursor y navegar. Stick derecho: cámara.</div>
       <button type="button" class="p5-banner p5-banner--action gp-reset" style="--p5-tone:#5a1d1d"><span class="p5-banner__label">Restablecer</span></button>`;
-    pane.innerHTML = this.connected ? padHtml + kbHtml : kbHtml + padHtml;
+    pane.innerHTML = this.connected && this.active ? padHtml + kbHtml : kbHtml + padHtml;
     pane.querySelector(".gp-rescan").addEventListener("click", () => { if (typeof SFX !== "undefined") SFX.click(); this.rescan(); });
     pane.querySelector(".gp-testbtn").addEventListener("click", () => {
       if (typeof SFX !== "undefined") SFX.click();
