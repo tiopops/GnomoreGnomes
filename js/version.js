@@ -12,9 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001664";
+const GG_VERSION = "v.001665";
 
 const GG_CHANGELOG = [
+  { v: "v.001665", date: "03/11/2026", title: "Instalador de Windows", items: [
+    "Instalador de Windows: si el juego ya está instalado, ofrece Modificar / Reparar / Desinstalar (en vez de reinstalar sin preguntar); el desinstalador, también el de Aplicaciones de Windows, permite borrar además los datos del juego",
+  ] },
   { v: "v.001664", date: "02/11/2026", title: "App de Windows", items: [
     "App de Windows: en pantalla completa la lista de resoluciones ya no queda vacía con una versión antigua de la app",
     "Aviso de descarga para Windows: al cerrarlo con la X solo se oculta mientras dure la pestaña; al cerrarla y volver a abrir el juego reaparece",
