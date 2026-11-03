@@ -50,7 +50,7 @@
     if (!crops[a.id]) crops[a.id] = [0, 0, 1.8];
     const card = document.createElement("div");
     card.className = "card";
-    card.innerHTML = `<b>${a.name}</b><div class="av-tile"><span class="av-tile__img"><img src="../${a.img}" alt="" draggable="false"></span></div>
+    card.innerHTML = `<b>${a.name}</b><div class="av-tile${AVATAR_SPECIAL.has(a.id) ? ' av-tile--gold' : ''}"><span class="av-tile__img"><img src="../${a.img}" alt="" draggable="false"></span></div>
       <div class="row"><button data-z="-1">−</button><span class="zv"></span><button data-z="1">+</button></div>`;
     const tile = card.querySelector(".av-tile"), zv = card.querySelector(".zv");
     const upd = () => { apply(a.id, tile.querySelector(".av-tile__img")); zv.textContent = "x" + crops[a.id][2].toFixed(2); dump(); };

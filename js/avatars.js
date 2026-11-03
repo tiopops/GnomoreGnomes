@@ -7,7 +7,14 @@
      - Una unidad: aniquilar una unidad rival de ese tipo (Units.removeUnit avisa con onRivalDied).
      - Nizak: completar los 5 tutoriales.
      - Guardia de WallForge: marearlo lanzándole un gnomo (Reliquia._stun avisa con onGuardStunned).
-     - El gnomo viene desbloqueado de serie. */
+     - GnomOgro: matarlo (cualquier partida).
+     - Gnomo en llamas: quitárselo de encima a una unidad propia con una pedrada.
+     - Tendero goblin: gastar 100 puntos de gloria en la Tienda Goblin (se acumula entre partidas).
+     - Oráculo: conseguir las 4 cartas del Oráculo (se acumulan entre partidas).
+     - Grulla: ahuyentarla lanzándole un gnomo 5 veces en una misma partida.
+     - El gnomo viene desbloqueado de serie.
+     Los contadores acumulados (gasto en la tienda y cartas del Oráculo) viajan dentro del mismo campo "u" de Firestore
+     como fichas "p.shop.N" y "p.or.<carta>", para no tocar las reglas de la base de datos. */
 
 const AVATARS_KEY = "gnomoregnomes_avatars_";
 const AVATAR_DEFAULT = "u:gnomo";
@@ -21,15 +28,31 @@ const AVATAR_CROPS = {
   "u:goblin_lanzador": [-15.2, 22.9, 1.8],
   "u:urgamentes": [-13.5, 41.3, 1.8],
   "u:punoroca": [-31.6, 35.9, 1.8],
-  "u:manos_largas": [-22.3, 18.9, 1.8],
+  "u:manos_largas": [-22.3, 18.9, 1.7],
   "u:ala_fugaz": [-58.1, 17.4, 2.1],
   "u:nidobot": [-13.1, 28.5, 2],
   "u:magonifico": [-17.7, -10.8, 1.7],
   "u:trazaflechas": [-5.9, 18.8, 2],
   "u:portamuros": [-14.3, 22.8, 1.8],
   "u:guardia": [-3.4, 13.7, 1.8],
+  "u:grulla": [-49.6, 41.7, 1.9],
+  "u:gnomo_fuego": [-9.5, 23.6, 1.9],
   "u:nizak": [15.6, 8.2, 1.8],
+  "u:gnomogro": [-32.6, 24.3, 1.9],
+  "u:tendero": [0, -8.7, 1.9],
+  "u:oraculo": [-13.4, 4, 1.9],
 };
+// Retratos especiales (los que cuestan más de conseguir): llevan un marco dorado, solo de contorno.
+const AVATAR_SPECIAL = new Set(["u:grulla", "u:gnomo_fuego", "u:gnomogro", "u:tendero", "u:oraculo"]);
+// Retratos que no salen de la Gnomoteca (no tienen ficha de unidad): se añaden al final del catálogo.
+const AVATAR_EXTRA = [
+  { id: "u:gnomogro", name: "GnomOgro", img: "assets/gnomogro/gnomo_ogro_midres.png" },
+  { id: "u:tendero", name: "Tendero Goblin", img: "assets/ui/goblin_vendedor.png" },
+  { id: "u:oraculo", name: "Oráculo", img: "assets/oraculo/oraculo_goblin.webp" },
+];
+const AVATAR_SHOP_GOAL = 100; // puntos de gloria gastados en la Tienda Goblin (acumulado)
+const AVATAR_ORACLE_CARDS = ["renacido", "vigilante", "afortunado", "eterno"];
+const AVATAR_CRANE_GOAL = 5; // veces que se ahuyenta a la Grulla en una misma partida
 const AVATAR_TUTORIALS = ["basic", "mush", "rock", "crane", "wall"];
 
 const Avatars = {
@@ -40,13 +63,16 @@ const Avatars = {
   _dirty: false,
   _pushT: 0,
   _focus: 0,
+  shop: 0, // gloria gastada en la tienda (acumulado entre partidas)
+  cards: new Set(), // cartas del Oráculo ganadas (acumulado entre partidas)
+  _crane: 0, // grullas ahuyentadas en la partida en curso
 
   // ---------- Catálogo ----------
   list() {
     if (typeof Gnomoteca === "undefined" || !Gnomoteca.entries) return [];
-    const ok = new Set(["u:gnomo", "u:nizak", "u:guardia"]);
+    const ok = new Set(["u:gnomo", "u:nizak", "u:guardia", "u:grulla", "u:gnomo_fuego"]);
     if (typeof UNIT_TYPES !== "undefined") Object.keys(UNIT_TYPES).forEach((id) => ok.add("u:" + id));
-    return Gnomoteca.entries("unidades").filter((e) => ok.has(e.id)).map((e) => ({ id: e.id, name: e.name, img: e.img }));
+    return Gnomoteca.entries("unidades").filter((e) => ok.has(e.id)).map((e) => ({ id: e.id, name: e.name, img: e.img })).concat(AVATAR_EXTRA);
   },
   get(id) { return this.list().find((a) => a.id === id) || null; },
   _tr(s) { return typeof I18N !== "undefined" && I18N.tr ? I18N.tr(s) : s; },
@@ -55,6 +81,11 @@ const Avatars = {
     if (a.id === AVATAR_DEFAULT) return this._tr("El gnomo viene de serie. Es lo mínimo que se le puede pedir.");
     if (a.id === "u:nizak") return this._tr("Completa todos los tutoriales de Nizak.");
     if (a.id === "u:guardia") return this._tr("Marea a un guardia de WallForge lanzándole un gnomo.");
+    if (a.id === "u:gnomogro") return this._tr("Mata al GnomOgro.");
+    if (a.id === "u:gnomo_fuego") return this._tr("Quítate de encima un gnomo en llamas con una pedrada.");
+    if (a.id === "u:grulla") return this._tr("Ahuyenta a la Grulla lanzándole un gnomo 5 veces en una misma partida.") + " (" + Math.min(this._crane, AVATAR_CRANE_GOAL) + "/" + AVATAR_CRANE_GOAL + ")";
+    if (a.id === "u:tendero") return this._tr("Gasta 100 puntos de gloria en la Tienda Goblin, aunque sea en partidas distintas.") + " (" + Math.min(this.shop, AVATAR_SHOP_GOAL) + "/" + AVATAR_SHOP_GOAL + ")";
+    if (a.id === "u:oraculo") return this._tr("Consigue las 4 cartas del Oráculo, aunque sea en partidas distintas.") + " (" + this.cards.size + "/" + AVATAR_ORACLE_CARDS.length + ")";
     return this._tr("Aniquila a un {0} rival.").replace("{0}", this._tr(a.name));
   },
   has(id) { return this.u.has(id); },
@@ -76,12 +107,22 @@ const Avatars = {
   _loadLocal() {
     this.u = new Set([AVATAR_DEFAULT]);
     this.sel = AVATAR_DEFAULT;
+    this.shop = 0;
+    this.cards = new Set();
     try {
       const o = JSON.parse(localStorage.getItem(this._key()) || "null");
-      if (o) { (o.u || []).forEach((id) => this.u.add(id)); if (o.sel && this.u.has(o.sel)) this.sel = o.sel; }
+      if (o) { (o.u || []).forEach((id) => this._ingest(id)); if (o.sel && this.u.has(o.sel)) this.sel = o.sel; }
     } catch (e) {}
   },
-  _saveLocal() { try { localStorage.setItem(this._key(), JSON.stringify({ u: [...this.u], sel: this.sel })); } catch (e) {} },
+  // Un id suelto es un retrato; las fichas "p.shop.N" y "p.or.<carta>" son progreso acumulado.
+  _ingest(id) {
+    if (!id) return;
+    if (id.startsWith("p.shop.")) { this.shop = Math.max(this.shop, parseInt(id.slice(7), 10) || 0); return; }
+    if (id.startsWith("p.or.")) { const k = id.slice(5); if (AVATAR_ORACLE_CARDS.includes(k)) this.cards.add(k); return; }
+    this.u.add(id);
+  },
+  _tokens() { return [...this.u, "p.shop." + this.shop, ...[...this.cards].map((k) => "p.or." + k)]; },
+  _saveLocal() { try { localStorage.setItem(this._key(), JSON.stringify({ u: this._tokens(), sel: this.sel })); } catch (e) {} },
   _touch() {
     this._dirty = true;
     this._saveLocal();
@@ -102,8 +143,8 @@ const Avatars = {
         const d = snap.data();
         const ids = typeof d.u === "string" && d.u ? d.u.split(",") : [];
         const rem = new Set(ids);
-        ids.forEach((id) => { if (id) this.u.add(id); });
-        if ([...this.u].some((id) => !rem.has(id))) need = true; // lo que solo tenía este navegador, sube
+        ids.forEach((id) => this._ingest(id));
+        if (this._tokens().some((id) => !rem.has(id) && id !== "p.shop.0")) need = true; // lo que solo tenía este navegador, sube
         if (typeof d.sel === "string" && this.u.has(d.sel)) this.sel = d.sel;
       } else need = true;
       this._dirty = need;
@@ -119,7 +160,7 @@ const Avatars = {
     if (!db || !uid || !this._cloud || !this._dirty) return;
     this._dirty = false;
     try {
-      await db.collection("avatars").doc(uid).set({ v: 1, u: [...this.u].join(","), sel: this.sel });
+      await db.collection("avatars").doc(uid).set({ v: 1, u: this._tokens().join(","), sel: this.sel });
     } catch (e) { this._dirty = true; console.warn("avatars:", e && e.code); }
   },
 
@@ -140,6 +181,21 @@ const Avatars = {
     if (unit && unit.typeId) this.unlock("u:" + unit.typeId);
   },
   onGuardStunned() { this.unlock("u:guardia"); },
+  onGnomogroKilled() { this.unlock("u:gnomogro"); },
+  onFireGnomeStoned() { this.unlock("u:gnomo_fuego"); },
+  newMatch() { this._crane = 0; },
+  onCraneScared() { if (++this._crane >= AVATAR_CRANE_GOAL) this.unlock("u:grulla"); },
+  onShopSpend(n) {
+    if (!(n > 0)) return;
+    this.shop += n;
+    this._touch();
+    if (this.shop >= AVATAR_SHOP_GOAL) this.unlock("u:tendero");
+  },
+  onOracleCard(kind) {
+    if (!AVATAR_ORACLE_CARDS.includes(kind)) return;
+    if (!this.cards.has(kind)) { this.cards.add(kind); this._touch(); }
+    if (AVATAR_ORACLE_CARDS.every((k) => this.cards.has(k))) this.unlock("u:oraculo");
+  },
   // Nizak: al completar los 5 tutoriales (se revisa al abrir el selector, el perfil y desde la Gnomoteca).
   check() {
     const T = typeof Tutorial !== "undefined" && Tutorial.isDone ? Tutorial : null;
@@ -151,7 +207,7 @@ const Avatars = {
   faceHtml(id, cls) {
     const a = this.get(id || this.sel) || this.get(AVATAR_DEFAULT);
     if (!a) return `<i class="ph-fill ph-user"></i>`;
-    return `<span class="av-face ${cls || ""}"${this._crop(a.id)}><img src="${this._esc(a.img)}" alt="" draggable="false"></span>`;
+    return `<span class="av-face ${AVATAR_SPECIAL.has(a.id) ? "av-face--gold" : ""} ${cls || ""}"${this._crop(a.id)}><img src="${this._esc(a.img)}" alt="" draggable="false"></span>`;
   },
   currentId() { return this.has(this.sel) ? this.sel : AVATAR_DEFAULT; },
   // Retrato válido venido de la red: solo ids que existen en el catálogo.
@@ -224,7 +280,7 @@ const Avatars = {
     this._overlay.querySelector("#av-count").textContent = `${got} / ${list.length}`;
     this._overlay.querySelector("#av-grid").innerHTML = list.map((a) => {
       const lock = !this.has(a.id);
-      return `<div class="av-tile ${lock ? "av-tile--lock" : ""} ${a.id === cur ? "av-tile--sel" : ""}" data-id="${this._esc(a.id)}" role="button" tabindex="0" aria-label="${this._esc(this._tr(a.name))}">
+      return `<div class="av-tile ${lock ? "av-tile--lock" : ""} ${AVATAR_SPECIAL.has(a.id) ? "av-tile--gold" : ""} ${a.id === cur ? "av-tile--sel" : ""}" data-id="${this._esc(a.id)}" role="button" tabindex="0" aria-label="${this._esc(this._tr(a.name))}">
         <span class="av-tile__img"${this._crop(a.id)}><img src="${this._esc(a.img)}" alt="" draggable="false"></span>
         ${lock ? '<span class="av-tile__lock"><i class="ph-bold ph-lock-simple"></i></span>' : ""}
       </div>`;

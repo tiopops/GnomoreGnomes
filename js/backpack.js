@@ -1326,7 +1326,11 @@ const Backpack = {
     if (target.kind === "gnome") return Sacrifice.rockOnGnome(target.ref, team);
     if (target.kind === "volcano") return Volcano.onRockHit(target.ref, team);
     if (target.kind === "lava") { Volcano.extinguish(target.ref); return; }
-    if (target.kind === "firegnome") { Volcano.removeGnome(target.ref); return; }
+    if (target.kind === "firegnome") {
+      if (team === "player" && typeof Avatars !== "undefined") { try { Avatars.onFireGnomeStoned(); } catch (e) {} }
+      Volcano.removeGnome(target.ref);
+      return;
+    }
     if (typeof Drums !== "undefined") {
       const c = getTileCenter(target.row, target.col, Units.boardSize);
       Drums._impact(c.x, c.y, target, true);

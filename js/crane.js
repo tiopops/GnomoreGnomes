@@ -380,6 +380,7 @@ const Crane = {
     const ob = this._ob(this.st.team);
     if (!ob) return;
     if (typeof Turns !== "undefined") Turns.useAction(holder);
+    if (holder.team === "player" && typeof Avatars !== "undefined") { try { Avatars.onCraneScared(); } catch (e) {} }
     Units.clearRangeOverlays();
     gnome.passing = false;
     gnome.busy = true;

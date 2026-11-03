@@ -339,6 +339,7 @@ const Oracle = {
       B.won = team;
       if (A.kind !== "vigilante") this._perk(team)[A.kind] = true;
       if (team === "player" && A.kind !== "vigilante" && typeof Backpack !== "undefined") Backpack.addItem("oraculo_" + A.kind);
+      if (team === "player" && typeof Avatars !== "undefined") { try { Avatars.onOracleCard(A.kind); } catch (e) {} }
       this.refreshAll();
       return { res: "win", kind: A.kind };
     }

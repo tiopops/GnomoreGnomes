@@ -147,6 +147,7 @@ async function startMatch({ modeId, raceId, levelId, opponents, mp }) {
   try {
     if (typeof Preload !== "undefined") await Preload.run();
     if (typeof Banners !== "undefined") Banners.clear();
+    if (typeof Avatars !== "undefined") Avatars.newMatch();
     const size = getBoardSize(opponents);
     // Ríos (pedido explícito) — de momento solo el modo 1v1 los pide, así
     // que se activan solo para "opponents === 1" en vez de para

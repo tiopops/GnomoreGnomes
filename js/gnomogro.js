@@ -579,6 +579,7 @@ const GnomOgro = {
     const g = this.current;
     if (!g) return;
     this.current = null;
+    if (killerTeam === "player" && typeof Avatars !== "undefined") { try { Avatars.onGnomogroKilled(); } catch (e) {} }
     if (typeof Glory !== "undefined") Glory.queueKillBonus(killerTeam);
     if (typeof SFX !== "undefined") {
       SFX.explosion();
