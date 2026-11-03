@@ -617,7 +617,7 @@ function createGnomeInstance() {
       this.hideBadge();
       if (approach.row !== unit.row || approach.col !== unit.col) {
         const path = Units.stepPath(unit.row, unit.col, approach.row, approach.col);
-        await Units.walkPath(unit, path);
+        await Units.walkPath(unit, path, { noGnomeReact: true }); // el gnomo que se va a coger no debe huir: se resuelve tras cogerlo
         // Pedido explícito: "si cojo a un gnomo, el personaje avanza lo
         // coge y para, pero al parar no se revelan las casillas de niebla
         // que deberian" — Units.walkPath solo reevalúa visibilidad sobre lo
@@ -643,6 +643,8 @@ function createGnomeInstance() {
       this.attachTo(unit);
       SFX.catch();
       if (typeof Turns !== "undefined") Turns.useAction(unit);
+      // Ya cogido (este gnomo no huye: va con él), los demás gnomos que lo vean sí lo hacen.
+      await Gnome.reactToStop(unit);
       Units.refreshRange(unit);
       setTimeout(() => Gnome.ensureLooseGnome(), 400); // siempre al menos 2 sueltos
     },
@@ -2023,6 +2025,14 @@ const Gnome = {
   // el radio después.
   async reactToPlayerMove(mover) {
     await Promise.all(this.list.filter((g) => !g.heldBy).map((g) => g.reactToPlayerMove(mover)));
+  },
+
+  // Una unidad ha dejado de andar (sea cual sea el motivo): los gnomos que la ven huyen. Lo llama Units.walkPath
+  // al terminar cualquier desplazamiento; solo reaccionan por las unidades del jugador (o de cualquiera en
+  // multijugador), igual que Movement.moveTo.
+  async reactToStop(unit) {
+    if (!unit || !unit.el || (typeof Units !== "undefined" && !Units.list.includes(unit))) return;
+    if (unit.team === "player" || (typeof Net !== "undefined" && Net.active)) await this.reactToPlayerMove(unit);
   },
 
   hideAllBadges() {

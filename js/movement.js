@@ -110,7 +110,7 @@ const Movement = {
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
     Units.clearRangeOverlays();
     const path = Units.stepPath(unit.row, unit.col, destRow, destCol);
-    await Units.walkPath(unit, path);
+    await Units.walkPath(unit, path, { noGnomeReact: true }); // la huida de los gnomos se resuelve más abajo, en su orden
     // Moverse cuenta como UNA de las 2 acciones del turno (pedido explícito).
     if (typeof Turns !== "undefined") Turns.useAction(unit);
     // Niebla de guerra (js/fog.js) — pedido explícito: "se revelarán según

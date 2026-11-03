@@ -1142,7 +1142,7 @@ const Units = {
   // respiración (misma especificidad que unit__sprite pero declarada
   // después en el CSS) — al vivir en un único sitio, ninguna mecánica que
   // reutilice esto puede reintroducir ese bug por accidente.
-  async walkPath(unit, path) {
+  async walkPath(unit, path, opts = {}) {
     // PuñoRoca (pedido explícito: "el troll puñoroca mueve mucho para su
     // fuerza...tienes que cambiar su movimiento") — sin un UrgaMentes
     // aliado justo a su lado ANTES de arrancar el movimiento, el primer
@@ -1229,6 +1229,17 @@ const Units = {
     if (typeof Skills !== "undefined") Skills.refreshCohesion();
     // Seta explosiva (js/mushrooms.js): al quedar junto al Altar, se ofrece sola.
     if (typeof Mushrooms !== "undefined" && unit.el) await Mushrooms.autoOffer(unit);
+    // Pedido explícito: "cuando un personaje deja de andar sea cual sea el motivo (aunque haya cogido un cofre, un
+    // gnomo...) debe resolverse, si fuera necesario, la huida de un gnomo dentro del área de alerta del propio
+    // gnomo". Este es el ÚNICO punto de paso de cualquier desplazamiento paso a paso, así que aquí se resuelve
+    // para TODOS (acercarse a un cofre, a un recurso, a una tienda, a un tótem, a atacar...). Primero se revela
+    // la niebla (igual que Movement.moveTo) y luego huyen los gnomos. Movement.moveTo y Gnome.catchBy llevan su
+    // propio orden (acciones gastadas / gnomo ya cogido) y piden `noGnomeReact` para no huir dos veces.
+    // Solo unidades de verdad (los gnomos no viven en Units.list: su propia huida no debe espantar a nadie).
+    if (!opts.noGnomeReact && unit.el && typeof Gnome !== "undefined" && this.list.includes(unit)) {
+      if (typeof Fog !== "undefined" && unit.team === "player") Fog.revealForUnit(unit);
+      await Gnome.reactToStop(unit);
+    }
   },
 
   // "el jugador indica a donde quiere moverse, pero el segundo y tercer

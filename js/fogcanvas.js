@@ -405,7 +405,10 @@ const FogCanvas = {
 
   _measure(e, panX, panY, scale) {
     const sp = this._spriteOf(e.el);
-    if (!sp || !sp.complete || !sp.naturalWidth) { e.rect = null; return; }
+    // Si el sprite está recargando (cambio de calidad de la resolución adaptativa) se conserva la medida anterior:
+    // con rect = null la niebla que lo tapa se retiraba un instante y el objeto asomaba por encima de la nube.
+    if (!sp) { e.rect = null; return; }
+    if (!sp.complete || !sp.naturalWidth) return;
     const r = sp.getBoundingClientRect();
     if (!r.width || !r.height) { e.rect = null; return; }
     const vpr = BoardView.viewportEl.getBoundingClientRect();

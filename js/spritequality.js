@@ -314,6 +314,14 @@ const SpriteQuality = {
     if (!this.crossfade || this._ghosts >= this.MAX_GHOSTS) return false;
     if (typeof PerfMode !== "undefined" && PerfMode.enabled) return false;
     if (!imgEl.isConnected || !imgEl.parentElement || !imgEl.animate) return false;
+    // Casos en los que el fantasma de la textura vieja se ve mal y es mejor el cambio directo (pedido explícito:
+    // "algunos sprites siguen parpadeando o haciendo cosas raras con la resolución adaptativa, como el gnomo cuando
+    // está siendo cogido o la mena de metal" y "la mena se superpone un instante sobre la niebla"):
+    //  - objetos tapados, recordados o asomando entre la niebla: el fantasma no lleva su máscara de niebla y se veía por encima;
+    //  - el personaje que lleva un gnomo cogido (el fantasma, con z-index propio, tapaba o hacía temblar al gnomo);
+    //  - la mena de metal (sprite con animación de reposo propia y volteo aleatorio).
+    if (imgEl.closest(".unit--fog-hidden, .gg-peek, .gg-remembered, .gg-fogfade, .resource-node--mena")) return false;
+    if (imgEl.parentElement.querySelector(":scope > .gnome-attach")) return false;
     const r = imgEl.getBoundingClientRect();
     if (!r.width || !r.height) return false;
     return r.right > 0 && r.bottom > 0 && r.left < window.innerWidth && r.top < window.innerHeight;
