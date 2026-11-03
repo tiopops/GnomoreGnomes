@@ -39,7 +39,8 @@ function send(s) { if (win && !win.isDestroyed()) win.webContents.send("status",
 //   full  = pantalla completa · window = ventana SIN bordes · framed = ventana CON bordes (barra de título)
 const RESOLUTIONS = [[1280, 720], [1366, 768], [1600, 900], [1920, 1080], [2560, 1440], [3840, 2160]];
 // width/height = ventana (en píxeles de interfaz) · fw/fh = resolución REAL del monitor en pantalla completa (0 = la nativa)
-let display = { mode: "framed", width: 1280, height: 720, fw: 0, fh: 0 };
+// ls = dónde se eligió la última resolución ("win" = ventana, "full" = pantalla completa): al cambiar de modo se conserva.
+let display = { mode: "framed", width: 1280, height: 720, fw: 0, fh: 0, ls: "win" };
 let lastWindowMode = "framed"; // al salir de pantalla completa con F11 se vuelve a este
 let displayFile = null;
 const { DisplayMode } = require("./displaymode");
@@ -66,7 +67,7 @@ function sanitize(d) {
   // Una ventana nunca debe ser mayor que la pantalla (ni menor que lo jugable).
   w = Math.max(800, Math.min(w, sz.full.width)); h = Math.max(500, Math.min(h, sz.full.height));
   const fw = Math.max(0, Math.round(+(d && d.fw)) || 0), fh = Math.max(0, Math.round(+(d && d.fh)) || 0);
-  return { mode, width: w, height: h, fw: fw && fh ? fw : 0, fh: fw && fh ? fh : 0 };
+  return { mode, width: w, height: h, fw: fw && fh ? fw : 0, fh: fw && fh ? fh : 0, ls: d && d.ls === "full" ? "full" : "win" };
 }
 // Resoluciones que caben en la pantalla, más la nativa.
 function resolutionList() {
@@ -156,8 +157,34 @@ function makeWindow() {
 
 // Aplica un cambio de pantalla. Una ventana sin bordes solo se puede crear así desde cero, por eso pasar a/desde "window"
 // reabre la ventana (el juego se recarga); entre pantalla completa y ventana con bordes es inmediato.
+// Resolución más parecida de una lista [[w,h],…] a la pedida.
+function nearestRes(list, w, h) {
+  let best = null, bd = Infinity;
+  for (const [lw, lh] of list) { const d = Math.abs(lw - w) + Math.abs(lh - h); if (d < bd) { bd = d; best = [lw, lh]; } }
+  return best;
+}
+// Pasa la última resolución elegida de un tipo (ventana ↔ pantalla completa) al otro, para que se conserve al cambiar de modo.
+function carryResolution(nextMode) {
+  const sf = screenSize().sf, nat = screenSize().full;
+  if (nextMode === "full" && display.ls === "win") {
+    const pw = Math.round(display.width * sf), ph = Math.round(display.height * sf);
+    const best = nearestRes(fullState().resolutions, pw, ph) || [pw, ph];
+    const isNat = dm && dm.cur && best[0] === dm.cur.w && best[1] === dm.cur.h;
+    return { fw: isNat ? 0 : best[0], fh: isNat ? 0 : best[1] };
+  }
+  if (nextMode !== "full" && display.ls === "full") {
+    const w = display.fw ? display.fw / sf : nat.width, h = display.fh ? display.fh / sf : nat.height;
+    const best = nearestRes(resolutionList(), w, h) || [Math.round(w), Math.round(h)];
+    return { width: best[0], height: best[1] };
+  }
+  return {};
+}
 function setDisplay(patch) {
   const prev = display;
+  const nextMode = patch && patch.mode ? patch.mode : display.mode;
+  const picked = patch && (Array.isArray(patch.full) || patch.width || patch.height);
+  if (picked) patch = { ...patch, ls: Array.isArray(patch.full) ? "full" : "win" };
+  else if (nextMode !== display.mode) patch = { ...patch, ...carryResolution(nextMode), ls: display.ls };
   // {full:[w,h]} = resolución real del monitor en pantalla completa (la nativa se guarda como 0).
   if (patch && Array.isArray(patch.full)) {
     const [w, h] = patch.full, nat = dm && dm.cur;
