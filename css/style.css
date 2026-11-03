@@ -13051,6 +13051,7 @@ body.perf-mode .amb-gl, body.perf-mode .amb-sky { animation: none; }
 .av-tile--sel::before { background: #f0c850; }
 .av-tile--focus::before { background: #b9a6dc; }
 /* Retratos especiales: marco dorado, solo de contorno. */
+.av-tile--rowstart { grid-column-start: 1; }
 .av-tile--gold::before { background: #d9a520; }
 .av-tile--gold.av-tile--sel::before { background: #ffe58a; }
 .av-face--gold::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 2px #d9a520; pointer-events: none; z-index: 1; }

@@ -255,7 +255,7 @@ const EN_DICT = {
 "Marea a un guardia de WallForge lanzándole un gnomo.": "Make a WallForge guard dizzy by throwing a gnome at it.",
 "Aniquila a un {0} rival.": "Annihilate a rival {0}.",
 "Mata al GnomOgro.": "Kill the GnomOgre.",
-"Quítate de encima un gnomo en llamas con una pedrada.": "Get rid of a flaming gnome with a rock.",
+"Quítate de encima 5 gnomos en llamas con una pedrada en una misma partida.": "Get rid of 5 flaming gnomes with a rock in a single match.",
 "Ahuyenta a la Grulla lanzándole un gnomo 5 veces en una misma partida.": "Scare off the Crane by throwing a gnome at it 5 times in a single match.",
 "Gasta 100 puntos de gloria en la Tienda Goblin, aunque sea en partidas distintas.": "Spend 100 glory points at the Goblin Shop, even across different matches.",
 "Consigue las 4 cartas del Oráculo, aunque sea en partidas distintas.": "Get all 4 Oracle cards, even across different matches.",

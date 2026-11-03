@@ -8,7 +8,7 @@
      - Nizak: completar los 5 tutoriales.
      - Guardia de WallForge: marearlo lanzándole un gnomo (Reliquia._stun avisa con onGuardStunned).
      - GnomOgro: matarlo (cualquier partida).
-     - Gnomo en llamas: quitárselo de encima a una unidad propia con una pedrada.
+     - Gnomo en llamas: quitarse de encima 5 con una pedrada en una misma partida.
      - Tendero goblin: gastar 100 puntos de gloria en la Tienda Goblin (se acumula entre partidas).
      - Oráculo: conseguir las 4 cartas del Oráculo (se acumulan entre partidas).
      - Grulla: ahuyentarla lanzándole un gnomo 5 veces en una misma partida.
@@ -52,6 +52,7 @@ const AVATAR_EXTRA = [
 ];
 const AVATAR_SHOP_GOAL = 100; // puntos de gloria gastados en la Tienda Goblin (acumulado)
 const AVATAR_ORACLE_CARDS = ["renacido", "vigilante", "afortunado", "eterno"];
+const AVATAR_FIRE_GOAL = 5; // gnomos en llamas quitados con una pedrada en una misma partida
 const AVATAR_CRANE_GOAL = 5; // veces que se ahuyenta a la Grulla en una misma partida
 const AVATAR_TUTORIALS = ["basic", "mush", "rock", "crane", "wall"];
 
@@ -65,6 +66,7 @@ const Avatars = {
   _focus: 0,
   shop: 0, // gloria gastada en la tienda (acumulado entre partidas)
   cards: new Set(), // cartas del Oráculo ganadas (acumulado entre partidas)
+  _fire: 0, // gnomos en llamas apagados con piedra en la partida en curso
   _crane: 0, // grullas ahuyentadas en la partida en curso
 
   // ---------- Catálogo ----------
@@ -72,7 +74,7 @@ const Avatars = {
     if (typeof Gnomoteca === "undefined" || !Gnomoteca.entries) return [];
     const ok = new Set(["u:gnomo", "u:nizak", "u:guardia", "u:grulla", "u:gnomo_fuego"]);
     if (typeof UNIT_TYPES !== "undefined") Object.keys(UNIT_TYPES).forEach((id) => ok.add("u:" + id));
-    return Gnomoteca.entries("unidades").filter((e) => ok.has(e.id)).map((e) => ({ id: e.id, name: e.name, img: e.img })).concat(AVATAR_EXTRA);
+    return Gnomoteca.entries("unidades").filter((e) => ok.has(e.id)).map((e) => ({ id: e.id, name: e.name, img: e.img })).concat(AVATAR_EXTRA).sort((x, y) => AVATAR_SPECIAL.has(x.id) - AVATAR_SPECIAL.has(y.id)); // los especiales, al final (sort estable)
   },
   get(id) { return this.list().find((a) => a.id === id) || null; },
   _tr(s) { return typeof I18N !== "undefined" && I18N.tr ? I18N.tr(s) : s; },
@@ -82,7 +84,7 @@ const Avatars = {
     if (a.id === "u:nizak") return this._tr("Completa todos los tutoriales de Nizak.");
     if (a.id === "u:guardia") return this._tr("Marea a un guardia de WallForge lanzándole un gnomo.");
     if (a.id === "u:gnomogro") return this._tr("Mata al GnomOgro.");
-    if (a.id === "u:gnomo_fuego") return this._tr("Quítate de encima un gnomo en llamas con una pedrada.");
+    if (a.id === "u:gnomo_fuego") return this._tr("Quítate de encima 5 gnomos en llamas con una pedrada en una misma partida.") + " (" + Math.min(this._fire, AVATAR_FIRE_GOAL) + "/" + AVATAR_FIRE_GOAL + ")";
     if (a.id === "u:grulla") return this._tr("Ahuyenta a la Grulla lanzándole un gnomo 5 veces en una misma partida.") + " (" + Math.min(this._crane, AVATAR_CRANE_GOAL) + "/" + AVATAR_CRANE_GOAL + ")";
     if (a.id === "u:tendero") return this._tr("Gasta 100 puntos de gloria en la Tienda Goblin, aunque sea en partidas distintas.") + " (" + Math.min(this.shop, AVATAR_SHOP_GOAL) + "/" + AVATAR_SHOP_GOAL + ")";
     if (a.id === "u:oraculo") return this._tr("Consigue las 4 cartas del Oráculo, aunque sea en partidas distintas.") + " (" + this.cards.size + "/" + AVATAR_ORACLE_CARDS.length + ")";
@@ -182,8 +184,8 @@ const Avatars = {
   },
   onGuardStunned() { this.unlock("u:guardia"); },
   onGnomogroKilled() { this.unlock("u:gnomogro"); },
-  onFireGnomeStoned() { this.unlock("u:gnomo_fuego"); },
-  newMatch() { this._crane = 0; },
+  onFireGnomeStoned() { if (++this._fire >= AVATAR_FIRE_GOAL) this.unlock("u:gnomo_fuego"); },
+  newMatch() { this._crane = 0; this._fire = 0; },
   onCraneScared() { if (++this._crane >= AVATAR_CRANE_GOAL) this.unlock("u:grulla"); },
   onShopSpend(n) {
     if (!(n > 0)) return;
@@ -278,9 +280,10 @@ const Avatars = {
     const got = list.filter((a) => this.has(a.id)).length;
     const cur = this.currentId();
     this._overlay.querySelector("#av-count").textContent = `${got} / ${list.length}`;
-    this._overlay.querySelector("#av-grid").innerHTML = list.map((a) => {
+    const firstSpecial = list.findIndex((a) => AVATAR_SPECIAL.has(a.id));
+    this._overlay.querySelector("#av-grid").innerHTML = list.map((a, i) => {
       const lock = !this.has(a.id);
-      return `<div class="av-tile ${lock ? "av-tile--lock" : ""} ${AVATAR_SPECIAL.has(a.id) ? "av-tile--gold" : ""} ${a.id === cur ? "av-tile--sel" : ""}" data-id="${this._esc(a.id)}" role="button" tabindex="0" aria-label="${this._esc(this._tr(a.name))}">
+      return `<div class="av-tile ${lock ? "av-tile--lock" : ""} ${AVATAR_SPECIAL.has(a.id) ? "av-tile--gold" : ""} ${i === firstSpecial ? "av-tile--rowstart" : ""} ${a.id === cur ? "av-tile--sel" : ""}" data-id="${this._esc(a.id)}" role="button" tabindex="0" aria-label="${this._esc(this._tr(a.name))}">
         <span class="av-tile__img"${this._crop(a.id)}><img src="${this._esc(a.img)}" alt="" draggable="false"></span>
         ${lock ? '<span class="av-tile__lock"><i class="ph-bold ph-lock-simple"></i></span>' : ""}
       </div>`;

@@ -12,12 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001671";
+const GG_VERSION = "v.001672";
 
 const GG_CHANGELOG = [
-  { v: "v.001671", date: "03/11/2026", title: "Instalador de Windows", items: [
+  { v: "v.001672", date: "03/11/2026", title: "Instalador de Windows", items: [
+      "Imágenes de perfil: las especiales van en la última fila del selector; el Gnomo en llamas pide 5 pedradas a gnomos en llamas en una misma partida",
       "Imágenes de perfil especiales (Grulla, Gnomo en llamas, GnomOgro, Tendero Goblin y Oráculo): marco dorado de contorno; encuadres ajustados",
-      "Imágenes de perfil nuevas: GnomOgro (mátalo), Gnomo en llamas (quítatelo con una pedrada), Tendero Goblin (100 de gloria gastada en la tienda, acumulable entre partidas), Oráculo (las 4 cartas, acumulables entre partidas) y la Grulla (ahuyéntala 5 veces en una partida)",
+      "Imágenes de perfil nuevas: GnomOgro (mátalo), Gnomo en llamas (quítate de encima 5 con pedradas en una misma partida), Tendero Goblin (100 de gloria gastada en la tienda, acumulable entre partidas), Oráculo (las 4 cartas, acumulables entre partidas) y la Grulla (ahuyéntala 5 veces en una partida)",
       "Ajustes > Controles: teclado y mando se ordenan según el control que estés usando en ese momento; el actual aparece arriba.",
       "Resolución adaptativa: tiendas, rocas y demás elementos del escenario cambian de textura sin fundido (adiós parpadeos y rarezas).",
     "Resolución adaptativa: la mena ya no se ve un instante por encima de la niebla y se evitan parpadeos en el personaje que lleva un gnomo cogido, en la mena de metal y en los objetos tapados por la niebla (el cambio de calidad es directo en esos casos)",
