@@ -321,6 +321,11 @@ const SpriteQuality = {
     //  - el personaje que lleva un gnomo cogido (el fantasma, con z-index propio, tapaba o hacía temblar al gnomo);
     //  - la mena de metal (sprite con animación de reposo propia y volteo aleatorio).
     if (imgEl.closest(".unit--fog-hidden, .gg-peek, .gg-remembered, .gg-fogfade, .resource-node--mena")) return false;
+    // Pedido explícito: "la tienda goblin y la roca aún hacen cosas raras, revisa todos los elementos de los
+    // escenarios". El fundido solo se usa en los personajes de equipo (jugador / rivales); tiendas, rocas, aldeas,
+    // tótems, arbustos, cofres, gnomos... cambian de textura de golpe, sin fantasma encima.
+    if (!imgEl.closest(".unit--player, .unit--enemy, [class*='unit--enemy']")) return false;
+    if (imgEl.closest(".shop, .resource-node, .board-item, .bush, .hierbajo, .drum, .altar, .egg")) return false;
     if (imgEl.parentElement.querySelector(":scope > .gnome-attach")) return false;
     const r = imgEl.getBoundingClientRect();
     if (!r.width || !r.height) return false;
