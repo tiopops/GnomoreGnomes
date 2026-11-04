@@ -12,6 +12,7 @@
      - Tendero goblin: gastar 100 puntos de gloria en la Tienda Goblin (se acumula entre partidas).
      - Oráculo: conseguir las 4 cartas del Oráculo (se acumulan entre partidas).
      - Grulla: ahuyentarla lanzándole un gnomo 5 veces en una misma partida.
+     - Logo de un equipo ("t:<raza>"): ganar una partida contra ese equipo (que uno de tus rivales lo llevara).
      - El gnomo viene desbloqueado de serie.
      Los contadores acumulados (gasto en la tienda y cartas del Oráculo) viajan dentro del mismo campo "u" de Firestore
      como fichas "p.shop.N" y "p.or.<carta>", para no tocar las reglas de la base de datos. */
@@ -41,6 +42,10 @@ const AVATAR_CROPS = {
   "u:gnomogro": [-32.6, 24.3, 1.9],
   "u:tendero": [0, -8.7, 1.9],
   "u:oraculo": [-13.4, 4, 1.9],
+  "t:mushboom_forest": [0, 0, 0.95],
+  "t:colinas_rockntroll": [-2.2, 0, 0.95],
+  "t:equipo_surcanubes": [0, 0, 0.95],
+  "t:equipo_enmurallado": [0, 0, 0.95],
 };
 // Retratos especiales (los que cuestan más de conseguir): llevan un marco dorado, solo de contorno.
 const AVATAR_SPECIAL = new Set(["u:grulla", "u:gnomo_fuego", "u:gnomogro", "u:tendero", "u:oraculo"]);
@@ -74,7 +79,8 @@ const Avatars = {
     if (typeof Gnomoteca === "undefined" || !Gnomoteca.entries) return [];
     const ok = new Set(["u:gnomo", "u:nizak", "u:guardia", "u:grulla", "u:gnomo_fuego"]);
     if (typeof UNIT_TYPES !== "undefined") Object.keys(UNIT_TYPES).forEach((id) => ok.add("u:" + id));
-    return Gnomoteca.entries("unidades").filter((e) => ok.has(e.id)).map((e) => ({ id: e.id, name: e.name, img: e.img })).concat(AVATAR_EXTRA).sort((x, y) => AVATAR_SPECIAL.has(x.id) - AVATAR_SPECIAL.has(y.id)); // los especiales, al final (sort estable)
+    const teams = typeof RACES !== "undefined" ? RACES.filter((r) => r.iconImg).map((r) => ({ id: "t:" + r.id, name: typeof I18N !== "undefined" && r.nameKey ? I18N.t(r.nameKey) : r.id, img: r.iconImg })) : [];
+    return Gnomoteca.entries("unidades").filter((e) => ok.has(e.id)).map((e) => ({ id: e.id, name: e.name, img: e.img })).concat(teams, AVATAR_EXTRA).sort((x, y) => AVATAR_SPECIAL.has(x.id) - AVATAR_SPECIAL.has(y.id)); // los especiales, al final (sort estable)
   },
   get(id) { return this.list().find((a) => a.id === id) || null; },
   _tr(s) { return typeof I18N !== "undefined" && I18N.tr ? I18N.tr(s) : s; },
@@ -83,6 +89,7 @@ const Avatars = {
     if (a.id === AVATAR_DEFAULT) return this._tr("El gnomo viene de serie. Es lo mínimo que se le puede pedir.");
     if (a.id === "u:nizak") return this._tr("Completa todos los tutoriales de Nizak.");
     if (a.id === "u:guardia") return this._tr("Marea a un guardia de WallForge lanzándole un gnomo.");
+    if (a.id.startsWith("t:")) return this._tr("Gana una partida contra el equipo {0}.").replace("{0}", this._tr(a.name));
     if (a.id === "u:gnomogro") return this._tr("Mata al GnomOgro.");
     if (a.id === "u:gnomo_fuego") return this._tr("Quítate de encima 5 gnomos en llamas con una pedrada en una misma partida.") + " (" + Math.min(this._fire, AVATAR_FIRE_GOAL) + "/" + AVATAR_FIRE_GOAL + ")";
     if (a.id === "u:grulla") return this._tr("Ahuyenta a la Grulla lanzándole un gnomo 5 veces en una misma partida.") + " (" + Math.min(this._crane, AVATAR_CRANE_GOAL) + "/" + AVATAR_CRANE_GOAL + ")";
@@ -183,6 +190,12 @@ const Avatars = {
     if (unit && unit.typeId) this.unlock("u:" + unit.typeId);
   },
   onGuardStunned() { this.unlock("u:guardia"); },
+  // Fin de partida ganada por el jugador: se desbloquea el logo de cada equipo que tenía enfrente.
+  onMatchWon() {
+    if (typeof Tutorial !== "undefined" && Tutorial.active) return;
+    if (typeof Teams === "undefined" || !Teams.raceIds) return;
+    Teams.all.forEach((t) => { if (t !== "player" && Teams.raceIds[t]) this.unlock("t:" + Teams.raceIds[t]); });
+  },
   onGnomogroKilled() { this.unlock("u:gnomogro"); },
   onFireGnomeStoned() { if (++this._fire >= AVATAR_FIRE_GOAL) this.unlock("u:gnomo_fuego"); },
   newMatch() { this._crane = 0; this._fire = 0; },

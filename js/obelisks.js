@@ -921,6 +921,7 @@ const Obelisks = {
   _endGame(winnerTeam, reason) {
     this.gameOver = true;
     if (typeof PlayerStats !== "undefined") PlayerStats.recordEnd(winnerTeam);
+    if (winnerTeam === "player" && typeof Avatars !== "undefined") { try { Avatars.onMatchWon(); } catch (e) {} }
     this.closeRecruitPopup();
     this.closeAbilitiesPopup();
     this._cancelPlacementMode();
