@@ -444,7 +444,7 @@ const GNOMOTECA_EXTRA = {
 "Sus trucos se pagan con sangre: AlaFugaz se hace 1-3 de daño al aterrizar y NidoBot hasta 5 si incuba 3 turnos. ManosLargas tiene 1 de vida, pegan flojo y ven poco (percepción 1-2). Mucho truco y poca resistencia."
 ],
 "t:equipo_enmurallado": [
-"Dominan la información y el espacio: TrazaFlechas marca a un rival a 3 casillas y ve lo que ve él hasta que muere, MagoNífico se cambia de sitio con cualquier rival que veas y PortaMuros aplasta y deja inactivo al que tenga al lado. Ven muy lejos (percepción 4) y PortaMuros es un muro de 4 de vida y 3 de fuerza.",
+"Dominan la información y el espacio: TrazaFlechas marca a un rival a 3 casillas y ve lo que ve él hasta que muere, MagoNífico se cambia de sitio con cualquier unidad que veas, rival o aliada, y PortaMuros aplasta y deja inactivo al que tenga al lado. Ven muy lejos (percepción 4) y PortaMuros es un muro de 4 de vida y 3 de fuerza.",
 "Frágiles y de poco pegar: MagoNífico y TrazaFlechas solo aguantan 1 golpe y PortaMuros avanza despacio (2 casillas). Sus trucos solo se usan una vez hasta recargar en un tótem, y el cambiazo se deshace al acabar el turno. Mucha estrategia, poco aguante."
 ]
 };

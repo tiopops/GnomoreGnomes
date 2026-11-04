@@ -5,7 +5,7 @@
      - TrazaFlechas · Flecha Rastreadora: flecha a un rival visible a máx. 3 casillas.
        Le quita 1 de vida y lo MARCA: mientras siga vivo, su dueño ve dónde está y
        todo lo que ve esa unidad (su percepción), aunque esté lejos.
-     - MagoNífico · Cambiazo: intercambia su posición con un rival que estés viendo.
+     - MagoNífico · Cambiazo: intercambia su posición con una unidad que estés viendo, rival o aliada.
        Al final del turno de quien lo usa, cada uno vuelve a la casilla donde estaba
        cuando se produjo el intercambio.
      - PortaMuros · Muro Aplastante: clava su escudo en el suelo y la onda aplasta a TODOS los
@@ -28,7 +28,7 @@ Object.assign(ABILITIES, {
     icon: "ph-arrows-left-right",
     iconImg: "assets/iconos/intercambio_magico.png",
     description:
-      "Intercambia su posición con la de un rival que estés viendo. Al final del turno, cada uno vuelve a la casilla donde estaba cuando se produjo el intercambio. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
+      "Intercambia su posición con la de una unidad que estés viendo, rival o aliada. Al final del turno, cada uno vuelve a la casilla donde estaba cuando se produjo el intercambio. Gasta 1 acción. Un uso por partida: se recarga si empiezas el turno junto a un tótem propio.",
   },
   portamuros: {
     name: "Muro Aplastante",
@@ -339,7 +339,8 @@ const Enmurallado = {
   // MagoNífico · Cambiazo
   // =====================================================================
   swapValid(unit) {
-    return (u) => u.team !== unit.team && u !== unit && (unit.team !== "player" || this.visible(u));
+    // Pedido explícito: "también puede intercambiarse por una unidad aliada". Vale cualquier unidad visible (rival o aliada) que no esté ya en otro intercambio.
+    return (u) => u !== unit && !u.swapBond && (unit.team !== "player" || this.visible(u));
   },
 
   activateSwap(unit) {

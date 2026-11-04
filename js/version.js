@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001673";
+const GG_VERSION = "v.001674";
 
 const GG_CHANGELOG = [
-  { v: "v.001673", date: "03/11/2026", title: "Instalador de Windows", items: [
+  { v: "v.001674", date: "03/11/2026", title: "Instalador de Windows", items: [
+      "MagoNífico: el Cambiazo también puede intercambiarse con una unidad aliada (descripciones actualizadas)",
       "Pantallas sin \"pop\": al entrar en cualquier pantalla (elegir raza, escenario, rivales, menús...) el telón espera a que sus imágenes estén cargadas y decodificadas antes de abrirse, y en segundo plano se adelantan los recursos de esas pantallas",
       "Imágenes de perfil: las especiales van en la última fila del selector; el Gnomo en llamas pide 5 pedradas a gnomos en llamas en una misma partida",
       "Imágenes de perfil especiales (Grulla, Gnomo en llamas, GnomOgro, Tendero Goblin y Oráculo): marco dorado de contorno; encuadres ajustados",

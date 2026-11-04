@@ -32,7 +32,7 @@ const STRINGS = {
     race_equipo_surcanubes_weaknesses: "Sus trucos se pagan con sangre: AlaFugaz se hace 1-3 de daño al aterrizar y NidoBot hasta 5 si incuba 3 turnos. ManosLargas tiene 1 de vida, pegan flojo y ven poco (percepción 1-2).",
     race_equipo_enmurallado: "Equipo Reforjados",
     race_equipo_enmurallado_flavor: "Soldados de la gran muralla, tan bien guardados como bien armados: MagoNífico, TrazaFlechas y PortaMuros.",
-    race_equipo_enmurallado_virtues: "Dominan la información y el espacio: TrazaFlechas marca a un rival a 3 casillas y ve lo que ve él hasta que muere, MagoNífico se cambia de sitio con cualquier rival que veas y PortaMuros aplasta y deja inactivo al que tenga al lado. Ven muy lejos (percepción 4) y PortaMuros es un muro de 4 de vida y 3 de fuerza.",
+    race_equipo_enmurallado_virtues: "Dominan la información y el espacio: TrazaFlechas marca a un rival a 3 casillas y ve lo que ve él hasta que muere, MagoNífico se cambia de sitio con cualquier unidad que veas, rival o aliada, y PortaMuros aplasta y deja inactivo al que tenga al lado. Ven muy lejos (percepción 4) y PortaMuros es un muro de 4 de vida y 3 de fuerza.",
     race_equipo_enmurallado_weaknesses: "Frágiles y de poco pegar: MagoNífico y TrazaFlechas solo aguantan 1 golpe y PortaMuros avanza despacio (2 casillas). Sus trucos solo se usan una vez hasta recargar en un tótem, y el cambiazo se deshace al acabar el turno.",
 
     choose_level: "Elige el nivel",
@@ -234,7 +234,7 @@ const STRINGS = {
     race_equipo_surcanubes_weaknesses: "Their tricks cost blood: ShootingWing takes 1-3 damage landing and NestBot up to 5 after 3 turns incubating. StickyFingers has 1 health, they hit weakly and see little (perception 1-2).",
     race_equipo_enmurallado: "Team Reforged",
     race_equipo_enmurallado_flavor: "Soldiers of the great wall, as well guarded as they are well armed: MageNificent, ArrowTracer and WallPorter.",
-    race_equipo_enmurallado_virtues: "They own information and space: ArrowTracer marks a rival 3 tiles away and sees what it sees until it dies, MageNificent swaps places with any rival you can see and WallPorter flattens whoever stands next to it, leaving them idle. They see very far (perception 4) and WallPorter is a wall with 4 health and 3 strength.",
+    race_equipo_enmurallado_virtues: "They own information and space: ArrowTracer marks a rival 3 tiles away and sees what it sees until it dies, MageNificent swaps places with any unit you can see, rival or ally and WallPorter flattens whoever stands next to it, leaving them idle. They see very far (perception 4) and WallPorter is a wall with 4 health and 3 strength.",
     race_equipo_enmurallado_weaknesses: "Fragile and weak hitters: MageNificent and ArrowTracer only take 1 hit and WallPorter advances slowly (2 tiles). Their tricks can only be used once until recharged at a totem, and the switcheroo is undone when the turn ends.",
 
     choose_level: "Choose the level",
