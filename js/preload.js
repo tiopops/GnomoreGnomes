@@ -181,6 +181,80 @@ const Preload = {
     }
   },
 
+  // ---------- Pantallas de menú sin "pop" ----------
+  // Espera a que todas las imágenes (<img> y fondos CSS) de una pantalla estén descargadas y decodificadas.
+  // Se llama con el telón de transición aún cerrado; tope de seguridad _SCREEN_CAP_MS para no bloquear nunca.
+  _SCREEN_CAP_MS: 1800,
+  _bgUrls(root) {
+    const urls = new Set();
+    const els = root.querySelectorAll("*");
+    const n = Math.min(els.length, 900);
+    for (let i = 0; i < n; i++) {
+      let bg = "";
+      try { bg = getComputedStyle(els[i]).backgroundImage; } catch (e) {}
+      if (!bg || bg === "none") continue;
+      const re = /url\((?:"([^"]+)"|'([^']+)'|([^)]+))\)/g;
+      let m;
+      while ((m = re.exec(bg))) { const u = m[1] || m[2] || m[3]; if (u && !u.startsWith("data:")) urls.add(u); }
+    }
+    return urls;
+  },
+  _decodeUrl(u) {
+    return new Promise((res) => {
+      const im = new Image();
+      im.decoding = "async";
+      im.onerror = () => res();
+      im.onload = () => (im.decode ? im.decode().then(res, res) : res());
+      im.src = u;
+    });
+  },
+  async screenReady(id) {
+    const root = document.getElementById(id);
+    if (!root) return;
+    const jobs = [];
+    const seen = new Set();
+    root.querySelectorAll("img").forEach((im) => {
+      const u = im.currentSrc || im.src;
+      if (!u || seen.has(u)) return;
+      seen.add(u);
+      jobs.push(new Promise((res) => {
+        const go = () => (im.decode ? im.decode().then(res, res) : res());
+        if (im.complete && im.naturalWidth) go();
+        else if (im.complete) res();
+        else { im.addEventListener("load", go, { once: true }); im.addEventListener("error", res, { once: true }); }
+      }));
+    });
+    this._bgUrls(root).forEach((u) => { if (!seen.has(u)) { seen.add(u); jobs.push(this._decodeUrl(u)); } });
+    if (document.fonts && document.fonts.ready) jobs.push(document.fonts.ready.then(() => {}, () => {}));
+    await Promise.race([Promise.all(jobs), new Promise((r) => setTimeout(r, this._SCREEN_CAP_MS))]);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  },
+
+  // Calienta en segundo plano (cuando el navegador está libre) lo que enseñan las pantallas de elegir raza,
+  // escenario y rivales, para que al entrar ya estén en caché.
+  warmMenus() {
+    if (this._warmed) return;
+    this._warmed = true;
+    const urls = new Set();
+    try {
+      if (typeof RACES !== "undefined") RACES.forEach((r) => { [r.iconImg, r.gloryIcon].forEach((u) => u && urls.add(u)); });
+      if (typeof LEVELS !== "undefined") LEVELS.forEach((l) => { if (l.islandImg) urls.add(l.islandImg); });
+      if (typeof UNIT_TYPES !== "undefined") Object.values(UNIT_TYPES).forEach((t) => { if (t.spriteUrl) urls.add(t.spriteUrl); });
+      if (typeof ABILITIES !== "undefined") Object.values(ABILITIES).forEach((a) => { if (a && a.iconImg) urls.add(a.iconImg); });
+    } catch (e) {}
+    const list = [...urls].filter((u) => !this._seen.has(u));
+    list.forEach((u) => this._seen.add(u));
+    let i = 0;
+    const step = (dl) => {
+      // Tandas pequeñas mientras el navegador esté libre, para no robar fotogramas al menú.
+      let n = 0;
+      while (i < list.length && n < 3 && (!dl || dl.timeRemaining() > 4)) { this._decodeUrl(list[i++]); n++; }
+      if (i < list.length) idle();
+    };
+    const idle = () => (window.requestIdleCallback ? requestIdleCallback(step, { timeout: 1500 }) : setTimeout(() => step(null), 120));
+    idle();
+  },
+
   // Remate: se llama cuando el nivel ya está construido (o si falló el
   // arranque). No hace nada si la barra no se mostró (partidas posteriores
   // de la misma sesión de página, ver _done en run()).
@@ -251,3 +325,6 @@ const Preload = {
     if (this._overlayEl) this._overlayEl.classList.remove("match-loading-overlay--visible");
   },
 };
+
+// Con el menú ya pintado, se adelantan en segundo plano los recursos de las pantallas de selección.
+window.addEventListener("load", () => setTimeout(() => { try { Preload.warmMenus(); } catch (e) {} }, 2500));

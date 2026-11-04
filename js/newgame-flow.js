@@ -55,9 +55,17 @@ function showScreen(id) {
   c.style.pointerEvents = "auto"; // sin clics dobles mientras se cierra el telón
   c.style.transition = `opacity ${out}ms ease-in`;
   c.style.opacity = "1";
-  _sceneSwapTimer = setTimeout(() => {
+  _sceneSwapTimer = setTimeout(async () => {
     _sceneSwapTimer = null;
     _swapScreen(id);
+    // Pedido explícito: "no me gusta entrar a las pantallas y que aparezcan sprites en plan POP": el telón sigue
+    // cerrado hasta que las imágenes de la pantalla nueva estén descargadas y decodificadas (con tope de seguridad).
+    // Al abrir el telón sobre el tablero no se espera: ahí ya manda la pantalla de carga de la partida (Preload).
+    if (id !== "screen-board" && typeof Preload !== "undefined" && Preload.screenReady) {
+      const mine = _sceneSwapTimer; // por si durante la espera se pide otra pantalla
+      try { await Preload.screenReady(id); } catch (e) {}
+      if (_sceneSwapTimer !== mine) return;
+    }
     c.style.pointerEvents = "none";
     c.style.transition = `opacity ${inn}ms ease-out`;
     c.style.opacity = "0";
