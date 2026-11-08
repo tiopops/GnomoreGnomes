@@ -436,7 +436,7 @@ const Artifacts = {
       // Carga de las imágenes del artefacto ya (para que no haya "pop" al salir) y entrada del cofre.
       this._loadImgs(artId ? [this.img(artId)] : []).then(async () => {
         root.classList.add("achest--in");
-        anim(chest, [{ transform: "translateY(-70vmin) scale(.9, 1.2)", opacity: 0 }, { transform: "translateY(0) scale(1.18, .8)", opacity: 1, offset: 0.55 }, { transform: "translateY(-3vmin) scale(.94, 1.08)", offset: 0.75 }, { transform: "translateY(0) scale(1)" }], { duration: 760, easing: "ease-in" });
+        anim(chest, [{ transform: "translateY(-70vmin) scale(.9, 1.2)", opacity: 0 }, { transform: "translateY(0) scale(1.18, .8)", opacity: 1, offset: 0.55 }, { transform: "translateY(-3vmin) scale(.94, 1.08)", offset: 0.75, opacity: 1 }, { transform: "translateY(0) scale(1)", opacity: 1 }], { duration: 760, easing: "ease-in" });
         await wait(420); SND.land(); const c = center(inner); sparks(c.x, c.y + c.h * 0.35, 10, 400); shake(7, 260);
         await wait(340); busy = false; hint.style.opacity = 1;
       });
