@@ -117,6 +117,7 @@ const Net = {
     this.seat = cfg.role === "host" ? 0 : 1;
     this.myTeam = "player";
     this.otherTeam = "enemy";
+    this._peerArt = "";
     this.names = { me: cfg.myName || "", other: cfg.otherName || "" };
     this.avatars = { me: cfg.myAv || "u:gnomo", other: cfg.otherAv || "u:gnomo" };
     this.seed = cfg.seed;
@@ -202,7 +203,8 @@ const Net = {
         if (!this._peerReady) {
           this._peerReady = true;
           this._peerLay = o.lay;
-          this._send({ t: "ready", lay: this.layoutHash() });
+          this._peerArt = o.art || "";
+          this._send({ t: "ready", lay: this.layoutHash(), art: typeof Artifacts !== "undefined" ? Artifacts.netPayload() : "" });
           if (this._selfReady && o.lay !== this.layoutHash()) {
             console.error("[Net] MUNDO DISTINTO entre los dos clientes", o.lay, this.layoutHash());
             if (this.onStatus) this.onStatus("layout-mismatch");
@@ -377,7 +379,7 @@ const Net = {
 
   _announceReady() {
     if (this._readyTimer) clearInterval(this._readyTimer);
-    const send = () => { if (this.active && !this._go) this._send({ t: "ready", lay: this.layoutHash() }); else clearInterval(this._readyTimer); };
+    const send = () => { if (this.active && !this._go) this._send({ t: "ready", lay: this.layoutHash(), art: typeof Artifacts !== "undefined" ? Artifacts.netPayload() : "" }); else clearInterval(this._readyTimer); };
     send();
     this._readyTimer = setInterval(send, 1500);
   },
@@ -386,6 +388,8 @@ const Net = {
     if (this._go || !this._selfReady || !this._peerReady) return;
     this._go = true;
     if (this._readyTimer) clearInterval(this._readyTimer);
+    // Artefactos de cada jugador (js/artifacts.js): se conocen los dos y se aplican a la vez en ambos clientes.
+    if (typeof Artifacts !== "undefined") { Artifacts.netApply(this._peerArt); Artifacts.applyStart(); }
     Turns.activeTeam = this.teamOfSeat(0);
     Turns._aiRunning = this.seat !== 0;
     Turns._updateButtonState();

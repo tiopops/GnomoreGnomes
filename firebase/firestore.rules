@@ -234,6 +234,18 @@ service cloud.firestore {
 
     // Imágenes de perfil (js/avatars.js): desbloqueadas ("u", ids separados por comas) y la elegida ("sel").
     // Solo su dueño la lee y la escribe.
+    // Artefactos (js/artifacts.js): los que posee el jugador y los que lleva en cada cojín.
+    // own y eq son textos con identificadores separados por comas. Solo su dueño lo lee y lo escribe.
+    match /artifacts/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['v', 'own', 'eq'])
+        && request.resource.data.v == 1
+        && request.resource.data.own is string && request.resource.data.own.size() <= 400
+        && request.resource.data.eq is string && request.resource.data.eq.size() <= 120;
+      allow delete: if false;
+    }
+
     match /avatars/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid

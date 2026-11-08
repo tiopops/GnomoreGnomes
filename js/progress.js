@@ -18,7 +18,7 @@ Object.assign(STRINGS.es, {
   pg_missions: "Misiones diarias",
   pg_tab_missions: "MISIONES",
   pg_tab_stats: "ESTADÍSTICAS",
-  pg_tab_unlocks: "PREMIOS",
+  pg_tab_unlocks: "ARTEFACTOS",
   pg_bonus: "Completa todas",
   pg_streak: "Racha diaria",
   pg_days: "{n} días",
@@ -46,7 +46,7 @@ Object.assign(STRINGS.en, {
   pg_missions: "Daily missions",
   pg_tab_missions: "MISSIONS",
   pg_tab_stats: "STATS",
-  pg_tab_unlocks: "REWARDS",
+  pg_tab_unlocks: "ARTIFACTS",
   pg_bonus: "Complete them all",
   pg_streak: "Daily streak",
   pg_days: "{n} days",
@@ -69,7 +69,7 @@ Object.assign(STRINGS.en, {
   m_multiwin: "Win against 2 rivals at once",
 });
 
-const PROGRESS_LEVEL_CAP = 99;
+const PROGRESS_LEVEL_CAP = 30; // nivel máximo (los artefactos de js/artifacts.js se reparten hasta aquí)
 const PROGRESS_SK_START = 1000;
 const PROGRESS_SK_MIN = 100;
 const PROGRESS_SK_LEVELUP = 10; // el SK sube un poco con cada nivel (el progreso también cuenta)
@@ -197,7 +197,7 @@ const Progress = {
   },
 
   // ---------- Nivel ----------
-  need(level) { return 500 + 100 * level; }, // XP para pasar de `level` al siguiente
+  need(level) { return 150 + 25 * level; }, // XP para pasar de `level` al siguiente
   info(xp) {
     let level = 1, rem = Math.max(0, xp | 0);
     while (level < PROGRESS_LEVEL_CAP && rem >= this.need(level)) { rem -= this.need(level); level++; }

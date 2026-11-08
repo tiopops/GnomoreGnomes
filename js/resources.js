@@ -744,9 +744,9 @@ const Resources = {
     // Multijugador: el recuento se suma YA, igual que el del rival, para que ambos clientes lo sepan
     // exacto (la animación de vuelo a la mochila queda solo como efecto, ver _collect).
     if (isPlayerCollecting && typeof Net !== "undefined" && Net.active) {
-      this.counts[def.resourceId] = (this.counts[def.resourceId] || 0) + 1 + (typeof Skills !== "undefined" ? Skills.rank("player", "recolector") : 0);
+      this.counts[def.resourceId] = (this.counts[def.resourceId] || 0) + 1 + (typeof Skills !== "undefined" ? Skills.rank("player", "recolector") : 0) + (typeof Artifacts !== "undefined" ? Artifacts.resourceBonus("player", def.resourceId) : 0);
     }
-    if (isEnemyCollecting) { const _c = this.countsFor(destroyer.team); _c[def.resourceId] = (_c[def.resourceId] || 0) + 1 + (typeof Skills !== "undefined" ? Skills.rank(destroyer.team, "recolector") : 0); }
+    if (isEnemyCollecting) { const _c = this.countsFor(destroyer.team); _c[def.resourceId] = (_c[def.resourceId] || 0) + 1 + (typeof Skills !== "undefined" ? Skills.rank(destroyer.team, "recolector") : 0) + (typeof Artifacts !== "undefined" ? Artifacts.resourceBonus(destroyer.team, def.resourceId) : 0); }
     if (!isPlayerCollecting && typeof Fog !== "undefined" && Fog.perceivedGrid && !Fog.isPerceived(node.row, node.col)) {
       this._ghosts.push({ row: node.row, col: node.col, el: node.el });
       return;
@@ -873,7 +873,7 @@ const Resources = {
       if (typeof SFX !== "undefined") SFX.dropFail();
       return; // mochila llena: el recurso se pierde, igual que rechazar una compra sin sitio
     }
-    this.counts[resourceId] = (this.counts[resourceId] || 0) + 1 + (typeof Skills !== "undefined" ? Skills.rank("player", "recolector") : 0);
+    this.counts[resourceId] = (this.counts[resourceId] || 0) + 1 + (typeof Skills !== "undefined" ? Skills.rank("player", "recolector") : 0) + (typeof Artifacts !== "undefined" ? Artifacts.resourceBonus("player", resourceId) : 0);
     if (typeof SFX !== "undefined") SFX.itemEaten();
     // "que genera una animacion de pulsacion en el momento recibir el
     // recurso" (pedido explícito) — mismo mecanismo de "quitar clase, forzar

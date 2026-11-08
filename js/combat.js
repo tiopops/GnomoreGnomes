@@ -362,6 +362,7 @@ const Combat = {
   // sin efecto). Se para en el primer obstáculo (borde del tablero, otra
   // unidad o el gnomo) en vez de saltárselo.
   async pushBack(attacker, target) {
+    if (typeof Artifacts !== "undefined" && Artifacts.blocksPush(target)) return; // Botas AgarraSuelos
     const attackerBonus = typeof Armory !== "undefined" ? Armory.attackBonus(attacker.team) : 0;
     const push = UNIT_TYPES[attacker.typeId].fuerza + attackerBonus - UNIT_TYPES[target.typeId].fuerza;
     if (push <= 0) return;

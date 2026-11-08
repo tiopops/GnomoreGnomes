@@ -181,10 +181,10 @@ const PlayerStats = {
 
   html(s) {
     const T = (k) => (typeof Progress !== "undefined" ? Progress.t(k) : k);
-    const tab = this._tab === "stats" ? "stats" : "missions";
+    const tab = this._tab === "stats" ? "stats" : this._tab === "artifacts" && typeof Artifacts !== "undefined" ? "artifacts" : "missions";
     const tb = (id, label) => `<button type="button" class="pf-tab${tab === id ? " pf-tab--on" : ""}" data-pftab="${id}"><span>${label}</span></button>`;
-    return `<div class="pf-tabs">${tb("missions", T("pg_tab_missions"))}${tb("stats", T("pg_tab_stats"))}<span class="pf-tab pf-tab--off"><span><i class="ph-fill ph-lock"></i>${T("pg_tab_unlocks")}</span></span></div>
-      <div class="pf-body">${tab === "missions" && typeof Progress !== "undefined" ? Progress.missionsHtml() : this.statsHtml(s)}</div>`;
+    return `<div class="pf-tabs">${tb("missions", T("pg_tab_missions"))}${tb("stats", T("pg_tab_stats"))}${tb("artifacts", T("pg_tab_unlocks"))}</div>
+      <div class="pf-body">${tab === "artifacts" ? Artifacts.tabHtml() : tab === "missions" && typeof Progress !== "undefined" ? Progress.missionsHtml() : this.statsHtml(s)}</div>`;
   },
 
   // Rellena el contenedor del menú de usuario (auth.js) con nivel, misiones y estadísticas.
@@ -201,6 +201,7 @@ const PlayerStats = {
         this._tab = b.dataset.pftab;
         paint(this._cache || st);
       }));
+      if (typeof Artifacts !== "undefined") Artifacts.bindTab(el, () => { if (el.isConnected) paint(this._cache || st); });
       if (typeof Progress !== "undefined") Progress.watch(el, () => { if (el.isConnected) paint(this._cache || st); });
     };
     paint(this._cache || this._normalize({}));

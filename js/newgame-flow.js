@@ -195,6 +195,8 @@ async function startMatch({ modeId, raceId, levelId, opponents, mp }) {
     if (typeof Preload !== "undefined") await Preload.settle();
     if (typeof Preload !== "undefined") Preload.finish();
 
+    // Artefactos equipados (js/artifacts.js): en local se aplican ya; en multijugador, al estar ambos listos.
+    if (typeof Artifacts !== "undefined") Artifacts.begin(!!mp);
     const resumeBtn = document.getElementById("btn-resume-game");
     if (resumeBtn && !mp) resumeBtn.disabled = false;
     if (mp) Net.startTurns();
@@ -225,6 +227,7 @@ async function resumeMatch() {
     syncBoardCamera(playerSpawnSpots[0]);
     if (typeof Preload !== "undefined") await Preload.settle();
     if (typeof Preload !== "undefined") Preload.finish();
+    if (typeof Artifacts !== "undefined") Artifacts.resume();
   } catch (err) {
     _recoverFromFailedMatchStart();
     _showStartMatchError(err);
@@ -491,6 +494,7 @@ function spawnTestUnits(size, raceId, opponents, mp) {
     Armory.resetAll();
     if (typeof Skills !== "undefined") Skills.resetAll();
   }
+  if (typeof Artifacts !== "undefined") Artifacts.reset();
 
   // Turnos (js/turns.js) — se resetea AL FINAL, con el resto del tablero ya
   // colocado: siempre empieza el turno del jugador, y (re)aparece el botón

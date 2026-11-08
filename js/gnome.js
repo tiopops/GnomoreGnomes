@@ -746,7 +746,8 @@ function createGnomeInstance() {
       // Turnos (js/turns.js) — pedido explícito: "pegar al gnomo una vez"
       // es una de las 2 acciones del turno.
       if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
-      if (typeof Turns !== "undefined") Turns.useAction(unit);
+      // Guantes EspavilaGnomos: un golpe por turno y equipo no gasta acción.
+      if (typeof Turns !== "undefined" && !(typeof Artifacts !== "undefined" && Artifacts.freeGnomeHit(unit))) Turns.useAction(unit);
       // Tambores de Guerra (js/drums.js): golpe junto a un tambor.
       if (typeof Drums !== "undefined") Drums.onGnomeHit(unit);
       // El Eterno (js/oracle.js): +1 de vida por golpe.
@@ -960,7 +961,7 @@ function createGnomeInstance() {
     // probabilidad real de acertar (computePassSuccess).
     _throwDifficultyClass(unit, distance, movimiento) {
       if (distance <= movimiento) return this._passDifficultyClass(distance, movimiento);
-      const p = this.computePassSuccess(UNIT_TYPES[unit.typeId].agilidad, distance, movimiento);
+      const p = this.computePassSuccess(UNIT_TYPES[unit.typeId].agilidad, distance, movimiento, unit.team);
       return p >= 0.5 ? "range-marker--pass-medium" : "range-marker--pass-hard";
     },
 
@@ -1006,8 +1007,9 @@ function createGnomeInstance() {
     //     nunca sale, con mucha sigue siendo un tiro arriesgado pero jugable.
     // Acotado entre 5% y 98% fuera del caso adyacente, para que ahí nunca
     // sea ni un fallo ni un éxito garantizados.
-    computePassSuccess(agilidad, distance, movimiento) {
+    computePassSuccess(agilidad, distance, movimiento, team) {
       if (typeof Tutorial !== "undefined" && Tutorial.active) return 1; // el tutorial no falla pases
+      if (team && typeof Artifacts !== "undefined" && Artifacts.passSure(team)) return 1; // Guantes PielResina
       if (distance <= 1) return 1;
       const overreach = Math.max(0, distance - movimiento);
       if (overreach === 0) return Math.min(98, 90 + agilidad * 3) / 100;
@@ -1053,7 +1055,7 @@ function createGnomeInstance() {
 
       const distance = Math.max(Math.abs(target.row - holder.row), Math.abs(target.col - holder.col));
       const holderType = UNIT_TYPES[holder.typeId];
-      const success = Math.random() < this.computePassSuccess(holderType.agilidad, distance, holderType.movimiento);
+      const success = Math.random() < this.computePassSuccess(holderType.agilidad, distance, holderType.movimiento, holder.team);
 
       // Encararse hacia quien recibe el pase ANTES de soltarlo — tanto quien
       // lanza como el propio gnomo — para que el lanzamiento se lea como
@@ -1140,7 +1142,7 @@ function createGnomeInstance() {
 
       const distance = Math.max(Math.abs(destRow - holder.row), Math.abs(destCol - holder.col));
       const holderType = UNIT_TYPES[holder.typeId];
-      const success = Math.random() < this.computePassSuccess(holderType.agilidad, distance, holderType.movimiento);
+      const success = Math.random() < this.computePassSuccess(holderType.agilidad, distance, holderType.movimiento, holder.team);
 
       Units.faceTowardsTile(holder, destRow, destCol);
       this.row = holder.row;

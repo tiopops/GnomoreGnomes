@@ -787,7 +787,7 @@ const Egg = {
 
     const dist = this.cheb(holder, e);
     const type = UNIT_TYPES[holder.typeId];
-    const success = Math.random() < gnome.computePassSuccess(type.agilidad, dist, type.movimiento);
+    const success = Math.random() < gnome.computePassSuccess(type.agilidad, dist, type.movimiento, holder.team);
     Units.faceTowardsTile(holder, e.row, e.col);
     gnome.row = holder.row;
     gnome.col = holder.col;

@@ -590,7 +590,7 @@ const Turns = {
       if (typeof Gnome !== "undefined" && Gnome.isHeldBy(u.id)) return; // ya carga un gnomo: no se le puede pasar otro
       const d = Math.max(Math.abs(u.row - unit.row), Math.abs(u.col - unit.col));
       if (d > mov + 2) return;
-      const value = held.computePassSuccess(type.agilidad, d, mov) * held.computePassPoints(d, mov);
+      const value = held.computePassSuccess(type.agilidad, d, mov, unit.team) * held.computePassPoints(d, mov);
       if (value > bestValue) {
         bestValue = value;
         bestAlly = u;

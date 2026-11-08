@@ -1013,6 +1013,7 @@ const Abilities = {
   },
 
   async _pushBackFixed(target, attacker, distance, noDrown = false) {
+    if (!noDrown && typeof Artifacts !== "undefined" && Artifacts.blocksPush(target)) return; // Botas AgarraSuelos
     const dRow = Math.sign(target.row - attacker.row);
     const dCol = Math.sign(target.col - attacker.col);
     if (dRow === 0 && dCol === 0) return;
