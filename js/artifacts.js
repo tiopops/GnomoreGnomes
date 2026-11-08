@@ -7,14 +7,14 @@
        el último artefacto llega siempre al nivel máximo aunque el catálogo crezca. Los cofres de
        niveles ya superados se dan con efecto retroactivo (cofres ganados − artefactos en poder).
      - El cofre obligatorio del menú principal (3 golpes, recompensa, "RECOGER").
-     - Qué artefactos se poseen y cuáles van en cada cojín (1 al inicio, 2º en el nivel 20, 3º en el 30).
+     - Qué artefactos se poseen y cuáles van en cada vitrina (1 al inicio, 2º en el nivel 20, 3º en el 30).
      - La pestaña ARTEFACTOS del perfil (la pinta aquí, la monta js/stats.js).
      - Aplicar los efectos en cada partida (también en multijugador: cada cliente manda los suyos
        en el mensaje "ready" de js/net.js y se aplican por equipo cuando ambos están listos).
    Datos: artifacts/{uid} en Firestore (reglas en firebase/firestore.rules) con copia en localStorage. */
 
 const ART_LEVEL_MAX = 30;
-const ART_SLOT_LEVELS = [1, 20, 30]; // nivel en que se desbloquea cada cojín
+const ART_SLOT_LEVELS = [1, 20, 30]; // nivel en que se desbloquea cada vitrina
 
 // Para sumar artefactos: añade aquí una línea (id = nombre del sprite en assets/artefactos/).
 const ART_DEFS = [
@@ -36,14 +36,14 @@ const ART_DEFS = [
     art_tab: "ARTEFACTOS", art_chest_lv: "COFRE DE NIVEL {n}", art_new: "ARTEFACTO NUEVO", art_take: "RECOGER",
     art_tap: "Pulsa el cofre para abrirlo", art_next: "Próximo cofre: nivel {n}", art_all: "¡Tienes todos los artefactos!",
     art_slot_lock: "NIV {n}", art_unknown: "???", art_locked_desc: "Aún no lo tienes. Se consigue en un cofre.",
-    art_equipped: "EQUIPADO", art_help: "Pulsa un artefacto para ponerlo en el cojín marcado (otra vez para quitarlo).",
+    art_equipped: "EQUIPADO", art_help: "Pulsa un artefacto para ponerlo en la vitrina marcada (otra vez para quitarlo).",
     art_count: "{a} / {b}", art_open_aria: "Abrir cofre",
   };
   const en = {
     art_tab: "ARTIFACTS", art_chest_lv: "LEVEL {n} CHEST", art_new: "NEW ARTIFACT", art_take: "COLLECT",
     art_tap: "Tap the chest to open it", art_next: "Next chest: level {n}", art_all: "You have every artifact!",
     art_slot_lock: "LV {n}", art_unknown: "???", art_locked_desc: "You don't have it yet. Find it in a chest.",
-    art_equipped: "EQUIPPED", art_help: "Tap an artifact to put it on the selected cushion (again to remove it).",
+    art_equipped: "EQUIPPED", art_help: "Tap an artifact to put it in the selected display case (again to remove it).",
     art_count: "{a} / {b}", art_open_aria: "Open chest",
   };
   ART_DEFS.forEach((d) => { es["art_" + d.id + "_n"] = d.es[0]; es["art_" + d.id + "_d"] = d.es[1]; en["art_" + d.id + "_n"] = d.en[0]; en["art_" + d.id + "_d"] = d.en[1]; });
@@ -57,7 +57,7 @@ const Artifacts = {
   _s: { own: [], eq: [null, null, null] },
   _saveT: null,
   _open: false,
-  _slot: 0, // cojín seleccionado en la pestaña
+  _slot: 0, // vitrina seleccionada en la pestaña
   _focus: null, // artefacto cuya ficha se enseña en la pestaña
   _teams: {}, // equipo -> [ids] activos en la partida en curso
   _freeKey: {}, // equipo -> "ronda|equipo" del turno en que ya usó el golpe gratis a un gnomo
@@ -136,7 +136,7 @@ const Artifacts = {
     try { await db.collection("artifacts").doc(uid).set(this._pack()); } catch (e) { console.warn("artifacts:", e && e.code); }
   },
 
-  // ---------- Reglas de cofres y cojines ----------
+  // ---------- Reglas de cofres y vitrinas ----------
   level() { return typeof Progress !== "undefined" && Progress._loaded ? Math.min(ART_LEVEL_MAX, Progress.level) : 1; },
   chestsEarned() { const n = ART_DEFS.length; return Math.min(n, Math.floor((this.level() * n) / ART_LEVEL_MAX)); },
   pending() { return Math.max(0, this.chestsEarned() - this._s.own.length); },
@@ -242,6 +242,8 @@ const Artifacts = {
       q(".achest__name").textContent = artId ? this.name(artId) : "";
       q(".achest__desc").textContent = artId ? this.desc(artId) : "";
       document.body.appendChild(root);
+      // Capa superior del navegador (top layer): queda por encima de TODA la interfaz, tenga el z-index que tenga.
+      try { if (root.showPopover) { root.setAttribute("popover", "manual"); root.showPopover(); } } catch (e) {}
 
       // ---------- Sonido (sintetizado; respeta el volumen y el silencio del juego) ----------
       let AC = null, master = null;

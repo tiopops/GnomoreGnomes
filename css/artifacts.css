@@ -2,7 +2,7 @@
 
 /* ============ Artefactos (js/artifacts.js) ============ */
 /* ---- Cofre obligatorio del menú ---- */
-.achest { position: fixed; inset: 0; z-index: 2147482000; overflow: hidden; color: #fff; font-family: inherit; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+.achest { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: transparent; z-index: 2147482000; overflow: hidden; color: #fff; font-family: inherit; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 .achest * { box-sizing: border-box; }
 .achest__dim { position: absolute; inset: 0; background: #0c0812; opacity: .55; transition: opacity .5s linear; }
 .achest__rays { position: absolute; left: 50%; top: 46%; width: 260vmax; height: 260vmax; margin: -130vmax 0 0 -130vmax; pointer-events: none; opacity: 0; transition: opacity 1.4s linear;
