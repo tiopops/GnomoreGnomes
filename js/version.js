@@ -12,11 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001680";
+const GG_VERSION = "v.001681";
 
 const GG_CHANGELOG = [
-  { v: "v.001680", date: "09/11/2026", title: "Artefactos", items: [
-      "Artefactos: el artefacto que flota sobre la vitrina tiene un aura dorada pulsante con su misma forma",
+  { v: "v.001681", date: "09/11/2026", title: "Artefactos", items: [
+      "Artefactos: el artefacto que flota sobre la vitrina tiene un aura dorada suave y pulsante con su misma forma",
       "Artefactos sincronizados entre dispositivos: se unen los de la nube y los de cada dispositivo, y no se abre ningún cofre hasta poder leer la nube",
     ] },
   { v: "v.001678", date: "08/11/2026", title: "Artefactos", items: [

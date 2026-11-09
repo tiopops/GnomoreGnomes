@@ -228,7 +228,7 @@ const Artifacts = {
           <div class="achest__chestshadow abs"></div>
           <div class="achest__cush abs"><img alt=""></div>
           <div class="achest__artshadow abs"></div>
-          <div class="achest__art abs"><div class="achest__artfloat"><img alt=""></div></div>
+          <div class="achest__art abs"><div class="achest__artfloat"><img class="achest__glow" alt=""><img class="achest__artimg" alt=""></div></div>
           <div class="achest__chest abs" role="button" tabindex="0" aria-label="${T("art_open_aria")}">
             <div class="achest__chestinner"><img class="achest__closed" alt=""><img class="achest__opened" alt=""></div>
           </div>
@@ -370,8 +370,8 @@ const Artifacts = {
       };
 
       const reveal = async (from) => {
-        const art = q(".achest__art img");
-        art.src = this.img(artId);
+        const art = q(".achest__artimg");
+        art.src = this.img(artId); q(".achest__glow").src = this.img(artId);
         anim(chest, [{ transform: "none", opacity: 1 }, { transform: "translateY(26vmin) scale(.7)", opacity: 0 }], { duration: 480, easing: "cubic-bezier(.5,0,.9,.4)", delay: 380 });
         anim(q(".achest__chestshadow"), [{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: 380 });
         cush.style.display = "block"; wrap.style.display = "block"; sh.style.display = "block";
@@ -461,7 +461,7 @@ const Artifacts = {
       const open = i < slots, id = open ? this._s.eq[i] : null;
       return `<div class="art-slot${open ? "" : " art-slot--lock"}${open && i === this._slot ? " art-slot--sel" : ""}" data-slot="${i}" ${open ? 'role="button" tabindex="0"' : ""}>
         <img class="art-slot__cush" src="${this.img("cushion")}" alt="" draggable="false">
-        ${id ? `<img class="art-slot__art" src="${this.img(id)}" alt="${this._esc(this.name(id))}" draggable="false">` : ""}
+        ${id ? `<img class="art-slot__glow" src="${this.img(id)}" alt="" draggable="false"><img class="art-slot__art" src="${this.img(id)}" alt="${this._esc(this.name(id))}" draggable="false">` : ""}
         ${open ? "" : `<span class="art-slot__lock"><i class="ph-fill ph-lock"></i><b>${T("art_slot_lock", { n: need })}</b></span>`}
       </div>`;
     }).join("");
