@@ -104,20 +104,29 @@ const Artifacts = {
     let local = null;
     try { local = JSON.parse(localStorage.getItem(this._key(uid)) || "null"); } catch (e) {}
     local = local ? this._normalize(local) : null;
-    let remote = null;
+    let remote = null, failed = false;
     const db = this._db;
     if (db) {
       try {
         const snap = await db.collection("artifacts").doc(uid).get();
         if (snap.exists) remote = this._normalize(snap.data());
-      } catch (e) { console.warn("artifacts:", e && e.code); }
+      } catch (e) { failed = true; console.warn("artifacts:", e && e.code); }
     }
     if (uid !== this._uid) return;
-    // Gana quien tenga más artefactos (el otro pudo quedarse sin subir por falta de red / reglas sin publicar).
-    const s = remote && (!local || remote.own.length >= local.own.length) ? remote : local || { own: [], eq: [null, null, null] };
+    // Se UNEN los artefactos de la nube y los de este dispositivo; los cojines/vitrinas mandan los de la nube.
+    const own = (remote ? remote.own : []).slice();
+    (local ? local.own : []).forEach((id) => { if (!own.includes(id)) own.push(id); });
+    const base = remote || local || { eq: [null, null, null] };
+    const s = this._normalize({ own, eq: base.eq });
     this._s = s;
+    if (failed) {
+      // Sin poder leer la nube no se abre ningún cofre (saldría un artefacto distinto en cada dispositivo): se reintenta.
+      clearTimeout(this._retryT);
+      this._retryT = setTimeout(() => { if (uid === this._uid) this.load(); }, 20000);
+      return;
+    }
     this._loaded = true;
-    this._persist(!remote || (local && local.own.length > remote.own.length));
+    this._persist(!remote || own.length > remote.own.length);
     document.dispatchEvent(new CustomEvent("gg:artifacts"));
   },
 
@@ -219,7 +228,7 @@ const Artifacts = {
           <div class="achest__chestshadow abs"></div>
           <div class="achest__cush abs"><img alt=""></div>
           <div class="achest__artshadow abs"></div>
-          <div class="achest__art abs"><div class="achest__artfloat"><img alt=""></div></div>
+          <div class="achest__art abs"><div class="achest__artfloat"><i class="achest__aura"></i><i class="achest__aura achest__aura--ring"></i><img alt=""></div></div>
           <div class="achest__chest abs" role="button" tabindex="0" aria-label="${T("art_open_aria")}">
             <div class="achest__chestinner"><img class="achest__closed" alt=""><img class="achest__opened" alt=""></div>
           </div>
@@ -452,7 +461,7 @@ const Artifacts = {
       const open = i < slots, id = open ? this._s.eq[i] : null;
       return `<div class="art-slot${open ? "" : " art-slot--lock"}${open && i === this._slot ? " art-slot--sel" : ""}" data-slot="${i}" ${open ? 'role="button" tabindex="0"' : ""}>
         <img class="art-slot__cush" src="${this.img("cushion")}" alt="" draggable="false">
-        ${id ? `<img class="art-slot__art" src="${this.img(id)}" alt="${this._esc(this.name(id))}" draggable="false">` : ""}
+        ${id ? `<i class="art-slot__aura"></i><img class="art-slot__art" src="${this.img(id)}" alt="${this._esc(this.name(id))}" draggable="false">` : ""}
         ${open ? "" : `<span class="art-slot__lock"><i class="ph-fill ph-lock"></i><b>${T("art_slot_lock", { n: need })}</b></span>`}
       </div>`;
     }).join("");

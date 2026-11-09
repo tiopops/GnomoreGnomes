@@ -12,9 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001678";
+const GG_VERSION = "v.001679";
 
 const GG_CHANGELOG = [
+  { v: "v.001679", date: "09/11/2026", title: "Artefactos", items: [
+      "Artefactos: el artefacto que flota sobre la vitrina tiene un aura dorada pulsante",
+      "Artefactos sincronizados entre dispositivos: se unen los de la nube y los de cada dispositivo, y no se abre ningún cofre hasta poder leer la nube",
+    ] },
   { v: "v.001678", date: "08/11/2026", title: "Artefactos", items: [
       "Artefactos: el cofre se dibuja por encima de toda la interfaz; cofre de nivel obligatorio en el menú principal (3 golpes) con un artefacto nuevo cada vez; pestaña ARTEFACTOS en Mi Cuenta con vitrinas (2ª vitrina en el nivel 20, 3ª en el 30) para equiparlos; efectos en todas las partidas, también online",
       "Nivel máximo 30 y curva de experiencia más suave (los cofres de niveles ya superados se dan con efecto retroactivo)",
