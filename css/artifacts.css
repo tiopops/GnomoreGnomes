@@ -67,10 +67,14 @@
 .art-next { align-self: center; font-size: .78rem; color: #cfc6e6; text-shadow: 2px 2px 0 #000; padding-bottom: 4px; }
 @media (max-width: 560px) { .art-grid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); } }
 
-/* Aura dorada pulsante bajo el artefacto (plana, sin desenfoques) */
-.achest__artfloat { position: relative; }
-.achest__aura { position: absolute; left: 8%; top: 8%; width: 84%; height: 84%; border-radius: 50%; background: #f0c850; opacity: .3; pointer-events: none; animation: artAuraPulse 1.5s ease-in-out infinite; }
-.achest__aura--ring { background: none; border: 4px solid #f0c850; opacity: .6; animation-name: artAuraRing; animation-delay: .35s; }
-.art-slot__aura { position: absolute; left: 22%; top: -14%; width: 56%; aspect-ratio: 1; border-radius: 50%; background: #f0c850; opacity: .3; pointer-events: none; animation: artAuraPulse 1.5s ease-in-out infinite; }
-@keyframes artAuraPulse { 0%,100% { transform: scale(.82); opacity: .38; } 50% { transform: scale(1.08); opacity: .14; } }
-@keyframes artAuraRing { 0% { transform: scale(.8); opacity: .7; } 100% { transform: scale(1.25); opacity: 0; } }
+/* Aura dorada pulsante con la forma del artefacto: contorno dorado plano (sin desenfoques) que respira */
+.achest__art img { animation: artAuraA 1.4s ease-in-out infinite; }
+.art-slot__art { animation: artSlotFloat 2.6s ease-in-out infinite, artAuraB 1.4s ease-in-out infinite; }
+@keyframes artAuraA {
+  0%,100% { filter: drop-shadow(2px 0 0 #f0c850) drop-shadow(-2px 0 0 #f0c850) drop-shadow(0 2px 0 #f0c850) drop-shadow(0 -2px 0 #f0c850) drop-shadow(5px 6px 0 rgba(0,0,0,.5)); }
+  50% { filter: drop-shadow(6px 0 0 #ffe27a) drop-shadow(-6px 0 0 #ffe27a) drop-shadow(0 6px 0 #ffe27a) drop-shadow(0 -6px 0 #ffe27a) drop-shadow(5px 6px 0 rgba(0,0,0,.5)); }
+}
+@keyframes artAuraB {
+  0%,100% { filter: drop-shadow(1.5px 0 0 #f0c850) drop-shadow(-1.5px 0 0 #f0c850) drop-shadow(0 1.5px 0 #f0c850) drop-shadow(0 -1.5px 0 #f0c850) drop-shadow(3px 4px 0 rgba(0,0,0,.5)); }
+  50% { filter: drop-shadow(3.5px 0 0 #ffe27a) drop-shadow(-3.5px 0 0 #ffe27a) drop-shadow(0 3.5px 0 #ffe27a) drop-shadow(0 -3.5px 0 #ffe27a) drop-shadow(3px 4px 0 rgba(0,0,0,.5)); }
+}
