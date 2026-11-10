@@ -33,17 +33,17 @@ const ART_DEFS = [
 
 (function registerArtStrings() {
   const es = {
-    art_tab: "ARTEFACTOS", art_chest_lv: "COFRE DE NIVEL {n}", art_new: "ARTEFACTO NUEVO", art_take: "RECOGER",
-    art_tap: "Pulsa el cofre para abrirlo", art_next: "Próximo cofre: nivel {n}", art_all: "¡Tienes todos los artefactos!",
-    art_slot_lock: "NIV {n}", art_unknown: "???", art_locked_desc: "Aún no lo tienes. Se consigue en un cofre.",
-    art_equipped: "EQUIPADO", art_help: "Pulsa un artefacto para ponerlo en la vitrina marcada (otra vez para quitarlo).",
+    art_tab: "RELIQUIAS", art_chest_lv: "COFRE DE NIVEL {n}", art_new: "RELIQUIA NUEVA", art_take: "RECOGER",
+    art_tap: "Pulsa el cofre para abrirlo", art_next: "Próximo cofre: nivel {n}", art_all: "¡Tienes todas las reliquias!",
+    art_slot_lock: "NIV {n}", art_unknown: "???", art_locked_desc: "Aún no la tienes. Se consigue en un cofre.",
+    art_equipped: "EQUIPADO", art_help: "Pulsa una reliquia para ponerla en la vitrina marcada (otra vez para quitarla).",
     art_count: "{a} / {b}", art_open_aria: "Abrir cofre",
   };
   const en = {
-    art_tab: "ARTIFACTS", art_chest_lv: "LEVEL {n} CHEST", art_new: "NEW ARTIFACT", art_take: "COLLECT",
-    art_tap: "Tap the chest to open it", art_next: "Next chest: level {n}", art_all: "You have every artifact!",
+    art_tab: "RELICS", art_chest_lv: "LEVEL {n} CHEST", art_new: "NEW RELIC", art_take: "COLLECT",
+    art_tap: "Tap the chest to open it", art_next: "Next chest: level {n}", art_all: "You have every relic!",
     art_slot_lock: "LV {n}", art_unknown: "???", art_locked_desc: "You don't have it yet. Find it in a chest.",
-    art_equipped: "EQUIPPED", art_help: "Tap an artifact to put it in the selected display case (again to remove it).",
+    art_equipped: "EQUIPPED", art_help: "Tap a relic to put it in the selected display case (again to remove it).",
     art_count: "{a} / {b}", art_open_aria: "Open chest",
   };
   ART_DEFS.forEach((d) => { es["art_" + d.id + "_n"] = d.es[0]; es["art_" + d.id + "_d"] = d.es[1]; en["art_" + d.id + "_n"] = d.en[0]; en["art_" + d.id + "_d"] = d.en[1]; });

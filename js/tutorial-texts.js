@@ -184,13 +184,13 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Ahora abre el cofre: guarda reliquias con ventajas que se desgastan si mueren tus unidades.",
-   "mission": "Abre el cofre de reliquias",
+   "say": "Ahora abre el cofre: guarda artefactos con ventajas que se desgastan si mueren tus unidades.",
+   "mission": "Abre el cofre de artefactos",
    "ok": "Botas TrotaMontes: más Movimiento. Cuida su durabilidad, no conservo el ticket de compra.",
    "mood": "normal",
    "en": {
-    "say": "Now open the chest: it holds relics with perks that wear down when your units die.",
-    "mission": "Open the relic chest",
+    "say": "Now open the chest: it holds artifacts with perks that wear down when your units die.",
+    "mission": "Open the artifact chest",
     "ok": "MountainTrotter Boots: more Movement. Mind their durability, I didn't keep the receipt."
    }
   },

@@ -644,8 +644,8 @@ const Tutorial = {
         ok: "¡Madera conseguida! Ya puedes fabricarme un ataúd... o una mejora de armadura, que queda más elegante. En la armería de tu obelisco tienes las mejoras de equipo.",
       },
       {
-        say: `Por si no te parecía suficientemente satisfactorio reventar gnomos... ¿ves ese cofre escondido en un rincón? En las partidas de verdad hay un buen puñado repartidos por el mapa. Se abren haciendo clic sobre ellos y esconden reliquias, de las que dan ventajas de las buenas… Cuando las consigas, cada vez que muera una unidad tuya, perderán 1 punto de durabilidad, y cuando lleguen a 0 se rompen. Como la clavícula de mi tío Klink.`,
-        mission: "Abre el cofre de reliquias",
+        say: `Por si no te parecía suficientemente satisfactorio reventar gnomos... ¿ves ese cofre escondido en un rincón? En las partidas de verdad hay un buen puñado repartidos por el mapa. Se abren haciendo clic sobre ellos y esconden artefactos, de los que dan ventajas de las buenas… Cuando los consigas, cada vez que muera una unidad tuya, perderán 1 punto de durabilidad, y cuando lleguen a 0 se rompen. Como la clavícula de mi tío Klink.`,
+        mission: "Abre el cofre de artefactos",
         onStart: () => {
           T._refill();
           const f = T._my().find((u) => !Gnome.isHeldBy(u.id)) || T._my()[0];
@@ -665,7 +665,7 @@ const Tutorial = {
         },
         refillFor: () => T._ctx.cutterId,
         done: () => typeof Relics !== "undefined" && Relics.list("player").length > 0,
-        ok: "¡Reliquia en la mochila! Son las Botas TrotaMontes: +1 de Movimiento para todas tus unidades. Fíjate en su marcador, ese 5/5 que tiene al lado: esa es su durabilidad. Cuida de tus unidades o las botas se gastarán antes de tiempo. Y no, no guardo el ticket de compra, así que olvídate de la garantía.",
+        ok: "¡Artefacto en la mochila! Son las Botas TrotaMontes: +1 de Movimiento para todas tus unidades. Fíjate en su marcador, ese 5/5 que tiene al lado: esa es su durabilidad. Cuida de tus unidades o las botas se gastarán antes de tiempo. Y no, no guardo el ticket de compra, así que olvídate de la garantía.",
       },
       {
         say: `No hay nada mejor que conquistar un tótem con un gnomo cargado de puntos. Tu unidad lo estampa contra él y le resta tanta vida como puntos lleve. Si se queda sin puntos, el tótem es tuyo y te da +2 Puntos de Gloria cada turno. Siempre dos, se capture como se capture. Sí, dos, ya puedes ir pensando en la jubilación. ¿Por qué me miras a mí y al tótem de esa manera? Acércate con quien lleva el gnomo y pulsa la diana. Lo que la gente del gremio conoce como “estampada”.`,
@@ -776,7 +776,7 @@ const Tutorial = {
         ok: "Y el rival... no hizo nada. Era de esperar, esto es un tutorial.",
       },
       {
-        say: `Lo has conseguido. Ya sabes reclutar, mover, esconderte, coger gnomos, lanzarlos, estamparlos, atacar, talar, abrir cofres de reliquias, mejorar y conquistar. ¡Enhorabuena! Oficialmente ya eres todo un asesino de gnomos... aunque me parta lo poco que me queda de corazón o de lomo, según transcurra la partida. Y recuerda: si algún gnomo te mira raro, es que ya conoce tus intenciones.`,
+        say: `Lo has conseguido. Ya sabes reclutar, mover, esconderte, coger gnomos, lanzarlos, estamparlos, atacar, talar, abrir cofres de artefactos, mejorar y conquistar. ¡Enhorabuena! Oficialmente ya eres todo un asesino de gnomos... aunque me parta lo poco que me queda de corazón o de lomo, según transcurra la partida. Y recuerda: si algún gnomo te mira raro, es que ya conoce tus intenciones.`,
         button: "TERMINAR TUTORIAL",
         final: true,
       },
