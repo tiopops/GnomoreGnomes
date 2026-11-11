@@ -414,7 +414,9 @@ const SelectScreens = {
       el.style.width = w + "px";
       el.style.transform = `translate(${x - w / 2}px,${yB - w * 0.82}px)`;
       el.style.zIndex = Math.round((z + 1) * 50);
-      el.style.filter = `brightness(${0.55 + 0.45 * f}) saturate(${0.6 + 0.4 * f})`;
+      // Los mapas no elegidos se desaturan hasta el 25 % de su color; al rotar, el color entra/sale con fundido continuo.
+      const sat = 0.25 + 0.75 * Math.max(0, 1 - Math.abs(t));
+      el.style.filter = `brightness(${0.55 + 0.45 * f}) saturate(${sat})`;
       el.querySelector(".sel-isl__lbl").style.opacity = Math.max(0, (z - 0.55) / 0.45);
       el.classList.toggle("sel-isl--front", Math.abs(t) < 0.5);
     });

@@ -12,9 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001682";
+const GG_VERSION = "v.001683";
 
 const GG_CHANGELOG = [
+  { v: "v.001683", date: "11/11/2026", title: "Selección de mapa", items: [
+      "Selección de escenario: los mapas no elegidos se desaturan con fundido hasta el 25 % de su color; el elegido recupera todo su color",
+    ] },
   { v: "v.001682", date: "10/11/2026", title: "Reliquias y artefactos", items: [
       "Cambio de nombres: lo que se conseguía en los cofres del mapa y se llevaba en la mochila (Botas TrotaMontes y compañía) pasa a llamarse ARTEFACTOS, y lo de la cuenta (cofre de nivel, vitrinas, Guantes PielResina...) pasa a llamarse RELIQUIAS; cambiado en menús, Gnomoteca, tutoriales y traducciones (la Reliquia Paranoica de WallForge se queda como está)",
     ] },
