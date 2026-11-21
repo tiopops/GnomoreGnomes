@@ -299,11 +299,12 @@ const CampaignIntro = (() => {
         <button type="button" class="cine__skip"><span class="cine__skiptxt">${cfg.hold}</span><i class="cine__fill"></i></button>`;
       const v = ov.querySelector("video"), txt = ov.querySelector(".cine__txt"), sub = ov.querySelector(".cine__sub");
       const fill = ov.querySelector(".cine__fill"), btn = ov.querySelector(".cine__skip");
-      let done = false, hold = null, raf = 0;
+      let done = false, hold = null, raf = 0, voice = null, lastSub = null;
       const finish = () => {
         if (done) return; done = true;
         cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); document.removeEventListener("keyup", ku);
         try { v.pause(); } catch (e) {}
+        try { if (voice) voice.pause(); } catch (e) {}
         if (cfg.onEnd) cfg.onEnd();
         // La escena siguiente retira este telón negro al montarse (sin parpadeo del tablero entre medias).
         sub.classList.remove("cine__sub--on"); btn.style.display = "none";
@@ -315,6 +316,17 @@ const CampaignIntro = (() => {
         raf = requestAnimationFrame(loop);
         const t = v.currentTime;
         const cur = (cfg.subs || []).find((x) => t >= x.t0 && t < x.t1);
+        // Voz de Nizak: ficheros aparte por idioma (no van dentro del vídeo); suena al aparecer cada subtítulo.
+        if (cur && cfg.voiceDir && cur !== lastSub) {
+          lastSub = cur;
+          try {
+            if (voice) voice.pause();
+            const i = cfg.subs.indexOf(cur) + 1;
+            voice = new Audio(cfg.voiceDir + "intro1_" + i + ".mp3?v=3");
+            voice.volume = (typeof SFX !== "undefined" && SFX.enabled === false) ? 0 : (typeof SFX !== "undefined" && typeof SFX.volume === "number" ? SFX.volume : 1);
+            const pr = voice.play(); if (pr && pr.catch) pr.catch(() => {});
+          } catch (e) {}
+        }
         sub.classList.toggle("cine__sub--on", !!cur);
         if (cur && txt.textContent !== cur.text) txt.textContent = cur.text;
         // Mando: cualquier botón mantenido cuenta como "pulsar".

@@ -409,6 +409,15 @@ const SFX = {
     setTimeout(() => this._pluck("draw-3", 392, "triangle", 0.8, 0.24), 600);
   },
 
+  // Campaña: gnomo estampado contra tu Obelisco = punto ganado. Golpe grave del impacto + arpegio
+  // ascendente de moneda con remate brillante ("¡un punto más para la saca!").
+  stampScore() {
+    this._tone(110, null, 0.22, "sine", 0.34);
+    this._tone(70, null, 0.3, "triangle", 0.3, 0.02);
+    [0, 4, 7, 12].forEach((st, i) => this._tone(523.25 * Math.pow(2, st / 12), null, i === 3 ? 0.5 : 0.18, i === 3 ? "triangle" : "square", i === 3 ? 0.26 : 0.14, 0.14 + i * 0.075));
+    this._tone(2093, null, 0.35, "sine", 0.1, 0.46);
+    this._tone(2637, null, 0.3, "sine", 0.08, 0.52);
+  },
   glory() {
     this._pluck("glory-1", 660, "triangle", 0.18, 0.24);
     setTimeout(() => this._pluck("glory-2", 880, "triangle", 0.18, 0.24), 70);

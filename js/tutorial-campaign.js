@@ -34,13 +34,13 @@ Object.assign(Tutorial, {
     return [
       {
         mood: "grunon",
-        say: "Modo Campaña. Aquí no se conquista nada: se EXTRAE. Entras en el bosque, rescatas gnomos, rapiñas recursos y sales por patas antes de que alguien se ofenda. Lo que traigas, es tuyo; lo que dejes, es de los lobos.",
+        say: "Modo Campaña. Aquí no se conquista nada: se EXTRAE. Entras en el bosque, revientas gnomos, rapiñas recursos y sales por patas antes de que alguien se ofenda. Lo que traigas, es tuyo; lo que dejes, es de los lobos.",
         button: "Qué optimista",
         onStart: () => { T._refill(); T._focus(unit(), T._ctx.guard); },
       },
       {
         mood: "normal",
-        say: "Esos lobos con lanza son Rastreadores. Se dedican a meter gnomos en jaulas —no preguntes por qué, nadie los ha visto cobrar— y la jaula no se abre mientras quede un guardia en pie. Ahí tienes un campamento de práctica.",
+        say: "Esos lobos con lanza son Rastreadores. Se dedican a meter gnomos en jaulas —cada uno se entretiene como quiere— y la jaula no se abre mientras quede un guardia en pie. Ahí tienes un campamento de práctica.",
         button: "Entendido",
         onStart: () => { T._focus(unit(), T._ctx.guard, T._ctx.cage); },
       },
@@ -54,6 +54,12 @@ Object.assign(Tutorial, {
           const u = unit(), d = T._ctx.guard;
           if (!u) return null;
           if (!d || !Units.list.includes(d)) return T._unitEl(u);
+          // Si la unidad se movió y el Rompeobeliscos quedó lejos (o encima de ella), se recoloca a su lado.
+          const dist = Math.max(Math.abs(u.row - d.row), Math.abs(u.col - d.col));
+          if (!u.moving && (dist > 3 || dist === 0)) {
+            const spot = T._findSpot(u, { minD: 2, maxD: 3, side: "center", minOb: 2 }) || T._around(u, 2, 1);
+            if (spot) { d.row = spot.row; d.col = spot.col; Units._placeInstant(d); if (typeof Fog !== "undefined") Fog.applyVisibility(); }
+          }
           return T._unitThen(u, () => T._marker("attack-marker", d.row, d.col) || T._nearestRange(d.row, d.col)) || T._unitEl(d);
         },
         refillFor: () => T._ctx.unitId,
@@ -63,7 +69,7 @@ Object.assign(Tutorial, {
         mood: "normal",
         say: "¡Jaula abierta! El gnomo liberado es un gnomo de toda la vida: huye, chilla y tiene opiniones sobre cómo lo agarras. Cógelo antes de que se le ocurra algo.",
         mission: "Coge a Tinkle",
-        ok: "Tinkle, el famoso. Que no se te escape: aquí eso cuesta objetivos.",
+        ok: "El famoso Tinkle. Que no se te escape: a veces correr detrás de los gnomos es más cansado de lo que parece.",
         onStart: () => {
           T._refill();
           if (Units.selectedId) Units.deselect();
@@ -80,9 +86,9 @@ Object.assign(Tutorial, {
       },
       {
         mood: "grunon",
-        say: "Como en las partidas normales, pegar al gnomo le carga puntos. Eso sí: en la campaña solo aguanta hasta +5, que son gnomos de buena familia. Con un golpe nos vale.",
+        say: "Como en las partidas normales, pegar al gnomo le carga puntos. Eso sí: en la campaña cada gnomo puede acumular 5 golpes. Con uno nos vale.",
         mission: "Golpea a Tinkle",
-        ok: "Puntos de bolsillo. Tinkle ya no se sienta bien.",
+        ok: "Un puñado de puntos al bolsillo. Tinkle ya no se sienta bien.",
         onStart: () => { T._refill(); T._focus(unit()); },
         target: () => {
           const u = unit();
@@ -120,13 +126,13 @@ Object.assign(Tutorial, {
       },
       {
         mood: "normal",
-        say: "Las cuentas: empiezas con 4 puntos y una unidad, tu población máxima es 5 y no ganas puntos por turno. Los puntos salen de las bajas (+3) y de golpear gnomos. Y ojo: los puntos no se extraen; solo gnomos, madera, roca y metal.",
+        say: "Las cuentas: empiezas con 4 puntos y una unidad, tu población máxima es 5 y no ganas puntos por turno. Los puntos salen de las bajas (+3) y de golpear gnomos. Y lo que extraigas —gnomos, madera, roca y metal— lo inviertes luego en mejoras desde el menú de campaña.",
         button: "Anotado",
         onStart: () => { T._focus(T._ob()); },
       },
       {
         mood: "normal",
-        say: "Hablando de extraer: los pinos, las rocas y las menas también se golpean y sueltan recursos. Con ellos compras mejoras y reliquias exclusivas de la campaña. Selecciona a tu unidad y tala ese pino.",
+        say: "Hablando de extraer: los pinos, las rocas y las menas también se golpean y sueltan recursos. Con ellos compras mejoras en el menú de campaña. Selecciona a tu unidad y tala ese pino.",
         mission: "Tala el pino (2 golpes)",
         ok: "Madera. Con esto se compra mucho en el mapa de la campaña.",
         onStart: () => {
@@ -152,7 +158,7 @@ Object.assign(Tutorial, {
         mood: "grunon",
         say: "Ojo: de vez en cuando aparecen Rompeobeliscos, goblins furtivos con un garrote y mucho tiempo libre. Tienen 1 de vida y 1 de daño, pero se acercan despacio a tu obelisco para mellarlo, o a ti para estorbarte. Este viene de práctica: acaba con él.",
         mission: "Detén al Rompeobeliscos",
-        ok: "Garrote confiscado. Tu obelisco te lo agradece, aunque no habla.",
+        ok: "Has eliminado a esa pequeña alimaña... valía menos que el garrote que llevaba en la mano.",
         onStart: () => {
           T._refill();
           const f = unit();
@@ -167,6 +173,12 @@ Object.assign(Tutorial, {
           const u = unit(), d = T._ctx.sneak;
           if (!u) return null;
           if (!d || !Units.list.includes(d)) return T._unitEl(u);
+          // Si la unidad se movió y el Rompeobeliscos quedó lejos (o encima de ella), se recoloca a su lado.
+          const dist = Math.max(Math.abs(u.row - d.row), Math.abs(u.col - d.col));
+          if (!u.moving && (dist > 3 || dist === 0)) {
+            const spot = T._findSpot(u, { minD: 2, maxD: 3, side: "center", minOb: 2 }) || T._around(u, 2, 1);
+            if (spot) { d.row = spot.row; d.col = spot.col; Units._placeInstant(d); if (typeof Fog !== "undefined") Fog.applyVisibility(); }
+          }
           return T._unitThen(u, () => T._marker("attack-marker", d.row, d.col) || T._nearestRange(d.row, d.col)) || T._unitEl(d);
         },
         refillFor: () => T._ctx.unitId,
@@ -174,7 +186,7 @@ Object.assign(Tutorial, {
       },
       {
         mood: "normal",
-        say: "Cuando tengas lo que quieras, o cuando la cosa se ponga fea, selecciona tu obelisco y pulsa el icono de salida. Si aceptas, te llevas los gnomos y los recursos. Si caes antes, solo la mitad de los recursos.",
+        say: "Cuando tengas lo que quieras, o cuando la cosa se ponga fea, selecciona tu obelisco y pulsa el icono de salida. Si aceptas, te llevas los gnomos y los recursos. Si caes antes, te quedas sin nada. Y vigila el reloj: si se acaban los turnos sin reunir a todos los gnomos, solo conservas la mitad de los recursos.",
         mission: "Extrae con el obelisco",
         ok: "Fuera por la puerta grande. O por la de atrás, que es más rápida.",
         onStart: () => { T._refill(); if (Units.selectedId) Units.deselect(); T._focus(T._ob()); },
@@ -187,7 +199,7 @@ Object.assign(Tutorial, {
       },
       {
         mood: "normal",
-        say: "Ya fuera del nivel, en el mapa de la campaña: eliges capítulo, gastas recursos en mejoras (más puntos iniciales, +1 de ataque, +1 de aguante, más población...) y compras reliquias, que solo valen en este modo. Empiezas con una equipada; una mejora cara te deja llevar tres. Más gnomos traídos, más capítulos abiertos.",
+        say: "Ya fuera del nivel, en el menú de campaña: lo que has extraído se invierte en mejoras. ¡Más gnomos traídos, más capítulos abiertos!",
         button: "Vale",
         onStart: () => { T._focus(T._ob()); },
       },

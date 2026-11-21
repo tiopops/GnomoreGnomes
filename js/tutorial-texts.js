@@ -672,20 +672,20 @@ const TUTORIAL_TEXTS = {
  ],
  "campaign": [
   {
-   "say": "Modo Campaña. Aquí no se conquista nada: se EXTRAE. Entras en el bosque, rescatas gnomos, rapiñas recursos y sales por patas antes de que alguien se ofenda. Lo que traigas, es tuyo; lo que dejes, es de los lobos.",
+   "say": "Modo Campaña. Aquí no se conquista nada: se EXTRAE. Entras en el bosque, revientas gnomos, rapiñas recursos y sales por patas antes de que alguien se ofenda. Lo que traigas, es tuyo; lo que dejes, es de los lobos.",
    "button": "Qué optimista",
    "mood": "grunon",
    "en": {
-    "say": "Campaign mode. You don't conquer anything here: you EXTRACT. You walk into the forest, rescue gnomes, grab resources and bolt before anyone takes offence. What you bring back is yours; what you leave behind belongs to the wolves.",
+    "say": "Campaign mode. You don't conquer anything here: you EXTRACT. You walk into the forest, burst gnomes, grab resources and bolt before anyone takes offence. What you bring back is yours; what you leave behind belongs to the wolves.",
     "button": "How optimistic"
    }
   },
   {
-   "say": "Esos lobos con lanza son Rastreadores. Se dedican a meter gnomos en jaulas —no preguntes por qué, nadie los ha visto cobrar— y la jaula no se abre mientras quede un guardia en pie. Ahí tienes un campamento de práctica.",
+   "say": "Esos lobos con lanza son Rastreadores. Se dedican a meter gnomos en jaulas —cada uno se entretiene como quiere— y la jaula no se abre mientras quede un guardia en pie. Ahí tienes un campamento de práctica.",
    "button": "Entendido",
    "mood": "normal",
    "en": {
-    "say": "Those spear-wielding wolves are Trackers. They spend their days locking gnomes in cages — don't ask why, nobody has ever seen them get paid — and a cage won't open while a guard is still standing. There's a practice camp for you.",
+    "say": "Those spear-wielding wolves are Trackers. They spend their days locking gnomes in cages — everyone has to keep busy somehow — and a cage won't open while a guard is still standing. There's a practice camp for you.",
     "button": "Got it"
    }
   },
@@ -703,23 +703,23 @@ const TUTORIAL_TEXTS = {
   {
    "say": "¡Jaula abierta! El gnomo liberado es un gnomo de toda la vida: huye, chilla y tiene opiniones sobre cómo lo agarras. Cógelo antes de que se le ocurra algo.",
    "mission": "Coge a Tinkle",
-   "ok": "Tinkle, el famoso. Que no se te escape: aquí eso cuesta objetivos.",
+   "ok": "El famoso Tinkle. Que no se te escape: a veces correr detrás de los gnomos es más cansado de lo que parece.",
    "mood": "normal",
    "en": {
     "say": "Cage open! The freed gnome is a gnome like any other: it flees, screams and has opinions about how you grab it. Pick it up before it gets ideas.",
     "mission": "Grab Tinkle",
-    "ok": "Tinkle, the famous. Don't let it get away: here that costs objectives."
+    "ok": "The famous Tinkle. Don't let it get away: chasing gnomes is sometimes more tiring than it looks."
    }
   },
   {
-   "say": "Como en las partidas normales, pegar al gnomo le carga puntos. Eso sí: en la campaña solo aguanta hasta +5, que son gnomos de buena familia. Con un golpe nos vale.",
+   "say": "Como en las partidas normales, pegar al gnomo le carga puntos. Eso sí: en la campaña cada gnomo puede acumular 5 golpes. Con uno nos vale.",
    "mission": "Golpea a Tinkle",
-   "ok": "Puntos de bolsillo. Tinkle ya no se sienta bien.",
+   "ok": "Un puñado de puntos al bolsillo. Tinkle ya no se sienta bien.",
    "mood": "grunon",
    "en": {
-    "say": "Just like in normal matches, hitting the gnome charges it with points. In campaign, though, it only holds up to +5: they're gnomes of good breeding. One hit will do.",
+    "say": "Just like in normal matches, hitting the gnome charges it with points. In campaign, though, each gnome can pile up 5 hits. One will do.",
     "mission": "Hit Tinkle",
-    "ok": "Pocket points. Tinkle can't sit comfortably anymore."
+    "ok": "A handful of points in the pocket. Tinkle can't sit comfortably anymore."
    }
   },
   {
@@ -734,21 +734,21 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Las cuentas: empiezas con 4 puntos y una unidad, tu población máxima es 5 y no ganas puntos por turno. Los puntos salen de las bajas (+3) y de golpear gnomos. Y ojo: los puntos no se extraen; solo gnomos, madera, roca y metal.",
+   "say": "Las cuentas: empiezas con 4 puntos y una unidad, tu población máxima es 5 y no ganas puntos por turno. Los puntos salen de las bajas (+3) y de golpear gnomos. Y lo que extraigas —gnomos, madera, roca y metal— lo inviertes luego en mejoras desde el menú de campaña.",
    "button": "Anotado",
    "mood": "normal",
    "en": {
-    "say": "The numbers: you start with 4 points and one unit, your population cap is 5 and you gain no points per turn. Points come from kills (+3) and from hitting gnomes. And mind this: points are not extracted; only gnomes, wood, rock and metal.",
+    "say": "The numbers: you start with 4 points and one unit, your population cap is 5 and you gain no points per turn. Points come from kills (+3) and from hitting gnomes. And whatever you extract — gnomes, wood, rock and metal — you invest later in upgrades from the campaign menu.",
     "button": "Noted"
    }
   },
   {
-   "say": "Hablando de extraer: los pinos, las rocas y las menas también se golpean y sueltan recursos. Con ellos compras mejoras y reliquias exclusivas de la campaña. Selecciona a tu unidad y tala ese pino.",
+   "say": "Hablando de extraer: los pinos, las rocas y las menas también se golpean y sueltan recursos. Con ellos compras mejoras en el menú de campaña. Selecciona a tu unidad y tala ese pino.",
    "mission": "Tala el pino (2 golpes)",
    "ok": "Madera. Con esto se compra mucho en el mapa de la campaña.",
    "mood": "normal",
    "en": {
-    "say": "Speaking of extracting: pines, rocks and ore can also be hit and drop resources. You spend them on campaign-exclusive upgrades and relics. Select your unit and chop that pine.",
+    "say": "Speaking of extracting: pines, rocks and ore can also be hit and drop resources. You spend them on upgrades in the campaign menu. Select your unit and chop that pine.",
     "mission": "Chop the pine (2 hits)",
     "ok": "Wood. That buys a lot on the campaign map."
    }
@@ -756,31 +756,31 @@ const TUTORIAL_TEXTS = {
   {
    "say": "Ojo: de vez en cuando aparecen Rompeobeliscos, goblins furtivos con un garrote y mucho tiempo libre. Tienen 1 de vida y 1 de daño, pero se acercan despacio a tu obelisco para mellarlo, o a ti para estorbarte. Este viene de práctica: acaba con él.",
    "mission": "Detén al Rompeobeliscos",
-   "ok": "Garrote confiscado. Tu obelisco te lo agradece, aunque no habla.",
+   "ok": "Has eliminado a esa pequeña alimaña... valía menos que el garrote que llevaba en la mano.",
    "mood": "grunon",
    "en": {
     "say": "Watch out: every now and then Obelisk Breakers show up, sneaky goblins with a club and plenty of free time. They have 1 health and 1 damage, but they creep toward your obelisk to chip it, or toward you to be a nuisance. This one is for practice: finish it off.",
     "mission": "Stop the Obelisk Breaker",
-    "ok": "Club confiscated. Your obelisk thanks you, even if it can't talk."
+    "ok": "You've eliminated that little vermin... it was worth less than the club in its hand."
    }
   },
   {
-   "say": "Cuando tengas lo que quieras, o cuando la cosa se ponga fea, selecciona tu obelisco y pulsa el icono de salida. Si aceptas, te llevas los gnomos y los recursos. Si caes antes, solo la mitad de los recursos.",
+   "say": "Cuando tengas lo que quieras, o cuando la cosa se ponga fea, selecciona tu obelisco y pulsa el icono de salida. Si aceptas, te llevas los gnomos y los recursos. Si caes antes, te quedas sin nada. Y vigila el reloj: si se acaban los turnos sin reunir a todos los gnomos, solo conservas la mitad de los recursos.",
    "mission": "Extrae con el obelisco",
    "ok": "Fuera por la puerta grande. O por la de atrás, que es más rápida.",
    "mood": "normal",
    "en": {
-    "say": "When you have what you want, or when things get ugly, select your obelisk and tap the exit icon. If you accept, you take the gnomes and the resources with you. If you fall first, only half of the resources.",
+    "say": "When you have what you want, or when things get ugly, select your obelisk and tap the exit icon. If you accept, you take the gnomes and the resources with you. If you fall first, you walk away with nothing. And watch the clock: if the turns run out before you gather every gnome, you only keep half the resources.",
     "mission": "Extract from the obelisk",
     "ok": "Out through the front door. Or the back one, which is faster."
    }
   },
   {
-   "say": "Ya fuera del nivel, en el mapa de la campaña: eliges capítulo, gastas recursos en mejoras (más puntos iniciales, +1 de ataque, +1 de aguante, más población...) y compras reliquias, que solo valen en este modo. Empiezas con una equipada; una mejora cara te deja llevar tres. Más gnomos traídos, más capítulos abiertos.",
+   "say": "Ya fuera del nivel, en el menú de campaña: lo que has extraído se invierte en mejoras. ¡Más gnomos traídos, más capítulos abiertos!",
    "button": "Vale",
    "mood": "normal",
    "en": {
-    "say": "Back out at the campaign map: you pick a chapter, spend resources on upgrades (more starting points, +1 attack, +1 toughness, more population...) and buy relics, which only work in this mode. You start with one equipped; one costly upgrade lets you carry three. More gnomes brought home, more chapters unlocked.",
+    "say": "Back out in the campaign menu: whatever you extracted gets invested in upgrades. More gnomes brought home, more chapters unlocked!",
     "button": "Okay"
    }
   },

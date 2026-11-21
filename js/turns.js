@@ -54,7 +54,7 @@ const TURNS_SANDBOX_NO_ENEMY_ATTACK = false;
 
 const Turns = {
   // Rondas máximas de la partida actual (la Partida Rápida online es más corta).
-  maxRounds() { return typeof Net !== "undefined" && Net.active && Net.mm ? TURNS_QUICK_ROUNDS : TURNS_MAX_ROUNDS; },
+  maxRounds() { if (typeof Campaign !== "undefined" && Campaign.active && Campaign.run && Campaign.run.maxTurns) return Campaign.run.maxTurns; return typeof Net !== "undefined" && Net.active && Net.mm ? TURNS_QUICK_ROUNDS : TURNS_MAX_ROUNDS; },
   activeTeam: "player", // "player" | "enemy"
   actionsUsed: {}, // unitId -> nº de acciones gastadas en SU turno actual
   _btn: null,

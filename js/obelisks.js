@@ -947,7 +947,7 @@ const Obelisks = {
   // roundNumber (ver turns.js); si ninguno de los 3 criterios desempata de
   // verdad, es un EMPATE de verdad (winnerTeam = null, ver _showGameOverOverlay).
   checkTurnLimit(roundNumber) {
-    if (typeof Campaign !== "undefined" && Campaign.active) return; // la Campaña no tiene límite de turnos
+    if (typeof Campaign !== "undefined" && Campaign.active) { if (Campaign.onTurnLimit) Campaign.onTurnLimit(roundNumber); return; } // la Campaña tiene su propio límite (según el nivel)
     if (this.gameOver) return;
     if (roundNumber <= Turns.maxRounds()) return;
 

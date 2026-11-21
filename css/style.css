@@ -12025,6 +12025,11 @@ body.tut-hush .tut-panel * { pointer-events: none; }
 .village-attack-marker *,
 .village--targeted,
 .village--targeted * { cursor: url("../assets/iconos/cursor_mazo.png?v=3") 24 24, pointer !important; }
+/* Estampar un gnomo contra un Obelisco (también el propio, en Campaña): el mismo mazo que contra los tótems. */
+.obelisk-attack-marker,
+.obelisk-attack-marker *,
+.obelisk--targeted,
+.obelisk--targeted * { cursor: url("../assets/iconos/cursor_mazo.png?v=3") 24 24, pointer !important; }
 
 /* Sacrificio del volcán (parodia de Terminator): charquito y máscara de la mano. */
 .sac-lavalip { position: absolute; border-radius: 50%; background: #ff9a22; border: 2px solid #c9460f; box-sizing: border-box; pointer-events: none; }
