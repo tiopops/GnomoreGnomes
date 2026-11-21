@@ -173,7 +173,6 @@ const Campaign = {
       this._click();
       this.render();
       goToScreen("screen-campaign");
-      if (!this.s.seenTut) { this.s.seenTut = true; this.persist(); setTimeout(() => this.showTutorial(), 350); }
     });
     if (typeof Turns !== "undefined") Turns.registerTurnStartListener(this);
     document.addEventListener("gg:langchange", () => { this.render(); this._refreshHud(); });
@@ -229,7 +228,6 @@ const Campaign = {
     root.innerHTML = `
       <div class="camp-top">
         <span class="camp-chip"><i class="ph-fill ph-users-three"></i> ${t("cmp_gnomes")} <b>${this.s.gnomes}</b></span>${res}
-        <button type="button" class="camp-how"><i class="ph-fill ph-question"></i> ${t("cmp_how")}</button>
       </div>
       <div class="camp-body">
         <div class="camp-col">
@@ -253,8 +251,6 @@ const Campaign = {
     root.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => this.buy(b.dataset.buy)));
     root.querySelectorAll("[data-relic]").forEach((b) => b.addEventListener("click", () => this.buyRelic(b.dataset.relic)));
     root.querySelectorAll("[data-eq]").forEach((b) => b.addEventListener("click", () => this.toggleRelic(b.dataset.eq)));
-    const how = root.querySelector(".camp-how");
-    if (how) how.addEventListener("click", () => { this._click(); this.showTutorial(); });
   },
 
   buy(id) {
@@ -665,66 +661,17 @@ const Campaign = {
     this._camps = [];
   },
 
-  // ---------- Intro "La Guerra Eterna" (Nizak narra mientras el escenario se desplaza) ----------
+  // ---------- Intro "La Guerra Eterna" (la escena vive en js/campaign-intro.js) ----------
   _warIntro(ch) {
-    return new Promise((resolve) => {
-      const lines = this.t("cmp_intro" + ch.n).split("|");
-      const per = ch.n === 1 ? 6 : 4.8;
-      const total = lines.length * per + 3;
-      const ov = document.createElement("div");
-      ov.className = "war";
-      ov.style.setProperty("--dur", total + "s");
-      const sprites = (race) => Object.keys(UNIT_TYPES).filter((k) => UNIT_TYPES[k].raceId === race);
-      const pairs = [["mushboom_forest", "equipo_surcanubes"], ["colinas_rockntroll", "equipo_enmurallado"], ["equipo_surcanubes", "mushboom_forest"],
-        ["equipo_enmurallado", "colinas_rockntroll"], ["mushboom_forest", "colinas_rockntroll"], ["equipo_enmurallado", "equipo_surcanubes"]];
-      const pick = (race, i) => { const l = sprites(race); return UNIT_TYPES[l[i % l.length]]; };
-      const face = (def, wantRight) => ((def.defaultFacing || "right") === "right") === wantRight ? 1 : -1;
-      let html = '<div class="war__sky"></div><div class="war__sun"></div><div class="war__far"></div><div class="war__track"><div class="war__ground"></div>';
-      const dieAt = [];
-      pairs.forEach((p, i) => {
-        const x = 6 + i * 26;
-        const a = pick(p[0], i), b = pick(p[1], i + 1);
-        const y = (i % 3) * 2.4;
-        const loserLeft = i % 2 === 0;
-        const t = 3 + i * (total - 14) / pairs.length + (i % 2);
-        const rock = i % 3 === 1;
-        dieAt.push(t);
-        const f = (def, right, lose, sx) => `<div class="war__f${lose ? (rock ? " war__f--squash" : " war__f--die") : ""}" style="left:${sx}vw;bottom:calc(var(--gnd) + ${y}vh);--t:${t}s;z-index:${10 + i}">
-          <img class="war__fi" style="--d:${(i * 0.17 + (right ? 0 : 0.4)).toFixed(2)}s;--s:${face(def, right)}" src="${def.spriteUrl}" alt=""></div>`;
-        html += f(a, true, loserLeft, x) + f(b, false, !loserLeft, x + 11);
-        const bx = x + (loserLeft ? 0 : 11) + 1;
-        html += `<img class="war__blood" style="left:${bx}vw;bottom:calc(var(--gnd) + ${y - 1}vh);--t:${t}s" src="assets/decals/efecto_sangre_0${(i % 3) + 1}.png" alt="">`;
-        if (rock) html += `<div class="war__shadow" style="left:${bx - 1}vw;bottom:calc(var(--gnd) + ${y - 1}vh);--t:${t - 0.9}s"></div><img class="war__rock" style="left:${bx - 1}vw;bottom:calc(var(--gnd) + ${y}vh);--t:${t - 0.9}s" src="assets/iconos/recurso_roca_nodo.png" alt="">`;
-      });
-      html += "</div>";
-      const gx = total - 10;
-      html += `<div class="war__plague" style="--t:${gx}s">${Array.from({ length: 7 }, (_, i) => `<img class="war__g" style="--i:${i}" src="${GNOME_ASSETS.corre}" alt="">`).join("")}
-        <div class="war__rainbow"></div></div>`;
-      html += Array.from({ length: 16 }, (_, i) => `<i class="war__candy" style="left:${(i * 37) % 100}%;--c:${["#ff5a8a", "#ffd23f", "#5ad1ff", "#7be07b"][i % 4]};--t:${gx + (i % 5) * 0.4}s;--d:${3 + (i % 4)}s"></i>`).join("");
-      html += `<div class="war__title">${this.t(ch.n === 1 ? "cmp_war" : "cmp_ch" + ch.n)}</div>
-        <button type="button" class="war__skip">${this.t("cmp_skip")}</button>
-        <div class="war__nz"><img class="war__nizak" src="assets/tutorial/nizak_grunon.png" alt="">
-        <div class="war__box"><div class="war__name">${this.t("cmp_nizak")}</div><div class="war__text"></div>
-        <button type="button" class="war__go">${this.t("cmp_start")}</button></div></div>`;
-      ov.innerHTML = html;
-      document.body.appendChild(ov);
-      this._warEl = ov;
-      const textEl = ov.querySelector(".war__text"), goBtn = ov.querySelector(".war__go");
-      const timers = [];
-      let done = false;
-      const finish = () => {
-        if (done) return; done = true;
-        timers.forEach(clearTimeout);
-        ov.classList.remove("war--on");
-        setTimeout(() => { ov.remove(); if (this._warEl === ov) this._warEl = null; resolve(); }, 250);
-      };
-      lines.forEach((ln, i) => timers.push(setTimeout(() => { textEl.textContent = ln; textEl.classList.remove("war__text--in"); void textEl.offsetWidth; textEl.classList.add("war__text--in"); }, i * per * 1000)));
-      dieAt.forEach((t) => timers.push(setTimeout(() => { if (typeof SFX !== "undefined" && SFX.death) SFX.death(); }, t * 1000)));
-      timers.push(setTimeout(() => ov.classList.add("war--peace"), gx * 1000));
-      timers.push(setTimeout(() => { goBtn.classList.add("war__go--on"); }, (lines.length * per) * 1000));
-      ov.querySelector(".war__skip").addEventListener("click", () => { this._click(); finish(); });
-      goBtn.addEventListener("click", () => { this._click(); finish(); });
-      requestAnimationFrame(() => ov.classList.add("war--on"));
+    return CampaignIntro.play({
+      lines: this.t("cmp_intro" + ch.n).split("|"),
+      per: ch.n === 1 ? 6 : 4.8,
+      seed: 7 + ch.n,
+      title: this.t(ch.n === 1 ? "cmp_war" : "cmp_ch" + ch.n),
+      nizak: this.t("cmp_nizak"), skip: this.t("cmp_skip"), start: this.t("cmp_start"),
+      click: () => this._click(),
+      onMount: (el) => { this._warEl = el; },
+      onEnd: (el) => { if (this._warEl === el) this._warEl = null; },
     });
   },
 };

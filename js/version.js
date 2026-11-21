@@ -12,10 +12,12 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001686";
+const GG_VERSION = "v.001687";
 
 const GG_CHANGELOG = [
-  { v: "v.001686", date: "21/11/2026", title: "Campaña y ficha de unidad", items: [
+  { v: "v.001687", date: "21/11/2026", title: "Campaña y ficha de unidad", items: [
+      "Campaña: la intro de La Guerra Eterna ahora es una escena sobre losetas reales con cámara en movimiento, duelos entre razas, rocas, sangre y la llegada de la plaga de gnomos",
+      "Campaña: el tutorial ya no salta solo al entrar; vive únicamente en el menú de Tutoriales",
       "Campaña: nuevo tutorial (en el menú de tutoriales y con el botón CÓMO SE JUEGA) y botón del menú principal en verde",
       "Campaña: intro de Nizak dentro del nivel con la escena animada de La Guerra Eterna, antes de empezar a jugar",
       "Campaña: los gnomos se estampan contra el Obelisco (sacrificio, no pierde vida); puntos de partida: empiezas con 4 y una unidad, +3 por baja y los del gnomo (hasta +5), sin puntos por turno; población máxima 5",

@@ -118,27 +118,30 @@
 .obelisk--camp-hit .obelisk__sprite { animation: campObHit .4s ease-out; }
 @keyframes campObHit { 30% { filter: brightness(.7) sepia(1) saturate(7) hue-rotate(-35deg); transform: translateX(-5px); } 60% { transform: translateX(5px); } }
 
-/* ---- Intro "La Guerra Eterna": colores planos y sombras duras (sin desenfoques) ---- */
-.war { position: fixed; inset: 0; z-index: 5000; overflow: hidden; background: #2a1b2e; opacity: 0; transition: opacity .25s ease; --gnd: 7vh; }
+/* ---- Intro "La Guerra Eterna" (js/campaign-intro.js): escena sobre losetas reales, colores planos y sombras duras ---- */
+.war { position: fixed; inset: 0; z-index: 5000; overflow: hidden; background: #1f2d3a; opacity: 0; transition: opacity .25s ease; }
 .war--on { opacity: 1; }
-.war__sky { position: absolute; inset: 0; background: linear-gradient(#2a1b2e 0 30%, #5a2a2e 30% 55%, #8a4a35 55% 100%); }
-.war__sun { position: absolute; right: 12vw; top: 14vh; width: 14vh; height: 14vh; border-radius: 50%; background: #ffcf3f; }
-.war__far { position: absolute; left: 0; right: 0; bottom: 28vh; height: 22vh; background: #3a2230; clip-path: polygon(0 100%, 0 55%, 12% 20%, 24% 60%, 38% 10%, 52% 55%, 66% 25%, 80% 62%, 92% 18%, 100% 50%, 100% 100%); }
-.war__track { position: absolute; left: 0; bottom: 28vh; width: 260vw; height: 52vh; animation: warScroll var(--dur) ease-in-out forwards; }
-.war__ground { position: absolute; left: 0; right: 0; bottom: 0; height: var(--gnd); background: repeating-linear-gradient(90deg, #4a6b2e 0 6vw, #3f5d27 6vw 12vw); border-top: .8vh solid #2c4219; z-index: 0; }
-.war__f { position: absolute; transform-origin: 50% 100%; }
-.war__fi { display: block; height: min(30vh, 250px); width: auto; transform-origin: 50% 100%; transform: scaleX(var(--s)); animation: warLunge .8s ease-in-out infinite alternate; animation-delay: var(--d); filter: drop-shadow(.6vh .6vh 0 rgba(0,0,0,.55)); }
-.war--peace .war__fi { animation-play-state: paused; }
-.war__f--die { animation: warDie 1s ease-in forwards; animation-delay: var(--t); }
-.war__f--squash { animation: warSquash .18s ease-in forwards; animation-delay: var(--t); }
-.war__blood { position: absolute; height: 9vh; width: auto; opacity: 0; z-index: 1; animation: warBlood .3s ease-out forwards; animation-delay: var(--t); }
-.war__shadow { position: absolute; width: 9vh; height: 2.4vh; border-radius: 50%; background: rgba(0,0,0,.4); opacity: 0; z-index: 1; animation: warShadow .9s linear forwards; animation-delay: var(--t); }
-.war__rock { position: absolute; height: 13vh; width: auto; opacity: 0; z-index: 40; animation: warRock .9s cubic-bezier(.5,0,1,.6) forwards; animation-delay: var(--t); }
-.war__plague { position: absolute; left: 100vw; bottom: calc(28vh + var(--gnd)); display: flex; align-items: flex-end; z-index: 60; animation: warPlague 4.5s ease-out forwards; animation-delay: var(--t); }
-.war__g { height: 16vh; width: auto; margin-left: -1.5vh; animation: warBob .4s ease-in-out infinite alternate; animation-delay: calc(var(--i) * .07s); filter: drop-shadow(.5vh .5vh 0 rgba(0,0,0,.5)); }
-.war__rainbow { position: absolute; left: 4vw; bottom: 9vh; width: 46vw; height: 24vh; border-radius: 46vw 46vw 0 0; border: 2.2vh solid #e0262a; border-bottom: 0; box-shadow: inset 0 0 0 2.2vh #ff9a1f, inset 0 0 0 4.4vh #ffd23f, inset 0 0 0 6.6vh #5ad1ff, inset 0 0 0 8.8vh #a96bff; z-index: -1; }
-.war__candy { position: absolute; top: -4vh; width: 1.7vh; height: 1.7vh; border-radius: 50%; background: var(--c); opacity: 0; z-index: 70; animation: warCandy var(--d) linear infinite; animation-delay: var(--t); }
-.war__title { position: absolute; top: 6vh; left: 50%; transform: translateX(-50%); font-family: "Russo One", sans-serif; font-size: clamp(1.6rem, 5vw, 3.2rem); color: #fff; text-shadow: 4px 4px 0 #000; letter-spacing: .08em; z-index: 80; white-space: nowrap; animation: warTitle 4.5s ease forwards; }
+.war__view { position: absolute; left: 0; right: 0; top: 0; bottom: 0; overflow: hidden; }
+.war__shake, .war__world { position: absolute; left: 0; top: 0; }
+.war__tile { position: absolute; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+.war__dusk { position: absolute; inset: 0; background: rgba(150, 30, 30, .2); pointer-events: none; z-index: 20; }
+.war__u { position: absolute; pointer-events: none; }
+.war__flip, .war__sp { display: block; }
+.war__sp { height: auto; transform-origin: 50% 100%; user-select: none; -webkit-user-drag: none; }
+.war__sh, .war__rs { position: absolute; height: 18px; border-radius: 50%; background: #000; transform: translate(-50%, -50%); pointer-events: none; }
+.war__rs { width: 150px; height: 56px; }
+.war__rock { position: absolute; width: 150px; height: auto; pointer-events: none; transform-origin: 50% 100%; }
+.war__decal { position: absolute; z-index: 5; pointer-events: none; transform: translate(-50%, -50%); }
+.war__dust { position: absolute; border-radius: 50%; background: #d4c4a2; pointer-events: none; }
+.war__ring { position: absolute; width: 140px; height: 70px; border-radius: 50%; border: 8px solid rgba(255, 255, 255, .6); pointer-events: none; }
+.war__spark { position: absolute; width: 64px; height: 64px; background: #fff1a8; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); pointer-events: none; }
+.war__drop { position: absolute; border-radius: 50%; background: #b3121a; pointer-events: none; }
+.war__chip { position: absolute; clip-path: polygon(10% 0, 100% 25%, 80% 100%, 0 70%); pointer-events: none; }
+.war__fx { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 30; }
+.war__ember { position: absolute; top: 0; }
+.war__candy { position: absolute; top: 0; width: 14px; height: 14px; border-radius: 3px; }
+.war__rainbow { position: absolute; left: 22vw; top: 3vh; width: 56vw; height: 22vh; z-index: 25; transform-origin: 50% 100%; opacity: 0; pointer-events: none; }
+.war__title { position: absolute; top: 6vh; left: 50%; transform: translateX(-50%); font-family: "Russo One", sans-serif; font-size: clamp(1.6rem, 5vw, 3.2rem); color: #fff; text-shadow: 4px 4px 0 #000; letter-spacing: .08em; z-index: 80; white-space: nowrap; opacity: 0; pointer-events: none; }
 .war__skip { position: absolute; top: 12px; right: 12px; z-index: 90; padding: 8px 16px; background: #14121a; color: #fff; border: 3px solid #ffcf3f; border-radius: 8px; font-family: "Russo One", sans-serif; cursor: var(--cursor-pointer); box-shadow: 3px 3px 0 rgba(0,0,0,.6); }
 .war__nz { position: absolute; left: 0; right: 0; bottom: 0; height: 28vh; background: #14121a; border-top: 4px solid #ffcf3f; display: flex; align-items: flex-end; gap: 14px; padding: 0 16px 12px; z-index: 85; }
 .war__nizak { height: 34vh; width: auto; margin-top: -6vh; flex: none; filter: drop-shadow(.6vh .6vh 0 rgba(0,0,0,.6)); }
@@ -148,16 +151,5 @@
 .war__text--in { animation: warIn .35s ease-out; }
 .war__go { align-self: flex-end; display: none; padding: 10px 22px; background: #ffcf3f; color: #14121a; border: 3px solid #000; border-radius: 8px; font-family: "Russo One", sans-serif; cursor: var(--cursor-pointer); box-shadow: 4px 4px 0 rgba(0,0,0,.6); }
 .war__go--on { display: inline-block; }
-@keyframes warScroll { to { transform: translateX(-100vw); } }
-@keyframes warLunge { to { transform: translateX(calc(var(--s) * 1.6vw)) rotate(calc(var(--s) * 7deg)) scaleX(var(--s)); } }
-@keyframes warDie { 35% { transform: translateY(-4vh) rotate(-18deg); } 100% { transform: translateY(1.5vh) rotate(88deg); } }
-@keyframes warSquash { to { transform: scale(1.5, .1); } }
-@keyframes warBlood { from { opacity: 1; transform: scale(.2); } to { opacity: 1; transform: scale(1); } }
-@keyframes warShadow { from { opacity: .4; transform: scale(.2); } to { opacity: .4; transform: scale(1.2); } }
-@keyframes warRock { 0% { opacity: 1; transform: translateY(-75vh) rotate(0); } 100% { opacity: 1; transform: translateY(0) rotate(200deg); } }
-@keyframes warPlague { to { transform: translateX(-88vw); } }
-@keyframes warBob { to { transform: translateY(-1.6vh); } }
-@keyframes warCandy { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 1; transform: translateY(75vh); } }
-@keyframes warTitle { 0% { opacity: 0; } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes warIn { from { opacity: 0; transform: translateY(6px); } }
-@media (max-width: 640px) { .war__nizak { height: 26vh; } .war__nz { height: 34vh; } .war__track, .war__far { bottom: 34vh; } .war__plague { bottom: calc(34vh + var(--gnd)); } }
+@media (max-width: 640px) { .war__nizak { height: 26vh; } .war__nz { height: 34vh; } }
