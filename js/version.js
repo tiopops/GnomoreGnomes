@@ -16,8 +16,9 @@ const GG_VERSION = "v.001689";
 
 const GG_CHANGELOG = [
   { v: "v.001691", date: "21/11/2026", title: "Campaña y ficha de unidad", items: [
+      "Campaña: eliminadas las voces de narración de la intro en todos los idiomas (solo subtítulos)",
       "Campaña: la pestaña de reliquias ahora tiene casillas con cojín donde la reliquia elegida flota (hasta 3 con la mejora Maletín), iconos más grandes y un único color",
-      "Campaña: la intro del capítulo 1 aparece al instante (antes de montar el nivel) y Nizak la narra con voz en inglés, en archivos aparte del vídeo según el idioma (el español va solo con subtítulos por ahora)",
+      "Campaña: la intro del capítulo 1 aparece al instante (antes de montar el nivel), en archivos aparte del vídeo según el idioma (el español va solo con subtítulos por ahora)",
       "Campaña: los Tomos de rama de habilidades ya no existen en la tienda de reliquias de campaña",
       "Campaña: límite de turnos por nivel (se calcula solo con el objetivo y la dificultad del capítulo); si se agotan sin reunir a todos los gnomos, conservas los gnomos pero solo la mitad de los recursos, y al caer ya no te llevas nada",
       "Campaña: menús rediseñados con colores por categoría, tarjetas compactas sin scroll, ficha de capítulo con gnomos, turnos y campamentos, y casillas de reliquias equipadas",

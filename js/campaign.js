@@ -48,8 +48,6 @@ const CAMPAIGN_RELIC_COST_CHEAP = { madera: 4, roca: 4, metal: 1 };
 const CAMPAIGN_RELIC_COST_DEAR = { madera: 8, roca: 8, metal: 4 };
 const CAMPAIGN_RELIC_DEAR = ["espada", "armadura"];
 // Reliquias que NO existen en la Campaña (los Tomos de rama de habilidades solo valen en partidas normales).
-// Idiomas con voz de Nizak en la intro (assets/campana/voz/<idioma>/). El español queda SIN voz hasta tener una grabación buena: solo subtítulos.
-const CAMPAIGN_VOICE_LANGS = ["en"];
 const CAMPAIGN_RELIC_BANNED = ["tomo_guerra", "tomo_prot", "tomo_super"];
 const CAMPAIGN_RES = ["madera", "roca", "metal"];
 const CAMPAIGN_RES_ICON = { madera: "assets/iconos/recurso_madera.png", roca: "assets/iconos/recurso_roca.png", metal: "assets/iconos/recurso_metal.png" };
@@ -721,7 +719,6 @@ const Campaign = {
       src: "assets/campana/intro_guerra.mp4?v=6",
       nizak: this.t("cmp_nizak"), hold: this.t("cmp_hold_skip"),
       subs: [{ t0: 0.6, t1: 7.6, text: L[0] }, { t0: 8.0, t1: 15.8, text: L[1] }, { t0: 16.2, t1: 23.9, text: L[2] }, { t0: 24.3, t1: 29.4, text: L[3] }],
-      voiceDir: CAMPAIGN_VOICE_LANGS.includes(I18N.currentLang) ? "assets/campana/voz/" + I18N.currentLang + "/" : null, // voz de Nizak aparte del vídeo (cada idioma la suya)
       onStart: () => { if (typeof Music !== "undefined" && Music.duck) Music.duck(30500); },
     });
   },
