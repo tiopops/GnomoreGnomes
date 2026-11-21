@@ -94,3 +94,70 @@
 .camp-result__goal { justify-content: center !important; border: 0 !important; opacity: .75; font-size: .85rem; }
 .camp-result__btn { align-self: center; margin-top: 6px; padding: 12px 24px; background: #ffcf3f; color: #14121a; border: 3px solid #000; border-radius: 8px; font-family: "Russo One", sans-serif; letter-spacing: .05em; cursor: var(--cursor-pointer); box-shadow: 4px 4px 0 rgba(0,0,0,.6); }
 .camp-result__btn:hover { transform: translate(-1px,-1px); }
+
+/* ---- v2: recursos, reliquias, menú verde ---- */
+#btn-campaign, .tut-menu__list .menu-btn[data-scenario="campaign"] { --c: #5fa84a; --c2: #2d5a22; }
+.camp-col { display: flex; flex-direction: column; gap: 14px; }
+.camp-chip img { width: 24px; height: 24px; object-fit: contain; }
+.camp-how { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; background: #2b2438; color: #fff; border: 3px solid #ffcf3f; border-radius: 10px; font-family: "Russo One", sans-serif; letter-spacing: .05em; cursor: var(--cursor-pointer); box-shadow: 4px 4px 0 rgba(0,0,0,.55); }
+.camp-how i { color: #ffcf3f; }
+.camp-shop + .camp-shop { margin-top: 0; }
+.camp-shop__title small { font-size: .7rem; opacity: .8; margin-left: 8px; letter-spacing: .04em; }
+.camp-shop__help { font-size: .78rem; opacity: .75; margin-bottom: 6px; }
+.camp-up__img { width: 46px; height: 46px; object-fit: contain; flex: none; }
+.camp-up--on { background: rgba(255, 207, 63, .08); }
+.camp-up__buyer { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex: none; }
+.camp-costs { display: inline-flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.camp-costs--on { color: #6fdc6f; font-family: "Russo One", sans-serif; font-size: .8rem; }
+.camp-cost { display: inline-flex; align-items: center; gap: 3px; font-family: "Russo One", sans-serif; font-size: .88rem; }
+.camp-cost img { width: 18px; height: 18px; object-fit: contain; }
+.camp-cost--no { color: #ff8a8a; }
+.camp-up__buy--on { background: #5a5368; color: #fff; }
+.camp-intro__next { margin-top: 10px; float: right; padding: 8px 18px; background: #ffcf3f; color: #14121a; border: 3px solid #000; border-radius: 8px; font-family: "Russo One", sans-serif; cursor: var(--cursor-pointer); box-shadow: 3px 3px 0 rgba(0,0,0,.6); }
+.camp-result__res { justify-content: center !important; gap: 14px; }
+.obelisk--camp-hit .obelisk__sprite { animation: campObHit .4s ease-out; }
+@keyframes campObHit { 30% { filter: brightness(.7) sepia(1) saturate(7) hue-rotate(-35deg); transform: translateX(-5px); } 60% { transform: translateX(5px); } }
+
+/* ---- Intro "La Guerra Eterna": colores planos y sombras duras (sin desenfoques) ---- */
+.war { position: fixed; inset: 0; z-index: 5000; overflow: hidden; background: #2a1b2e; opacity: 0; transition: opacity .25s ease; --gnd: 7vh; }
+.war--on { opacity: 1; }
+.war__sky { position: absolute; inset: 0; background: linear-gradient(#2a1b2e 0 30%, #5a2a2e 30% 55%, #8a4a35 55% 100%); }
+.war__sun { position: absolute; right: 12vw; top: 14vh; width: 14vh; height: 14vh; border-radius: 50%; background: #ffcf3f; }
+.war__far { position: absolute; left: 0; right: 0; bottom: 28vh; height: 22vh; background: #3a2230; clip-path: polygon(0 100%, 0 55%, 12% 20%, 24% 60%, 38% 10%, 52% 55%, 66% 25%, 80% 62%, 92% 18%, 100% 50%, 100% 100%); }
+.war__track { position: absolute; left: 0; bottom: 28vh; width: 260vw; height: 52vh; animation: warScroll var(--dur) ease-in-out forwards; }
+.war__ground { position: absolute; left: 0; right: 0; bottom: 0; height: var(--gnd); background: repeating-linear-gradient(90deg, #4a6b2e 0 6vw, #3f5d27 6vw 12vw); border-top: .8vh solid #2c4219; z-index: 0; }
+.war__f { position: absolute; transform-origin: 50% 100%; }
+.war__fi { display: block; height: min(30vh, 250px); width: auto; transform-origin: 50% 100%; transform: scaleX(var(--s)); animation: warLunge .8s ease-in-out infinite alternate; animation-delay: var(--d); filter: drop-shadow(.6vh .6vh 0 rgba(0,0,0,.55)); }
+.war--peace .war__fi { animation-play-state: paused; }
+.war__f--die { animation: warDie 1s ease-in forwards; animation-delay: var(--t); }
+.war__f--squash { animation: warSquash .18s ease-in forwards; animation-delay: var(--t); }
+.war__blood { position: absolute; height: 9vh; width: auto; opacity: 0; z-index: 1; animation: warBlood .3s ease-out forwards; animation-delay: var(--t); }
+.war__shadow { position: absolute; width: 9vh; height: 2.4vh; border-radius: 50%; background: rgba(0,0,0,.4); opacity: 0; z-index: 1; animation: warShadow .9s linear forwards; animation-delay: var(--t); }
+.war__rock { position: absolute; height: 13vh; width: auto; opacity: 0; z-index: 40; animation: warRock .9s cubic-bezier(.5,0,1,.6) forwards; animation-delay: var(--t); }
+.war__plague { position: absolute; left: 100vw; bottom: calc(28vh + var(--gnd)); display: flex; align-items: flex-end; z-index: 60; animation: warPlague 4.5s ease-out forwards; animation-delay: var(--t); }
+.war__g { height: 16vh; width: auto; margin-left: -1.5vh; animation: warBob .4s ease-in-out infinite alternate; animation-delay: calc(var(--i) * .07s); filter: drop-shadow(.5vh .5vh 0 rgba(0,0,0,.5)); }
+.war__rainbow { position: absolute; left: 4vw; bottom: 9vh; width: 46vw; height: 24vh; border-radius: 46vw 46vw 0 0; border: 2.2vh solid #e0262a; border-bottom: 0; box-shadow: inset 0 0 0 2.2vh #ff9a1f, inset 0 0 0 4.4vh #ffd23f, inset 0 0 0 6.6vh #5ad1ff, inset 0 0 0 8.8vh #a96bff; z-index: -1; }
+.war__candy { position: absolute; top: -4vh; width: 1.7vh; height: 1.7vh; border-radius: 50%; background: var(--c); opacity: 0; z-index: 70; animation: warCandy var(--d) linear infinite; animation-delay: var(--t); }
+.war__title { position: absolute; top: 6vh; left: 50%; transform: translateX(-50%); font-family: "Russo One", sans-serif; font-size: clamp(1.6rem, 5vw, 3.2rem); color: #fff; text-shadow: 4px 4px 0 #000; letter-spacing: .08em; z-index: 80; white-space: nowrap; animation: warTitle 4.5s ease forwards; }
+.war__skip { position: absolute; top: 12px; right: 12px; z-index: 90; padding: 8px 16px; background: #14121a; color: #fff; border: 3px solid #ffcf3f; border-radius: 8px; font-family: "Russo One", sans-serif; cursor: var(--cursor-pointer); box-shadow: 3px 3px 0 rgba(0,0,0,.6); }
+.war__nz { position: absolute; left: 0; right: 0; bottom: 0; height: 28vh; background: #14121a; border-top: 4px solid #ffcf3f; display: flex; align-items: flex-end; gap: 14px; padding: 0 16px 12px; z-index: 85; }
+.war__nizak { height: 34vh; width: auto; margin-top: -6vh; flex: none; filter: drop-shadow(.6vh .6vh 0 rgba(0,0,0,.6)); }
+.war__box { flex: 1; color: #fff; display: flex; flex-direction: column; gap: 6px; align-self: center; max-width: 860px; }
+.war__name { font-family: "Russo One", sans-serif; color: #ffcf3f; letter-spacing: .1em; }
+.war__text { min-height: 3.4em; font-size: clamp(.95rem, 2.3vw, 1.25rem); line-height: 1.4; }
+.war__text--in { animation: warIn .35s ease-out; }
+.war__go { align-self: flex-end; display: none; padding: 10px 22px; background: #ffcf3f; color: #14121a; border: 3px solid #000; border-radius: 8px; font-family: "Russo One", sans-serif; cursor: var(--cursor-pointer); box-shadow: 4px 4px 0 rgba(0,0,0,.6); }
+.war__go--on { display: inline-block; }
+@keyframes warScroll { to { transform: translateX(-100vw); } }
+@keyframes warLunge { to { transform: translateX(calc(var(--s) * 1.6vw)) rotate(calc(var(--s) * 7deg)) scaleX(var(--s)); } }
+@keyframes warDie { 35% { transform: translateY(-4vh) rotate(-18deg); } 100% { transform: translateY(1.5vh) rotate(88deg); } }
+@keyframes warSquash { to { transform: scale(1.5, .1); } }
+@keyframes warBlood { from { opacity: 1; transform: scale(.2); } to { opacity: 1; transform: scale(1); } }
+@keyframes warShadow { from { opacity: .4; transform: scale(.2); } to { opacity: .4; transform: scale(1.2); } }
+@keyframes warRock { 0% { opacity: 1; transform: translateY(-75vh) rotate(0); } 100% { opacity: 1; transform: translateY(0) rotate(200deg); } }
+@keyframes warPlague { to { transform: translateX(-88vw); } }
+@keyframes warBob { to { transform: translateY(-1.6vh); } }
+@keyframes warCandy { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 1; transform: translateY(75vh); } }
+@keyframes warTitle { 0% { opacity: 0; } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes warIn { from { opacity: 0; transform: translateY(6px); } }
+@media (max-width: 640px) { .war__nizak { height: 26vh; } .war__nz { height: 34vh; } .war__track, .war__far { bottom: 34vh; } .war__plague { bottom: calc(34vh + var(--gnd)); } }

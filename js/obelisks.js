@@ -164,6 +164,7 @@ const Obelisks = {
   // vivo a partir de Villages.ownedCount (nunca se "descuenta" nada al
   // perder un tótem: si baja, simplemente deja de sumar, ver cabecera).
   populationFor(team) {
+    if (team === "player" && typeof Campaign !== "undefined" && Campaign.active) return Campaign.popLimit();
     const owned = typeof Villages !== "undefined" ? Villages.ownedCount(team) : 0;
     return OBELISK_BASE_POPULATION + owned + (typeof Skills !== "undefined" ? Skills.rank(team, "refuerzos") : 0);
   },
@@ -703,7 +704,7 @@ const Obelisks = {
     // explosiones de seta: sin gnomo cogido no hay mira de ataque.
     if (!(typeof Gnome !== "undefined" && Gnome.list.some((g) => g.heldBy === unit.id))) return;
     this.list.forEach((obelisk, i) => {
-      if (obelisk.team === unit.team) return;
+      if (obelisk.team === unit.team && !(typeof Campaign !== "undefined" && Campaign.active && unit.team === "player")) return;
       if (typeof Fog !== "undefined" && Fog.isFogged(obelisk.row, obelisk.col)) return;
       const approach = this.findApproachTile(unit, obelisk);
       if (!approach) return;
@@ -831,7 +832,8 @@ const Obelisks = {
   async attack(unit, obelisk) {
     if (this.gameOver) return;
     if (typeof Turns !== "undefined" && !Turns.canAct(unit)) return;
-    if (obelisk.team === unit.team) return;
+    const sacrifice = typeof Campaign !== "undefined" && Campaign.active && obelisk.team === "player" && unit.team === "player";
+    if (obelisk.team === unit.team && !sacrifice) return;
 
     Units.clearRangeOverlays();
     Units.faceTowardsTile(unit, obelisk.row, obelisk.col);
@@ -842,8 +844,8 @@ const Obelisks = {
     const skillBonus = typeof Skills !== "undefined" ? Skills.attackBonus(unit, obelisk, { announce: true }) : 0;
     const damage = carriedGnome.points;
     const wasFullHp = obelisk.hp >= obelisk.maxHp;
-    obelisk.hp = Math.max(0, obelisk.hp - damage);
-    const oneHitKill = wasFullHp && obelisk.hp <= 0;
+    if (!sacrifice) obelisk.hp = Math.max(0, obelisk.hp - damage); // Campaña: el Obelisco propio no pierde vida, es un sacrificio
+    const oneHitKill = !sacrifice && wasFullHp && obelisk.hp <= 0;
 
     if (typeof Turns !== "undefined") Turns.useAction(unit);
     if (oneHitKill && unit.el) unit.el.classList.remove("unit--exhausted");
@@ -852,6 +854,11 @@ const Obelisks = {
 
     if (oneHitKill && typeof Turns !== "undefined") Turns.refreshExhaustedClass(unit);
 
+    if (sacrifice) {
+      Campaign.onSacrifice(unit, damage);
+      Units.refreshRange(unit);
+      return;
+    }
     if (obelisk.hp <= 0) {
       await this._destroy(obelisk);
     } else {

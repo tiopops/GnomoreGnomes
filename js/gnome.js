@@ -1617,6 +1617,7 @@ function createGnomeInstance() {
     // ---------- Puntos acumulados ----------
 
     _addPoints(n) {
+      if (typeof Campaign !== "undefined" && Campaign.active) n = Math.max(0, Math.min(n, Campaign.gnomeCap() - this.points)); // Campaña: tope de puntos por gnomo
       this._setPoints(this.points + n);
     },
 
@@ -2040,7 +2041,6 @@ const Gnome = {
     if (!unit || !unit.el || (typeof Units !== "undefined" && !Units.list.includes(unit))) return;
     if (unit.team === "player" || (typeof Net !== "undefined" && Net.active)) await this.reactToPlayerMove(unit);
     // Campaña (js/campaign.js): una unidad que se detiene junto al Obelisco con un gnomo lo extrae.
-    if (typeof Campaign !== "undefined" && Campaign.active) Campaign.onUnitStopped(unit);
   },
 
   hideAllBadges() {

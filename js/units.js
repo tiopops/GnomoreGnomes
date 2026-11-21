@@ -281,6 +281,16 @@ const UNIT_TYPES = {
   },
 };
 
+// Neutrales de la Campaña (js/campaign.js): no son de ninguna raza jugable (raceId "neutral").
+UNIT_TYPES.rastreador = {
+  name: "Rastreador", raceId: "neutral", spriteUrl: "assets/campana/rastreador.png",
+  aguante: 2, movimiento: 3, fuerza: 1, agilidad: 2, percepcion: 3, attackRange: 1, defaultFacing: "right",
+};
+UNIT_TYPES.rompeobeliscos = {
+  name: "Rompeobeliscos", raceId: "neutral", spriteUrl: "assets/campana/rompeobeliscos.png",
+  aguante: 1, movimiento: 3, fuerza: 1, agilidad: 2, percepcion: 3, attackRange: 1, defaultFacing: "right",
+};
+
 // Tamaño visual de cada personaje EN EL TABLERO (multiplica el ancho base de
 // 120px, ver .unit__sprite en style.css) — vive separado de UNIT_TYPES, no
 // dentro de cada entrada, porque es puramente estético/de calibración (a
@@ -292,6 +302,8 @@ const UNIT_TYPES = {
 // el tamaño base hasta que se afine el suyo.
 const SPRITE_SCALES = {
   default: 1,
+  rastreador: 1.05,
+  rompeobeliscos: 0.8,
   hombre_arbol: 1.5,
   surcabosques: 1,
   seta_artificiero: 1,

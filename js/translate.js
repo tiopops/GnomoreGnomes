@@ -933,6 +933,8 @@ const EN_DICT = {
 "Primeros pasos": "First steps",
 "Lo básico: reclutar, mover, gnomos y combate": "The basics: recruiting, moving, gnomes and combat",
 "Tutorial Bosque MushBoom": "MushBoom Forest Tutorial",
+"Tutorial Modo Campaña": "Campaign Mode Tutorial",
+"Extracción: jaulas, estampar gnomos y reliquias": "Extraction: cages, slamming gnomes and relics",
 "Setas explosivas, Altar de Sacrificios y GnomOgro": "Explosive mushrooms, Sacrifice Altar and GnomOgre",
 "Tutorial Colinas Rock'n Troll": "Rock'n Troll Hills Tutorial",
 "Tambores de Guerra, fragmentos y Volcán": "War Drums, fragments and Volcano",

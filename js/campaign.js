@@ -1,84 +1,114 @@
-/* Gnomore Gnomes — modo CAMPAÑA (esqueleto jugable).
+/* Gnomore Gnomes — modo CAMPAÑA (extracción).
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
-     - El estado de la campaña (capítulos hechos, gnomos y puntos acumulados, mejoras compradas),
-       guardado en localStorage por cuenta (gg_campaign_<uid>).
-     - La pantalla del mapa de capítulos (bloqueado / disponible / hecho) y la tienda de mejoras.
-     - La intro narrada por Nizak al empezar cada capítulo.
-     - La partida de campaña: extracción de gnomos. El motor normal solo le avisa mediante ganchos
-       mínimos protegidos por `Campaign.active` (ver units.js, obelisks.js, gnome.js, armory.js,
-       newgame-flow.js, matchcleanup.js). Sin Campaña activa nada de esto cambia el juego normal.
+     - El estado de la campaña (capítulos hechos, gnomos y recursos extraídos, mejoras y reliquias
+       compradas), guardado en localStorage por cuenta (gg_campaign_<uid>).
+     - El mapa de capítulos, la tienda de mejoras y reliquias de campaña, y su tutorial.
+     - La intro "La Guerra Eterna" narrada por Nizak al empezar cada capítulo.
+     - La partida de campaña. El motor normal solo le avisa con ganchos mínimos protegidos por
+       `Campaign.active` (units, obelisks, gnome, glory, armory, artifacts, newgame-flow, matchcleanup).
+       Sin Campaña activa nada de esto cambia el juego normal.
 
-   Pedido explícito (resumen): conseguir X gnomos por nivel "como en el último Splatoon"; gnomos en
-   jaulas vigiladas por neutrales o en campamentos; los neutrales usan los sprites de WallForge;
-   puntos por matar neutrales o entregar gnomos (1 a 1); el Obelisco solo es la zona de extracción
-   (sin habilidades ni armería ni tótems ni obelisco enemigo) y un icono a la derecha de "reclutar"
-   termina la partida con lo conseguido; mejoras exclusivas de campaña comprables en el mapa;
-   capítulos 1-5 con candados y requisitos crecientes; cada capítulo más difícil.
-   PENDIENTE (siguientes entregas): barra de experiencia y niveles de unidad, sincronizar en la nube,
-   GnomOgro (capítulo 5), mapas propios de cada fase. */
+   Reglas pedidas (resumen): conseguir X gnomos por nivel; gnomos enjaulados por neutrales
+   (Rastreadores) o sueltos; los gnomos se ESTAMPAN contra el Obelisco propio, que no pierde vida (es un
+   sacrificio) y solo sirve de zona de extracción; puntos de partida (propios de la partida, NO se
+   extraen): empiezas con 4 y 1 unidad básica, +3 por baja de neutral y los puntos del gnomo al estamparlo
+   (tope +5 por gnomo); sin puntos por turno; población máxima 5; se extraen gnomos, madera, roca y metal,
+   que compran mejoras y reliquias de campaña (1 equipada, hasta 3 con una mejora); Rompeobeliscos
+   furtivos (1 vida, 1 daño) aparecen lejos y se acercan a golpear el Obelisco; avisos al empezar turno.
+   PENDIENTE: barras de experiencia/niveles de unidad, nube, GnomOgro (cap. 5), mapa de regiones. */
 
 const CAMPAIGN_CHAPTERS = [
-  { n: 1, levelId: "mushboom_forest", img: "assets/niveles/isla_mushboom_forest.png", goal: 3, req: { gnomes: 0, points: 0 },
-    camps: 2, guards: [1, 1], cages: 2, pool: ["magonifico", "trazaflechas"], aggro: 4 },
-  { n: 2, levelId: "colinas_rockntroll", img: "assets/niveles/isla_colinas_rockntroll.png", goal: 4, req: { gnomes: 3, points: 12 },
-    camps: 3, guards: [1, 2], cages: 2, pool: ["magonifico", "trazaflechas", "portamuros"], aggro: 5 },
-  { n: 3, levelId: "hurrycrane_village", img: "assets/niveles/isla_hurrycrane_village.png", goal: 5, req: { gnomes: 8, points: 40 },
-    camps: 4, guards: [2, 2], cages: 2, pool: ["trazaflechas", "portamuros", "magonifico"], aggro: 5 },
-  { n: 4, levelId: "wallforge", img: "assets/niveles/isla_wallforge.png", goal: 6, req: { gnomes: 15, points: 90 },
-    camps: 5, guards: [2, 3], cages: 2, pool: ["portamuros", "trazaflechas", "magonifico"], aggro: 6 },
-  { n: 5, levelId: "mushboom_forest", img: null, boss: true, goal: 1, req: { gnomes: 24, points: 170 } },
+  { n: 1, levelId: "mushboom_forest", goal: 3, req: { gnomes: 0, res: 0 }, camps: 2, guards: [1, 1], cages: 2, pool: ["rastreador"], aggro: 4, sneak: { every: 4, max: 1 } },
+  { n: 2, levelId: "mushboom_forest", goal: 4, req: { gnomes: 3, res: 8 }, camps: 3, guards: [1, 2], cages: 2, pool: ["rastreador"], aggro: 5, sneak: { every: 3, max: 2 } },
+  { n: 3, levelId: "mushboom_forest", goal: 5, req: { gnomes: 8, res: 24 }, camps: 4, guards: [2, 2], cages: 2, pool: ["rastreador", "rastreador", "portamuros"], aggro: 5, sneak: { every: 3, max: 3 } },
+  { n: 4, levelId: "mushboom_forest", goal: 6, req: { gnomes: 15, res: 50 }, camps: 5, guards: [2, 3], cages: 2, pool: ["rastreador", "portamuros"], aggro: 6, sneak: { every: 2, max: 4 } },
+  { n: 5, levelId: "mushboom_forest", boss: true, goal: 1, req: { gnomes: 24, res: 90 } },
 ];
 
-// Mejoras exclusivas de campaña (se compran en el mapa con los puntos acumulados).
+// Mejoras exclusivas de campaña: se pagan con los recursos extraídos.
 const CAMPAIGN_UPGRADES = [
-  { id: "prov", icon: "ph-basket", max: 3, cost: [10, 20, 35] },
-  { id: "arma", icon: "ph-sword", max: 2, cost: [25, 60] },
-  { id: "armadura", icon: "ph-shield", max: 2, cost: [25, 60] },
+  { id: "prov", icon: "ph-basket", max: 3, cost: [{ madera: 3, roca: 2 }, { madera: 6, roca: 4 }, { madera: 9, roca: 7, metal: 1 }] },
+  { id: "arma", icon: "ph-sword", max: 2, cost: [{ roca: 4, metal: 1 }, { roca: 8, metal: 3 }] },
+  { id: "armadura", icon: "ph-shield", max: 2, cost: [{ madera: 4, metal: 1 }, { madera: 8, metal: 3 }] },
+  { id: "pop", icon: "ph-users-three", max: 3, cost: [{ madera: 5, roca: 3 }, { madera: 8, roca: 6 }, { madera: 12, roca: 9, metal: 2 }] },
+  { id: "carga", icon: "ph-hand-grabbing", max: 3, cost: [{ madera: 3, roca: 3, metal: 1 }, { madera: 6, roca: 6, metal: 2 }, { madera: 9, roca: 9, metal: 4 }] },
+  { id: "slots", icon: "ph-diamonds-four", max: 1, cost: [{ madera: 20, roca: 20, metal: 8 }] },
 ];
+const CAMPAIGN_RELIC_COST_CHEAP = { madera: 4, roca: 4, metal: 1 };
+const CAMPAIGN_RELIC_COST_DEAR = { madera: 8, roca: 8, metal: 4 };
+const CAMPAIGN_RELIC_DEAR = ["espada", "armadura", "tomo_guerra", "tomo_prot", "tomo_super"];
+const CAMPAIGN_RES = ["madera", "roca", "metal"];
+const CAMPAIGN_RES_ICON = { madera: "assets/iconos/recurso_madera.png", roca: "assets/iconos/recurso_roca.png", metal: "assets/iconos/recurso_metal.png" };
 
-const CAMPAIGN_REWARD = { kill: { magonifico: 2, trazaflechas: 2, portamuros: 4 }, deliver: 3 };
-const CAMPAIGN_START_GLORY = 4; // + mejora "Provisiones" (+2 por nivel)
+const CAMPAIGN_KILL_POINTS = 3;
+const CAMPAIGN_START_GLORY = 4;
+const CAMPAIGN_BASE_POP = 5;
+const CAMPAIGN_BASE_CARRY = 5;
 
 (function registerCampaignStrings() {
   const es = {
-    menu_campaign: "Campaña", cmp_title: "CAMPAÑA", cmp_gnomes: "GNOMOS", cmp_points: "PUNTOS", cmp_goal: "Rescata {n} gnomos y llévalos al Obelisco.",
+    menu_campaign: "Campaña", cmp_title: "CAMPAÑA", cmp_gnomes: "GNOMOS", cmp_goal: "Estampa {n} gnomos contra el Obelisco.",
     cmp_play: "JUGAR", cmp_soon: "PRÓXIMAMENTE", cmp_locked: "BLOQUEADO", cmp_done: "COMPLETADO", cmp_chapter: "CAPÍTULO {n}",
-    cmp_need: "Necesitas {g} gnomos y {p} puntos acumulados (tienes {hg} y {hp}).", cmp_need_prev: "Completa el capítulo anterior.",
-    cmp_boss: "El GnomOgro te espera... pero aún no está listo.", cmp_shop: "MEJORAS DE CAMPAÑA", cmp_buy: "COMPRAR", cmp_max: "AL MÁXIMO",
-    cmp_up_prov: "Provisiones", cmp_up_prov_d: "Empiezas cada nivel con +2 Puntos de Gloria por nivel de mejora.",
+    cmp_need: "Necesitas {g} gnomos y {r} recursos extraídos (tienes {hg} y {hr}).", cmp_need_prev: "Completa el capítulo anterior.",
+    cmp_boss: "El GnomOgro te espera... pero aún no está listo.", cmp_shop: "MEJORAS DE CAMPAÑA", cmp_relics: "RELIQUIAS DE CAMPAÑA",
+    cmp_buy: "COMPRAR", cmp_max: "AL MÁXIMO", cmp_equip: "EQUIPAR", cmp_unequip: "QUITAR", cmp_equipped: "EQUIPADA",
+    cmp_slots: "Equipadas {a}/{b}", cmp_relics_help: "Se compran con recursos extraídos. Las reliquias de tu cuenta no valen aquí.",
+    cmp_up_prov: "Provisiones", cmp_up_prov_d: "Empiezas cada nivel con +2 puntos por nivel de mejora.",
     cmp_up_arma: "Garrotes afilados", cmp_up_arma_d: "+1 de ataque a todas tus unidades.",
     cmp_up_armadura: "Cortezas duras", cmp_up_armadura_d: "+1 de aguante a todas tus unidades.",
-    cmp_hud: "{a}/{b}", cmp_extract: "Extraer", cmp_extract_q: "¿EXTRAER Y TERMINAR?", cmp_extract_info: "Te llevas lo conseguido hasta ahora.",
+    cmp_up_pop: "Más barracones", cmp_up_pop_d: "+1 de población máxima.",
+    cmp_up_carga: "Gnomos más cargables", cmp_up_carga_d: "Los gnomos aguantan +1 punto de golpes antes de estamparlos.",
+    cmp_up_slots: "Maletín de reliquias", cmp_up_slots_d: "Puedes llevar hasta 3 reliquias a la vez en vez de 1.",
+    cmp_how: "CÓMO SE JUEGA",
+    cmp_hud: "{a}/{b}", cmp_extract: "Extraer", cmp_extract_q: "¿EXTRAER Y TERMINAR?", cmp_extract_info: "Te llevas los gnomos y los recursos conseguidos. Los puntos de la partida no se extraen.",
     cmp_yes: "EXTRAER", cmp_no: "SEGUIR", cmp_res_ok: "¡CAPÍTULO SUPERADO!", cmp_res_part: "EXTRACCIÓN COMPLETADA", cmp_res_fail: "HAS CAÍDO",
-    cmp_res_g: "Gnomos extraídos", cmp_res_p: "Puntos obtenidos", cmp_res_k: "Neutrales derrotados", cmp_res_goal: "Objetivo: {n} gnomos",
-    cmp_back_map: "VOLVER AL MAPA", cmp_free: "¡GNOMOS LIBRES!", cmp_delivered: "+1 GNOMO", cmp_continue: "Toca para continuar", cmp_next: "CONTINUAR",
-    cmp_ch1: "Capítulo 1 · Bosque MushBoom", cmp_ch2: "Capítulo 2 · Colinas Rock'n Troll", cmp_ch3: "Capítulo 3 · Poblado HurryCrane", cmp_ch4: "Capítulo 4 · WallForge", cmp_ch5: "Capítulo 5 · El GnomOgro",
-    cmp_intro1: "Hubo un tiempo en que todo el reino de Gnomoria era feliz. Las razas vivían en guerra —ironías de la vida— matándose y torturándose sin problemas ni preocupaciones. Hasta que aparecieron ELLOS: los gnomos, con sus arcoíris y sus chuches sin gluten y bajas en azúcar, empeñados en mediar para conseguir la paz. ¡Están locos! ¡No se lo permitiremos! Guardabosques, reunid gnomos en el Bosque MushBoom.",
-    cmp_intro2: "Los gnomos se extienden como una plaga de purpurina. Hasta en las Colinas Rock'n Troll se oyen sus cantos de hermandad por encima de los tambores. Esto es intolerable. Rescatad a los que están enjaulados antes de que sigan predicando la paz.",
-    cmp_intro3: "En el Poblado HurryCrane hasta las grullas parecen conversar en lugar de picotearse. Algo huele a concordia, y ese olor nos revuelve el estómago. Traedme más gnomos: hay que saber dónde se esconden.",
-    cmp_intro4: "WallForge, las murallas de la discordia. Sus soldados vigilan campamentos y jaulas por pura costumbre... y por un buen sueldo. Entrad, sacad a los gnomos y que nadie hable de abrazos.",
-    cmp_intro5: "Se acerca el GnomOgro. Pero eso, mis queridos guardabosques, es otra historia.",
-    cmp_nizak: "Nizak",
+    cmp_res_g: "Gnomos estampados", cmp_res_k: "Neutrales derrotados", cmp_res_goal: "Objetivo: {n} gnomos", cmp_res_half: "Al caer solo te llevas la mitad de los recursos.",
+    cmp_back_map: "VOLVER AL MAPA", cmp_free: "¡GNOMOS LIBRES!", cmp_done_banner: "¡OBJETIVO CUMPLIDO!", cmp_warn_ob: "¡ATACAN TU OBELISCO!", cmp_warn_none: "NO QUEDAN GNOMOS POR LIBERAR",
+    cmp_skip: "SALTAR", cmp_start: "COMENZAR", cmp_war: "LA GUERRA ETERNA", cmp_next: "SIGUIENTE", cmp_ok: "ENTENDIDO", cmp_nizak: "Nizak",
+    cmp_ch1: "Capítulo 1 · Claro de las Setas", cmp_ch2: "Capítulo 2 · Orilla Pantanosa", cmp_ch3: "Capítulo 3 · Espesura Profunda", cmp_ch4: "Capítulo 4 · Cumbre del Hongo", cmp_ch5: "Capítulo 5 · El GnomOgro",
+    cmp_intro1: "Hace más de tres siglos, todo el reino de Gnomoria era feliz.|Las razas vivían en guerra —ironías de la vida— matándose y torturándose sin una sola preocupación.|Hasta que llegaron ELLOS: los gnomos, con sus arcoíris y sus chuches sin gluten y bajas en azúcar, empeñados en mediar para conseguir la paz.|¡Están locos! ¡No se lo permitiremos! Guardabosques, a por ellos.",
+    cmp_intro2: "Los gnomos se extienden como una plaga de purpurina.|Hasta junto a la orilla se oyen ya sus cantos de hermandad.|Rescatad a los enjaulados antes de que sigan predicando la paz.",
+    cmp_intro3: "Más adentro del bosque, hasta las setas parecen charlar en vez de explotar.|Algo huele a concordia, y ese olor me revuelve el estómago.|Traedme más gnomos: hay que saber dónde se esconden.",
+    cmp_intro4: "En lo alto del bosque, los Rastreadores vigilan jaulas por costumbre... y por un buen sueldo.|Entrad, sacad a los gnomos y que nadie mencione la palabra abrazo.",
+    cmp_intro5: "Se acerca el GnomOgro.|Pero eso, mis queridos guardabosques, es otra historia.",
+    cmp_tut1_t: "El objetivo", cmp_tut1: "Cada capítulo te pide estampar un número de gnomos contra tu Obelisco. Empiezas con 1 unidad básica y 4 puntos de partida. Población máxima: 5.",
+    cmp_tut2_t: "Jaulas y neutrales", cmp_tut2: "Los gnomos están enjaulados en campamentos vigilados por Rastreadores. Derrota a todos los guardias de un campamento y las jaulas se abren. Cada baja te da +3 puntos.",
+    cmp_tut3_t: "Estampar gnomos", cmp_tut3: "Un gnomo libre huye de ti como siempre. Cógelo, pégale para cargarle puntos (hasta +5) y llévalo al Obelisco: aquí no le hace daño, es un sacrificio, y los puntos del gnomo pasan a tu bolsa.",
+    cmp_tut4_t: "Puntos y recursos", cmp_tut4: "Los puntos son solo de la partida: úsalos para reclutar. Nadie te da puntos por turno. Recoge madera, roca y metal de los recursos del mapa: eso sí se extrae.",
+    cmp_tut5_t: "Furtivos", cmp_tut5: "De vez en cuando aparecen Rompeobeliscos lejos de tu base y se acercan a golpear el Obelisco. Son débiles, pero si lo derriban, pierdes. Te avisaré al empezar tu turno.",
+    cmp_tut6_t: "Extraer", cmp_tut6: "Con el Obelisco seleccionado, el icono de salida a la derecha de reclutar termina la partida. Te llevas los gnomos y los recursos; con ellos compras mejoras y reliquias en el mapa. Si caes, solo te llevas la mitad de los recursos.",
   };
   const en = {
-    menu_campaign: "Campaign", cmp_title: "CAMPAIGN", cmp_gnomes: "GNOMES", cmp_points: "POINTS", cmp_goal: "Rescue {n} gnomes and bring them to the Obelisk.",
+    menu_campaign: "Campaign", cmp_title: "CAMPAIGN", cmp_gnomes: "GNOMES", cmp_goal: "Slam {n} gnomes into the Obelisk.",
     cmp_play: "PLAY", cmp_soon: "COMING SOON", cmp_locked: "LOCKED", cmp_done: "COMPLETED", cmp_chapter: "CHAPTER {n}",
-    cmp_need: "You need {g} gnomes and {p} total points (you have {hg} and {hp}).", cmp_need_prev: "Complete the previous chapter.",
-    cmp_boss: "The GnomOgre awaits... but it isn't ready yet.", cmp_shop: "CAMPAIGN UPGRADES", cmp_buy: "BUY", cmp_max: "MAXED",
-    cmp_up_prov: "Provisions", cmp_up_prov_d: "Start every level with +2 Glory Points per upgrade level.",
+    cmp_need: "You need {g} gnomes and {r} extracted resources (you have {hg} and {hr}).", cmp_need_prev: "Complete the previous chapter.",
+    cmp_boss: "The GnomOgre awaits... but it isn't ready yet.", cmp_shop: "CAMPAIGN UPGRADES", cmp_relics: "CAMPAIGN RELICS",
+    cmp_buy: "BUY", cmp_max: "MAXED", cmp_equip: "EQUIP", cmp_unequip: "REMOVE", cmp_equipped: "EQUIPPED",
+    cmp_slots: "Equipped {a}/{b}", cmp_relics_help: "Bought with extracted resources. Your account relics don't count here.",
+    cmp_up_prov: "Provisions", cmp_up_prov_d: "Start every level with +2 points per upgrade level.",
     cmp_up_arma: "Sharpened clubs", cmp_up_arma_d: "+1 attack for all your units.",
     cmp_up_armadura: "Hardened bark", cmp_up_armadura_d: "+1 toughness for all your units.",
-    cmp_hud: "{a}/{b}", cmp_extract: "Extract", cmp_extract_q: "EXTRACT AND FINISH?", cmp_extract_info: "You keep what you've gathered so far.",
+    cmp_up_pop: "More barracks", cmp_up_pop_d: "+1 maximum population.",
+    cmp_up_carga: "Sturdier gnomes", cmp_up_carga_d: "Gnomes can take +1 point of hits before the slam.",
+    cmp_up_slots: "Relic case", cmp_up_slots_d: "Carry up to 3 relics at once instead of 1.",
+    cmp_how: "HOW TO PLAY",
+    cmp_hud: "{a}/{b}", cmp_extract: "Extract", cmp_extract_q: "EXTRACT AND FINISH?", cmp_extract_info: "You keep the gnomes and resources you gathered. Match points are not extracted.",
     cmp_yes: "EXTRACT", cmp_no: "KEEP GOING", cmp_res_ok: "CHAPTER CLEARED!", cmp_res_part: "EXTRACTION COMPLETE", cmp_res_fail: "YOU HAVE FALLEN",
-    cmp_res_g: "Gnomes extracted", cmp_res_p: "Points earned", cmp_res_k: "Neutrals defeated", cmp_res_goal: "Goal: {n} gnomes",
-    cmp_back_map: "BACK TO THE MAP", cmp_free: "GNOMES FREED!", cmp_delivered: "+1 GNOME", cmp_continue: "Tap to continue", cmp_next: "CONTINUE",
-    cmp_ch1: "Chapter 1 · MushBoom Forest", cmp_ch2: "Chapter 2 · Rock'n Troll Hills", cmp_ch3: "Chapter 3 · HurryCrane Village", cmp_ch4: "Chapter 4 · WallForge", cmp_ch5: "Chapter 5 · The GnomOgre",
-    cmp_intro1: "There was a time when the whole kingdom of Gnomoria was happy. The races lived at war — the irony! — killing and torturing each other without a care in the world. Until THEY showed up: the gnomes, with their rainbows and their gluten-free, low-sugar candy, set on mediating peace. They're mad! We won't allow it! Forest Rangers, gather gnomes in MushBoom Forest.",
-    cmp_intro2: "The gnomes spread like a plague of glitter. Even in the Rock'n Troll Hills their songs of brotherhood rise above the drums. This is intolerable. Rescue the caged ones before they keep preaching peace.",
-    cmp_intro3: "In HurryCrane Village even the cranes seem to chat instead of pecking at each other. Something smells of harmony, and it turns my stomach. Bring me more gnomes: we must learn where they hide.",
-    cmp_intro4: "WallForge, the walls of discord. Its soldiers guard camps and cages out of habit... and for good pay. Go in, get the gnomes out, and let nobody mention hugs.",
-    cmp_intro5: "The GnomOgre approaches. But that, my dear rangers, is another story.",
-    cmp_nizak: "Nizak",
+    cmp_res_g: "Gnomes slammed", cmp_res_k: "Neutrals defeated", cmp_res_goal: "Goal: {n} gnomes", cmp_res_half: "When you fall you only keep half the resources.",
+    cmp_back_map: "BACK TO THE MAP", cmp_free: "GNOMES FREED!", cmp_done_banner: "GOAL REACHED!", cmp_warn_ob: "YOUR OBELISK IS UNDER ATTACK!", cmp_warn_none: "NO GNOMES LEFT TO FREE",
+    cmp_skip: "SKIP", cmp_start: "BEGIN", cmp_war: "THE ETERNAL WAR", cmp_next: "NEXT", cmp_ok: "GOT IT", cmp_nizak: "Nizak",
+    cmp_ch1: "Chapter 1 · Mushroom Glade", cmp_ch2: "Chapter 2 · Boggy Shore", cmp_ch3: "Chapter 3 · Deep Thicket", cmp_ch4: "Chapter 4 · Fungus Peak", cmp_ch5: "Chapter 5 · The GnomOgre",
+    cmp_intro1: "Over three centuries ago, the whole kingdom of Gnomoria was happy.|The races lived at war — the irony! — killing and torturing each other without a care in the world.|Until THEY showed up: the gnomes, with their rainbows and their gluten-free, low-sugar candy, set on mediating peace.|They're mad! We won't allow it! Forest Rangers, get them.",
+    cmp_intro2: "The gnomes spread like a plague of glitter.|Even by the shore you can hear their songs of brotherhood.|Rescue the caged ones before they keep preaching peace.",
+    cmp_intro3: "Deeper in the forest, even the mushrooms seem to chat instead of exploding.|Something smells of harmony, and it turns my stomach.|Bring me more gnomes: we must learn where they hide.",
+    cmp_intro4: "High in the forest, Trackers guard cages out of habit... and for good pay.|Go in, get the gnomes out, and let nobody mention the word hug.",
+    cmp_intro5: "The GnomOgre approaches.|But that, my dear rangers, is another story.",
+    cmp_tut1_t: "The goal", cmp_tut1: "Every chapter asks you to slam a number of gnomes into your Obelisk. You start with 1 basic unit and 4 match points. Maximum population: 5.",
+    cmp_tut2_t: "Cages and neutrals", cmp_tut2: "Gnomes are caged in camps guarded by Trackers. Defeat every guard of a camp and the cages open. Each kill gives you +3 points.",
+    cmp_tut3_t: "Slamming gnomes", cmp_tut3: "A free gnome runs from you as usual. Grab it, hit it to charge points (up to +5) and take it to the Obelisk: it takes no damage here, it's a sacrifice, and the gnome's points go into your pool.",
+    cmp_tut4_t: "Points and resources", cmp_tut4: "Points belong to the match only: spend them recruiting. Nobody gives you points per turn. Gather wood, rock and metal from the map: those do get extracted.",
+    cmp_tut5_t: "Sneakers", cmp_tut5: "Now and then Obelisk Breakers appear far from your base and creep up to hit the Obelisk. They are weak, but if they bring it down, you lose. I'll warn you at the start of your turn.",
+    cmp_tut6_t: "Extract", cmp_tut6: "With the Obelisk selected, the exit icon right of recruit ends the match. You keep the gnomes and resources; spend them on upgrades and relics on the map. If you fall, you only keep half the resources.",
   };
   Object.assign(STRINGS.es, es);
   Object.assign(STRINGS.en, en);
@@ -87,8 +117,8 @@ const CAMPAIGN_START_GLORY = 4; // + mejora "Provisiones" (+2 por nivel)
 const Campaign = {
   active: false,
   run: null,
-  s: null, // progreso guardado
-  sel: 1, // capítulo seleccionado en el mapa
+  s: null,
+  sel: 1,
   _uid: null,
   _hud: null,
   _camps: [],
@@ -96,25 +126,38 @@ const Campaign = {
   t(k, v) { return I18N.t(k, v); },
   _sleep(ms) { return new Promise((r) => setTimeout(r, ms)); },
   ch(n) { return CAMPAIGN_CHAPTERS.find((c) => c.n === n); },
+  _click() { if (typeof SFX !== "undefined" && SFX.click) SFX.click(); },
+  _cheb(a, b) { return Math.max(Math.abs(a.row - b.row), Math.abs(a.col - b.col)); },
 
   // ---------- Progreso ----------
   _key() { return "gg_campaign_" + (this._uid || "guest"); },
-  _defaults() { return { v: 1, gnomes: 0, points: 0, earnedPoints: 0, done: {}, up: {} }; },
+  _defaults() { return { v: 2, gnomes: 0, res: { madera: 0, roca: 0, metal: 0 }, earnedRes: 0, done: {}, up: {}, relics: [], eq: [], seenTut: false }; },
   load() {
     let raw = null;
     try { raw = JSON.parse(localStorage.getItem(this._key()) || "null"); } catch (e) {}
-    this.s = Object.assign(this._defaults(), raw && typeof raw === "object" ? raw : {});
-    this.s.done = this.s.done || {};
-    this.s.up = this.s.up || {};
+    const d = this._defaults();
+    this.s = Object.assign(d, raw && typeof raw === "object" ? raw : {});
+    this.s.res = Object.assign({ madera: 0, roca: 0, metal: 0 }, this.s.res || {});
+    this.s.done = this.s.done || {}; this.s.up = this.s.up || {};
+    this.s.relics = Array.isArray(this.s.relics) ? this.s.relics : []; this.s.eq = Array.isArray(this.s.eq) ? this.s.eq : [];
+    this.s.v = 2;
   },
   persist() { try { localStorage.setItem(this._key(), JSON.stringify(this.s)); } catch (e) {} },
   upLevel(id) { return (this.s && this.s.up[id]) || 0; },
   bonus(id) { return this.active && this.s ? this.upLevel(id) : 0; },
+  popLimit() { return CAMPAIGN_BASE_POP + this.upLevel("pop"); },
+  gnomeCap() { return CAMPAIGN_BASE_CARRY + this.upLevel("carga"); },
+  slots() { return this.upLevel("slots") ? 3 : 1; },
+  equippedRelics() { return this.s.eq.filter((id) => this.s.relics.includes(id)).slice(0, this.slots()); },
+  relicCost(id) { return CAMPAIGN_RELIC_DEAR.includes(id) ? CAMPAIGN_RELIC_COST_DEAR : CAMPAIGN_RELIC_COST_CHEAP; },
+  canPay(cost) { return CAMPAIGN_RES.every((r) => (this.s.res[r] || 0) >= (cost[r] || 0)); },
+  pay(cost) { CAMPAIGN_RES.forEach((r) => { this.s.res[r] -= cost[r] || 0; }); },
+  totalRes() { return CAMPAIGN_RES.reduce((a, r) => a + (this.s.res[r] || 0), 0); },
 
   unlocked(n) {
     if (n === 1) return true;
     const c = this.ch(n);
-    return !!(this.s.done[n - 1] && this.s.gnomes >= c.req.gnomes && this.s.earnedPoints >= c.req.points);
+    return !!(this.s.done[n - 1] && this.s.gnomes >= c.req.gnomes && this.s.earnedRes >= c.req.res);
   },
 
   // ---------- Arranque ----------
@@ -127,22 +170,20 @@ const Campaign = {
     this.load();
     const btn = document.getElementById("btn-campaign");
     if (btn) btn.addEventListener("click", () => {
-      if (typeof SFX !== "undefined" && SFX.click) SFX.click();
+      this._click();
       this.render();
       goToScreen("screen-campaign");
+      if (!this.s.seenTut) { this.s.seenTut = true; this.persist(); setTimeout(() => this.showTutorial(), 350); }
     });
     if (typeof Turns !== "undefined") Turns.registerTurnStartListener(this);
     document.addEventListener("gg:langchange", () => { this.render(); this._refreshHud(); });
   },
 
-  // El turno del jugador acaba: los neutrales reaccionan (Turns espera a esta promesa).
-  async onTurnEnd(team) {
-    if (!this.active || team !== "player" || !this.run || this.run.over) return;
-    await this.neutralTurn();
-    this._checkStuck();
+  // ---------- Pantalla del mapa ----------
+  _costHtml(cost) {
+    return CAMPAIGN_RES.filter((r) => cost[r]).map((r) => `<span class="camp-cost${(this.s.res[r] || 0) >= cost[r] ? "" : " camp-cost--no"}"><img src="${CAMPAIGN_RES_ICON[r]}" alt="">${cost[r]}</span>`).join("");
   },
 
-  // ---------- Pantalla del mapa ----------
   render() {
     const root = document.getElementById("camp-root");
     if (!root || !this.s) return;
@@ -151,7 +192,7 @@ const Campaign = {
     const nodes = CAMPAIGN_CHAPTERS.map((c, i) => {
       const un = this.unlocked(c.n), done = !!this.s.done[c.n];
       const cls = ["camp-node", un ? "camp-node--open" : "camp-node--locked", done ? "camp-node--done" : "", c.n === sel.n ? "camp-node--sel" : ""].join(" ");
-      const img = c.img ? `<img class="camp-node__img" src="${c.img}" alt="">` : `<i class="ph-fill ph-skull camp-node__skull"></i>`;
+      const img = c.boss ? `<i class="ph-fill ph-skull camp-node__skull"></i>` : `<img class="camp-node__img" src="assets/niveles/isla_mushboom_forest.png" alt="">`;
       const badge = !un ? `<i class="ph-fill ph-lock-simple camp-node__badge"></i>` : done ? `<i class="ph-fill ph-check-circle camp-node__badge camp-node__badge--ok"></i>` : "";
       return `<button type="button" class="${cls}" data-n="${c.n}" style="--i:${i}">${img}${badge}<span class="camp-node__n">${c.n}</span></button>`;
     }).join('<i class="camp-link"></i>');
@@ -159,7 +200,7 @@ const Campaign = {
     let status, action;
     if (sel.boss) { status = t("cmp_boss"); action = `<button class="p5-banner p5-banner--action camp-play" disabled><span class="p5-banner__label">${t("cmp_soon")}</span></button>`; }
     else if (!this.unlocked(sel.n)) {
-      status = this.s.done[sel.n - 1] ? t("cmp_need", { g: sel.req.gnomes, p: sel.req.points, hg: this.s.gnomes, hp: this.s.earnedPoints }) : t("cmp_need_prev");
+      status = this.s.done[sel.n - 1] ? t("cmp_need", { g: sel.req.gnomes, r: sel.req.res, hg: this.s.gnomes, hr: this.s.earnedRes }) : t("cmp_need_prev");
       action = `<button class="p5-banner p5-banner--action camp-play" disabled><span class="p5-banner__label"><i class="ph-fill ph-lock-simple"></i> ${t("cmp_locked")}</span></button>`;
     } else {
       status = this.s.done[sel.n] ? t("cmp_done") : "";
@@ -167,21 +208,32 @@ const Campaign = {
     }
 
     const shop = CAMPAIGN_UPGRADES.map((u) => {
-      const lv = this.upLevel(u.id), max = lv >= u.max, cost = u.cost[lv], can = !max && this.s.points >= cost;
+      const lv = this.upLevel(u.id), max = lv >= u.max, cost = u.cost[lv], can = !max && this.canPay(cost);
       const pips = Array.from({ length: u.max }, (_, i) => `<i class="camp-pip${i < lv ? " camp-pip--on" : ""}"></i>`).join("");
       return `<div class="camp-up"><i class="ph-fill ${u.icon} camp-up__icon"></i>
         <div class="camp-up__txt"><b>${t("cmp_up_" + u.id)}</b><span>${t("cmp_up_" + u.id + "_d")}</span><span class="camp-pips">${pips}</span></div>
-        <button type="button" class="camp-up__buy" data-buy="${u.id}" ${can ? "" : "disabled"}>${max ? t("cmp_max") : `${t("cmp_buy")} · ${cost}`}</button></div>`;
+        <div class="camp-up__buyer">${max ? "" : `<span class="camp-costs">${this._costHtml(cost)}</span>`}<button type="button" class="camp-up__buy" data-buy="${u.id}" ${can ? "" : "disabled"}>${max ? t("cmp_max") : t("cmp_buy")}</button></div></div>`;
     }).join("");
 
+    const eq = this.equippedRelics();
+    const relics = (typeof ART_DEFS !== "undefined" ? ART_DEFS : []).map((d) => {
+      const own = this.s.relics.includes(d.id), on = eq.includes(d.id), cost = this.relicCost(d.id);
+      const btn = own ? `<button type="button" class="camp-up__buy${on ? " camp-up__buy--on" : ""}" data-eq="${d.id}">${on ? t("cmp_unequip") : t("cmp_equip")}</button>`
+        : `<button type="button" class="camp-up__buy" data-relic="${d.id}" ${this.canPay(cost) ? "" : "disabled"}>${t("cmp_buy")}</button>`;
+      return `<div class="camp-up${on ? " camp-up--on" : ""}"><img class="camp-up__img" src="assets/artefactos/${d.id}.webp" alt="">
+        <div class="camp-up__txt"><b>${Artifacts.name(d.id)}</b><span>${Artifacts.desc(d.id)}</span></div>
+        <div class="camp-up__buyer">${own ? (on ? `<span class="camp-costs camp-costs--on">${t("cmp_equipped")}</span>` : "") : `<span class="camp-costs">${this._costHtml(cost)}</span>`}${btn}</div></div>`;
+    }).join("");
+
+    const res = CAMPAIGN_RES.map((r) => `<span class="camp-chip"><img src="${CAMPAIGN_RES_ICON[r]}" alt=""><b>${this.s.res[r] || 0}</b></span>`).join("");
     root.innerHTML = `
       <div class="camp-top">
-        <span class="camp-chip"><i class="ph-fill ph-users-three"></i> ${t("cmp_gnomes")} <b>${this.s.gnomes}</b></span>
-        <span class="camp-chip"><i class="ph-fill ph-coins"></i> ${t("cmp_points")} <b>${this.s.points}</b></span>
+        <span class="camp-chip"><i class="ph-fill ph-users-three"></i> ${t("cmp_gnomes")} <b>${this.s.gnomes}</b></span>${res}
+        <button type="button" class="camp-how"><i class="ph-fill ph-question"></i> ${t("cmp_how")}</button>
       </div>
       <div class="camp-body">
-        <div class="camp-map">${nodes}</div>
-        <div class="camp-side">
+        <div class="camp-col">
+          <div class="camp-map">${nodes}</div>
           <div class="camp-detail">
             <div class="camp-detail__kicker">${t("cmp_chapter", { n: sel.n })}</div>
             <div class="camp-detail__name">${t("cmp_ch" + sel.n).replace(/^[^·]*· /, "")}</div>
@@ -189,50 +241,78 @@ const Campaign = {
             <div class="camp-detail__status">${status}</div>
             ${action}
           </div>
+        </div>
+        <div class="camp-side">
           <div class="camp-shop"><div class="camp-shop__title">${t("cmp_shop")}</div>${shop}</div>
+          <div class="camp-shop"><div class="camp-shop__title">${t("cmp_relics")} <small>${t("cmp_slots", { a: eq.length, b: this.slots() })}</small></div><div class="camp-shop__help">${t("cmp_relics_help")}</div>${relics}</div>
         </div>
       </div>`;
-    root.querySelectorAll(".camp-node").forEach((b) => b.addEventListener("click", () => {
-      if (typeof SFX !== "undefined" && SFX.click) SFX.click();
-      this.sel = +b.dataset.n; this.render();
-    }));
+    root.querySelectorAll(".camp-node").forEach((b) => b.addEventListener("click", () => { this._click(); this.sel = +b.dataset.n; this.render(); }));
     const pb = root.querySelector("[data-play]");
-    if (pb) pb.addEventListener("click", () => { if (typeof SFX !== "undefined" && SFX.click) SFX.click(); this.play(+pb.dataset.play); });
+    if (pb) pb.addEventListener("click", () => { this._click(); this.play(+pb.dataset.play); });
     root.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => this.buy(b.dataset.buy)));
+    root.querySelectorAll("[data-relic]").forEach((b) => b.addEventListener("click", () => this.buyRelic(b.dataset.relic)));
+    root.querySelectorAll("[data-eq]").forEach((b) => b.addEventListener("click", () => this.toggleRelic(b.dataset.eq)));
+    const how = root.querySelector(".camp-how");
+    if (how) how.addEventListener("click", () => { this._click(); this.showTutorial(); });
   },
 
   buy(id) {
     const u = CAMPAIGN_UPGRADES.find((x) => x.id === id);
     if (!u) return;
     const lv = this.upLevel(id);
-    if (lv >= u.max || this.s.points < u.cost[lv]) return;
-    this.s.points -= u.cost[lv];
+    if (lv >= u.max || !this.canPay(u.cost[lv])) return;
+    this.pay(u.cost[lv]);
     this.s.up[id] = lv + 1;
     this.persist();
     if (typeof SFX !== "undefined" && SFX.buy) SFX.buy();
     this.render();
   },
+  buyRelic(id) {
+    const cost = this.relicCost(id);
+    if (this.s.relics.includes(id) || !this.canPay(cost)) return;
+    this.pay(cost);
+    this.s.relics.push(id);
+    if (this.equippedRelics().length < this.slots()) this.s.eq.push(id);
+    this.persist();
+    if (typeof SFX !== "undefined" && SFX.buy) SFX.buy();
+    this.render();
+  },
+  toggleRelic(id) {
+    this._click();
+    const eq = this.equippedRelics();
+    if (eq.includes(id)) this.s.eq = eq.filter((x) => x !== id);
+    else if (eq.length < this.slots()) this.s.eq = eq.concat(id);
+    else this.s.eq = eq.slice(0, this.slots() - 1).concat(id); // sustituye a la última
+    this.persist();
+    this.render();
+  },
 
-  // ---------- Intro de Nizak ----------
-  _intro(ch) {
-    return new Promise((resolve) => {
-      const ov = document.createElement("div");
-      ov.className = "camp-intro";
-      ov.innerHTML = `<div class="camp-intro__card">
-        <img class="camp-intro__nizak" src="assets/tutorial/nizak_normal.png" alt="">
-        <div class="camp-intro__box"><div class="camp-intro__name">${this.t("cmp_nizak")}</div>
-        <div class="camp-intro__text">${this.t("cmp_intro" + ch.n)}</div>
-        <div class="camp-intro__tap">${this.t("cmp_continue")} <i class="ph-fill ph-caret-right"></i></div></div></div>`;
-      document.body.appendChild(ov);
-      requestAnimationFrame(() => ov.classList.add("camp-intro--on"));
-      let closed = false;
-      const close = () => {
-        if (closed) return; closed = true;
-        if (typeof SFX !== "undefined" && SFX.click) SFX.click();
-        ov.classList.remove("camp-intro--on");
-        setTimeout(() => { ov.remove(); resolve(); }, 220);
-      };
-      ov.addEventListener("click", close);
+  // ---------- Tutorial (tarjetas de Nizak) ----------
+  showTutorial() {
+    if (document.querySelector(".camp-intro")) return;
+    const pages = [1, 2, 3, 4, 5, 6].map((i) => ({ title: this.t("cmp_tut" + i + "_t"), text: this.t("cmp_tut" + i) }));
+    const ov = document.createElement("div");
+    ov.className = "camp-intro";
+    ov.innerHTML = `<div class="camp-intro__card">
+      <img class="camp-intro__nizak" src="assets/tutorial/nizak_aplaude.png" alt="">
+      <div class="camp-intro__box"><div class="camp-intro__name">${this.t("cmp_nizak")} · <span class="camp-tut__title"></span> <small class="camp-tut__n"></small></div>
+      <div class="camp-intro__text"></div>
+      <button type="button" class="camp-intro__next"></button></div></div>`;
+    document.body.appendChild(ov);
+    requestAnimationFrame(() => ov.classList.add("camp-intro--on"));
+    let i = 0;
+    const paint = () => {
+      ov.querySelector(".camp-tut__title").textContent = pages[i].title;
+      ov.querySelector(".camp-tut__n").textContent = `${i + 1}/${pages.length}`;
+      ov.querySelector(".camp-intro__text").textContent = pages[i].text;
+      ov.querySelector(".camp-intro__next").textContent = i === pages.length - 1 ? this.t("cmp_ok") : this.t("cmp_next");
+    };
+    paint();
+    ov.querySelector(".camp-intro__next").addEventListener("click", (e) => {
+      e.stopPropagation(); this._click();
+      if (i < pages.length - 1) { i++; paint(); return; }
+      ov.classList.remove("camp-intro--on"); setTimeout(() => ov.remove(), 220);
     });
   },
 
@@ -240,15 +320,21 @@ const Campaign = {
   async play(n) {
     const ch = this.ch(n);
     if (!ch || ch.boss || !this.unlocked(n)) return;
-    await this._intro(ch);
     this.active = true;
-    this.run = { n, goal: ch.goal, delivered: 0, kills: 0, earned: 0, over: false };
+    this.run = { n, goal: ch.goal, delivered: 0, kills: 0, over: false, warnedNone: false, warnedDone: false, spawned: 0 };
     this._camps = [];
     if (typeof matchDraft !== "undefined") matchDraft.modeId = "campaign";
     await startMatch({ modeId: "campaign", raceId: "mushboom_forest", levelId: ch.levelId, opponents: 1 });
-    // Si el arranque falló, startMatch ya deshizo la pantalla: se limpia el estado.
     const board = document.getElementById("screen-board");
     if (!board || !board.classList.contains("screen--active")) this.onLeaveBoard();
+  },
+
+  // Tras construir la partida: intro de Nizak antes de empezar a jugar.
+  async afterStart() {
+    const ch = this.ch(this.run.n);
+    await this._warIntro(ch);
+    if (!this.active || !this.run) return;
+    if (typeof Turns !== "undefined") Turns.showTurnBanner();
   },
 
   _free(r, c, size) {
@@ -259,10 +345,8 @@ const Campaign = {
     return mods.every((m) => !(m && m.at && m.at(r, c)));
   },
 
-  // Se llama desde spawnTestUnits con el tablero ya construido.
   onMatchBuilt(size) {
     const ch = this.ch(this.run.n);
-    // Sin rival con Obelisco, sin tótems ni Altar (la Campaña solo tiene la zona de extracción).
     if (typeof Obelisks !== "undefined") {
       const eo = Obelisks.byTeam("enemy");
       if (eo) { eo.el.remove(); Obelisks.list = Obelisks.list.filter((o) => o !== eo); }
@@ -274,27 +358,27 @@ const Campaign = {
     const ob = Obelisks.byTeam("player");
     this._setupObelisk(ob);
 
-    // Puntos iniciales y dos unidades propias junto al Obelisco.
-    if (typeof Glory !== "undefined") Glory.addNow("player", CAMPAIGN_START_GLORY + 2 * this.upLevel("prov"));
+    // Puntos de partida (no se extraen) y una unidad básica junto al Obelisco.
+    if (typeof Glory !== "undefined") { Glory.points.player = 0; Glory.addNow("player", CAMPAIGN_START_GLORY + 2 * this.upLevel("prov")); }
     const roster = Object.keys(UNIT_TYPES).filter((k) => UNIT_TYPES[k].raceId === "mushboom_forest");
+    roster.sort((a, b) => Units.recruitPriceFor(a) - Units.recruitPriceFor(b));
     const adj = Obelisks._adjacentFreeTiles(ob);
-    for (let i = 0; i < 2 && adj.length; i++) {
-      const spot = adj.splice(Math.floor(Math.random() * adj.length), 1)[0];
-      const u = Units.spawnUnit({ typeId: roster[i % roster.length], row: spot.row, col: spot.col, team: "player" });
+    if (adj.length) {
+      const spot = adj[Math.floor(Math.random() * adj.length)];
+      const u = Units.spawnUnit({ typeId: roster[0], row: spot.row, col: spot.col, team: "player" });
       if (typeof Fog !== "undefined" && Fog.revealForUnit) Fog.revealForUnit(u);
     }
 
-    // Campamentos: neutrales (soldados de WallForge) guardando gnomos enjaulados.
+    // Campamentos de Rastreadores con gnomos enjaulados.
     const placed = [];
-    const dist = (a, b) => Math.max(Math.abs(a.row - b.row), Math.abs(a.col - b.col));
     for (let k = 0; k < ch.camps; k++) {
       let spot = null;
       for (let minD = 8; minD >= 3 && !spot; minD -= 1) {
         for (let a = 0; a < 300 && !spot; a++) {
           const r = 2 + Math.floor(Math.random() * (size - 4)), c = 2 + Math.floor(Math.random() * (size - 4));
           if (!this._free(r, c, size)) continue;
-          if (dist({ row: r, col: c }, ob) < minD + 2) continue;
-          if (placed.some((p) => dist(p, { row: r, col: c }) < minD)) continue;
+          if (this._cheb({ row: r, col: c }, ob) < minD + 2) continue;
+          if (placed.some((p) => this._cheb(p, { row: r, col: c }) < minD)) continue;
           if (!Obelisks._hasFreeRing(r, c, size)) continue;
           spot = { row: r, col: c };
         }
@@ -311,7 +395,6 @@ const Campaign = {
         camp.guards.push(Units.spawnUnit({ typeId, row: p.row, col: p.col, team: "enemy" }).id);
       }
       for (let g = 0; g < ch.cages; g++) {
-        // El primero va en el centro; los demás en la casilla libre más cercana.
         const gn = Gnome.spawnNear(spot.row, spot.col);
         this._cage(gn);
         camp.gnomes.push(gn);
@@ -319,9 +402,9 @@ const Campaign = {
       this._camps.push(camp);
     }
 
-    // Un gnomo suelto cerca del inicio para aprender a cogerlo y entregarlo.
-    const near = Gnome.spawnNear(Math.min(size - 1, ob.row + (ob.row < size / 2 ? 4 : -4)), Math.min(size - 1, ob.col + (ob.col < size / 2 ? 3 : -3)));
-    near.caged = false;
+    // Un gnomo suelto cerca del inicio para aprender a cogerlo.
+    Gnome.spawnNear(Math.min(size - 1, ob.row + (ob.row < size / 2 ? 4 : -4)), Math.min(size - 1, ob.col + (ob.col < size / 2 ? 3 : -3)));
+    if (typeof Obelisks.refreshAll === "function") Obelisks.refreshAll();
     this._showHud();
   },
 
@@ -337,16 +420,11 @@ const Campaign = {
     gn.el.appendChild(img);
     gn._cageEl = img;
   },
-
   _openCage(gn) {
     gn.caged = false;
     if (gn.spriteEl) gn.spriteEl.style.opacity = "";
     const img = gn._cageEl;
-    if (img) {
-      img.classList.add("camp-cage--open");
-      setTimeout(() => img.remove(), 520);
-      gn._cageEl = null;
-    }
+    if (img) { img.classList.add("camp-cage--open"); setTimeout(() => img.remove(), 520); gn._cageEl = null; }
   },
 
   _setupObelisk(ob) {
@@ -358,80 +436,87 @@ const Campaign = {
     btn.className = "obelisk__menu-btn obelisk__menu-btn--extract";
     btn.setAttribute("aria-label", this.t("cmp_extract"));
     btn.innerHTML = '<i class="ph-fill ph-sign-out obelisk__menu-extract-icon"></i>';
-    btn.addEventListener("click", (e) => { e.stopPropagation(); if (typeof SFX !== "undefined" && SFX.click) SFX.click(); this._askExtract(); });
+    btn.addEventListener("click", (e) => { e.stopPropagation(); this._click(); this._askExtract(); });
     if (typeof Tooltip !== "undefined") Tooltip.attach(btn, this.t("cmp_extract"));
     menu.appendChild(btn);
   },
 
   // ---------- Marcador ----------
   _showHud() {
-    if (!this._hud) {
-      this._hud = document.createElement("div");
-      this._hud.className = "camp-hud";
-      document.body.appendChild(this._hud);
-    }
+    if (!this._hud) { this._hud = document.createElement("div"); this._hud.className = "camp-hud"; document.body.appendChild(this._hud); }
     this._hud.style.display = "flex";
     this._refreshHud();
   },
   _refreshHud() {
     if (!this._hud || !this.run) return;
-    const r = this.run, ok = r.delivered >= r.goal;
-    this._hud.classList.toggle("camp-hud--ok", ok);
-    this._hud.innerHTML = `<span class="camp-hud__item"><i class="ph-fill ph-users-three"></i> ${this.t("cmp_hud", { a: r.delivered, b: r.goal })}</span>
-      <span class="camp-hud__item"><i class="ph-fill ph-coins"></i> ${r.earned}</span>`;
+    const r = this.run;
+    this._hud.classList.toggle("camp-hud--ok", r.delivered >= r.goal);
+    this._hud.innerHTML = `<span class="camp-hud__item"><i class="ph-fill ph-users-three"></i> ${this.t("cmp_hud", { a: r.delivered, b: r.goal })}</span>`;
   },
-  _bump() {
-    if (!this._hud) return;
-    this._hud.classList.remove("camp-hud--bump"); void this._hud.offsetWidth; this._hud.classList.add("camp-hud--bump");
-  },
+  _bump() { if (!this._hud) return; this._hud.classList.remove("camp-hud--bump"); void this._hud.offsetWidth; this._hud.classList.add("camp-hud--bump"); },
+  _banner(txt) { if (typeof Turns !== "undefined" && Turns.showBanner) Turns.showBanner(txt); },
 
   // ---------- Eventos del motor ----------
   onUnitRemoved(unit) {
     const run = this.run;
-    if (!run || run.over) return;
-    if (unit.team === "enemy") {
-      const pts = CAMPAIGN_REWARD.kill[unit.typeId] || 2;
-      run.kills++; run.earned += pts;
-      if (typeof Glory !== "undefined") Glory.addNow("player", pts);
-      this._refreshHud(); this._bump();
-      this._camps.forEach((camp) => {
-        if (camp.open) return;
-        if (camp.guards.every((id) => !Units.list.some((u) => u.id === id))) {
-          camp.open = true;
-          camp.gnomes.forEach((g) => this._openCage(g));
-          if (typeof Turns !== "undefined" && Turns.showBanner) Turns.showBanner(this.t("cmp_free"));
-          if (typeof SFX !== "undefined" && SFX.passSuccess) SFX.passSuccess();
-        }
-      });
-    }
+    if (!run || run.over || unit.team !== "enemy") return;
+    run.kills++;
+    if (typeof Glory !== "undefined") Glory.addNow("player", CAMPAIGN_KILL_POINTS);
+    this._camps.forEach((camp) => {
+      if (camp.open) return;
+      if (camp.guards.every((id) => !Units.list.some((u) => u.id === id))) {
+        camp.open = true;
+        camp.gnomes.forEach((g) => this._openCage(g));
+        this._banner(this.t("cmp_free"));
+        if (typeof SFX !== "undefined" && SFX.passSuccess) SFX.passSuccess();
+      }
+    });
   },
 
-  // Una unidad se detuvo: si lleva un gnomo y está junto al Obelisco, lo extrae.
-  onUnitStopped(unit) {
-    if (!unit || unit.team !== "player" || !this.run || this.run.over) return;
-    setTimeout(() => this._tryDeliver(unit), 200);
-  },
-  async _tryDeliver(unit) {
-    if (!this.run || this.run.over || !unit.el || !Units.list.includes(unit)) return;
-    const ob = Obelisks.byTeam("player");
-    const g = Gnome.list.find((x) => x.heldBy === unit.id);
-    if (!ob || !g || Math.max(Math.abs(ob.row - unit.row), Math.abs(ob.col - unit.col)) > 1) return;
-    if (g._delivering) return;
-    g._delivering = true;
-    this.run.delivered++; this.run.earned += CAMPAIGN_REWARD.deliver;
-    if (typeof Glory !== "undefined") Glory.addFlying("player", CAMPAIGN_REWARD.deliver, unit.el);
-    if (typeof Units.spawnFloatingText === "function") Units.spawnFloatingText(unit, this.t("cmp_delivered"), { className: "dmg-popup camp-popup" });
-    if (typeof SFX !== "undefined") { if (SFX.captureVillage) SFX.captureVillage(); }
-    ob.el.classList.add("obelisk--camp-pulse");
-    setTimeout(() => ob.el.classList.remove("obelisk--camp-pulse"), 700);
-    g.detachFrom();
-    Gnome.destroyInstance(g);
-    if (typeof Units.refreshRange === "function") Units.refreshRange(unit);
+  // Un gnomo se ha estampado contra el Obelisco propio (js/obelisks.js): sacrificio, sin daño al Obelisco.
+  onSacrifice(unit, pts) {
+    const run = this.run;
+    if (!run || run.over) return;
+    run.delivered++;
+    if (pts > 0 && typeof Glory !== "undefined") Glory.addFlying("player", pts, unit.el);
     this._refreshHud(); this._bump();
-    if (typeof Gnome.showFor === "function") Gnome.showFor(unit);
+    if (run.delivered >= run.goal && !run.warnedDone) { run.warnedDone = true; this._banner(this.t("cmp_done_banner")); }
+  },
+
+  // Inicio de turno del jugador: avisos.
+  onTurnStart(team) {
+    const run = this.run;
+    if (!this.active || !run || run.over || team !== "player") return;
+    const ob = Obelisks.byTeam("player");
+    if (ob && Units.list.some((u) => u.typeId === "rompeobeliscos" && this._cheb(u, ob) <= 1)) this._banner(this.t("cmp_warn_ob"));
+    if (!run.warnedNone && Gnome.list.length && !Gnome.list.some((g) => g.caged)) { run.warnedNone = true; this._banner(this.t("cmp_warn_none")); }
   },
 
   // ---------- IA de los neutrales ----------
+  async onTurnEnd(team) {
+    if (!this.active || team !== "player" || !this.run || this.run.over) return;
+    this._maybeSpawnSneaker();
+    await this.neutralTurn();
+    this._checkStuck();
+  },
+
+  _maybeSpawnSneaker() {
+    const ch = this.ch(this.run.n), sn = ch.sneak;
+    if (!sn || Turns.roundNumber % sn.every !== 0) return;
+    if (Units.list.filter((u) => u.typeId === "rompeobeliscos").length >= sn.max) return;
+    const ob = Obelisks.byTeam("player"), size = Units.boardSize;
+    let best = null;
+    for (let a = 0; a < 250; a++) {
+      const r = Math.floor(Math.random() * size), c = Math.floor(Math.random() * size);
+      if (!this._free(r, c, size)) continue;
+      const d = this._cheb({ row: r, col: c }, ob);
+      if (d < 10) continue;
+      if (!best || d > best.d) best = { row: r, col: c, d };
+      if (d >= 14) break;
+    }
+    if (best) Units.spawnUnit({ typeId: "rompeobeliscos", row: best.row, col: best.col, team: "enemy" });
+  },
+
   async neutralTurn() {
     const guards = Units.list.filter((u) => u.team === "enemy");
     if (!guards.length) return;
@@ -440,24 +525,24 @@ const Campaign = {
     Turns.activeTeam = "enemy"; // canAct/Movement solo dejan actuar al equipo activo
     const ep = typeof MatchCleanup !== "undefined" ? MatchCleanup.epoch : 0;
     try {
-    for (const g of guards) {
-      for (let i = 0; i < TURNS_MAX_ACTIONS; i++) {
-        if ((typeof MatchCleanup !== "undefined" && MatchCleanup.epoch !== ep) || !g.el || !Units.list.includes(g)) break;
-        if (!Turns.canAct(g)) break;
-        let acted = false;
-        try { acted = await this._guardAct(g); } catch (e) { console.warn("[Campaign] guard", e); }
-        if (!acted) break;
-        await this._sleep(240);
+      for (const g of guards) {
+        for (let i = 0; i < TURNS_MAX_ACTIONS; i++) {
+          if ((typeof MatchCleanup !== "undefined" && MatchCleanup.epoch !== ep) || !g.el || !Units.list.includes(g) || this.run.over) break;
+          if (!Turns.canAct(g)) break;
+          let acted = false;
+          try { acted = g.typeId === "rompeobeliscos" ? await this._sneakAct(g) : await this._guardAct(g); } catch (e) { console.warn("[Campaign] neutral", e); }
+          if (!acted) break;
+          await this._sleep(240);
+        }
       }
-    }
     } finally { Turns.activeTeam = prevTeam; }
   },
+
   async _guardAct(g) {
     const ch = this.ch(this.run.n);
-    const players = Units.list.filter((u) => u.team === "player");
     let best = null;
-    players.forEach((u) => {
-      const d = Math.max(Math.abs(u.row - g.row), Math.abs(u.col - g.col));
+    Units.list.filter((u) => u.team === "player").forEach((u) => {
+      const d = this._cheb(u, g);
       if (!best || d < best.d) best = { u, d };
     });
     if (!best || best.d > ch.aggro) return false;
@@ -470,7 +555,31 @@ const Campaign = {
     return true;
   },
 
-  // Sin unidades ni puntos para reclutar: no hay forma de seguir.
+  // Rompeobeliscos: golpean al jugador si lo tienen pegado; si no, se acercan poco a poco al Obelisco y le pegan.
+  async _sneakAct(u) {
+    const ob = Obelisks.byTeam("player");
+    if (!ob) return false;
+    const close = Combat.attackableEnemies(u).find((o) => o.approach.row === u.row && o.approach.col === u.col);
+    if (close) { await Combat.attack(u, close.target); return true; }
+    if (this._cheb(u, ob) <= 1) { await this._hitObelisk(u, ob); return true; }
+    const dest = Turns._aiPickMoveTileToward(u, { row: ob.row, col: ob.col });
+    if (!dest) return false;
+    await Movement.moveTo(u, dest.row, dest.col);
+    if (typeof Turns.forceOutOfActions === "function") Turns.forceOutOfActions(u); // solo avanzan una vez por turno: llegan poco a poco
+    return true;
+  },
+
+  async _hitObelisk(u, ob) {
+    Units.faceTowardsTile(u, ob.row, ob.col);
+    Turns.useAction(u);
+    ob.hp = Math.max(0, ob.hp - 1);
+    if (typeof Units.updateHpBar === "function") Units.updateHpBar(ob);
+    if (typeof SFX !== "undefined" && SFX.hit) SFX.hit();
+    ob.el.classList.remove("obelisk--camp-hit"); void ob.el.offsetWidth; ob.el.classList.add("obelisk--camp-hit");
+    await this._sleep(380);
+    if (ob.hp <= 0) await Obelisks._destroy(ob);
+  },
+
   _checkStuck() {
     if (!this.run || this.run.over) return;
     const mine = Units.list.some((u) => u.team === "player");
@@ -480,19 +589,20 @@ const Campaign = {
 
   // ---------- Extracción y resultado ----------
   _askExtract() {
-    if (!this.run || this.run.over) return;
-    if (this._askEl) return;
+    if (!this.run || this.run.over || this._askEl) return;
     const ov = document.createElement("div");
     ov.className = "camp-ask";
+    const c = Resources.counts;
     ov.innerHTML = `<div class="camp-ask__panel">
       <div class="camp-ask__q">${this.t("cmp_extract_q")}</div>
-      <div class="camp-ask__info">${this.t("cmp_extract_info")}<br><b>${this.run.delivered}/${this.run.goal}</b> ${this.t("cmp_gnomes").toLowerCase()} · <b>${this.run.earned}</b> ${this.t("cmp_points").toLowerCase()}</div>
+      <div class="camp-ask__info">${this.t("cmp_extract_info")}<br><b>${this.run.delivered}/${this.run.goal}</b> ${this.t("cmp_gnomes").toLowerCase()}
+        <span class="camp-costs">${CAMPAIGN_RES.map((r) => `<span class="camp-cost"><img src="${CAMPAIGN_RES_ICON[r]}" alt="">${c[r] || 0}</span>`).join("")}</span></div>
       <div class="camp-ask__row"><button class="camp-ask__btn camp-ask__btn--yes">${this.t("cmp_yes")}</button><button class="camp-ask__btn camp-ask__btn--no">${this.t("cmp_no")}</button></div></div>`;
     document.body.appendChild(ov);
     this._askEl = ov;
     const close = () => { ov.remove(); this._askEl = null; };
     ov.querySelector(".camp-ask__btn--no").addEventListener("click", () => { if (typeof SFX !== "undefined" && SFX.back) SFX.back(); close(); });
-    ov.querySelector(".camp-ask__btn--yes").addEventListener("click", () => { if (typeof SFX !== "undefined" && SFX.click) SFX.click(); close(); this._finish("extract"); });
+    ov.querySelector(".camp-ask__btn--yes").addEventListener("click", () => { this._click(); close(); this._finish("extract"); });
     ov.addEventListener("click", (e) => { if (e.target === ov) close(); });
   },
 
@@ -506,18 +616,18 @@ const Campaign = {
     if (typeof Units !== "undefined") Units.deselect();
     if (typeof Turns !== "undefined") Turns.hideButton();
     const fallen = kind === "fallen";
-    const gain = fallen ? Math.floor(r.earned / 2) : r.earned;
+    const got = {};
+    CAMPAIGN_RES.forEach((k) => { const n = (Resources.counts && Resources.counts[k]) || 0; got[k] = fallen ? Math.floor(n / 2) : n; });
     const completed = !fallen && r.delivered >= r.goal;
     this.s.gnomes += r.delivered;
-    this.s.points += gain;
-    this.s.earnedPoints += gain;
+    CAMPAIGN_RES.forEach((k) => { this.s.res[k] += got[k]; this.s.earnedRes += got[k]; });
     if (completed) this.s.done[r.n] = true;
     this.persist();
     if (typeof SFX !== "undefined") { if (fallen && SFX.defeat) SFX.defeat(); else if (SFX.victory) SFX.victory(); }
-    this._showResult({ completed, fallen, gain });
+    this._showResult({ completed, fallen, got });
   },
 
-  _showResult({ completed, fallen, gain }) {
+  _showResult({ completed, fallen, got }) {
     const r = this.run;
     const title = fallen ? this.t("cmp_res_fail") : completed ? this.t("cmp_res_ok") : this.t("cmp_res_part");
     const ov = document.createElement("div");
@@ -526,17 +636,13 @@ const Campaign = {
       <div class="camp-result__title${fallen ? " camp-result__title--bad" : ""}">${title}</div>
       <div class="camp-result__rows">
         <div><span>${this.t("cmp_res_g")}</span><b>${r.delivered}</b></div>
-        <div><span>${this.t("cmp_res_p")}</span><b>+${gain}</b></div>
+        <div class="camp-result__res">${CAMPAIGN_RES.map((k) => `<span class="camp-cost"><img src="${CAMPAIGN_RES_ICON[k]}" alt="">+${got[k]}</span>`).join("")}</div>
         <div><span>${this.t("cmp_res_k")}</span><b>${r.kills}</b></div>
-        <div class="camp-result__goal">${this.t("cmp_res_goal", { n: r.goal })}</div></div>
+        <div class="camp-result__goal">${this.t("cmp_res_goal", { n: r.goal })}${fallen ? "<br>" + this.t("cmp_res_half") : ""}</div></div>
       <button class="camp-result__btn">${this.t("cmp_back_map")}</button></div>`;
     document.body.appendChild(ov);
     requestAnimationFrame(() => ov.classList.add("camp-result--on"));
-    ov.querySelector(".camp-result__btn").addEventListener("click", () => {
-      if (typeof SFX !== "undefined" && SFX.click) SFX.click();
-      ov.remove();
-      this.leaveToMap();
-    });
+    ov.querySelector(".camp-result__btn").addEventListener("click", () => { this._click(); ov.remove(); this.leaveToMap(); });
     this._resultEl = ov;
   },
 
@@ -550,15 +656,76 @@ const Campaign = {
     if (typeof screenHistory !== "undefined") { screenHistory.length = 0; screenHistory.push("main-menu", "screen-campaign"); }
   },
 
-  // MatchCleanup.leave(): se sale del tablero (por el motivo que sea): se apaga todo el estado de la run.
   onLeaveBoard() {
     if (!this.active && !this._hud) return;
     this.active = false;
     if (this._hud) this._hud.style.display = "none";
-    if (this._askEl) { this._askEl.remove(); this._askEl = null; }
-    if (this._resultEl) { this._resultEl.remove(); this._resultEl = null; }
+    ["_askEl", "_resultEl", "_warEl"].forEach((k) => { if (this[k]) { this[k].remove(); this[k] = null; } });
     if (typeof Obelisks !== "undefined") Obelisks.gameOver = false;
     this._camps = [];
+  },
+
+  // ---------- Intro "La Guerra Eterna" (Nizak narra mientras el escenario se desplaza) ----------
+  _warIntro(ch) {
+    return new Promise((resolve) => {
+      const lines = this.t("cmp_intro" + ch.n).split("|");
+      const per = ch.n === 1 ? 6 : 4.8;
+      const total = lines.length * per + 3;
+      const ov = document.createElement("div");
+      ov.className = "war";
+      ov.style.setProperty("--dur", total + "s");
+      const sprites = (race) => Object.keys(UNIT_TYPES).filter((k) => UNIT_TYPES[k].raceId === race);
+      const pairs = [["mushboom_forest", "equipo_surcanubes"], ["colinas_rockntroll", "equipo_enmurallado"], ["equipo_surcanubes", "mushboom_forest"],
+        ["equipo_enmurallado", "colinas_rockntroll"], ["mushboom_forest", "colinas_rockntroll"], ["equipo_enmurallado", "equipo_surcanubes"]];
+      const pick = (race, i) => { const l = sprites(race); return UNIT_TYPES[l[i % l.length]]; };
+      const face = (def, wantRight) => ((def.defaultFacing || "right") === "right") === wantRight ? 1 : -1;
+      let html = '<div class="war__sky"></div><div class="war__sun"></div><div class="war__far"></div><div class="war__track"><div class="war__ground"></div>';
+      const dieAt = [];
+      pairs.forEach((p, i) => {
+        const x = 6 + i * 26;
+        const a = pick(p[0], i), b = pick(p[1], i + 1);
+        const y = (i % 3) * 2.4;
+        const loserLeft = i % 2 === 0;
+        const t = 3 + i * (total - 14) / pairs.length + (i % 2);
+        const rock = i % 3 === 1;
+        dieAt.push(t);
+        const f = (def, right, lose, sx) => `<div class="war__f${lose ? (rock ? " war__f--squash" : " war__f--die") : ""}" style="left:${sx}vw;bottom:calc(var(--gnd) + ${y}vh);--t:${t}s;z-index:${10 + i}">
+          <img class="war__fi" style="--d:${(i * 0.17 + (right ? 0 : 0.4)).toFixed(2)}s;--s:${face(def, right)}" src="${def.spriteUrl}" alt=""></div>`;
+        html += f(a, true, loserLeft, x) + f(b, false, !loserLeft, x + 11);
+        const bx = x + (loserLeft ? 0 : 11) + 1;
+        html += `<img class="war__blood" style="left:${bx}vw;bottom:calc(var(--gnd) + ${y - 1}vh);--t:${t}s" src="assets/decals/efecto_sangre_0${(i % 3) + 1}.png" alt="">`;
+        if (rock) html += `<div class="war__shadow" style="left:${bx - 1}vw;bottom:calc(var(--gnd) + ${y - 1}vh);--t:${t - 0.9}s"></div><img class="war__rock" style="left:${bx - 1}vw;bottom:calc(var(--gnd) + ${y}vh);--t:${t - 0.9}s" src="assets/iconos/recurso_roca_nodo.png" alt="">`;
+      });
+      html += "</div>";
+      const gx = total - 10;
+      html += `<div class="war__plague" style="--t:${gx}s">${Array.from({ length: 7 }, (_, i) => `<img class="war__g" style="--i:${i}" src="${GNOME_ASSETS.corre}" alt="">`).join("")}
+        <div class="war__rainbow"></div></div>`;
+      html += Array.from({ length: 16 }, (_, i) => `<i class="war__candy" style="left:${(i * 37) % 100}%;--c:${["#ff5a8a", "#ffd23f", "#5ad1ff", "#7be07b"][i % 4]};--t:${gx + (i % 5) * 0.4}s;--d:${3 + (i % 4)}s"></i>`).join("");
+      html += `<div class="war__title">${this.t(ch.n === 1 ? "cmp_war" : "cmp_ch" + ch.n)}</div>
+        <button type="button" class="war__skip">${this.t("cmp_skip")}</button>
+        <div class="war__nz"><img class="war__nizak" src="assets/tutorial/nizak_grunon.png" alt="">
+        <div class="war__box"><div class="war__name">${this.t("cmp_nizak")}</div><div class="war__text"></div>
+        <button type="button" class="war__go">${this.t("cmp_start")}</button></div></div>`;
+      ov.innerHTML = html;
+      document.body.appendChild(ov);
+      this._warEl = ov;
+      const textEl = ov.querySelector(".war__text"), goBtn = ov.querySelector(".war__go");
+      const timers = [];
+      let done = false;
+      const finish = () => {
+        if (done) return; done = true;
+        timers.forEach(clearTimeout);
+        ov.classList.remove("war--on");
+        setTimeout(() => { ov.remove(); if (this._warEl === ov) this._warEl = null; resolve(); }, 250);
+      };
+      lines.forEach((ln, i) => timers.push(setTimeout(() => { textEl.textContent = ln; textEl.classList.remove("war__text--in"); void textEl.offsetWidth; textEl.classList.add("war__text--in"); }, i * per * 1000)));
+      dieAt.forEach((t) => timers.push(setTimeout(() => { if (typeof SFX !== "undefined" && SFX.death) SFX.death(); }, t * 1000)));
+      timers.push(setTimeout(() => ov.classList.add("war--peace"), gx * 1000));
+      timers.push(setTimeout(() => { goBtn.classList.add("war__go--on"); }, (lines.length * per) * 1000));
+      ov.querySelector(".war__skip").addEventListener("click", () => { this._click(); finish(); });
+      goBtn.addEventListener("click", () => { this._click(); finish(); });
+      requestAnimationFrame(() => ov.classList.add("war--on"));
+    });
   },
 };
 

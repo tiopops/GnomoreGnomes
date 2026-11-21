@@ -221,6 +221,7 @@ const Glory = {
   // jugador). `team` es "player" | "enemy".
   grantTurnStart(team) {
     if (!(team in this.points)) return;
+    if (typeof Campaign !== "undefined" && Campaign.active) return; // Campaña: no hay puntos por turno
     const gained = GLORY_PER_TURN_START + this.pendingBonus[team] + this._villagesBonus(team) + this._relicBonus(team);
     const room = Math.max(0, GLORY_CAP - this.points[team]);
     const added = Math.min(gained, room);

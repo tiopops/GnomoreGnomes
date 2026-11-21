@@ -520,6 +520,7 @@ const Artifacts = {
   begin(mp) {
     this.reset();
     if (this._isTutorial()) return;
+    if (typeof Campaign !== "undefined" && Campaign.active) { this._teams.player = Campaign.equippedRelics(); this.applyStart(); return; } // Campaña: solo sus reliquias compradas
     const me = mp && typeof Net !== "undefined" && Net.active ? Net.myTeam : "player";
     this._teams[me] = this.equippedIds();
     if (!mp) this.applyStart();

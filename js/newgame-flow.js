@@ -200,6 +200,7 @@ async function startMatch({ modeId, raceId, levelId, opponents, mp }) {
     const resumeBtn = document.getElementById("btn-resume-game");
     if (resumeBtn && !mp) resumeBtn.disabled = false;
     if (mp) Net.startTurns();
+    else if (typeof Campaign !== "undefined" && Campaign.active) Campaign.afterStart();
     else setTimeout(() => { if (typeof Turns !== "undefined") Turns.showTurnBanner(); }, 900);
   } catch (err) {
     _recoverFromFailedMatchStart();

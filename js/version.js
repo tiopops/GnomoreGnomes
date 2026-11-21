@@ -12,10 +12,15 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001685";
+const GG_VERSION = "v.001686";
 
 const GG_CHANGELOG = [
-  { v: "v.001685", date: "21/11/2026", title: "Campaña y ficha de unidad", items: [
+  { v: "v.001686", date: "21/11/2026", title: "Campaña y ficha de unidad", items: [
+      "Campaña: nuevo tutorial (en el menú de tutoriales y con el botón CÓMO SE JUEGA) y botón del menú principal en verde",
+      "Campaña: intro de Nizak dentro del nivel con la escena animada de La Guerra Eterna, antes de empezar a jugar",
+      "Campaña: los gnomos se estampan contra el Obelisco (sacrificio, no pierde vida); puntos de partida: empiezas con 4 y una unidad, +3 por baja y los del gnomo (hasta +5), sin puntos por turno; población máxima 5",
+      "Campaña: se extraen gnomos, madera, roca y metal (los puntos no); mejoras y reliquias propias de campaña, 1 equipada o hasta 3 con una mejora",
+      "Campaña: nuevos neutrales Rastreador (guardan jaulas) y Rompeobeliscos (furtivos que atacan el Obelisco); avisos al empezar turno; los 5 capítulos transcurren en MushBoom",
       "Nuevo modo CAMPAÑA (primera versión jugable): mapa de capítulos con candados, intro narrada por Nizak, tienda de mejoras exclusivas y el capítulo 1 al 4 jugables",
       "Campaña: rescata gnomos de jaulas vigiladas por neutrales (soldados de WallForge) y llévalos al Obelisco, que solo sirve de zona de extracción; el icono de salida junto al Obelisco termina la partida con lo conseguido",
       "Campaña: puntos por derrotar neutrales y por entregar gnomos; las mejoras (Provisiones, Garrotes afilados, Cortezas duras) se compran en el mapa",
