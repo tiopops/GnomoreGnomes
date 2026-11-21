@@ -320,3 +320,80 @@
 /* JUGAR en amarillo (mismo patrón que el resto del juego) */
 .camp-play:not([disabled]) { --p5-tone: #ffcf3d; }
 .camp-play:not([disabled]) .p5-banner__label { color: #111; text-shadow: none; }
+
+/* ===== v6: cantos de pico e irregulares (mismo sistema que .p5-banner) =====
+   Doble capa ::before (contorno) + ::after (relleno) con clip-path y sombra dura
+   por filter; el color de relleno/contorno sale de --tone / --edge para que los
+   estados sigan funcionando. Nada se recorta en el elemento real. */
+.camp-chip, .camp-detail, .camp-shop, .camp-intro__box, .camp-hud__item, .camp-ask__panel, .camp-result__panel,
+.camp-ask__btn, .camp-result__btn, .camp-how, .camp-up__buy, .camp-intro__next, .war__skip, .war__go, .camp-tab,
+.camp-card, .cine__skip, .camp-map, .camp-stat, .camp-slots, .camp-slot, .camp-rtop, .camp-rtile, .camp-node,
+.camp-card__badge, .camp-cost, .camp-rtile__tag, .camp-tab small {
+  --s: 12px; --bw: 3px;
+  position: relative; isolation: isolate;
+  background: none !important; border: none !important; border-radius: 0 !important; box-shadow: none !important;
+  filter: drop-shadow(4px 4px 0 rgba(0,0,0,.55));
+}
+.camp-chip::before, .camp-detail::before, .camp-shop::before, .camp-intro__box::before, .camp-hud__item::before, .camp-ask__panel::before, .camp-result__panel::before,
+.camp-ask__btn::before, .camp-result__btn::before, .camp-how::before, .camp-up__buy::before, .camp-intro__next::before, .war__skip::before, .war__go::before, .camp-tab::before,
+.camp-card::before, .cine__skip::before, .camp-map::before, .camp-stat::before, .camp-slots::before, .camp-slot::before, .camp-rtop::before, .camp-rtile::before, .camp-node::before,
+.camp-card__badge::before, .camp-cost::before, .camp-rtile__tag::before, .camp-tab small::before,
+.camp-chip::after, .camp-detail::after, .camp-shop::after, .camp-intro__box::after, .camp-hud__item::after, .camp-ask__panel::after, .camp-result__panel::after,
+.camp-ask__btn::after, .camp-result__btn::after, .camp-how::after, .camp-up__buy::after, .camp-intro__next::after, .war__skip::after, .war__go::after, .camp-tab::after,
+.camp-card::after, .cine__skip::after, .camp-map::after, .camp-stat::after, .camp-slots::after, .camp-slot::after, .camp-rtop::after, .camp-rtile::after, .camp-node::after,
+.camp-card__badge::after, .camp-cost::after, .camp-rtile__tag::after, .camp-tab small::after {
+  content: ""; position: absolute; pointer-events: none;
+  clip-path: polygon(var(--s) 0, 100% 0, calc(100% - var(--s)) 100%, 0 100%);
+}
+.camp-chip::before, .camp-detail::before, .camp-shop::before, .camp-intro__box::before, .camp-hud__item::before, .camp-ask__panel::before, .camp-result__panel::before,
+.camp-ask__btn::before, .camp-result__btn::before, .camp-how::before, .camp-up__buy::before, .camp-intro__next::before, .war__skip::before, .war__go::before, .camp-tab::before,
+.camp-card::before, .cine__skip::before, .camp-map::before, .camp-stat::before, .camp-slots::before, .camp-slot::before, .camp-rtop::before, .camp-rtile::before, .camp-node::before,
+.camp-card__badge::before, .camp-cost::before, .camp-rtile__tag::before, .camp-tab small::before { inset: 0; background: var(--edge, #000); z-index: -2; }
+.camp-chip::after, .camp-detail::after, .camp-shop::after, .camp-intro__box::after, .camp-hud__item::after, .camp-ask__panel::after, .camp-result__panel::after,
+.camp-ask__btn::after, .camp-result__btn::after, .camp-how::after, .camp-up__buy::after, .camp-intro__next::after, .war__skip::after, .war__go::after, .camp-tab::after,
+.camp-card::after, .cine__skip::after, .camp-map::after, .camp-stat::after, .camp-slots::after, .camp-slot::after, .camp-rtop::after, .camp-rtile::after, .camp-node::after,
+.camp-card__badge::after, .camp-cost::after, .camp-rtile__tag::after, .camp-tab small::after { inset: var(--bw); background: var(--tone, #14121a); z-index: -1; }
+
+/* tamaños de pico y grosor según la caja */
+.camp-detail, .camp-shop, .camp-intro__box, .camp-ask__panel, .camp-result__panel, .camp-map, .camp-rtop { --s: 22px; --bw: 4px; }
+.camp-cost, .camp-rtile__tag, .camp-tab small { --s: 5px; --bw: 2px; }
+.camp-card__badge, .camp-slot { --s: 8px; }
+.camp-node { --s: 0px; --bw: 4px; }
+.camp-node::before, .camp-node::after { clip-path: polygon(14% 0, 100% 7%, 90% 100%, 0 92%); }
+.camp-detail, .camp-shop, .camp-intro__box, .camp-ask__panel, .camp-result__panel, .camp-map, .camp-rtop, .camp-slots { padding-left: calc(var(--s, 12px) + 12px); padding-right: calc(var(--s, 12px) + 12px); }
+
+/* colores base (relleno --tone / contorno --edge) */
+.camp-chip, .camp-detail, .camp-shop, .camp-intro__box, .camp-hud__item, .camp-ask__panel, .camp-result__panel, .camp-card, .cine__skip, .camp-slots, .camp-rtop, .war__skip { --tone: #14121a; --edge: #ffcf3f; }
+.camp-how { --tone: #2b2438; --edge: #ffcf3f; }
+.camp-tab, .camp-stat { --tone: #2b2438; --edge: #14121a; }
+.camp-tab--on { --tone: #ffcf3f; }
+.camp-tab small { --tone: #14121a; --edge: #000; }
+.camp-map { --tone: #1c1826; --edge: #14121a; }
+.camp-up__buy, .camp-result__btn, .camp-intro__next, .war__go, .camp-ask__btn--yes { --tone: #ffcf3f; --edge: #000; }
+.camp-up__buy[disabled] { --tone: #5a5368; }
+.camp-up__buy--on, .camp-card .camp-up__buy--on, .camp-rinfo__act .camp-up__buy--on { --tone: #6fdc6f; }
+.camp-ask__btn--no { --tone: #2b2438; --edge: #000; }
+.camp-ask__btn { --edge: #000; }
+.camp-slot { --tone: transparent; --edge: #6a5f80; }
+.camp-slot--on { --tone: #1d3322; --edge: #6fdc6f; }
+.camp-cost { --tone: #14121a; --edge: #14121a; }
+.camp-rtile__tag { --tone: #6fdc6f; --edge: #14121a; }
+.camp-hud--ok .camp-hud__item:first-child { --edge: #6fdc6f; }
+.camp-hud__item--warn { --edge: #ff5a4a; }
+/* tarjetas de mejora */
+.camp-card { --tone: #1c1826; --edge: #14121a; }
+.camp-card::after { background: linear-gradient(90deg, var(--acc, #ffcf3f) 0 12px, var(--tone) 12px) !important; }
+.camp-card--on { --tone: #1d3322; } .camp-card--on::after { background: linear-gradient(90deg, #6fdc6f 0 12px, var(--tone) 12px) !important; }
+.camp-card--own:not(.camp-card--on) { --tone: #1c2a2a; } .camp-card--max { --tone: #2a2515; }
+.camp-card:hover { box-shadow: none !important; filter: drop-shadow(7px 7px 0 rgba(0,0,0,.6)); }
+.camp-card__badge { --tone: var(--acc); --edge: #14121a; }
+.camp-card__badge--img { --tone: #14121a; --edge: var(--acc); }
+/* reliquias */
+.camp-rtile { --tone: #1c1826; --edge: #14121a; }
+.camp-rtile--on { --tone: #1d3322; }
+.camp-rtile--foc { --edge: #ffcf3f; }
+.camp-rtile:hover { box-shadow: none !important; filter: drop-shadow(6px 6px 0 rgba(0,0,0,.6)); }
+/* mapa */
+.camp-node { --tone: #2b2438; --edge: #14121a; }
+.camp-node--open { --tone: #3a6b3a; } .camp-node--done { --tone: #2f5d8a; } .camp-node--locked { --tone: #2b2438; }
+.camp-node--sel { --tone: #4f8f4f; --edge: #ffcf3f; }

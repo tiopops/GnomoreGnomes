@@ -16,6 +16,7 @@ const GG_VERSION = "v.001689";
 
 const GG_CHANGELOG = [
   { v: "v.001691", date: "21/11/2026", title: "Campaña y ficha de unidad", items: [
+      "Campaña: todas las interfaces (paneles, botones, pestañas, tarjetas, mapa, reliquias) con los cantos de pico e irregulares del resto del juego, sin esquinas redondeadas; botón JUGAR en amarillo",
       "Campaña: eliminadas las voces de narración de la intro en todos los idiomas (solo subtítulos)",
       "Campaña: la pestaña de reliquias ahora tiene casillas con cojín donde la reliquia elegida flota (hasta 3 con la mejora Maletín), iconos más grandes y un único color",
       "Campaña: la intro del capítulo 1 aparece al instante (antes de montar el nivel), en archivos aparte del vídeo según el idioma (el español va solo con subtítulos por ahora)",
