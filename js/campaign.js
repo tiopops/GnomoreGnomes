@@ -1,8 +1,8 @@
 /* Gnomore Gnomes — modo CAMPAÑA (extracción).
    Regla de oro: un archivo por mecánica. Este archivo SOLO sabe:
-     - El estado de la campaña (capítulos hechos, gnomos y recursos extraídos, mejoras y reliquias
+     - El estado de la campaña (capítulos hechos, gnomos y recursos extraídos, mejoras
        compradas), guardado en localStorage por cuenta (gg_campaign_<uid>).
-     - El mapa de capítulos, la tienda de mejoras y reliquias de campaña, y su tutorial.
+     - El mapa de capítulos, la tienda de mejoras de campaña, y su tutorial.
      - La intro "La Guerra Eterna" narrada por Nizak al empezar cada capítulo.
      - La partida de campaña. El motor normal solo le avisa con ganchos mínimos protegidos por
        `Campaign.active` (units, obelisks, gnome, glory, armory, artifacts, newgame-flow, matchcleanup).
@@ -13,7 +13,7 @@
    sacrificio) y solo sirve de zona de extracción; puntos de partida (propios de la partida, NO se
    extraen): empiezas con 4 y 1 unidad básica, +3 por baja de neutral y los puntos del gnomo al estamparlo
    (tope +5 por gnomo); sin puntos por turno; población máxima 5; se extraen gnomos, madera, roca y metal,
-   que compran mejoras y reliquias de campaña (1 equipada, hasta 3 con una mejora); Rompeobeliscos
+   que compran mejoras de campaña; Rompeobeliscos
    furtivos (1 vida, 1 daño) aparecen lejos y se acercan a golpear el Obelisco; avisos al empezar turno.
    PENDIENTE: barras de experiencia/niveles de unidad, nube, GnomOgro (cap. 5), mapa de regiones. */
 
@@ -42,13 +42,7 @@ const CAMPAIGN_UPGRADES = [
   { id: "armadura", icon: "ph-shield", max: 2, cost: [{ madera: 4, metal: 1 }, { madera: 8, metal: 3 }] },
   { id: "pop", icon: "ph-users-three", max: 3, cost: [{ madera: 5, roca: 3 }, { madera: 8, roca: 6 }, { madera: 12, roca: 9, metal: 2 }] },
   { id: "carga", icon: "ph-hand-grabbing", max: 3, cost: [{ madera: 3, roca: 3, metal: 1 }, { madera: 6, roca: 6, metal: 2 }, { madera: 9, roca: 9, metal: 4 }] },
-  { id: "slots", icon: "ph-diamonds-four", max: 1, cost: [{ madera: 20, roca: 20, metal: 8 }] },
 ];
-const CAMPAIGN_RELIC_COST_CHEAP = { madera: 4, roca: 4, metal: 1 };
-const CAMPAIGN_RELIC_COST_DEAR = { madera: 8, roca: 8, metal: 4 };
-const CAMPAIGN_RELIC_DEAR = ["espada", "armadura"];
-// Reliquias que NO existen en la Campaña (los Tomos de rama de habilidades solo valen en partidas normales).
-const CAMPAIGN_RELIC_BANNED = ["tomo_guerra", "tomo_prot", "tomo_super"];
 const CAMPAIGN_RES = ["madera", "roca", "metal"];
 const CAMPAIGN_RES_ICON = { madera: "assets/iconos/recurso_madera.png", roca: "assets/iconos/recurso_roca.png", metal: "assets/iconos/recurso_metal.png" };
 
@@ -62,19 +56,17 @@ const CAMPAIGN_BASE_CARRY = 5;
     menu_campaign: "Campaña", cmp_title: "CAMPAÑA", cmp_gnomes: "GNOMOS", cmp_goal: "Estampa {n} gnomos contra el Obelisco.",
     cmp_play: "JUGAR", cmp_soon: "PRÓXIMAMENTE", cmp_locked: "BLOQUEADO", cmp_done: "COMPLETADO", cmp_chapter: "CAPÍTULO {n}",
     cmp_need: "Necesitas {g} gnomos y {r} recursos extraídos (tienes {hg} y {hr}).", cmp_need_prev: "Completa el capítulo anterior.",
-    cmp_boss: "El GnomOgro te espera... pero aún no está listo.", cmp_shop: "MEJORAS DE CAMPAÑA", cmp_tab_map: "MAPA", cmp_tab_up: "MEJORAS", cmp_tab_rel: "RELIQUIAS", cmp_relics: "RELIQUIAS DE CAMPAÑA",
-    cmp_buy: "COMPRAR", cmp_max: "AL MÁXIMO", cmp_equip: "EQUIPAR", cmp_unequip: "QUITAR", cmp_equipped: "EQUIPADA",
-    cmp_slots: "Equipadas {a}/{b}", cmp_relics_help: "Se compran con recursos extraídos. Las reliquias de tu cuenta no valen aquí.",
+    cmp_boss: "El GnomOgro te espera... pero aún no está listo.", cmp_shop: "MEJORAS DE CAMPAÑA", cmp_tab_map: "MAPA", cmp_tab_up: "MEJORAS",
+    cmp_buy: "COMPRAR", cmp_max: "AL MÁXIMO",
     cmp_up_prov: "Provisiones", cmp_up_prov_d: "Empiezas cada nivel con +2 puntos por nivel de mejora.",
     cmp_up_arma: "Garrotes afilados", cmp_up_arma_d: "+1 de ataque a todas tus unidades.",
     cmp_up_armadura: "Cortezas duras", cmp_up_armadura_d: "+1 de aguante a todas tus unidades.",
     cmp_up_pop: "Más barracones", cmp_up_pop_d: "+1 de población máxima.",
     cmp_up_carga: "Gnomos más cargables", cmp_up_carga_d: "Los gnomos aguantan +1 punto de golpes antes de estamparlos.",
-    cmp_up_slots: "Maletín de reliquias", cmp_up_slots_d: "Puedes llevar hasta 3 reliquias a la vez en vez de 1.",
     cmp_how: "CÓMO SE JUEGA",
     cmp_hud: "{a}/{b}", cmp_extract: "Extraer", cmp_extract_q: "¿EXTRAER Y TERMINAR?", cmp_extract_info: "Te llevas los gnomos y los recursos conseguidos.",
     cmp_yes: "EXTRAER", cmp_no: "SEGUIR", cmp_res_ok: "¡CAPÍTULO SUPERADO!", cmp_res_part: "EXTRACCIÓN COMPLETADA", cmp_res_fail: "HAS CAÍDO",
-    cmp_res_g: "Gnomos estampados", cmp_res_k: "Neutrales derrotados", cmp_res_goal: "Objetivo: {n} gnomos", cmp_res_half: "Al caer te quedas sin nada: ni gnomos ni recursos.", cmp_res_time: "¡SE ACABÓ EL TIEMPO!", cmp_res_timeup: "No reuniste a todos los gnomos a tiempo: conservas los gnomos, pero solo la mitad de los recursos.", cmp_hud_turns: "{a} turnos", cmp_slot_lock: "Mejora el Maletín", cmp_stat_gnomes: "gnomos", cmp_stat_turns: "turnos", cmp_stat_camps: "campamentos", cmp_warn_turns: "¡QUEDAN {n} TURNOS!",
+    cmp_res_g: "Gnomos estampados", cmp_res_k: "Neutrales derrotados", cmp_res_goal: "Objetivo: {n} gnomos", cmp_res_half: "Al caer te quedas sin nada: ni gnomos ni recursos.", cmp_res_time: "¡SE ACABÓ EL TIEMPO!", cmp_res_timeup: "No reuniste a todos los gnomos a tiempo: conservas los gnomos, pero solo la mitad de los recursos.", cmp_hud_turns: "{a} turnos", cmp_stat_gnomes: "gnomos", cmp_stat_turns: "turnos", cmp_stat_camps: "campamentos", cmp_warn_turns: "¡QUEDAN {n} TURNOS!",
     cmp_back_map: "VOLVER AL MAPA", cmp_free: "¡GNOMOS LIBRES!", cmp_done_banner: "¡OBJETIVO CUMPLIDO!", cmp_warn_ob: "¡ATACAN TU OBELISCO!", cmp_warn_none: "NO QUEDAN GNOMOS POR LIBERAR",
     cmp_skip: "SALTAR", cmp_hold_skip: "MANTÉN PARA SALTAR", cmp_start: "COMENZAR", cmp_war: "LA GUERRA ETERNA", cmp_next: "SIGUIENTE", cmp_ok: "ENTENDIDO", cmp_nizak: "Nizak",
     cmp_ch1: "Capítulo 1 · Claro de las Setas", cmp_ch2: "Capítulo 2 · Orilla Pantanosa", cmp_ch3: "Capítulo 3 · Espesura Profunda", cmp_ch4: "Capítulo 4 · Cumbre del Hongo", cmp_ch5: "Capítulo 5 · El GnomOgro",
@@ -94,19 +86,17 @@ const CAMPAIGN_BASE_CARRY = 5;
     menu_campaign: "Campaign", cmp_title: "CAMPAIGN", cmp_gnomes: "GNOMES", cmp_goal: "Slam {n} gnomes into the Obelisk.",
     cmp_play: "PLAY", cmp_soon: "COMING SOON", cmp_locked: "LOCKED", cmp_done: "COMPLETED", cmp_chapter: "CHAPTER {n}",
     cmp_need: "You need {g} gnomes and {r} extracted resources (you have {hg} and {hr}).", cmp_need_prev: "Complete the previous chapter.",
-    cmp_boss: "The GnomOgre awaits... but it isn't ready yet.", cmp_shop: "CAMPAIGN UPGRADES", cmp_tab_map: "MAP", cmp_tab_up: "UPGRADES", cmp_tab_rel: "RELICS", cmp_relics: "CAMPAIGN RELICS",
-    cmp_buy: "BUY", cmp_max: "MAXED", cmp_equip: "EQUIP", cmp_unequip: "REMOVE", cmp_equipped: "EQUIPPED",
-    cmp_slots: "Equipped {a}/{b}", cmp_relics_help: "Bought with extracted resources. Your account relics don't count here.",
+    cmp_boss: "The GnomOgre awaits... but it isn't ready yet.", cmp_shop: "CAMPAIGN UPGRADES", cmp_tab_map: "MAP", cmp_tab_up: "UPGRADES",
+    cmp_buy: "BUY", cmp_max: "MAXED",
     cmp_up_prov: "Provisions", cmp_up_prov_d: "Start every level with +2 points per upgrade level.",
     cmp_up_arma: "Sharpened clubs", cmp_up_arma_d: "+1 attack for all your units.",
     cmp_up_armadura: "Hardened bark", cmp_up_armadura_d: "+1 toughness for all your units.",
     cmp_up_pop: "More barracks", cmp_up_pop_d: "+1 maximum population.",
     cmp_up_carga: "Sturdier gnomes", cmp_up_carga_d: "Gnomes can take +1 point of hits before the slam.",
-    cmp_up_slots: "Relic case", cmp_up_slots_d: "Carry up to 3 relics at once instead of 1.",
     cmp_how: "HOW TO PLAY",
     cmp_hud: "{a}/{b}", cmp_extract: "Extract", cmp_extract_q: "EXTRACT AND FINISH?", cmp_extract_info: "You keep the gnomes and resources you gathered.",
     cmp_yes: "EXTRACT", cmp_no: "KEEP GOING", cmp_res_ok: "CHAPTER CLEARED!", cmp_res_part: "EXTRACTION COMPLETE", cmp_res_fail: "YOU HAVE FALLEN",
-    cmp_res_g: "Gnomes slammed", cmp_res_k: "Neutrals defeated", cmp_res_goal: "Goal: {n} gnomes", cmp_res_half: "When you fall you keep nothing: no gnomes, no resources.", cmp_res_time: "TIME IS UP!", cmp_res_timeup: "You did not gather every gnome in time: you keep the gnomes, but only half the resources.", cmp_hud_turns: "{a} turns", cmp_slot_lock: "Upgrade the Case", cmp_stat_gnomes: "gnomes", cmp_stat_turns: "turns", cmp_stat_camps: "camps", cmp_warn_turns: "{n} TURNS LEFT!",
+    cmp_res_g: "Gnomes slammed", cmp_res_k: "Neutrals defeated", cmp_res_goal: "Goal: {n} gnomes", cmp_res_half: "When you fall you keep nothing: no gnomes, no resources.", cmp_res_time: "TIME IS UP!", cmp_res_timeup: "You did not gather every gnome in time: you keep the gnomes, but only half the resources.", cmp_hud_turns: "{a} turns", cmp_stat_gnomes: "gnomes", cmp_stat_turns: "turns", cmp_stat_camps: "camps", cmp_warn_turns: "{n} TURNS LEFT!",
     cmp_back_map: "BACK TO THE MAP", cmp_free: "GNOMES FREED!", cmp_done_banner: "GOAL REACHED!", cmp_warn_ob: "YOUR OBELISK IS UNDER ATTACK!", cmp_warn_none: "NO GNOMES LEFT TO FREE",
     cmp_skip: "SKIP", cmp_hold_skip: "HOLD TO SKIP", cmp_start: "BEGIN", cmp_war: "THE ETERNAL WAR", cmp_next: "NEXT", cmp_ok: "GOT IT", cmp_nizak: "Nizak",
     cmp_ch1: "Chapter 1 · Mushroom Glade", cmp_ch2: "Chapter 2 · Boggy Shore", cmp_ch3: "Chapter 3 · Deep Thicket", cmp_ch4: "Chapter 4 · Fungus Peak", cmp_ch5: "Chapter 5 · The GnomOgre",
@@ -143,7 +133,7 @@ const Campaign = {
 
   // ---------- Progreso ----------
   _key() { return "gg_campaign_" + (this._uid || "guest"); },
-  _defaults() { return { v: 2, gnomes: 0, res: { madera: 0, roca: 0, metal: 0 }, earnedRes: 0, done: {}, up: {}, relics: [], eq: [], seenTut: false }; },
+  _defaults() { return { v: 2, gnomes: 0, res: { madera: 0, roca: 0, metal: 0 }, earnedRes: 0, done: {}, up: {}, seenTut: false }; },
   load() {
     let raw = null;
     try { raw = JSON.parse(localStorage.getItem(this._key()) || "null"); } catch (e) {}
@@ -151,7 +141,6 @@ const Campaign = {
     this.s = Object.assign(d, raw && typeof raw === "object" ? raw : {});
     this.s.res = Object.assign({ madera: 0, roca: 0, metal: 0 }, this.s.res || {});
     this.s.done = this.s.done || {}; this.s.up = this.s.up || {};
-    this.s.relics = Array.isArray(this.s.relics) ? this.s.relics : []; this.s.eq = Array.isArray(this.s.eq) ? this.s.eq : [];
     this.s.v = 2;
   },
   persist() { try { localStorage.setItem(this._key(), JSON.stringify(this.s)); } catch (e) {} },
@@ -159,9 +148,6 @@ const Campaign = {
   bonus(id) { return this.active && this.s ? this.upLevel(id) : 0; },
   popLimit() { return CAMPAIGN_BASE_POP + this.upLevel("pop"); },
   gnomeCap() { return CAMPAIGN_BASE_CARRY + this.upLevel("carga"); },
-  slots() { return this.upLevel("slots") ? 3 : 1; },
-  equippedRelics() { return this.s.eq.filter((id) => this.s.relics.includes(id) && !CAMPAIGN_RELIC_BANNED.includes(id)).slice(0, this.slots()); },
-  relicCost(id) { return CAMPAIGN_RELIC_DEAR.includes(id) ? CAMPAIGN_RELIC_COST_DEAR : CAMPAIGN_RELIC_COST_CHEAP; },
   canPay(cost) { return CAMPAIGN_RES.every((r) => (this.s.res[r] || 0) >= (cost[r] || 0)); },
   pay(cost) { CAMPAIGN_RES.forEach((r) => { this.s.res[r] -= cost[r] || 0; }); },
   totalRes() { return CAMPAIGN_RES.reduce((a, r) => a + (this.s.res[r] || 0), 0); },
@@ -230,39 +216,9 @@ const Campaign = {
         <button type="button" class="camp-up__buy" data-buy="${u.id}" ${can ? "" : "disabled"}>${max ? t("cmp_max") : t("cmp_buy")}</button></div></div>`;
     }).join("");
 
-    const eq = this.equippedRelics();
-    const defs = (typeof ART_DEFS !== "undefined" ? ART_DEFS : []).filter((d) => !CAMPAIGN_RELIC_BANNED.includes(d.id));
-    const foc = defs.some((d) => d.id === this.relFocus) ? this.relFocus : (eq[0] || (defs[0] && defs[0].id));
-    const nSlots = this.slots();
-    const cushImg = Artifacts.img("cushion");
-    const shelf = [0, 1, 2].map((k) => {
-      const open = k < nSlots, id = open ? eq[k] : null;
-      return `<div class="art-slot camp-slot3${open ? "" : " art-slot--lock"}${id && id === foc ? " art-slot--sel" : ""}"${id ? ` data-rfocus="${id}" role="button" tabindex="0"` : ""}>
-        <img class="art-slot__cush" src="${cushImg}" alt="" draggable="false">
-        ${id ? `<img class="art-slot__art" src="${Artifacts.img(id)}" alt="" draggable="false">` : ""}
-        ${open ? "" : `<span class="art-slot__lock"><i class="ph-fill ph-lock"></i><b>${t("cmp_slot_lock")}</b></span>`}
-      </div>`;
-    }).join("");
-    const rtiles = defs.map((d) => {
-      const own = this.s.relics.includes(d.id), on = eq.includes(d.id), cost = this.relicCost(d.id);
-      return `<button type="button" class="camp-rtile${own ? " camp-rtile--own" : ""}${on ? " camp-rtile--on" : ""}${foc === d.id ? " camp-rtile--foc" : ""}" data-rfocus="${d.id}">
-        <span class="camp-rtile__img"><img src="${Artifacts.img(d.id)}" alt="" draggable="false"></span>
-        <span class="camp-rtile__name">${Artifacts.name(d.id)}</span>
-        ${on ? `<span class="camp-rtile__tag">${t("cmp_equipped")}</span>` : own ? "" : `<span class="camp-costs camp-rtile__cost">${this._costHtml(cost)}</span>`}
-      </button>`;
-    }).join("");
-    let rinfo = "";
-    if (foc) {
-      const own = this.s.relics.includes(foc), on = eq.includes(foc), cost = this.relicCost(foc);
-      const act = own ? `<button type="button" class="camp-up__buy${on ? " camp-up__buy--on" : ""}" data-eq="${foc}">${on ? t("cmp_unequip") : t("cmp_equip")}</button>`
-        : `<button type="button" class="camp-up__buy" data-relic="${foc}" ${this.canPay(cost) ? "" : "disabled"}>${t("cmp_buy")}</button>`;
-      rinfo = `<div class="camp-rinfo"><img class="camp-rinfo__img" src="${Artifacts.img(foc)}" alt="" draggable="false">
-        <div class="camp-rinfo__txt"><b>${Artifacts.name(foc)}</b><span>${Artifacts.desc(foc)}</span></div>
-        <div class="camp-rinfo__act">${own ? "" : `<span class="camp-costs">${this._costHtml(cost)}</span>`}${act}</div></div>`;
-    }
-    const tab = this.tab || "map";
+    const tab = this.tab === "up" ? "up" : "map";
     const res = CAMPAIGN_RES.map((r) => `<span class="camp-chip"><img src="${CAMPAIGN_RES_ICON[r]}" alt=""><b>${this.s.res[r] || 0}</b></span>`).join("");
-    const tabs = [["map", "ph-map-trifold", t("cmp_tab_map"), ""], ["up", "ph-hammer", t("cmp_tab_up"), ""], ["rel", "ph-scroll", t("cmp_tab_rel"), `${eq.length}/${this.slots()}`]]
+    const tabs = [["map", "ph-map-trifold", t("cmp_tab_map"), ""], ["up", "ph-hammer", t("cmp_tab_up"), ""]]
       .map(([id, ic, lb, sm]) => `<button type="button" class="camp-tab${tab === id ? " camp-tab--on" : ""}" data-tab="${id}"><i class="ph-fill ${ic}"></i><span>${lb}</span>${sm ? `<small>${sm}</small>` : ""}</button>`).join("");
     const pane = tab === "map"
       ? `<div class="camp-pane camp-pane--map">
@@ -274,9 +230,7 @@ const Campaign = {
             <div class="camp-detail__status">${status}</div>
             ${action}
           </div></div>`
-      : tab === "up"
-        ? `<div class="camp-pane"><div class="camp-grid">${upCards}</div></div>`
-        : `<div class="camp-pane camp-pane--rel"><div class="camp-rtop"><div class="camp-shelf">${shelf}</div>${rinfo}</div><div class="camp-rgrid">${rtiles}</div></div>`;
+      : `<div class="camp-pane"><div class="camp-grid">${upCards}</div></div>`;
     root.innerHTML = `
       <div class="camp-top"><span class="camp-chip"><i class="ph-fill ph-users-three"></i> ${t("cmp_gnomes")} <b>${this.s.gnomes}</b></span>${res}</div>
       <div class="camp-tabs">${tabs}</div>
@@ -286,9 +240,6 @@ const Campaign = {
     const pb = root.querySelector("[data-play]");
     if (pb) pb.addEventListener("click", () => { this._click(); this.play(+pb.dataset.play); });
     root.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => this.buy(b.dataset.buy)));
-    root.querySelectorAll("[data-rfocus]").forEach((b) => b.addEventListener("click", () => { this._click(); this.relFocus = b.dataset.rfocus; this.render(); }));
-    root.querySelectorAll("[data-relic]").forEach((b) => b.addEventListener("click", () => this.buyRelic(b.dataset.relic)));
-    root.querySelectorAll("[data-eq]").forEach((b) => b.addEventListener("click", () => this.toggleRelic(b.dataset.eq)));
   },
 
   buy(id) {
@@ -300,25 +251,6 @@ const Campaign = {
     this.s.up[id] = lv + 1;
     this.persist();
     if (typeof SFX !== "undefined" && SFX.buy) SFX.buy();
-    this.render();
-  },
-  buyRelic(id) {
-    const cost = this.relicCost(id);
-    if (this.s.relics.includes(id) || !this.canPay(cost)) return;
-    this.pay(cost);
-    this.s.relics.push(id);
-    if (this.equippedRelics().length < this.slots()) this.s.eq.push(id);
-    this.persist();
-    if (typeof SFX !== "undefined" && SFX.buy) SFX.buy();
-    this.render();
-  },
-  toggleRelic(id) {
-    this._click();
-    const eq = this.equippedRelics();
-    if (eq.includes(id)) this.s.eq = eq.filter((x) => x !== id);
-    else if (eq.length < this.slots()) this.s.eq = eq.concat(id);
-    else this.s.eq = eq.slice(0, this.slots() - 1).concat(id); // sustituye a la última
-    this.persist();
     this.render();
   },
 

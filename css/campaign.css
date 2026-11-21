@@ -397,3 +397,16 @@
 .camp-node { --tone: #2b2438; --edge: #14121a; }
 .camp-node--open { --tone: #3a6b3a; } .camp-node--done { --tone: #2f5d8a; } .camp-node--locked { --tone: #2b2438; }
 .camp-node--sel { --tone: #4f8f4f; --edge: #ffcf3f; }
+
+/* v6.1: tarjetas de mejoras ordenadas (sin franja suelta, pie en una sola fila) */
+.camp-card { --edge: var(--acc, #ffcf3f); padding: 12px 22px 12px 30px; }
+.camp-card::after, .camp-card--on::after { background: var(--tone) !important; }
+.camp-card--on { --edge: #6fdc6f; }
+.camp-card__foot { flex-wrap: nowrap; gap: 8px; }
+.camp-card__foot .camp-pips { flex: none; gap: 3px; }
+.camp-card .camp-pip { width: 16px; height: 10px; }
+.camp-card .camp-costs { flex: 1; min-width: 0; flex-wrap: nowrap; gap: 4px; justify-content: flex-end; }
+.camp-card .camp-cost { font-size: .85rem; padding: 2px 6px; white-space: nowrap; }
+.camp-card .camp-cost img { width: 18px; height: 18px; }
+.camp-card .camp-up__buy { flex: none; padding: 8px 14px; font-size: .95rem; }
+.camp-card__foot > .camp-up__buy:only-child, .camp-card__foot .camp-pips + .camp-up__buy { margin-left: auto; }
