@@ -1603,6 +1603,8 @@ const Units = {
     }
     // Imágenes de perfil (js/avatars.js): aniquilar a un rival desbloquea su retrato.
     if (unit.team !== "player" && typeof Avatars !== "undefined") { try { Avatars.onRivalDied(unit); } catch (e) {} }
+    // Modo Campaña (js/campaign.js): puntos por baja y liberación de jaulas.
+    if (typeof Campaign !== "undefined" && Campaign.active) { try { Campaign.onUnitRemoved(unit); } catch (e) { console.warn("[Campaign]", e); } }
   },
 };
 

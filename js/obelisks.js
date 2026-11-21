@@ -927,6 +927,8 @@ const Obelisks = {
     this._cancelPlacementMode();
     if (typeof Units !== "undefined") Units.deselect();
     if (typeof Turns !== "undefined") Turns.hideButton();
+    // Modo Campaña (js/campaign.js): tiene su propio resumen de fin de partida.
+    if (typeof Campaign !== "undefined" && Campaign.active) { Campaign.onGameEnd(winnerTeam === "player"); return; }
     this._showGameOverOverlay(winnerTeam, reason || "destroyed");
   },
 
@@ -938,6 +940,7 @@ const Obelisks = {
   // roundNumber (ver turns.js); si ninguno de los 3 criterios desempata de
   // verdad, es un EMPATE de verdad (winnerTeam = null, ver _showGameOverOverlay).
   checkTurnLimit(roundNumber) {
+    if (typeof Campaign !== "undefined" && Campaign.active) return; // la Campaña no tiene límite de turnos
     if (this.gameOver) return;
     if (roundNumber <= Turns.maxRounds()) return;
 

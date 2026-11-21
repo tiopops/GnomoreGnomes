@@ -11,12 +11,12 @@
    funciona para CUALQUIER unidad seleccionada (también un rival) — solo
    sirve para consultar datos, no para actuar.
 
-   Interacción: es un botón de "mantener pulsado" (como un tooltip), no un
-   toggle — se abre en pointerdown y se cierra en pointerup/pointercancel,
-   sin botón de cerrar ni clic-fuera. El pointerup/cancel se escucha en
-   window (no en el propio botón) para que soltar en cualquier punto de la
-   pantalla cierre igualmente el popup, incluso si el dedo/ratón se ha
-   desplazado fuera del botón antes de soltar. */
+   Interacción (cambiada para el modo Campaña, donde la ficha tiene que poder
+   usarse con calma para repartir puntos de experiencia): se abre al PULSAR la
+   cara de la unidad y se queda abierta hasta pulsar fuera de la tarjeta (el
+   fondo oscuro recoge ese toque, no llega al juego) o en la X de la esquina;
+   también se cierra al volver a pulsar la cara, al cambiar de unidad y con B
+   en el mando. */
 
 // Recorte de la cara dentro del círculo de información, UNO POR TIPO DE
 // PERSONAJE (mismo patrón que GNOME_ATTACH_OFFSETS en gnome.js): cada
@@ -129,18 +129,18 @@ const UnitInfo = {
     btn.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
       e.preventDefault();
-      this.openPopup();
+      if (this.overlayEl) this.closePopup();
+      else this.openPopup();
     });
     // Evita que un long-press dispare además el menú contextual táctil.
     btn.addEventListener("contextmenu", (e) => e.preventDefault());
     document.body.appendChild(btn);
-    window.addEventListener("pointerup", () => this.closePopup());
-    window.addEventListener("pointercancel", () => this.closePopup());
     this.buttonEl = btn;
     return btn;
   },
 
   onSelect(unit) {
+    if (this.overlayEl && this.currentUnit && this.currentUnit.id !== unit.id) this.closePopup(); // otra unidad: la ficha abierta ya no es suya
     this.currentUnit = unit;
     const btn = this.ensureButton();
     const type = UNIT_TYPES[unit.typeId];
@@ -264,6 +264,7 @@ const UnitInfo = {
     // .backpack-slots/.backpack-desc — sin eso, el ::after de relleno de
     // .p5-banner (z-index:1) taparía cualquier hijo sin z-index propio.
     overlay.innerHTML = `
+      <div class="unit-info-wrap">
       <div class="p5-banner unit-info-card">
         <div class="unit-info-card__content">
           <div class="unit-info-head">
@@ -300,8 +301,15 @@ const UnitInfo = {
               : ""
           }
         </div>
+      </div>
+      <button type="button" class="backpack-close-btn unit-info-close" aria-label="Cerrar"><i class="ph ph-x backpack-close-btn__icon"></i></button>
       </div>`;
-
+    // Pulsar fuera de la tarjeta (el fondo) la cierra; la X también.
+    overlay.addEventListener("pointerdown", (e) => {
+      e.stopPropagation();
+      if (e.target === overlay) { e.preventDefault(); this.closePopup(); }
+    });
+    overlay.querySelector(".unit-info-close").addEventListener("click", (e) => { e.stopPropagation(); this.closePopup(); });
     document.body.appendChild(overlay);
     this.overlayEl = overlay;
     requestAnimationFrame(() => overlay.classList.add("unit-info-overlay--visible"));

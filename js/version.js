@@ -12,9 +12,16 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001683";
+const GG_VERSION = "v.001685";
 
 const GG_CHANGELOG = [
+  { v: "v.001685", date: "21/11/2026", title: "Campaña y ficha de unidad", items: [
+      "Nuevo modo CAMPAÑA (primera versión jugable): mapa de capítulos con candados, intro narrada por Nizak, tienda de mejoras exclusivas y el capítulo 1 al 4 jugables",
+      "Campaña: rescata gnomos de jaulas vigiladas por neutrales (soldados de WallForge) y llévalos al Obelisco, que solo sirve de zona de extracción; el icono de salida junto al Obelisco termina la partida con lo conseguido",
+      "Campaña: puntos por derrotar neutrales y por entregar gnomos; las mejoras (Provisiones, Garrotes afilados, Cortezas duras) se compran en el mapa",
+      "La ficha de información de una unidad ya no se cierra al soltar: se queda abierta hasta que pulses fuera de ella o en la X de la esquina",
+      "Tutorial actualizado: ahora pide abrir la información de la unidad y cerrarla",
+    ] },
   { v: "v.001683", date: "11/11/2026", title: "Selección de mapa", items: [
       "Selección de escenario: los mapas no elegidos se desaturan con fundido hasta el 25 % de su color; el elegido recupera todo su color",
     ] },

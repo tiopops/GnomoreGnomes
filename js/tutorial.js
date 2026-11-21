@@ -380,9 +380,8 @@ const Tutorial = {
         onStart: () => T._refill(),
       },
       {
-        say: `Antes de seguir, un truco útil: selecciona a TruenoEspora y mantén pulsada la cara de tu unidad, abajo a la izquierda, y verás todas sus estadísticas. Con las unidades enemigas funciona igual: selecciónalas y mira de qué pasta están hechas… antes de que te hagan pasta a ti.`,
-        mission: "Mantén pulsada su cara",
-        hold: true,
+        say: `Antes de seguir, un truco útil: selecciona a TruenoEspora y pulsa la cara de tu unidad, abajo a la izquierda, y verás todas sus estadísticas. La ventana se queda abierta hasta que pulses fuera de ella o en la X de la esquina. Con las unidades enemigas funciona igual: selecciónalas y mira de qué pasta están hechas… antes de que te hagan pasta a ti.`,
+        mission: "Abre su información y ciérrala",
         onStart: () => {
           T._ctx.infoSeen = false;
           T._ctx.infoShown = false;
@@ -394,13 +393,10 @@ const Tutorial = {
           return document.getElementById("unit-info-btn") || T._unitEl(u);
         },
         done: () => {
-          // Con mando: se abre la visión (X > Información) y se cierra con B.
-          if (T._padMode()) {
-            const open = !!document.querySelector(".unit-info-overlay--visible");
-            if (open) T._ctx.infoShown = true;
-            return !!T._ctx.infoShown && !open;
-          }
-          return !!T._ctx.infoSeen;
+          // Se abre la ficha (pulsando la cara, o con mando X > Información) y se cierra (X, pulsar fuera o B).
+          const open = !!document.querySelector(".unit-info-overlay--visible");
+          if (open) T._ctx.infoShown = true;
+          return !!T._ctx.infoShown && !open;
         },
         ok: "Ahora sabes cuánto aguanta, cuánto pega y cuánto le queda. Información de oro, y gratis.",
       },

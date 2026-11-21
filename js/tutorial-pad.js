@@ -44,10 +44,10 @@ const TUTORIAL_PAD_TEXTS = {
       en: { rep: [["Pick one.", "Move the cursor to one with the D-pad and press {confirm} ({back} cancels)."]], mission: "Pick a tile with {confirm}" },
     },
     { // 6 información de la unidad (sin mantener pulsado)
-      rep: [["Mantén pulsada su cara (abajo a la izquierda) para ver sus estadísticas. Con los enemigos funciona igual.",
+      rep: [["Pulsa su cara (abajo a la izquierda) para ver sus estadísticas. Se queda abierta hasta que pulses fuera o en la X. Con los enemigos funciona igual.",
              "Selecciona a tu unidad (cursor sobre ella y {confirm}), pulsa {actions} y elige «Información de la unidad» para ver sus estadísticas. Se cierra con {back}. Con los enemigos funciona igual: cursor sobre ellos y {confirm}."]],
       mission: "Abre su información y ciérrala con {back}",
-      en: { rep: [["Hold its face (bottom left) to see its stats. It works the same on enemies.",
+      en: { rep: [["Tap its face (bottom left) to see its stats. It stays open until you tap outside or the X. It works the same on enemies.",
                    "Select your unit (cursor on it and {confirm}), press {actions} and choose \"Unit information\" to see its stats. Close it with {back}. Same with enemies: cursor on them and {confirm}."]],
             mission: "Open its information and close it with {back}" },
     },

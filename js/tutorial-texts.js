@@ -74,13 +74,13 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Mantén pulsada su cara (abajo a la izquierda) para ver sus estadísticas. Con los enemigos funciona igual.",
-   "mission": "Mantén pulsada su cara",
+   "say": "Pulsa su cara (abajo a la izquierda) para ver sus estadísticas. Se queda abierta hasta que pulses fuera o en la X. Con los enemigos funciona igual.",
+   "mission": "Abre su información y ciérrala",
    "ok": "Su vida, su fuerza, su habilidad… información de oro, y gratis.",
    "mood": "normal",
    "en": {
-    "say": "Hold its face (bottom left) to see its stats. It works the same on enemies.",
-    "mission": "Hold its face",
+    "say": "Tap its face (bottom left) to see its stats. It stays open until you tap outside or the X. It works the same on enemies.",
+    "mission": "Open its info and close it",
     "ok": "Its health, its strength, its ability… pure gold information, and free."
    }
   },

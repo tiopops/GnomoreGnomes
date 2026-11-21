@@ -167,7 +167,7 @@ async function startMatch({ modeId, raceId, levelId, opponents, mp }) {
     if (mp && typeof GGRand !== "undefined") GGRand.enable("w" + Net.seed);
     const map = generateMap(size, { rivers: opponents === 1 });
 
-    if (!mp) SaveGame.save({
+    if (!mp && !(typeof Campaign !== "undefined" && Campaign.active)) SaveGame.save({
       modeId,
       raceId,
       levelId: levelId || "mushboom_forest",
@@ -304,7 +304,9 @@ function spawnTestUnits(size, raceId, opponents, mp) {
   const enemyRace = (typeof RACES !== "undefined" ? RACES : []).find(
     (r) => r.available && r.id !== finalRaceId
   );
-  const finalEnemyRaceId = mp && mp.otherRace ? mp.otherRace : enemyRace ? enemyRace.id : finalRaceId;
+  let finalEnemyRaceId = mp && mp.otherRace ? mp.otherRace : enemyRace ? enemyRace.id : finalRaceId;
+  // Campaña (js/campaign.js): los neutrales usan por ahora los soldados de WallForge.
+  if (typeof Campaign !== "undefined" && Campaign.active) finalEnemyRaceId = "equipo_enmurallado";
   // Bandos: rival 1 = otra raza; rival 2 = raza del jugador (con variante de
   // color); rival 3 = raza del rival 1 (con variante).
   const _rivals = Math.max(1, Math.min(3, opponents || 1));
@@ -538,6 +540,8 @@ function spawnTestUnits(size, raceId, opponents, mp) {
   // zonas reveladas. Va AL FINAL de todo a propósito — pedido explícito:
   // "los elementos de debajo de la niebla no deben renderizarse para el
   // jugador".
+  // Campaña (js/campaign.js): quita al rival/tótems/altar y reparte campamentos y jaulas.
+  if (typeof Campaign !== "undefined" && Campaign.active) Campaign.onMatchBuilt(size);
   if (typeof Fog !== "undefined") Fog.applyVisibility();
   // Totems (js/villages.js) — comprueba de entrada si algún personaje ha
   // quedado colocado justo detrás de un totem (solapamiento en pantalla).

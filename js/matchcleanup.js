@@ -46,6 +46,7 @@ const MatchCleanup = {
   // Al salir del tablero hacia cualquier otra pantalla.
   leave() {
     this.epoch++;
+    if (typeof Campaign !== "undefined") { try { Campaign.onLeaveBoard(); } catch (e) {} }
     this.gameMuted = true;
     const safe = (fn) => { try { fn(); } catch (e) { console.warn("MatchCleanup:", e); } };
     // ---- Sonido y música ----

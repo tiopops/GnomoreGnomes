@@ -499,6 +499,7 @@ function createGnomeInstance() {
     // sonidos" — antes sonaba SFX.hop() aquí igual que en un paso de
     // movimiento de verdad; se quita del todo, este salto es solo visual.
     _maybeIdleHop() {
+      if (this.caged) return;
       if (this.points < GNOME_HOP_MIN_POINTS) return;
       const chance = Math.min(GNOME_HOP_MAX_CHANCE, (this.points - GNOME_HOP_MIN_POINTS) * 0.05);
       if (NR() > chance) return;
@@ -559,6 +560,7 @@ function createGnomeInstance() {
     },
 
     _showCatchMarkerFor(unit) {
+      if (this.caged) return; // gnomo enjaulado (js/campaign.js): hasta abrir la jaula no se coge
       // Niebla de guerra (js/fog.js) — pedido explícito: "puede que haya un
       // enemigo o gnomos, pero hasta que no se despeje no se sabrá". Un
       // gnomo suelto sobre una loseta todavía sin revelar no se puede coger
@@ -605,6 +607,7 @@ function createGnomeInstance() {
     },
 
     async catchBy(unit) {
+      if (this.caged) return;
       if (this.heldBy || this.busy) return;
       // Turnos (js/turns.js) — coger un gnomo suelto cuenta como UNA acción
       // del turno (se agrupa con "moverse": no hay una acción "coger"
@@ -1324,6 +1327,7 @@ function createGnomeInstance() {
     // no haya quedado escondido en un arbusto justo en este mismo
     // movimiento (ver Bushes.isHidingUnit, js/bushes.js).
     async reactToPlayerMove(mover) {
+      if (this.caged) return; // enjaulado (js/campaign.js): no huye
     if (typeof Tutorial !== "undefined" && Tutorial.active) return; // tutorial: el gnomo de práctica se deja coger
       if (!this.el || this.heldBy || this.busy) return;
       const dist = Math.max(Math.abs(mover.row - this.row), Math.abs(mover.col - this.col));
@@ -2035,6 +2039,8 @@ const Gnome = {
   async reactToStop(unit) {
     if (!unit || !unit.el || (typeof Units !== "undefined" && !Units.list.includes(unit))) return;
     if (unit.team === "player" || (typeof Net !== "undefined" && Net.active)) await this.reactToPlayerMove(unit);
+    // Campaña (js/campaign.js): una unidad que se detiene junto al Obelisco con un gnomo lo extrae.
+    if (typeof Campaign !== "undefined" && Campaign.active) Campaign.onUnitStopped(unit);
   },
 
   hideAllBadges() {
@@ -2269,6 +2275,7 @@ const Gnome = {
   },
 
   ensureLooseGnome() {
+    if (typeof Campaign !== "undefined" && Campaign.active) return; // Campaña: los gnomos solo salen de jaulas/campamentos
     if (typeof Units === "undefined" || !Units.boardSize) return;
     const size = Units.boardSize;
     let guard = 0;

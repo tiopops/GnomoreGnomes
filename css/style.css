@@ -2672,7 +2672,11 @@ body.team-markers--visible .unit__team-marker {
 
 .unit-info-overlay--visible {
   opacity: 1;
+  pointer-events: auto; /* el fondo recoge el toque "fuera de la ficha" que la cierra */
 }
+.unit-info-wrap { position: relative; transform: scale(0.88) translateY(10px); transition: transform 0.22s cubic-bezier(0.34, 1.35, 0.64, 1); }
+.unit-info-overlay--visible .unit-info-wrap { transform: scale(1) translateY(0); }
+.unit-info-close { cursor: var(--cursor-pointer, pointer); }
 
 /* Pedido explícito: "actualiza las interfaces...para que se adecuen al
    estilo actual" — esta tarjeta llevaba el diseño ANTIGUO de antes de que
@@ -2690,12 +2694,6 @@ body.team-markers--visible .unit__team-marker {
   width: min(320px, 86vw);
   padding: 28px 24px 24px;
   text-align: center;
-  transform: scale(0.88) translateY(10px);
-  transition: transform 0.22s cubic-bezier(0.34, 1.35, 0.64, 1);
-}
-
-.unit-info-overlay--visible .unit-info-card {
-  transform: scale(1) translateY(0);
 }
 
 /* Todo el contenido real va dentro de este envoltorio con su propio
