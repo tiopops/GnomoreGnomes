@@ -317,3 +317,6 @@
 .camp-rtop { padding: 14px 16px 10px; }
 .camp-slot3 { width: 104px; margin-top: 34px; }
 .camp-slot3 .art-slot__art { top: -66%; }
+/* JUGAR en amarillo (mismo patrón que el resto del juego) */
+.camp-play:not([disabled]) { --p5-tone: #ffcf3d; }
+.camp-play:not([disabled]) .p5-banner__label { color: #111; text-shadow: none; }
