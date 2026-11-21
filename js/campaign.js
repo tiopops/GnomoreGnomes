@@ -50,7 +50,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     menu_campaign: "Campaña", cmp_title: "CAMPAÑA", cmp_gnomes: "GNOMOS", cmp_goal: "Estampa {n} gnomos contra el Obelisco.",
     cmp_play: "JUGAR", cmp_soon: "PRÓXIMAMENTE", cmp_locked: "BLOQUEADO", cmp_done: "COMPLETADO", cmp_chapter: "CAPÍTULO {n}",
     cmp_need: "Necesitas {g} gnomos y {r} recursos extraídos (tienes {hg} y {hr}).", cmp_need_prev: "Completa el capítulo anterior.",
-    cmp_boss: "El GnomOgro te espera... pero aún no está listo.", cmp_shop: "MEJORAS DE CAMPAÑA", cmp_relics: "RELIQUIAS DE CAMPAÑA",
+    cmp_boss: "El GnomOgro te espera... pero aún no está listo.", cmp_shop: "MEJORAS DE CAMPAÑA", cmp_tab_map: "MAPA", cmp_tab_up: "MEJORAS", cmp_tab_rel: "RELIQUIAS", cmp_relics: "RELIQUIAS DE CAMPAÑA",
     cmp_buy: "COMPRAR", cmp_max: "AL MÁXIMO", cmp_equip: "EQUIPAR", cmp_unequip: "QUITAR", cmp_equipped: "EQUIPADA",
     cmp_slots: "Equipadas {a}/{b}", cmp_relics_help: "Se compran con recursos extraídos. Las reliquias de tu cuenta no valen aquí.",
     cmp_up_prov: "Provisiones", cmp_up_prov_d: "Empiezas cada nivel con +2 puntos por nivel de mejora.",
@@ -64,7 +64,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_yes: "EXTRAER", cmp_no: "SEGUIR", cmp_res_ok: "¡CAPÍTULO SUPERADO!", cmp_res_part: "EXTRACCIÓN COMPLETADA", cmp_res_fail: "HAS CAÍDO",
     cmp_res_g: "Gnomos estampados", cmp_res_k: "Neutrales derrotados", cmp_res_goal: "Objetivo: {n} gnomos", cmp_res_half: "Al caer solo te llevas la mitad de los recursos.",
     cmp_back_map: "VOLVER AL MAPA", cmp_free: "¡GNOMOS LIBRES!", cmp_done_banner: "¡OBJETIVO CUMPLIDO!", cmp_warn_ob: "¡ATACAN TU OBELISCO!", cmp_warn_none: "NO QUEDAN GNOMOS POR LIBERAR",
-    cmp_skip: "SALTAR", cmp_start: "COMENZAR", cmp_war: "LA GUERRA ETERNA", cmp_next: "SIGUIENTE", cmp_ok: "ENTENDIDO", cmp_nizak: "Nizak",
+    cmp_skip: "SALTAR", cmp_hold_skip: "MANTÉN PARA SALTAR", cmp_start: "COMENZAR", cmp_war: "LA GUERRA ETERNA", cmp_next: "SIGUIENTE", cmp_ok: "ENTENDIDO", cmp_nizak: "Nizak",
     cmp_ch1: "Capítulo 1 · Claro de las Setas", cmp_ch2: "Capítulo 2 · Orilla Pantanosa", cmp_ch3: "Capítulo 3 · Espesura Profunda", cmp_ch4: "Capítulo 4 · Cumbre del Hongo", cmp_ch5: "Capítulo 5 · El GnomOgro",
     cmp_intro1: "Hace más de tres siglos, todo el reino de Gnomoria era feliz.|Las razas vivían en guerra —ironías de la vida— matándose y torturándose sin una sola preocupación.|Hasta que llegaron ELLOS: los gnomos, con sus arcoíris y sus chuches sin gluten y bajas en azúcar, empeñados en mediar para conseguir la paz.|¡Están locos! ¡No se lo permitiremos! Guardabosques, a por ellos.",
     cmp_intro2: "Los gnomos se extienden como una plaga de purpurina.|Hasta junto a la orilla se oyen ya sus cantos de hermandad.|Rescatad a los enjaulados antes de que sigan predicando la paz.",
@@ -82,7 +82,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     menu_campaign: "Campaign", cmp_title: "CAMPAIGN", cmp_gnomes: "GNOMES", cmp_goal: "Slam {n} gnomes into the Obelisk.",
     cmp_play: "PLAY", cmp_soon: "COMING SOON", cmp_locked: "LOCKED", cmp_done: "COMPLETED", cmp_chapter: "CHAPTER {n}",
     cmp_need: "You need {g} gnomes and {r} extracted resources (you have {hg} and {hr}).", cmp_need_prev: "Complete the previous chapter.",
-    cmp_boss: "The GnomOgre awaits... but it isn't ready yet.", cmp_shop: "CAMPAIGN UPGRADES", cmp_relics: "CAMPAIGN RELICS",
+    cmp_boss: "The GnomOgre awaits... but it isn't ready yet.", cmp_shop: "CAMPAIGN UPGRADES", cmp_tab_map: "MAP", cmp_tab_up: "UPGRADES", cmp_tab_rel: "RELICS", cmp_relics: "CAMPAIGN RELICS",
     cmp_buy: "BUY", cmp_max: "MAXED", cmp_equip: "EQUIP", cmp_unequip: "REMOVE", cmp_equipped: "EQUIPPED",
     cmp_slots: "Equipped {a}/{b}", cmp_relics_help: "Bought with extracted resources. Your account relics don't count here.",
     cmp_up_prov: "Provisions", cmp_up_prov_d: "Start every level with +2 points per upgrade level.",
@@ -96,7 +96,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_yes: "EXTRACT", cmp_no: "KEEP GOING", cmp_res_ok: "CHAPTER CLEARED!", cmp_res_part: "EXTRACTION COMPLETE", cmp_res_fail: "YOU HAVE FALLEN",
     cmp_res_g: "Gnomes slammed", cmp_res_k: "Neutrals defeated", cmp_res_goal: "Goal: {n} gnomes", cmp_res_half: "When you fall you only keep half the resources.",
     cmp_back_map: "BACK TO THE MAP", cmp_free: "GNOMES FREED!", cmp_done_banner: "GOAL REACHED!", cmp_warn_ob: "YOUR OBELISK IS UNDER ATTACK!", cmp_warn_none: "NO GNOMES LEFT TO FREE",
-    cmp_skip: "SKIP", cmp_start: "BEGIN", cmp_war: "THE ETERNAL WAR", cmp_next: "NEXT", cmp_ok: "GOT IT", cmp_nizak: "Nizak",
+    cmp_skip: "SKIP", cmp_hold_skip: "HOLD TO SKIP", cmp_start: "BEGIN", cmp_war: "THE ETERNAL WAR", cmp_next: "NEXT", cmp_ok: "GOT IT", cmp_nizak: "Nizak",
     cmp_ch1: "Chapter 1 · Mushroom Glade", cmp_ch2: "Chapter 2 · Boggy Shore", cmp_ch3: "Chapter 3 · Deep Thicket", cmp_ch4: "Chapter 4 · Fungus Peak", cmp_ch5: "Chapter 5 · The GnomOgre",
     cmp_intro1: "Over three centuries ago, the whole kingdom of Gnomoria was happy.|The races lived at war — the irony! — killing and torturing each other without a care in the world.|Until THEY showed up: the gnomes, with their rainbows and their gluten-free, low-sugar candy, set on mediating peace.|They're mad! We won't allow it! Forest Rangers, get them.",
     cmp_intro2: "The gnomes spread like a plague of glitter.|Even by the shore you can hear their songs of brotherhood.|Rescue the caged ones before they keep preaching peace.",
@@ -206,31 +206,31 @@ const Campaign = {
       action = `<button class="p5-banner p5-banner--action camp-play" data-play="${sel.n}"><span class="p5-banner__label">${t("cmp_play")}</span></button>`;
     }
 
-    const shop = CAMPAIGN_UPGRADES.map((u) => {
+    const upCards = CAMPAIGN_UPGRADES.map((u) => {
       const lv = this.upLevel(u.id), max = lv >= u.max, cost = u.cost[lv], can = !max && this.canPay(cost);
       const pips = Array.from({ length: u.max }, (_, i) => `<i class="camp-pip${i < lv ? " camp-pip--on" : ""}"></i>`).join("");
-      return `<div class="camp-up"><i class="ph-fill ${u.icon} camp-up__icon"></i>
-        <div class="camp-up__txt"><b>${t("cmp_up_" + u.id)}</b><span>${t("cmp_up_" + u.id + "_d")}</span><span class="camp-pips">${pips}</span></div>
-        <div class="camp-up__buyer">${max ? "" : `<span class="camp-costs">${this._costHtml(cost)}</span>`}<button type="button" class="camp-up__buy" data-buy="${u.id}" ${can ? "" : "disabled"}>${max ? t("cmp_max") : t("cmp_buy")}</button></div></div>`;
+      return `<div class="camp-card">
+        <div class="camp-card__head"><i class="ph-fill ${u.icon} camp-card__icon"></i><div class="camp-card__txt"><b>${t("cmp_up_" + u.id)}</b><span>${t("cmp_up_" + u.id + "_d")}</span></div></div>
+        <div class="camp-card__foot"><span class="camp-pips">${pips}</span>${max ? "" : `<span class="camp-costs">${this._costHtml(cost)}</span>`}
+        <button type="button" class="camp-up__buy" data-buy="${u.id}" ${can ? "" : "disabled"}>${max ? t("cmp_max") : t("cmp_buy")}</button></div></div>`;
     }).join("");
 
     const eq = this.equippedRelics();
-    const relics = (typeof ART_DEFS !== "undefined" ? ART_DEFS : []).map((d) => {
+    const relCards = (typeof ART_DEFS !== "undefined" ? ART_DEFS : []).map((d) => {
       const own = this.s.relics.includes(d.id), on = eq.includes(d.id), cost = this.relicCost(d.id);
       const btn = own ? `<button type="button" class="camp-up__buy${on ? " camp-up__buy--on" : ""}" data-eq="${d.id}">${on ? t("cmp_unequip") : t("cmp_equip")}</button>`
         : `<button type="button" class="camp-up__buy" data-relic="${d.id}" ${this.canPay(cost) ? "" : "disabled"}>${t("cmp_buy")}</button>`;
-      return `<div class="camp-up${on ? " camp-up--on" : ""}"><img class="camp-up__img" src="assets/artefactos/${d.id}.webp" alt="">
-        <div class="camp-up__txt"><b>${Artifacts.name(d.id)}</b><span>${Artifacts.desc(d.id)}</span></div>
-        <div class="camp-up__buyer">${own ? (on ? `<span class="camp-costs camp-costs--on">${t("cmp_equipped")}</span>` : "") : `<span class="camp-costs">${this._costHtml(cost)}</span>`}${btn}</div></div>`;
+      return `<div class="camp-card camp-card--rel${on ? " camp-card--on" : ""}">
+        <div class="camp-card__head"><img class="camp-card__img" src="assets/artefactos/${d.id}.webp" alt=""><div class="camp-card__txt"><b>${Artifacts.name(d.id)}</b><span>${Artifacts.desc(d.id)}</span></div></div>
+        <div class="camp-card__foot">${own ? (on ? `<span class="camp-costs camp-costs--on">${t("cmp_equipped")}</span>` : "<span></span>") : `<span class="camp-costs">${this._costHtml(cost)}</span>`}${btn}</div></div>`;
     }).join("");
 
+    const tab = this.tab || "map";
     const res = CAMPAIGN_RES.map((r) => `<span class="camp-chip"><img src="${CAMPAIGN_RES_ICON[r]}" alt=""><b>${this.s.res[r] || 0}</b></span>`).join("");
-    root.innerHTML = `
-      <div class="camp-top">
-        <span class="camp-chip"><i class="ph-fill ph-users-three"></i> ${t("cmp_gnomes")} <b>${this.s.gnomes}</b></span>${res}
-      </div>
-      <div class="camp-body">
-        <div class="camp-col">
+    const tabs = [["map", "ph-map-trifold", t("cmp_tab_map"), ""], ["up", "ph-hammer", t("cmp_tab_up"), ""], ["rel", "ph-scroll", t("cmp_tab_rel"), `${eq.length}/${this.slots()}`]]
+      .map(([id, ic, lb, sm]) => `<button type="button" class="camp-tab${tab === id ? " camp-tab--on" : ""}" data-tab="${id}"><i class="ph-fill ${ic}"></i><span>${lb}</span>${sm ? `<small>${sm}</small>` : ""}</button>`).join("");
+    const pane = tab === "map"
+      ? `<div class="camp-pane camp-pane--map">
           <div class="camp-map">${nodes}</div>
           <div class="camp-detail">
             <div class="camp-detail__kicker">${t("cmp_chapter", { n: sel.n })}</div>
@@ -238,13 +238,15 @@ const Campaign = {
             ${sel.boss ? "" : `<div class="camp-detail__goal">${t("cmp_goal", { n: sel.goal })}</div>`}
             <div class="camp-detail__status">${status}</div>
             ${action}
-          </div>
-        </div>
-        <div class="camp-side">
-          <div class="camp-shop"><div class="camp-shop__title">${t("cmp_shop")}</div>${shop}</div>
-          <div class="camp-shop"><div class="camp-shop__title">${t("cmp_relics")} <small>${t("cmp_slots", { a: eq.length, b: this.slots() })}</small></div><div class="camp-shop__help">${t("cmp_relics_help")}</div>${relics}</div>
-        </div>
-      </div>`;
+          </div></div>`
+      : tab === "up"
+        ? `<div class="camp-pane"><div class="camp-grid">${upCards}</div></div>`
+        : `<div class="camp-pane"><div class="camp-shop__help">${t("cmp_relics_help")}</div><div class="camp-grid camp-grid--rel">${relCards}</div></div>`;
+    root.innerHTML = `
+      <div class="camp-top"><span class="camp-chip"><i class="ph-fill ph-users-three"></i> ${t("cmp_gnomes")} <b>${this.s.gnomes}</b></span>${res}</div>
+      <div class="camp-tabs">${tabs}</div>
+      ${pane}`;
+    root.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { this._click(); this.tab = b.dataset.tab; this.render(); }));
     root.querySelectorAll(".camp-node").forEach((b) => b.addEventListener("click", () => { this._click(); this.sel = +b.dataset.n; this.render(); }));
     const pb = root.querySelector("[data-play]");
     if (pb) pb.addEventListener("click", () => { this._click(); this.play(+pb.dataset.play); });
@@ -284,32 +286,16 @@ const Campaign = {
     this.render();
   },
 
-  // ---------- Tutorial (tarjetas de Nizak) ----------
-  showTutorial() {
-    if (document.querySelector(".camp-intro")) return;
-    const pages = [1, 2, 3, 4, 5, 6].map((i) => ({ title: this.t("cmp_tut" + i + "_t"), text: this.t("cmp_tut" + i) }));
-    const ov = document.createElement("div");
-    ov.className = "camp-intro";
-    ov.innerHTML = `<div class="camp-intro__card">
-      <img class="camp-intro__nizak" src="assets/tutorial/nizak_aplaude.png" alt="">
-      <div class="camp-intro__box"><div class="camp-intro__name">${this.t("cmp_nizak")} · <span class="camp-tut__title"></span> <small class="camp-tut__n"></small></div>
-      <div class="camp-intro__text"></div>
-      <button type="button" class="camp-intro__next"></button></div></div>`;
-    document.body.appendChild(ov);
-    requestAnimationFrame(() => ov.classList.add("camp-intro--on"));
-    let i = 0;
-    const paint = () => {
-      ov.querySelector(".camp-tut__title").textContent = pages[i].title;
-      ov.querySelector(".camp-tut__n").textContent = `${i + 1}/${pages.length}`;
-      ov.querySelector(".camp-intro__text").textContent = pages[i].text;
-      ov.querySelector(".camp-intro__next").textContent = i === pages.length - 1 ? this.t("cmp_ok") : this.t("cmp_next");
-    };
-    paint();
-    ov.querySelector(".camp-intro__next").addEventListener("click", (e) => {
-      e.stopPropagation(); this._click();
-      if (i < pages.length - 1) { i++; paint(); return; }
-      ov.classList.remove("camp-intro--on"); setTimeout(() => ov.remove(), 220);
-    });
+  // ---------- Tutorial (la escena y el guion viven en js/tutorial-campaign.js) ----------
+  // Pone el motor en modo campaña dentro de la escena de práctica: sin guardado, sin avance de capítulos.
+  beginTutorial() {
+    this.active = true;
+    this.run = { n: 0, goal: 2, delivered: 0, kills: 0, over: false, warnedNone: true, warnedDone: false, spawned: 0, tutorial: true };
+    this._camps = [];
+    const ob = Obelisks.byTeam("player");
+    this._setupObelisk(ob);
+    if (typeof Glory !== "undefined") { Glory.points.player = 0; Glory.addNow("player", CAMPAIGN_START_GLORY); }
+    this._showHud();
   },
 
   // ---------- Partida ----------
@@ -328,7 +314,14 @@ const Campaign = {
   // Tras construir la partida: intro de Nizak antes de empezar a jugar.
   async afterStart() {
     const ch = this.ch(this.run.n);
-    await this._warIntro(ch);
+    if (ch.n === 1) {
+      await this._cinematic(ch);
+      const c = CampaignIntro._cine;
+      if (c) { CampaignIntro._cine = null; c.style.transition = "opacity .5s"; c.style.opacity = "0"; setTimeout(() => c.remove(), 520); }
+    } else {
+      if (!this.active || !this.run) return;
+      await this._warIntro(ch);
+    }
     if (!this.active || !this.run) return;
     if (typeof Turns !== "undefined") Turns.showTurnBanner();
   },
@@ -490,7 +483,7 @@ const Campaign = {
 
   // ---------- IA de los neutrales ----------
   async onTurnEnd(team) {
-    if (!this.active || team !== "player" || !this.run || this.run.over) return;
+    if (!this.active || team !== "player" || !this.run || this.run.over || this.run.tutorial) return;
     this._maybeSpawnSneaker();
     await this.neutralTurn();
     this._checkStuck();
@@ -598,11 +591,11 @@ const Campaign = {
     this._askEl = ov;
     const close = () => { ov.remove(); this._askEl = null; };
     ov.querySelector(".camp-ask__btn--no").addEventListener("click", () => { if (typeof SFX !== "undefined" && SFX.back) SFX.back(); close(); });
-    ov.querySelector(".camp-ask__btn--yes").addEventListener("click", () => { this._click(); close(); this._finish("extract"); });
+    ov.querySelector(".camp-ask__btn--yes").addEventListener("click", () => { this._click(); close(); if (this.run.tutorial) { this.run.tutExtracted = true; return; } this._finish("extract"); });
     ov.addEventListener("click", (e) => { if (e.target === ov) close(); });
   },
 
-  onGameEnd(playerWon) { if (!this.run || this.run.over) return; this._finish(playerWon ? "extract" : "fallen"); },
+  onGameEnd(playerWon) { if (!this.run || this.run.over || this.run.tutorial) return; this._finish(playerWon ? "extract" : "fallen"); },
 
   _finish(kind) {
     const r = this.run;
@@ -659,6 +652,17 @@ const Campaign = {
     ["_askEl", "_resultEl", "_warEl"].forEach((k) => { if (this[k]) { this[k].remove(); this[k] = null; } });
     if (typeof Obelisks !== "undefined") Obelisks.gameOver = false;
     this._camps = [];
+  },
+
+  // Escena de vídeo del capítulo 1 (3D con los sprites del juego, sin voces): subtítulos propios en el idioma elegido.
+  _cinematic(ch) {
+    const L = this.t("cmp_intro1").split("|");
+    return CampaignIntro.playVideo({
+      src: "assets/campana/intro_guerra.mp4?v=3",
+      nizak: this.t("cmp_nizak"), hold: this.t("cmp_hold_skip"),
+      subs: [{ t0: 0.8, t1: 7.2, text: L[0] }, { t0: 8.5, t1: 15.5, text: L[1] }, { t0: 16.5, t1: 23.8, text: L[2] }, { t0: 24.5, t1: 28.2, text: L[3] }],
+      onStart: () => { if (typeof Music !== "undefined" && Music.duck) Music.duck(30500); },
+    });
   },
 
   // ---------- Intro "La Guerra Eterna" (la escena vive en js/campaign-intro.js) ----------

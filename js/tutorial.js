@@ -307,6 +307,7 @@ const Tutorial = {
     if (this._scenario === "rock" && this._stepsRock) return this._stepsRock();
     if (this._scenario === "crane" && this._stepsCrane) return this._stepsCrane();
     if (this._scenario === "wall" && this._stepsWall) return this._stepsWall();
+    if (this._scenario === "campaign" && this._stepsCampaign) return this._stepsCampaign();
     return [
       {
         say: `Vaya, otro verdugo. Perdón, «jugador»: así os llamamos antes de que nos aplastéis. Soy ${TUTORIAL_GUIDE_NAME}, llevo media vida dedicándome a ser vuestra pelota en este deporte de majaras. Siempre digo que de algo hay que vivir. Bueno, vivir, vivir... Te enseñaré lo básico para que, al menos, me aplastes con cierta elegancia.`,

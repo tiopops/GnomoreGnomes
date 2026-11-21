@@ -282,8 +282,66 @@ const CampaignIntro = (() => {
       ov.querySelector(".war__skip").addEventListener("click", () => { if (cfg.click) cfg.click(); finish(); });
       goBtn.addEventListener("click", () => { if (cfg.click) cfg.click(); finish(); });
       requestAnimationFrame(() => ov.classList.add("war--on"));
+      const c = CampaignIntro._cine;
+      if (c) { CampaignIntro._cine = null; setTimeout(() => c.remove(), 320); }
     }));
   }
 
-  return { play };
+  // ---- Escena de vídeo cinematográfica (3D renderizado con los sprites del juego) ----
+  // El vídeo NO lleva texto ni voces: los subtítulos son una capa HTML propia (cfg.subs: [{t0,t1,text}]) en el idioma
+  // elegido. Se salta manteniendo pulsado 3 s (ratón/táctil, tecla o botón del mando), igual que el retrato del tutorial.
+  const HOLD_MS = 3000;
+  function playVideo(cfg) {
+    return new Promise((resolve) => {
+      const ov = mk("div", "cine");
+      ov.innerHTML = `<video class="cine__v" playsinline preload="auto" src="${cfg.src}"></video>
+        <div class="cine__sub"><span class="cine__who">${cfg.nizak}</span><span class="cine__txt"></span></div>
+        <button type="button" class="cine__skip"><span class="cine__skiptxt">${cfg.hold}</span><i class="cine__fill"></i></button>`;
+      const v = ov.querySelector("video"), txt = ov.querySelector(".cine__txt"), sub = ov.querySelector(".cine__sub");
+      const fill = ov.querySelector(".cine__fill"), btn = ov.querySelector(".cine__skip");
+      let done = false, hold = null, raf = 0;
+      const finish = () => {
+        if (done) return; done = true;
+        cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); document.removeEventListener("keyup", ku);
+        try { v.pause(); } catch (e) {}
+        if (cfg.onEnd) cfg.onEnd();
+        // La escena siguiente retira este telón negro al montarse (sin parpadeo del tablero entre medias).
+        sub.classList.remove("cine__sub--on"); btn.style.display = "none";
+        CampaignIntro._cine = ov;
+        setTimeout(() => { if (CampaignIntro._cine === ov) { ov.remove(); CampaignIntro._cine = null; } }, 6000);
+        resolve();
+      };
+      const loop = () => {
+        raf = requestAnimationFrame(loop);
+        const t = v.currentTime;
+        const cur = (cfg.subs || []).find((x) => t >= x.t0 && t < x.t1);
+        sub.classList.toggle("cine__sub--on", !!cur);
+        if (cur && txt.textContent !== cur.text) txt.textContent = cur.text;
+        // Mando: cualquier botón mantenido cuenta como "pulsar".
+        let pad = false;
+        try { (navigator.getGamepads ? [...navigator.getGamepads()] : []).forEach((g) => { if (g && g.buttons.some((b) => b.pressed)) pad = true; }); } catch (e) {}
+        if (pad && !hold) hold = { t0: performance.now(), pad: true };
+        if (!pad && hold && hold.pad) hold = null;
+        if (hold) {
+          const f = Math.min(1, (performance.now() - hold.t0) / HOLD_MS);
+          fill.style.width = f * 100 + "%"; btn.classList.add("cine__skip--on");
+          if (f >= 1) finish();
+        } else { fill.style.width = "0%"; btn.classList.remove("cine__skip--on"); }
+      };
+      const start = (src) => { if (!hold) hold = { t0: performance.now(), src }; };
+      const stop = (src) => { if (hold && hold.src === src) hold = null; };
+      const kd = (e) => { if (e.repeat) return; if (["Space", "Enter", "Escape"].includes(e.code)) start("key"); };
+      const ku = (e) => { if (["Space", "Enter", "Escape"].includes(e.code)) stop("key"); };
+      document.addEventListener("keydown", kd); document.addEventListener("keyup", ku);
+      ov.addEventListener("pointerdown", () => start("ptr"));
+      ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => ov.addEventListener(ev, () => stop("ptr")));
+      v.addEventListener("ended", finish);
+      v.addEventListener("error", finish);
+      if (cfg.onStart) cfg.onStart();
+      document.body.appendChild(ov);
+      requestAnimationFrame(() => { ov.classList.add("cine--on"); const p = v.play(); if (p && p.catch) p.catch(finish); loop(); });
+    });
+  }
+
+  return { play, playVideo };
 })();

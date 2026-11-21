@@ -12,10 +12,14 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001687";
+const GG_VERSION = "v.001689";
 
 const GG_CHANGELOG = [
-  { v: "v.001687", date: "21/11/2026", title: "Campaña y ficha de unidad", items: [
+  { v: "v.001690", date: "21/11/2026", title: "Campaña y ficha de unidad", items: [
+      "Campaña: nueva introducción cinematográfica en HD (~30 s) del capítulo 1: bosque en 3D con planos de profundidad, razas matándose con una sonrisa, la llegada de los gnomos con sus arcoíris y chuches, y el título del juego; con música, efectos y subtítulos en tu idioma (mantén pulsado 3 s para saltarla)",
+      "Campaña: el tutorial es ahora un tutorial al uso (escena de práctica con campamento, jaula, estampar, recursos, Rompeobeliscos y extracción) y va el último de la lista de tutoriales",
+      "Campaña: menú condensado en pestañas (Mapa, Mejoras y Reliquias) para verlo todo sin desplazarse; las reliquias de rama (Tomos) están en la pestaña Reliquias",
+      "Colores: el tutorial de Campaña ya no repite el color del de MushBoom y Reanudar partida deja de repetir el azul de Tutorial",
       "Campaña: la intro de La Guerra Eterna ahora es una escena sobre losetas reales con cámara en movimiento, duelos entre razas, rocas, sangre y la llegada de la plaga de gnomos",
       "Campaña: el tutorial ya no salta solo al entrar; vive únicamente en el menú de Tutoriales",
       "Campaña: nuevo tutorial (en el menú de tutoriales y con el botón CÓMO SE JUEGA) y botón del menú principal en verde",

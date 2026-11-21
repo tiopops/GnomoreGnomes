@@ -364,6 +364,8 @@ const Glory = {
   _renderPreview(team) {
     const previewEl = this._previewEls[team];
     if (!previewEl) return;
+    if (typeof Campaign !== "undefined" && Campaign.active) { previewEl.textContent = ""; previewEl.style.display = "none"; return; } // Campaña: sin puntos por turno
+    previewEl.style.display = "";
     const next = GLORY_PER_TURN_START + this.pendingBonus[team] + this._villagesBonus(team) + this._relicBonus(team);
     previewEl.textContent = this.points[team] >= GLORY_CAP ? "LLENO" : `+${next} / turno`;
   },

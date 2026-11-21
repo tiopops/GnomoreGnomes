@@ -562,7 +562,7 @@ h2 {
 .tut-menu__list .menu-btn > span { position: relative; z-index: 3; }
 #btn-new-game { --c: #f0a21a; --c2: #8a4a12; --mb-h: 70px; font-size: calc(var(--mb-fs, 0.95rem) * 1.15); }
 #btn-tutorial { --c: #5d93e0; --c2: #274d82; }
-#btn-resume-game { --c: #5d93e0; --c2: #274d82; }
+#btn-resume-game { --c: #19a7b8; --c2: #0b4f5a; }
 #btn-multiplayer { --c: #d9566b; --c2: #7a2a3a; }
 #btn-gnomoteca { --c: #8f7bb8; --c2: #4b3a66; }
 .main-menu .menu-btn:disabled { --c: #4a4352; --c2: #2b2731; }

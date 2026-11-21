@@ -107,8 +107,8 @@ Object.assign(Tutorial, {
       { id: "mush", icon: "ph-tree", title: "Tutorial Bosque MushBoom", sub: "Setas explosivas, Altar de Sacrificios y GnomOgro" },
       { id: "rock", icon: "ph-mountains", title: "Tutorial Colinas Rock'n Troll", sub: "Tambores de Guerra, fragmentos y Volcán" },
       { id: "crane", icon: "ph-egg", title: "Tutorial Poblado HurryCrane", sub: "Huevo de Grulla, bumpers y la Grulla" },
-      { id: "campaign", icon: "ph-flag-banner", title: "Tutorial Modo Campaña", sub: "Extracción: jaulas, estampar gnomos y reliquias" },
       { id: "wall", icon: "ph-castle-turret", title: "Tutorial Fortaleza WallForge", sub: "Guardias, cámara sellada y Reliquia Paranoica" },
+      { id: "campaign", icon: "ph-flag-banner", title: "Tutorial Modo Campaña", sub: "Extracción: jaulas, estampar gnomos y reliquias" },
     ];
     list.innerHTML = items
       .map(
@@ -125,7 +125,6 @@ Object.assign(Tutorial, {
     list.querySelectorAll(".tut-menu__item").forEach((b) =>
       b.addEventListener("click", () => {
         if (typeof SFX !== "undefined") SFX.click();
-        if (b.dataset.scenario === "campaign" && typeof Campaign !== "undefined") { Campaign.showTutorial(); return; }
         this.start(b.dataset.scenario);
       })
     );
@@ -144,6 +143,12 @@ Object.assign(Tutorial, {
       Villages.list = [];
     }
     this._ctx.villageId = null;
+    if (this._scenario === "campaign") {
+      this._buildCampaignScene();
+      if (typeof Fog !== "undefined") Fog.applyVisibility();
+      this._refill();
+      return;
+    }
     if (this._scenario === "wall") {
       this._buildWallScene();
       // Gloria de práctica al tope (30) no deja sumar nada: se baja para que se vea volar cada punto hasta el contador.
