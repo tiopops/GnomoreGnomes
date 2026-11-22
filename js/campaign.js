@@ -37,9 +37,9 @@ function campaignTurnLimit(ch) {
 // Mejoras exclusivas de campaña: se pagan con los recursos extraídos.
 // Categorías de mejoras (mismos colores que las ramas del árbol de habilidades de las partidas normales).
 const CAMPAIGN_CATS = [
-  { id: "combate", acc: "#e6302f", icon: "ph-sword" },
-  { id: "ejercito", acc: "#2f7fe6", icon: "ph-users-three" },
-  { id: "extraccion", acc: "#3fb95a", icon: "ph-package" },
+  { id: "combate", acc: "#d9566b", icon: "ph-sword" },
+  { id: "ejercito", acc: "#5d93e0", icon: "ph-users-three" },
+  { id: "extraccion", acc: "#5fa84a", icon: "ph-package" },
 ];
 const CAMPAIGN_UPGRADES = [
   { id: "arma", cat: "combate", icon: "ph-sword", max: 2, cost: [{ roca: 4, metal: 1 }, { roca: 8, metal: 3 }] },
@@ -89,11 +89,11 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_hud: "{a}/{b}", cmp_extract: "Extraer", cmp_extract_q: "¿EXTRAER Y TERMINAR?", cmp_extract_info: "Te llevas los gnomos y los recursos conseguidos.",
     cmp_yes: "EXTRAER", cmp_no: "SEGUIR", cmp_res_ok: "¡CAPÍTULO SUPERADO!", cmp_res_part: "EXTRACCIÓN COMPLETADA", cmp_res_fail: "HAS CAÍDO",
     cmp_res_g: "Gnomos estampados", cmp_res_k: "Neutrales derrotados", cmp_res_goal: "Objetivo: {n} gnomos", cmp_res_half: "Al caer te quedas sin nada: ni gnomos ni recursos.", cmp_res_time: "¡SE ACABÓ EL TIEMPO!", cmp_res_timeup: "No reuniste a todos los gnomos a tiempo: conservas los gnomos, pero solo la mitad de los recursos.", cmp_hud_turns: "{a} turnos", cmp_stat_gnomes: "gnomos", cmp_stat_turns: "turnos", cmp_stat_camps: "campamentos", cmp_warn_turns: "¡QUEDAN {n} TURNOS!",
-    cmp_back_map: "VOLVER AL MAPA", cmp_free: "¡GNOMOS LIBRES!", cmp_done_banner: "¡OBJETIVO CUMPLIDO!", cmp_warn_ob: "¡ATACAN TU OBELISCO!", cmp_warn_none: "NO QUEDAN GNOMOS POR LIBERAR",
+    cmp_back_map: "VOLVER AL MAPA", cmp_free: "¡JAULA ABIERTA!", cmp_done_banner: "¡OBJETIVO CUMPLIDO!", cmp_warn_ob: "¡ATACAN TU OBELISCO!", cmp_warn_none: "NO QUEDAN GNOMOS ENJAULADOS",
     cmp_skip: "SALTAR", cmp_hold_skip: "MANTÉN PARA SALTAR", cmp_start: "COMENZAR", cmp_war: "LA GUERRA ETERNA", cmp_next: "SIGUIENTE", cmp_ok: "ENTENDIDO", cmp_nizak: "Nizak",
     cmp_ch1: "Capítulo 1 · Claro de las Setas", cmp_ch2: "Capítulo 2 · Orilla Pantanosa", cmp_ch3: "Capítulo 3 · Espesura Profunda", cmp_ch4: "Capítulo 4 · Cumbre del Hongo", cmp_ch5: "Capítulo 5 · El GnomOgro",
     cmp_intro1: "¡Hace más de tres siglos, todo el reino de Gnomoria era feliz! Una felicidad muy suya, ya me entienden.|¡Las razas vivían en guerra, matándose y torturándose sin una sola preocupación! ¡Eso sí, siempre con una reverencia!|¡Hasta que llegaron ELLOS! Los gnomos, con sus arcoíris, sus chuches sin gluten y su empeño en MEDIAR. ¡En NUESTRA guerra!|¡Están locos! ¡No lo vamos a permitir! Guardabosques... ¡a por ellos!",
-    cmp_intro2: "Los gnomos se extienden como una plaga de purpurina.|Hasta junto a la orilla se oyen ya sus cantos de hermandad.|Rescatad a los enjaulados antes de que sigan predicando la paz.",
+    cmp_intro2: "Los gnomos se extienden como una plaga de purpurina.|Hasta junto a la orilla se oyen ya sus cantos de hermandad.|Estampad a los enjaulados antes de que sigan predicando la paz.",
     cmp_intro3: "Más adentro del bosque, hasta las setas parecen charlar en vez de explotar.|Algo huele a concordia, y ese olor me revuelve el estómago.|Traedme más gnomos: hay que saber dónde se esconden.",
     cmp_intro4: "En lo alto del bosque, los Rastreadores vigilan jaulas por costumbre... y por un buen sueldo.|Entrad, sacad a los gnomos y que nadie mencione la palabra abrazo.",
     cmp_intro5: "Se acerca el GnomOgro.|Pero eso, mis queridos guardabosques, es otra historia.",
@@ -129,11 +129,11 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_hud: "{a}/{b}", cmp_extract: "Extract", cmp_extract_q: "EXTRACT AND FINISH?", cmp_extract_info: "You keep the gnomes and resources you gathered.",
     cmp_yes: "EXTRACT", cmp_no: "KEEP GOING", cmp_res_ok: "CHAPTER CLEARED!", cmp_res_part: "EXTRACTION COMPLETE", cmp_res_fail: "YOU HAVE FALLEN",
     cmp_res_g: "Gnomes slammed", cmp_res_k: "Neutrals defeated", cmp_res_goal: "Goal: {n} gnomes", cmp_res_half: "When you fall you keep nothing: no gnomes, no resources.", cmp_res_time: "TIME IS UP!", cmp_res_timeup: "You did not gather every gnome in time: you keep the gnomes, but only half the resources.", cmp_hud_turns: "{a} turns", cmp_stat_gnomes: "gnomes", cmp_stat_turns: "turns", cmp_stat_camps: "camps", cmp_warn_turns: "{n} TURNS LEFT!",
-    cmp_back_map: "BACK TO THE MAP", cmp_free: "GNOMES FREED!", cmp_done_banner: "GOAL REACHED!", cmp_warn_ob: "YOUR OBELISK IS UNDER ATTACK!", cmp_warn_none: "NO GNOMES LEFT TO FREE",
+    cmp_back_map: "BACK TO THE MAP", cmp_free: "CAGE OPEN!", cmp_done_banner: "GOAL REACHED!", cmp_warn_ob: "YOUR OBELISK IS UNDER ATTACK!", cmp_warn_none: "NO CAGED GNOMES LEFT",
     cmp_skip: "SKIP", cmp_hold_skip: "HOLD TO SKIP", cmp_start: "BEGIN", cmp_war: "THE ETERNAL WAR", cmp_next: "NEXT", cmp_ok: "GOT IT", cmp_nizak: "Nizak",
     cmp_ch1: "Chapter 1 · Mushroom Glade", cmp_ch2: "Chapter 2 · Boggy Shore", cmp_ch3: "Chapter 3 · Deep Thicket", cmp_ch4: "Chapter 4 · Fungus Peak", cmp_ch5: "Chapter 5 · The GnomOgre",
     cmp_intro1: "Three centuries ago, the whole kingdom of Gnomoria was happy! Very, very happy.|The races lived at war, killing and torturing each other without a care! With a polite bow, of course.|Until THEY came! Gnomes, with their rainbows, gluten-free candy and mania for MEDIATING. In OUR war!|They're mad! We won't allow it! Forest Rangers... get them!",
-    cmp_intro2: "The gnomes spread like a plague of glitter.|Even by the shore you can hear their songs of brotherhood.|Rescue the caged ones before they keep preaching peace.",
+    cmp_intro2: "The gnomes spread like a plague of glitter.|Even by the shore you can hear their songs of brotherhood.|Slam the caged ones before they keep preaching peace.",
     cmp_intro3: "Deeper in the forest, even the mushrooms seem to chat instead of exploding.|Something smells of harmony, and it turns my stomach.|Bring me more gnomes: we must learn where they hide.",
     cmp_intro4: "High in the forest, Trackers guard cages out of habit... and for good pay.|Go in, get the gnomes out, and let nobody mention the word hug.",
     cmp_intro5: "The GnomOgre approaches.|But that, my dear rangers, is another story.",
@@ -407,6 +407,7 @@ const Campaign = {
       await this._warIntro(ch);
     }
     if (!this.active || !this.run) return;
+    this.run.ready = true; // a partir de aquí ya valen los avisos de turno
     if (typeof Turns !== "undefined") Turns.showTurnBanner();
   },
 
@@ -570,7 +571,7 @@ const Campaign = {
     }
     const ob = Obelisks.byTeam("player");
     if (ob && Units.list.some((u) => u.typeId === "rompeobeliscos" && this._cheb(u, ob) <= 1)) this._banner(this.t("cmp_warn_ob"));
-    if (!run.warnedNone && Gnome.list.length && !Gnome.list.some((g) => g.caged)) { run.warnedNone = true; this._banner(this.t("cmp_warn_none")); }
+    if (run.ready && !run.warnedNone && Gnome.list.length && !Gnome.list.some((g) => g.caged)) { run.warnedNone = true; this._banner(this.t("cmp_warn_none")); }
   },
 
   // ---------- IA de los neutrales ----------

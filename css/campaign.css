@@ -465,3 +465,6 @@
 .camp-ask__btn--cancel { --tone: #ffcf3f; --edge: #000; }
 .camp-ask__btn--danger { --tone: #2b2438; --edge: #000; }
 .camp-ask__info { line-height: 1.4; }
+/* v7.2: tonos apagados, los mismos de los botones del menú principal */
+.camp-card__badge .camp-card__icon { color: #1a1520; }
+.camp-sec__h { text-shadow: 2px 2px 0 rgba(0,0,0,.7); }
