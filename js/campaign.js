@@ -74,7 +74,7 @@ const CAMPAIGN_BASE_CARRY = 5;
 (function registerCampaignStrings() {
   const es = {
     cmp_abandon: "Abandonar campaña", cmp_abandon_q: "¿ABANDONAR LA CAMPAÑA?", cmp_abandon_info: "Perderás TODO el progreso: capítulos superados, gnomos, recursos y mejoras. La campaña empezará de cero y no se puede deshacer.", cmp_abandon_yes: "SÍ, ABANDONAR", cmp_abandon_no: "CANCELAR",
-    cmp_stat_stamped: "ESTAMPADOS", cmp_depleted: "Aquí ya no queda ni un gnomo. Todos estampados.", cmp_depleted_btn: "AGOTADO",
+    cmp_stat_stamped: "ESTAMPADOS", cmp_star_hint: "Completa el capítulo · estampa a todos los gnomos · elimina todos los campamentos en una misma partida", cmp_res_stars: "ESTRELLAS", cmp_depleted: "Aquí ya no queda ni un gnomo. Todos estampados.", cmp_depleted_btn: "AGOTADO",
     menu_campaign: "Campaña", cmp_title: "CAMPAÑA", cmp_gnomes: "GNOMOS", cmp_goal: "Estampa {n} gnomos contra el Obelisco.",
     cmp_play: "JUGAR", cmp_soon: "PRÓXIMAMENTE", cmp_locked: "BLOQUEADO", cmp_done: "COMPLETADO", cmp_chapter: "CAPÍTULO {n}",
     cmp_need: "Necesitas {g} gnomos y {r} recursos extraídos (tienes {hg} y {hr}).", cmp_need_prev: "Completa el capítulo anterior.",
@@ -115,7 +115,7 @@ const CAMPAIGN_BASE_CARRY = 5;
   };
   const en = {
     cmp_abandon: "Abandon campaign", cmp_abandon_q: "ABANDON THE CAMPAIGN?", cmp_abandon_info: "You will lose ALL progress: cleared chapters, gnomes, resources and upgrades. The campaign will start over and this cannot be undone.", cmp_abandon_yes: "YES, ABANDON", cmp_abandon_no: "CANCEL",
-    cmp_stat_stamped: "SLAMMED", cmp_depleted: "Not a single gnome left here. All slammed.", cmp_depleted_btn: "DEPLETED",
+    cmp_stat_stamped: "SLAMMED", cmp_star_hint: "Finish the chapter · slam every gnome · wipe out every camp in a single match", cmp_res_stars: "STARS", cmp_depleted: "Not a single gnome left here. All slammed.", cmp_depleted_btn: "DEPLETED",
     menu_campaign: "Campaign", cmp_title: "CAMPAIGN", cmp_gnomes: "GNOMES", cmp_goal: "Slam {n} gnomes into the Obelisk.",
     cmp_play: "PLAY", cmp_soon: "COMING SOON", cmp_locked: "LOCKED", cmp_done: "COMPLETED", cmp_chapter: "CHAPTER {n}",
     cmp_need: "You need {g} gnomes and {r} extracted resources (you have {hg} and {hr}).", cmp_need_prev: "Complete the previous chapter.",
@@ -175,7 +175,7 @@ const Campaign = {
 
   // ---------- Progreso ----------
   _key() { return "gg_campaign_" + (this._uid || "guest"); },
-  _defaults() { return { v: 2, t: 0, gnomes: 0, pts: 0, got: {}, res: { madera: 0, roca: 0, metal: 0 }, earnedRes: 0, done: {}, up: {}, seenTut: false }; },
+  _defaults() { return { v: 2, t: 0, gnomes: 0, pts: 0, got: {}, camps: {}, res: { madera: 0, roca: 0, metal: 0 }, earnedRes: 0, done: {}, up: {}, seenTut: false }; },
   get _db() { return typeof Account !== "undefined" ? Account._db : null; },
   // Normaliza lo que llega de localStorage o de la base de datos (solo números y mapas de números/booleanos).
   _norm(raw) {
@@ -183,7 +183,7 @@ const Campaign = {
     if (!raw || typeof raw !== "object") return d;
     const n = (v) => (typeof v === "number" && isFinite(v) && v >= 0 ? Math.floor(v) : 0);
     const map = (m, bool) => { const o = {}; if (m && typeof m === "object") Object.keys(m).slice(0, 60).forEach((k) => { const v = bool ? !!m[k] : n(m[k]); if (v) o[k] = v; }); return o; };
-    d.t = n(raw.t); d.gnomes = n(raw.gnomes); d.pts = n(raw.pts); d.earnedRes = n(raw.earnedRes); d.got = map(raw.got, false);
+    d.t = n(raw.t); d.gnomes = n(raw.gnomes); d.pts = n(raw.pts); d.earnedRes = n(raw.earnedRes); d.got = map(raw.got, false); d.camps = map(raw.camps, false);
     CAMPAIGN_RES.forEach((k) => { d.res[k] = n(raw.res && raw.res[k]); });
     d.done = map(raw.done, true); d.up = map(raw.up, false); d.seenTut = !!raw.seenTut;
     return d;
@@ -257,6 +257,16 @@ const Campaign = {
   popLimit() { return CAMPAIGN_BASE_POP + this.upLevel("pop"); },
   gnomeCap() { return CAMPAIGN_BASE_CARRY + this.upLevel("carga"); },
   canPay(cost) { return (this.s.pts || 0) >= (cost.p || 0) && CAMPAIGN_RES.every((r) => (this.s.res[r] || 0) >= (cost[r] || 0)); },
+  // Campamentos eliminados en la MEJOR partida de ese capítulo (no se acumula entre intentos).
+  campsBest(n) { const ch = this.ch(n); return ch ? Math.min(ch.camps || 0, (this.s.camps && this.s.camps[n]) || 0) : 0; },
+  // Estrellas: 1 = capítulo completado, 2 = todos los gnomos estampados, 3 = todos los campamentos eliminados en una misma partida.
+  starFlags(n) {
+    const ch = this.ch(n);
+    if (!ch || ch.boss) return [false, false, false];
+    return [!!this.s.done[n], this.remaining(n) <= 0, this.campsBest(n) >= (ch.camps || 0)];
+  },
+  stars(n) { return this.starFlags(n).filter(Boolean).length; },
+  _starsHtml(n, cls) { return `<span class="camp-stars ${cls || ""}">${this.starFlags(n).map((on) => `<i class="ph-fill ph-star camp-star${on ? " camp-star--on" : ""}"></i>`).join("")}</span>`; },
   remaining(n) { const ch = this.ch(n); return ch ? Math.max(0, campaignChapterGnomes(ch) - ((this.s.got && this.s.got[n]) || 0)) : 0; },
   pay(cost) { CAMPAIGN_RES.forEach((r) => { this.s.res[r] -= cost[r] || 0; }); this.s.pts -= cost.p || 0; },
   totalRes() { return CAMPAIGN_RES.reduce((a, r) => a + (this.s.res[r] || 0), 0); },
@@ -305,7 +315,7 @@ const Campaign = {
       const cls = ["camp-node", un ? "camp-node--open" : "camp-node--locked", done ? "camp-node--done" : "", c.n === sel.n ? "camp-node--sel" : ""].join(" ");
       const img = c.boss ? `<i class="ph-fill ph-skull camp-node__skull"></i>` : `<img class="camp-node__img" src="assets/niveles/isla_mushboom_forest.png" alt="">`;
       const badge = !un ? `<i class="ph-fill ph-lock-simple camp-node__badge"></i>` : done ? `<i class="ph-fill ph-check-circle camp-node__badge camp-node__badge--ok"></i>` : "";
-      return `<button type="button" class="${cls}" data-n="${c.n}" style="--i:${i}">${img}${badge}<span class="camp-node__n">${c.n}</span></button>`;
+      return `<button type="button" class="${cls}" data-n="${c.n}" style="--i:${i}">${img}${badge}<span class="camp-node__n">${c.n}</span>${!c.boss && un ? this._starsHtml(c.n, "camp-stars--node") : ""}</button>`;
     }).join('<i class="camp-link"></i>');
 
     let status, action;
@@ -345,7 +355,8 @@ const Campaign = {
           <div class="camp-detail">
             <div class="camp-detail__kicker">${t("cmp_chapter", { n: sel.n })}</div>
             <div class="camp-detail__name">${t("cmp_ch" + sel.n).replace(/^[^·]*· /, "")}</div>
-            ${sel.boss ? "" : `<div class="camp-detail__stats"><span class="camp-stat"><i class="ph-fill ph-users-three"></i><b>${sel.goal}</b><small>${t("cmp_stat_gnomes")}</small></span><span class="camp-stat camp-stat--got"><i class="ph-fill ph-hammer"></i><b>${campaignChapterGnomes(sel) - this.remaining(sel.n)}/${campaignChapterGnomes(sel)}</b><small>${t("cmp_stat_stamped")}</small></span><span class="camp-stat"><i class="ph-fill ph-hourglass-medium"></i><b>${campaignTurnLimit(sel)}</b><small>${t("cmp_stat_turns")}</small></span><span class="camp-stat"><i class="ph-fill ph-tent"></i><b>${sel.camps}</b><small>${t("cmp_stat_camps")}</small></span>${sel.foe && sel.foe.arma ? `<span class="camp-stat camp-stat--foe"><i class="ph-fill ph-sword"></i><b>+${sel.foe.arma}</b><small>${t("cmp_stat_foeatk")}</small></span>` : ""}${sel.foe && sel.foe.armadura ? `<span class="camp-stat camp-stat--foe"><i class="ph-fill ph-shield"></i><b>+${sel.foe.armadura}</b><small>${t("cmp_stat_foedef")}</small></span>` : ""}</div>`}
+            ${sel.boss ? "" : `<div class="camp-detail__stats"><span class="camp-stat"><i class="ph-fill ph-users-three"></i><b>${sel.goal}</b><small>${t("cmp_stat_gnomes")}</small></span><span class="camp-stat camp-stat--got"><i class="ph-fill ph-hammer"></i><b>${campaignChapterGnomes(sel) - this.remaining(sel.n)}/${campaignChapterGnomes(sel)}</b><small>${t("cmp_stat_stamped")}</small></span><span class="camp-stat"><i class="ph-fill ph-hourglass-medium"></i><b>${campaignTurnLimit(sel)}</b><small>${t("cmp_stat_turns")}</small></span><span class="camp-stat camp-stat--got"><i class="ph-fill ph-tent"></i><b>${this.campsBest(sel.n)}/${sel.camps}</b><small>${t("cmp_stat_camps")}</small></span>${sel.foe && sel.foe.arma ? `<span class="camp-stat camp-stat--foe"><i class="ph-fill ph-sword"></i><b>+${sel.foe.arma}</b><small>${t("cmp_stat_foeatk")}</small></span>` : ""}${sel.foe && sel.foe.armadura ? `<span class="camp-stat camp-stat--foe"><i class="ph-fill ph-shield"></i><b>+${sel.foe.armadura}</b><small>${t("cmp_stat_foedef")}</small></span>` : ""}</div>`}
+            ${sel.boss || !this.unlocked(sel.n) ? "" : `<div class="camp-detail__stars">${this._starsHtml(sel.n, "camp-stars--big")}<small>${t("cmp_star_hint")}</small></div>`}
             <div class="camp-detail__status">${status}</div>
             ${action}
           </div></div>`
@@ -735,6 +746,11 @@ const Campaign = {
     const leftPts = (typeof Glory !== "undefined" && Glory.points && Glory.points.player) || 0;
     got.pts = fallen ? Math.floor(leftPts * 0.2 * lvS) : timeout ? Math.floor(leftPts * (0.5 + 0.1 * lvP)) : leftPts;
     this.s.pts = (this.s.pts || 0) + got.pts;
+    // Campamentos de esta partida: los abiertos + los que no se montaron porque sus gnomos ya estaban estampados. Se guarda el MEJOR intento.
+    const ch0 = this.ch(r.n), campsTotal = (ch0 && ch0.camps) || 0;
+    const cleared = Math.min(campsTotal, this._camps.filter((c) => c.open).length + Math.max(0, campsTotal - this._camps.length));
+    r.campsCleared = cleared;
+    if (cleared > this.campsBest(r.n)) { this.s.camps = this.s.camps || {}; this.s.camps[r.n] = cleared; }
     const completed = !fallen && r.delivered >= r.goal;
     if (!fallen) {
       const n = Math.min(r.delivered, this.remaining(r.n));
@@ -759,6 +775,8 @@ const Campaign = {
         <div><span>${this.t("cmp_res_g")}</span><b>${r.delivered}</b></div>
         <div class="camp-result__res"><span class="camp-cost camp-cost--pts"><img src="${CAMPAIGN_PTS_ICON}" alt="">+${got.pts || 0}</span>${CAMPAIGN_RES.map((k) => `<span class="camp-cost"><img src="${CAMPAIGN_RES_ICON[k]}" alt="">+${got[k]}</span>`).join("")}</div>
         <div><span>${this.t("cmp_res_k")}</span><b>${r.kills}</b></div>
+        <div><span>${this.t("cmp_stat_camps")}</span><b>${r.campsCleared || 0}/${(this.ch(r.n) || {}).camps || 0}</b></div>
+        <div class="camp-result__stars">${this._starsHtml(r.n, "camp-stars--big")}</div>
         <div class="camp-result__goal">${this.t("cmp_res_goal", { n: r.goal })}${fallen ? "<br>" + (this.upLevel("seguro") ? this.t("cmp_res_ins", { p: 20 * this.upLevel("seguro") }) : this.t("cmp_res_half")) : timeout ? "<br>" + (this.upLevel("prorroga") ? this.t("cmp_res_tprc", { p: 50 + 10 * this.upLevel("prorroga") }) : this.t("cmp_res_timeup")) : ""}</div></div>
       <button class="camp-result__btn">${this.t("cmp_back_map")}</button></div>`;
     document.body.appendChild(ov);
