@@ -89,7 +89,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_hud: "{a}/{b}", cmp_extract: "Extraer", cmp_extract_q: "¿EXTRAER Y TERMINAR?", cmp_extract_info: "Te llevas los gnomos y los recursos conseguidos.",
     cmp_yes: "EXTRAER", cmp_no: "SEGUIR", cmp_res_ok: "¡CAPÍTULO SUPERADO!", cmp_res_part: "EXTRACCIÓN COMPLETADA", cmp_res_fail: "HAS CAÍDO",
     cmp_res_g: "Gnomos estampados", cmp_res_k: "Neutrales derrotados", cmp_res_goal: "Objetivo: {n} gnomos", cmp_res_half: "Al caer te quedas sin nada: ni gnomos ni recursos.", cmp_res_time: "¡SE ACABÓ EL TIEMPO!", cmp_res_timeup: "No reuniste a todos los gnomos a tiempo: conservas los gnomos, pero solo la mitad de los recursos.", cmp_hud_turns: "{a} turnos", cmp_stat_gnomes: "gnomos", cmp_stat_turns: "turnos", cmp_stat_camps: "campamentos", cmp_warn_turns: "¡QUEDAN {n} TURNOS!",
-    cmp_back_map: "VOLVER AL MAPA", cmp_free: "¡JAULA ABIERTA!", cmp_done_banner: "¡OBJETIVO CUMPLIDO!", cmp_warn_ob: "¡ATACAN TU OBELISCO!", cmp_warn_none: "NO QUEDAN GNOMOS ENJAULADOS",
+    cmp_back_map: "VOLVER AL MAPA", cmp_free: "¡JAULA ABIERTA!", cmp_done_banner: "¡OBJETIVO CUMPLIDO!", cmp_warn_ob: "¡ATACAN TU OBELISCO!", cmp_warn_none: "YA NO QUEDAN GNOMOS EN LA ZONA",
     cmp_skip: "SALTAR", cmp_hold_skip: "MANTÉN PARA SALTAR", cmp_start: "COMENZAR", cmp_war: "LA GUERRA ETERNA", cmp_next: "SIGUIENTE", cmp_ok: "ENTENDIDO", cmp_nizak: "Nizak",
     cmp_ch1: "Capítulo 1 · Claro de las Setas", cmp_ch2: "Capítulo 2 · Orilla Pantanosa", cmp_ch3: "Capítulo 3 · Espesura Profunda", cmp_ch4: "Capítulo 4 · Cumbre del Hongo", cmp_ch5: "Capítulo 5 · El GnomOgro",
     cmp_intro1: "¡Hace más de tres siglos, todo el reino de Gnomoria era feliz! Una felicidad muy suya, ya me entienden.|¡Las razas vivían en guerra, matándose y torturándose sin una sola preocupación! ¡Eso sí, siempre con una reverencia!|¡Hasta que llegaron ELLOS! Los gnomos, con sus arcoíris, sus chuches sin gluten y su empeño en MEDIAR. ¡En NUESTRA guerra!|¡Están locos! ¡No lo vamos a permitir! Guardabosques... ¡a por ellos!",
@@ -129,7 +129,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_hud: "{a}/{b}", cmp_extract: "Extract", cmp_extract_q: "EXTRACT AND FINISH?", cmp_extract_info: "You keep the gnomes and resources you gathered.",
     cmp_yes: "EXTRACT", cmp_no: "KEEP GOING", cmp_res_ok: "CHAPTER CLEARED!", cmp_res_part: "EXTRACTION COMPLETE", cmp_res_fail: "YOU HAVE FALLEN",
     cmp_res_g: "Gnomes slammed", cmp_res_k: "Neutrals defeated", cmp_res_goal: "Goal: {n} gnomes", cmp_res_half: "When you fall you keep nothing: no gnomes, no resources.", cmp_res_time: "TIME IS UP!", cmp_res_timeup: "You did not gather every gnome in time: you keep the gnomes, but only half the resources.", cmp_hud_turns: "{a} turns", cmp_stat_gnomes: "gnomes", cmp_stat_turns: "turns", cmp_stat_camps: "camps", cmp_warn_turns: "{n} TURNS LEFT!",
-    cmp_back_map: "BACK TO THE MAP", cmp_free: "CAGE OPEN!", cmp_done_banner: "GOAL REACHED!", cmp_warn_ob: "YOUR OBELISK IS UNDER ATTACK!", cmp_warn_none: "NO CAGED GNOMES LEFT",
+    cmp_back_map: "BACK TO THE MAP", cmp_free: "CAGE OPEN!", cmp_done_banner: "GOAL REACHED!", cmp_warn_ob: "YOUR OBELISK IS UNDER ATTACK!", cmp_warn_none: "NO GNOMES LEFT IN THE AREA",
     cmp_skip: "SKIP", cmp_hold_skip: "HOLD TO SKIP", cmp_start: "BEGIN", cmp_war: "THE ETERNAL WAR", cmp_next: "NEXT", cmp_ok: "GOT IT", cmp_nizak: "Nizak",
     cmp_ch1: "Chapter 1 · Mushroom Glade", cmp_ch2: "Chapter 2 · Boggy Shore", cmp_ch3: "Chapter 3 · Deep Thicket", cmp_ch4: "Chapter 4 · Fungus Peak", cmp_ch5: "Chapter 5 · The GnomOgre",
     cmp_intro1: "Three centuries ago, the whole kingdom of Gnomoria was happy! Very, very happy.|The races lived at war, killing and torturing each other without a care! With a polite bow, of course.|Until THEY came! Gnomes, with their rainbows, gluten-free candy and mania for MEDIATING. In OUR war!|They're mad! We won't allow it! Forest Rangers... get them!",
@@ -186,7 +186,6 @@ const Campaign = {
     let raw = null;
     try { raw = JSON.parse(localStorage.getItem(this._key()) || "null"); } catch (e) {}
     this.s = this._norm(raw);
-    this._refreshAbandon();
     this._pull();
   },
   // Base de datos (Firestore): campaign/{uid}. Gana la copia más reciente (t); sin red o sin sesión sigue en este navegador.
@@ -201,7 +200,7 @@ const Campaign = {
         if (r.t >= (this.s.t || 0)) {
           this.s = r;
           try { localStorage.setItem(this._key(), JSON.stringify(this.s)); } catch (e) {}
-          this.render(); this._refreshAbandon();
+          this.render();
         } else this._push();
       } else if (this.hasProgress()) this._push();
     } catch (e) { console.warn("campaign:", e && e.code); }
@@ -215,15 +214,10 @@ const Campaign = {
     if (!this.s) return;
     this.s.t = Date.now();
     try { localStorage.setItem(this._key(), JSON.stringify(this.s)); } catch (e) {}
-    this._refreshAbandon();
     clearTimeout(this._pushT);
     if (now) this._push(); else this._pushT = setTimeout(() => this._push(), 400);
   },
   // ---------- Abandonar campaña (botón del menú principal) ----------
-  _refreshAbandon() {
-    const b = document.getElementById("btn-campaign-abandon");
-    if (b) b.style.display = this.hasProgress() ? "" : "none";
-  },
   _askAbandon() {
     if (this._askEl) return;
     const ov = document.createElement("div");
@@ -268,8 +262,6 @@ const Campaign = {
       this.render();
     });
     this.load();
-    const ab = document.getElementById("btn-campaign-abandon");
-    if (ab) ab.addEventListener("click", () => { this._click(); this._askAbandon(); });
     const btn = document.getElementById("btn-campaign");
     if (btn) btn.addEventListener("click", () => {
       this._click();
@@ -343,7 +335,10 @@ const Campaign = {
     root.innerHTML = `
       <div class="camp-top"><span class="camp-chip"><i class="ph-fill ph-users-three"></i> ${t("cmp_gnomes")} <b>${this.s.gnomes}</b></span>${res}</div>
       <div class="camp-tabs">${tabs}</div>
-      ${pane}`;
+      ${pane}
+      ${this.hasProgress() ? `<div class="camp-foot"><button type="button" class="p5-banner p5-banner--action camp-abandon" data-abandon><span class="p5-banner__label"><i class="ph ph-arrow-counter-clockwise"></i> ${t("cmp_abandon")}</span></button></div>` : ""}`;
+    const abBtn = root.querySelector("[data-abandon]");
+    if (abBtn) abBtn.addEventListener("click", () => { this._click(); this._askAbandon(); });
     root.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { this._click(); this.tab = b.dataset.tab; this.render(); }));
     root.querySelectorAll(".camp-node").forEach((b) => b.addEventListener("click", () => { this._click(); this.sel = +b.dataset.n; this.render(); }));
     const pb = root.querySelector("[data-play]");

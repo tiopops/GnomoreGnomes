@@ -460,11 +460,12 @@
 .camp-tabs { margin: 10px 0 18px; }
 
 /* ===== Abandonar campaña (menú principal) ===== */
-#btn-campaign-abandon { --c: #b5483f; --c2: #5e211c; padding-top: 8px; padding-bottom: 8px; font-size: .82rem; margin-top: -6px; }
-#btn-campaign-abandon i { font-size: 1.05rem; }
 .camp-ask__btn--cancel { --tone: #ffcf3f; --edge: #000; }
 .camp-ask__btn--danger { --tone: #2b2438; --edge: #000; }
 .camp-ask__info { line-height: 1.4; }
 /* v7.2: tonos apagados, los mismos de los botones del menú principal */
 .camp-card__badge .camp-card__icon { color: #1a1520; }
 .camp-sec__h { text-shadow: 2px 2px 0 rgba(0,0,0,.7); }
+.camp-foot { display: flex; justify-content: center; padding: 26px 0 8px; }
+.camp-abandon { --p5-tone: #2b2438; padding: 10px 26px; font-size: .95rem; }
+.camp-abandon .p5-banner__label { display: inline-flex; align-items: center; gap: 8px; }
