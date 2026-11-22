@@ -662,6 +662,7 @@ const Units = {
       forcedRestNextTurn: false,
     };
     this.list.push(unit);
+    if (typeof UnitXP !== "undefined") UnitXP.attach(unit); // Campaña: barra de experiencia propia
 
     this._placeInstant(unit);
     this.updateHpBar(unit);
@@ -1361,7 +1362,7 @@ const Units = {
 
   // Rango de movimiento real: base del tipo + Reliquias del equipo.
   moveRangeOf(unit) {
-    return UNIT_TYPES[unit.typeId].movimiento + (typeof Relics !== "undefined" ? Relics.moveBonus(unit.team) : 0);
+    return UNIT_TYPES[unit.typeId].movimiento + (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "movimiento") : 0) + (typeof Relics !== "undefined" ? Relics.moveBonus(unit.team) : 0);
   },
 
   // La niebla profunda se dibuja en el canvas del suelo (debajo de las unidades),

@@ -634,7 +634,7 @@ const Resources = {
     if (typeof Turns !== "undefined") Turns.useAction(unit);
 
     const bonus = typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0;
-    const damage = UNIT_TYPES[unit.typeId].fuerza + bonus;
+    const damage = UNIT_TYPES[unit.typeId].fuerza + (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "fuerza") : 0) + bonus;
     node.hp = Math.max(0, node.hp - damage);
     if (typeof Units !== "undefined") Units.updateHpBar(node);
     Units.spawnFloatingText(node, `-${damage}`, { className: "dmg-popup" });

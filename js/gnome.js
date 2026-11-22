@@ -757,6 +757,7 @@ function createGnomeInstance() {
       if (typeof Oracle !== "undefined") Oracle.onGnomeHit(unit);
       const dmg =
         UNIT_TYPES[unit.typeId].fuerza +
+        (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "fuerza") : 0) +
         (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0) +
         (typeof Relics !== "undefined" ? Relics.gnomeHitBonus(unit.team) : 0);
       this._hitting = true;
@@ -964,7 +965,7 @@ function createGnomeInstance() {
     // probabilidad real de acertar (computePassSuccess).
     _throwDifficultyClass(unit, distance, movimiento) {
       if (distance <= movimiento) return this._passDifficultyClass(distance, movimiento);
-      const p = this.computePassSuccess(UNIT_TYPES[unit.typeId].agilidad, distance, movimiento, unit.team);
+      const p = this.computePassSuccess(UNIT_TYPES[unit.typeId].agilidad + (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "agilidad") : 0), distance, movimiento, unit.team);
       return p >= 0.5 ? "range-marker--pass-medium" : "range-marker--pass-hard";
     },
 
@@ -1058,7 +1059,7 @@ function createGnomeInstance() {
 
       const distance = Math.max(Math.abs(target.row - holder.row), Math.abs(target.col - holder.col));
       const holderType = UNIT_TYPES[holder.typeId];
-      const success = Math.random() < this.computePassSuccess(holderType.agilidad, distance, holderType.movimiento, holder.team);
+      const success = Math.random() < this.computePassSuccess(holderType.agilidad + (typeof UnitXP !== "undefined" ? UnitXP.bonus(holder, "agilidad") : 0), distance, holderType.movimiento, holder.team);
 
       // Encararse hacia quien recibe el pase ANTES de soltarlo — tanto quien
       // lanza como el propio gnomo — para que el lanzamiento se lea como
@@ -1145,7 +1146,7 @@ function createGnomeInstance() {
 
       const distance = Math.max(Math.abs(destRow - holder.row), Math.abs(destCol - holder.col));
       const holderType = UNIT_TYPES[holder.typeId];
-      const success = Math.random() < this.computePassSuccess(holderType.agilidad, distance, holderType.movimiento, holder.team);
+      const success = Math.random() < this.computePassSuccess(holderType.agilidad + (typeof UnitXP !== "undefined" ? UnitXP.bonus(holder, "agilidad") : 0), distance, holderType.movimiento, holder.team);
 
       Units.faceTowardsTile(holder, destRow, destCol);
       this.row = holder.row;

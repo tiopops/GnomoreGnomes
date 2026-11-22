@@ -280,11 +280,11 @@ const UnitInfo = {
             </div>
           </div>
           <div class="unit-info-stats">
-            ${this.statRow("ph-shield", "Aguante", type.aguante, typeof Armory !== "undefined" ? Armory.defenseBonus(unit.team) : 0)}
-            ${this.statRow("ph-footprints", "Movimiento", type.movimiento, typeof Relics !== "undefined" ? Relics.moveBonus(unit.team) : 0)}
-            ${this.statRow("ph-boxing-glove", "Fuerza", type.fuerza, typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0)}
-            ${this.statRow("ph-wind", "Agilidad", type.agilidad)}
-            ${this.statRow("ph-eye", "Percepción", type.percepcion)}
+            ${this.statRow("ph-shield", "Aguante", type.aguante, (typeof Armory !== "undefined" ? Armory.defenseBonus(unit.team) : 0) + (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "aguante") : 0))}
+            ${this.statRow("ph-footprints", "Movimiento", type.movimiento, (typeof Relics !== "undefined" ? Relics.moveBonus(unit.team) : 0) + (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "movimiento") : 0))}
+            ${this.statRow("ph-boxing-glove", "Fuerza", type.fuerza, (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0) + (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "fuerza") : 0))}
+            ${this.statRow("ph-wind", "Agilidad", type.agilidad, (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "agilidad") : 0))}
+            ${this.statRow("ph-eye", "Percepción", type.percepcion, (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "percepcion") : 0))}
           </div>
           ${
             ability

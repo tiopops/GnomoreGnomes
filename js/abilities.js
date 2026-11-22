@@ -240,8 +240,8 @@ const Abilities = {
   _activateThorns(unit) {
     const type = UNIT_TYPES[unit.typeId];
     const bonus = typeof Armory !== "undefined" ? Armory.defenseBonus(unit.team) : 0;
-    unit.hp = type.aguante + bonus + (unit.cohesionBonus || 0);
-    unit.maxHp = type.aguante + bonus + (unit.cohesionBonus || 0);
+    unit.hp = type.aguante + bonus + (unit.cohesionBonus || 0) + (unit.xpHp || 0);
+    unit.maxHp = type.aguante + bonus + (unit.cohesionBonus || 0) + (unit.xpHp || 0);
     Units.updateHpBar(unit);
     unit.thorny = true;
     unit.el.classList.add("unit--thorny");

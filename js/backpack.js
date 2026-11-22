@@ -702,8 +702,8 @@ const Backpack = {
     this.inventory = this.inventory.filter((it) => it.uid !== uid);
     const type = UNIT_TYPES[target.typeId];
     const bonus = typeof Armory !== "undefined" ? Armory.defenseBonus(target.team) : 0;
-    target.hp = type.aguante + bonus + (target.cohesionBonus || 0);
-    target.maxHp = type.aguante + bonus + (target.cohesionBonus || 0);
+    target.hp = type.aguante + bonus + (target.cohesionBonus || 0) + (target.xpHp || 0);
+    target.maxHp = type.aguante + bonus + (target.cohesionBonus || 0) + (target.xpHp || 0);
     Units.updateHpBar(target);
     SFX.itemEaten();
     Units.spawnFloatingText(target, "¡BEBEVIDA!", { className: "dmg-popup popup--good" });

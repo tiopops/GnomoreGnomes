@@ -532,3 +532,23 @@
   .camp-detail__stats .camp-stat { width: auto; margin: 0; }
   .camp-detail__stars { margin-bottom: 10px; }
 }
+
+/* v11 — experiencia de unidad (js/unitxp.js): 3 tramos bajo la barra de vida, mismo lenguaje astillado, colores planos. */
+.unit__xpbar { position: absolute; left: 50%; top: -5px; transform: translateX(-50%); width: 56px; height: 5px; display: flex; gap: 2px; box-sizing: border-box; padding: 1px 2px; background: #14121a; clip-path: polygon(0% 0%, 100% 14%, 98.5% 100%, 0% 86%); opacity: 0; pointer-events: none; transition: opacity .18s ease; }
+.unit--selected .unit__xpbar, .unit:hover .unit__xpbar, .unit__xpbar--has { opacity: 1; }
+.unit__xpbar-seg { flex: 1 1 0; min-width: 0; height: 100%; background: #3a3450; clip-path: polygon(2px 0%, 100% 0%, calc(100% - 2px) 100%, 0% 100%); overflow: hidden; }
+.unit__xpbar-seg i { display: block; height: 100%; width: 0; background: #ffcf3f; transition: width .35s ease; }
+.xp-popup { position: absolute; transform: translate(-50%, 0); font-family: "Russo One", sans-serif; font-size: 1.5rem; color: #ffcf3f; -webkit-text-stroke: 3px #14121a; paint-order: stroke fill; pointer-events: none; animation: dmg-popup-rise 1.6s ease-out forwards; }
+/* ventana de subida de nivel (reutiliza el marco de .camp-ask) */
+.uxp { z-index: 5600; opacity: 0; transition: opacity .18s ease; } .uxp--on { opacity: 1; }
+.uxp__panel { width: min(560px, 100%); }
+.uxp__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 4px; }
+.uxp__grid .uxp__btn:last-child { grid-column: 1 / -1; }
+.uxp__btn { display: flex; align-items: center; gap: 10px; justify-content: flex-start; text-align: left; padding: 12px 20px 12px 24px; font-size: 1.05rem; --tone: #2b2438; --edge: #000; color: #fff; }
+.uxp__btn i { font-size: 1.7rem; color: #ffcf3f; flex: none; }
+.uxp__name { flex: 1 1 auto; letter-spacing: .04em; }
+.uxp__val { flex: none; color: #ffcf3f; font-size: 1.15rem; }
+.uxp__btn--sel, .uxp__btn:hover:not(:disabled) { --tone: #ffcf3f; --edge: #000; color: #14121a; }
+.uxp__btn--sel i, .uxp__btn--sel .uxp__val, .uxp__btn:hover:not(:disabled) i, .uxp__btn:hover:not(:disabled) .uxp__val { color: #14121a; }
+.uxp__btn--max { opacity: .45; cursor: default; }
+@media (max-width: 520px) { .uxp__grid { grid-template-columns: 1fr; } .uxp__grid .uxp__btn:last-child { grid-column: auto; } }

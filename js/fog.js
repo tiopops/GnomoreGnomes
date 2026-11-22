@@ -208,7 +208,7 @@ const Fog = {
       Units.list.forEach((u) => {
         if (u.team !== "player") return;
         const type = UNIT_TYPES[u.typeId];
-        markAround(u.row, u.col, (type ? type.percepcion : 1) + sentinel);
+        markAround(u.row, u.col, (type ? type.percepcion : 1) + sentinel + (typeof UnitXP !== "undefined" ? UnitXP.bonus(u, "percepcion") : 0));
       });
     }
     // Pedido explícito: "2 casillas alrededor de los totems capturados...
@@ -372,7 +372,7 @@ const Fog = {
   revealForUnit(unit) {
     if (unit.team !== "player") return; // cada jugador tiene SU niebla (también en multijugador)
     const type = UNIT_TYPES[unit.typeId];
-    this.revealAround(unit.row, unit.col, type.percepcion + (typeof Skills !== "undefined" && unit.team === "player" ? Skills.perceptionBonus("player") : 0));
+    this.revealAround(unit.row, unit.col, type.percepcion + (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "percepcion") : 0) + (typeof Skills !== "undefined" && unit.team === "player" ? Skills.perceptionBonus("player") : 0));
   },
 
   // Pedido explícito: "los elementos de debajo de la niebla no deben

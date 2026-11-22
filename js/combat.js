@@ -149,7 +149,7 @@ const Combat = {
     // Daño que haría ESTE golpe (misma fórmula que attack() más abajo) —
     // hace falta ya aquí, antes de golpear de verdad, para saber qué
     // rivales morirían con él (ver unit--doomed más abajo).
-    const damage = UNIT_TYPES[unit.typeId].fuerza + (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0);
+    const damage = UNIT_TYPES[unit.typeId].fuerza + (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "fuerza") : 0) + (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0);
     this.attackableEnemies(unit).forEach(({ target, approach }, i) => {
       const tile = this.attackMarkerTile(target);
       const atkMarker = Units.addMarker({
@@ -262,11 +262,13 @@ const Combat = {
     // Emboscada suman ataque extra.
     const damage =
       UNIT_TYPES[attacker.typeId].fuerza +
+      (typeof UnitXP !== "undefined" ? UnitXP.bonus(attacker, "fuerza") : 0) +
       (typeof Armory !== "undefined" ? Armory.attackBonus(attacker.team) : 0) +
       (typeof Skills !== "undefined" ? Skills.attackBonus(attacker, target, { announce: true }) : 0);
     // Habilidades de PROTECCIÓN (js/skills.js): Evasión/Escudo/Piel de Roca
     // pueden anular el golpe; si no, hace el daño de siempre (barra, texto,
     // temblor y sonido los pone Skills.resolveDamage).
+    target.lastHitBy = attacker.id; // Campaña: XP para quien da el golpe final (js/unitxp.js)
     const outcome =
       typeof Skills !== "undefined"
         ? Skills.resolveDamage(target, damage, { melee: true })
@@ -364,7 +366,7 @@ const Combat = {
   async pushBack(attacker, target) {
     if (typeof Artifacts !== "undefined" && Artifacts.blocksPush(target)) return; // Botas AgarraSuelos
     const attackerBonus = typeof Armory !== "undefined" ? Armory.attackBonus(attacker.team) : 0;
-    const push = UNIT_TYPES[attacker.typeId].fuerza + attackerBonus - UNIT_TYPES[target.typeId].fuerza;
+    const push = UNIT_TYPES[attacker.typeId].fuerza + (typeof UnitXP !== "undefined" ? UnitXP.bonus(attacker, "fuerza") : 0) + attackerBonus - UNIT_TYPES[target.typeId].fuerza;
     if (push <= 0) return;
 
     const dRow = Math.sign(target.row - attacker.row);
