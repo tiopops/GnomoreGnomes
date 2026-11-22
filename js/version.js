@@ -16,6 +16,7 @@ const GG_VERSION = "v.001694";
 
 const GG_CHANGELOG = [
   { v: "v.001694", date: "22/11/2026", title: "Campaña: mejoras y guardado", items: [
+      "Intro: nuevos subtítulos (La Guerra Eterna, el origen de Gnomore Gnomes)",
       "Gnomoteca: los enemigos de la campaña (Rastreador y Rompeobeliscos) tienen ficha propia con descripción y etiquetas; cualquier enemigo neutral nuevo sale solo",
       "Campaña: la plaga gnoma del turno 15 y los sacrificios ya no sueltan gnomos extra; solo hay los de las jaulas y el suelto de cada capítulo",
       "Campaña: \"Saco sin fondo\" ahora tiene 2 niveles: +1 y +2 de cada recurso recogido al extraer (antes un 15% que con pocos recursos no se entendía)",
