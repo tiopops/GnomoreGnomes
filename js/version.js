@@ -12,12 +12,15 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001689";
+const GG_VERSION = "v.001692";
 
 const GG_CHANGELOG = [
+  { v: "v.001692", date: "22/11/2026", title: "Campaña: mejoras y guardado", items: [
+      "Campaña: avisos de la zona corregidos: ya no sale \"Ya no quedan gnomos en la zona\" durante el vídeo inicial, y las jaulas abiertas dicen \"¡Jaula abierta!\" (los gnomos no se liberan, se estampan)",
+      "Campaña: todo el progreso (capítulos, gnomos, recursos y mejoras) se guarda en tu cuenta y se sincroniza entre dispositivos; nuevo botón Abandonar campaña dentro de la pantalla de Campaña, con aviso de que se pierde todo el progreso",
+      "Campaña: pestaña Mejoras rediseñada con 12 mejoras en 3 categorías (Combate, Ejército y Extracción, con los tonos apagados del menú principal), más aire, costes y niveles más grandes; nuevas: Botín de guerra, Margen de turnos, Catalejo, Manos largas, Saco sin fondo, Prórroga y Red de seguridad",
+  ] },
   { v: "v.001691", date: "21/11/2026", title: "Campaña y ficha de unidad", items: [
-      "Campaña: todo el progreso (capítulos, gnomos, recursos y mejoras) se guarda en tu cuenta y se sincroniza entre dispositivos; nuevo botón Abandonar campaña en el menú principal, con aviso de que se pierde todo el progreso",
-      "Campaña: pestaña Mejoras rediseñada con 12 mejoras en 3 categorías (Combate en rojo, Ejército en azul, Extracción en verde), más aire, costes y niveles más grandes; nuevas: Botín de guerra, Margen de turnos, Catalejo, Manos largas, Saco sin fondo, Prórroga y Red de seguridad",
       "Campaña: eliminadas las reliquias (pestaña, tienda y la mejora Maletín de reliquias); en campaña se juega sin reliquias",
       "Campaña: todas las interfaces (paneles, botones, pestañas, tarjetas, mapa, reliquias) con los cantos de pico e irregulares del resto del juego, sin esquinas redondeadas; botón JUGAR en amarillo",
       "Campaña: eliminadas las voces de narración de la intro en todos los idiomas (solo subtítulos)",
