@@ -66,6 +66,7 @@ const CAMPAIGN_PTS_ICON = "assets/iconos/gloria_mushboom_forest.png"; // los pun
 function campaignChapterGnomes(ch) { return ch.boss ? 0 : (ch.camps || 0) * (ch.cages || 0) + 1; }
 const CAMPAIGN_RES_ICON = { madera: "assets/iconos/recurso_madera.png", roca: "assets/iconos/recurso_roca.png", metal: "assets/iconos/recurso_metal.png" };
 
+const CAMPAIGN_INTRO_VOICES = { es: "assets/campana/voz_intro_es.mp3?v=1" }; // añadir aquí la voz de cada idioma nuevo
 const CAMPAIGN_KILL_POINTS = 3;
 const CAMPAIGN_START_GLORY = 4;
 const CAMPAIGN_BASE_POP = 3;
@@ -808,10 +809,11 @@ const Campaign = {
   _cinematic(ch) {
     const L = this.t("cmp_intro1").split("|");
     return CampaignIntro.playVideo({
-      src: "assets/campana/intro_guerra.mp4?v=10",
+      src: "assets/campana/intro_guerra.mp4?v=12",
+      voice: CAMPAIGN_INTRO_VOICES[typeof I18N !== "undefined" ? I18N.currentLang : "es"] || null, // locución aparte por idioma (sin entrada = sin voz)
       nizak: this.t("cmp_nizak"), hold: this.t("cmp_hold_skip"),
-      subs: [{ t0: 0.6, t1: 7.6, text: L[0] }, { t0: 8.0, t1: 15.8, text: L[1] }, { t0: 16.2, t1: 23.9, text: L[2] }, { t0: 24.3, t1: 29.4, text: L[3] }],
-      onStart: () => { if (typeof Music !== "undefined" && Music.duck) Music.duck(30500); },
+      subs: [{ t0: 0.3, t1: 10.5, text: L[0] }, { t0: 10.9, t1: 20.2, text: L[1] }, { t0: 20.4, t1: 31.3, text: L[2] }, { t0: 31.6, t1: 40.8, text: L[3] }],
+      onStart: () => { if (typeof Music !== "undefined" && Music.duck) Music.duck(41500); },
     });
   },
 

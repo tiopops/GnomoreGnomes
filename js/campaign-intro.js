@@ -300,8 +300,12 @@ const CampaignIntro = (() => {
       const v = ov.querySelector("video"), txt = ov.querySelector(".cine__txt"), sub = ov.querySelector(".cine__sub");
       const fill = ov.querySelector(".cine__fill"), btn = ov.querySelector(".cine__skip");
       let done = false, hold = null, raf = 0;
+      // Locución: archivo de audio aparte (según el idioma elegido), sincronizado con el vídeo. Sin archivo para ese idioma = sin voz.
+      let voice = null;
+      if (cfg.voice) { try { voice = new Audio(cfg.voice); voice.preload = "auto"; voice.volume = 1; } catch (e) { voice = null; } }
       const finish = () => {
         if (done) return; done = true;
+        if (voice) { try { voice.pause(); } catch (e) {} }
         cancelAnimationFrame(raf); document.removeEventListener("keydown", kd); document.removeEventListener("keyup", ku);
         try { v.pause(); } catch (e) {}
         if (cfg.onEnd) cfg.onEnd();
@@ -314,6 +318,13 @@ const CampaignIntro = (() => {
       const loop = () => {
         raf = requestAnimationFrame(loop);
         const t = v.currentTime;
+        if (voice) {
+          if (v.paused) { if (!voice.paused) voice.pause(); }
+          else {
+            if (voice.paused && v.currentTime > 0.05) { try { voice.currentTime = v.currentTime; const pp = voice.play(); if (pp && pp.catch) pp.catch(() => {}); } catch (e) {} }
+            else if (Math.abs(voice.currentTime - v.currentTime) > 0.25) { try { voice.currentTime = v.currentTime; } catch (e) {} }
+          }
+        }
         const cur = (cfg.subs || []).find((x) => t >= x.t0 && t < x.t1);
         sub.classList.toggle("cine__sub--on", !!cur);
         if (cur && txt.textContent !== cur.text) txt.textContent = cur.text;
