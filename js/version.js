@@ -16,6 +16,7 @@ const GG_VERSION = "v.001694";
 
 const GG_CHANGELOG = [
   { v: "v.001694", date: "22/11/2026", title: "Campaña: mejoras y guardado", items: [
+      "Campaña: población inicial 3 (mejorable hasta 8); cada mejora pide solo 1-2 tipos de recurso; los costes de las tarjetas ya no se recortan; en la intro el cielo cambia suavemente a azul cuando llegan los gnomos y sale el arcoíris",
       "Campaña: las pestañas MAPA y MEJORAS ya no se desplazan horizontalmente al cambiar; intro con unidades y gnomos a su escala real del juego",
       "Intro rehecha: las rocas ya no tapan la cámara, hay más sangre y los subtítulos son nuevos",
       "Campaña: los puntos que te sobran al extraer también se llevan contigo y las mejoras cuestan puntos además de recursos; los gnomos estampados de un capítulo ya no vuelven a aparecer al rejugarlo (la ficha muestra cuántos llevas estampados) y cuando se acaban el capítulo queda agotado",

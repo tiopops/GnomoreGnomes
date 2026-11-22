@@ -11,7 +11,7 @@
    Reglas pedidas (resumen): conseguir X gnomos por nivel; gnomos enjaulados por neutrales
    (Rastreadores) o sueltos; los gnomos se ESTAMPAN contra el Obelisco propio, que no pierde vida (es un
    sacrificio) y solo sirve de zona de extracción; puntos de partida (los sobrantes SÍ se extraen y compran mejoras): empiezas con 4 y 1 unidad básica, +3 por baja de neutral y los puntos del gnomo al estamparlo
-   (tope +5 por gnomo); sin puntos por turno; población máxima 5; se extraen gnomos, madera, roca y metal,
+   (tope +5 por gnomo); sin puntos por turno; población máxima 3 (mejorable); se extraen gnomos, madera, roca y metal,
    que compran mejoras de campaña; Rompeobeliscos
    furtivos (1 vida, 1 daño) aparecen lejos y se acercan a golpear el Obelisco; avisos al empezar turno.
    PENDIENTE: barras de experiencia/niveles de unidad, nube, GnomOgro (cap. 5), mapa de regiones. */
@@ -47,14 +47,14 @@ const CAMPAIGN_CATS = [
 const CAMPAIGN_UPGRADES = [
   { id: "arma", cat: "combate", icon: "ph-sword", max: 2, cost: [{ roca: 4, metal: 1 }, { roca: 8, metal: 3 }] },
   { id: "armadura", cat: "combate", icon: "ph-shield", max: 2, cost: [{ madera: 4, metal: 1 }, { madera: 8, metal: 3 }] },
-  { id: "cazador", cat: "combate", icon: "ph-coins", max: 3, cost: [{ roca: 3, metal: 1 }, { roca: 6, metal: 2 }, { roca: 9, metal: 4 }] },
-  { id: "prov", cat: "ejercito", icon: "ph-basket", max: 3, cost: [{ madera: 3, roca: 2 }, { madera: 6, roca: 4 }, { madera: 9, roca: 7, metal: 1 }] },
-  { id: "pop", cat: "ejercito", icon: "ph-users-three", max: 3, cost: [{ madera: 5, roca: 3 }, { madera: 8, roca: 6 }, { madera: 12, roca: 9, metal: 2 }] },
-  { id: "carga", cat: "ejercito", icon: "ph-hand-grabbing", max: 3, cost: [{ madera: 3, roca: 3, metal: 1 }, { madera: 6, roca: 6, metal: 2 }, { madera: 9, roca: 9, metal: 4 }] },
-  { id: "turnos", cat: "extraccion", icon: "ph-hourglass-high", max: 3, cost: [{ madera: 4, roca: 2 }, { madera: 7, roca: 5, metal: 1 }, { madera: 10, roca: 8, metal: 3 }] },
-  { id: "vision", cat: "extraccion", icon: "ph-binoculars", max: 1, cost: [{ madera: 6, roca: 6, metal: 2 }] },
-  { id: "recolector", cat: "extraccion", icon: "ph-hand-coins", max: 2, cost: [{ madera: 6, roca: 4, metal: 1 }, { madera: 12, roca: 9, metal: 3 }] },
-  { id: "botin", cat: "extraccion", icon: "ph-package", max: 3, cost: [{ madera: 5, roca: 5 }, { madera: 9, roca: 9, metal: 2 }, { madera: 14, roca: 14, metal: 5 }] },
+  { id: "cazador", cat: "combate", icon: "ph-coins", max: 3, cost: [{ metal: 2 }, { metal: 4 }, { metal: 6 }] },
+  { id: "prov", cat: "ejercito", icon: "ph-basket", max: 3, cost: [{ madera: 3 }, { madera: 6 }, { madera: 9 }] },
+  { id: "pop", cat: "ejercito", icon: "ph-users-three", max: 5, cost: [{ madera: 4, roca: 2 }, { madera: 6, roca: 4 }, { madera: 9, roca: 6 }, { madera: 12, roca: 9 }, { madera: 16, roca: 13 }] },
+  { id: "carga", cat: "ejercito", icon: "ph-hand-grabbing", max: 3, cost: [{ roca: 3, metal: 1 }, { roca: 6, metal: 2 }, { roca: 9, metal: 4 }] },
+  { id: "turnos", cat: "extraccion", icon: "ph-hourglass-high", max: 3, cost: [{ madera: 4, roca: 2 }, { madera: 7, roca: 5 }, { madera: 10, roca: 8 }] },
+  { id: "vision", cat: "extraccion", icon: "ph-binoculars", max: 1, cost: [{ roca: 6, metal: 2 }] },
+  { id: "recolector", cat: "extraccion", icon: "ph-hand-coins", max: 2, cost: [{ madera: 6, metal: 1 }, { madera: 12, metal: 3 }] },
+  { id: "botin", cat: "extraccion", icon: "ph-package", max: 3, cost: [{ madera: 5, roca: 5 }, { madera: 9, roca: 9 }, { madera: 14, roca: 14 }] },
   { id: "prorroga", cat: "extraccion", icon: "ph-timer", max: 3, cost: [{ roca: 4, metal: 1 }, { roca: 8, metal: 3 }, { roca: 12, metal: 6 }] },
   { id: "seguro", cat: "extraccion", icon: "ph-first-aid-kit", max: 2, cost: [{ madera: 5, metal: 1 }, { madera: 10, metal: 4 }] },
 ];
@@ -68,7 +68,7 @@ const CAMPAIGN_RES_ICON = { madera: "assets/iconos/recurso_madera.png", roca: "a
 
 const CAMPAIGN_KILL_POINTS = 3;
 const CAMPAIGN_START_GLORY = 4;
-const CAMPAIGN_BASE_POP = 5;
+const CAMPAIGN_BASE_POP = 3;
 const CAMPAIGN_BASE_CARRY = 5;
 
 (function registerCampaignStrings() {
@@ -106,7 +106,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_intro3: "Más adentro del bosque, hasta las setas parecen charlar en vez de explotar.|Algo huele a concordia, y ese olor me revuelve el estómago.|Traedme más gnomos: hay que saber dónde se esconden.",
     cmp_intro4: "En lo alto del bosque, los Rastreadores vigilan jaulas por costumbre... y por un buen sueldo.|Entrad, sacad a los gnomos y que nadie mencione la palabra abrazo.",
     cmp_intro5: "Se acerca el GnomOgro.|Pero eso, mis queridos guardabosques, es otra historia.",
-    cmp_tut1_t: "El objetivo", cmp_tut1: "Cada capítulo te pide estampar un número de gnomos contra tu Obelisco. Empiezas con 1 unidad básica y 4 puntos de partida. Población máxima: 5.",
+    cmp_tut1_t: "El objetivo", cmp_tut1: "Cada capítulo te pide estampar un número de gnomos contra tu Obelisco. Empiezas con 1 unidad básica y 4 puntos de partida. Población máxima: 3 (mejorable en MEJORAS).",
     cmp_tut2_t: "Jaulas y neutrales", cmp_tut2: "Los gnomos están enjaulados en campamentos vigilados por Rastreadores. Derrota a todos los guardias de un campamento y las jaulas se abren. Cada baja te da +3 puntos.",
     cmp_tut3_t: "Estampar gnomos", cmp_tut3: "Un gnomo libre huye de ti como siempre. Cógelo, pégale para cargarle puntos (hasta +5) y llévalo al Obelisco: aquí no le hace daño, es un sacrificio, y los puntos del gnomo pasan a tu bolsa.",
     cmp_tut4_t: "Puntos y recursos", cmp_tut4: "Usa los puntos para reclutar, pero ojo: los que te sobren al extraer te los llevas y también compran mejoras. Nadie te da puntos por turno. Recoge además madera, roca y metal.",
@@ -147,7 +147,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_intro3: "Deeper in the forest, even the mushrooms seem to chat instead of exploding.|Something smells of harmony, and it turns my stomach.|Bring me more gnomes: we must learn where they hide.",
     cmp_intro4: "High in the forest, Trackers guard cages out of habit... and for good pay.|Go in, get the gnomes out, and let nobody mention the word hug.",
     cmp_intro5: "The GnomOgre approaches.|But that, my dear rangers, is another story.",
-    cmp_tut1_t: "The goal", cmp_tut1: "Every chapter asks you to slam a number of gnomes into your Obelisk. You start with 1 basic unit and 4 match points. Maximum population: 5.",
+    cmp_tut1_t: "The goal", cmp_tut1: "Every chapter asks you to slam a number of gnomes into your Obelisk. You start with 1 basic unit and 4 match points. Maximum population: 3 (upgradeable in UPGRADES).",
     cmp_tut2_t: "Cages and neutrals", cmp_tut2: "Gnomes are caged in camps guarded by Trackers. Defeat every guard of a camp and the cages open. Each kill gives you +3 points.",
     cmp_tut3_t: "Slamming gnomes", cmp_tut3: "A free gnome runs from you as usual. Grab it, hit it to charge points (up to +5) and take it to the Obelisk: it takes no damage here, it's a sacrifice, and the gnome's points go into your pool.",
     cmp_tut4_t: "Points and resources", cmp_tut4: "Spend points on recruiting, but mind this: the ones you have left when you extract come with you and also buy upgrades. Nobody gives you points per turn. Gather wood, rock and metal too.",
@@ -790,7 +790,7 @@ const Campaign = {
   _cinematic(ch) {
     const L = this.t("cmp_intro1").split("|");
     return CampaignIntro.playVideo({
-      src: "assets/campana/intro_guerra.mp4?v=8",
+      src: "assets/campana/intro_guerra.mp4?v=10",
       nizak: this.t("cmp_nizak"), hold: this.t("cmp_hold_skip"),
       subs: [{ t0: 0.6, t1: 7.6, text: L[0] }, { t0: 8.0, t1: 15.8, text: L[1] }, { t0: 16.2, t1: 23.9, text: L[2] }, { t0: 24.3, t1: 29.4, text: L[3] }],
       onStart: () => { if (typeof Music !== "undefined" && Music.duck) Music.duck(30500); },

@@ -483,3 +483,8 @@
    el hueco de la barra de scroll se reserva siempre (antes solo aparecía en la pestaña más alta). */
 #screen-campaign { scrollbar-gutter: stable both-edges; }
 .camp-pane--up { padding: 6px 0 0; }
+
+/* v9.1 — pie de tarjeta: los costes ocupan su propia fila (nunca se recortan) y COMPRAR va debajo a la derecha */
+.camp-pane--up .camp-card .camp-card__foot { flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
+.camp-pane--up .camp-card .camp-costs { flex: 1 1 100%; flex-wrap: wrap; justify-content: flex-start; gap: 8px; }
+.camp-pane--up .camp-card .camp-up__buy { margin-left: auto; }
