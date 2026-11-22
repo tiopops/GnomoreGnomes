@@ -126,7 +126,7 @@ Object.assign(Tutorial, {
       },
       {
         mood: "normal",
-        say: "Las cuentas: empiezas con 4 puntos y una unidad, tu población máxima es 5 y no ganas puntos por turno. Los puntos salen de las bajas (+3) y de golpear gnomos. Y lo que extraigas —gnomos, madera, roca y metal— lo inviertes luego en mejoras desde el menú de campaña.",
+        say: "Las cuentas: empiezas con 4 puntos y una unidad, tu población máxima es 5 y no ganas puntos por turno. Los puntos salen de las bajas (+3) y de golpear gnomos. Y lo que extraigas —los gnomos, los puntos que te sobren, madera, roca y metal— lo inviertes luego en mejoras desde el menú de campaña.",
         button: "Anotado",
         onStart: () => { T._focus(T._ob()); },
       },

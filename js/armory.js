@@ -93,11 +93,11 @@ const Armory = {
   },
 
   attackBonus(team) {
-    return ((this.state[team] && this.state[team].arma) || 0) + (team === "player" && typeof Campaign !== "undefined" ? Campaign.bonus("arma") : 0);
+    return ((this.state[team] && this.state[team].arma) || 0) + (typeof Campaign !== "undefined" ? (team === "player" ? Campaign.bonus("arma") : team === "enemy" ? Campaign.foeBonus("arma") : 0) : 0);
   },
 
   defenseBonus(team) {
-    return ((this.state[team] && this.state[team].armadura) || 0) + (team === "player" && typeof Campaign !== "undefined" ? Campaign.bonus("armadura") : 0);
+    return ((this.state[team] && this.state[team].armadura) || 0) + (typeof Campaign !== "undefined" ? (team === "player" ? Campaign.bonus("armadura") : team === "enemy" ? Campaign.foeBonus("armadura") : 0) : 0);
   },
 
   // ---------- Popup ----------

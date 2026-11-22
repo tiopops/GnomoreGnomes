@@ -223,6 +223,7 @@
 .camp-detail__stats { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 .camp-stat { display: flex; flex-direction: column; align-items: center; min-width: 88px; padding: 8px 12px; background: #2b2438; border: 3px solid #14121a; border-radius: 10px; transform: skewX(-6deg); box-shadow: 3px 3px 0 rgba(0,0,0,.6); }
 .camp-stat i { color: #ffcf3f; font-size: 1.5rem; } .camp-stat b { font-family: "Russo One", sans-serif; font-size: 1.55rem; line-height: 1.1; } .camp-stat small { font-size: .8rem; opacity: .85; text-transform: uppercase; letter-spacing: .06em; }
+.camp-stat--foe i { color: #ff5a4f; } .camp-stat--foe b { color: #ff8a7a; }
 .camp-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
 .camp-grid--rel { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); }
 .camp-card { position: relative; border: 3px solid #14121a; border-left: 12px solid var(--acc, #ffcf3f); background: #1c1826; border-radius: 12px; padding: 12px 14px; gap: 12px; box-shadow: 5px 5px 0 rgba(0,0,0,.6); transition: transform .12s ease; }
@@ -469,3 +470,16 @@
 .camp-foot { display: flex; justify-content: center; padding: 26px 0 8px; }
 .camp-abandon { --p5-tone: #2b2438; padding: 10px 26px; font-size: .95rem; }
 .camp-abandon .p5-banner__label { display: inline-flex; align-items: center; gap: 8px; }
+
+/* v8: puntos extraídos y gnomos estampados por capítulo */
+.camp-cost--pts { color: #ffe08a; }
+.camp-pane--up .camp-card .camp-cost--pts img, .camp-chip--pts img { object-fit: contain; }
+.camp-stat--got b { white-space: nowrap; }
+.camp-detail__stats { flex-wrap: nowrap; gap: 8px; }
+.camp-detail__stats .camp-stat { min-width: 0; flex: 1 1 0; padding: 8px 6px; }
+.camp-detail__stats .camp-stat small { font-size: .72rem; letter-spacing: 0; }
+
+/* v9 — las pestañas MAPA y MEJORAS ocupan exactamente el mismo ancho y no se desplazan al cambiar:
+   el hueco de la barra de scroll se reserva siempre (antes solo aparecía en la pestaña más alta). */
+#screen-campaign { scrollbar-gutter: stable both-edges; }
+.camp-pane--up { padding: 6px 0 0; }

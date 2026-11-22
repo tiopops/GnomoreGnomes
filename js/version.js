@@ -12,10 +12,14 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001692";
+const GG_VERSION = "v.001694";
 
 const GG_CHANGELOG = [
-  { v: "v.001692", date: "22/11/2026", title: "Campaña: mejoras y guardado", items: [
+  { v: "v.001694", date: "22/11/2026", title: "Campaña: mejoras y guardado", items: [
+      "Campaña: las pestañas MAPA y MEJORAS ya no se desplazan horizontalmente al cambiar; intro con unidades y gnomos a su escala real del juego",
+      "Intro rehecha: las rocas ya no tapan la cámara, hay más sangre y los subtítulos son nuevos",
+      "Campaña: los puntos que te sobran al extraer también se llevan contigo y las mejoras cuestan puntos además de recursos; los gnomos estampados de un capítulo ya no vuelven a aparecer al rejugarlo (la ficha muestra cuántos llevas estampados) y cuando se acaban el capítulo queda agotado",
+      "Campaña: la dificultad crece capítulo a capítulo para que compense invertir en mejoras: menos turnos desde el capítulo 2 (18 → 21 → 25 → 28) y neutrales veteranos (+1 ataque en el 3; +1 ataque y +1 defensa en el 4), indicados en la ficha de cada capítulo",
       "Campaña: avisos de la zona corregidos: ya no sale \"Ya no quedan gnomos en la zona\" durante el vídeo inicial, y las jaulas abiertas dicen \"¡Jaula abierta!\" (los gnomos no se liberan, se estampan)",
       "Campaña: todo el progreso (capítulos, gnomos, recursos y mejoras) se guarda en tu cuenta y se sincroniza entre dispositivos; nuevo botón Abandonar campaña dentro de la pantalla de Campaña, con aviso de que se pierde todo el progreso",
       "Campaña: pestaña Mejoras rediseñada con 12 mejoras en 3 categorías (Combate, Ejército y Extracción, con los tonos apagados del menú principal), más aire, costes y niveles más grandes; nuevas: Botín de guerra, Margen de turnos, Catalejo, Manos largas, Saco sin fondo, Prórroga y Red de seguridad",

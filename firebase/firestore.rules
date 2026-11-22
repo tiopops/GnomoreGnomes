@@ -224,11 +224,13 @@ service cloud.firestore {
     match /campaign/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['v', 't', 'gnomes', 'res', 'earnedRes', 'done', 'up', 'seenTut'])
+        && request.resource.data.keys().hasOnly(['v', 't', 'gnomes', 'pts', 'got', 'res', 'earnedRes', 'done', 'up', 'seenTut'])
         && request.resource.data.v == 2
         && request.resource.data.t is number && request.resource.data.t >= 0
         && request.resource.data.gnomes is number && request.resource.data.gnomes >= 0
         && request.resource.data.earnedRes is number && request.resource.data.earnedRes >= 0
+        && request.resource.data.pts is number && request.resource.data.pts >= 0
+        && request.resource.data.got is map && request.resource.data.got.size() <= 20
         && request.resource.data.res is map && request.resource.data.res.size() <= 6
         && request.resource.data.done is map && request.resource.data.done.size() <= 20
         && request.resource.data.up is map && request.resource.data.up.size() <= 40

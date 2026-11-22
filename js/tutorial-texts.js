@@ -734,11 +734,11 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
-   "say": "Las cuentas: empiezas con 4 puntos y una unidad, tu población máxima es 5 y no ganas puntos por turno. Los puntos salen de las bajas (+3) y de golpear gnomos. Y lo que extraigas —gnomos, madera, roca y metal— lo inviertes luego en mejoras desde el menú de campaña.",
+   "say": "Las cuentas: empiezas con 4 puntos y una unidad, tu población máxima es 5 y no ganas puntos por turno. Los puntos salen de las bajas (+3) y de golpear gnomos. Y lo que extraigas —los gnomos, los puntos que te sobren, madera, roca y metal— lo inviertes luego en mejoras desde el menú de campaña.",
    "button": "Anotado",
    "mood": "normal",
    "en": {
-    "say": "The numbers: you start with 4 points and one unit, your population cap is 5 and you gain no points per turn. Points come from kills (+3) and from hitting gnomes. And whatever you extract — gnomes, wood, rock and metal — you invest later in upgrades from the campaign menu.",
+    "say": "The numbers: you start with 4 points and one unit, your population cap is 5 and you gain no points per turn. Points come from kills (+3) and from hitting gnomes. And whatever you extract — the gnomes, any points you have left, wood, rock and metal — you invest later in upgrades from the campaign menu.",
     "button": "Noted"
    }
   },
