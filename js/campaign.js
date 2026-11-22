@@ -35,13 +35,25 @@ function campaignTurnLimit(ch) {
 }
 
 // Mejoras exclusivas de campaña: se pagan con los recursos extraídos.
-const CAMP_ACC = ["#ffcf3f"];
+// Categorías de mejoras (mismos colores que las ramas del árbol de habilidades de las partidas normales).
+const CAMPAIGN_CATS = [
+  { id: "combate", acc: "#e6302f", icon: "ph-sword" },
+  { id: "ejercito", acc: "#2f7fe6", icon: "ph-users-three" },
+  { id: "extraccion", acc: "#3fb95a", icon: "ph-package" },
+];
 const CAMPAIGN_UPGRADES = [
-  { id: "prov", icon: "ph-basket", max: 3, cost: [{ madera: 3, roca: 2 }, { madera: 6, roca: 4 }, { madera: 9, roca: 7, metal: 1 }] },
-  { id: "arma", icon: "ph-sword", max: 2, cost: [{ roca: 4, metal: 1 }, { roca: 8, metal: 3 }] },
-  { id: "armadura", icon: "ph-shield", max: 2, cost: [{ madera: 4, metal: 1 }, { madera: 8, metal: 3 }] },
-  { id: "pop", icon: "ph-users-three", max: 3, cost: [{ madera: 5, roca: 3 }, { madera: 8, roca: 6 }, { madera: 12, roca: 9, metal: 2 }] },
-  { id: "carga", icon: "ph-hand-grabbing", max: 3, cost: [{ madera: 3, roca: 3, metal: 1 }, { madera: 6, roca: 6, metal: 2 }, { madera: 9, roca: 9, metal: 4 }] },
+  { id: "arma", cat: "combate", icon: "ph-sword", max: 2, cost: [{ roca: 4, metal: 1 }, { roca: 8, metal: 3 }] },
+  { id: "armadura", cat: "combate", icon: "ph-shield", max: 2, cost: [{ madera: 4, metal: 1 }, { madera: 8, metal: 3 }] },
+  { id: "cazador", cat: "combate", icon: "ph-coins", max: 3, cost: [{ roca: 3, metal: 1 }, { roca: 6, metal: 2 }, { roca: 9, metal: 4 }] },
+  { id: "prov", cat: "ejercito", icon: "ph-basket", max: 3, cost: [{ madera: 3, roca: 2 }, { madera: 6, roca: 4 }, { madera: 9, roca: 7, metal: 1 }] },
+  { id: "pop", cat: "ejercito", icon: "ph-users-three", max: 3, cost: [{ madera: 5, roca: 3 }, { madera: 8, roca: 6 }, { madera: 12, roca: 9, metal: 2 }] },
+  { id: "carga", cat: "ejercito", icon: "ph-hand-grabbing", max: 3, cost: [{ madera: 3, roca: 3, metal: 1 }, { madera: 6, roca: 6, metal: 2 }, { madera: 9, roca: 9, metal: 4 }] },
+  { id: "turnos", cat: "extraccion", icon: "ph-hourglass-high", max: 3, cost: [{ madera: 4, roca: 2 }, { madera: 7, roca: 5, metal: 1 }, { madera: 10, roca: 8, metal: 3 }] },
+  { id: "vision", cat: "extraccion", icon: "ph-binoculars", max: 1, cost: [{ madera: 6, roca: 6, metal: 2 }] },
+  { id: "recolector", cat: "extraccion", icon: "ph-hand-coins", max: 2, cost: [{ madera: 6, roca: 4, metal: 1 }, { madera: 12, roca: 9, metal: 3 }] },
+  { id: "botin", cat: "extraccion", icon: "ph-package", max: 3, cost: [{ madera: 5, roca: 5 }, { madera: 9, roca: 9, metal: 2 }, { madera: 14, roca: 14, metal: 5 }] },
+  { id: "prorroga", cat: "extraccion", icon: "ph-timer", max: 3, cost: [{ roca: 4, metal: 1 }, { roca: 8, metal: 3 }, { roca: 12, metal: 6 }] },
+  { id: "seguro", cat: "extraccion", icon: "ph-first-aid-kit", max: 2, cost: [{ madera: 5, metal: 1 }, { madera: 10, metal: 4 }] },
 ];
 const CAMPAIGN_RES = ["madera", "roca", "metal"];
 const CAMPAIGN_RES_ICON = { madera: "assets/iconos/recurso_madera.png", roca: "assets/iconos/recurso_roca.png", metal: "assets/iconos/recurso_metal.png" };
@@ -53,6 +65,7 @@ const CAMPAIGN_BASE_CARRY = 5;
 
 (function registerCampaignStrings() {
   const es = {
+    cmp_abandon: "Abandonar campaña", cmp_abandon_q: "¿ABANDONAR LA CAMPAÑA?", cmp_abandon_info: "Perderás TODO el progreso: capítulos superados, gnomos, recursos y mejoras. La campaña empezará de cero y no se puede deshacer.", cmp_abandon_yes: "SÍ, ABANDONAR", cmp_abandon_no: "CANCELAR",
     menu_campaign: "Campaña", cmp_title: "CAMPAÑA", cmp_gnomes: "GNOMOS", cmp_goal: "Estampa {n} gnomos contra el Obelisco.",
     cmp_play: "JUGAR", cmp_soon: "PRÓXIMAMENTE", cmp_locked: "BLOQUEADO", cmp_done: "COMPLETADO", cmp_chapter: "CAPÍTULO {n}",
     cmp_need: "Necesitas {g} gnomos y {r} recursos extraídos (tienes {hg} y {hr}).", cmp_need_prev: "Completa el capítulo anterior.",
@@ -62,6 +75,15 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_up_arma: "Garrotes afilados", cmp_up_arma_d: "+1 de ataque a todas tus unidades.",
     cmp_up_armadura: "Cortezas duras", cmp_up_armadura_d: "+1 de aguante a todas tus unidades.",
     cmp_up_pop: "Más barracones", cmp_up_pop_d: "+1 de población máxima.",
+    cmp_cat_combate: "COMBATE", cmp_cat_ejercito: "EJÉRCITO", cmp_cat_extraccion: "EXTRACCIÓN", cmp_lvl: "NIVEL {a}/{b}",
+    cmp_up_cazador: "Botín de guerra", cmp_up_cazador_d: "Cada neutral que derrotas te da +1 punto de gloria extra por nivel.",
+    cmp_up_turnos: "Margen de turnos", cmp_up_turnos_d: "+2 turnos en el límite de cada nivel por nivel de mejora.",
+    cmp_up_vision: "Catalejo", cmp_up_vision_d: "Todas tus unidades y tu Obelisco ven una casilla más lejos: campamentos y jaulas se descubren antes.",
+    cmp_up_recolector: "Manos largas", cmp_up_recolector_d: "Cada fuente de recursos te da +1 unidad extra por nivel al recogerla.",
+    cmp_up_botin: "Saco sin fondo", cmp_up_botin_d: "Al extraer te llevas un 15% más de recursos por nivel.",
+    cmp_up_prorroga: "Prórroga", cmp_up_prorroga_d: "Si se acaba el tiempo conservas un 10% más de recursos por nivel (sobre la mitad).",
+    cmp_up_seguro: "Red de seguridad", cmp_up_seguro_d: "Si caes, te salvas un 20% de los recursos por nivel (los gnomos se pierden igual).",
+    cmp_res_ins: "Tu red de seguridad rescata el {p}% de los recursos.", cmp_res_tprc: "No reuniste a todos los gnomos a tiempo: conservas los gnomos y el {p}% de los recursos.",
     cmp_up_carga: "Gnomos más cargables", cmp_up_carga_d: "Los gnomos aguantan +1 punto de golpes antes de estamparlos.",
     cmp_how: "CÓMO SE JUEGA",
     cmp_hud: "{a}/{b}", cmp_extract: "Extraer", cmp_extract_q: "¿EXTRAER Y TERMINAR?", cmp_extract_info: "Te llevas los gnomos y los recursos conseguidos.",
@@ -83,6 +105,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_tut6_t: "Extraer", cmp_tut6: "Con el Obelisco seleccionado, el icono de salida a la derecha de reclutar termina la partida. Te llevas los gnomos y los recursos; se invierten en mejoras desde el menú de campaña. Si caes, te quedas sin nada.",
   };
   const en = {
+    cmp_abandon: "Abandon campaign", cmp_abandon_q: "ABANDON THE CAMPAIGN?", cmp_abandon_info: "You will lose ALL progress: cleared chapters, gnomes, resources and upgrades. The campaign will start over and this cannot be undone.", cmp_abandon_yes: "YES, ABANDON", cmp_abandon_no: "CANCEL",
     menu_campaign: "Campaign", cmp_title: "CAMPAIGN", cmp_gnomes: "GNOMES", cmp_goal: "Slam {n} gnomes into the Obelisk.",
     cmp_play: "PLAY", cmp_soon: "COMING SOON", cmp_locked: "LOCKED", cmp_done: "COMPLETED", cmp_chapter: "CHAPTER {n}",
     cmp_need: "You need {g} gnomes and {r} extracted resources (you have {hg} and {hr}).", cmp_need_prev: "Complete the previous chapter.",
@@ -92,6 +115,15 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_up_arma: "Sharpened clubs", cmp_up_arma_d: "+1 attack for all your units.",
     cmp_up_armadura: "Hardened bark", cmp_up_armadura_d: "+1 toughness for all your units.",
     cmp_up_pop: "More barracks", cmp_up_pop_d: "+1 maximum population.",
+    cmp_cat_combate: "COMBAT", cmp_cat_ejercito: "ARMY", cmp_cat_extraccion: "EXTRACTION", cmp_lvl: "LEVEL {a}/{b}",
+    cmp_up_cazador: "War spoils", cmp_up_cazador_d: "Every neutral you defeat gives +1 extra glory point per level.",
+    cmp_up_turnos: "Turn margin", cmp_up_turnos_d: "+2 turns on every level's limit per upgrade level.",
+    cmp_up_vision: "Spyglass", cmp_up_vision_d: "All your units and your Obelisk see one tile further: camps and cages show up sooner.",
+    cmp_up_recolector: "Long arms", cmp_up_recolector_d: "Every resource source gives +1 extra unit per level when collected.",
+    cmp_up_botin: "Bottomless sack", cmp_up_botin_d: "When you extract you take 15% more resources per level.",
+    cmp_up_prorroga: "Extension", cmp_up_prorroga_d: "If time runs out you keep 10% more resources per level (on top of half).",
+    cmp_up_seguro: "Safety net", cmp_up_seguro_d: "If you fall, you save 20% of the resources per level (gnomes are still lost).",
+    cmp_res_ins: "Your safety net rescues {p}% of the resources.", cmp_res_tprc: "You did not gather every gnome in time: you keep the gnomes and {p}% of the resources.",
     cmp_up_carga: "Sturdier gnomes", cmp_up_carga_d: "Gnomes can take +1 point of hits before the slam.",
     cmp_how: "HOW TO PLAY",
     cmp_hud: "{a}/{b}", cmp_extract: "Extract", cmp_extract_q: "EXTRACT AND FINISH?", cmp_extract_info: "You keep the gnomes and resources you gathered.",
@@ -133,17 +165,87 @@ const Campaign = {
 
   // ---------- Progreso ----------
   _key() { return "gg_campaign_" + (this._uid || "guest"); },
-  _defaults() { return { v: 2, gnomes: 0, res: { madera: 0, roca: 0, metal: 0 }, earnedRes: 0, done: {}, up: {}, seenTut: false }; },
+  _defaults() { return { v: 2, t: 0, gnomes: 0, res: { madera: 0, roca: 0, metal: 0 }, earnedRes: 0, done: {}, up: {}, seenTut: false }; },
+  get _db() { return typeof Account !== "undefined" ? Account._db : null; },
+  // Normaliza lo que llega de localStorage o de la base de datos (solo números y mapas de números/booleanos).
+  _norm(raw) {
+    const d = this._defaults();
+    if (!raw || typeof raw !== "object") return d;
+    const n = (v) => (typeof v === "number" && isFinite(v) && v >= 0 ? Math.floor(v) : 0);
+    const map = (m, bool) => { const o = {}; if (m && typeof m === "object") Object.keys(m).slice(0, 60).forEach((k) => { const v = bool ? !!m[k] : n(m[k]); if (v) o[k] = v; }); return o; };
+    d.t = n(raw.t); d.gnomes = n(raw.gnomes); d.earnedRes = n(raw.earnedRes);
+    CAMPAIGN_RES.forEach((k) => { d.res[k] = n(raw.res && raw.res[k]); });
+    d.done = map(raw.done, true); d.up = map(raw.up, false); d.seenTut = !!raw.seenTut;
+    return d;
+  },
+  hasProgress() {
+    const s = this.s;
+    return !!(s && (s.gnomes > 0 || s.earnedRes > 0 || s.seenTut || Object.keys(s.done).length || Object.keys(s.up).length || CAMPAIGN_RES.some((k) => s.res[k] > 0)));
+  },
   load() {
     let raw = null;
     try { raw = JSON.parse(localStorage.getItem(this._key()) || "null"); } catch (e) {}
-    const d = this._defaults();
-    this.s = Object.assign(d, raw && typeof raw === "object" ? raw : {});
-    this.s.res = Object.assign({ madera: 0, roca: 0, metal: 0 }, this.s.res || {});
-    this.s.done = this.s.done || {}; this.s.up = this.s.up || {};
-    this.s.v = 2;
+    this.s = this._norm(raw);
+    this._refreshAbandon();
+    this._pull();
   },
-  persist() { try { localStorage.setItem(this._key(), JSON.stringify(this.s)); } catch (e) {} },
+  // Base de datos (Firestore): campaign/{uid}. Gana la copia más reciente (t); sin red o sin sesión sigue en este navegador.
+  async _pull() {
+    const uid = this._uid, db = this._db;
+    if (!uid || !db) return;
+    try {
+      const snap = await db.collection("campaign").doc(uid).get();
+      if (uid !== this._uid) return;
+      if (snap.exists) {
+        const r = this._norm(snap.data());
+        if (r.t >= (this.s.t || 0)) {
+          this.s = r;
+          try { localStorage.setItem(this._key(), JSON.stringify(this.s)); } catch (e) {}
+          this.render(); this._refreshAbandon();
+        } else this._push();
+      } else if (this.hasProgress()) this._push();
+    } catch (e) { console.warn("campaign:", e && e.code); }
+  },
+  async _push() {
+    const uid = this._uid, db = this._db;
+    if (!uid || !db || !this.s) return;
+    try { await db.collection("campaign").doc(uid).set(this._norm(this.s)); } catch (e) { console.warn("campaign:", e && e.code); }
+  },
+  persist(now) {
+    if (!this.s) return;
+    this.s.t = Date.now();
+    try { localStorage.setItem(this._key(), JSON.stringify(this.s)); } catch (e) {}
+    this._refreshAbandon();
+    clearTimeout(this._pushT);
+    if (now) this._push(); else this._pushT = setTimeout(() => this._push(), 400);
+  },
+  // ---------- Abandonar campaña (botón del menú principal) ----------
+  _refreshAbandon() {
+    const b = document.getElementById("btn-campaign-abandon");
+    if (b) b.style.display = this.hasProgress() ? "" : "none";
+  },
+  _askAbandon() {
+    if (this._askEl) return;
+    const ov = document.createElement("div");
+    ov.className = "camp-ask";
+    ov.innerHTML = `<div class="camp-ask__panel">
+      <div class="camp-ask__q">${this.t("cmp_abandon_q")}</div>
+      <div class="camp-ask__info">${this.t("cmp_abandon_info")}</div>
+      <div class="camp-ask__row"><button class="camp-ask__btn camp-ask__btn--yes camp-ask__btn--cancel">${this.t("cmp_abandon_no")}</button><button class="camp-ask__btn camp-ask__btn--no camp-ask__btn--danger">${this.t("cmp_abandon_yes")}</button></div></div>`;
+    document.body.appendChild(ov);
+    this._askEl = ov;
+    const close = () => { ov.remove(); this._askEl = null; };
+    ov.querySelector(".camp-ask__btn--cancel").addEventListener("click", () => { if (typeof SFX !== "undefined" && SFX.back) SFX.back(); close(); });
+    ov.querySelector(".camp-ask__btn--danger").addEventListener("click", () => { this._click(); close(); this.abandon(); });
+    ov.addEventListener("click", (e) => { if (e.target === ov) close(); });
+  },
+  abandon() {
+    this.s = this._defaults();
+    this.tab = "map"; this.sel = 1;
+    this.persist(true);
+    this.render();
+    if (typeof SFX !== "undefined" && SFX.defeat) SFX.defeat();
+  },
   upLevel(id) { return (this.s && this.s.up[id]) || 0; },
   bonus(id) { return this.active && this.s ? this.upLevel(id) : 0; },
   popLimit() { return CAMPAIGN_BASE_POP + this.upLevel("pop"); },
@@ -166,6 +268,8 @@ const Campaign = {
       this.render();
     });
     this.load();
+    const ab = document.getElementById("btn-campaign-abandon");
+    if (ab) ab.addEventListener("click", () => { this._click(); this._askAbandon(); });
     const btn = document.getElementById("btn-campaign");
     if (btn) btn.addEventListener("click", () => {
       this._click();
@@ -207,14 +311,19 @@ const Campaign = {
       action = `<button class="p5-banner p5-banner--action camp-play" data-play="${sel.n}"><span class="p5-banner__label">${t("cmp_play")}</span></button>`;
     }
 
-    const upCards = CAMPAIGN_UPGRADES.map((u, ui) => {
+    const upCard = (u) => {
+      const cat = CAMPAIGN_CATS.find((c) => c.id === u.cat) || CAMPAIGN_CATS[0];
       const lv = this.upLevel(u.id), max = lv >= u.max, cost = u.cost[lv], can = !max && this.canPay(cost);
       const pips = Array.from({ length: u.max }, (_, i) => `<i class="camp-pip${i < lv ? " camp-pip--on" : ""}"></i>`).join("");
-      return `<div class="camp-card${max ? " camp-card--max" : ""}" style="--acc:${CAMP_ACC[ui % CAMP_ACC.length]}">
+      return `<div class="camp-card${max ? " camp-card--max" : ""}" style="--acc:${cat.acc}">
         <div class="camp-card__head"><span class="camp-card__badge"><i class="ph-fill ${u.icon} camp-card__icon"></i></span><div class="camp-card__txt"><b>${t("cmp_up_" + u.id)}</b><span>${t("cmp_up_" + u.id + "_d")}</span></div></div>
-        <div class="camp-card__foot"><span class="camp-pips">${pips}</span>${max ? "" : `<span class="camp-costs">${this._costHtml(cost)}</span>`}
+        <div class="camp-card__lvl"><span class="camp-pips">${pips}</span><em>${t("cmp_lvl", { a: lv, b: u.max })}</em></div>
+        <div class="camp-card__foot">${max ? "<span class=\"camp-costs\"></span>" : `<span class="camp-costs">${this._costHtml(cost)}</span>`}
         <button type="button" class="camp-up__buy" data-buy="${u.id}" ${can ? "" : "disabled"}>${max ? t("cmp_max") : t("cmp_buy")}</button></div></div>`;
-    }).join("");
+    };
+    const upCards = CAMPAIGN_CATS.map((c) => `<section class="camp-sec" style="--acc:${c.acc}">
+      <h3 class="camp-sec__h"><i class="ph-fill ${c.icon}"></i><span>${t("cmp_cat_" + c.id)}</span></h3>
+      <div class="camp-grid">${CAMPAIGN_UPGRADES.filter((u) => u.cat === c.id).map(upCard).join("")}</div></section>`).join("");
 
     const tab = this.tab === "up" ? "up" : "map";
     const res = CAMPAIGN_RES.map((r) => `<span class="camp-chip"><img src="${CAMPAIGN_RES_ICON[r]}" alt=""><b>${this.s.res[r] || 0}</b></span>`).join("");
@@ -230,7 +339,7 @@ const Campaign = {
             <div class="camp-detail__status">${status}</div>
             ${action}
           </div></div>`
-      : `<div class="camp-pane"><div class="camp-grid">${upCards}</div></div>`;
+      : `<div class="camp-pane camp-pane--up">${upCards}</div>`;
     root.innerHTML = `
       <div class="camp-top"><span class="camp-chip"><i class="ph-fill ph-users-three"></i> ${t("cmp_gnomes")} <b>${this.s.gnomes}</b></span>${res}</div>
       <div class="camp-tabs">${tabs}</div>
@@ -271,7 +380,7 @@ const Campaign = {
     const ch = this.ch(n);
     if (!ch || ch.boss || !this.unlocked(n)) return;
     this.active = true;
-    this.run = { n, goal: ch.goal, maxTurns: campaignTurnLimit(ch), delivered: 0, kills: 0, over: false, warnedNone: false, warnedDone: false, spawned: 0 };
+    this.run = { n, goal: ch.goal, maxTurns: campaignTurnLimit(ch) + 2 * this.upLevel("turnos"), delivered: 0, kills: 0, over: false, warnedNone: false, warnedDone: false, spawned: 0 };
     this._camps = [];
     if (typeof matchDraft !== "undefined") matchDraft.modeId = "campaign";
     // Capítulo 1: el vídeo aparece ANTES que nada (cortina negra encima) y el nivel se construye por debajo mientras suena.
@@ -427,7 +536,7 @@ const Campaign = {
     const run = this.run;
     if (!run || run.over || unit.team !== "enemy") return;
     run.kills++;
-    if (typeof Glory !== "undefined") Glory.addNow("player", CAMPAIGN_KILL_POINTS);
+    if (typeof Glory !== "undefined") Glory.addNow("player", CAMPAIGN_KILL_POINTS + this.upLevel("cazador"));
     this._camps.forEach((camp) => {
       if (camp.open) return;
       if (camp.guards.every((id) => !Units.list.some((u) => u.id === id))) {
@@ -596,7 +705,11 @@ const Campaign = {
     if (typeof Turns !== "undefined") Turns.hideButton();
     const fallen = kind === "fallen", timeout = kind === "timeout";
     const got = {};
-    CAMPAIGN_RES.forEach((k) => { const n = (Resources.counts && Resources.counts[k]) || 0; got[k] = fallen ? 0 : timeout ? Math.floor(n / 2) : n; });
+    const lvB = this.upLevel("botin"), lvP = this.upLevel("prorroga"), lvS = this.upLevel("seguro");
+    CAMPAIGN_RES.forEach((k) => {
+      const n = (Resources.counts && Resources.counts[k]) || 0;
+      got[k] = fallen ? Math.floor(n * 0.2 * lvS) : timeout ? Math.floor(n * (0.5 + 0.1 * lvP)) : Math.ceil(n * (1 + 0.15 * lvB));
+    });
     const completed = !fallen && r.delivered >= r.goal;
     if (!fallen) this.s.gnomes += r.delivered;
     CAMPAIGN_RES.forEach((k) => { this.s.res[k] += got[k]; this.s.earnedRes += got[k]; });
@@ -617,7 +730,7 @@ const Campaign = {
         <div><span>${this.t("cmp_res_g")}</span><b>${r.delivered}</b></div>
         <div class="camp-result__res">${CAMPAIGN_RES.map((k) => `<span class="camp-cost"><img src="${CAMPAIGN_RES_ICON[k]}" alt="">+${got[k]}</span>`).join("")}</div>
         <div><span>${this.t("cmp_res_k")}</span><b>${r.kills}</b></div>
-        <div class="camp-result__goal">${this.t("cmp_res_goal", { n: r.goal })}${fallen ? "<br>" + this.t("cmp_res_half") : timeout ? "<br>" + this.t("cmp_res_timeup") : ""}</div></div>
+        <div class="camp-result__goal">${this.t("cmp_res_goal", { n: r.goal })}${fallen ? "<br>" + (this.upLevel("seguro") ? this.t("cmp_res_ins", { p: 20 * this.upLevel("seguro") }) : this.t("cmp_res_half")) : timeout ? "<br>" + (this.upLevel("prorroga") ? this.t("cmp_res_tprc", { p: 50 + 10 * this.upLevel("prorroga") }) : this.t("cmp_res_timeup")) : ""}</div></div>
       <button class="camp-result__btn">${this.t("cmp_back_map")}</button></div>`;
     document.body.appendChild(ov);
     requestAnimationFrame(() => ov.classList.add("camp-result--on"));

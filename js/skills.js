@@ -702,7 +702,7 @@ const Skills = {
 
   // Centinela: +1 de percepción (unidades, tótems y Obelisco).
   perceptionBonus(team) {
-    return this.has(team, "centinela") ? 1 : 0;
+    return (this.has(team, "centinela") ? 1 : 0) + (team === "player" && typeof Campaign !== "undefined" ? Campaign.bonus("vision") : 0);
   },
   // Al comprarlo se revela ya el terreno extra alrededor de todo lo propio.
   _refreshPerception(team) {

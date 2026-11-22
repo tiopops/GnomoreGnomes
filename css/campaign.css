@@ -410,3 +410,58 @@
 .camp-card .camp-cost img { width: 18px; height: 18px; }
 .camp-card .camp-up__buy { flex: none; padding: 8px 14px; font-size: .95rem; }
 .camp-card__foot > .camp-up__buy:only-child, .camp-card__foot .camp-pips + .camp-up__buy { margin-left: auto; }
+
+/* ===== v7: pestaña MEJORAS — secciones por categoría, más aire, costes y niveles grandes ===== */
+#screen-campaign { padding-top: 28px; }
+.camp-root, #camp-root { width: min(1240px, 100%); gap: 18px; padding-bottom: 40px; }
+.camp-title { margin: 6px 0 6px; }
+.camp-top { margin-top: 4px; }
+.camp-tabs { margin: 6px 0 10px; gap: 12px; }
+.camp-pane--up { gap: 30px; padding: 6px 4px 0; }
+.camp-sec { display: flex; flex-direction: column; gap: 16px; }
+.camp-sec__h { display: flex; align-items: center; gap: 12px; margin: 0; padding: 0 0 0 4px; font-family: "Russo One", sans-serif; font-size: 1.25rem; letter-spacing: .14em; color: var(--acc); text-shadow: 2px 2px 0 #000; }
+.camp-sec__h i { font-size: 1.7rem; }
+.camp-sec__h::after { content: ""; flex: 1; height: 5px; background: var(--acc); clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%); opacity: .9; }
+.camp-pane--up .camp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 24px; }
+.camp-pane--up .camp-card { display: flex; flex-direction: column; justify-content: flex-start; gap: 14px; padding: 18px 26px 18px 34px; min-height: 196px; }
+.camp-pane--up .camp-card__head { gap: 16px; align-items: flex-start; }
+.camp-pane--up .camp-card__badge { width: 68px; height: 68px; }
+.camp-pane--up .camp-card__badge .camp-card__icon { font-size: 40px; }
+.camp-pane--up .camp-card__txt { gap: 6px; flex: 1; min-width: 0; }
+.camp-pane--up .camp-card__txt b { font-size: 1.2rem; }
+.camp-pane--up .camp-card__txt span { font-size: 1rem; line-height: 1.35; }
+.camp-card__lvl { display: flex; align-items: center; gap: 12px; margin-top: auto; }
+.camp-card__lvl .camp-pips { gap: 6px; margin: 0; }
+.camp-card__lvl .camp-pip { width: 34px; height: 16px; border: 2px solid #000; transform: skewX(-18deg); background: #3a3348; }
+.camp-card__lvl .camp-pip--on { background: var(--acc); }
+.camp-card__lvl em { font-style: normal; font-family: "Russo One", sans-serif; font-size: .95rem; letter-spacing: .08em; color: #d9d2e8; }
+.camp-pane--up .camp-card__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: nowrap; }
+.camp-pane--up .camp-card .camp-costs { gap: 8px; flex: 1; justify-content: flex-start; flex-wrap: wrap; }
+.camp-pane--up .camp-card .camp-cost { font-size: 1.25rem; padding: 5px 12px; gap: 6px; --s: 7px; }
+.camp-pane--up .camp-card .camp-cost img { width: 32px; height: 32px; }
+.camp-pane--up .camp-card .camp-up__buy { font-size: 1.1rem; padding: 11px 22px; }
+.camp-card::after, .camp-card--on::after, .camp-card--max::after { background: var(--tone) !important; }
+.camp-card--max { --tone: #20241a; }
+@media (max-width: 1100px) { .camp-pane--up .camp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 720px) {
+  .camp-pane--up .camp-grid { grid-template-columns: 1fr; gap: 16px; }
+  .camp-pane--up .camp-card { min-height: 0; padding: 14px 18px 14px 26px; }
+  .camp-pane--up .camp-card .camp-cost { font-size: 1.05rem; } .camp-pane--up .camp-card .camp-cost img { width: 26px; height: 26px; }
+}
+.camp-pane--up .camp-grid .camp-card { padding: 18px 24px 18px 40px; }
+.camp-pane--up .camp-card .camp-costs { flex-wrap: nowrap; gap: 6px; }
+.camp-pane--up .camp-card .camp-cost { font-size: 1.1rem; padding: 4px 9px; gap: 5px; }
+.camp-pane--up .camp-card .camp-cost img { width: 28px; height: 28px; }
+.camp-pane--up .camp-card .camp-up__buy { padding: 10px 16px; font-size: 1.05rem; flex: none; }
+/* v7.1: aire bajo el título (la raya quedaba pegada a los recursos) */
+#screen-campaign { padding-top: 40px; }
+.camp-title { margin: 8px 0 30px !important; padding-bottom: 6px; }
+.camp-top { margin-top: 0; }
+.camp-tabs { margin: 10px 0 18px; }
+
+/* ===== Abandonar campaña (menú principal) ===== */
+#btn-campaign-abandon { --c: #b5483f; --c2: #5e211c; padding-top: 8px; padding-bottom: 8px; font-size: .82rem; margin-top: -6px; }
+#btn-campaign-abandon i { font-size: 1.05rem; }
+.camp-ask__btn--cancel { --tone: #ffcf3f; --edge: #000; }
+.camp-ask__btn--danger { --tone: #2b2438; --edge: #000; }
+.camp-ask__info { line-height: 1.4; }

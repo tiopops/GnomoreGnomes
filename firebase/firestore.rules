@@ -218,6 +218,24 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Campaña (js/campaign.js): capítulos superados, gnomos, recursos extraídos y mejoras, en UN documento por usuario.
+    // t = marca de tiempo (ms) de la última modificación, para quedarse con la copia más reciente.
+    // Solo su dueño lo lee y lo escribe; solo números y mapas pequeños.
+    match /campaign/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['v', 't', 'gnomes', 'res', 'earnedRes', 'done', 'up', 'seenTut'])
+        && request.resource.data.v == 2
+        && request.resource.data.t is number && request.resource.data.t >= 0
+        && request.resource.data.gnomes is number && request.resource.data.gnomes >= 0
+        && request.resource.data.earnedRes is number && request.resource.data.earnedRes >= 0
+        && request.resource.data.res is map && request.resource.data.res.size() <= 6
+        && request.resource.data.done is map && request.resource.data.done.size() <= 20
+        && request.resource.data.up is map && request.resource.data.up.size() <= 40
+        && request.resource.data.seenTut is bool;
+      allow delete: if false;
+    }
+
     // Gnomoteca (js/gnomoteca.js): lo descubierto, los logros y sus contadores, en UN documento por usuario.
     // ids y a son textos con los identificadores separados por comas; st es un mapa de contadores.
     // Solo su dueño lo lee y lo escribe.
