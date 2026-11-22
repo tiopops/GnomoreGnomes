@@ -234,6 +234,7 @@ const Sacrifice = {
 
   // Un gnomo nuevo en una zona aleatoria del escenario, con un "pop" de aparición.
   _respawn() {
+    if (typeof Campaign !== "undefined" && Campaign.active) return; // Campaña: sin gnomos extra fuera de jaulas/campamentos
     if (typeof Gnome === "undefined" || !Gnome.spawnRandom) return;
     const g = Gnome.spawnRandom();
     if (g && g.el) {

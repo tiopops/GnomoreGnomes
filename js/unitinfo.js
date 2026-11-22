@@ -84,6 +84,8 @@ const UNIT_DESCRIPTIONS = {
   magonifico: "Dicen que es el mago más magnífico del reino. Lo dicen él, su sombrero y su mochila de pociones. Los tres a la vez.",
   trazaflechas: "Si te ha mirado, ya te ha apuntado. Si te ha apuntado, ya eres un dibujo en su cuaderno de blancos.",
   portamuros: "Lleva el muro a todas partes por si acaso. Lo del «por si acaso» suele acabar encima de alguien.",
+  rastreador: "Guarda los campamentos y las jaulas con una devoción que ya quisieran los obeliscos. No es muy listo, pero es lo único que se interpone entre tú y los gnomos. Y entre tú y unos cuantos moratones.",
+  rompeobeliscos: "Odia los obeliscos con una pasión inexplicable. Aparece lejos de tu base, avanza sin mirar a nadie y se pone a golpear tu Obelisco hasta que cae. Su terapeuta dice que es un problema de infancia.",
 };
 
 const UnitInfo = {

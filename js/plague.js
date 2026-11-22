@@ -36,6 +36,7 @@ const Plague = {
   },
 
   async onTurnStart(team) {
+    if (typeof Campaign !== "undefined" && Campaign.active) return; // Campaña: los gnomos solo salen de jaulas/campamentos (si no, el recuento por capítulo no cuadra)
     if (this._fired) return;
     if (typeof Turns === "undefined" || Turns.roundNumber !== PLAGUE_ROUND) return;
     if (typeof Obelisks !== "undefined" && Obelisks.gameOver) return;

@@ -10,6 +10,11 @@
 
 const GNOMOTECA_KEY = "gnomoregnomes_gnomoteca";
 const GNOMOTECA_ACH_KEY = "gnomoregnomes_gnomoteca_ach_";
+// Enemigos exclusivos de la campaña (cualquier unidad de UNIT_TYPES con raceId "neutral" sale sola en la Gnomoteca; aquí solo sus etiquetas).
+const CAMPAIGN_FOE_CHIPS = {
+  rastreador: ["Guarda los campamentos", "Vigila las jaulas"],
+  rompeobeliscos: ["Va a por tu Obelisco", "Aparece lejos de tu base"],
+};
 const GNOMOTECA_XP_ENTRY = 10; // XP por cada entrada descubierta (se cobra una sola vez)
 
 // Logros (coleccionables): icono Phosphor, explicación, XP que dan y cómo se mide el progreso.
@@ -791,7 +796,8 @@ const Gnomoteca = {
           const race = this._race(t.raceId);
           const ab = typeof ABILITIES !== "undefined" ? ABILITIES[id] : null;
           out.push({
-            id: "u:" + id, name: t.name, type: race ? this._tr(race.nameKey) : "Unidad", img: t.spriteUrl,
+            id: "u:" + id, name: t.name, type: race ? this._tr(race.nameKey) : t.raceId === "neutral" ? "Enemigo · Campaña" : "Unidad", img: t.spriteUrl,
+            chips: t.raceId === "neutral" ? (CAMPAIGN_FOE_CHIPS[id] || ["Enemigo de campaña"]) : undefined,
             desc: typeof UNIT_DESCRIPTIONS !== "undefined" ? UNIT_DESCRIPTIONS[id] || "" : "",
             stats: [["Aguante", t.aguante, maxOf("aguante")], ["Movimiento", t.movimiento, maxOf("movimiento")], ["Fuerza", t.fuerza, maxOf("fuerza")], ["Agilidad", t.agilidad, maxOf("agilidad")], ["Percepción", t.percepcion, maxOf("percepcion")]],
             extra: ab ? [[ab.name, ab.description]] : [],

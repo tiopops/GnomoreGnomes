@@ -16,6 +16,9 @@ const GG_VERSION = "v.001694";
 
 const GG_CHANGELOG = [
   { v: "v.001694", date: "22/11/2026", title: "Campaña: mejoras y guardado", items: [
+      "Gnomoteca: los enemigos de la campaña (Rastreador y Rompeobeliscos) tienen ficha propia con descripción y etiquetas; cualquier enemigo neutral nuevo sale solo",
+      "Campaña: la plaga gnoma del turno 15 y los sacrificios ya no sueltan gnomos extra; solo hay los de las jaulas y el suelto de cada capítulo",
+      "Campaña: \"Saco sin fondo\" ahora tiene 2 niveles: +1 y +2 de cada recurso recogido al extraer (antes un 15% que con pocos recursos no se entendía)",
       "Campaña: estrellas por capítulo (completar, estampar todos los gnomos, eliminar todos los campamentos en una misma partida; se guarda el mejor intento); contador de campamentos x/y; mapa y mejoras adaptados al móvil; botón COMPRAR alineado con los costes",
       "Campaña: población inicial 3 (mejorable hasta 8); cada mejora pide solo 1-2 tipos de recurso; los costes de las tarjetas ya no se recortan; en la intro el cielo cambia suavemente a azul cuando llegan los gnomos y sale el arcoíris",
       "Campaña: las pestañas MAPA y MEJORAS ya no se desplazan horizontalmente al cambiar; intro con unidades y gnomos a su escala real del juego",

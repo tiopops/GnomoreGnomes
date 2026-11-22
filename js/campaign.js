@@ -54,7 +54,7 @@ const CAMPAIGN_UPGRADES = [
   { id: "turnos", cat: "extraccion", icon: "ph-hourglass-high", max: 3, cost: [{ madera: 4, roca: 2 }, { madera: 7, roca: 5 }, { madera: 10, roca: 8 }] },
   { id: "vision", cat: "extraccion", icon: "ph-binoculars", max: 1, cost: [{ roca: 6, metal: 2 }] },
   { id: "recolector", cat: "extraccion", icon: "ph-hand-coins", max: 2, cost: [{ madera: 6, metal: 1 }, { madera: 12, metal: 3 }] },
-  { id: "botin", cat: "extraccion", icon: "ph-package", max: 3, cost: [{ madera: 5, roca: 5 }, { madera: 9, roca: 9 }, { madera: 14, roca: 14 }] },
+  { id: "botin", cat: "extraccion", icon: "ph-package", max: 2, cost: [{ madera: 5, roca: 5 }, { madera: 10, roca: 10 }] },
   { id: "prorroga", cat: "extraccion", icon: "ph-timer", max: 3, cost: [{ roca: 4, metal: 1 }, { roca: 8, metal: 3 }, { roca: 12, metal: 6 }] },
   { id: "seguro", cat: "extraccion", icon: "ph-first-aid-kit", max: 2, cost: [{ madera: 5, metal: 1 }, { madera: 10, metal: 4 }] },
 ];
@@ -89,7 +89,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_up_turnos: "Margen de turnos", cmp_up_turnos_d: "+2 turnos en el límite de cada nivel por nivel de mejora.",
     cmp_up_vision: "Catalejo", cmp_up_vision_d: "Todas tus unidades y tu Obelisco ven una casilla más lejos: campamentos y jaulas se descubren antes.",
     cmp_up_recolector: "Manos largas", cmp_up_recolector_d: "Cada fuente de recursos te da +1 unidad extra por nivel al recogerla.",
-    cmp_up_botin: "Saco sin fondo", cmp_up_botin_d: "Al extraer te llevas un 15% más de recursos por nivel.",
+    cmp_up_botin: "Saco sin fondo", cmp_up_botin_d: "Al extraer te llevas +1 de cada recurso recogido (+2 en el nivel 2).",
     cmp_up_prorroga: "Prórroga", cmp_up_prorroga_d: "Si se acaba el tiempo conservas un 10% más de recursos por nivel (sobre la mitad).",
     cmp_up_seguro: "Red de seguridad", cmp_up_seguro_d: "Si caes, te salvas un 20% de los recursos por nivel (los gnomos se pierden igual).",
     cmp_res_ins: "Tu red de seguridad rescata el {p}% de los recursos.", cmp_res_tprc: "No reuniste a todos los gnomos a tiempo: conservas los gnomos y el {p}% de los recursos.",
@@ -130,7 +130,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_up_turnos: "Turn margin", cmp_up_turnos_d: "+2 turns on every level's limit per upgrade level.",
     cmp_up_vision: "Spyglass", cmp_up_vision_d: "All your units and your Obelisk see one tile further: camps and cages show up sooner.",
     cmp_up_recolector: "Long arms", cmp_up_recolector_d: "Every resource source gives +1 extra unit per level when collected.",
-    cmp_up_botin: "Bottomless sack", cmp_up_botin_d: "When you extract you take 15% more resources per level.",
+    cmp_up_botin: "Bottomless sack", cmp_up_botin_d: "When you extract you take +1 of every resource you collected (+2 at level 2).",
     cmp_up_prorroga: "Extension", cmp_up_prorroga_d: "If time runs out you keep 10% more resources per level (on top of half).",
     cmp_up_seguro: "Safety net", cmp_up_seguro_d: "If you fall, you save 20% of the resources per level (gnomes are still lost).",
     cmp_res_ins: "Your safety net rescues {p}% of the resources.", cmp_res_tprc: "You did not gather every gnome in time: you keep the gnomes and {p}% of the resources.",
@@ -740,7 +740,7 @@ const Campaign = {
     const lvB = this.upLevel("botin"), lvP = this.upLevel("prorroga"), lvS = this.upLevel("seguro");
     CAMPAIGN_RES.forEach((k) => {
       const n = (Resources.counts && Resources.counts[k]) || 0;
-      got[k] = fallen ? Math.floor(n * 0.2 * lvS) : timeout ? Math.floor(n * (0.5 + 0.1 * lvP)) : Math.ceil(n * (1 + 0.15 * lvB));
+      got[k] = fallen ? Math.floor(n * 0.2 * lvS) : timeout ? Math.floor(n * (0.5 + 0.1 * lvP)) : (n > 0 ? n + lvB : 0);
     });
     // Puntos sobrantes de la partida: también se extraen (con las mismas reglas de prórroga y red de seguridad que los recursos).
     const leftPts = (typeof Glory !== "undefined" && Glory.points && Glory.points.player) || 0;
