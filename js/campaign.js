@@ -69,7 +69,7 @@ const CAMPAIGN_RES_ICON = { madera: "assets/iconos/recurso_madera.png", roca: "a
 const CAMPAIGN_INTRO_VOICES = { es: "assets/campana/voz_intro_es.mp3?v=1" }; // añadir aquí la voz de cada idioma nuevo
 const CAMPAIGN_KILL_POINTS = 3;
 const CAMPAIGN_START_GLORY = 4;
-const CAMPAIGN_EXTRACT_ICON = "assets/iconos/extraccion.png";
+const CAMPAIGN_EXTRACT_ICON = "assets/iconos/extraccion.png?v=2";
 const CAMPAIGN_EXTRACT_RADIUS = 2;
 const CAMPAIGN_BASE_POP = 3;
 const CAMPAIGN_BASE_CARRY = 5;
