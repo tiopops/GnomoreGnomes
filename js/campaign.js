@@ -69,6 +69,7 @@ const CAMPAIGN_RES_ICON = { madera: "assets/iconos/recurso_madera.png", roca: "a
 const CAMPAIGN_INTRO_VOICES = { es: "assets/campana/voz_intro_es.mp3?v=1" }; // añadir aquí la voz de cada idioma nuevo
 const CAMPAIGN_KILL_POINTS = 3;
 const CAMPAIGN_START_GLORY = 4;
+const CAMPAIGN_EXTRACT_ICON = "assets/iconos/extraccion.png";
 const CAMPAIGN_EXTRACT_RADIUS = 2;
 const CAMPAIGN_BASE_POP = 3;
 const CAMPAIGN_BASE_CARRY = 5;
@@ -308,7 +309,7 @@ const Campaign = {
     const root = document.getElementById("camp-root");
     if (!root || !this.s) return;
     if (!this._pre && typeof Artifacts !== "undefined" && typeof ART_DEFS !== "undefined") { // precarga: nada aparece de golpe al abrir la pestaña
-      this._pre = ["cushion"].concat(ART_DEFS.map((d) => d.id)).map((k) => { const im = new Image(); im.src = Artifacts.img(k); return im; });
+      this._pre = ["cushion"].concat(ART_DEFS.map((d) => d.id)).map((k) => { const im = new Image(); im.src = Artifacts.img(k); return im; }).concat([(() => { const im = new Image(); im.src = CAMPAIGN_EXTRACT_ICON; return im; })()]);
     }
     const t = (k, v) => this.t(k, v);
     const sel = this.ch(this.sel) || this.ch(1);
@@ -542,7 +543,7 @@ const Campaign = {
     const btn = document.createElement("button");
     btn.className = "obelisk__menu-btn obelisk__menu-btn--extract";
     btn.setAttribute("aria-label", this.t("cmp_extract"));
-    btn.innerHTML = '<i class="ph-fill ph-sign-out obelisk__menu-extract-icon"></i>';
+    btn.innerHTML = `<img class="obelisk__menu-extract-icon" src="${CAMPAIGN_EXTRACT_ICON}" alt="" draggable="false">`;
     btn.addEventListener("click", (e) => { e.stopPropagation(); this._click(); this._askExtract(); });
     if (typeof Tooltip !== "undefined") Tooltip.attach(btn, this.t("cmp_extract"));
     menu.appendChild(btn);

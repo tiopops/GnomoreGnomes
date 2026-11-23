@@ -70,7 +70,7 @@
 
 /* Obelisco de campaña: solo zona de extracción */
 .obelisk--campaign .obelisk__menu-btn--abilities, .obelisk--campaign .obelisk__menu-btn--armory { display: none; }
-.obelisk__menu-extract-icon { font-size: 58px; color: #ffcf3f; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)); pointer-events: none; }
+.obelisk__menu-extract-icon { width: 64px; height: 64px; object-fit: contain; pointer-events: none; }
 .obelisk--camp-pulse .obelisk__sprite { animation: campObPulse .6s ease-out; }
 @keyframes campObPulse { 30% { filter: brightness(1.7) drop-shadow(0 0 22px #ffcf3f); transform: scale(1.04); } }
 

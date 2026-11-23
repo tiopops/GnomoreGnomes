@@ -16,6 +16,7 @@ const GG_VERSION = "v.001695";
 
 const GG_CHANGELOG = [
   { v: "v.001695", date: "23/11/2026", title: "Campaña: extracción en grupo", items: [
+      "Campaña: el botón de extraer del obelisco tiene icono propio (adiós al provisional)",
       "Intro: el iris de cierre nace al empezar la persecución del gnomo y se cierra suavemente sobre él, sin el salto de cámara anterior",
       "Campaña: para extraer con el obelisco todas tus unidades vivas deben estar a 2 casillas o menos de él; si alguna está lejos, aviso y parpadean las que faltan. El tutorial de campaña lo explica",
   ] },
