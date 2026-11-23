@@ -19,7 +19,7 @@ const GG_CHANGELOG = [
       "Intro: nuevo final (el gnomo queda por delante del iris, pasa a su idle nervioso, mira a ambos lados y una roca lo aplasta) y el audio del vídeo baja de volumen cuando hay voz en off para que se oiga",
       "Campaña: el botón de extraer del obelisco tiene icono propio (adiós al provisional)",
       "Intro: el iris de cierre nace al empezar la persecución del gnomo y se cierra suavemente sobre él, sin el salto de cámara anterior",
-      "Campaña: para extraer con el obelisco todas tus unidades vivas deben estar a 2 casillas o menos de él; si alguna está lejos, aviso y parpadean las que faltan. El tutorial de campaña lo explica",
+      "Campaña: para extraer con el obelisco todas tus unidades vivas deben estar junto a él; si alguna está lejos, sale un aviso corto y parpadean las que faltan. El tutorial de campaña lo explica",
   ] },
   { v: "v.001694", date: "22/11/2026", title: "Campaña: mejoras y guardado", items: [
       "Campaña: experiencia de unidad. Cada unidad propia tiene una barra de XP de 3 niveles (+3 XP por baja de neutral, +2 por estampar un gnomo) y al subir de nivel eliges una estadística que no esté al máximo para +1",
