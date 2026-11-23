@@ -302,7 +302,7 @@ const CampaignIntro = (() => {
       let done = false, hold = null, raf = 0;
       // Locución: archivo de audio aparte (según el idioma elegido), sincronizado con el vídeo. Sin archivo para ese idioma = sin voz.
       let voice = null;
-      if (cfg.voice) { try { voice = new Audio(cfg.voice); voice.preload = "auto"; voice.volume = 1; } catch (e) { voice = null; } }
+      if (cfg.voice) { try { voice = new Audio(cfg.voice); voice.preload = "auto"; voice.volume = 1; v.volume = 0.22; } catch (e) { voice = null; } }
       const finish = () => {
         if (done) return; done = true;
         if (voice) { try { voice.pause(); } catch (e) {} }
