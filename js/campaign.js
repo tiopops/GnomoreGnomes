@@ -69,6 +69,7 @@ const CAMPAIGN_RES_ICON = { madera: "assets/iconos/recurso_madera.png", roca: "a
 const CAMPAIGN_INTRO_VOICES = { es: "assets/campana/voz_intro_es.mp3?v=1" }; // añadir aquí la voz de cada idioma nuevo
 const CAMPAIGN_KILL_POINTS = 3;
 const CAMPAIGN_START_GLORY = 4;
+const CAMPAIGN_EXTRACT_RADIUS = 2;
 const CAMPAIGN_BASE_POP = 3;
 const CAMPAIGN_BASE_CARRY = 5;
 
@@ -96,7 +97,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_res_ins: "Tu red de seguridad rescata el {p}% de los recursos.", cmp_res_tprc: "No reuniste a todos los gnomos a tiempo: conservas los gnomos y el {p}% de los recursos.",
     cmp_up_carga: "Gnomos más cargables", cmp_up_carga_d: "Los gnomos aguantan +1 punto de golpes antes de estamparlos.",
     cmp_how: "CÓMO SE JUEGA",
-    cmp_hud: "{a}/{b}", cmp_extract: "Extraer", cmp_extract_q: "¿EXTRAER Y TERMINAR?", cmp_extract_info: "Te llevas los gnomos, los recursos y los puntos que te sobren.",
+    cmp_hud: "{a}/{b}", cmp_extract: "Extraer", cmp_extract_q: "¿EXTRAER Y TERMINAR?", cmp_extract_far: "¡TODAS TUS UNIDADES A 2 CASILLAS DEL OBELISCO! ({n} lejos)", cmp_extract_info: "Te llevas los gnomos, los recursos y los puntos que te sobren.",
     cmp_yes: "EXTRAER", cmp_no: "SEGUIR", cmp_res_ok: "¡CAPÍTULO SUPERADO!", cmp_res_part: "EXTRACCIÓN COMPLETADA", cmp_res_fail: "HAS CAÍDO",
     cmp_res_g: "Gnomos estampados", cmp_res_k: "Neutrales derrotados", cmp_res_goal: "Objetivo: {n} gnomos", cmp_res_half: "Al caer te quedas sin nada: ni gnomos, ni recursos, ni puntos.", cmp_res_time: "¡SE ACABÓ EL TIEMPO!", cmp_res_timeup: "No reuniste a todos los gnomos a tiempo: conservas los gnomos, pero solo la mitad de los recursos.", cmp_hud_turns: "{a} turnos", cmp_stat_gnomes: "gnomos", cmp_stat_turns: "turnos", cmp_stat_camps: "campamentos", cmp_stat_foeatk: "ataque enemigo", cmp_stat_foedef: "defensa enemiga", cmp_warn_turns: "¡QUEDAN {n} TURNOS!",
     cmp_back_map: "VOLVER AL MAPA", cmp_free: "¡JAULA ABIERTA!", cmp_done_banner: "¡OBJETIVO CUMPLIDO!", cmp_warn_ob: "¡ATACAN TU OBELISCO!", cmp_warn_none: "YA NO QUEDAN GNOMOS EN LA ZONA",
@@ -112,7 +113,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_tut3_t: "Estampar gnomos", cmp_tut3: "Un gnomo libre huye de ti como siempre. Cógelo, pégale para cargarle puntos (hasta +5) y llévalo al Obelisco: aquí no le hace daño, es un sacrificio, y los puntos del gnomo pasan a tu bolsa.",
     cmp_tut4_t: "Puntos y recursos", cmp_tut4: "Usa los puntos para reclutar, pero ojo: los que te sobren al extraer te los llevas y también compran mejoras. Nadie te da puntos por turno. Recoge además madera, roca y metal.",
     cmp_tut5_t: "Furtivos", cmp_tut5: "De vez en cuando aparecen Rompeobeliscos lejos de tu base y se acercan a golpear el Obelisco. Son débiles, pero si lo derriban, pierdes. Te avisaré al empezar tu turno.",
-    cmp_tut6_t: "Extraer", cmp_tut6: "Con el Obelisco seleccionado, el icono de salida a la derecha de reclutar termina la partida. Te llevas los gnomos, los recursos y los puntos que te sobren; se invierten en mejoras desde el menú de campaña. Si caes, te quedas sin nada.",
+    cmp_tut6_t: "Extraer", cmp_tut6: "Con el Obelisco seleccionado, el icono de salida a la derecha de reclutar termina la partida, pero solo si todas tus unidades vivas están a 2 casillas o menos del obelisco. Te llevas los gnomos, los recursos y los puntos que te sobren; se invierten en mejoras desde el menú de campaña. Si caes, te quedas sin nada.",
   };
   const en = {
     cmp_abandon: "Abandon campaign", cmp_abandon_q: "ABANDON THE CAMPAIGN?", cmp_abandon_info: "You will lose ALL progress: cleared chapters, gnomes, resources and upgrades. The campaign will start over and this cannot be undone.", cmp_abandon_yes: "YES, ABANDON", cmp_abandon_no: "CANCEL",
@@ -137,7 +138,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_res_ins: "Your safety net rescues {p}% of the resources.", cmp_res_tprc: "You did not gather every gnome in time: you keep the gnomes and {p}% of the resources.",
     cmp_up_carga: "Sturdier gnomes", cmp_up_carga_d: "Gnomes can take +1 point of hits before the slam.",
     cmp_how: "HOW TO PLAY",
-    cmp_hud: "{a}/{b}", cmp_extract: "Extract", cmp_extract_q: "EXTRACT AND FINISH?", cmp_extract_info: "You keep the gnomes, the resources and the points you have left.",
+    cmp_hud: "{a}/{b}", cmp_extract: "Extract", cmp_extract_q: "EXTRACT AND FINISH?", cmp_extract_far: "ALL YOUR UNITS WITHIN 2 TILES OF THE OBELISK! ({n} too far)", cmp_extract_info: "You keep the gnomes, the resources and the points you have left.",
     cmp_yes: "EXTRACT", cmp_no: "KEEP GOING", cmp_res_ok: "CHAPTER CLEARED!", cmp_res_part: "EXTRACTION COMPLETE", cmp_res_fail: "YOU HAVE FALLEN",
     cmp_res_g: "Gnomes slammed", cmp_res_k: "Neutrals defeated", cmp_res_goal: "Goal: {n} gnomes", cmp_res_half: "When you fall you keep nothing: no gnomes, no resources, no points.", cmp_res_time: "TIME IS UP!", cmp_res_timeup: "You did not gather every gnome in time: you keep the gnomes, but only half the resources.", cmp_hud_turns: "{a} turns", cmp_stat_gnomes: "gnomes", cmp_stat_turns: "turns", cmp_stat_camps: "camps", cmp_stat_foeatk: "enemy attack", cmp_stat_foedef: "enemy armour", cmp_warn_turns: "{n} TURNS LEFT!",
     cmp_back_map: "BACK TO THE MAP", cmp_free: "CAGE OPEN!", cmp_done_banner: "GOAL REACHED!", cmp_warn_ob: "YOUR OBELISK IS UNDER ATTACK!", cmp_warn_none: "NO GNOMES LEFT IN THE AREA",
@@ -153,7 +154,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_tut3_t: "Slamming gnomes", cmp_tut3: "A free gnome runs from you as usual. Grab it, hit it to charge points (up to +5) and take it to the Obelisk: it takes no damage here, it's a sacrifice, and the gnome's points go into your pool.",
     cmp_tut4_t: "Points and resources", cmp_tut4: "Spend points on recruiting, but mind this: the ones you have left when you extract come with you and also buy upgrades. Nobody gives you points per turn. Gather wood, rock and metal too.",
     cmp_tut5_t: "Sneakers", cmp_tut5: "Now and then Obelisk Breakers appear far from your base and creep up to hit the Obelisk. They are weak, but if they bring it down, you lose. I'll warn you at the start of your turn.",
-    cmp_tut6_t: "Extract", cmp_tut6: "With the Obelisk selected, the exit icon right of recruit ends the match. You keep the gnomes, the resources and any points left; invest them in upgrades from the campaign menu. If you fall, you keep nothing.",
+    cmp_tut6_t: "Extract", cmp_tut6: "With the Obelisk selected, the exit icon right of recruit ends the match, but only if all your living units are within 2 tiles of the obelisk. You keep the gnomes, the resources and any points left; invest them in upgrades from the campaign menu. If you fall, you keep nothing.",
   };
   Object.assign(STRINGS.es, es);
   Object.assign(STRINGS.en, en);
@@ -704,8 +705,22 @@ const Campaign = {
   },
 
   // ---------- Extracción y resultado ----------
+  // Extraer exige que TODAS las unidades vivas aliadas estén a ≤ CAMPAIGN_EXTRACT_RADIUS casillas del obelisco.
+  _farUnits() {
+    const ob = (typeof Obelisks !== "undefined" && Obelisks.byTeam) ? Obelisks.byTeam("player") : null;
+    if (!ob) return [];
+    return Units.list.filter((u) => u.team === "player" && this._cheb(u, ob) > CAMPAIGN_EXTRACT_RADIUS);
+  },
+
   _askExtract() {
     if (!this.run || this.run.over || this._askEl) return;
+    const far = this._farUnits();
+    if (far.length) {
+      this._banner(this.t("cmp_extract_far").replace("{n}", far.length));
+      if (typeof SFX !== "undefined" && SFX.back) SFX.back();
+      far.forEach((u) => { const el = u.el; if (!el) return; el.classList.remove("unit--far"); void el.offsetWidth; el.classList.add("unit--far"); setTimeout(() => el.classList.remove("unit--far"), 1600); });
+      return;
+    }
     const ov = document.createElement("div");
     ov.className = "camp-ask";
     const c = Resources.counts;
@@ -811,7 +826,7 @@ const Campaign = {
   _cinematic(ch) {
     const L = this.t("cmp_intro1").split("|");
     return CampaignIntro.playVideo({
-      src: "assets/campana/intro_guerra.mp4?v=14",
+      src: "assets/campana/intro_guerra.mp4?v=15",
       voice: CAMPAIGN_INTRO_VOICES[typeof I18N !== "undefined" ? I18N.currentLang : "es"] || null, // locución aparte por idioma (sin entrada = sin voz)
       nizak: this.t("cmp_nizak"), hold: this.t("cmp_hold_skip"),
       subs: [{ t0: 0.3, t1: 10.5, text: L[0] }, { t0: 10.9, t1: 20.2, text: L[1] }, { t0: 20.4, t1: 31.3, text: L[2] }, { t0: 31.6, t1: 40.8, text: L[3] }],

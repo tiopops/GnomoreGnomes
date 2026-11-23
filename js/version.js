@@ -12,9 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001694";
+const GG_VERSION = "v.001695";
 
 const GG_CHANGELOG = [
+  { v: "v.001695", date: "23/11/2026", title: "Campaña: extracción en grupo", items: [
+      "Intro: el iris de cierre nace al empezar la persecución del gnomo y se cierra suavemente sobre él, sin el salto de cámara anterior",
+      "Campaña: para extraer con el obelisco todas tus unidades vivas deben estar a 2 casillas o menos de él; si alguna está lejos, aviso y parpadean las que faltan. El tutorial de campaña lo explica",
+  ] },
   { v: "v.001694", date: "22/11/2026", title: "Campaña: mejoras y guardado", items: [
       "Campaña: experiencia de unidad. Cada unidad propia tiene una barra de XP de 3 niveles (+3 XP por baja de neutral, +2 por estampar un gnomo) y al subir de nivel eliges una estadística que no esté al máximo para +1",
       "Intro: la locución va en un archivo aparte según el idioma elegido (hoy español); el vídeo dura 41 s, sin parpadeos oscuros entre escenas y con los combatientes ya en pantalla desde el inicio",

@@ -552,3 +552,7 @@
 .uxp__btn--sel i, .uxp__btn--sel .uxp__val, .uxp__btn:hover:not(:disabled) i, .uxp__btn:hover:not(:disabled) .uxp__val { color: #14121a; }
 .uxp__btn--max { opacity: .45; cursor: default; }
 @media (max-width: 520px) { .uxp__grid { grid-template-columns: 1fr; } .uxp__grid .uxp__btn:last-child { grid-column: auto; } }
+
+/* Unidad demasiado lejos del obelisco para extraer: parpadeo rojo plano */
+.unit--far { animation: unit-far-blink .4s steps(1) 4; }
+@keyframes unit-far-blink { 0%, 100% { filter: none; } 50% { filter: drop-shadow(0 0 0 #e23b3b) drop-shadow(3px 0 0 #e23b3b) drop-shadow(-3px 0 0 #e23b3b) drop-shadow(0 3px 0 #e23b3b) drop-shadow(0 -3px 0 #e23b3b); } }

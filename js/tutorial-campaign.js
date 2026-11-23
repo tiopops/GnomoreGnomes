@@ -186,7 +186,7 @@ Object.assign(Tutorial, {
       },
       {
         mood: "normal",
-        say: "Cuando tengas lo que quieras, o cuando la cosa se ponga fea, selecciona tu obelisco y pulsa el icono de salida. Si aceptas, te llevas los gnomos y los recursos. Si caes antes, te quedas sin nada. Y vigila el reloj: si se acaban los turnos sin reunir a todos los gnomos, solo conservas la mitad de los recursos.",
+        say: "Cuando tengas lo que quieras, o cuando la cosa se ponga fea, reúne a todas tus unidades a 2 casillas o menos del obelisco, selecciónalo y pulsa el icono de salida. Si aceptas, te llevas los gnomos y los recursos. Si caes antes, te quedas sin nada. Y vigila el reloj: si se acaban los turnos sin reunir a todos los gnomos, solo conservas la mitad de los recursos.",
         mission: "Extrae con el obelisco",
         ok: "Fuera por la puerta grande. O por la de atrás, que es más rápida.",
         onStart: () => { T._refill(); if (Units.selectedId) Units.deselect(); T._focus(T._ob()); },
