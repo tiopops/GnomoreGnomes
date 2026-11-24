@@ -682,29 +682,30 @@
 .cmp-strip { display: block; padding: 20px 26px 20px 28px; }
 .cmp-strip--in { animation: cmp-strip-in .25s ease both; }
 @keyframes cmp-strip-in { from { transform: translateY(8px); opacity: 0; } to { opacity: 1; } }
-.cmp-strip__body { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(200px, 1.1fr) minmax(280px, 1.5fr) auto; align-items: center; gap: 22px; color: #fff; }
+.cmp-strip__body { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(170px, .8fr) minmax(0, 2.6fr) auto; align-items: center; gap: 22px; color: #fff; }
 .cmp-strip__kicker { font-family: "Russo One", sans-serif; font-size: .78rem; letter-spacing: .2em; color: #b9b3c9; text-transform: uppercase; }
 .cmp-strip__name { margin: 2px 0 8px; font-family: "Russo One", sans-serif; font-size: 1.6rem; color: #ffcf3f; letter-spacing: .03em; text-shadow: 3px 3px 0 rgba(0,0,0,.65); line-height: 1.1; }
 .cmp-strip__stars { font-size: 1.7rem; gap: 4px; }
 .cmp-strip__stars .camp-star:nth-child(2) { transform: none; }
-.cmp-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 8px; }
-.cmp-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 2px 7px; background: rgba(255,255,255,.07); clip-path: var(--gg-slot-clip); }
+.cmp-tiles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
+.cmp-tile { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; padding: 9px 4px 8px; min-width: 0; background: rgba(255,255,255,.07); clip-path: var(--gg-slot-clip); }
 .cmp-tile i { font-size: 1.25rem; color: #ffcf3f; }
 .cmp-tile b { font-family: "Russo One", sans-serif; font-weight: 400; font-size: 1.3rem; color: #fff; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.cmp-tile small { font-size: .72rem; letter-spacing: .06em; color: #b9b3c9; text-transform: uppercase; text-align: center; }
+.cmp-tile small { font-size: .72rem; letter-spacing: .06em; color: #b9b3c9; text-transform: uppercase; text-align: center; letter-spacing: 0; overflow-wrap: anywhere; line-height: 1.15; }
 .cmp-tile--foe i { color: #ff5a4f; } .cmp-tile--foe b { color: #ff8a7a; }
 .cmp-strip__act { display: flex; justify-content: center; }
+.cmp-strip__status, .cmp-strip__hint { padding-top: 2px; }
 .cmp-strip__act .camp-play { margin: 0; padding: 14px 54px; font-size: 1.3rem; }
 .cmp-strip__status, .cmp-strip__hint { grid-column: 1 / -1; margin: 0; font-size: .95rem; color: #b9b3c9; }
 .cmp-strip__status { color: #ffb3b3; }
 
 @media (max-width: 900px) {
   .cmp-strip__body { grid-template-columns: 1fr; justify-items: center; text-align: center; }
-  .cmp-strip__stars { justify-content: center; } .cmp-tiles { width: 100%; }
+  .cmp-strip__stars { justify-content: center; } .cmp-tiles { width: 100%; grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); }
 }
 @media (max-width: 640px) {
   .cmp-board { height: 820px; }
-  .cmp-tiles { grid-template-columns: repeat(2, 1fr); } .cmp-tile small { letter-spacing: 0; font-size: .8rem; }
+  .cmp-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cmp-tile small { letter-spacing: 0; font-size: .8rem; }
   .cmp-svg--d { display: none; } .cmp-svg--m { display: block; }
   .cmp-isle { left: var(--mx); top: var(--my); }
   .cmp-isle__btn { width: var(--wm, 120px); }
