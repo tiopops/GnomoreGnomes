@@ -16,6 +16,9 @@
    furtivos (1 vida, 1 daño) aparecen lejos y se acercan a golpear el Obelisco; avisos al empezar turno.
    PENDIENTE: barras de experiencia/niveles de unidad, nube, GnomOgro (cap. 5), mapa de regiones. */
 
+// Posición de cada isla en el mapa: [x, y, x móvil, y móvil, ancho, ancho móvil] (% del tablero / px)
+const CAMPAIGN_MAP_POS = { 1: [12, 56, 32, 79, 150, 118], 2: [31, 32, 68, 66, 168, 128], 3: [50, 58, 32, 47, 176, 128], 4: [69, 30, 68, 28, 184, 134], 5: [88, 56, 44, 8, 200, 150] };
+
 const CAMPAIGN_CHAPTERS = [
   { n: 1, levelId: "mushboom_forest", goal: 3, req: { gnomes: 0, res: 0 }, camps: 2, guards: [1, 1], cages: 2, pool: ["rastreador"], aggro: 4, sneak: { every: 4, max: 1 }, foe: { arma: 0, armadura: 0 }, tempo: 1 },
   { n: 2, levelId: "mushboom_forest", goal: 4, req: { gnomes: 3, res: 8 }, camps: 3, guards: [1, 2], cages: 2, pool: ["rastreador"], aggro: 5, sneak: { every: 3, max: 2 }, foe: { arma: 0, armadura: 0 }, tempo: 0.9 },
@@ -58,6 +61,8 @@ const CAMPAIGN_UPGRADES = [
   { id: "prorroga", cat: "extraccion", icon: "ph-timer", max: 3, cost: [{ roca: 4, metal: 1 }, { roca: 8, metal: 3 }, { roca: 12, metal: 6 }] },
   { id: "seguro", cat: "extraccion", icon: "ph-first-aid-kit", max: 2, cost: [{ madera: 5, metal: 1 }, { madera: 10, metal: 4 }] },
 ];
+// Más exigentes (+30%, redondeado; lo que costaba 1 sigue costando 1).
+CAMPAIGN_UPGRADES.forEach((u) => u.cost.forEach((c) => { ["madera", "roca", "metal"].forEach((k) => { if (c[k]) c[k] = Math.round(c[k] * 1.3); }); }));
 // Coste en puntos de cada nivel de mejora (además de los recursos): 2, 4, 6... (vision cuesta el doble).
 CAMPAIGN_UPGRADES.forEach((u) => u.cost.forEach((c, i) => { c.p = (u.id === "vision" ? 4 : 2) * (i + 1); }));
 const CAMPAIGN_RES = ["madera", "roca", "metal"];
@@ -66,7 +71,9 @@ const CAMPAIGN_PTS_ICON = "assets/iconos/gloria_mushboom_forest.png"; // los pun
 function campaignChapterGnomes(ch) { return ch.boss ? 0 : (ch.camps || 0) * (ch.cages || 0) + 1; }
 const CAMPAIGN_RES_ICON = { madera: "assets/iconos/recurso_madera.png", roca: "assets/iconos/recurso_roca.png", metal: "assets/iconos/recurso_metal.png" };
 
-const CAMPAIGN_INTRO_VOICES = { es: "assets/campana/voz_intro_es.mp3?v=1" }; // añadir aquí la voz de cada idioma nuevo
+const CAMPAIGN_INTRO_VOICES = { es: "assets/campana/voz_intro_es.mp3?v=1", en: "assets/campana/voz_intro_en.mp3?v=1" };
+// Tiempos de los 4 subtítulos de la intro por idioma (cada locución tiene su propio ritmo); sin entrada = los de español.
+const CAMPAIGN_INTRO_SUB_TIMES = { es: [[0.3, 10.5], [10.9, 20.2], [20.4, 31.3], [31.6, 40.8]], en: [[0.3, 10.0], [10.4, 20.4], [20.7, 29.5], [31.5, 40.0]] }; // añadir aquí la voz de cada idioma nuevo
 const CAMPAIGN_KILL_POINTS = 3;
 const CAMPAIGN_START_GLORY = 4;
 const CAMPAIGN_EXTRACT_ICON = "assets/iconos/extraccion.png?v=2";
@@ -100,7 +107,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_how: "CÓMO SE JUEGA",
     cmp_hud: "{a}/{b}", cmp_extract: "Extraer", cmp_extract_q: "¿EXTRAER Y TERMINAR?", cmp_extract_far: "UNIDADES DEMASIADO LEJOS DEL OBELISCO", cmp_extract_info: "Te llevas los gnomos, los recursos y los puntos que te sobren.",
     cmp_yes: "EXTRAER", cmp_no: "SEGUIR", cmp_res_ok: "¡CAPÍTULO SUPERADO!", cmp_res_part: "EXTRACCIÓN COMPLETADA", cmp_res_fail: "HAS CAÍDO",
-    cmp_res_g: "Gnomos estampados", cmp_res_k: "Neutrales derrotados", cmp_res_goal: "Objetivo: {n} gnomos", cmp_res_half: "Al caer te quedas sin nada: ni gnomos, ni recursos, ni puntos.", cmp_res_time: "¡SE ACABÓ EL TIEMPO!", cmp_res_timeup: "No reuniste a todos los gnomos a tiempo: conservas los gnomos, pero solo la mitad de los recursos.", cmp_hud_turns: "{a} turnos", cmp_stat_gnomes: "gnomos", cmp_stat_turns: "turnos", cmp_stat_camps: "campamentos", cmp_stat_foeatk: "ataque enemigo", cmp_stat_foedef: "defensa enemiga", cmp_warn_turns: "¡QUEDAN {n} TURNOS!",
+    cmp_res_loot: "BOTÍN", cmp_res_lost: "BOTÍN PERDIDO", cmp_res_g: "Gnomos estampados", cmp_res_k: "Neutrales derrotados", cmp_res_goal: "Objetivo: {n} gnomos", cmp_res_half: "Al caer te quedas sin nada: ni gnomos, ni recursos, ni puntos.", cmp_res_time: "¡SE ACABÓ EL TIEMPO!", cmp_res_timeup: "No reuniste a todos los gnomos a tiempo: conservas los gnomos, pero solo la mitad de los recursos.", cmp_hud_turns: "{a} turnos", cmp_stat_gnomes: "gnomos", cmp_stat_turns: "turnos", cmp_stat_camps: "campamentos", cmp_stat_foeatk: "ataque enemigo", cmp_stat_foedef: "defensa enemiga", cmp_warn_turns: "¡QUEDAN {n} TURNOS!",
     cmp_back_map: "VOLVER AL MAPA", cmp_free: "¡JAULA ABIERTA!", cmp_done_banner: "¡OBJETIVO CUMPLIDO!", cmp_warn_ob: "¡ATACAN TU OBELISCO!", cmp_warn_none: "YA NO QUEDAN GNOMOS EN LA ZONA",
     cmp_skip: "SALTAR", cmp_hold_skip: "MANTÉN PARA SALTAR", cmp_start: "COMENZAR", cmp_war: "LA GUERRA ETERNA", cmp_next: "SIGUIENTE", cmp_ok: "ENTENDIDO", cmp_nizak: "Nizak",
     cmp_ch1: "Capítulo 1 · Claro de las Setas", cmp_ch2: "Capítulo 2 · Orilla Pantanosa", cmp_ch3: "Capítulo 3 · Espesura Profunda", cmp_ch4: "Capítulo 4 · Cumbre del Hongo", cmp_ch5: "Capítulo 5 · El GnomOgro",
@@ -141,7 +148,7 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_how: "HOW TO PLAY",
     cmp_hud: "{a}/{b}", cmp_extract: "Extract", cmp_extract_q: "EXTRACT AND FINISH?", cmp_extract_far: "UNITS TOO FAR FROM THE OBELISK", cmp_extract_info: "You keep the gnomes, the resources and the points you have left.",
     cmp_yes: "EXTRACT", cmp_no: "KEEP GOING", cmp_res_ok: "CHAPTER CLEARED!", cmp_res_part: "EXTRACTION COMPLETE", cmp_res_fail: "YOU HAVE FALLEN",
-    cmp_res_g: "Gnomes slammed", cmp_res_k: "Neutrals defeated", cmp_res_goal: "Goal: {n} gnomes", cmp_res_half: "When you fall you keep nothing: no gnomes, no resources, no points.", cmp_res_time: "TIME IS UP!", cmp_res_timeup: "You did not gather every gnome in time: you keep the gnomes, but only half the resources.", cmp_hud_turns: "{a} turns", cmp_stat_gnomes: "gnomes", cmp_stat_turns: "turns", cmp_stat_camps: "camps", cmp_stat_foeatk: "enemy attack", cmp_stat_foedef: "enemy armour", cmp_warn_turns: "{n} TURNS LEFT!",
+    cmp_res_loot: "LOOT", cmp_res_lost: "LOOT LOST", cmp_res_g: "Gnomes slammed", cmp_res_k: "Neutrals defeated", cmp_res_goal: "Goal: {n} gnomes", cmp_res_half: "When you fall you keep nothing: no gnomes, no resources, no points.", cmp_res_time: "TIME IS UP!", cmp_res_timeup: "You did not gather every gnome in time: you keep the gnomes, but only half the resources.", cmp_hud_turns: "{a} turns", cmp_stat_gnomes: "gnomes", cmp_stat_turns: "turns", cmp_stat_camps: "camps", cmp_stat_foeatk: "enemy attack", cmp_stat_foedef: "enemy armour", cmp_warn_turns: "{n} TURNS LEFT!",
     cmp_back_map: "BACK TO THE MAP", cmp_free: "CAGE OPEN!", cmp_done_banner: "GOAL REACHED!", cmp_warn_ob: "YOUR OBELISK IS UNDER ATTACK!", cmp_warn_none: "NO GNOMES LEFT IN THE AREA",
     cmp_skip: "SKIP", cmp_hold_skip: "HOLD TO SKIP", cmp_start: "BEGIN", cmp_war: "THE ETERNAL WAR", cmp_next: "NEXT", cmp_ok: "GOT IT", cmp_nizak: "Nizak",
     cmp_ch1: "Chapter 1 · Mushroom Glade", cmp_ch2: "Chapter 2 · Boggy Shore", cmp_ch3: "Chapter 3 · Deep Thicket", cmp_ch4: "Chapter 4 · Fungus Peak", cmp_ch5: "Chapter 5 · The GnomOgre",
@@ -305,22 +312,47 @@ const Campaign = {
   },
 
 
-  render() {
-    const root = document.getElementById("camp-root");
-    if (!root || !this.s) return;
-    if (!this._pre && typeof Artifacts !== "undefined" && typeof ART_DEFS !== "undefined") { // precarga: nada aparece de golpe al abrir la pestaña
-      this._pre = ["cushion"].concat(ART_DEFS.map((d) => d.id)).map((k) => { const im = new Image(); im.src = Artifacts.img(k); return im; }).concat([(() => { const im = new Image(); im.src = CAMPAIGN_EXTRACT_ICON; return im; })()]);
-    }
+  // ---------- Mapa: islas flotantes + franja de ficha ----------
+  _mapPoints(mobile) { return CAMPAIGN_CHAPTERS.map((c) => { const p = CAMPAIGN_MAP_POS[c.n] || [50, 50, 50, 50]; return mobile ? [p[2], p[3]] : [p[0], p[1]]; }); },
+  _mapRoutes(mobile) {
+    const P = this._mapPoints(mobile).map(([x, y]) => [x * 10, y * 10]);
+    return CAMPAIGN_CHAPTERS.slice(0, -1).map((c, i) => {
+      const [x0, y0] = P[i], [x1, y1] = P[i + 1], my = Math.min(y0, y1) - 70;
+      return `<path class="${this.s.done[c.n] ? "cmp-route cmp-route--done" : "cmp-route"}" d="M ${x0} ${y0} Q ${(x0 + x1) / 2} ${my} ${x1} ${y1}"/>`;
+    }).join("");
+  },
+  _mapSky() {
+    const rnd = (i) => { const v = Math.sin(i * 78.233) * 43758.5453; return v - Math.floor(v); };
+    let h = "";
+    for (let i = 0; i < 26; i++) h += `<i class="cmp-star" style="left:${(rnd(i) * 100).toFixed(1)}%;top:${(rnd(i + 50) * 100).toFixed(1)}%;opacity:${(.35 + rnd(i + 9) * .5).toFixed(2)}"></i>`;
+    [[4, 78, 34, 16, 0], [30, 86, 40, 14, 1], [62, 80, 34, 18, 0], [84, 88, 30, 12, 1], [14, 14, 26, 10, 1], [46, 8, 24, 9, 0], [76, 10, 28, 10, 1]].forEach(([x, y, w, ht, k]) => { h += `<div class="cmp-cloud${k ? " cmp-cloud--b" : ""}" style="left:${x}%;top:${y}%;width:${w}%;height:${ht}%"></div>`; });
+    return h;
+  },
+  _mapHtml(sel) {
     const t = (k, v) => this.t(k, v);
-    const sel = this.ch(this.sel) || this.ch(1);
-    const nodes = CAMPAIGN_CHAPTERS.map((c, i) => {
-      const un = this.unlocked(c.n), done = !!this.s.done[c.n];
-      const cls = ["camp-node", un ? "camp-node--open" : "camp-node--locked", done ? "camp-node--done" : "", c.n === sel.n ? "camp-node--sel" : ""].join(" ");
-      const img = c.boss ? `<i class="ph-fill ph-skull camp-node__skull"></i>` : `<img class="camp-node__img" src="assets/niveles/isla_mushboom_forest.png" alt="">`;
-      const badge = !un ? `<i class="ph-fill ph-lock-simple camp-node__badge"></i>` : done ? `<i class="ph-fill ph-check-circle camp-node__badge camp-node__badge--ok"></i>` : "";
-      return `<button type="button" class="${cls}" data-n="${c.n}" style="--i:${i}">${img}${badge}<span class="camp-node__n">${c.n}</span>${!c.boss && un ? this._starsHtml(c.n, "camp-stars--node") : ""}</button>`;
-    }).join('<i class="camp-link"></i>');
-
+    const pop = !this._mapShown; this._mapShown = true;
+    const isles = CAMPAIGN_CHAPTERS.map((c, i) => {
+      const p = CAMPAIGN_MAP_POS[c.n] || [50, 50, 50, 50], un = this.unlocked(c.n), done = !!this.s.done[c.n];
+      const cls = ["cmp-isle", un ? "cmp-isle--open" : "cmp-isle--locked", c.boss ? "cmp-isle--boss" : "", c.n === sel.n ? "cmp-isle--sel" : "", pop ? "cmp-isle--pop" : ""].join(" ");
+      const badge = done ? `<span class="cmp-badge"><i class="ph-fill ph-check"></i></span>` : !un ? `<span class="cmp-badge"><i class="ph-fill ph-lock-simple"></i></span>` : "";
+      const here = un && !done && !c.boss && this._isCurrent(c.n) ? `<img class="cmp-here" src="assets/equipos/MushboomForest/gnomo_idle.png" alt="">` : "";
+      const stars = !c.boss && un ? this._starsHtml(c.n, "cmp-isle__stars") : "";
+      const name = t("cmp_ch" + c.n).replace(/^[^·]*· /, "");
+      return `<div class="${cls}" style="--x:${p[0]}%;--y:${p[1]}%;--mx:${p[2]}%;--my:${p[3]}%;--w:${p[4] || 170}px;--wm:${p[5] || 120}px;--d:${i * .1}s;--fd:${-i * 1.1}s">
+        <button type="button" class="cmp-isle__btn" data-n="${c.n}" aria-label="${name}">
+          <i class="ph-fill ph-caret-down cmp-arrow"></i>
+          <span class="cmp-isle__float">${here}<img class="cmp-isle__img" src="assets/niveles/isla_mushboom_forest.png" alt="">${c.boss ? '<span class="cmp-skull"><i class="ph-fill ph-skull"></i></span>' : ""}<span class="cmp-num"><span>${c.n}</span></span>${badge}</span>
+          <span class="cmp-shadow"></span><span class="cmp-name">${name}</span>${stars}
+        </button></div>`;
+    }).join("");
+    return `<div class="p5-banner cmp-frame"><div class="cmp-board"><div class="cmp-band cmp-band--1"></div><div class="cmp-band cmp-band--2"></div><div class="cmp-band cmp-band--3"></div>${this._mapSky()}
+      <svg class="cmp-svg cmp-svg--d" viewBox="0 0 1000 1000" preserveAspectRatio="none">${this._mapRoutes(false)}</svg>
+      <svg class="cmp-svg cmp-svg--m" viewBox="0 0 1000 1000" preserveAspectRatio="none">${this._mapRoutes(true)}</svg>${isles}</div></div>`;
+  },
+  // El gnomo marca el primer capítulo desbloqueado que aún no está completado.
+  _isCurrent(n) { const f = CAMPAIGN_CHAPTERS.find((c) => !c.boss && this.unlocked(c.n) && !this.s.done[c.n]); return !!f && f.n === n; },
+  _stripHtml(sel) {
+    const t = (k, v) => this.t(k, v);
     let status, action;
     if (sel.boss) { status = t("cmp_boss"); action = `<button class="p5-banner p5-banner--action camp-play" disabled><span class="p5-banner__label">${t("cmp_soon")}</span></button>`; }
     else if (!this.unlocked(sel.n)) {
@@ -333,6 +365,39 @@ const Campaign = {
         action = `<button class="p5-banner p5-banner--action camp-play" disabled><span class="p5-banner__label"><i class="ph-fill ph-check-circle"></i> ${t("cmp_depleted_btn")}</span></button>`;
       } else action = `<button class="p5-banner p5-banner--action camp-play" data-play="${sel.n}"><span class="p5-banner__label">${t("cmp_play")}</span></button>`;
     }
+
+    const tile = (ic, val, lb, cls) => `<span class="cmp-tile${cls ? " " + cls : ""}"><i class="ph-fill ${ic}"></i><b>${val}</b><small>${lb}</small></span>`;
+    const tiles = sel.boss ? "" : `<div class="cmp-tiles">${tile("ph-users-three", sel.goal, t("cmp_stat_gnomes"))}${tile("ph-hammer", campaignChapterGnomes(sel) - this.remaining(sel.n) + "/" + campaignChapterGnomes(sel), t("cmp_stat_stamped"))}${tile("ph-hourglass-medium", campaignTurnLimit(sel), t("cmp_stat_turns"))}${tile("ph-tent", this.campsBest(sel.n) + "/" + sel.camps, t("cmp_stat_camps"))}${sel.foe && sel.foe.arma ? tile("ph-sword", "+" + sel.foe.arma, t("cmp_stat_foeatk"), "cmp-tile--foe") : ""}${sel.foe && sel.foe.armadura ? tile("ph-shield", "+" + sel.foe.armadura, t("cmp_stat_foedef"), "cmp-tile--foe") : ""}</div>`;
+    const stars = sel.boss || !this.unlocked(sel.n) ? "" : this._starsHtml(sel.n, "cmp-strip__stars");
+    return `<div class="cmp-strip__body">
+      <div class="cmp-strip__id"><div class="cmp-strip__kicker">${t("cmp_chapter", { n: sel.n })}</div><div class="cmp-strip__name">${t("cmp_ch" + sel.n).replace(/^[^·]*· /, "")}</div>${stars}</div>
+      ${tiles}
+      <div class="cmp-strip__act">${action}</div>
+      ${status ? `<p class="cmp-strip__status">${status}</p>` : ""}${sel.boss || !this.unlocked(sel.n) ? "" : `<p class="cmp-strip__hint">${t("cmp_star_hint")}</p>`}
+    </div>`;
+  },
+  _selectChapter(n) {
+    const root = document.getElementById("camp-root"), sel = this.ch(n);
+    if (!root || !sel) return;
+    this.sel = n;
+    root.querySelectorAll(".cmp-isle").forEach((el) => el.classList.toggle("cmp-isle--sel", +el.querySelector(".cmp-isle__btn").dataset.n === n));
+    const strip = root.querySelector("#cmp-strip");
+    if (!strip) return this.render();
+    strip.innerHTML = this._stripHtml(sel);
+    strip.classList.remove("cmp-strip--in"); void strip.offsetWidth; strip.classList.add("cmp-strip--in");
+    const pb = strip.querySelector("[data-play]");
+    if (pb) pb.addEventListener("click", () => { this._click(); this.play(+pb.dataset.play); });
+  },
+
+  render() {
+    const root = document.getElementById("camp-root");
+    if (!root || !this.s) return;
+    if (!this._pre && typeof Artifacts !== "undefined" && typeof ART_DEFS !== "undefined") { // precarga: nada aparece de golpe al abrir la pestaña
+      this._pre = ["cushion"].concat(ART_DEFS.map((d) => d.id)).map((k) => { const im = new Image(); im.src = Artifacts.img(k); return im; }).concat([CAMPAIGN_EXTRACT_ICON, "assets/niveles/isla_mushboom_forest.png", "assets/equipos/MushboomForest/gnomo_idle.png"].map((u) => { const im = new Image(); im.src = u; return im; }));
+    }
+    const t = (k, v) => this.t(k, v);
+    const sel = this.ch(this.sel) || this.ch(1);
+    const nodes = this._mapHtml(sel);
 
     const upCard = (u) => {
       const cat = CAMPAIGN_CATS.find((c) => c.id === u.cat) || CAMPAIGN_CATS[0];
@@ -353,16 +418,7 @@ const Campaign = {
     const tabs = [["map", "ph-map-trifold", t("cmp_tab_map"), ""], ["up", "ph-hammer", t("cmp_tab_up"), ""]]
       .map(([id, ic, lb, sm]) => `<button type="button" class="camp-tab${tab === id ? " camp-tab--on" : ""}" data-tab="${id}"><i class="ph-fill ${ic}"></i><span>${lb}</span>${sm ? `<small>${sm}</small>` : ""}</button>`).join("");
     const pane = tab === "map"
-      ? `<div class="camp-pane camp-pane--map">
-          <div class="camp-map">${nodes}</div>
-          <div class="camp-detail">
-            <div class="camp-detail__kicker">${t("cmp_chapter", { n: sel.n })}</div>
-            <div class="camp-detail__name">${t("cmp_ch" + sel.n).replace(/^[^·]*· /, "")}</div>
-            ${sel.boss ? "" : `<div class="camp-detail__stats"><span class="camp-stat"><i class="ph-fill ph-users-three"></i><b>${sel.goal}</b><small>${t("cmp_stat_gnomes")}</small></span><span class="camp-stat camp-stat--got"><i class="ph-fill ph-hammer"></i><b>${campaignChapterGnomes(sel) - this.remaining(sel.n)}/${campaignChapterGnomes(sel)}</b><small>${t("cmp_stat_stamped")}</small></span><span class="camp-stat"><i class="ph-fill ph-hourglass-medium"></i><b>${campaignTurnLimit(sel)}</b><small>${t("cmp_stat_turns")}</small></span><span class="camp-stat camp-stat--got"><i class="ph-fill ph-tent"></i><b>${this.campsBest(sel.n)}/${sel.camps}</b><small>${t("cmp_stat_camps")}</small></span>${sel.foe && sel.foe.arma ? `<span class="camp-stat camp-stat--foe"><i class="ph-fill ph-sword"></i><b>+${sel.foe.arma}</b><small>${t("cmp_stat_foeatk")}</small></span>` : ""}${sel.foe && sel.foe.armadura ? `<span class="camp-stat camp-stat--foe"><i class="ph-fill ph-shield"></i><b>+${sel.foe.armadura}</b><small>${t("cmp_stat_foedef")}</small></span>` : ""}</div>`}
-            ${sel.boss || !this.unlocked(sel.n) ? "" : `<div class="camp-detail__stars">${this._starsHtml(sel.n, "camp-stars--big")}<small>${t("cmp_star_hint")}</small></div>`}
-            <div class="camp-detail__status">${status}</div>
-            ${action}
-          </div></div>`
+      ? `<div class="camp-pane camp-pane--map">${nodes}<div class="p5-banner cmp-strip" id="cmp-strip">${this._stripHtml(sel)}</div></div>`
       : `<div class="camp-pane camp-pane--up">${upCards}</div>`;
     root.innerHTML = `
       <div class="camp-top"><span class="camp-chip"><i class="ph-fill ph-users-three"></i> ${t("cmp_gnomes")} <b>${this.s.gnomes}</b></span><span class="camp-chip camp-chip--pts"><img src="${CAMPAIGN_PTS_ICON}" alt=""><b>${this.s.pts || 0}</b></span>${res}</div>
@@ -372,7 +428,7 @@ const Campaign = {
     const abBtn = root.querySelector("[data-abandon]");
     if (abBtn) abBtn.addEventListener("click", () => { this._click(); this._askAbandon(); });
     root.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { this._click(); this.tab = b.dataset.tab; this.render(); }));
-    root.querySelectorAll(".camp-node").forEach((b) => b.addEventListener("click", () => { this._click(); this.sel = +b.dataset.n; this.render(); }));
+    root.querySelectorAll(".cmp-isle__btn").forEach((b) => b.addEventListener("click", () => { this._click(); this._selectChapter(+b.dataset.n); }));
     const pb = root.querySelector("[data-play]");
     if (pb) pb.addEventListener("click", () => { this._click(); this.play(+pb.dataset.play); });
     root.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => this.buy(b.dataset.buy)));
@@ -533,6 +589,13 @@ const Campaign = {
     if (gn.spriteEl) gn.spriteEl.style.opacity = "";
     const img = gn._cageEl;
     if (img) { img.classList.add("camp-cage--open"); setTimeout(() => img.remove(), 520); gn._cageEl = null; }
+    // Como en la partida normal: al quedar libre, el gnomo sale huyendo de la unidad del jugador más cercana (si lo ve).
+    setTimeout(() => {
+      if (!this.run || this.run.over || !gn.el || gn.heldBy || gn.busy || typeof Units === "undefined") return;
+      let best = null, bd = 99;
+      Units.list.forEach((u) => { if (u.team !== "player") return; const d = this._cheb(u, gn); if (d < bd) { bd = d; best = u; } });
+      if (best) gn.reactToPlayerMove(best);
+    }, 560);
   },
 
   _setupObelisk(ob) {
@@ -788,19 +851,24 @@ const Campaign = {
     const title = fallen ? this.t("cmp_res_fail") : timeout ? this.t("cmp_res_time") : completed ? this.t("cmp_res_ok") : this.t("cmp_res_part");
     const ov = document.createElement("div");
     ov.className = "camp-result";
-    ov.innerHTML = `<div class="camp-result__panel">
-      <div class="camp-result__title${fallen || timeout ? " camp-result__title--bad" : ""}">${title}</div>
-      <div class="camp-result__rows">
-        <div><span>${this.t("cmp_res_g")}</span><b>${r.delivered}</b></div>
-        <div class="camp-result__res"><span class="camp-cost camp-cost--pts"><img src="${CAMPAIGN_PTS_ICON}" alt="">+${got.pts || 0}</span>${CAMPAIGN_RES.map((k) => `<span class="camp-cost"><img src="${CAMPAIGN_RES_ICON[k]}" alt="">+${got[k]}</span>`).join("")}</div>
-        <div><span>${this.t("cmp_res_k")}</span><b>${r.kills}</b></div>
-        <div><span>${this.t("cmp_stat_camps")}</span><b>${r.campsCleared || 0}/${(this.ch(r.n) || {}).camps || 0}</b></div>
-        <div class="camp-result__stars">${this._starsHtml(r.n, "camp-stars--big")}</div>
-        <div class="camp-result__goal">${this.t("cmp_res_goal", { n: r.goal })}${fallen ? "<br>" + (this.upLevel("seguro") ? this.t("cmp_res_ins", { p: 20 * this.upLevel("seguro") }) : this.t("cmp_res_half")) : timeout ? "<br>" + (this.upLevel("prorroga") ? this.t("cmp_res_tprc", { p: 50 + 10 * this.upLevel("prorroga") }) : this.t("cmp_res_timeup")) : ""}</div></div>
-      <button class="camp-result__btn">${this.t("cmp_back_map")}</button></div>`;
+    const bad = fallen || timeout;
+    const maxCamps = (this.ch(r.n) || {}).camps || 0;
+    const note = fallen ? (this.upLevel("seguro") ? this.t("cmp_res_ins", { p: 20 * this.upLevel("seguro") }) : this.t("cmp_res_half"))
+      : timeout ? (this.upLevel("prorroga") ? this.t("cmp_res_tprc", { p: 50 + 10 * this.upLevel("prorroga") }) : this.t("cmp_res_timeup")) : "";
+    const row = (icon, label, val, small, i) => `<div class="res-row${bad ? " res-row--bad" : ""}" style="animation-delay:${0.1 + i * 0.12}s"><i class="ph-fill ${icon}"></i><span class="res-row__label">${label}</span><span class="res-row__val">${val}${small ? `<small> / ${small}</small>` : ""}</span></div>`;
+    const loot = [[CAMPAIGN_PTS_ICON, got.pts || 0]].concat(CAMPAIGN_RES.map((k) => [CAMPAIGN_RES_ICON[k], got[k] || 0]));
+    const lost = loot.every((x) => !x[1]);
+    ov.innerHTML = `<div class="p5-banner res-card"><div class="res-body">
+      <h2 class="res-title${bad ? " res-title--bad" : ""}">${title}</h2>
+      <div class="res-stars">${this.starFlags(r.n).map((on) => `<i class="ph-fill ph-star res-star${on ? " res-star--on" : ""}"></i>`).join("")}</div>
+      <div class="res-rows">${row("ph-flag-banner", this.t("cmp_res_g"), r.delivered, r.goal, 0)}${row("ph-skull", this.t("cmp_res_k"), r.kills, 0, 1)}${row("ph-tent", this.t("cmp_stat_camps"), r.campsCleared || 0, maxCamps, 2)}</div>
+      <div class="res-loot-h">${this.t(lost && bad ? "cmp_res_lost" : "cmp_res_loot")}</div>
+      <div class="res-loot">${loot.map((x, i) => `<div class="res-tile${x[1] ? "" : " res-tile--zero"}" style="animation-delay:${0.5 + i * 0.09}s"><img src="${x[0]}" alt=""><b>+${x[1]}</b></div>`).join("")}</div>
+      ${note ? `<p class="res-note">${note}</p>` : ""}
+      <div class="res-foot"><button type="button" class="p5-banner p5-banner--action res-go"><span class="p5-banner__label"><i class="ph-fill ph-map-trifold"></i> ${this.t("cmp_back_map")}</span></button></div></div></div>`;
     document.body.appendChild(ov);
     requestAnimationFrame(() => ov.classList.add("camp-result--on"));
-    ov.querySelector(".camp-result__btn").addEventListener("click", () => { this._click(); ov.remove(); this.leaveToMap(); });
+    ov.querySelector(".res-go").addEventListener("click", () => { this._click(); ov.remove(); this.leaveToMap(); });
     this._resultEl = ov;
   },
 
@@ -826,11 +894,13 @@ const Campaign = {
   // Escena de vídeo del capítulo 1 (3D con los sprites del juego, sin voces): subtítulos propios en el idioma elegido.
   _cinematic(ch) {
     const L = this.t("cmp_intro1").split("|");
+    const lang = typeof I18N !== "undefined" ? I18N.currentLang : "es";
+    const T = CAMPAIGN_INTRO_SUB_TIMES[lang] || CAMPAIGN_INTRO_SUB_TIMES.es;
     return CampaignIntro.playVideo({
       src: "assets/campana/intro_guerra.mp4?v=17",
-      voice: CAMPAIGN_INTRO_VOICES[typeof I18N !== "undefined" ? I18N.currentLang : "es"] || null, // locución aparte por idioma (sin entrada = sin voz)
+      voice: CAMPAIGN_INTRO_VOICES[lang] || null, // locución aparte por idioma (sin entrada = sin voz)
       nizak: this.t("cmp_nizak"), hold: this.t("cmp_hold_skip"),
-      subs: [{ t0: 0.3, t1: 10.5, text: L[0] }, { t0: 10.9, t1: 20.2, text: L[1] }, { t0: 20.4, t1: 31.3, text: L[2] }, { t0: 31.6, t1: 40.8, text: L[3] }],
+      subs: T.map((x, i) => ({ t0: x[0], t1: x[1], text: L[i] })),
       onStart: () => { if (typeof Music !== "undefined" && Music.duck) Music.duck(41500); },
     });
   },

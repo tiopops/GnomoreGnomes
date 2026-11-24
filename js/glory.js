@@ -374,7 +374,7 @@ const Glory = {
   // mismo espíritu que UnitInfo.statRow (js/unitinfo.js) — una función
   // compartida en vez de repetir el marcado por cada fuente de puntos.
   _sourceRow(icon, label, amount, { muted = false } = {}) {
-    const sign = amount > 0 ? "+" : "";
+    const sign = typeof amount === "number" && amount > 0 ? "+" : "";
     return `
       <div class="glory-popup-row${muted ? " glory-popup-row--muted" : ""}">
         <i class="ph-fill ${icon} glory-popup-row__icon"></i>
@@ -394,6 +394,7 @@ const Glory = {
     if (this.overlayEl) return;
     const team = "player";
     SFX.click();
+    const isCamp = typeof Campaign !== "undefined" && Campaign.active;
 
     const villages = typeof Villages !== "undefined" ? Villages.ownedCount(team) : 0;
     const villagesBonus = this._villagesBonus(team);
@@ -418,8 +419,12 @@ const Glory = {
             ${iconSrc ? `<img class="glory-popup-total__img" src="${iconSrc}" alt="">` : `<i class="ph-fill ph-trophy"></i>`}
             <span>${this.points[team]}<small class="glory-hud__cap">/${GLORY_CAP}</small></span>
           </div>
-          <p class="glory-popup-subtitle">${this.points[team] >= GLORY_CAP ? "Tu gloria está llena: lo que ganes ahora se pierde. ¡Gástala!" : "Vas a ganar esto al empezar tu próximo turno:"}</p>
+          <p class="glory-popup-subtitle">${isCamp ? "En campaña no hay puntos por turno. Así los consigues:" : this.points[team] >= GLORY_CAP ? "Tu gloria está llena: lo que ganes ahora se pierde. ¡Gástala!" : "Vas a ganar esto al empezar tu próximo turno:"}</p>
           <div class="glory-popup-sources">
+            ${isCamp ? `
+            ${this._sourceRow("ph-sparkle", "Puntos por turno", 0, { muted: true })}
+            ${this._sourceRow("ph-skull", "Puntos por baja enemiga", CAMPAIGN_KILL_POINTS + (Campaign.upLevel ? Campaign.upLevel("cazador") : 0))}
+            ${this._sourceRow("ph-flag-banner", "Puntos por gnomo estampado", "sus puntos")}` : `
             ${this._sourceRow("ph-sparkle", "Base de cada turno", GLORY_PER_TURN_START)}
             ${this._sourceRow(
               "ph-skull",
@@ -429,20 +434,15 @@ const Glory = {
             )}
             ${this._sourceRow(
               "ph-house-simple",
-              // Pedido explícito: "indica 'sin poblados conquistados'...poblados?
-              // son Totems!" — Villages.js sigue llamándose así por dentro (el
-              // nombre del archivo/mecánica no ha cambiado), pero el propio
-              // juego ya no usa la palabra "poblado" en ningún otro texto
-              // visible, todo dice "tótem" (ver races.js, backpack.js...).
               villages > 0 ? `Tótems conquistados (${villages})` : "Sin tótems conquistados",
               villagesBonus,
               { muted: villagesBonus === 0 }
             )}
-            ${relicBonus > 0 ? this._sourceRow("ph-coin", "Gnomeda de la Suerte", relicBonus) : ""}
+            ${relicBonus > 0 ? this._sourceRow("ph-coin", "Gnomeda de la Suerte", relicBonus) : ""}`}
           </div>
           <div class="glory-popup-row glory-popup-row--next">
-            <span class="glory-popup-row__label">Próximo turno</span>
-            <span class="glory-popup-row__amount">+${nextTotal}</span>
+            <span class="glory-popup-row__label">${isCamp ? "Acumulados para la extracción" : "Próximo turno"}</span>
+            <span class="glory-popup-row__amount">${isCamp ? this.points[team] : "+" + nextTotal}</span>
           </div>
         </div>
       </div>`;

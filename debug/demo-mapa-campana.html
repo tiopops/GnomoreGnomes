@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEMO v2 — Mapa de campaña (islas flotantes)</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../assets/fonts/phosphor/fill.css">
+<style>
+  /* DEMO v2 del mapa de campaña (solo muestra, NO está en el juego). CSS, fuente, iconos y sprites reales del juego. */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { padding: 20px 16px 40px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .mp-h { margin: 6px 0 0; font-size: 1.7rem; letter-spacing: .08em; text-transform: uppercase; text-shadow: 3px 3px 0 rgba(0,0,0,.6); }
+  .mp-h::after { content: ""; display: block; height: 3px; margin-top: 6px; background: rgba(255,255,255,.35); }
+  .mp-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .mp-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; font-size: 1rem; background: #2b2733; border: 2px solid #ffcf3f; transform: skewX(-12deg); box-shadow: 3px 3px 0 rgba(0,0,0,.55); }
+  .mp-chip > * { transform: skewX(12deg); } .mp-chip img { width: 22px; height: 22px; object-fit: contain; } .mp-chip b { font-weight: 400; color: #ffcf3f; }
+
+  .mp-wrap { width: min(1180px, 100%); display: flex; flex-direction: column; gap: 18px; }
+
+  /* ---------- Escena: islas flotantes en el vacío ---------- */
+  .mp-frame { display: block; padding: 14px 16px; }
+  .mp-board { position: relative; z-index: 2; width: 100%; height: 470px; overflow: hidden; background: #1c1a27; clip-path: var(--gg-slot-clip); isolation: isolate; }
+  .mp-band { position: absolute; left: 0; right: 0; }
+  .mp-band--1 { top: 0; height: 34%; background: #1c1a27; } .mp-band--2 { top: 34%; height: 33%; background: #211e2f; } .mp-band--3 { top: 67%; height: 33%; background: #272336; }
+  .mp-cloud { position: absolute; background: #2d2940; clip-path: polygon(0 100%, 6% 58%, 18% 52%, 26% 24%, 42% 18%, 54% 40%, 68% 30%, 82% 52%, 94% 56%, 100% 100%); animation: mp-cloud 40s linear infinite; }
+  .mp-cloud--b { background: #34304a; animation-duration: 60s; }
+  @keyframes mp-cloud { from { transform: translateX(-30px); } 50% { transform: translateX(30px); } to { transform: translateX(-30px); } }
+  .mp-star { position: absolute; width: 4px; height: 4px; background: #6d6a86; }
+
+  .mp-svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
+  .mp-route { fill: none; stroke: #4a4562; stroke-width: 8; stroke-dasharray: 1 16; stroke-linecap: round; }
+  .mp-route-done { fill: none; stroke: #ffcf3f; stroke-width: 8; stroke-dasharray: 1 16; stroke-linecap: round; animation: mp-march 1s linear infinite; }
+  @keyframes mp-march { to { stroke-dashoffset: -17; } }
+
+  .mp-isle { position: absolute; z-index: 2; width: 0; height: 0; }
+  .mp-isle__btn { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); padding: 0; border: none; background: none; cursor: pointer; font: inherit; color: inherit; width: var(--w, 168px); transition: transform .18s ease; animation: mp-pop .5s cubic-bezier(.34,1.6,.64,1) both; animation-delay: var(--d, 0s); }
+  .mp-isle__btn:hover { transform: translate(-50%, -53%); }
+  .mp-isle--sel .mp-isle__btn { transform: translate(-50%, -54%) scale(1.1); }
+  @keyframes mp-pop { from { scale: 0; opacity: 0; } to { scale: 1; opacity: 1; } }
+  .mp-isle__float { display: block; position: relative; animation: mp-float 4.5s ease-in-out infinite; animation-delay: var(--fd, 0s); }
+  @keyframes mp-float { 50% { transform: translateY(-9px); } }
+  .mp-isle__img { display: block; width: 100%; height: auto; filter: drop-shadow(5px 5px 0 rgba(0,0,0,.5)); }
+  .mp-isle--locked .mp-isle__img { filter: grayscale(1) brightness(.32) drop-shadow(5px 5px 0 rgba(0,0,0,.5)); }
+  .mp-isle--boss .mp-isle__img { filter: grayscale(1) brightness(.2) hue-rotate(300deg) drop-shadow(5px 5px 0 rgba(0,0,0,.5)); }
+  .mp-shadow { position: absolute; left: 50%; top: calc(100% + 14px); width: 62%; height: 16px; transform: translateX(-50%); background: rgba(0,0,0,.35); border-radius: 50%; }
+  .mp-isle--sel .mp-shadow { background: none; border: 4px solid #ffcf3f; width: 74%; height: 22px; }
+  .mp-skull { position: absolute; left: 0; right: 0; top: 18%; display: flex; justify-content: center; font-size: 3.6rem; color: rgba(255,255,255,.4); pointer-events: none; }
+  .mp-here { position: absolute; z-index: 4; left: 50%; top: -34px; width: 62px; transform: translateX(-50%); pointer-events: none; filter: drop-shadow(3px 3px 0 rgba(0,0,0,.5)); animation: mp-hop 1.1s ease-in-out infinite; }
+  @keyframes mp-hop { 50% { transform: translate(-50%, -10px); } }
+  .mp-num { position: absolute; z-index: 3; left: 6%; top: 52%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #14121a; background: #ffcf3f; border: 3px solid #000; transform: rotate(45deg) skew(-3deg,-3deg); }
+  .mp-num > span { transform: rotate(-45deg); }
+  .mp-isle--locked .mp-num { background: #3a3550; color: #fff; }
+  .mp-badge { position: absolute; z-index: 3; right: 8%; top: 46%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #14121a; background: #ffcf3f; border: 3px solid #000; transform: rotate(8deg); }
+  .mp-isle--locked .mp-badge { background: #2b2733; color: #fff; }
+  .mp-name { position: absolute; left: 50%; top: calc(100% + 34px); transform: translateX(-50%); white-space: nowrap; font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; padding: 3px 12px; background: #0f0e16; color: #fff; clip-path: var(--gg-slot-clip); }
+  .mp-isle--locked .mp-name { color: rgba(255,255,255,.55); }
+  .mp-stars { position: absolute; left: 50%; top: calc(100% + 60px); transform: translateX(-50%); display: flex; gap: 2px; font-size: 1.1rem; color: rgba(255,255,255,.2); filter: drop-shadow(2px 2px 0 rgba(0,0,0,.55)); }
+  .mp-stars i.on { color: #ffcf3f; }
+  .mp-arrow { position: absolute; z-index: 5; left: 50%; top: -52px; transform: translateX(-50%); font-size: 1.8rem; color: #ffcf3f; -webkit-text-stroke: 3px #14121a; paint-order: stroke fill; animation: mp-hop 1s ease-in-out infinite; pointer-events: none; }
+
+  /* ---------- Ficha del capítulo (franja inferior) ---------- */
+  .dt-strip { display: block; padding: 20px 26px 20px 28px; animation: dt-in .25s ease both; }
+  @keyframes dt-in { from { transform: translateY(8px); opacity: 0; } to { opacity: 1; } }
+  .dt-body { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(200px, 1.1fr) minmax(280px, 1.5fr) auto; align-items: center; gap: 22px; }
+  .dt-kicker { font-size: .78rem; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; }
+  .dt-name { margin: 2px 0 8px; font-size: 1.6rem; color: #ffcf3f; letter-spacing: .03em; text-shadow: 3px 3px 0 rgba(0,0,0,.65); line-height: 1.1; }
+  .dt-stars { display: flex; gap: 4px; font-size: 1.7rem; color: rgba(255,255,255,.16); filter: drop-shadow(2px 2px 0 rgba(0,0,0,.55)); }
+  .dt-stars i.on { color: #ffcf3f; }
+  .dt-tiles { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+  .dt-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 2px 7px; background: rgba(255,255,255,.07); clip-path: var(--gg-slot-clip); }
+  .dt-tile i { font-size: 1.25rem; color: #ffcf3f; } .dt-tile b { font-weight: 400; font-size: 1.3rem; color: #fff; font-variant-numeric: tabular-nums; } .dt-tile span { font-size: .62rem; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+  .dt-tile--bad b { color: #ff8a8a; } .dt-tile--ok b { color: #7ee08a; }
+  .dt-act { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .dt-go { padding: 14px 54px; display: flex; font-size: 1.3rem; --p5-tone: #ffcf3d; border: none; font-family: inherit; }
+  .dt-go .p5-banner__label { color: #14121a; text-shadow: none; display: flex; gap: 10px; align-items: center; }
+  .dt-go[disabled] { --p5-tone: #2b2733; filter: none; cursor: default; } .dt-go[disabled] .p5-banner__label { color: rgba(255,255,255,.55); }
+  .dt-keys { display: flex; gap: 14px; font-size: .75rem; color: var(--muted); letter-spacing: .05em; }
+  .dt-keys kbd { font: inherit; font-size: .72rem; color: var(--ink); background: rgba(255,255,255,.12); padding: 2px 7px; clip-path: var(--gg-slot-clip); }
+  .dt-keys span { display: inline-flex; gap: 6px; align-items: center; }
+  .dt-hint { grid-column: 1 / -1; margin: 0; font-size: .8rem; color: var(--muted); }
+
+  @media (max-width: 900px) { .dt-body { grid-template-columns: 1fr; justify-items: center; text-align: center; } .dt-stars { justify-content: center; } .dt-tiles { width: 100%; } .dt-keys { display: none; } }
+  @media (max-width: 640px) {
+    .mp-board { height: 640px; }
+    .mp-isle__btn { width: var(--wm, 120px); }
+    .mp-name { top: calc(100% + 30px); font-size: .72rem; } .mp-stars { top: calc(100% + 52px); font-size: .95rem; } .mp-num { width: 30px; height: 30px; font-size: .95rem; }
+    .mp-here { width: 48px; top: -24px; } .mp-skull { font-size: 2.6rem; } .mp-arrow { top: -42px; font-size: 1.5rem; }
+    .dt-strip { padding: 20px 16px; } .dt-name { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+<h1 class="mp-h">Campaña</h1>
+<div class="mp-chips">
+  <span class="mp-chip"><i class="ph-fill ph-users-three" style="color:#ffcf3f"></i><span>GNOMOS <b>3</b></span></span>
+  <span class="mp-chip"><img src="../assets/iconos/gloria_mushboom_forest.png" alt=""><b>0</b></span>
+  <span class="mp-chip"><img src="../assets/iconos/recurso_madera.png" alt=""><b>6</b></span>
+  <span class="mp-chip"><img src="../assets/iconos/recurso_roca.png" alt=""><b>4</b></span>
+  <span class="mp-chip"><img src="../assets/iconos/recurso_metal.png" alt=""><b>1</b></span>
+</div>
+<div class="mp-wrap">
+  <div class="p5-banner mp-frame"><div class="mp-board" id="board">
+    <div class="mp-band mp-band--1"></div><div class="mp-band mp-band--2"></div><div class="mp-band mp-band--3"></div>
+    <div id="sky"></div>
+    <svg class="mp-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none" id="roads"></svg>
+    <div id="nodes"></div>
+  </div></div>
+  <div class="p5-banner dt-strip"><div class="dt-body" id="detail"></div></div>
+</div>
+
+<script>
+const CH = [
+  { n: 1, name: "Claro de las Setas", x: 12, y: 56, w: 150, wm: 112, mx: 30, my: 82, state: "done", stars: 3, gnomes: 3, stamped: "5/5", turns: 18, camps: "2/2" },
+  { n: 2, name: "Orilla Pantanosa", x: 31, y: 32, w: 168, wm: 128, mx: 70, my: 71, state: "open", stars: 1, gnomes: 4, stamped: "3/5", turns: 21, camps: "1/3" },
+  { n: 3, name: "Espesura Profunda", x: 50, y: 58, w: 176, wm: 128, mx: 32, my: 54, state: "locked", gnomes: 5, stamped: "0/5", turns: 25, camps: "0/4", req: { gnomes: 8, res: 24 } },
+  { n: 4, name: "Cumbre del Hongo", x: 69, y: 30, w: 184, wm: 134, mx: 68, my: 37, state: "locked", gnomes: 6, stamped: "0/5", turns: 28, camps: "0/5", req: { gnomes: 15, res: 50 } },
+  { n: 5, name: "El GnomOgro", x: 88, y: 56, w: 200, wm: 150, mx: 44, my: 14, state: "locked", boss: true, req: { gnomes: 24, res: 90 } },
+];
+const HAVE = { gnomes: 3, res: 11 };
+let selN = 2;
+const mq = window.matchMedia("(max-width: 640px)");
+const posOf = (c) => mq.matches ? [c.mx, c.my] : [c.x, c.y];
+
+function buildSky() {
+  const rnd = (i) => { const v = Math.sin(i * 78.233) * 43758.5453; return v - Math.floor(v); };
+  let h = "";
+  for (let i = 0; i < 26; i++) h += `<i class="mp-star" style="left:${rnd(i) * 100}%;top:${rnd(i + 50) * 100}%;opacity:${.35 + rnd(i + 9) * .5}"></i>`;
+  [[4, 78, 34, 16, ""], [30, 86, 40, 14, "b"], [62, 80, 34, 18, ""], [84, 88, 30, 12, "b"], [14, 14, 26, 10, "b"], [46, 8, 24, 9, ""], [76, 10, 28, 10, "b"]].forEach(([x, y, w, ht, k]) => { h += `<div class="mp-cloud ${k ? "mp-cloud--b" : ""}" style="left:${x}%;top:${y}%;width:${w}%;height:${ht}%"></div>`; });
+  document.getElementById("sky").innerHTML = h;
+}
+function build() {
+  const P = CH.map((c) => { const [x, y] = posOf(c); return [x * 10, y * 10]; });
+  const seg = (i) => { const [x0, y0] = P[i], [x1, y1] = P[i + 1], my = Math.min(y0, y1) - 70; return `M ${x0} ${y0} Q ${(x0 + x1) / 2} ${my} ${x1} ${y1}`; };
+  const done = CH.filter((c) => c.state === "done").length;
+  document.getElementById("roads").innerHTML = CH.slice(0, -1).map((c, i) => `<path class="${i < done ? "mp-route-done" : "mp-route"}" d="${seg(i)}"/>`).join("");
+  renderNodes();
+}
+function renderNodes() {
+  document.getElementById("nodes").innerHTML = CH.map((c, i) => {
+    const [x, y] = posOf(c);
+    const cls = `mp-isle mp-isle--${c.state}${c.boss ? " mp-isle--boss" : ""}${c.n === selN ? " mp-isle--sel" : ""}`;
+    const stars = c.boss || c.state === "locked" ? "" : `<div class="mp-stars">${[0, 1, 2].map((k) => `<i class="ph-fill ph-star${k < (c.stars || 0) ? " on" : ""}"></i>`).join("")}</div>`;
+    const badge = c.state === "done" ? `<span class="mp-badge"><i class="ph-fill ph-check"></i></span>` : c.state === "locked" ? `<span class="mp-badge"><i class="ph-fill ph-lock-simple"></i></span>` : "";
+    const here = c.state === "open" ? `<img class="mp-here" src="../assets/equipos/MushboomForest/gnomo_idle.png" alt="">` : "";
+    const arrow = c.n === selN ? `<i class="ph-fill ph-caret-down mp-arrow"></i>` : "";
+    return `<div class="${cls}" style="left:${x}%;top:${y}%">${arrow}
+      <button type="button" class="mp-isle__btn" data-n="${c.n}" style="--w:${c.w}px;--wm:${c.wm}px;--d:${i * .1}s">
+        <span class="mp-isle__float" style="--fd:${-i * 1.1}s">${here}<img class="mp-isle__img" src="../assets/niveles/isla_mushboom_forest.png" alt="">${c.boss ? '<span class="mp-skull"><i class="ph-fill ph-skull"></i></span>' : ""}<span class="mp-num"><span>${c.n}</span></span>${badge}</span>
+        <span class="mp-shadow"></span></button>
+      <div class="mp-name">${c.name}</div>${stars}</div>`;
+  }).join("");
+  document.querySelectorAll(".mp-isle__btn").forEach((b) => b.addEventListener("click", () => select(+b.dataset.n)));
+}
+function select(n) { selN = n; renderNodes(); renderDetail(); }
+function renderDetail() {
+  const c = CH.find((x) => x.n === selN), locked = c.state === "locked";
+  const g = c.req ? c.req.gnomes : 0, r = c.req ? c.req.res : 0;
+  const tiles = locked
+    ? `<div class="dt-tile ${HAVE.gnomes >= g ? "dt-tile--ok" : "dt-tile--bad"}"><i class="ph-fill ph-users-three"></i><b>${HAVE.gnomes}/${g}</b><span>Gnomos</span></div>
+       <div class="dt-tile ${HAVE.res >= r ? "dt-tile--ok" : "dt-tile--bad"}"><i class="ph-fill ph-package"></i><b>${HAVE.res}/${r}</b><span>Recursos</span></div>
+       ${c.boss ? "" : `<div class="dt-tile"><i class="ph-fill ph-hourglass-high"></i><b>${c.turns}</b><span>Turnos</span></div><div class="dt-tile"><i class="ph-fill ph-tent"></i><b>${c.camps.split("/")[1]}</b><span>Campam.</span></div>`}`
+    : `<div class="dt-tile"><i class="ph-fill ph-users-three"></i><b>${c.gnomes}</b><span>Gnomos</span></div>
+       <div class="dt-tile"><i class="ph-fill ph-flag-banner"></i><b>${c.stamped}</b><span>Estampados</span></div>
+       <div class="dt-tile"><i class="ph-fill ph-hourglass-high"></i><b>${c.turns}</b><span>Turnos</span></div>
+       <div class="dt-tile"><i class="ph-fill ph-tent"></i><b>${c.camps}</b><span>Campam.</span></div>`;
+  const stars = c.boss ? "" : `<div class="dt-stars">${[0, 1, 2].map((k) => `<i class="ph-fill ph-star${k < (c.stars || 0) ? " on" : ""}"></i>`).join("")}</div>`;
+  const strip = document.querySelector(".dt-strip"); strip.style.animation = "none"; void strip.offsetWidth; strip.style.animation = "";
+  document.getElementById("detail").innerHTML = `<div><div class="dt-kicker">Capítulo ${c.n}${c.boss ? " · Jefe" : ""}</div><h2 class="dt-name">${c.name}</h2>${stars}</div>
+    <div class="dt-tiles">${tiles}</div>
+    <div class="dt-act"><button type="button" class="p5-banner p5-banner--action dt-go" ${locked ? "disabled" : ""}><span class="p5-banner__label"><i class="ph-fill ${locked ? "ph-lock-simple" : "ph-play"}"></i> ${locked ? "BLOQUEADO" : "JUGAR"}</span></button>
+      <div class="dt-keys"><span><kbd>LB</kbd><kbd>RB</kbd> Capítulo</span><span><kbd>A</kbd> Jugar</span></div></div>
+    ${locked ? "" : `<p class="dt-hint">Completa el capítulo · estampa a todos los gnomos · elimina todos los campamentos en una misma partida</p>`}`;
+}
+document.addEventListener("keydown", (e) => { if (e.code === "ArrowRight") select(Math.min(5, selN + 1)); if (e.code === "ArrowLeft") select(Math.max(1, selN - 1)); });
+window.addEventListener("resize", () => build());
+buildSky(); build(); renderDetail();
+</script>
+</body>
+</html>

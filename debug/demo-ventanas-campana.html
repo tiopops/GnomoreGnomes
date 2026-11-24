@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEMO — Ventanas de campaña</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../assets/fonts/phosphor/fill.css">
+<style>
+  /* DEMO de la nueva ventana de subida de nivel (solo muestra, aún NO está en el juego).
+     Usa el CSS real del juego: .p5-banner, --p5-tone, --gg-slot-clip, Russo One y los iconos Phosphor. */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 28px 16px; }
+  .stage-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; z-index: 5; width: max-content; max-width: 96vw; }
+  .stage-bar button { font: inherit; font-size: .9rem; color: #fff; background: #2b2733; border: 2px solid #000; padding: 8px 14px; cursor: pointer; box-shadow: 3px 3px 0 rgba(0,0,0,.55); }
+  .stage-bar button:hover { background: #3a3344; } .stage-bar button.on { background: #ffcf3d; color: #14121a; }
+
+  .lv-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px 16px; background: rgba(10,11,16,.6); backdrop-filter: blur(3px); overflow-y: auto; }
+  .lv-overlay[hidden] { display: none; }
+
+  .lv-card { display: flex; flex-direction: column; width: min(540px, 100%); padding: 30px 28px 26px; margin: auto; animation: lv-in .28s cubic-bezier(.34,1.35,.64,1) both; }
+  @keyframes lv-in { from { transform: scale(.88) translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .lv-body { position: relative; z-index: 2; width: 100%; display: flex; flex-direction: column; gap: 14px; }
+
+  /* Cabecera: título + 3 rombos de nivel */
+  .lv-head { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .lv-title { margin: 0; font-size: 2rem; letter-spacing: .06em; color: #ffcf3f; text-shadow: 3px 3px 0 rgba(0,0,0,.7); line-height: 1; }
+  .lv-pips { display: flex; gap: 8px; }
+  .lv-pip { width: 18px; height: 18px; background: rgba(255,255,255,.14); transform: rotate(45deg) skew(-4deg,-4deg); }
+  .lv-pip--on { background: #ffcf3f; box-shadow: 2px 2px 0 rgba(0,0,0,.6); }
+  .lv-pip--new { animation: lv-pop .5s cubic-bezier(.34,1.8,.64,1) both .25s; }
+  @keyframes lv-pop { from { transform: rotate(45deg) scale(0); } to { transform: rotate(45deg) scale(1); } }
+
+  /* Unidad: retrato real + nombre + barra de XP llena */
+  .lv-unit { display: flex; align-items: center; gap: 14px; padding: 8px 14px 8px 8px; background: rgba(255,255,255,.06); clip-path: var(--gg-slot-clip); }
+  .lv-portrait { flex: none; width: 84px; height: 84px; display: flex; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.28); clip-path: var(--gg-slot-clip); }
+  .lv-portrait img { width: 92%; height: auto; max-height: 100%; object-fit: contain; image-rendering: auto; }
+  .lv-unit__info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .lv-unit__name { font-size: 1.25rem; letter-spacing: .04em; color: var(--ink); text-transform: uppercase; }
+  .lv-xp { display: flex; align-items: center; gap: 10px; }
+  .lv-xp__bar { flex: 1; height: 12px; background: rgba(0,0,0,.4); clip-path: polygon(3% 0,100% 0,97% 100%,0 100%); }
+  .lv-xp__fill { height: 100%; width: 100%; background: #ffcf3f; }
+  .lv-xp__txt { font-size: .85rem; color: var(--muted); letter-spacing: .06em; }
+
+  .lv-hint { margin: 0; text-align: center; font-size: .95rem; color: var(--muted); letter-spacing: .02em; }
+  .lv-hint b { color: #ffcf3f; font-weight: 400; }
+
+  /* Estadísticas */
+  .lv-stats { display: flex; flex-direction: column; gap: 8px; }
+  .lv-stat { position: relative; display: grid; grid-template-columns: 34px minmax(0,1fr) auto 78px; align-items: center; column-gap: 12px; min-height: 54px; padding: 8px 16px 8px 14px; font: inherit; color: var(--ink); text-align: left; background: rgba(255,255,255,.07); border: none; cursor: pointer; clip-path: var(--gg-slot-clip); transition: background .12s ease, transform .12s ease; }
+  .lv-stat:hover:not(:disabled):not(.lv-stat--sel) { background: rgba(255,255,255,.13); transform: translateX(3px); }
+  .lv-stat__icon { font-size: 1.7rem; color: #ffcf3f; justify-self: center; }
+  .lv-stat__name { font-size: 1.05rem; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lv-seg { display: flex; gap: 4px; }
+  .lv-seg i { display: block; width: 14px; height: 18px; background: rgba(255,255,255,.16); transform: skewX(-14deg); }
+  .lv-seg i.on { background: #ffcf3f; }
+  .lv-seg i.next { background: transparent; outline: 2px solid #ffcf3f; outline-offset: -2px; animation: lv-blink .9s steps(1) infinite; }
+  @keyframes lv-blink { 50% { background: #ffcf3f; } }
+  .lv-stat__val { justify-self: end; font-size: 1.2rem; color: #ffcf3f; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .lv-stat__val s { text-decoration: none; opacity: .55; }
+  .lv-stat__val em { font-style: normal; display: inline-block; margin: 0 3px; }
+
+  .lv-stat--sel { background: #ffcf3f; color: #14121a; }
+  .lv-stat--sel .lv-stat__icon, .lv-stat--sel .lv-stat__val { color: #14121a; }
+  .lv-stat--sel .lv-seg i { background: rgba(20,18,26,.22); }
+  .lv-stat--sel .lv-seg i.on { background: #14121a; }
+  .lv-stat--sel .lv-seg i.next { outline-color: #14121a; background: transparent; animation: lv-blink-d .9s steps(1) infinite; }
+  @keyframes lv-blink-d { 50% { background: #14121a; } }
+  .lv-stat:disabled { opacity: .45; cursor: default; }
+  .lv-stat:disabled .lv-seg i { background: rgba(255,255,255,.4); }
+  .lv-stat--done { animation: lv-done .5s ease both; }
+  @keyframes lv-done { 0% { transform: scale(1); } 40% { transform: scale(1.04); } 100% { transform: scale(1); } }
+
+  /* Acción + ayuda de mando */
+  .lv-foot { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 2px; }
+  .lv-go { padding: 12px 46px; display: flex; align-items: center; gap: 12px; font-size: 1.2rem; color: #14121a; --p5-tone: #ffcf3d; border: none; font-family: inherit; }
+  .lv-go .p5-banner__label { color: #14121a; text-shadow: none; display: flex; align-items: center; gap: 10px; }
+  .lv-keys { display: flex; gap: 18px; font-size: .8rem; color: var(--muted); letter-spacing: .05em; }
+  .lv-keys span { display: inline-flex; align-items: center; gap: 6px; }
+  .lv-keys kbd { font: inherit; font-size: .78rem; color: var(--ink); background: rgba(255,255,255,.12); padding: 2px 7px; clip-path: var(--gg-slot-clip); }
+
+  .lv-plus { position: absolute; right: 22px; top: 50%; z-index: 4; font-size: 1.6rem; color: #ffcf3f; -webkit-text-stroke: 3px #14121a; paint-order: stroke fill; pointer-events: none; animation: lv-plus 1s ease-out forwards; }
+  @keyframes lv-plus { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-46px); opacity: 0; } }
+
+  @media (max-width: 460px) {
+    .lv-card { padding: 26px 16px 20px; }
+    .lv-title { font-size: 1.7rem; }
+    .lv-stat { grid-template-columns: 28px minmax(0,1fr) auto; row-gap: 6px; padding: 9px 12px; }
+    .lv-stat__icon { font-size: 1.5rem; }
+    .lv-stat__name { font-size: .98rem; }
+    .lv-seg { grid-column: 2 / 3; grid-row: 2; }
+    .lv-stat__val { grid-column: 3; grid-row: 1 / span 2; }
+    .lv-keys { display: none; }
+    .lv-portrait { width: 70px; height: 70px; }
+  }
+
+  /* ===== Resultado de capítulo ===== */
+  .rs-card { width: min(520px, 100%); }
+  .rs-title { margin: 0; text-align: center; font-size: 1.8rem; letter-spacing: .05em; color: #ffcf3f; text-shadow: 3px 3px 0 rgba(0,0,0,.7); line-height: 1.1; }
+  .rs-title--bad { color: var(--ink); }
+  .rs-stars { display: flex; justify-content: center; align-items: flex-end; gap: 10px; padding: 6px 0 2px; }
+  .rs-star { font-size: 3.4rem; color: rgba(255,255,255,.16); filter: drop-shadow(3px 3px 0 rgba(0,0,0,.55)); }
+  .rs-star:nth-child(2) { transform: translateY(-10px); font-size: 4rem; }
+  .rs-star--on { color: #ffcf3f; animation: rs-star .5s cubic-bezier(.34,1.9,.64,1) both; }
+  .rs-star--on:nth-child(1) { animation-delay: .35s; } .rs-star--on:nth-child(2) { animation-delay: .65s; } .rs-star--on:nth-child(3) { animation-delay: .95s; }
+  @keyframes rs-star { from { transform: scale(0) rotate(-40deg); opacity: 0; } to { opacity: 1; } }
+  .rs-stars .rs-star--on:nth-child(2) { --y: -10px; }
+  .rs-rows { display: flex; flex-direction: column; gap: 8px; }
+  .rs-row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 16px 8px 14px; background: rgba(255,255,255,.07); clip-path: var(--gg-slot-clip); animation: rs-row .3s ease both; }
+  .rs-row i { font-size: 1.5rem; color: #ffcf3f; flex: none; width: 30px; text-align: center; }
+  .rs-row__label { flex: 1; font-size: 1.02rem; letter-spacing: .04em; text-transform: uppercase; }
+  .rs-row__val { font-size: 1.35rem; color: #ffcf3f; font-variant-numeric: tabular-nums; }
+  .rs-row__val small { font-size: .95rem; color: var(--muted); }
+  .rs-row--bad { opacity: .55; }
+  @keyframes rs-row { from { transform: translateX(-16px); opacity: 0; } to { opacity: 1; } }
+  .rs-loot-h { margin: 4px 0 -4px; text-align: center; font-size: .85rem; letter-spacing: .18em; color: var(--muted); }
+  .rs-loot { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+  .rs-tile { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px 8px; background: rgba(0,0,0,.3); clip-path: var(--gg-slot-clip); animation: rs-tile .35s cubic-bezier(.34,1.7,.64,1) both; }
+  .rs-tile img { width: 46px; height: 46px; object-fit: contain; }
+  .rs-tile b { font-size: 1.25rem; font-weight: 400; color: #ffcf3f; font-variant-numeric: tabular-nums; }
+  .rs-tile--zero { opacity: .5; } .rs-tile--zero b { color: var(--muted); }
+  @keyframes rs-tile { from { transform: scale(.4); opacity: 0; } to { opacity: 1; } }
+  .rs-note { margin: 0; text-align: center; font-size: .92rem; color: var(--muted); line-height: 1.35; }
+  @media (max-width: 460px) { .rs-title { font-size: 1.45rem; } .rs-star { font-size: 2.8rem; } .rs-star:nth-child(2) { font-size: 3.3rem; } .rs-tile img { width: 38px; height: 38px; } .rs-row__label { font-size: .92rem; } .lv-keys { display: none; } }
+</style>
+</head>
+<body>
+<div class="stage-bar"><button data-tab="lvl" class="on">Subida de nivel</button><button data-tab="win">Capítulo superado</button><button data-tab="fail">Has caído</button><button id="again">Repetir</button><button id="maxToggle">Estadística al máximo</button></div>
+<div class="lv-overlay" id="ov"></div>
+
+<script>
+const STATS = [
+  { id: "aguante", name: "Aguante", icon: "ph-shield", cur: 1 },
+  { id: "movimiento", name: "Movimiento", icon: "ph-footprints", cur: 4 },
+  { id: "fuerza", name: "Fuerza", icon: "ph-boxing-glove", cur: 1 },
+  { id: "agilidad", name: "Agilidad", icon: "ph-wind", cur: 3 },
+  { id: "percepcion", name: "Percepción", icon: "ph-eye", cur: 3 },
+];
+const CAP = 5;
+let sel = 0, showMax = false, locked = false;
+const ov = document.getElementById("ov");
+
+function render() {
+  const stats = STATS.map((s) => ({ ...s, cur: showMax && s.id === "percepcion" ? CAP : s.cur }));
+  const rows = stats.map((s, i) => {
+    const full = s.cur >= CAP;
+    const seg = Array.from({ length: CAP }, (_, k) => `<i class="${k < s.cur ? "on" : !full && k === s.cur ? "next" : ""}"></i>`).join("");
+    return `<button type="button" class="lv-stat${i === sel ? " lv-stat--sel" : ""}" data-i="${i}" ${full ? "disabled" : ""}>
+      <i class="ph-fill ${s.icon} lv-stat__icon"></i>
+      <span class="lv-stat__name">${s.name}</span>
+      <span class="lv-seg">${seg}</span>
+      <span class="lv-stat__val">${full ? "MÁX" : `<s>${s.cur}</s><em>→</em>${s.cur + 1}`}</span></button>`;
+  }).join("");
+  ov.innerHTML = `<div class="p5-banner lv-card"><div class="lv-body">
+    <div class="lv-head"><h2 class="lv-title">¡NIVEL 1!</h2>
+      <div class="lv-pips"><i class="lv-pip lv-pip--on lv-pip--new"></i><i class="lv-pip"></i><i class="lv-pip"></i></div></div>
+    <div class="lv-unit"><div class="lv-portrait"><img src="../assets/equipos/MushboomForest/unidad_02.png" alt=""></div>
+      <div class="lv-unit__info"><span class="lv-unit__name">SurcaBosques</span>
+        <div class="lv-xp"><div class="lv-xp__bar"><div class="lv-xp__fill"></div></div><span class="lv-xp__txt">4/4 XP</span></div></div></div>
+    <p class="lv-hint">Elige una estadística: <b>+1</b></p>
+    <div class="lv-stats">${rows}</div>
+    <div class="lv-foot"><button type="button" class="p5-banner p5-banner--action lv-go" id="go"><span class="p5-banner__label"><i class="ph-fill ph-arrow-fat-line-up"></i> SUBIR</span></button>
+      <div class="lv-keys"><span><kbd>↑</kbd><kbd>↓</kbd> Elegir</span><span><kbd>A</kbd> / <kbd>Enter</kbd> Confirmar</span></div></div>
+  </div></div>`;
+  ov.querySelectorAll(".lv-stat").forEach((b) => b.addEventListener("click", () => { if (locked) return; sel = +b.dataset.i; render(); }));
+  ov.querySelector("#go").addEventListener("click", confirmPick);
+}
+
+function confirmPick() {
+  if (locked) return; locked = true;
+  const row = ov.querySelector(".lv-stat--sel");
+  const segs = row.querySelectorAll(".lv-seg i");
+  const k = [...segs].findIndex((x) => x.classList.contains("next"));
+  row.classList.add("lv-stat--done");
+  if (k >= 0) { segs[k].className = "on"; segs[k].style.animation = "none"; }
+  const p = document.createElement("span"); p.className = "lv-plus"; p.textContent = "+1"; row.appendChild(p);
+  setTimeout(() => { ov.hidden = true; locked = false; }, 900);
+}
+
+document.addEventListener("keydown", (e) => {
+  if (ov.hidden || locked) return;
+  const open = STATS.map((s, i) => (showMax && s.id === "percepcion" ? -1 : i)).filter((i) => i >= 0);
+  const at = open.indexOf(sel);
+  if (e.code === "ArrowDown" || e.code === "ArrowRight") { e.preventDefault(); sel = open[(at + 1) % open.length]; render(); }
+  else if (e.code === "ArrowUp" || e.code === "ArrowLeft") { e.preventDefault(); sel = open[(at - 1 + open.length) % open.length]; render(); }
+  else if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); confirmPick(); }
+});
+document.getElementById("again").addEventListener("click", () => show(tab));
+document.getElementById("maxToggle").addEventListener("click", () => { showMax = !showMax; if (showMax && STATS[sel].id === "percepcion") sel = 0; show("lvl"); });
+
+let tab = "lvl";
+const RES = [["../assets/iconos/gloria_mushboom_forest.png", "pts"], ["../assets/iconos/recurso_madera.png", "madera"], ["../assets/iconos/recurso_roca.png", "roca"], ["../assets/iconos/recurso_metal.png", "metal"]];
+function renderResult(kind) {
+  const bad = kind === "fail";
+  const got = bad ? { pts: 0, madera: 0, roca: 0, metal: 0 } : { pts: 11, madera: 6, roca: 4, metal: 1 };
+  const stars = bad ? 0 : 3;
+  const rows = [
+    ["ph-flag-banner", "Gnomos estampados", bad ? "0" : "2", " / 2"],
+    ["ph-skull", "Neutrales derrotados", bad ? "1" : "3", ""],
+    ["ph-tent", "Campamentos", bad ? "0" : "2", " / 2"],
+  ].map((r, i) => `<div class="rs-row${bad ? " rs-row--bad" : ""}" style="animation-delay:${.1 + i * .12}s"><i class="ph-fill ${r[0]}"></i><span class="rs-row__label">${r[1]}</span><span class="rs-row__val">${r[2]}<small>${r[3]}</small></span></div>`).join("");
+  const tiles = RES.map(([src, k], i) => `<div class="rs-tile${got[k] ? "" : " rs-tile--zero"}" style="animation-delay:${.5 + i * .09}s"><img src="${src}" alt=""><b>+${got[k]}</b></div>`).join("");
+  const starHtml = [0, 1, 2].map((i) => `<i class="ph-fill ph-star rs-star${i < stars ? " rs-star--on" : ""}"></i>`).join("");
+  ov.innerHTML = `<div class="p5-banner lv-card rs-card"><div class="lv-body">
+    <h2 class="rs-title${bad ? " rs-title--bad" : ""}">${bad ? "HAS CAÍDO" : "¡CAPÍTULO SUPERADO!"}</h2>
+    <div class="rs-stars">${starHtml}</div>
+    <div class="rs-rows">${rows}</div>
+    <div class="rs-loot-h">${bad ? "BOTÍN PERDIDO" : "BOTÍN"}</div>
+    <div class="rs-loot">${tiles}</div>
+    ${bad ? '<p class="rs-note">Al caer te quedas sin nada: ni gnomos, ni recursos, ni puntos.</p>' : ""}
+    <div class="lv-foot"><button type="button" class="p5-banner p5-banner--action lv-go" id="back"><span class="p5-banner__label"><i class="ph-fill ph-map-trifold"></i> VOLVER AL MAPA</span></button></div>
+  </div></div>`;
+  ov.querySelector("#back").addEventListener("click", () => { ov.hidden = true; });
+}
+function show(t) { tab = t; ov.hidden = false; locked = false; document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === t)); if (t === "lvl") { sel = 0; render(); } else renderResult(t); }
+document.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => show(b.dataset.tab)));
+render();
+</script>
+</body>
+</html>

@@ -12,10 +12,20 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001695";
+const GG_VERSION = "v.001696";
 
 const GG_CHANGELOG = [
+  { v: "v.001696", date: "24/11/2026", title: "Campaña: nuevo mapa", items: [
+      "Campaña: nuevo mapa con islas flotantes sobre un cielo oscuro, ruta de puntos que se ilumina al completar capítulos, gnomo marcando el capítulo actual y ficha del capítulo en una franja bajo el mapa (adaptada a móvil)",
+  ] },
   { v: "v.001695", date: "23/11/2026", title: "Campaña: extracción en grupo", items: [
+      "Campaña: la ventana de Puntos de Gloria con textos más claros (puntos por baja enemiga, por gnomo estampado y acumulados para la extracción)",
+      "Campaña: nuevo diseño de la ventana de subida de nivel (retrato, marcas de estadística, confirmar aparte con botón/Enter/A) y de la pantalla de resultado del capítulo (estrellas grandes, filas, botín en casillas)",
+      "Campaña: las mejoras piden algo más de recursos (+30%)",
+      "Campaña: los gnomos que salen de las jaulas huyen al quedar libres, como en la partida normal",
+      "Campaña: las habilidades especiales se recargan al empezar el turno en una casilla adyacente al Obelisco",
+      "Campaña: la ventana de Puntos de Gloria explica las reglas de campaña (sin puntos por turno; puntos por bajas y por gnomos estampados; lo que sobra se lo lleva al extraer)",
+      "Intro: locución en inglés (archivo aparte) con los subtítulos ajustados a su ritmo",
       "Intro: las rocas que caen del cielo ahora son las rocas propias de la intro (ya no las de recursos)",
       "Intro: nuevo final (el gnomo queda por delante del iris, pasa a su idle nervioso, mira a ambos lados y una roca lo aplasta) y el audio del vídeo baja de volumen cuando hay voz en off para que se oiga",
       "Campaña: el botón de extraer del obelisco tiene icono propio (adiós al provisional)",

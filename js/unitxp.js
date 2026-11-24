@@ -20,11 +20,11 @@ const UNITXP_STATS = [
 
 (function registerUnitXpStrings() {
   const es = {
-    uxp_title: "¡NIVEL {n}!", uxp_pick: "{name} sube de nivel. Elige una estadística (+1).", uxp_max: "MÁX",
+    uxp_title: "¡NIVEL {n}!", uxp_pick: "Elige una estadística: +1", uxp_go: "SUBIR", uxp_choose: "Elegir", uxp_confirm: "Confirmar", uxp_max: "MÁX",
     uxp_aguante: "AGUANTE", uxp_movimiento: "MOVIMIENTO", uxp_fuerza: "FUERZA", uxp_agilidad: "AGILIDAD", uxp_percepcion: "PERCEPCIÓN",
   };
   const en = {
-    uxp_title: "LEVEL {n}!", uxp_pick: "{name} levels up. Pick a stat (+1).", uxp_max: "MAX",
+    uxp_title: "LEVEL {n}!", uxp_pick: "Pick a stat: +1", uxp_go: "LEVEL UP", uxp_choose: "Choose", uxp_confirm: "Confirm", uxp_max: "MAX",
     uxp_aguante: "TOUGHNESS", uxp_movimiento: "MOVEMENT", uxp_fuerza: "STRENGTH", uxp_agilidad: "AGILITY", uxp_percepcion: "PERCEPTION",
   };
   Object.assign(STRINGS.es, es);
@@ -96,17 +96,24 @@ const UnitXP = {
   _show({ unit, lvl }) {
     const type = UNIT_TYPES[unit.typeId];
     const ov = document.createElement("div");
-    ov.className = "camp-ask uxp";
-    const btns = UNITXP_STATS.map((s, i) => {
+    ov.className = "uxp";
+    const need = UNITXP_LEVELS[Math.max(0, lvl - 1)];
+    const btns = UNITXP_STATS.map((s) => {
       const cur = this._total(unit, s.id), full = cur >= UNITXP_CAP;
-      return `<button type="button" class="camp-ask__btn uxp__btn${full ? " uxp__btn--max" : ""}" data-stat="${s.id}" ${full ? "disabled" : ""}>
-        <i class="ph-fill ${s.icon}"></i><span class="uxp__name">${this.t("uxp_" + s.id)}</span>
-        <span class="uxp__val">${full ? this.t("uxp_max") : cur + " → " + (cur + 1)}</span></button>`;
+      const seg = Array.from({ length: UNITXP_CAP }, (_, k) => `<i class="${k < cur ? "on" : !full && k === cur ? "next" : ""}"></i>`).join("");
+      return `<button type="button" class="uxp__btn${full ? " uxp__btn--max" : ""}" data-stat="${s.id}" ${full ? "disabled" : ""}>
+        <i class="ph-fill ${s.icon} uxp__icon"></i><span class="uxp__name">${this.t("uxp_" + s.id)}</span><span class="uxp__seg">${seg}</span>
+        <span class="uxp__val">${full ? this.t("uxp_max") : `<s>${cur}</s><em>→</em>${cur + 1}`}</span></button>`;
     }).join("");
-    ov.innerHTML = `<div class="camp-ask__panel uxp__panel">
-      <div class="camp-ask__q">${this.t("uxp_title", { n: lvl })}</div>
-      <div class="camp-ask__info">${this.t("uxp_pick", { name: type.name })}</div>
-      <div class="uxp__grid">${btns}</div></div>`;
+    const pips = UNITXP_LEVELS.map((_, k) => `<i class="uxp__pip${k < lvl ? " uxp__pip--on" : ""}${k === lvl - 1 ? " uxp__pip--new" : ""}"></i>`).join("");
+    ov.innerHTML = `<div class="p5-banner uxp__card"><div class="uxp__body">
+      <div class="uxp__head"><h2 class="uxp__title">${this.t("uxp_title", { n: lvl })}</h2><div class="uxp__pips">${pips}</div></div>
+      <div class="uxp__unit"><div class="uxp__portrait"><img src="${type.spriteUrl}" alt=""></div>
+        <div class="uxp__uinfo"><span class="uxp__uname">${type.name}</span><div class="uxp__xp"><div class="uxp__xpbar"><div class="uxp__xpfill"></div></div><span class="uxp__xptxt">${need}/${need} XP</span></div></div></div>
+      <p class="uxp__hint">${this.t("uxp_pick")}</p>
+      <div class="uxp__grid">${btns}</div>
+      <div class="uxp__foot"><button type="button" class="p5-banner p5-banner--action uxp__go"><span class="p5-banner__label"><i class="ph-fill ph-arrow-fat-line-up"></i> ${this.t("uxp_go")}</span></button>
+        <div class="uxp__keys"><span><kbd>↑</kbd><kbd>↓</kbd> ${this.t("uxp_choose")}</span><span><kbd>A</kbd> / <kbd>Enter</kbd> ${this.t("uxp_confirm")}</span></div></div></div></div>`;
     document.body.appendChild(ov);
     requestAnimationFrame(() => ov.classList.add("uxp--on"));
     this._ov = ov; this._sel = 0;
@@ -133,7 +140,7 @@ const UnitXP = {
       if (e.code === "ArrowRight" || e.code === "ArrowDown") { e.preventDefault(); move(1); }
       else if (e.code === "ArrowLeft" || e.code === "ArrowUp") { e.preventDefault(); move(-1); }
       else if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); pick(UNITXP_STATS[this._sel].id); }
-      else if (/^Digit[1-5]$/.test(e.code)) { const k = +e.code.slice(5) - 1; if (!btnEls[k].disabled) pick(UNITXP_STATS[k].id); }
+      else if (/^Digit[1-5]$/.test(e.code)) { const k = +e.code.slice(5) - 1; if (!btnEls[k].disabled) focus(k); }
     };
     document.addEventListener("keydown", kd, true);
     // Mando: cruceta/stick para moverse, A para elegir.
@@ -158,9 +165,9 @@ const UnitXP = {
       ov.classList.remove("uxp--on"); setTimeout(() => ov.remove(), 180); this._ov = null;
     };
     btnEls.forEach((b, k) => {
-      b.addEventListener("click", () => { if (typeof Campaign !== "undefined") Campaign._click(); pick(b.dataset.stat); });
-      b.addEventListener("pointerenter", () => focus(k));
+      b.addEventListener("click", () => { if (typeof Campaign !== "undefined") Campaign._click(); focus(k); });
     });
+    ov.querySelector(".uxp__go").addEventListener("click", () => { if (typeof Campaign !== "undefined") Campaign._click(); pick(UNITXP_STATS[this._sel].id); });
     focus(0);
   },
 

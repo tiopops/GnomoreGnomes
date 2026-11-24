@@ -1509,7 +1509,12 @@ const Abilities = {
     if (typeof Villages !== "undefined") {
       Units.list.forEach((unit) => {
         if (unit.team !== team || !unit.abilityUsed || !ABILITIES[unit.typeId]) return;
-        const near = Villages.list.some((v) => v.owner === team && Math.max(Math.abs(v.row - unit.row), Math.abs(v.col - unit.col)) <= 1);
+        let near = Villages.list.some((v) => v.owner === team && Math.max(Math.abs(v.row - unit.row), Math.abs(v.col - unit.col)) <= 1);
+        // Campaña: el sitio de recarga es el Obelisco propio (empezar el turno en una casilla adyacente).
+        if (!near && typeof Campaign !== "undefined" && Campaign.active && typeof Obelisks !== "undefined" && Obelisks.byTeam) {
+          const ob = Obelisks.byTeam(team);
+          near = !!ob && Math.max(Math.abs(ob.row - unit.row), Math.abs(ob.col - unit.col)) <= 1;
+        }
         if (!near) return;
         unit.abilityUsed = false;
         if (typeof Units.spawnFloatingText === "function") Units.spawnFloatingText(unit, "¡Habilidad recargada!", { className: "dmg-popup popup--good" });
