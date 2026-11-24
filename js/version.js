@@ -16,6 +16,7 @@ const GG_VERSION = "v.001695";
 
 const GG_CHANGELOG = [
   { v: "v.001695", date: "23/11/2026", title: "Campaña: extracción en grupo", items: [
+      "Intro: las rocas que caen del cielo ahora son las rocas propias de la intro (ya no las de recursos)",
       "Intro: nuevo final (el gnomo queda por delante del iris, pasa a su idle nervioso, mira a ambos lados y una roca lo aplasta) y el audio del vídeo baja de volumen cuando hay voz en off para que se oiga",
       "Campaña: el botón de extraer del obelisco tiene icono propio (adiós al provisional)",
       "Intro: el iris de cierre nace al empezar la persecución del gnomo y se cierra suavemente sobre él, sin el salto de cámara anterior",

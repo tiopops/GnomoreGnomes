@@ -827,7 +827,7 @@ const Campaign = {
   _cinematic(ch) {
     const L = this.t("cmp_intro1").split("|");
     return CampaignIntro.playVideo({
-      src: "assets/campana/intro_guerra.mp4?v=16",
+      src: "assets/campana/intro_guerra.mp4?v=17",
       voice: CAMPAIGN_INTRO_VOICES[typeof I18N !== "undefined" ? I18N.currentLang : "es"] || null, // locución aparte por idioma (sin entrada = sin voz)
       nizak: this.t("cmp_nizak"), hold: this.t("cmp_hold_skip"),
       subs: [{ t0: 0.3, t1: 10.5, text: L[0] }, { t0: 10.9, t1: 20.2, text: L[1] }, { t0: 20.4, t1: 31.3, text: L[2] }, { t0: 31.6, t1: 40.8, text: L[3] }],
