@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001696";
+const GG_VERSION = "v.001697";
 
 const GG_CHANGELOG = [
-  { v: "v.001696", date: "24/11/2026", title: "Campaña: nuevo mapa", items: [
+  { v: "v.001697", date: "24/11/2026", title: "Campaña: nuevo mapa", items: [
+      "Campaña: arreglado el fallo que daba puntos gratis al entrar y salir de un nivel: los fondos de partida ya no se extraen, solo la gloria ganada por encima de ellos (también en el aviso de extracción y en la ventana de Gloria)",
       "Campaña: nuevo mapa con islas flotantes sobre un cielo oscuro, ruta de puntos que se ilumina al completar capítulos, gnomo marcando el capítulo actual y ficha del capítulo en una franja bajo el mapa (adaptada a móvil)",
   ] },
   { v: "v.001695", date: "23/11/2026", title: "Campaña: extracción en grupo", items: [

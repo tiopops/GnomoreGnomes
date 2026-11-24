@@ -520,6 +520,7 @@ const Campaign = {
 
     // Puntos de partida (no se extraen) y una unidad básica junto al Obelisco.
     if (typeof Glory !== "undefined") { Glory.points.player = 0; Glory.addNow("player", CAMPAIGN_START_GLORY + 2 * this.upLevel("prov")); }
+    this.run.startPts = (typeof Glory !== "undefined" && Glory.points && Glory.points.player) || 0; // fondos de partida: se devuelven, no se extraen
     const roster = Object.keys(UNIT_TYPES).filter((k) => UNIT_TYPES[k].raceId === "mushboom_forest");
     roster.sort((a, b) => Units.recruitPriceFor(a) - Units.recruitPriceFor(b));
     const adj = Obelisks._adjacentFreeTiles(ob);
@@ -776,6 +777,12 @@ const Campaign = {
     return Units.list.filter((u) => u.team === "player" && this._cheb(u, ob) > CAMPAIGN_EXTRACT_RADIUS);
   },
 
+  // Puntos extraíbles = lo ganado por encima de los fondos de partida (entrar y salir sin hacer nada no da nada).
+  netPts() {
+    const r = this.run, cur = (typeof Glory !== "undefined" && Glory.points && Glory.points.player) || 0;
+    return r && !r.tutorial ? Math.max(0, cur - (r.startPts || 0)) : cur;
+  },
+
   _askExtract() {
     if (!this.run || this.run.over || this._askEl) return;
     const far = this._farUnits();
@@ -791,7 +798,7 @@ const Campaign = {
     ov.innerHTML = `<div class="camp-ask__panel">
       <div class="camp-ask__q">${this.t("cmp_extract_q")}</div>
       <div class="camp-ask__info">${this.t("cmp_extract_info")}<br><b>${this.run.delivered}/${this.run.goal}</b> ${this.t("cmp_gnomes").toLowerCase()}
-        <span class="camp-costs"><span class="camp-cost camp-cost--pts"><img src="${CAMPAIGN_PTS_ICON}" alt="">${(typeof Glory !== "undefined" && Glory.points && Glory.points.player) || 0}</span>${CAMPAIGN_RES.map((r) => `<span class="camp-cost"><img src="${CAMPAIGN_RES_ICON[r]}" alt="">${c[r] || 0}</span>`).join("")}</span></div>
+        <span class="camp-costs"><span class="camp-cost camp-cost--pts"><img src="${CAMPAIGN_PTS_ICON}" alt="">${this.netPts()}</span>${CAMPAIGN_RES.map((r) => `<span class="camp-cost"><img src="${CAMPAIGN_RES_ICON[r]}" alt="">${c[r] || 0}</span>`).join("")}</span></div>
       <div class="camp-ask__row"><button class="camp-ask__btn camp-ask__btn--yes">${this.t("cmp_yes")}</button><button class="camp-ask__btn camp-ask__btn--no">${this.t("cmp_no")}</button></div></div>`;
     document.body.appendChild(ov);
     this._askEl = ov;
@@ -825,7 +832,7 @@ const Campaign = {
       got[k] = fallen ? Math.floor(n * 0.2 * lvS) : timeout ? Math.floor(n * (0.5 + 0.1 * lvP)) : (n > 0 ? n + lvB : 0);
     });
     // Puntos sobrantes de la partida: también se extraen (con las mismas reglas de prórroga y red de seguridad que los recursos).
-    const leftPts = (typeof Glory !== "undefined" && Glory.points && Glory.points.player) || 0;
+    const leftPts = this.netPts();
     got.pts = fallen ? Math.floor(leftPts * 0.2 * lvS) : timeout ? Math.floor(leftPts * (0.5 + 0.1 * lvP)) : leftPts;
     this.s.pts = (this.s.pts || 0) + got.pts;
     // Campamentos de esta partida: los abiertos + los que no se montaron porque sus gnomos ya estaban estampados. Se guarda el MEJOR intento.

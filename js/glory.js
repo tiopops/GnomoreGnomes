@@ -442,7 +442,7 @@ const Glory = {
           </div>
           <div class="glory-popup-row glory-popup-row--next">
             <span class="glory-popup-row__label">${isCamp ? "Acumulados para la extracción" : "Próximo turno"}</span>
-            <span class="glory-popup-row__amount">${isCamp ? this.points[team] : "+" + nextTotal}</span>
+            <span class="glory-popup-row__amount">${isCamp ? (typeof Campaign !== "undefined" && Campaign.netPts ? Campaign.netPts() : this.points[team]) : "+" + nextTotal}</span>
           </div>
         </div>
       </div>`;

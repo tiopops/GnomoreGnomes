@@ -679,27 +679,27 @@
 .cmp-isle--sel .cmp-arrow { display: block; }
 .cmp-isle__btn:focus-visible { outline: 3px solid #ffcf3f; outline-offset: 6px; }
 
-.cmp-strip { display: block; padding: 20px 26px 20px 28px; }
+.cmp-strip { display: block; padding: 22px calc(4% + 14px) 22px calc(4% + 22px); }
 .cmp-strip--in { animation: cmp-strip-in .25s ease both; }
 @keyframes cmp-strip-in { from { transform: translateY(8px); opacity: 0; } to { opacity: 1; } }
-.cmp-strip__body { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(170px, .8fr) minmax(0, 2.6fr) auto; align-items: center; gap: 22px; color: #fff; }
+.cmp-strip__body { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(170px, .8fr) minmax(0, 3.2fr) auto; align-items: center; gap: 22px; color: #fff; }
 .cmp-strip__kicker { font-family: "Russo One", sans-serif; font-size: .78rem; letter-spacing: .2em; color: #b9b3c9; text-transform: uppercase; }
-.cmp-strip__name { margin: 2px 0 8px; font-family: "Russo One", sans-serif; font-size: 1.6rem; color: #ffcf3f; letter-spacing: .03em; text-shadow: 3px 3px 0 rgba(0,0,0,.65); line-height: 1.1; }
+.cmp-strip__name { margin: 2px 0 8px; font-family: "Russo One", sans-serif; font-size: clamp(1.25rem, 1.9vw, 1.6rem); color: #ffcf3f; letter-spacing: .02em; overflow-wrap: anywhere; text-shadow: 3px 3px 0 rgba(0,0,0,.65); line-height: 1.1; }
 .cmp-strip__stars { font-size: 1.7rem; gap: 4px; }
 .cmp-strip__stars .camp-star:nth-child(2) { transform: none; }
-.cmp-tiles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
-.cmp-tile { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; padding: 9px 4px 8px; min-width: 0; background: rgba(255,255,255,.07); clip-path: var(--gg-slot-clip); }
+.cmp-tiles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; min-width: 0; }
+.cmp-tile { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; padding: 9px 2px 8px; min-width: 0; background: rgba(255,255,255,.07); clip-path: var(--gg-slot-clip); }
 .cmp-tile i { font-size: 1.25rem; color: #ffcf3f; }
 .cmp-tile b { font-family: "Russo One", sans-serif; font-weight: 400; font-size: 1.3rem; color: #fff; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.cmp-tile small { font-size: .72rem; letter-spacing: .06em; color: #b9b3c9; text-transform: uppercase; text-align: center; letter-spacing: 0; overflow-wrap: anywhere; line-height: 1.15; }
+.cmp-tile small { font-size: .72rem; letter-spacing: .06em; color: #b9b3c9; text-transform: uppercase; text-align: center; letter-spacing: 0; line-height: 1.15; }
 .cmp-tile--foe i { color: #ff5a4f; } .cmp-tile--foe b { color: #ff8a7a; }
 .cmp-strip__act { display: flex; justify-content: center; }
 .cmp-strip__status, .cmp-strip__hint { padding-top: 2px; }
-.cmp-strip__act .camp-play { margin: 0; padding: 14px 54px; font-size: 1.3rem; }
+.cmp-strip__act .camp-play { margin: 0; padding: 14px 34px; font-size: 1.25rem; }
 .cmp-strip__status, .cmp-strip__hint { grid-column: 1 / -1; margin: 0; font-size: .95rem; color: #b9b3c9; }
 .cmp-strip__status { color: #ffb3b3; }
 
-@media (max-width: 900px) {
+@media (max-width: 1180px) {
   .cmp-strip__body { grid-template-columns: 1fr; justify-items: center; text-align: center; }
   .cmp-strip__stars { justify-content: center; } .cmp-tiles { width: 100%; grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); }
 }
@@ -712,5 +712,5 @@
   .cmp-name { top: calc(100% + 30px); font-size: .75rem; } .cmp-isle__btn .cmp-isle__stars { top: calc(100% + 54px); font-size: 1rem; }
   .cmp-num { width: 30px; height: 30px; font-size: .95rem; }
   .cmp-here { width: 48px; top: -24px; } .cmp-skull { font-size: 2.6rem; } .cmp-arrow { top: -42px; font-size: 1.5rem; }
-  .cmp-strip { padding: 20px 16px; } .cmp-strip__name { font-size: 1.4rem; }
+  .cmp-strip { padding: 20px calc(4% + 14px); } .cmp-strip__name { font-size: 1.4rem; }
 }
