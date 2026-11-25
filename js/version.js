@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001699";
+const GG_VERSION = "v.001700";
 
 const GG_CHANGELOG = [
-  { v: "v.001699", date: "24/11/2026", title: "Campaña: nuevo mapa", items: [
+  { v: "v.001700", date: "24/11/2026", title: "Campaña: nuevo mapa", items: [
+      "Campaña: cada golpe a un gnomo suma siempre 1 punto, sin importar la fuerza del personaje (el máximo por gnomo sigue siendo 5, ampliable con la mejora de carga)",
       "Campaña: nueva intro de guerra: los combates usan los sprites de salto, golpe al suelo y pegar, con más sangre, roca que hace temblar la pantalla y suelta fragmentos, bosque frondoso en la huida final y fundido a negro",
       "Campaña: el mapa ya no muestra al gnomo sobre la isla del capítulo; basta con la flecha de selección",
       "Campaña: arreglado el fallo que daba puntos gratis al entrar y salir de un nivel: los fondos de partida ya no se extraen, solo la gloria ganada por encima de ellos (también en el aviso de extracción y en la ventana de Gloria)",

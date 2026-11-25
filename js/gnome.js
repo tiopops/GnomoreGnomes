@@ -760,8 +760,10 @@ function createGnomeInstance() {
         (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "fuerza") : 0) +
         (typeof Armory !== "undefined" ? Armory.attackBonus(unit.team) : 0) +
         (typeof Relics !== "undefined" ? Relics.gnomeHitBonus(unit.team) : 0);
+      // Campaña: cada golpe suma SIEMPRE 1 punto (sin importar la fuerza ni los bonus); la fuerza solo cambia la animación.
+      const pts = typeof Campaign !== "undefined" && Campaign.active ? 1 : dmg;
       this._hitting = true;
-      this._playHit(unit, dmg).finally(() => { this._hitting = false; });
+      this._playHit(unit, dmg, pts).finally(() => { this._hitting = false; });
     },
 
     // Golpe con efecto goma (aprobado con demo): anticipación (se encoge y
@@ -770,7 +772,7 @@ function createGnomeInstance() {
     // intensidad depende del daño: flojo = todo muy rápido; fuerte =
     // anticipación lenta y embestida rápida. El NÚMERO del daño no lleva
     // efecto de goma (se queda con el popup de siempre).
-    async _playHit(unit, dmg) {
+    async _playHit(unit, dmg, pts = dmg) {
       const k = Math.max(0, Math.min(1, (dmg - 1) / 5));
       const W = 100 + 480 * k; // anticipación
       const LUNGE = 85 + 45 * k; // embestida
@@ -812,7 +814,9 @@ function createGnomeInstance() {
       if (sprite) anims.push(sprite.animate([{ transform: squashBack }, { transform: stretch }], { duration: LUNGE, fill: "forwards", easing: "cubic-bezier(.6,0,1,.6)" }));
       await wait(LUNGE);
       // 3) Impacto: aquí ocurre el golpe de verdad (puntos, sonido, popup)
-      this._addPoints(dmg);
+      const before = this.points;
+      this._addPoints(pts);
+      const shown = typeof Campaign !== "undefined" && Campaign.active ? this.points - before : dmg;
       SFX.hit();
       anims.forEach((a) => a.cancel());
       if (sprite) {
@@ -829,7 +833,7 @@ function createGnomeInstance() {
         attach.animate(jel.map(([x, y, o]) => ({ transform: `translateX(${o < 0.5 ? (1 - o) * 14 : 0}px) scale(${x}, ${y})`, offset: o })), { duration: 620 * F, easing: "ease-out" });
         this._hitFlash(attach, k, F);
       }
-      Units.spawnFloatingText(unit, `+${dmg}`, { className: "dmg-popup gnome-points-popup" });
+      if (shown > 0) Units.spawnFloatingText(unit, `+${shown}`, { className: "dmg-popup gnome-points-popup" });
       await wait(520 * F);
       if (sprite) {
         sprite.style.transformOrigin = prevOrigin;
