@@ -335,7 +335,7 @@ const Campaign = {
       const p = CAMPAIGN_MAP_POS[c.n] || [50, 50, 50, 50], un = this.unlocked(c.n), done = !!this.s.done[c.n];
       const cls = ["cmp-isle", un ? "cmp-isle--open" : "cmp-isle--locked", c.boss ? "cmp-isle--boss" : "", c.n === sel.n ? "cmp-isle--sel" : "", pop ? "cmp-isle--pop" : ""].join(" ");
       const badge = done ? `<span class="cmp-badge"><i class="ph-fill ph-check"></i></span>` : !un ? `<span class="cmp-badge"><i class="ph-fill ph-lock-simple"></i></span>` : "";
-      const here = un && !done && !c.boss && this._isCurrent(c.n) ? `<img class="cmp-here" src="assets/equipos/MushboomForest/gnomo_idle.png" alt="">` : "";
+      const here = "";
       const stars = !c.boss && un ? this._starsHtml(c.n, "cmp-isle__stars") : "";
       const name = t("cmp_ch" + c.n).replace(/^[^·]*· /, "");
       return `<div class="${cls}" style="--x:${p[0]}%;--y:${p[1]}%;--mx:${p[2]}%;--my:${p[3]}%;--w:${p[4] || 170}px;--wm:${p[5] || 120}px;--d:${i * .1}s;--fd:${-i * 1.1}s">
@@ -349,8 +349,6 @@ const Campaign = {
       <svg class="cmp-svg cmp-svg--d" viewBox="0 0 1000 1000" preserveAspectRatio="none">${this._mapRoutes(false)}</svg>
       <svg class="cmp-svg cmp-svg--m" viewBox="0 0 1000 1000" preserveAspectRatio="none">${this._mapRoutes(true)}</svg>${isles}</div></div>`;
   },
-  // El gnomo marca el primer capítulo desbloqueado que aún no está completado.
-  _isCurrent(n) { const f = CAMPAIGN_CHAPTERS.find((c) => !c.boss && this.unlocked(c.n) && !this.s.done[c.n]); return !!f && f.n === n; },
   _stripHtml(sel) {
     const t = (k, v) => this.t(k, v);
     let status, action;
@@ -393,7 +391,7 @@ const Campaign = {
     const root = document.getElementById("camp-root");
     if (!root || !this.s) return;
     if (!this._pre && typeof Artifacts !== "undefined" && typeof ART_DEFS !== "undefined") { // precarga: nada aparece de golpe al abrir la pestaña
-      this._pre = ["cushion"].concat(ART_DEFS.map((d) => d.id)).map((k) => { const im = new Image(); im.src = Artifacts.img(k); return im; }).concat([CAMPAIGN_EXTRACT_ICON, "assets/niveles/isla_mushboom_forest.png", "assets/equipos/MushboomForest/gnomo_idle.png"].map((u) => { const im = new Image(); im.src = u; return im; }));
+      this._pre = ["cushion"].concat(ART_DEFS.map((d) => d.id)).map((k) => { const im = new Image(); im.src = Artifacts.img(k); return im; }).concat([CAMPAIGN_EXTRACT_ICON, "assets/niveles/isla_mushboom_forest.png"].map((u) => { const im = new Image(); im.src = u; return im; }));
     }
     const t = (k, v) => this.t(k, v);
     const sel = this.ch(this.sel) || this.ch(1);
