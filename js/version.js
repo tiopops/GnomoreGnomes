@@ -12,10 +12,11 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001698";
+const GG_VERSION = "v.001699";
 
 const GG_CHANGELOG = [
-  { v: "v.001698", date: "24/11/2026", title: "Campaña: nuevo mapa", items: [
+  { v: "v.001699", date: "24/11/2026", title: "Campaña: nuevo mapa", items: [
+      "Campaña: nueva intro de guerra: los combates usan los sprites de salto, golpe al suelo y pegar, con más sangre, roca que hace temblar la pantalla y suelta fragmentos, bosque frondoso en la huida final y fundido a negro",
       "Campaña: el mapa ya no muestra al gnomo sobre la isla del capítulo; basta con la flecha de selección",
       "Campaña: arreglado el fallo que daba puntos gratis al entrar y salir de un nivel: los fondos de partida ya no se extraen, solo la gloria ganada por encima de ellos (también en el aviso de extracción y en la ventana de Gloria)",
       "Campaña: nuevo mapa con islas flotantes sobre un cielo oscuro, ruta de puntos que se ilumina al completar capítulos, gnomo marcando el capítulo actual y ficha del capítulo en una franja bajo el mapa (adaptada a móvil)",
