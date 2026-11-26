@@ -16,6 +16,7 @@ const GG_VERSION = "v.001701";
 
 const GG_CHANGELOG = [
   { v: "v.001701", date: "26/11/2026", title: "Campaña: intro y móvil", items: [
+      "Campaña: eliminadas las intros de los capítulos 2 en adelante (texto y animaciones); esos capítulos empiezan directamente. Solo se mantiene la intro en vídeo del capítulo 1",
       "Campaña (móvil vertical): los turnos y los gnomos restantes pasan a una fila compacta bajo la barra de Gloria, sin amontonarse sobre la interfaz",
       "Intro: niebla nueva, baja y suave en capas (sin el borde sesgado), y arbustos, setas y personajes bien asentados en el suelo en lugar de flotar",
   ] },

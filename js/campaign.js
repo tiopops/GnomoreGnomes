@@ -112,10 +112,6 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_skip: "SALTAR", cmp_hold_skip: "MANTÉN PARA SALTAR", cmp_start: "COMENZAR", cmp_war: "LA GUERRA ETERNA", cmp_next: "SIGUIENTE", cmp_ok: "ENTENDIDO", cmp_nizak: "Nizak",
     cmp_ch1: "Capítulo 1 · Claro de las Setas", cmp_ch2: "Capítulo 2 · Orilla Pantanosa", cmp_ch3: "Capítulo 3 · Espesura Profunda", cmp_ch4: "Capítulo 4 · Cumbre del Hongo", cmp_ch5: "Capítulo 5 · El GnomOgro",
     cmp_intro1: "El reino de Gnomoria lleva felizmente en guerra más de tres siglos... Una felicidad que solo sus habitantes entienden, pero felicidad al fin y al cabo.|La llamaron: La Guerra Eterna, una tradición que pasó de padres a hijos. Para aquellos que pudieron llegar a tener descendencia, claro.|¡Hasta que llegaron ELLOS! Los gnomos, y mancharon todo con sus arcoíris, sus chuches sin gluten y su empeño en acabar... ¡CON NUESTRA GUERRA!|Así se fundó Gnomore Gnomes. Ahora nuestra guerra puede esperar, pero las ganas de exterminar a los gnomos, no.",
-    cmp_intro2: "Los gnomos se extienden como una plaga de purpurina.|Hasta junto a la orilla se oyen ya sus cantos de hermandad.|Estampad a los enjaulados antes de que sigan predicando la paz.",
-    cmp_intro3: "Más adentro del bosque, hasta las setas parecen charlar en vez de explotar.|Algo huele a concordia, y ese olor me revuelve el estómago.|Traedme más gnomos: hay que saber dónde se esconden.",
-    cmp_intro4: "En lo alto del bosque, los Rastreadores vigilan jaulas por costumbre... y por un buen sueldo.|Entrad, sacad a los gnomos y que nadie mencione la palabra abrazo.",
-    cmp_intro5: "Se acerca el GnomOgro.|Pero eso, mis queridos guardabosques, es otra historia.",
     cmp_tut1_t: "El objetivo", cmp_tut1: "Cada capítulo te pide estampar un número de gnomos contra tu Obelisco. Empiezas con 1 unidad básica y 4 puntos de partida. Población máxima: 3 (mejorable en MEJORAS).",
     cmp_tut2_t: "Jaulas y neutrales", cmp_tut2: "Los gnomos están enjaulados en campamentos vigilados por Rastreadores. Derrota a todos los guardias de un campamento y las jaulas se abren. Cada baja te da +3 puntos.",
     cmp_tut3_t: "Estampar gnomos", cmp_tut3: "Un gnomo libre huye de ti como siempre. Cógelo, pégale para cargarle puntos (hasta +5) y llévalo al Obelisco: aquí no le hace daño, es un sacrificio, y los puntos del gnomo pasan a tu bolsa.",
@@ -153,10 +149,6 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_skip: "SKIP", cmp_hold_skip: "HOLD TO SKIP", cmp_start: "BEGIN", cmp_war: "THE ETERNAL WAR", cmp_next: "NEXT", cmp_ok: "GOT IT", cmp_nizak: "Nizak",
     cmp_ch1: "Chapter 1 · Mushroom Glade", cmp_ch2: "Chapter 2 · Boggy Shore", cmp_ch3: "Chapter 3 · Deep Thicket", cmp_ch4: "Chapter 4 · Fungus Peak", cmp_ch5: "Chapter 5 · The GnomOgre",
     cmp_intro1: "The kingdom of Gnomoria has been happily at war for more than three centuries... A happiness only its inhabitants understand, but happiness all the same.|They called it The Eternal War, a tradition passed down from parents to children. For those who managed to have children, of course.|Until THEY came! The gnomes, who stained everything with their rainbows, gluten-free candy and their determination to end... OUR WAR!|Thus Gnomore Gnomes was founded. Our war can wait now, but our hunger to exterminate the gnomes cannot.",
-    cmp_intro2: "The gnomes spread like a plague of glitter.|Even by the shore you can hear their songs of brotherhood.|Slam the caged ones before they keep preaching peace.",
-    cmp_intro3: "Deeper in the forest, even the mushrooms seem to chat instead of exploding.|Something smells of harmony, and it turns my stomach.|Bring me more gnomes: we must learn where they hide.",
-    cmp_intro4: "High in the forest, Trackers guard cages out of habit... and for good pay.|Go in, get the gnomes out, and let nobody mention the word hug.",
-    cmp_intro5: "The GnomOgre approaches.|But that, my dear rangers, is another story.",
     cmp_tut1_t: "The goal", cmp_tut1: "Every chapter asks you to slam a number of gnomes into your Obelisk. You start with 1 basic unit and 4 match points. Maximum population: 3 (upgradeable in UPGRADES).",
     cmp_tut2_t: "Cages and neutrals", cmp_tut2: "Gnomes are caged in camps guarded by Trackers. Defeat every guard of a camp and the cages open. Each kill gives you +3 points.",
     cmp_tut3_t: "Slamming gnomes", cmp_tut3: "A free gnome runs from you as usual. Grab it, hit it to charge points (up to +5) and take it to the Obelisk: it takes no damage here, it's a sacrifice, and the gnome's points go into your pool.",
@@ -486,9 +478,6 @@ const Campaign = {
       this._cinePre = null;
       const c = CampaignIntro._cine;
       if (c) { CampaignIntro._cine = null; c.style.transition = "opacity .5s"; c.style.opacity = "0"; setTimeout(() => c.remove(), 520); }
-    } else {
-      if (!this.active || !this.run) return;
-      await this._warIntro(ch);
     }
     if (!this.active || !this.run) return;
     this.run.ready = true; // a partir de aquí ya valen los avisos de turno
@@ -891,7 +880,7 @@ const Campaign = {
     if (!this.active && !this._hud) return;
     this.active = false;
     if (this._hud) this._hud.style.display = "none";
-    ["_askEl", "_resultEl", "_warEl"].forEach((k) => { if (this[k]) { this[k].remove(); this[k] = null; } });
+    ["_askEl", "_resultEl"].forEach((k) => { if (this[k]) { this[k].remove(); this[k] = null; } });
     if (typeof Obelisks !== "undefined") Obelisks.gameOver = false;
     this._camps = [];
   },
@@ -907,20 +896,6 @@ const Campaign = {
       nizak: this.t("cmp_nizak"), hold: this.t("cmp_hold_skip"),
       subs: T.map((x, i) => ({ t0: x[0], t1: x[1], text: L[i] })),
       onStart: () => { if (typeof Music !== "undefined" && Music.duck) Music.duck(41500); },
-    });
-  },
-
-  // ---------- Intro "La Guerra Eterna" (la escena vive en js/campaign-intro.js) ----------
-  _warIntro(ch) {
-    return CampaignIntro.play({
-      lines: this.t("cmp_intro" + ch.n).split("|"),
-      per: ch.n === 1 ? 6 : 4.8,
-      seed: 7 + ch.n,
-      title: this.t(ch.n === 1 ? "cmp_war" : "cmp_ch" + ch.n),
-      nizak: this.t("cmp_nizak"), skip: this.t("cmp_skip"), start: this.t("cmp_start"),
-      click: () => this._click(),
-      onMount: (el) => { this._warEl = el; },
-      onEnd: (el) => { if (this._warEl === el) this._warEl = null; },
     });
   },
 };
