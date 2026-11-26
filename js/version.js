@@ -12,9 +12,13 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001700";
+const GG_VERSION = "v.001701";
 
 const GG_CHANGELOG = [
+  { v: "v.001701", date: "26/11/2026", title: "Campaña: intro y móvil", items: [
+      "Campaña (móvil vertical): los turnos y los gnomos restantes pasan a una fila compacta bajo la barra de Gloria, sin amontonarse sobre la interfaz",
+      "Intro: niebla nueva, baja y suave en capas (sin el borde sesgado), y arbustos, setas y personajes bien asentados en el suelo en lugar de flotar",
+  ] },
   { v: "v.001700", date: "24/11/2026", title: "Campaña: nuevo mapa", items: [
       "Campaña: cada golpe a un gnomo suma siempre 1 punto, sin importar la fuerza del personaje (el máximo por gnomo sigue siendo 5, ampliable con la mejora de carga)",
       "Campaña: nueva intro de guerra: los combates usan los sprites de salto, golpe al suelo y pegar, con más sangre, roca que hace temblar la pantalla y suelta fragmentos, bosque frondoso en la huida final y fundido a negro",

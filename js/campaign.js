@@ -902,7 +902,7 @@ const Campaign = {
     const lang = typeof I18N !== "undefined" ? I18N.currentLang : "es";
     const T = CAMPAIGN_INTRO_SUB_TIMES[lang] || CAMPAIGN_INTRO_SUB_TIMES.es;
     return CampaignIntro.playVideo({
-      src: "assets/campana/intro_guerra.mp4?v=18",
+      src: "assets/campana/intro_guerra.mp4?v=19",
       voice: CAMPAIGN_INTRO_VOICES[lang] || null, // locución aparte por idioma (sin entrada = sin voz)
       nizak: this.t("cmp_nizak"), hold: this.t("cmp_hold_skip"),
       subs: T.map((x, i) => ({ t0: x[0], t1: x[1], text: L[i] })),
