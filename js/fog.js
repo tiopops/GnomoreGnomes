@@ -513,6 +513,7 @@ const Fog = {
         g.el.classList.toggle("unit--fog-hidden", this.isFoggedReal(g.row, g.col) || !this.isPerceived(g.row, g.col));
       });
     }
+    if (typeof Fairy !== "undefined") Fairy.refreshFog(); // Hada de la campaña (js/fairy.js)
     // "los totems no deben verse a traves de la niebla, realmente NADA debe
     // verse si tiene niebla encima" (pedido explícito) — a diferencia de
     // las unidades de arriba, un poblado/tótem se oculta SIEMPRE que su

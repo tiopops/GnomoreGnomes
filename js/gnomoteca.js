@@ -671,7 +671,7 @@ const Gnomoteca = {
     this._toastBusy = true;
     const el = document.createElement("div");
     el.className = "gnomo-toast" + (o.gold ? " gnomo-toast--gold" : "");
-    el.innerHTML = `<i class="ph-bold ph-${this._esc(o.icon)} gnomo-toast__ico"></i><span class="gnomo-toast__tx"><small>${o.gold ? "Logro desbloqueado" : "Gnomoteca"}</small>${o.name ? `<strong>${this._esc(o.name)}</strong>` : ""}</span><em class="gnomo-toast__xp"><b>+${o.xp}</b> XP</em>`;
+    el.innerHTML = `<i class="ph-bold ph-${this._esc(o.icon)} gnomo-toast__ico"></i><span class="gnomo-toast__tx"><small>${o.gold ? "Logro desbloqueado" : "Gnomoteca"}</small>${o.name ? `<strong>${this._esc(o.name)}</strong>` : ""}</span>${o.xp ? `<em class="gnomo-toast__xp"><b>+${o.xp}</b> XP</em>` : ""}`;
     document.body.appendChild(el);
     try { if (typeof SFX !== "undefined" && SFX.enabled) (SFX.missionDone || SFX.click).call(SFX); } catch (e) {}
     const done = () => { el.remove(); setTimeout(() => this._nextToast(), 250); };
@@ -715,6 +715,7 @@ const Gnomoteca = {
       });
     }
     if (typeof Gnome !== "undefined" && Gnome.list && Gnome.list.some((g) => g.el && this._visible(g.el))) this.discover("u:gnomo");
+    if (typeof Fairy !== "undefined" && Fairy.visible && Fairy.visible()) this.discover("u:hada"); // Hada de la campaña (js/fairy.js)
     // Recursos de escenario.
     if (typeof Resources !== "undefined" && Resources.list) {
       Resources.list.forEach((n) => { if (n.el && this._visible(n.el)) this.discover("r:" + n.kind); });
@@ -788,6 +789,11 @@ const Gnomoteca = {
         id: "u:gnomo", name: "Gnomo", type: "Unidad básica", img: "assets/equipos/MushboomForest/gnomo_idle.png",
         desc: "Pequeño, barbudo y sorprendentemente útil como proyectil. Se lanza contra recursos, guardias y páginas, y se carga de puntos al golpear.",
         chips: ["Se puede lanzar", "Una unidad solo carga un gnomo"],
+      });
+      out.push({
+        id: "u:hada", name: "Hada", type: "Neutral · Campaña", img: "assets/campana/hada_idle.png",
+        desc: "Escurridiza, quisquillosa y con más sentido común que tú: en cuanto ve a alguien acercarse, sale por patas. Hay una escondida en cada fase de la campaña. Si consigues llevarla hasta el Obelisco sin que te la maten, es tuya, y con ella el nivel se pone de un turquesa que da envidia.",
+        chips: ["Una por fase, bien escondida", "Rescátala al extraer"],
       });
       if (typeof UNIT_TYPES !== "undefined") {
         const maxOf = (k) => Math.max(5, ...Object.values(UNIT_TYPES).map((t) => t[k] || 0));

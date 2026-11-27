@@ -84,7 +84,7 @@ const CAMPAIGN_BASE_CARRY = 5;
 (function registerCampaignStrings() {
   const es = {
     cmp_abandon: "Abandonar campaña", cmp_abandon_q: "¿ABANDONAR LA CAMPAÑA?", cmp_abandon_info: "Perderás TODO el progreso: capítulos superados, gnomos, recursos y mejoras. La campaña empezará de cero y no se puede deshacer.", cmp_abandon_yes: "SÍ, ABANDONAR", cmp_abandon_no: "CANCELAR",
-    cmp_stat_stamped: "ESTAMPADOS", cmp_star_hint: "Completa el capítulo · estampa a todos los gnomos · elimina todos los campamentos en una misma partida", cmp_res_stars: "ESTRELLAS", cmp_depleted: "Aquí ya no queda ni un gnomo. Todos estampados.", cmp_depleted_btn: "AGOTADO",
+    cmp_stat_stamped: "ESTAMPADOS", cmp_star_hint: "Completa el capítulo · estampa a todos los gnomos · elimina todos los campamentos en una misma partida", cmp_res_stars: "ESTRELLAS", cmp_depleted: "Ya no quedan gnomos aquí: solo puedes entrar a por el hada, y el nivel no da nada más.", cmp_depleted_btn: "AGOTADO", cmp_perfect: "¡Nivel perfecto! Ya no da nada más, pero puedes volver cuando quieras.", cmp_fairy_saved: "¡HADA RESCATADA! Su retrato ya es tuyo.", cmp_fairy_bonus: "¡NIVEL PERFECTO! +2 de cada recurso extra.", cmp_best: "MEJOR", cmp_res_fairy: "Hada rescatada",
     menu_campaign: "Campaña", cmp_title: "CAMPAÑA", cmp_gnomes: "GNOMOS", cmp_goal: "Estampa {n} gnomos contra el Obelisco.",
     cmp_play: "JUGAR", cmp_soon: "PRÓXIMAMENTE", cmp_locked: "BLOQUEADO", cmp_done: "COMPLETADO", cmp_chapter: "CAPÍTULO {n}",
     cmp_need: "Necesitas {g} gnomos y {r} recursos extraídos (tienes {hg} y {hr}).", cmp_need_prev: "Completa el capítulo anterior.",
@@ -121,7 +121,7 @@ const CAMPAIGN_BASE_CARRY = 5;
   };
   const en = {
     cmp_abandon: "Abandon campaign", cmp_abandon_q: "ABANDON THE CAMPAIGN?", cmp_abandon_info: "You will lose ALL progress: cleared chapters, gnomes, resources and upgrades. The campaign will start over and this cannot be undone.", cmp_abandon_yes: "YES, ABANDON", cmp_abandon_no: "CANCEL",
-    cmp_stat_stamped: "SLAMMED", cmp_star_hint: "Finish the chapter · slam every gnome · wipe out every camp in a single match", cmp_res_stars: "STARS", cmp_depleted: "Not a single gnome left here. All slammed.", cmp_depleted_btn: "DEPLETED",
+    cmp_stat_stamped: "SLAMMED", cmp_star_hint: "Finish the chapter · slam every gnome · wipe out every camp in a single match", cmp_res_stars: "STARS", cmp_depleted: "No gnomes left here: you can only go in for the fairy, and the level gives nothing more.", cmp_depleted_btn: "DEPLETED", cmp_perfect: "Perfect level! It gives nothing more, but you can return any time.", cmp_fairy_saved: "FAIRY RESCUED! Her portrait is yours.", cmp_fairy_bonus: "PERFECT LEVEL! +2 of every extra resource.", cmp_best: "BEST", cmp_res_fairy: "Fairy rescued",
     menu_campaign: "Campaign", cmp_title: "CAMPAIGN", cmp_gnomes: "GNOMES", cmp_goal: "Slam {n} gnomes into the Obelisk.",
     cmp_play: "PLAY", cmp_soon: "COMING SOON", cmp_locked: "LOCKED", cmp_done: "COMPLETED", cmp_chapter: "CHAPTER {n}",
     cmp_need: "You need {g} gnomes and {r} extracted resources (you have {hg} and {hr}).", cmp_need_prev: "Complete the previous chapter.",
@@ -268,7 +268,13 @@ const Campaign = {
     return [!!this.s.done[n], this.remaining(n) <= 0, this.campsBest(n) >= (ch.camps || 0)];
   },
   stars(n) { return this.starFlags(n).filter(Boolean).length; },
-  _starsHtml(n, cls) { return `<span class="camp-stars ${cls || ""}">${this.starFlags(n).map((on) => `<i class="ph-fill ph-star camp-star${on ? " camp-star--on" : ""}"></i>`).join("")}</span>`; },
+  // Hada rescatada y mejor puntuación de cada capítulo. Se guardan dentro de los mapas ya existentes del documento
+  // ("f<n>" en done, "s<n>" en got) para no tener que tocar las reglas de la base de datos.
+  fairyDone(n) { return !!(this.s.done && this.s.done["f" + n]); },
+  bestScore(n) { return (this.s.got && this.s.got["s" + n]) || 0; },
+  // Nivel PERFECTO (estrellas turquesa): las 3 estrellas y el hada rescatada.
+  perfect(n) { const ch = this.ch(n); return !!ch && !ch.boss && this.starFlags(n).every(Boolean) && this.fairyDone(n); },
+  _starsHtml(n, cls) { return `<span class="camp-stars ${cls || ""}${this.perfect(n) ? " camp-stars--fairy" : ""}">${this.starFlags(n).map((on) => `<i class="ph-fill ph-star camp-star${on ? " camp-star--on" : ""}"></i>`).join("")}</span>`; },
   remaining(n) { const ch = this.ch(n); return ch ? Math.max(0, campaignChapterGnomes(ch) - ((this.s.got && this.s.got[n]) || 0)) : 0; },
   pay(cost) { CAMPAIGN_RES.forEach((r) => { this.s.res[r] -= cost[r] || 0; }); this.s.pts -= cost.p || 0; },
   totalRes() { return CAMPAIGN_RES.reduce((a, r) => a + (this.s.res[r] || 0), 0); },
@@ -337,9 +343,9 @@ const Campaign = {
           <span class="cmp-shadow"></span><span class="cmp-name">${name}</span>${stars}
         </button></div>`;
     }).join("");
-    return `<div class="p5-banner cmp-frame"><div class="cmp-board"><div class="cmp-band cmp-band--1"></div><div class="cmp-band cmp-band--2"></div><div class="cmp-band cmp-band--3"></div>${this._mapSky()}
+    return `<div class="p5-banner cmp-frame"><div class="cmp-scroll"><div class="cmp-board"><div class="cmp-band cmp-band--1"></div><div class="cmp-band cmp-band--2"></div><div class="cmp-band cmp-band--3"></div>${this._mapSky()}
       <svg class="cmp-svg cmp-svg--d" viewBox="0 0 1000 1000" preserveAspectRatio="none">${this._mapRoutes(false)}</svg>
-      <svg class="cmp-svg cmp-svg--m" viewBox="0 0 1000 1000" preserveAspectRatio="none">${this._mapRoutes(true)}</svg>${isles}</div></div>`;
+      <svg class="cmp-svg cmp-svg--m" viewBox="0 0 1000 1000" preserveAspectRatio="none">${this._mapRoutes(true)}</svg>${isles}</div></div></div>`;
   },
   _stripHtml(sel) {
     const t = (k, v) => this.t(k, v);
@@ -350,17 +356,17 @@ const Campaign = {
       action = `<button class="p5-banner p5-banner--action camp-play" disabled><span class="p5-banner__label"><i class="ph-fill ph-lock-simple"></i> ${t("cmp_locked")}</span></button>`;
     } else {
       status = this.s.done[sel.n] ? t("cmp_done") : "";
-      if (this.remaining(sel.n) <= 0) {
-        status = t("cmp_depleted");
-        action = `<button class="p5-banner p5-banner--action camp-play" disabled><span class="p5-banner__label"><i class="ph-fill ph-check-circle"></i> ${t("cmp_depleted_btn")}</span></button>`;
-      } else action = `<button class="p5-banner p5-banner--action camp-play" data-play="${sel.n}"><span class="p5-banner__label">${t("cmp_play")}</span></button>`;
+      if (this.remaining(sel.n) <= 0) status = this.perfect(sel.n) ? t("cmp_perfect") : t("cmp_depleted");
+      action = `<button class="p5-banner p5-banner--action camp-play" data-play="${sel.n}"><span class="p5-banner__label">${t("cmp_play")}</span></button>`;
     }
 
     const tile = (ic, val, lb, cls) => `<span class="cmp-tile${cls ? " " + cls : ""}"><i class="ph-fill ${ic}"></i><b>${val}</b><small>${lb}</small></span>`;
     const tiles = sel.boss ? "" : `<div class="cmp-tiles">${tile("ph-users-three", sel.goal, t("cmp_stat_gnomes"))}${tile("ph-hammer", campaignChapterGnomes(sel) - this.remaining(sel.n) + "/" + campaignChapterGnomes(sel), t("cmp_stat_stamped"))}${tile("ph-hourglass-medium", campaignTurnLimit(sel), t("cmp_stat_turns"))}${tile("ph-tent", this.campsBest(sel.n) + "/" + sel.camps, t("cmp_stat_camps"))}${sel.foe && sel.foe.arma ? tile("ph-sword", "+" + sel.foe.arma, t("cmp_stat_foeatk"), "cmp-tile--foe") : ""}${sel.foe && sel.foe.armadura ? tile("ph-shield", "+" + sel.foe.armadura, t("cmp_stat_foedef"), "cmp-tile--foe") : ""}</div>`;
     const stars = sel.boss || !this.unlocked(sel.n) ? "" : this._starsHtml(sel.n, "cmp-strip__stars");
+    const nav = (d, ic) => `<button type="button" class="cmp-nav cmp-nav--${d < 0 ? "prev" : "next"}" data-nav="${d}" ${(d < 0 && sel.n <= 1) || (d > 0 && sel.n >= CAMPAIGN_CHAPTERS.length) ? "disabled" : ""} aria-label="${d < 0 ? "‹" : "›"}"><i class="ph-fill ${ic}"></i></button>`;
     return `<div class="cmp-strip__body">
-      <div class="cmp-strip__id"><div class="cmp-strip__kicker">${t("cmp_chapter", { n: sel.n })}</div><div class="cmp-strip__name">${t("cmp_ch" + sel.n).replace(/^[^·]*· /, "")}</div>${stars}</div>
+      ${nav(-1, "ph-caret-left")}${nav(1, "ph-caret-right")}
+      <div class="cmp-strip__id"><div class="cmp-strip__kicker">${t("cmp_chapter", { n: sel.n })}</div><div class="cmp-strip__name">${t("cmp_ch" + sel.n).replace(/^[^·]*· /, "")}</div>${stars}${this.bestScore(sel.n) > 0 && !sel.boss ? `<div class="cmp-strip__best"><i class="ph-fill ph-trophy"></i> ${t("cmp_best")} <b>${this.bestScore(sel.n)}</b></div>` : ""}</div>
       ${tiles}
       <div class="cmp-strip__act">${action}</div>
       ${status ? `<p class="cmp-strip__status">${status}</p>` : ""}${sel.boss || !this.unlocked(sel.n) ? "" : `<p class="cmp-strip__hint">${t("cmp_star_hint")}</p>`}
@@ -375,15 +381,29 @@ const Campaign = {
     if (!strip) return this.render();
     strip.innerHTML = this._stripHtml(sel);
     strip.classList.remove("cmp-strip--in"); void strip.offsetWidth; strip.classList.add("cmp-strip--in");
+    this._bindStrip(strip);
+    this._centerOnSel(true);
+  },
+  _bindStrip(strip) {
     const pb = strip.querySelector("[data-play]");
     if (pb) pb.addEventListener("click", () => { this._click(); this.play(+pb.dataset.play); });
+    strip.querySelectorAll("[data-nav]").forEach((b) => b.addEventListener("click", () => { this._click(); this._selectChapter(Math.max(1, Math.min(CAMPAIGN_CHAPTERS.length, (this.sel || 1) + (+b.dataset.nav)))); }));
+  },
+  // Móvil vertical: el mapa es un visor con scroll propio; la isla elegida se centra sola.
+  _centerOnSel(smooth) {
+    if (!window.matchMedia("(max-width: 640px)").matches) return;
+    const root = document.getElementById("camp-root");
+    const frame = root && root.querySelector(".cmp-scroll"), isle = root && root.querySelector(".cmp-isle--sel");
+    if (!frame || !isle || !frame.clientHeight) return;
+    const board = frame.querySelector(".cmp-board"), y = board.offsetTop + isle.offsetTop;
+    frame.scrollTo({ top: Math.max(0, y - frame.clientHeight * 0.42), behavior: smooth ? "smooth" : "auto" });
   },
 
   render() {
     const root = document.getElementById("camp-root");
     if (!root || !this.s) return;
     if (!this._pre && typeof Artifacts !== "undefined" && typeof ART_DEFS !== "undefined") { // precarga: nada aparece de golpe al abrir la pestaña
-      this._pre = ["cushion"].concat(ART_DEFS.map((d) => d.id)).map((k) => { const im = new Image(); im.src = Artifacts.img(k); return im; }).concat([CAMPAIGN_EXTRACT_ICON, "assets/niveles/isla_mushboom_forest.png"].map((u) => { const im = new Image(); im.src = u; return im; }));
+      this._pre = ["cushion"].concat(ART_DEFS.map((d) => d.id)).map((k) => { const im = new Image(); im.src = Artifacts.img(k); return im; }).concat([CAMPAIGN_EXTRACT_ICON, "assets/niveles/isla_mushboom_forest.png", "assets/campana/hada_idle_midres.png", "assets/campana/hada_corre_midres.png"].map((u) => { const im = new Image(); im.src = u; return im; }));
     }
     const t = (k, v) => this.t(k, v);
     const sel = this.ch(this.sel) || this.ch(1);
@@ -411,7 +431,7 @@ const Campaign = {
       ? `<div class="camp-pane camp-pane--map">${nodes}<div class="p5-banner cmp-strip" id="cmp-strip">${this._stripHtml(sel)}</div></div>`
       : `<div class="camp-pane camp-pane--up">${upCards}</div>`;
     root.innerHTML = `
-      <div class="camp-top"><span class="camp-chip"><i class="ph-fill ph-users-three"></i> ${t("cmp_gnomes")} <b>${this.s.gnomes}</b></span><span class="camp-chip camp-chip--pts"><img src="${CAMPAIGN_PTS_ICON}" alt=""><b>${this.s.pts || 0}</b></span>${res}</div>
+      <div class="camp-top"><span class="camp-chip"><i class="ph-fill ph-users-three"></i> <span class="camp-chip__lb">${t("cmp_gnomes")}</span> <b>${this.s.gnomes}</b></span><span class="camp-chip camp-chip--pts"><img src="${CAMPAIGN_PTS_ICON}" alt=""><b>${this.s.pts || 0}</b></span>${res}</div>
       <div class="camp-tabs">${tabs}</div>
       ${pane}
       ${this.hasProgress() ? `<div class="camp-foot"><button type="button" class="p5-banner p5-banner--action camp-abandon" data-abandon><span class="p5-banner__label"><i class="ph ph-arrow-counter-clockwise"></i> ${t("cmp_abandon")}</span></button></div>` : ""}`;
@@ -419,9 +439,10 @@ const Campaign = {
     if (abBtn) abBtn.addEventListener("click", () => { this._click(); this._askAbandon(); });
     root.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { this._click(); this.tab = b.dataset.tab; this.render(); }));
     root.querySelectorAll(".cmp-isle__btn").forEach((b) => b.addEventListener("click", () => { this._click(); this._selectChapter(+b.dataset.n); }));
-    const pb = root.querySelector("[data-play]");
-    if (pb) pb.addEventListener("click", () => { this._click(); this.play(+pb.dataset.play); });
+    const strip0 = root.querySelector("#cmp-strip");
+    if (strip0) this._bindStrip(strip0);
     root.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => this.buy(b.dataset.buy)));
+    if (tab === "map") requestAnimationFrame(() => this._centerOnSel(false));
   },
 
   buy(id) {
@@ -451,12 +472,12 @@ const Campaign = {
   // ---------- Partida ----------
   async play(n) {
     const ch = this.ch(n);
-    if (!ch || ch.boss || !this.unlocked(n) || this.remaining(n) <= 0) return;
+    if (!ch || ch.boss || !this.unlocked(n)) return; // un capítulo agotado también se puede jugar (para el hada), pero ya no da nada más
     this.active = true;
     // Objetivo: lo que falte para el del capítulo (si ya lo superaste, hasta lo que quede), nunca más de los gnomos que quedan.
     const left = this.remaining(n), had = (this.s.got && this.s.got[n]) || 0;
     const goal = this.s.done[n] ? Math.min(ch.goal, left) : Math.max(1, Math.min(ch.goal - had, left));
-    this.run = { n, goal, total: left, maxTurns: campaignTurnLimit(ch) + 2 * this.upLevel("turnos"), delivered: 0, kills: 0, over: false, warnedNone: false, warnedDone: false, spawned: 0 };
+    this.run = { n, goal, total: left, maxTurns: campaignTurnLimit(ch) + 2 * this.upLevel("turnos"), delivered: 0, kills: 0, over: false, warnedNone: false, warnedDone: false, spawned: 0, depleted: left <= 0 };
     this._camps = [];
     if (typeof matchDraft !== "undefined") matchDraft.modeId = "campaign";
     // Capítulo 1: el vídeo aparece ANTES que nada (cortina negra encima) y el nivel se construye por debajo mientras suena.
@@ -501,6 +522,7 @@ const Campaign = {
     if (typeof Villages !== "undefined") Villages.resetAll();
     if (typeof Altar !== "undefined") Altar.resetAll();
     if (typeof Gnome !== "undefined") Gnome.resetAll();
+    if (typeof Fairy !== "undefined") Fairy.resetAll();
 
     const ob = Obelisks.byTeam("player");
     this._setupObelisk(ob);
@@ -556,6 +578,8 @@ const Campaign = {
 
     // Un gnomo suelto cerca del inicio para aprender a cogerlo.
     if (fresh) Gnome.spawnNear(Math.min(size - 1, ob.row + (ob.row < size / 2 ? 4 : -4)), Math.min(size - 1, ob.col + (ob.col < size / 2 ? 3 : -3)));
+    // El Hada: una por fase, escondida en un sitio distinto cada vez.
+    if (typeof Fairy !== "undefined" && !this.run.tutorial) Fairy.place(size, ob, (r, c) => this._free(r, c, size));
     if (typeof Obelisks.refreshAll === "function") Obelisks.refreshAll();
     this._showHud();
   },
@@ -812,6 +836,8 @@ const Campaign = {
     if (typeof Units !== "undefined") Units.deselect();
     if (typeof Turns !== "undefined") Turns.hideButton();
     const fallen = kind === "fallen", timeout = kind === "timeout";
+    const wasPerfect = this.perfect(r.n);
+    const rescued = kind === "extract" && typeof Fairy !== "undefined" && Fairy.carrierAlive();
     const got = {};
     const lvB = this.upLevel("botin"), lvP = this.upLevel("prorroga"), lvS = this.upLevel("seguro");
     CAMPAIGN_RES.forEach((k) => {
@@ -821,7 +847,14 @@ const Campaign = {
     // Puntos sobrantes de la partida: también se extraen (con las mismas reglas de prórroga y red de seguridad que los recursos).
     const leftPts = this.netPts();
     got.pts = fallen ? Math.floor(leftPts * 0.2 * lvS) : timeout ? Math.floor(leftPts * (0.5 + 0.1 * lvP)) : leftPts;
+    // Nivel agotado (ya no quedan gnomos): se puede jugar, pero no da botín.
+    if (r.depleted) { got.pts = 0; CAMPAIGN_RES.forEach((k) => { got[k] = 0; }); }
     this.s.pts = (this.s.pts || 0) + got.pts;
+    // Mejor puntuación (la partida peor no la sustituye).
+    const score = (r.delivered || 0) * 100 + (r.kills || 0) * 10 + got.pts;
+    this.s.got = this.s.got || {};
+    if (!r.depleted && score > this.bestScore(r.n)) this.s.got["s" + r.n] = score;
+    r.score = score;
     // Campamentos de esta partida: los abiertos + los que no se montaron porque sus gnomos ya estaban estampados. Se guarda el MEJOR intento.
     const ch0 = this.ch(r.n), campsTotal = (ch0 && ch0.camps) || 0;
     const cleared = Math.min(campsTotal, this._camps.filter((c) => c.open).length + Math.max(0, campsTotal - this._camps.length));
@@ -835,30 +868,40 @@ const Campaign = {
     }
     CAMPAIGN_RES.forEach((k) => { this.s.res[k] += got[k]; this.s.earnedRes += got[k]; });
     if (completed) this.s.done[r.n] = true;
+    // Hada rescatada: se desbloquea su retrato y, si el nivel ya tiene las 3 estrellas, se vuelve PERFECTO (+2 de cada recurso, una sola vez).
+    const newFairy = rescued && !this.fairyDone(r.n);
+    if (rescued) {
+      this.s.done["f" + r.n] = true;
+      if (typeof Avatars !== "undefined" && Avatars.onFairyRescued) Avatars.onFairyRescued();
+      if (typeof FairySFX !== "undefined") FairySFX.rescue();
+    }
+    const bonus = !wasPerfect && this.perfect(r.n);
+    if (bonus) CAMPAIGN_RES.forEach((k) => { got[k] += 2; this.s.res[k] += 2; this.s.earnedRes += 2; });
     this.persist();
     if (typeof SFX !== "undefined") { if (fallen && SFX.defeat) SFX.defeat(); else if (SFX.victory) SFX.victory(); }
-    this._showResult({ completed, fallen, timeout, got });
+    this._showResult({ completed, fallen, timeout, got, rescued: newFairy || (rescued && this.fairyDone(r.n)), newFairy, bonus });
   },
 
-  _showResult({ completed, fallen, timeout, got }) {
+  _showResult({ completed, fallen, timeout, got, rescued, newFairy, bonus }) {
     const r = this.run;
     const title = fallen ? this.t("cmp_res_fail") : timeout ? this.t("cmp_res_time") : completed ? this.t("cmp_res_ok") : this.t("cmp_res_part");
     const ov = document.createElement("div");
     ov.className = "camp-result";
     const bad = fallen || timeout;
     const maxCamps = (this.ch(r.n) || {}).camps || 0;
-    const note = fallen ? (this.upLevel("seguro") ? this.t("cmp_res_ins", { p: 20 * this.upLevel("seguro") }) : this.t("cmp_res_half"))
+    const fairyNote = bonus ? this.t("cmp_fairy_bonus") : newFairy ? this.t("cmp_fairy_saved") : "";
+    const note = fairyNote ? fairyNote : fallen ? (this.upLevel("seguro") ? this.t("cmp_res_ins", { p: 20 * this.upLevel("seguro") }) : this.t("cmp_res_half"))
       : timeout ? (this.upLevel("prorroga") ? this.t("cmp_res_tprc", { p: 50 + 10 * this.upLevel("prorroga") }) : this.t("cmp_res_timeup")) : "";
     const row = (icon, label, val, small, i) => `<div class="res-row${bad ? " res-row--bad" : ""}" style="animation-delay:${0.1 + i * 0.12}s"><i class="ph-fill ${icon}"></i><span class="res-row__label">${label}</span><span class="res-row__val">${val}${small ? `<small> / ${small}</small>` : ""}</span></div>`;
     const loot = [[CAMPAIGN_PTS_ICON, got.pts || 0]].concat(CAMPAIGN_RES.map((k) => [CAMPAIGN_RES_ICON[k], got[k] || 0]));
     const lost = loot.every((x) => !x[1]);
     ov.innerHTML = `<div class="p5-banner res-card"><div class="res-body">
       <h2 class="res-title${bad ? " res-title--bad" : ""}">${title}</h2>
-      <div class="res-stars">${this.starFlags(r.n).map((on) => `<i class="ph-fill ph-star res-star${on ? " res-star--on" : ""}"></i>`).join("")}</div>
+      <div class="res-stars${this.perfect(r.n) ? " res-stars--fairy" : ""}">${this.starFlags(r.n).map((on) => `<i class="ph-fill ph-star res-star${on ? " res-star--on" : ""}"></i>`).join("")}</div>
       <div class="res-rows">${row("ph-flag-banner", this.t("cmp_res_g"), r.delivered, r.goal, 0)}${row("ph-skull", this.t("cmp_res_k"), r.kills, 0, 1)}${row("ph-tent", this.t("cmp_stat_camps"), r.campsCleared || 0, maxCamps, 2)}</div>
       <div class="res-loot-h">${this.t(lost && bad ? "cmp_res_lost" : "cmp_res_loot")}</div>
       <div class="res-loot">${loot.map((x, i) => `<div class="res-tile${x[1] ? "" : " res-tile--zero"}" style="animation-delay:${0.5 + i * 0.09}s"><img src="${x[0]}" alt=""><b>+${x[1]}</b></div>`).join("")}</div>
-      ${note ? `<p class="res-note">${note}</p>` : ""}
+      ${note ? `<p class="res-note${fairyNote ? " res-note--fairy" : ""}">${note}</p>` : ""}
       <div class="res-foot"><button type="button" class="p5-banner p5-banner--action res-go"><span class="p5-banner__label"><i class="ph-fill ph-map-trifold"></i> ${this.t("cmp_back_map")}</span></button></div></div></div>`;
     document.body.appendChild(ov);
     requestAnimationFrame(() => ov.classList.add("camp-result--on"));
@@ -879,6 +922,7 @@ const Campaign = {
   onLeaveBoard() {
     if (!this.active && !this._hud) return;
     this.active = false;
+    if (typeof Fairy !== "undefined") Fairy.resetAll();
     if (this._hud) this._hud.style.display = "none";
     ["_askEl", "_resultEl"].forEach((k) => { if (this[k]) { this[k].remove(); this[k] = null; } });
     if (typeof Obelisks !== "undefined") Obelisks.gameOver = false;

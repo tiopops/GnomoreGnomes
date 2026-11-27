@@ -12,9 +12,15 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001701";
+const GG_VERSION = "v.001702";
 
 const GG_CHANGELOG = [
+  { v: "v.001702", date: "27/11/2026", title: "Campaña: mapa móvil", items: [
+      "Campaña (móvil vertical): nuevo mapa a pantalla completa sin scroll de página: recursos en una sola fila, el mapa ocupa el resto con scroll propio (la isla elegida se centra sola) y la ficha del capítulo queda fija abajo con flechas para cambiar de capítulo y un botón JUGAR grande a la altura del pulgar",
+      "Campaña: nueva mecánica, el Hada. Hay una escondida en cada fase (en sitios apartados, tras arbustos o junto a enemigos) que cambia de sitio cada vez. Es escurridiza: se queda quieta hasta que alguien se acerca y entonces sale corriendo. Si una unidad la atrapa brilla en dorado; si la matan, el hada se libera y huye. Extraer con ella rescata su retrato y, con las 3 estrellas, el nivel pasa a PERFECTO (estrellas turquesa y +2 de cada recurso extra)",
+      "Campaña: cada nivel guarda tu mejor puntuación. Solo se cobra botín al conseguir más estrellas que antes; un nivel agotado o perfecto se puede rejugar pero no da nada más",
+      "Hada: sonidos propios (campanillas, aleteo, huida y rescate), entrada en la Gnomoteca y retrato nuevo para el perfil",
+  ] },
   { v: "v.001701", date: "26/11/2026", title: "Campaña: intro y móvil", items: [
       "Campaña: eliminadas las intros de los capítulos 2 en adelante (texto y animaciones); esos capítulos empiezan directamente. Solo se mantiene la intro en vídeo del capítulo 1",
       "Campaña (móvil vertical): los turnos y los gnomos restantes pasan a una fila compacta bajo la barra de Gloria, sin amontonarse sobre la interfaz",

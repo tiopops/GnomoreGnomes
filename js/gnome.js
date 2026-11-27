@@ -1960,7 +1960,8 @@ const Gnome = {
   // movement.js y combat.js siguen llamando a esto tal cual, sin saber que
   // puede haber más de uno.
   isAt(row, col) {
-    return this.list.some((g) => g.isAt(row, col));
+    // El Hada de la campaña (js/fairy.js) también ocupa su casilla: nadie pisa donde ella está.
+    return this.list.some((g) => g.isAt(row, col)) || (typeof Fairy !== "undefined" && Fairy.isAt(row, col));
   },
 
   // true si algún gnomo lo lleva cogido esta unidad — usado por
@@ -2036,7 +2037,7 @@ const Gnome = {
   // devolver el control a Movement.moveTo, que es quien de verdad refresca
   // el radio después.
   async reactToPlayerMove(mover) {
-    await Promise.all(this.list.filter((g) => !g.heldBy).map((g) => g.reactToPlayerMove(mover)));
+    await Promise.all(this.list.filter((g) => !g.heldBy).map((g) => g.reactToPlayerMove(mover)).concat(typeof Fairy !== "undefined" ? [Fairy.reactToPlayerMove(mover)] : []));
   },
 
   // Una unidad ha dejado de andar (sea cual sea el motivo): los gnomos que la ven huyen. Lo llama Units.walkPath

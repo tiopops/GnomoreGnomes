@@ -23,6 +23,7 @@ const AVATAR_DEFAULT = "u:gnomo";
 // Se ajusta a mano con debug/editar-retratos.html y se pega aquí el resultado.
 const AVATAR_CROPS = {
   "u:gnomo": [-8, 23.4, 1.8],
+  "u:hada": [-15.5, 23.4, 1.8],
   "u:hombre_arbol": [-21.8, 32.8, 1.9],
   "u:surcabosques": [-25.7, 19.3, 1.9],
   "u:seta_artificiero": [-15.4, 18.7, 1.7],
@@ -48,12 +49,13 @@ const AVATAR_CROPS = {
   "u:oraculo": [-13.4, 4, 1.9],
 };
 // Retratos especiales (los que cuestan más de conseguir): llevan un marco dorado, solo de contorno.
-const AVATAR_SPECIAL = new Set(["u:grulla", "u:gnomo_fuego", "u:gnomogro", "u:tendero", "u:oraculo"]);
+const AVATAR_SPECIAL = new Set(["u:grulla", "u:gnomo_fuego", "u:gnomogro", "u:tendero", "u:oraculo", "u:hada"]);
 // Retratos que no salen de la Gnomoteca (no tienen ficha de unidad): se añaden al final del catálogo.
 const AVATAR_EXTRA = [
   { id: "u:gnomogro", name: "GnomOgro", img: "assets/gnomogro/gnomo_ogro_midres.png" },
   { id: "u:tendero", name: "Tendero Goblin", img: "assets/ui/goblin_vendedor.png" },
   { id: "u:oraculo", name: "Oráculo", img: "assets/oraculo/oraculo_goblin.webp" },
+  { id: "u:hada", name: "Hada", img: "assets/campana/hada_idle.png" },
 ];
 const AVATAR_SHOP_GOAL = 100; // puntos de gloria gastados en la Tienda Goblin (acumulado)
 const AVATAR_ORACLE_CARDS = ["renacido", "vigilante", "afortunado", "eterno"];
@@ -91,6 +93,7 @@ const Avatars = {
     if (a.id === "u:guardia") return this._tr("Marea a un guardia de WallForge lanzándole un gnomo.");
     if (a.id.startsWith("t:")) return this._tr("Gana una partida contra el equipo {0}.").replace("{0}", this._tr(a.name));
     if (a.id === "u:gnomogro") return this._tr("Mata al GnomOgro.");
+    if (a.id === "u:hada") return this._tr("Rescata un hada en la campaña: llévala hasta la extracción sin que maten a quien la lleva.");
     if (a.id === "u:gnomo_fuego") return this._tr("Quítate de encima 5 gnomos en llamas con una pedrada en una misma partida.") + " (" + Math.min(this._fire, AVATAR_FIRE_GOAL) + "/" + AVATAR_FIRE_GOAL + ")";
     if (a.id === "u:grulla") return this._tr("Ahuyenta a la Grulla lanzándole un gnomo 5 veces en una misma partida.") + " (" + Math.min(this._crane, AVATAR_CRANE_GOAL) + "/" + AVATAR_CRANE_GOAL + ")";
     if (a.id === "u:tendero") return this._tr("Gasta 100 puntos de gloria en la Tienda Goblin, aunque sea en partidas distintas.") + " (" + Math.min(this.shop, AVATAR_SHOP_GOAL) + "/" + AVATAR_SHOP_GOAL + ")";
@@ -197,6 +200,7 @@ const Avatars = {
     Teams.all.forEach((t) => { if (t !== "player" && Teams.raceIds[t]) this.unlock("t:" + Teams.raceIds[t]); });
   },
   onGnomogroKilled() { this.unlock("u:gnomogro"); },
+  onFairyRescued() { this.unlock("u:hada"); },
   onFireGnomeStoned() { if (++this._fire >= AVATAR_FIRE_GOAL) this.unlock("u:gnomo_fuego"); },
   newMatch() { this._crane = 0; this._fire = 0; },
   onCraneScared() { if (++this._crane >= AVATAR_CRANE_GOAL) this.unlock("u:grulla"); },

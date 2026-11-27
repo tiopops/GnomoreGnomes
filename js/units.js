@@ -1587,6 +1587,8 @@ const Units = {
     if (typeof Mushrooms !== "undefined") Mushrooms.onUnitDying(unit);
     // Gnomo en llamas del Volcán (js/volcano.js): si moría con uno agarrado, suelta lava.
     if (typeof Volcano !== "undefined") Volcano.onUnitDying(unit);
+    // Hada de la campaña (js/fairy.js): si moría quien la llevaba, se libera y sale corriendo.
+    if (typeof Fairy !== "undefined") Fairy.onUnitDying(unit);
     if (drowned) {
       await this._playDrown(unit);
     } else {

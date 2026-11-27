@@ -724,3 +724,55 @@
   .camp-hud--bump { animation-name: campBumpM; transform-origin: left top; }
   @keyframes campBumpM { 40% { transform: scale(1.18); } }
 }
+
+/* ---------- Mapa en móvil vertical (diseño de "pantalla de niveles" de móvil) ----------
+   Una sola pantalla sin scroll de página: arriba lo mínimo (volver, título, recursos en una fila, pestañas),
+   el mapa ocupa todo el resto como visor con scroll propio (la isla elegida se centra sola, ver _centerOnSel)
+   y la ficha del capítulo queda fija abajo, a la altura del pulgar, con flechas y un botón JUGAR grande. */
+.cmp-scroll { display: contents; }
+.cmp-nav { display: none; }
+@media (max-width: 640px) {
+  #screen-campaign:has(.camp-pane--map) { height: 100dvh; min-height: 0; overflow: hidden; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); justify-content: flex-start; }
+  #screen-campaign:has(.camp-pane--map) .back-btn { position: absolute; left: 10px; top: 10px; margin: 0; z-index: 3; }
+  #screen-campaign:has(.camp-pane--map) .camp-title { margin: 0 0 6px !important; padding: 8px 0 0 !important; font-size: 1.2rem; line-height: 1.2; height: 40px; }
+  #screen-campaign:has(.camp-pane--map) .camp-title::after { display: none; }
+  #screen-campaign:has(.camp-pane--map) #camp-root { flex: 1; min-height: 0; width: 100%; gap: 8px; padding-bottom: 0; }
+  #screen-campaign:has(.camp-pane--map) .camp-top { flex-wrap: nowrap; gap: 5px; margin: 0; }
+  #screen-campaign:has(.camp-pane--map) .camp-chip { padding: 3px 9px; font-size: .85rem; gap: 5px; }
+  #screen-campaign:has(.camp-pane--map) .camp-chip img { width: 20px; height: 20px; }
+  .camp-chip__lb { display: none; }
+  #screen-campaign:has(.camp-pane--map) .camp-tabs { margin: 0; gap: 8px; flex-wrap: nowrap; }
+  #screen-campaign:has(.camp-pane--map) .camp-tab { padding: 5px 16px; }
+  #screen-campaign:has(.camp-pane--map) .camp-foot { display: none; }
+  .camp-pane--map { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+  .cmp-frame { flex: 1; min-height: 0; padding: 8px 10px; overflow: hidden; }
+  .cmp-scroll { display: block; position: relative; z-index: 2; height: 100%; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; overscroll-behavior: contain; clip-path: var(--gg-slot-clip); }
+  .cmp-scroll::-webkit-scrollbar { display: none; }
+  .cmp-board { height: 860px; flex: none; }
+  .cmp-strip { flex: none; padding: 14px 18px 16px; }
+  .cmp-strip__body { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "p id n" "act act act" "st st st"; gap: 10px 10px; justify-items: stretch; }
+  .cmp-nav { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; padding: 0; font-size: 1.4rem; color: #fff; background: #2b2438; border: 3px solid #14121a; border-radius: 8px; cursor: var(--cursor-pointer, pointer); box-shadow: 3px 3px 0 rgba(0,0,0,.55); -webkit-tap-highlight-color: transparent; }
+  .cmp-nav:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(0,0,0,.55); }
+  .cmp-nav[disabled] { opacity: .3; }
+  .cmp-nav--prev { grid-area: p; } .cmp-nav--next { grid-area: n; }
+  .cmp-strip__id { grid-area: id; text-align: center; min-width: 0; }
+  .cmp-strip__name { font-size: 1.2rem; margin: 2px 0 4px; }
+  .cmp-strip__stars { justify-content: center; font-size: 1.5rem; }
+  .cmp-tiles, .cmp-strip__hint { display: none; }
+  .cmp-strip__act { grid-area: act; display: block; }
+  .cmp-strip__act .camp-play { width: 100%; padding: 15px 20px; font-size: 1.35rem; }
+  .cmp-strip__status { grid-area: st; text-align: center; font-size: .9rem; }
+}
+
+/* ---- Nivel PERFECTO (3 estrellas + hada): estrellas turquesa con un leve brillo pulsante (el brillo vive en el contenedor) ---- */
+.camp-stars--fairy .camp-star--on, .res-stars--fairy .res-star--on { color: #2de1d0; }
+.camp-stars--fairy, .res-stars--fairy { animation: tq-pulse 2.4s ease-in-out infinite; }
+@keyframes tq-pulse {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(45,225,208,.35)); }
+  50% { filter: drop-shadow(0 0 7px rgba(45,225,208,.85)); }
+}
+.res-note--fairy { color: #2de1d0; font-family: "Russo One", sans-serif; font-size: 1.05rem; text-shadow: 2px 2px 0 rgba(0,0,0,.65); }
+.cmp-strip__best { display: inline-flex; align-items: center; gap: 6px; margin: 2px 0 4px; font-family: "Russo One", sans-serif; font-size: 1rem; color: #fff; text-shadow: 2px 2px 0 rgba(0,0,0,.65); }
+.cmp-strip__best i { color: #ffcf3f; }
+.cmp-strip__best b { color: #ffcf3f; }
+@media (prefers-reduced-motion: reduce) { .camp-stars--fairy, .res-stars--fairy { animation: none; filter: drop-shadow(0 0 4px rgba(45,225,208,.6)); } }

@@ -1,0 +1,26 @@
+/* Gnomore Gnomes — el Hada de la campaña (js/fairy.js). Colores planos y sombras duras; solo el brillo dorado
+   pedido para quien la lleva usa un halo. Nada de mezclar @keyframes con transition sobre la misma propiedad. */
+.fairy { pointer-events: auto; }
+.fairy__flip { display: block; }
+/* Flota por encima del suelo: la elevación es una propiedad "translate" propia (no toca el transform del giro). */
+.fairy__float { translate: 0 -30px; animation: fairy-bob 1.8s ease-in-out infinite; }
+.fairy--run .fairy__float { animation-duration: .3s; }
+@keyframes fairy-bob { 0%, 100% { translate: 0 -30px; } 50% { translate: 0 -38px; } }
+.fairy__sprite { display: block; height: auto; user-select: none; -webkit-user-drag: none; filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, .45)); }
+.fairy__shadow { position: absolute; left: 50%; bottom: -3px; width: 42px; height: 13px; transform: translateX(-50%); background: rgba(0, 0, 0, .32); border-radius: 50%; }
+.fairy--run .fairy__shadow { width: 54px; }
+.fairy--catchable, .fairy--catchable * { cursor: url("../assets/iconos/cursor_mano.png") 24 24, pointer !important; }
+
+/* Quien lleva al hada: brillo dorado pulsante alrededor de su sprite (en .unit__flip, que solo cambia de transform
+   al girar) y una hadita flotando encima. Las demás capas de filtro de la unidad (sombra, selección, agotada)
+   se conservan vía --fa-base para que el brillo no se las coma. */
+.unit--fairy .unit__flip { --fa-base: drop-shadow(0 6px 5px rgba(0, 0, 0, .4)); animation: fairy-aura 1.1s ease-in-out infinite; }
+.unit--fairy.unit--selected .unit__flip { --fa-base: drop-shadow(0 6px 5px rgba(0, 0, 0, .4)) drop-shadow(0 0 10px rgba(122, 62, 240, .95)); }
+.unit--fairy.unit--exhausted .unit__flip { --fa-base: drop-shadow(0 6px 5px rgba(0, 0, 0, .4)) saturate(.35) brightness(.8); }
+.unit--fairy .unit__flip--turning { animation: unit-turn-pop .26s cubic-bezier(.34, 1.56, .64, 1), fairy-aura 1.1s ease-in-out infinite; }
+@keyframes fairy-aura {
+  0%, 100% { filter: var(--fa-base) drop-shadow(0 0 4px #ffcf3d) drop-shadow(0 0 12px #ffcf3d); }
+  50% { filter: var(--fa-base) drop-shadow(0 0 6px #fff1a8) drop-shadow(0 0 22px #ffcf3d); }
+}
+.fairy-carry { position: absolute; left: 50%; top: -50px; width: 36px; height: auto; transform: translateX(-50%); pointer-events: none; z-index: 5; filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, .5)); animation: fairy-carry-bob 1.4s ease-in-out infinite; }
+@keyframes fairy-carry-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -7px; } }
