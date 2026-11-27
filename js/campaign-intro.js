@@ -20,6 +20,18 @@ const CampaignIntro = (() => {
       const v = ov.querySelector("video"), txt = ov.querySelector(".cine__txt"), sub = ov.querySelector(".cine__sub");
       const fill = ov.querySelector(".cine__fill"), btn = ov.querySelector(".cine__skip");
       let done = false, hold = null, raf = 0;
+      // En vertical el vídeo (16:9) se recorta: se panea para seguir la acción y acabar con el gnomo final centrado.
+      const FOCUS = [[0, .5], [3, .52], [6, .55], [9, .5], [12, .5], [15, .55], [18, .5], [21, .58], [24, .62], [27, .5], [30, .5], [33, .55], [35, .55], [99, .55]];
+      const frame = (t) => {
+        const cw = ov.clientWidth, ch = ov.clientHeight, vw = v.videoWidth, vh = v.videoHeight;
+        if (!vw || !vh || ch <= cw) { v.style.objectPosition = ""; return; }
+        let fx = FOCUS[FOCUS.length - 1][1];
+        for (let i = 1; i < FOCUS.length; i++) if (t < FOCUS[i][0]) { const a = FOCUS[i - 1], b = FOCUS[i]; fx = a[1] + (b[1] - a[1]) * ((t - a[0]) / (b[0] - a[0])); break; }
+        const iw = vw * (ch / vh); // ancho mostrado del vídeo con object-fit: cover
+        if (iw <= cw) { v.style.objectPosition = ""; return; }
+        const p = Math.max(0, Math.min(1, (fx * iw - cw / 2) / (iw - cw)));
+        v.style.objectPosition = (p * 100).toFixed(2) + "% 50%";
+      };
       // Locución: archivo de audio aparte (según el idioma elegido), sincronizado con el vídeo. Sin archivo para ese idioma = sin voz.
       let voice = null;
       if (cfg.voice) { try { voice = new Audio(cfg.voice); voice.preload = "auto"; voice.volume = 1; v.volume = 0.22; } catch (e) { voice = null; } }
@@ -45,6 +57,7 @@ const CampaignIntro = (() => {
             else if (Math.abs(voice.currentTime - v.currentTime) > 0.25) { try { voice.currentTime = v.currentTime; } catch (e) {} }
           }
         }
+        frame(t);
         const cur = (cfg.subs || []).find((x) => t >= x.t0 && t < x.t1);
         sub.classList.toggle("cine__sub--on", !!cur);
         if (cur && txt.textContent !== cur.text) txt.textContent = cur.text;

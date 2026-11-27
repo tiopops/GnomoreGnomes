@@ -776,3 +776,10 @@
 .cmp-strip__best i { color: #ffcf3f; }
 .cmp-strip__best b { color: #ffcf3f; }
 @media (prefers-reduced-motion: reduce) { .camp-stars--fairy, .res-stars--fairy { animation: none; filter: drop-shadow(0 0 4px rgba(45,225,208,.6)); } }
+
+/* ---- Intro en vídeo, móvil: subtítulos compactos en horizontal (no se comen la pantalla) ---- */
+@media (orientation: landscape) and (max-height: 600px) {
+  .cine__sub { bottom: 2vh; width: min(880px, 88vw); flex-direction: row; align-items: baseline; gap: 10px; padding: 4px 14px; border-width: 2px; box-shadow: 3px 3px 0 rgba(0,0,0,.6); }
+  .cine__who { flex: none; font-size: .78rem; }
+  .cine__txt { flex: 1 1 auto; font-size: clamp(.92rem, 2.6vh, 1.05rem); line-height: 1.25; }
+}
