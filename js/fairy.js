@@ -19,6 +19,9 @@
    zigzag): hay que acorralarla contra un borde o pillarla despistada. Los enemigos la ignoran y ella a ellos.
    Quien la lleva brilla en dorado, pulsando, con una hadita encima; si lo matan se libera y escapa corriendo. */
 
+// Azar puramente visual/sonoro (nunca afecta al juego): el "de verdad" del navegador, para no tocar la secuencia del multijugador.
+const VR = typeof NR === "function" ? NR : Math.random;
+
 const FAIRY_ASSETS = {
   idle: "assets/campana/hada_idle_midres.png",
   corre: "assets/campana/hada_corre_midres.png",
@@ -56,7 +59,7 @@ const FairySFX = {
   },
   _noise(c, dur) {
     const n = Math.max(1, Math.floor(c.sampleRate * dur)), buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < n; i++) d[i] = VR() * 2 - 1;
     return buf;
   },
   // Campanita de cristal: fundamental + dos parciales inarmónicos que se apagan antes; ataque de 6 ms y caída exponencial.
@@ -115,7 +118,7 @@ const FairySFX = {
   rescue() {
     [523.25, 659.25, 783.99, 1046.5, 1318.5, 1568, 2093].forEach((f, i) => this.bell(f, i * 0.085, 1.5, 0.11 - i * 0.004));
     this.pad([261.63, 329.63, 392, 523.25], 0.1, 1.9, 0.05);
-    for (let i = 0; i < 7; i++) this.glint(1800 + Math.random() * 1600, 3200 + Math.random() * 2400, 0.35 + i * 0.12, 0.2, 0.035);
+    for (let i = 0; i < 7; i++) this.glint(1800 + VR() * 1600, 3200 + VR() * 2400, 0.35 + i * 0.12, 0.2, 0.035);
   },
   twinkle() { this.bell(2349, 0, 0.5, 0.05); this.bell(3136, 0.09, 0.5, 0.04); },
 };
@@ -129,13 +132,16 @@ const Fairy = {
   resetAll() {
     if (this.inst && this.inst.el) this.inst.el.remove();
     this.inst = null;
+    this._rs = null;
     this._releaseCarrierFx();
   },
 
   // Crea el hada escondida. `free(r, c)` lo da la campaña (casilla sin escenario/edificios). Una sola por fase,
   // en un sitio distinto cada vez: detrás de un arbusto, apartada (borde del mapa) o cerca de enemigos.
-  place(size, obelisk, free) {
+  // `obelisk`: un obelisco o varios (en partida normal hay uno por bando). mode: "campaign" (+1 fijo) o "normal" (sube al caer el portador).
+  place(size, obelisk, free, mode = "campaign") {
     this.resetAll();
+    const obs = [].concat(obelisk || []).filter(Boolean);
     const near = (r, c, list, d) => list.some((u) => Math.max(Math.abs(u.row - r), Math.abs(u.col - c)) <= d);
     const enemies = Units.list.filter((u) => u.team === "enemy");
     const cands = { bush: [], remote: [], foe: [], any: [] };
@@ -144,7 +150,7 @@ const Fairy = {
         if (!free(r, c) || Units.unitAt(r, c) || Gnome.isAt(r, c)) continue;
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
         if (this._shore(r, c)) continue; // ni en el agua ni pegada a ella: que nunca parezca flotar sobre un lago
-        if (obelisk && Math.max(Math.abs(obelisk.row - r), Math.abs(obelisk.col - c)) < 6) continue;
+        if (obs.some((o) => Math.max(Math.abs(o.row - r), Math.abs(o.col - c)) < 6)) continue;
         // "Detrás" de un arbusto = hacia el fondo de la pantalla: el arbusto la tapa por orden isométrico.
         if (typeof Bushes !== "undefined" && [[1, 1], [1, 0], [0, 1]].some(([dr, dc]) => Bushes.at(r + dr, c + dc))) cands.bush.push({ row: r, col: c });
         if (Math.min(r, c, size - 1 - r, size - 1 - c) <= 2) cands.remote.push({ row: r, col: c });
@@ -157,6 +163,29 @@ const Fairy = {
     if (!pool) return null;
     const spot = pool[Math.floor(Math.random() * pool.length)];
     this._spawn(spot.row, spot.col);
+    this.inst.mode = mode;
+    this.inst.level = 1; // bonus a TODAS las estadísticas del portador: +1; en partida normal sube hasta +5 cada vez que matan al portador
+    return this.inst;
+  },
+
+  // Tutorial de la campaña: un hada a la vista, a 3-4 casillas de la unidad (sin tocar el escenario del guion).
+  placeNear(unit, free) {
+    this.resetAll();
+    const cands = [];
+    for (let r = 1; r < Units.boardSize - 1; r++) for (let c = 1; c < Units.boardSize - 1; c++) {
+      const d = Math.max(Math.abs(r - unit.row), Math.abs(c - unit.col));
+      if (d < 3 || d > 4 || (free && !free(r, c)) || this._blocked(r, c) || this._shore(r, c) || Units.unitAt(r, c)) continue;
+      cands.push({ row: r, col: c });
+    }
+    // Hacia el fondo de la pantalla (arriba), lejos del cuadro de Nizak y de los botones de abajo.
+    const up = cands.filter((k) => k.row + k.col < unit.row + unit.col - 1 && Math.abs((k.col - k.row) - (unit.col - unit.row)) >= 3); // arriba y a un lado (no tapada por el Obelisco)
+    const pool = up.length ? up : cands;
+    if (!pool.length) return null;
+    const spot = pool[Math.floor(Math.random() * pool.length)];
+    this._spawn(spot.row, spot.col);
+    this.inst.mode = "campaign"; this.inst.level = 1;
+    if (typeof Fog !== "undefined" && Fog.revealAround) Fog.revealAround(spot.row, spot.col, 1, true);
+    this.refreshFog();
     return this.inst;
   },
 
@@ -303,10 +332,48 @@ const Fairy = {
     i.el.style.display = "none";
     i.el.style.transition = "";
     this._markCarrier(unit, true);
+    this._applyBuff(unit, i.level || 1);
     this._burst(to.x, to.y - 90, 10, "#fff1a8", 72, 520);
     this._ring(to.x, to.y);
     unit.el.animate([{ translate: "0 0" }, { translate: "0 -14px" }, { translate: "0 0" }], { duration: 320, easing: "ease-out" });
     if (typeof Gnomoteca !== "undefined" && Gnomoteca.discover) Gnomoteca.discover("u:hada");
+  },
+
+  // Mientras la lleva, la unidad gana +n en TODAS sus estadísticas (UnitXP.bonus lo suma en combate, movimiento, niebla...).
+  // El aguante se aplica además como vida máxima extra (xpHp es lo que ya suman todas las fórmulas de vida).
+  _applyBuff(unit, n, silent) {
+    if (!unit || !unit.el) return;
+    const delta = n - (unit.fairyBonus || 0);
+    unit.fairyBonus = n;
+    if (delta) {
+      unit.xpHp = (unit.xpHp || 0) + delta;
+      unit.maxHp += delta;
+      for (let k = 0; k < Math.abs(delta); k++) {
+        if (delta > 0) { const seg = document.createElement("div"); seg.className = "unit__hpbar-segment"; unit.hpBarEl.appendChild(seg); unit.hpSegmentEls.push(seg); }
+        else { const seg = unit.hpSegmentEls.pop(); if (seg) seg.remove(); }
+      }
+      unit.hp = delta > 0 ? unit.hp + delta : Math.max(1, Math.min(unit.hp, unit.maxHp));
+      Units.updateHpBar(unit);
+    }
+    if (unit.team === "player" && typeof Fog !== "undefined" && Fog.revealForUnit) { try { Fog.revealForUnit(unit); } catch (e) {} }
+    if (typeof Units.refreshRange === "function") { try { Units.refreshRange(unit); } catch (e) {} }
+    if (!silent) Units.spawnFloatingText(unit, "+" + n, { className: "xp-popup" });
+  },
+
+  // IA rival (partida normal): a veces intenta coger el hada si la tiene al alcance. Devuelve true si actuó.
+  async aiTry(unit) {
+    const i = this.inst;
+    if (!i || !i.el || i.carrier || i.busy || i.mode !== "normal" || unit.team === "player") return false;
+    if (this.isHeldBy(unit.id)) return false;
+    // Solo le interesa si la ve: dentro de su percepción (+2). Si puede alcanzarla, la coge; si no, se acerca (y ella huye).
+    const type = UNIT_TYPES[unit.typeId], d = Math.max(Math.abs(unit.row - i.row), Math.abs(unit.col - i.col));
+    if (d > type.percepcion + (typeof UnitXP !== "undefined" ? UnitXP.bonus(unit, "percepcion") : 0) + 2) return false;
+    if (this._approach(unit)) { await this.catchBy(unit); return true; }
+    const dest = typeof Turns !== "undefined" && Turns._aiPickMoveTileToward ? Turns._aiPickMoveTileToward(unit, { row: i.row, col: i.col }) : null;
+    if (!dest) return false;
+    await Movement.moveTo(unit, dest.row, dest.col);
+    await this.reactToPlayerMove(unit);
+    return true;
   },
 
   _markCarrier(unit, on) {
@@ -325,21 +392,58 @@ const Fairy = {
     Units.list.forEach((u) => { if (u.el && u.el.classList.contains("unit--fairy")) this._markCarrier(u, false); });
   },
 
+  // Azar de las reglas (huidas, titubeos...): en multijugador sale de un generador sembrado igual en los dos ordenadores.
+  _rnd() {
+    if (typeof Net !== "undefined" && Net.active && typeof GGRand !== "undefined") {
+      if (!this._rs) this._rs = GGRand.local("fairy|" + Net.seed);
+      return this._rs;
+    }
+    return Math.random;
+  },
+
+  // Dificultad: en partida normal y multijugador el hada se vuelve más esquiva con cada nivel (1-5) del bonus que da:
+  // ve desde más lejos, da más saltos, más largos, y casi nunca se queda petrificada. En campaña, siempre nivel 1.
+  _lv() { const i = this.inst; return i && i.mode === "normal" ? Math.max(1, Math.min(5, i.level || 1)) : 1; },
+  _vision() { return Math.round(FAIRY_VISION + 1.5 * (this._lv() - 1)); }, // 6, 8, 9, 11, 12 casillas
+  _hops() { return FAIRY_HOPS + (this._lv() - 1); }, // 4 a 8 saltos
+  _hopMs() { return FAIRY_HOP_MS; }, // la animación de cada salto no cambia con el nivel (si no, no se vería moverse)
+  _freeze() { return Math.max(0, FAIRY_FREEZE_CHANCE - 0.1 * (this._lv() - 1)); }, // 40 % a 0 %
+
+  // Extracción en campaña: el hada se despide (queda rescatada) y la unidad deja de llevarla y de tener su bonus.
+  lose() {
+    const i = this.inst;
+    if (!i || !i.carrier) return;
+    const unit = Units.list.find((u) => u.id === i.carrier);
+    i.carrier = null;
+    if (unit && unit.el) {
+      const p = getTileCenter(unit.row, unit.col, Units.boardSize);
+      this._burst(p.x, p.y - 90, 12, "#fff1a8", 80, 600);
+      this._markCarrier(unit, false);
+      this._applyBuff(unit, 0, true);
+    }
+  },
+
+  // De quién huye: en campaña solo de tus unidades (los neutrales la ignoran); en partida normal, de todas.
+  _seekers() {
+    const normal = this.inst && this.inst.mode === "normal";
+    return Units.list.filter((u) => normal || u.team === "player");
+  },
+
   // ---------- Escabullirse ----------
   async reactToPlayerMove(mover) {
     const i = this.inst;
     if (!i || !i.el || i.carrier || i.busy) return;
-    if (!mover || mover.team !== "player" || !Units.list.includes(mover)) return;
+    if (!mover || !Units.list.includes(mover) || (mover.team !== "player" && i.mode !== "normal")) return; // en campaña solo huye de tus unidades
     // Una unidad escondida en un arbusto es invisible para el hada (igual que para los neutrales y los gnomos).
     const hid = (u) => typeof Bushes !== "undefined" && Bushes.isHidingUnit(u);
     if (hid(mover)) return;
-    const players = Units.list.filter((u) => u.team === "player" && !hid(u));
+    const players = this._seekers().filter((u) => !hid(u));
     if (!players.length) return;
     const d = Math.min(...players.map((u) => Math.max(Math.abs(u.row - i.row), Math.abs(u.col - i.col))));
-    if (d > FAIRY_VISION) return;
+    if (d > this._vision()) return;
     // Si la tienes JUSTO al lado y esa unidad aún puede actuar, a veces se queda petrificada un instante (ventana para cogerla).
     const dm = Math.max(Math.abs(mover.row - i.row), Math.abs(mover.col - i.col));
-    if (dm <= 1 && (typeof Turns === "undefined" || Turns.canAct(mover)) && Math.random() < FAIRY_FREEZE_CHANCE) {
+    if (dm <= 1 && (typeof Turns === "undefined" || Turns.canAct(mover)) && this._rnd()() < this._freeze()) {
       FairySFX.freeze();
       i.spriteEl.animate([{ translate: "0 0" }, { translate: "-3px 0" }, { translate: "3px 0" }, { translate: "0 0" }], { duration: 240, iterations: 2 });
       return;
@@ -355,14 +459,15 @@ const Fairy = {
     FairySFX.flee();
     const dmin = (r, c) => Math.min(...players.map((u) => Math.max(Math.abs(u.row - r), Math.abs(u.col - c))));
     const size = Units.boardSize;
-    for (let h = 0; h < FAIRY_HOPS; h++) {
+    const reach = this._lv() >= 3 ? 3 : 2; // a partir del nivel 3 da saltos más largos
+    for (let h = 0; h < this._hops(); h++) {
       const opts = [];
-      for (let dr = -2; dr <= 2; dr++) {
-        for (let dc = -2; dc <= 2; dc++) {
+      for (let dr = -reach; dr <= reach; dr++) {
+        for (let dc = -reach; dc <= reach; dc++) {
           const r = i.row + dr, c = i.col + dc;
           if (!(dr || dc) || this._blocked(r, c) || this._shore(r, c) || !Units.pathIsWalkable(i.row, i.col, r, c, "player")) continue;
           const edge = Math.min(r, c, size - 1 - r, size - 1 - c) <= 0;
-          opts.push({ r, c, s: dmin(r, c) * 1.5 + Math.random() * 2.4 - (edge ? 1.2 : 0) });
+          opts.push({ r, c, s: dmin(r, c) * 1.5 + this._rnd()() * 2.4 - (edge ? 1.2 : 0) });
         }
       }
       opts.sort((a, b) => b.s - a.s);
@@ -383,12 +488,12 @@ const Fairy = {
     Units.faceTowardsTile(i, row, col);
     i.row = row; i.col = col;
     const { x, y } = getTileCenter(row, col, Units.boardSize);
-    i.el.style.transition = `left ${FAIRY_HOP_MS}ms linear, top ${FAIRY_HOP_MS}ms linear, opacity .3s ease`;
+    i.el.style.transition = `left ${this._hopMs()}ms linear, top ${this._hopMs()}ms linear, opacity .3s ease`;
     i.el.style.left = x + "px"; i.el.style.top = y + "px";
     i.el.style.zIndex = String((row + col) * 10 + 5);
     FairySFX.wing();
     this.refreshFog();
-    return new Promise((r) => setTimeout(r, FAIRY_HOP_MS + 10));
+    return new Promise((r) => setTimeout(r, this._hopMs() + 10));
   },
 
   _setRun(on) {
@@ -404,13 +509,14 @@ const Fairy = {
     const i = this.inst;
     if (!i || i.carrier !== unit.id) return;
     i.carrier = null;
+    if (i.mode === "normal") i.level = Math.min(5, (i.level || 1) + 1); // el siguiente que la coja sube todo un punto más (máx. +5)
     this._markCarrier(unit, false);
     // Aparece junto a la unidad caída (una casilla libre cercana) y sale corriendo.
     let spot = { row: unit.row, col: unit.col };
     for (let r = 1; r <= 3; r++) {
       const ring = [];
       for (let dr = -r; dr <= r; dr++) for (let dc = -r; dc <= r; dc++) if (Math.max(Math.abs(dr), Math.abs(dc)) === r && !this._blocked(unit.row + dr, unit.col + dc, unit)) ring.push({ row: unit.row + dr, col: unit.col + dc });
-      if (ring.length) { spot = ring[Math.floor(Math.random() * ring.length)]; break; }
+      if (ring.length) { spot = ring[Math.floor(this._rnd()() * ring.length)]; break; }
     }
     i.row = spot.row; i.col = spot.col;
     Units._placeInstant(i);
@@ -418,7 +524,7 @@ const Fairy = {
     FairySFX.release();
     const p = getTileCenter(i.row, i.col, Units.boardSize);
     this._burst(p.x, p.y - 70, 9, "#ffcf3d", 80, 520);
-    const players = Units.list.filter((u) => u.team === "player" && u !== unit);
+    const players = this._seekers().filter((u) => u !== unit);
     await new Promise((r) => setTimeout(r, 260));
     await this._flee(players.length ? players : [unit]);
   },
@@ -427,7 +533,7 @@ const Fairy = {
   _burst(x, y, n, col, d0, dur) {
     const root = Units.container;
     for (let k = 0; k < n; k++) {
-      const e = document.createElement("i"), a = (k / n) * Math.PI * 2 + Math.random() * 0.4, d = d0 * (0.6 + Math.random() * 0.6), sz = 7 + Math.random() * 7;
+      const e = document.createElement("i"), a = (k / n) * Math.PI * 2 + VR() * 0.4, d = d0 * (0.6 + VR() * 0.6), sz = 7 + VR() * 7;
       e.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;background:${col};border:2px solid #14121a;z-index:4800;pointer-events:none`;
       root.appendChild(e);
       e.animate([{ transform: "translate(-50%,-50%) rotate(45deg) scale(1)", opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) rotate(225deg) scale(.2)`, opacity: 0 }], { duration: dur, easing: "ease-out" }).onfinish = () => e.remove();

@@ -955,6 +955,7 @@ const Turns = {
       }
     }
 
+    if (typeof Fairy !== "undefined" && (await Fairy.aiTry(unit))) return true; // Hada (js/fairy.js): la IA también puede cogerla
     if (typeof Gnome !== "undefined") {
       // Señuelo Explosivo (js/backpack.js) — "el enemigo lo ve con el
       // sprite normal del gnomo" así que la IA lo persigue exactamente

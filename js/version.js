@@ -16,6 +16,11 @@ const GG_VERSION = "v.001703";
 
 const GG_CHANGELOG = [
   { v: "v.001703", date: "28/11/2026", title: "Campaña: últimos turnos y móvil", items: [
+      "Hada: quien la lleva gana +1 en TODAS sus estadísticas mientras la tenga (aguante, movimiento, fuerza, agilidad y percepción)",
+      "Hada (partida rápida y multijugador): cada nivel que sube (1 a 5) la hace más difícil de capturar: ve desde más lejos (de 6 a 12 casillas), da más saltos seguidos, más largos, y casi nunca se queda petrificada",
+      "Campaña: al extraer con el hada, ella se va y la unidad deja de llevarla y pierde el bonus",
+      "Hada: también aparece en el tutorial de la campaña y en el multijugador online (mismo comportamiento y mismo sitio para los dos jugadores). En partida rápida el rival se interesa por ella en cuanto la ve: se acerca a cogerla, y ella también huye de él",
+      "Hada en partida normal: ahora hay una escondida en todos los mapas. Si matan al portador, quien la coja después gana un punto más en todo (+2, +3... hasta +5). La IA rival también puede cogerla",
       "Hada: arreglados sus sonidos, que dejaban de oírse dentro de una partida",
       "Hada: tampoco ve a las unidades escondidas en un arbusto",
       "Campaña: los neutrales ya no ven ni persiguen a las unidades escondidas en un arbusto",

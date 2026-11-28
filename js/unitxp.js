@@ -40,7 +40,8 @@ const UnitXP = {
   t(k, v) { return I18N.t(k, v); },
 
   // Bonus acumulado de una estadística (0 para quien no tenga XP: enemigos, otros modos...).
-  bonus(unit, stat) { return (unit && unit.xpStats && unit.xpStats[stat]) || 0; },
+  // Incluye el bonus del Hada (unit.fairyBonus, js/fairy.js) mientras la unidad la lleva.
+  bonus(unit, stat) { return ((unit && unit.xpStats && unit.xpStats[stat]) || 0) + (unit && UNITXP_STATS.some((s) => s.id === stat) ? unit.fairyBonus || 0 : 0); },
 
   // Una unidad recién creada: si es del jugador y estamos en campaña, recibe su barra.
   attach(unit) {
@@ -82,7 +83,7 @@ const UnitXP = {
     if (k) this.addXp(k, UNITXP_KILL);
   },
 
-  _total(unit, stat) { return (UNIT_TYPES[unit.typeId][stat] || 0) + this.bonus(unit, stat); },
+  _total(unit, stat) { return (UNIT_TYPES[unit.typeId][stat] || 0) + ((unit.xpStats && unit.xpStats[stat]) || 0); },
   _open(unit) { return UNITXP_STATS.filter((s) => this._total(unit, s.id) < UNITXP_CAP); },
 
   _next() {

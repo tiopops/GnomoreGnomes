@@ -488,6 +488,13 @@ function spawnTestUnits(size, raceId, opponents, mp) {
   // Charcos de sangre (js/bloodsplat.js) — nada que colocar al empezar
   // (nacen sobre la marcha con cada muerte/gnomo aplastado), solo hay que
   // limpiar los de la partida anterior si la había.
+  // Hada (js/fairy.js): una escondida en cada mapa de partida normal (la campaña y los tutoriales la gestionan aparte).
+  if (typeof Fairy !== "undefined") {
+    Fairy.resetAll();
+    const special = (typeof Campaign !== "undefined" && Campaign.active) || (typeof Tutorial !== "undefined" && Tutorial.active);
+    if (!special) Fairy.place(size, Teams.all.map((t) => Obelisks.byTeam(t)), (r, c) => !Fairy._blocked(r, c), "normal");
+  }
+
   if (typeof BloodSplat !== "undefined") BloodSplat.resetAll();
   if (typeof Sacrifice !== "undefined") Sacrifice.resetAll();
 

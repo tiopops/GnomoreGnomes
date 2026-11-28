@@ -34,6 +34,9 @@
   UT(Altar, "approachAndSacrifice", "alt");
   UT(Volcano, "approachAndSmash", "vsm");
   UT(Mushrooms, "catchBy", "mush");
+  if (typeof Fairy !== "undefined") Net.hook(Fairy, "catchBy", "fairy.catch",
+    (unit) => ({ u: R(unit) }),
+    (a) => { const u = U(a.u); return u ? [u] : null; });
   if (typeof Egg !== "undefined") Net.hook(Egg, "throwGnome", "egg.throw",
     (holder, gnome, choice) => ({ u: R(holder), g: R(gnome), k: choice || 0 }),
     (a) => { const u = U(a.u), g = U(a.g); return alive(u, g) ? [u, g, a.k || 0] : null; });

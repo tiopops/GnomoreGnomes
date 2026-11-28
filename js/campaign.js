@@ -819,7 +819,7 @@ const Campaign = {
     this._askEl = ov;
     const close = () => { ov.remove(); this._askEl = null; };
     ov.querySelector(".camp-ask__btn--no").addEventListener("click", () => { if (typeof SFX !== "undefined" && SFX.back) SFX.back(); close(); });
-    ov.querySelector(".camp-ask__btn--yes").addEventListener("click", () => { this._click(); close(); if (this.run.tutorial) { this.run.tutExtracted = true; return; } this._finish("extract"); });
+    ov.querySelector(".camp-ask__btn--yes").addEventListener("click", () => { this._click(); close(); if (this.run.tutorial) { this.run.tutExtracted = true; if (typeof Fairy !== "undefined") Fairy.lose(); return; } this._finish("extract"); });
     ov.addEventListener("click", (e) => { if (e.target === ov) close(); });
   },
 
@@ -843,6 +843,7 @@ const Campaign = {
     const fallen = kind === "fallen", timeout = kind === "timeout";
     const wasPerfect = this.perfect(r.n);
     const rescued = kind === "extract" && typeof Fairy !== "undefined" && Fairy.carrierAlive();
+    if (rescued) Fairy.lose(); // al extraer, el hada se va y la unidad pierde el bonus
     const got = {};
     const lvB = this.upLevel("botin"), lvP = this.upLevel("prorroga"), lvS = this.upLevel("seguro");
     CAMPAIGN_RES.forEach((k) => {

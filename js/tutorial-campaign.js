@@ -15,6 +15,8 @@ Object.assign(Tutorial, {
     const u = Units.spawnUnit({ typeId: "seta_artificiero", row: spot.row, col: spot.col, team: "player" });
     this._ctx.unitId = u.id;
     if (typeof Fog !== "undefined") Fog.revealForUnit(u);
+    // El Hada (js/fairy.js): también aparece en el tutorial, a la vista, para que el jugador la conozca.
+    if (typeof Fairy !== "undefined") Fairy.placeNear(u);
     // Campamento: un Rastreador guardando un gnomo enjaulado, a 2-3 casillas de la unidad.
     if (typeof Gnome !== "undefined" && Gnome.resetAll) Gnome.resetAll();
     const cs = this._around(u, -2, 2) || this._around(u, 2, -2);
