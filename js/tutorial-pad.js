@@ -101,6 +101,13 @@ const TUTORIAL_PAD_TEXTS = {
       rep: [["Lanza al gnomo al agua", "Lanza al gnomo al agua (selecciona con {confirm}, abre las acciones con {actions}, elige lanzar y apunta a la calavera con {confirm})"]],
       en: { rep: [["Throw the gnome into the water", "Throw the gnome into the water (select with {confirm}, open actions with {actions}, choose throw and aim at the skull with {confirm})"]] },
     },
+    { // hada (explicación)
+    },
+    { // hada (coger)
+      rep: [["Pulsa la manita y que tu unidad la coja.", "Con tu unidad seleccionada, lleva el cursor al hada y pulsa {confirm} sobre la manita para que la coja."]],
+      mission: "Coge el hada con {confirm}",
+      en: { rep: [["Tap the little hand and have your unit grab her.", "With your unit selected, move the cursor to the fairy and press {confirm} on the little hand to grab her."]], mission: "Catch the fairy with {confirm}" },
+    },
     { // 19 Habilidades
       rep: [["Abre Habilidades, échale un vistazo y ciérrala.", "Selecciona tu Obelisco ({toObelisk} lleva el cursor y {confirm} lo selecciona), abre Habilidades ({prevUnit} y {nextUnit} cambian de opción, {confirm} abre la marcada), échale un vistazo y ciérrala con {back}."]],
       mission: "Abre Habilidades y ciérrala con {back}",

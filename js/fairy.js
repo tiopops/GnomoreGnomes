@@ -169,12 +169,12 @@ const Fairy = {
   },
 
   // Tutorial de la campaña: un hada a la vista, a 3-4 casillas de la unidad (sin tocar el escenario del guion).
-  placeNear(unit, free) {
+  placeNear(unit, free, tame) {
     this.resetAll();
     const cands = [];
     for (let r = 1; r < Units.boardSize - 1; r++) for (let c = 1; c < Units.boardSize - 1; c++) {
       const d = Math.max(Math.abs(r - unit.row), Math.abs(c - unit.col));
-      if (d < 3 || d > 4 || (free && !free(r, c)) || this._blocked(r, c) || this._shore(r, c) || Units.unitAt(r, c)) continue;
+      if (d < (tame ? 2 : 3) || d > (tame ? 3 : 4) || (free && !free(r, c)) || this._blocked(r, c) || this._shore(r, c) || Units.unitAt(r, c)) continue;
       cands.push({ row: r, col: c });
     }
     // Hacia el fondo de la pantalla (arriba), lejos del cuadro de Nizak y de los botones de abajo.
@@ -184,6 +184,7 @@ const Fairy = {
     const spot = pool[Math.floor(Math.random() * pool.length)];
     this._spawn(spot.row, spot.col);
     this.inst.mode = "campaign"; this.inst.level = 1;
+    this.inst.tame = !!tame; // dócil (tutorial de Primeros pasos): no huye
     if (typeof Fog !== "undefined" && Fog.revealAround) Fog.revealAround(spot.row, spot.col, 1, true);
     this.refreshFog();
     return this.inst;
@@ -432,7 +433,7 @@ const Fairy = {
   // ---------- Escabullirse ----------
   async reactToPlayerMove(mover) {
     const i = this.inst;
-    if (!i || !i.el || i.carrier || i.busy) return;
+    if (!i || !i.el || i.carrier || i.busy || i.tame) return;
     if (!mover || !Units.list.includes(mover) || (mover.team !== "player" && i.mode !== "normal")) return; // en campaña solo huye de tus unidades
     // Una unidad escondida en un arbusto es invisible para el hada (igual que para los neutrales y los gnomos).
     const hid = (u) => typeof Bushes !== "undefined" && Bushes.isHidingUnit(u);

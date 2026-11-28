@@ -745,6 +745,37 @@ const Tutorial = {
         ok: "+3 de Gloria al instante. Tinkle dio su vida por la causa, aunque nadie le preguntó. Descuida: el siguiente gnomo ya viene de camino.",
       },
       {
+        say: `Ahora, lo bueno: el HADA. Hay una escondida en cada mapa, quieta como una estatua hasta que alguien se acerca… y entonces sale por patas y no hay quien la pille. Quien la lleva gana +1 a TODAS sus estadísticas mientras la tenga. Mírala, ahí arriba.`,
+        button: "Quiero una",
+        onStart: () => {
+          T._refill();
+          const u = T._my().find((x) => !Gnome.isHeldBy(x.id)) || T._my()[0];
+          if (u && typeof Fairy !== "undefined") Fairy.placeNear(u, null, true);
+          if (typeof Fog !== "undefined") Fog.applyVisibility();
+        },
+      },
+      {
+        say: `Hoy te la he dejado dócil, no te acostumbres. Pulsa la manita y que tu unidad la coja. Si matan a quien la lleva, se suelta, y el siguiente que la pille gana +2, luego +3… hasta +5; pero cada vez corre más y ve desde más lejos. En la campaña, además, si sales por el Obelisco con ella, la rescatas.`,
+        mission: "Coge el hada",
+        onStart: () => {
+          T._refill();
+          const u = T._my().find((x) => !Gnome.isHeldBy(x.id)) || T._my()[0];
+          T._ctx.fairyUnitId = u && u.id;
+          if (u && typeof Fairy !== "undefined" && !Fairy.inst) Fairy.placeNear(u, null, true);
+          if (typeof Fog !== "undefined") Fog.applyVisibility();
+        },
+        target: () => {
+          const u = Units.list.find((x) => x.id === T._ctx.fairyUnitId);
+          const f = typeof Fairy !== "undefined" ? Fairy.inst : null;
+          if (!u || !f) return null;
+          if (f.carrier) return null;
+          return T._unitThen(u, () => T._marker("catch-marker", f.row, f.col)) || T._unitEl(u);
+        },
+        refillFor: () => T._ctx.fairyUnitId,
+        done: () => !!(typeof Fairy !== "undefined" && Fairy.inst && Fairy.inst.carrier),
+        ok: "Mira ese brillo dorado: acabas de convertir a tu unidad en un poco menos patética.",
+      },
+      {
         say: `Tu Obelisco guarda más trucos. Selecciónalo y abre Habilidades: tres ramas (Guerra, Protección y Supervivencia) con mejoras permanentes que se compran con Puntos de Gloria. Échale un vistazo y ciérrala con la X. No te pido que entiendas nada, de momento con que sepas que está ahí, es suficiente.`,
         mission: "Abre Habilidades y ciérrala",
         onStart: () => {

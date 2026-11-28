@@ -17,6 +17,7 @@ const GG_VERSION = "v.001703";
 const GG_CHANGELOG = [
   { v: "v.001703", date: "28/11/2026", title: "Campaña: últimos turnos y móvil", items: [
       "Hada: quien la lleva gana +1 en TODAS sus estadísticas mientras la tenga (aguante, movimiento, fuerza, agilidad y percepción)",
+      "Tutorial Primeros pasos: nueva parte sobre el Hada (qué es, el bonus que da, qué pasa si matan al portador y los niveles hasta +5) con una misión para cogerla; también con textos de mando y en inglés",
       "Hada (partida rápida y multijugador): cada nivel que sube (1 a 5) la hace más difícil de capturar: ve desde más lejos (de 6 a 12 casillas), da más saltos seguidos, más largos, y casi nunca se queda petrificada",
       "Campaña: al extraer con el hada, ella se va y la unidad deja de llevarla y pierde el bonus",
       "Hada: también aparece en el tutorial de la campaña y en el multijugador online (mismo comportamiento y mismo sitio para los dos jugadores). En partida rápida el rival se interesa por ella en cuanto la ve: se acerca a cogerla, y ella también huye de él",

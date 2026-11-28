@@ -217,6 +217,26 @@ const TUTORIAL_TEXTS = {
    }
   },
   {
+   "say": "Ahora, lo bueno: el HADA. Hay una escondida en cada mapa, quieta como una estatua hasta que alguien se acerca… y entonces sale por patas y no hay quien la pille. Quien la lleva gana +1 a TODAS sus estadísticas mientras la tenga. Mírala, ahí arriba.",
+   "button": "Quiero una",
+   "mood": "normal",
+   "en": {
+    "say": "Now, the good part: the FAIRY. There's one hidden on every map, still as a statue until someone gets close… and then she bolts and nobody can catch her. Whoever carries her gets +1 to ALL their stats while they have her. Look at her, up there.",
+    "button": "I want one"
+   }
+  },
+  {
+   "say": "Hoy te la he dejado dócil, no te acostumbres. Pulsa la manita y que tu unidad la coja. Si matan a quien la lleva, se suelta, y el siguiente que la pille gana +2, luego +3… hasta +5; pero cada vez corre más y ve desde más lejos. En la campaña, además, si sales por el Obelisco con ella, la rescatas.",
+   "mission": "Coge el hada",
+   "ok": "Mira ese brillo dorado: acabas de convertir a tu unidad en un poco menos patética.",
+   "mood": "aplaude",
+   "en": {
+    "say": "I've left her docile today, don't get used to it. Tap the little hand and have your unit grab her. If whoever carries her is killed she's released, and the next one to catch her gets +2, then +3… up to +5; but each time she runs more and sees from farther. In the campaign, if you leave through the Obelisk with her, you rescue her.",
+    "mission": "Catch the fairy",
+    "ok": "Look at that golden glow: you've just made your unit a little less pathetic."
+   }
+  },
+  {
    "say": "Tu Obelisco guarda más trucos: las habilidades y mejoras para la partida se compran con Gloria. Abre Habilidades, échale un vistazo y ciérrala.",
    "mission": "Abre Habilidades y ciérrala",
    "ok": "Demasiado árbol de habilidades para tan poco bosque… no me hagas caso, es un chiste malo de gnomos.",
