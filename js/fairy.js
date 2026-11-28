@@ -43,12 +43,13 @@ const FairySFX = {
       const c = SFX.ensureCtx();
       if (!c || !SFX.master) return null;
       if (c.state === "suspended" && !(SFX._inBg && SFX._inBg())) c.resume();
-      if (!this._echo || this._echo.ctx !== c) {
+      // (MatchCleanup sustituye SFX.master al empezar/salir de una partida: el eco se reconecta al nuevo, si no sonaría al vacío)
+      if (!this._echo || this._echo.ctx !== c || this._echo.master !== SFX.master) {
         const input = c.createGain(), dly = c.createDelay(0.6), fb = c.createGain(), lp = c.createBiquadFilter(), wet = c.createGain();
         dly.delayTime.value = 0.19; fb.gain.value = 0.34; lp.type = "lowpass"; lp.frequency.value = 4200; wet.gain.value = 0.42;
         input.connect(dly); dly.connect(lp); lp.connect(fb); fb.connect(dly); lp.connect(wet); wet.connect(SFX.master);
         input.connect(SFX.master);
-        this._echo = { ctx: c, input };
+        this._echo = { ctx: c, input, master: SFX.master };
       }
       return c;
     } catch (e) { return null; }
@@ -142,6 +143,7 @@ const Fairy = {
       for (let c = 1; c < size - 1; c++) {
         if (!free(r, c) || Units.unitAt(r, c) || Gnome.isAt(r, c)) continue;
         if (typeof TerrainMap !== "undefined" && !TerrainMap.isWalkable(r, c)) continue;
+        if (this._shore(r, c)) continue; // ni en el agua ni pegada a ella: que nunca parezca flotar sobre un lago
         if (obelisk && Math.max(Math.abs(obelisk.row - r), Math.abs(obelisk.col - c)) < 6) continue;
         // "Detrás" de un arbusto = hacia el fondo de la pantalla: el arbusto la tapa por orden isométrico.
         if (typeof Bushes !== "undefined" && [[1, 1], [1, 0], [0, 1]].some(([dr, dc]) => Bushes.at(r + dr, c + dc))) cands.bush.push({ row: r, col: c });
@@ -213,6 +215,13 @@ const Fairy = {
     if (was && !hidden) this._onSeen();
   },
   _onSeen() { FairySFX.spot(); },
+
+  // true si la casilla o alguna de sus vecinas es agua (el hada vuela, pero no debe verse sobre el agua).
+  _shore(r, c) {
+    if (typeof TerrainMap === "undefined") return false;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (!TerrainMap.isWalkable(r + dr, c + dc) && TerrainMap.typeAt(r + dr, c + dc) === "water") return true;
+    return false;
+  },
 
   _blocked(r, c, selfUnit) {
     if (r < 0 || c < 0 || r >= Units.boardSize || c >= Units.boardSize) return true;
@@ -321,7 +330,11 @@ const Fairy = {
     const i = this.inst;
     if (!i || !i.el || i.carrier || i.busy) return;
     if (!mover || mover.team !== "player" || !Units.list.includes(mover)) return;
-    const players = Units.list.filter((u) => u.team === "player");
+    // Una unidad escondida en un arbusto es invisible para el hada (igual que para los neutrales y los gnomos).
+    const hid = (u) => typeof Bushes !== "undefined" && Bushes.isHidingUnit(u);
+    if (hid(mover)) return;
+    const players = Units.list.filter((u) => u.team === "player" && !hid(u));
+    if (!players.length) return;
     const d = Math.min(...players.map((u) => Math.max(Math.abs(u.row - i.row), Math.abs(u.col - i.col))));
     if (d > FAIRY_VISION) return;
     // Si la tienes JUSTO al lado y esa unidad aún puede actuar, a veces se queda petrificada un instante (ventana para cogerla).
@@ -347,7 +360,7 @@ const Fairy = {
       for (let dr = -2; dr <= 2; dr++) {
         for (let dc = -2; dc <= 2; dc++) {
           const r = i.row + dr, c = i.col + dc;
-          if (!(dr || dc) || this._blocked(r, c) || !Units.pathIsWalkable(i.row, i.col, r, c, "player")) continue;
+          if (!(dr || dc) || this._blocked(r, c) || this._shore(r, c) || !Units.pathIsWalkable(i.row, i.col, r, c, "player")) continue;
           const edge = Math.min(r, c, size - 1 - r, size - 1 - c) <= 0;
           opts.push({ r, c, s: dmin(r, c) * 1.5 + Math.random() * 2.4 - (edge ? 1.2 : 0) });
         }

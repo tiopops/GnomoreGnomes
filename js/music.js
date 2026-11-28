@@ -24,6 +24,7 @@ const Music = {
   _target: null,
   _bg: false, // true mientras la app está en segundo plano / pantalla apagada
   _unlocked: false,
+  _rate: 1, // velocidad de reproducción (la campaña la sube un 50 % en los últimos turnos)
   _timer: null,
   _last: 0,
 
@@ -115,6 +116,7 @@ const Music = {
     if (!this._unlocked || this._bg) return;
     this._target = this._wanted();
     for (const k of Object.keys(this._els)) {
+      if (k === this._target && this._els[k].playbackRate !== this._rate) { try { this._els[k].playbackRate = this._rate; } catch (e) {} }
       if (k === this._target && this._els[k].paused) {
         const p = this._els[k].play();
         if (p && p.catch) p.catch(() => {});
@@ -162,6 +164,15 @@ const Music = {
     if (this._duckTimer) clearTimeout(this._duckTimer);
     this._duckTimer = setTimeout(() => { this._duckGoal = 1; this._startLoop(); }, ms);
     this._startLoop();
+  },
+
+  // Acelera/normaliza la música (1 = normal, 1.5 = +50 %). Mantiene el tono, solo cambia el ritmo.
+  setTempo(r) {
+    this._rate = r || 1;
+    for (const k of Object.keys(this._els)) {
+      const a = this._els[k];
+      try { a.preservesPitch = true; a.webkitPreservesPitch = true; a.playbackRate = this._rate; } catch (e) {}
+    }
   },
 
   setEnabled(on) {

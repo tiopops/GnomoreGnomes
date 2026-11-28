@@ -12,9 +12,18 @@
    ORDEN: lo más reciente SIEMPRE arriba: las entradas de la más nueva a la más
    antigua y, dentro de una entrada, el último cambio el primero de la lista. */
 
-const GG_VERSION = "v.001702";
+const GG_VERSION = "v.001703";
 
 const GG_CHANGELOG = [
+  { v: "v.001703", date: "28/11/2026", title: "Campaña: últimos turnos y móvil", items: [
+      "Hada: arreglados sus sonidos, que dejaban de oírse dentro de una partida",
+      "Hada: tampoco ve a las unidades escondidas en un arbusto",
+      "Campaña: los neutrales ya no ven ni persiguen a las unidades escondidas en un arbusto",
+      "Campaña: si se acaba el tiempo antes de extraer ya no se consigue nada (ni recursos, ni puntos, ni gnomos, ni progreso). La mejora Prórroga ahora conserva un 10% de los recursos por nivel",
+      "Hada: ya no aparece ni huye por casillas pegadas al agua, para que nunca parezca flotar sobre un lago",
+      "Campaña: cuando quedan 3 turnos o menos para la extracción, el cartel de aviso sale en rojo y la música se acelera un 50 % hasta que termina la partida",
+      "Campaña (móvil): el marcador de turnos y gnomos estampados ya no se superpone a las ventanas (Ajustes y demás) y los contenedores de recursos del mapa son algo más anchos",
+  ] },
   { v: "v.001702", date: "27/11/2026", title: "Campaña: mapa móvil", items: [
       "Campaña (móvil vertical): nuevo mapa a pantalla completa sin scroll de página: recursos en una sola fila, el mapa ocupa el resto con scroll propio (la isla elegida se centra sola) y la ficha del capítulo queda fija abajo con flechas para cambiar de capítulo y un botón JUGAR grande a la altura del pulgar",
       "Intro del capítulo 1 (móvil): en horizontal los subtítulos ocupan mucho menos; en vertical el vídeo se desplaza para seguir la batalla desde el principio y acaba con el gnomo final centrado",

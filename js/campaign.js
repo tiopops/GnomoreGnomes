@@ -100,14 +100,14 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_up_vision: "Catalejo", cmp_up_vision_d: "Todas tus unidades y tu Obelisco ven una casilla más lejos: campamentos y jaulas se descubren antes.",
     cmp_up_recolector: "Manos largas", cmp_up_recolector_d: "Cada fuente de recursos te da +1 unidad extra por nivel al recogerla.",
     cmp_up_botin: "Saco sin fondo", cmp_up_botin_d: "Al extraer te llevas +1 de cada recurso recogido (+2 en el nivel 2).",
-    cmp_up_prorroga: "Prórroga", cmp_up_prorroga_d: "Si se acaba el tiempo conservas un 10% más de recursos por nivel (sobre la mitad).",
+    cmp_up_prorroga: "Prórroga", cmp_up_prorroga_d: "Si se acaba el tiempo antes de extraer, conservas un 10% de los recursos por nivel (sin ella, nada).",
     cmp_up_seguro: "Red de seguridad", cmp_up_seguro_d: "Si caes, te salvas un 20% de los recursos por nivel (los gnomos se pierden igual).",
-    cmp_res_ins: "Tu red de seguridad rescata el {p}% de los recursos.", cmp_res_tprc: "No reuniste a todos los gnomos a tiempo: conservas los gnomos y el {p}% de los recursos.",
+    cmp_res_ins: "Tu red de seguridad rescata el {p}% de los recursos.", cmp_res_tprc: "No reuniste a todos los gnomos a tiempo: gracias a la Prórroga solo conservas el {p}% de los recursos.",
     cmp_up_carga: "Gnomos más cargables", cmp_up_carga_d: "Los gnomos aguantan +1 punto de golpes antes de estamparlos.",
     cmp_how: "CÓMO SE JUEGA",
     cmp_hud: "{a}/{b}", cmp_extract: "Extraer", cmp_extract_q: "¿EXTRAER Y TERMINAR?", cmp_extract_far: "UNIDADES DEMASIADO LEJOS DEL OBELISCO", cmp_extract_info: "Te llevas los gnomos, los recursos y los puntos que te sobren.",
     cmp_yes: "EXTRAER", cmp_no: "SEGUIR", cmp_res_ok: "¡CAPÍTULO SUPERADO!", cmp_res_part: "EXTRACCIÓN COMPLETADA", cmp_res_fail: "HAS CAÍDO",
-    cmp_res_loot: "BOTÍN", cmp_res_lost: "BOTÍN PERDIDO", cmp_res_g: "Gnomos estampados", cmp_res_k: "Neutrales derrotados", cmp_res_goal: "Objetivo: {n} gnomos", cmp_res_half: "Al caer te quedas sin nada: ni gnomos, ni recursos, ni puntos.", cmp_res_time: "¡SE ACABÓ EL TIEMPO!", cmp_res_timeup: "No reuniste a todos los gnomos a tiempo: conservas los gnomos, pero solo la mitad de los recursos.", cmp_hud_turns: "{a} turnos", cmp_stat_gnomes: "gnomos", cmp_stat_turns: "turnos", cmp_stat_camps: "campamentos", cmp_stat_foeatk: "ataque enemigo", cmp_stat_foedef: "defensa enemiga", cmp_warn_turns: "¡QUEDAN {n} TURNOS!",
+    cmp_res_loot: "BOTÍN", cmp_res_lost: "BOTÍN PERDIDO", cmp_res_g: "Gnomos estampados", cmp_res_k: "Neutrales derrotados", cmp_res_goal: "Objetivo: {n} gnomos", cmp_res_half: "Al caer te quedas sin nada: ni gnomos, ni recursos, ni puntos.", cmp_res_time: "¡SE ACABÓ EL TIEMPO!", cmp_res_timeup: "No reuniste a todos los gnomos a tiempo: te vas con las manos vacías.", cmp_hud_turns: "{a} turnos", cmp_stat_gnomes: "gnomos", cmp_stat_turns: "turnos", cmp_stat_camps: "campamentos", cmp_stat_foeatk: "ataque enemigo", cmp_stat_foedef: "defensa enemiga", cmp_warn_turns: "¡QUEDAN {n} TURNOS!",
     cmp_back_map: "VOLVER AL MAPA", cmp_free: "¡JAULA ABIERTA!", cmp_done_banner: "¡OBJETIVO CUMPLIDO!", cmp_warn_ob: "¡ATACAN TU OBELISCO!", cmp_warn_none: "YA NO QUEDAN GNOMOS EN LA ZONA",
     cmp_skip: "SALTAR", cmp_hold_skip: "MANTÉN PARA SALTAR", cmp_start: "COMENZAR", cmp_war: "LA GUERRA ETERNA", cmp_next: "SIGUIENTE", cmp_ok: "ENTENDIDO", cmp_nizak: "Nizak",
     cmp_ch1: "Capítulo 1 · Claro de las Setas", cmp_ch2: "Capítulo 2 · Orilla Pantanosa", cmp_ch3: "Capítulo 3 · Espesura Profunda", cmp_ch4: "Capítulo 4 · Cumbre del Hongo", cmp_ch5: "Capítulo 5 · El GnomOgro",
@@ -137,14 +137,14 @@ const CAMPAIGN_BASE_CARRY = 5;
     cmp_up_vision: "Spyglass", cmp_up_vision_d: "All your units and your Obelisk see one tile further: camps and cages show up sooner.",
     cmp_up_recolector: "Long arms", cmp_up_recolector_d: "Every resource source gives +1 extra unit per level when collected.",
     cmp_up_botin: "Bottomless sack", cmp_up_botin_d: "When you extract you take +1 of every resource you collected (+2 at level 2).",
-    cmp_up_prorroga: "Extension", cmp_up_prorroga_d: "If time runs out you keep 10% more resources per level (on top of half).",
+    cmp_up_prorroga: "Extension", cmp_up_prorroga_d: "If time runs out before extraction you keep 10% of the resources per level (without it, nothing).",
     cmp_up_seguro: "Safety net", cmp_up_seguro_d: "If you fall, you save 20% of the resources per level (gnomes are still lost).",
-    cmp_res_ins: "Your safety net rescues {p}% of the resources.", cmp_res_tprc: "You did not gather every gnome in time: you keep the gnomes and {p}% of the resources.",
+    cmp_res_ins: "Your safety net rescues {p}% of the resources.", cmp_res_tprc: "You did not gather every gnome in time: thanks to Extension you only keep {p}% of the resources.",
     cmp_up_carga: "Sturdier gnomes", cmp_up_carga_d: "Gnomes can take +1 point of hits before the slam.",
     cmp_how: "HOW TO PLAY",
     cmp_hud: "{a}/{b}", cmp_extract: "Extract", cmp_extract_q: "EXTRACT AND FINISH?", cmp_extract_far: "UNITS TOO FAR FROM THE OBELISK", cmp_extract_info: "You keep the gnomes, the resources and the points you have left.",
     cmp_yes: "EXTRACT", cmp_no: "KEEP GOING", cmp_res_ok: "CHAPTER CLEARED!", cmp_res_part: "EXTRACTION COMPLETE", cmp_res_fail: "YOU HAVE FALLEN",
-    cmp_res_loot: "LOOT", cmp_res_lost: "LOOT LOST", cmp_res_g: "Gnomes slammed", cmp_res_k: "Neutrals defeated", cmp_res_goal: "Goal: {n} gnomes", cmp_res_half: "When you fall you keep nothing: no gnomes, no resources, no points.", cmp_res_time: "TIME IS UP!", cmp_res_timeup: "You did not gather every gnome in time: you keep the gnomes, but only half the resources.", cmp_hud_turns: "{a} turns", cmp_stat_gnomes: "gnomes", cmp_stat_turns: "turns", cmp_stat_camps: "camps", cmp_stat_foeatk: "enemy attack", cmp_stat_foedef: "enemy armour", cmp_warn_turns: "{n} TURNS LEFT!",
+    cmp_res_loot: "LOOT", cmp_res_lost: "LOOT LOST", cmp_res_g: "Gnomes slammed", cmp_res_k: "Neutrals defeated", cmp_res_goal: "Goal: {n} gnomes", cmp_res_half: "When you fall you keep nothing: no gnomes, no resources, no points.", cmp_res_time: "TIME IS UP!", cmp_res_timeup: "You did not gather every gnome in time: you leave empty-handed.", cmp_hud_turns: "{a} turns", cmp_stat_gnomes: "gnomes", cmp_stat_turns: "turns", cmp_stat_camps: "camps", cmp_stat_foeatk: "enemy attack", cmp_stat_foedef: "enemy armour", cmp_warn_turns: "{n} TURNS LEFT!",
     cmp_back_map: "BACK TO THE MAP", cmp_free: "CAGE OPEN!", cmp_done_banner: "GOAL REACHED!", cmp_warn_ob: "YOUR OBELISK IS UNDER ATTACK!", cmp_warn_none: "NO GNOMES LEFT IN THE AREA",
     cmp_skip: "SKIP", cmp_hold_skip: "HOLD TO SKIP", cmp_start: "BEGIN", cmp_war: "THE ETERNAL WAR", cmp_next: "NEXT", cmp_ok: "GOT IT", cmp_nizak: "Nizak",
     cmp_ch1: "Chapter 1 · Mushroom Glade", cmp_ch2: "Chapter 2 · Boggy Shore", cmp_ch3: "Chapter 3 · Deep Thicket", cmp_ch4: "Chapter 4 · Fungus Peak", cmp_ch5: "Chapter 5 · The GnomOgre",
@@ -639,6 +639,8 @@ const Campaign = {
       (r.maxTurns ? `<span class="camp-hud__item${left <= 3 && r.delivered < r.goal ? " camp-hud__item--warn" : ""}"><i class="ph-fill ph-hourglass-medium"></i> ${this.t("cmp_hud_turns", { a: left })}</span>` : "");
   },
   _bump() { if (!this._hud) return; this._hud.classList.remove("camp-hud--bump"); void this._hud.offsetWidth; this._hud.classList.add("camp-hud--bump"); },
+  _bannerRed(txt) { if (typeof Banners !== "undefined") Banners.text(txt, 1, "red"); else this._banner(txt); },
+  _tempo(r) { if (typeof Music !== "undefined" && Music.setTempo) Music.setTempo(r); },
   _banner(txt) { if (typeof Turns !== "undefined" && Turns.showBanner) Turns.showBanner(txt); },
 
   // ---------- Eventos del motor ----------
@@ -678,8 +680,9 @@ const Campaign = {
     this._refreshHud();
     if (run.maxTurns && !run.tutorial && run.delivered < run.goal) {
       const left = run.maxTurns - Turns.roundNumber + 1;
-      if (left > 0 && left <= 3) this._banner(this.t("cmp_warn_turns", { n: left }));
-    }
+      if (left > 0 && left <= 3) { this._bannerRed(this.t("cmp_warn_turns", { n: left })); this._tempo(1.5); if (typeof SFX !== "undefined" && SFX.ensureCtx) { /* aviso sonoro lo da el propio cartel */ } }
+      else this._tempo(1);
+    } else this._tempo(1);
     const ob = Obelisks.byTeam("player");
     if (ob && Units.list.some((u) => u.typeId === "rompeobeliscos" && this._cheb(u, ob) <= 1)) this._banner(this.t("cmp_warn_ob"));
     if (run.ready && !run.warnedNone && Gnome.list.length && !Gnome.list.some((g) => g.caged)) { run.warnedNone = true; this._banner(this.t("cmp_warn_none")); }
@@ -735,6 +738,7 @@ const Campaign = {
     const ch = this.ch(this.run.n);
     let best = null;
     Units.list.filter((u) => u.team === "player").forEach((u) => {
+      if (typeof Bushes !== "undefined" && Bushes.isHidingUnit(u)) return; // escondido en un arbusto: los neutrales no lo ven
       const d = this._cheb(u, g);
       if (!best || d < best.d) best = { u, d };
     });
@@ -832,6 +836,7 @@ const Campaign = {
     const r = this.run;
     if (!r || r.over) return;
     r.over = true;
+    this._tempo(1);
     if (typeof Obelisks !== "undefined") Obelisks.gameOver = true;
     if (typeof Units !== "undefined") Units.deselect();
     if (typeof Turns !== "undefined") Turns.hideButton();
@@ -842,26 +847,26 @@ const Campaign = {
     const lvB = this.upLevel("botin"), lvP = this.upLevel("prorroga"), lvS = this.upLevel("seguro");
     CAMPAIGN_RES.forEach((k) => {
       const n = (Resources.counts && Resources.counts[k]) || 0;
-      got[k] = fallen ? Math.floor(n * 0.2 * lvS) : timeout ? Math.floor(n * (0.5 + 0.1 * lvP)) : (n > 0 ? n + lvB : 0);
+      got[k] = fallen ? Math.floor(n * 0.2 * lvS) : timeout ? Math.floor(n * 0.1 * lvP) : (n > 0 ? n + lvB : 0);
     });
     // Puntos sobrantes de la partida: también se extraen (con las mismas reglas de prórroga y red de seguridad que los recursos).
     const leftPts = this.netPts();
-    got.pts = fallen ? Math.floor(leftPts * 0.2 * lvS) : timeout ? Math.floor(leftPts * (0.5 + 0.1 * lvP)) : leftPts;
+    got.pts = fallen ? Math.floor(leftPts * 0.2 * lvS) : timeout ? Math.floor(leftPts * 0.1 * lvP) : leftPts;
     // Nivel agotado (ya no quedan gnomos): se puede jugar, pero no da botín.
     if (r.depleted) { got.pts = 0; CAMPAIGN_RES.forEach((k) => { got[k] = 0; }); }
     this.s.pts = (this.s.pts || 0) + got.pts;
     // Mejor puntuación (la partida peor no la sustituye).
     const score = (r.delivered || 0) * 100 + (r.kills || 0) * 10 + got.pts;
     this.s.got = this.s.got || {};
-    if (!r.depleted && score > this.bestScore(r.n)) this.s.got["s" + r.n] = score;
+    if (!r.depleted && !timeout && score > this.bestScore(r.n)) this.s.got["s" + r.n] = score;
     r.score = score;
     // Campamentos de esta partida: los abiertos + los que no se montaron porque sus gnomos ya estaban estampados. Se guarda el MEJOR intento.
     const ch0 = this.ch(r.n), campsTotal = (ch0 && ch0.camps) || 0;
     const cleared = Math.min(campsTotal, this._camps.filter((c) => c.open).length + Math.max(0, campsTotal - this._camps.length));
     r.campsCleared = cleared;
-    if (cleared > this.campsBest(r.n)) { this.s.camps = this.s.camps || {}; this.s.camps[r.n] = cleared; }
+    if (!timeout && cleared > this.campsBest(r.n)) { this.s.camps = this.s.camps || {}; this.s.camps[r.n] = cleared; }
     const completed = !fallen && r.delivered >= r.goal;
-    if (!fallen) {
+    if (!fallen && !timeout) { // si se acaba el tiempo antes de extraer no se conserva nada (ni gnomos)
       const n = Math.min(r.delivered, this.remaining(r.n));
       this.s.gnomes += n;
       this.s.got[r.n] = ((this.s.got && this.s.got[r.n]) || 0) + n; // los gnomos estampados no vuelven a aparecer en este capítulo
@@ -891,7 +896,7 @@ const Campaign = {
     const maxCamps = (this.ch(r.n) || {}).camps || 0;
     const fairyNote = bonus ? this.t("cmp_fairy_bonus") : newFairy ? this.t("cmp_fairy_saved") : "";
     const note = fairyNote ? fairyNote : fallen ? (this.upLevel("seguro") ? this.t("cmp_res_ins", { p: 20 * this.upLevel("seguro") }) : this.t("cmp_res_half"))
-      : timeout ? (this.upLevel("prorroga") ? this.t("cmp_res_tprc", { p: 50 + 10 * this.upLevel("prorroga") }) : this.t("cmp_res_timeup")) : "";
+      : timeout ? (this.upLevel("prorroga") ? this.t("cmp_res_tprc", { p: 10 * this.upLevel("prorroga") }) : this.t("cmp_res_timeup")) : "";
     const row = (icon, label, val, small, i) => `<div class="res-row${bad ? " res-row--bad" : ""}" style="animation-delay:${0.1 + i * 0.12}s"><i class="ph-fill ${icon}"></i><span class="res-row__label">${label}</span><span class="res-row__val">${val}${small ? `<small> / ${small}</small>` : ""}</span></div>`;
     const loot = [[CAMPAIGN_PTS_ICON, got.pts || 0]].concat(CAMPAIGN_RES.map((k) => [CAMPAIGN_RES_ICON[k], got[k] || 0]));
     const lost = loot.every((x) => !x[1]);
@@ -923,6 +928,7 @@ const Campaign = {
     if (!this.active && !this._hud) return;
     this.active = false;
     if (typeof Fairy !== "undefined") Fairy.resetAll();
+    this._tempo(1);
     if (this._hud) this._hud.style.display = "none";
     ["_askEl", "_resultEl"].forEach((k) => { if (this[k]) { this[k].remove(); this[k] = null; } });
     if (typeof Obelisks !== "undefined") Obelisks.gameOver = false;

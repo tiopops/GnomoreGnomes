@@ -60,7 +60,7 @@
 @media (max-width: 640px) { .camp-intro__card { flex-direction: column; align-items: center; } .camp-intro__nizak { height: 22vh; } .camp-intro__text { font-size: .92rem; } }
 
 /* Marcador en partida */
-.camp-hud { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 900; display: none; gap: 10px; pointer-events: none; }
+.camp-hud { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 850; display: none; gap: 10px; pointer-events: none; }
 .camp-hud__item { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; background: #14121a; color: #fff; border: 3px solid #ffcf3f; border-radius: 9px; font-family: "Russo One", sans-serif; font-size: 1rem; box-shadow: 3px 3px 0 rgba(0,0,0,.6); transform: skewX(-6deg); }
 .camp-hud__item i { color: #ffcf3f; font-size: 1.15rem; }
 .camp-hud--ok .camp-hud__item:first-child { border-color: #6fdc6f; } .camp-hud--ok .camp-hud__item:first-child i { color: #6fdc6f; }
@@ -738,7 +738,7 @@
   #screen-campaign:has(.camp-pane--map) .camp-title::after { display: none; }
   #screen-campaign:has(.camp-pane--map) #camp-root { flex: 1; min-height: 0; width: 100%; gap: 8px; padding-bottom: 0; }
   #screen-campaign:has(.camp-pane--map) .camp-top { flex-wrap: nowrap; gap: 5px; margin: 0; }
-  #screen-campaign:has(.camp-pane--map) .camp-chip { padding: 3px 9px; font-size: .85rem; gap: 5px; }
+  #screen-campaign:has(.camp-pane--map) .camp-chip { padding: 3px 14px; font-size: .85rem; gap: 7px; }
   #screen-campaign:has(.camp-pane--map) .camp-chip img { width: 20px; height: 20px; }
   .camp-chip__lb { display: none; }
   #screen-campaign:has(.camp-pane--map) .camp-tabs { margin: 0; gap: 8px; flex-wrap: nowrap; }
